@@ -66,14 +66,9 @@ readonly EX_PROTOCOL=76    # remote error in protocol
 readonly EX_NOPERM=77      # permission denied
 readonly EX_CONFIG=78      # configuration error (unsupported platform)
 
-# Useful for printing text to console...
+# The marks error, success and usage print.
 
-readonly Heavy_ballot='✘' Heavy_check_mark='✔'
-
-readonly b=$'\033[1m'   # bold
-readonly n=$'\033[0m'   # normal (reset)
-readonly u=$'\033[4m'   # underline
-readonly u_=$'\033[24m' # underline off
+readonly HEAVY_BALLOT='✘' HEAVY_CHECK_MARK='✔'
 
 ###########
 # Functions
@@ -92,7 +87,7 @@ readonly u_=$'\033[24m' # underline off
 # Returns:
 #   - 0 when every file is read; a file that cannot be read ends the script through errexit.
 function Set-Environment {
-    local envFile
+    local env_file
     local whitelist
 
     # Optional first args: --whitelist "VAR1 VAR2 ..."
@@ -102,7 +97,7 @@ function Set-Environment {
         shift 2
     fi
 
-    for envFile in "$@"; do
+    for env_file in "$@"; do
 
         while read -r line; do
 
@@ -140,7 +135,7 @@ function Set-Environment {
                 note "export $name=\"$value\""
             fi
 
-        done <"$envFile"
+        done <"$env_file"
 
     done
 }
@@ -178,11 +173,11 @@ function Set-Traps {
 # Returns:
 #   - 0 when `$1` is 0; otherwise it does not return: the script exits with `$1`.
 function error {
-    local rc=$1
+    local status=$1
     shift 1
-    printf '[%s] [\033[31m%s\033[0m] %s\n' "$script_name" "$Heavy_ballot" "$*" >&2
-    if ((rc != 0)); then
-        exit "$rc"
+    printf '[%s] [\033[31m%s\033[0m] %s\n' "$script_name" "$HEAVY_BALLOT" "$*" >&2
+    if ((status != 0)); then
+        exit "$status"
     fi
 }
 
@@ -239,13 +234,13 @@ function on_error_or_interrupt {
 # Returns:
 #   - 0 when every one is found; otherwise it does not return: the script exits 69, EX_UNAVAILABLE.
 function require_command {
-    local name missing=()
+    local name missing_list=()
 
     for name in "$@"; do
-        hash "$name" 2>/dev/null || missing+=("$name")
+        hash "$name" 2>/dev/null || missing_list+=("$name")
     done
 
-    ((${#missing[@]} == 0)) || error $EX_UNAVAILABLE "requires ${missing[*]}: not found on PATH"
+    ((${#missing_list[@]} == 0)) || error $EX_UNAVAILABLE "requires ${missing_list[*]}: not found on PATH"
 }
 
 # require_darwin ends the script unless it runs on macOS.
@@ -313,7 +308,7 @@ function require_root {
 # Returns:
 #   - 0.
 function success {
-    printf '[%s] [\033[32m%s\033[0m] %s\n' "$script_name" "$Heavy_check_mark" "$*" >&2
+    printf '[%s] [\033[32m%s\033[0m] %s\n' "$script_name" "$HEAVY_CHECK_MARK" "$*" >&2
 }
 
 # usage shows the script's man page, or prints the synopsis it is given when there is none, and ends the script.
@@ -327,12 +322,12 @@ function success {
 # Returns:
 #   - it does not return: the script exits 0, or 2 when `$1` is missing or empty.
 function usage {
-    local _synopsis="${1:-}"
+    local synopsis_text="${1:-}"
 
     # Require a synopsis so callers can provide a fallback when man is unavailable
 
-    if [[ -z "$_synopsis" ]]; then
-        printf '[%s] \033[31m%s\033[0m usage() requires a synopsis argument.\n' "$script_name" "$Heavy_ballot" >&2
+    if [[ -z "$synopsis_text" ]]; then
+        printf '[%s] \033[31m%s\033[0m usage() requires a synopsis argument.\n' "$script_name" "$HEAVY_BALLOT" >&2
         exit 2
     fi
 
@@ -352,7 +347,7 @@ function usage {
 
     # Final fallback: print the synopsis provided by the caller
 
-    printf "%s\n" "$_synopsis"
+    printf "%s\n" "$synopsis_text"
     exit 0
 }
 

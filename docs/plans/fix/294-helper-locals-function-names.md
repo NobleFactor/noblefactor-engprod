@@ -1,7 +1,7 @@
 ---
 title: "Declare-BashScript's names follow the house's rules, and one Set-Environment serves scripts and prompts"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/294
-status: approved
+status: active
 created: 2026-10-10
 updated: 2026-10-10
 ---
@@ -168,8 +168,9 @@ which is this one. They are ticked here, from NobleFactor/noblefactor-ops#293's 
 
 ### Phase 2: The names (Requirement 1)
 
-- [ ] `missing_list`, `env_file`, `HEAVY_BALLOT`, `HEAVY_CHECK_MARK`, `status` and `synopsis_text`; `b`, `n`, `u` and
-  `u_` removed.
+- [x] `missing_list`, `env_file`, `HEAVY_BALLOT`, `HEAVY_CHECK_MARK`, `status` and `synopsis_text`; `b`, `n`, `u` and
+  `u_` removed. 2026-10-10: `make check` clean, and personal's whole shell gate passes against this branch's helper,
+  Install-JetBrainsToolbox included: 123 files in its main clone, 129 in Start-Claude's worktree.
 
 ### Phase 3: Set-Environment (Requirement 2)
 
