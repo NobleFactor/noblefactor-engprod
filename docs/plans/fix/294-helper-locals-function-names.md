@@ -14,9 +14,9 @@ Lane 93 of NobleFactor/devlore-cli#916, with lane 66 folded in: #294 and #291 in
 personal's Start-Claude pull request (lanes 48, 49, 51, 53 and 59), whose CI otherwise fails. The helper's names follow
 the house's rules: `require_command`'s indexed array becomes `missing_list`, so shellcheck reads no script's scalar
 `missing` as it, and the helper's other names are renamed or removed as ruled. Set-Environment becomes one function,
-`Home/common/.local/share/functions/Set-Environment` in this base layer, which Declare-BashScript sources and a prompt
-loads. It keeps its variables local, works without `--whitelist` and without arguments, and expands its values with
-`eval`, as the prompt's copy always has, escaped so that a value runs nothing but its `$(...)`.
+`Home/common/.local/share/shell/functions/Set-Environment` in this base layer, which Declare-BashScript sources and a
+prompt loads. It keeps its variables local, works without `--whitelist` and without arguments, and expands its values
+with `eval`, as the prompt's copy always has, escaped so that a value runs nothing but its `$(...)`.
 
 ## Issue 294
 
@@ -96,6 +96,10 @@ the third.
   `read` drops a value's trailing `=`, and offered splitting each line with parameter expansion (1) or keeping the
   here-string (2); asked what the here-string's loss would be and how the two differ, and answered: "make the change
   to parameter expansion".
+- The functions directory, 2026-10-11: "I want to move the functions directory from ~/.local/share/functions to
+  ~/.local/share/shell/functions. This means updating bash/zsh rc files, and Declare-BashScript. Can we do that on the
+  next PR?" Offered this pull request, before anything is deployed at the old path, with personal#269 taking the new
+  path for the rc files (1), or the pull request after it (2): "go with 1. next question."
 
 ## Goals
 
@@ -144,11 +148,11 @@ writ's test data) keep the names of c942f54, which they say they copy.
 
 ### Requirement 2: Set-Environment (#291)
 
-One file in this base layer, `Home/common/.local/share/functions/Set-Environment`, which writ deploys to
-`~/.local/share/functions/`, XDG's data directory. Declare-BashScript sources it from
-`${XDG_DATA_HOME:-$HOME/.local/share}/functions`, where a prompt loads it too, so a script and a prompt run the one
-deployed file. A test of a checkout sets `XDG_DATA_HOME` to the checkout's `Home/common/.local/share`, so that it runs
-the file under review with nothing deployed. When the file is not there, the helper stops with 72, `EX_OSFILE`,
+One file in this base layer, `Home/common/.local/share/shell/functions/Set-Environment`, which writ deploys to
+`~/.local/share/shell/functions/`, under XDG's data directory. Declare-BashScript sources it from
+`${XDG_DATA_HOME:-$HOME/.local/share}/shell/functions`, where a prompt loads it too, so a script and a prompt run the
+one deployed file. A test of a checkout sets `XDG_DATA_HOME` to the checkout's `Home/common/.local/share`, so that it
+runs the file under review with nothing deployed. When the file is not there, the helper stops with 72, `EX_OSFILE`,
 naming the path it looked for.
 
 One implementation, the same for a script and for a prompt, in bash and in zsh. Every variable it assigns is `local`.
@@ -173,13 +177,12 @@ variables untouched after a call. And one for each behavior of requirement 2, in
 newline; the `export` prefix; a name the shell cannot take; a value in single quotes; `$HOME` and `$(hostname)`
 expanded; `$(date '+%Y')`; the values that must run nothing, `x; echo RAN`, `\"; echo RAN; \"`, and one ending in a
 backslash; values with `=` in them, `A=b=c` and `K=dGVzdDE=`, kept whole; `--whitelist` exporting only the names it
-lists; each export printed on standard error as
-`export NAME="value"`; and nothing printed when `SILENT` is set. And three in bash for the helper's lookup, none
-needing a temporary directory: Set-Environment found through `XDG_DATA_HOME`, set to the checkout's
-`Home/common/.local/share`; found through `HOME`, set to the checkout's `Home/common`, with `XDG_DATA_HOME` unset; and
-not found, with `XDG_DATA_HOME` set to a directory that has no `functions`, where the helper stops with 72 and names
-the path. Every case that passes today still passes. CI's Tools step installs zsh beside shellcheck, so the zsh cases
-run in CI as they do on a Mac.
+lists; each export printed on standard error as `export NAME="value"`; and nothing printed when `SILENT` is set. And
+three in bash for the helper's lookup, none needing a temporary directory: Set-Environment found through
+`XDG_DATA_HOME`, set to the checkout's `Home/common/.local/share`; found through `HOME`, set to the checkout's
+`Home/common`, with `XDG_DATA_HOME` unset; and not found, with `XDG_DATA_HOME` set to a directory that has no
+`shell/functions`, where the helper stops with 72 and names the path. Every case that passes today still passes. CI's
+Tools step installs zsh beside shellcheck, so the zsh cases run in CI as they do on a Mac.
 
 ### Requirement 4: the consumers
 
@@ -220,6 +223,11 @@ which is this one. They are ticked here, from NobleFactor/noblefactor-ops#293's 
   it is not there, both ruled 2026-10-11; its comment, Set-Environment's header and the man page's entry say so.
   2026-10-11: shfmt, `bash -n` and shellcheck clean on the helper and Set-Environment, `zsh -n` on Set-Environment,
   mandoc clean at warning level, and phase 4's three cases for the lookup pass.
+- [x] Set-Environment moved with `git mv` to `Home/common/.local/share/shell/functions`, and the helper sourcing it
+  from `${XDG_DATA_HOME:-$HOME/.local/share}/shell/functions`, ruled 2026-10-11; the helper's test, its comment,
+  Set-Environment's header and the man page's entry follow. 2026-10-11: moved by the owner's run of `git mv`; shfmt,
+  `bash -n`, `zsh -n` and shellcheck clean, mandoc clean, all 49 of the test's cases passing, and again with `TMPDIR`
+  and `TMPPREFIX` pointed at a missing directory; `make check` clean.
 
 ### Phase 4: The tests (Requirement 3)
 
@@ -231,19 +239,22 @@ which is this one. They are ticked here, from NobleFactor/noblefactor-ops#293's 
 ### Phase 5: Verification (Requirement 4)
 
 - [ ] `make check` clean on this Mac, and CI green on the pull request.
-- [ ] Personal's whole shell gate against this branch's helper: Install-JetBrainsToolbox clean, and every file as
-  before.
+- [x] Personal's whole shell gate against this branch's helper: Install-JetBrainsToolbox clean, and every file as
+  before. 2026-10-11, after the move: 123 files in personal's main clone and 129 in Start-Claude's worktree, none
+  failing, Install-JetBrainsToolbox among them; shellcheck follows the helper into Set-Environment, reporting no
+  SC1091.
 
 ### Phase 6: Plan 289 (Requirement 5)
 
-- [ ] Its phase 6 CI box and phase 7 box ticked from #293's record.
+- [x] Its phase 6 CI box and phase 7 box ticked from #293's record. 2026-10-11: both ticked, from the record read the
+  same day, and its status set to `complete`.
 
 ### Phase 7: Acceptance and closure
 
 - [ ] The pull request, the merge and `git close-branch`; lanes 66 and 93 marked on NobleFactor/devlore-cli#916, #291
   and #294 closed, and their plan rows pointed at `develop`.
 - [ ] writ's deploy, run on this Mac once the merged helper is in the main clone and before any script sources it,
-  so that `~/.local/share/functions/Set-Environment` resolves: until then every script that sources the helper,
+  so that `~/.local/share/shell/functions/Set-Environment` resolves: until then every script that sources the helper,
   `git open-branch` and `git close-branch` among them, stops (agent-rules rule 5).
 
 ## Files to Create/Modify
@@ -251,7 +262,7 @@ which is this one. They are ticked here, from NobleFactor/noblefactor-ops#293's 
 | File | Action | Purpose |
 | --- | --- | --- |
 | `Home/common/.local/bin/Declare-BashScript` | Modify | Requirements 1 and 2: the names, and sourcing Set-Environment |
-| `Home/common/.local/share/functions/Set-Environment` | Create | Requirement 2 |
+| `Home/common/.local/share/shell/functions/Set-Environment` | Create | Requirement 2 |
 | `Home/common/.local/share/man/man1/Declare-BashScript.1` | Modify | Requirements 1 and 2: two entries |
 | `tests/Test-DeclareBashScript` | Modify | Requirement 3 |
 | `.github/workflows/ci.yaml` | Modify | Requirement 3: zsh, for the zsh cases |
@@ -261,9 +272,9 @@ which is this one. They are ticked here, from NobleFactor/noblefactor-ops#293's 
 ## Out of Scope
 
 - A prompt's Set-Environment: personal's loaders (`.bashrc`, `.zshrc`, `.zprofile`, and Install-UnixUserConfiguration's
-  `zcompile`) look in `${XDG_DATA_HOME:-$HOME/.local/share}/functions`, and personal's own copy is deleted. That is
-  David-Noble-at-work/personal#269, lane 95 of NobleFactor/devlore-cli#916, after this merges; until it lands, a prompt
-  keeps personal's copy.
+  `zcompile`) look in `${XDG_DATA_HOME:-$HOME/.local/share}/shell/functions`, and personal's own copy is deleted. That
+  is David-Noble-at-work/personal#269, lane 95 of NobleFactor/devlore-cli#916, after this merges; until it lands, a
+  prompt keeps personal's copy.
 - The PowerShell Set-Environment in personal's `Home/common/.config/powershell/profile.ps1`: another language, and
   whether it should behave as this one does is to be raised on its own.
 - devlore-cli's copies of the helper's functions, which keep c942f54's names (requirement 1).
@@ -280,4 +291,10 @@ which is this one. They are ticked here, from NobleFactor/noblefactor-ops#293's 
 
 ## Open Questions
 
-None. The findings of 2026-10-11 are ruled; see Rulings.
+1. **pushup and up.** The owner, 2026-10-11: "we have two functions that are still installed to ~/.functions. they
+   should be moved such that they install to ~/.local/share/shell/functions"; "we should do that on the same PR"; and
+   "the up and pushup functions are for interactive sessions only." They are personal's, `Home/common.Unix/.functions/`,
+   and this pull request changes only noblefactor-ops. (1) They join Set-Environment in this layer's
+   `Home/common/.local/share/shell/functions`, written to the house's rules and passing its gate, and personal#269
+   deletes personal's copies; or (2) they move within personal, to `Home/common.Unix/.local/share/shell/functions`, in
+   personal#269's pull request with the rc files that load them. Proposed: (1).

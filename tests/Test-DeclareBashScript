@@ -12,8 +12,8 @@
     exit 72 # EX_OSFILE
 }
 
-# The helper sources Set-Environment from ${XDG_DATA_HOME:-$HOME/.local/share}/functions. This checkout's is the file
-# under review, so the test points XDG_DATA_HOME at it and needs nothing deployed (#294).
+# The helper sources Set-Environment from ${XDG_DATA_HOME:-$HOME/.local/share}/shell/functions. This checkout's is the
+# file under review, so the test points XDG_DATA_HOME at it and needs nothing deployed (#294).
 XDG_DATA_HOME="$(cd "$(dirname "$0")/../Home/common/.local/share" && pwd)" || exit 72 # EX_OSFILE
 export XDG_DATA_HOME
 
@@ -152,7 +152,7 @@ done
 checkout_home="$(cd "$(dirname "$0")/../Home/common" && pwd)"
 failures=0
 helper="$(cd "$(dirname "$0")/../Home/common/.local/bin" && pwd)/Declare-BashScript"
-set_environment="${XDG_DATA_HOME}/functions/Set-Environment"
+set_environment="${XDG_DATA_HOME}/shell/functions/Set-Environment"
 tests_directory="$(cd "$(dirname "$0")" && pwd)"
 
 # A cleanup that says it ran and with what status, for the cases that check the EXIT trap.
@@ -238,8 +238,8 @@ run_case "require_command with every tool found" 0 0 'carried on' '
 require_command bash getopt
 echo carried on'
 
-# The helper sources Set-Environment from ${XDG_DATA_HOME:-$HOME/.local/share}/functions (#294). HOME first points
-# where there is none, so only XDG_DATA_HOME can supply it; then XDG_DATA_HOME is unset, so only HOME can.
+# The helper sources Set-Environment from ${XDG_DATA_HOME:-$HOME/.local/share}/shell/functions (#294). HOME first
+# points where there is none, so only XDG_DATA_HOME can supply it; then XDG_DATA_HOME is unset, so only HOME can.
 run_case "Set-Environment: found through XDG_DATA_HOME" 0 0 'found' \
     '[[ "$(type -t Set-Environment)" == function ]] && echo found' bash "HOME='${tests_directory}'"
 
@@ -248,7 +248,7 @@ run_case "Set-Environment: found through HOME, with XDG_DATA_HOME unset" 0 0 'fo
     "unset XDG_DATA_HOME; HOME='${checkout_home}'"
 
 run_case "Set-Environment: not found, which stops the helper with 72" 72 0 \
-    'requires Set-Environment, which is not at .*/tests/functions/Set-Environment$' 'echo not reached' bash \
+    'requires Set-Environment, which is not at .*/tests/shell/functions/Set-Environment$' 'echo not reached' bash \
     "XDG_DATA_HOME='${tests_directory}'"
 
 # #291's three, under the helper's errexit and nounset: no argument, no --whitelist, and a caller's variables of the

@@ -4,7 +4,7 @@
 # Copyright (c) 2025-2026 Noble Factor. All rights reserved.
 
 # Set-Environment - the one Set-Environment: Declare-BashScript sources this file, and a prompt, bash or zsh, loads it,
-# both from ${XDG_DATA_HOME:-$HOME/.local/share}/functions (#294).
+# both from ${XDG_DATA_HOME:-$HOME/.local/share}/shell/functions (#294).
 
 # Set-Environment exports the variables one or more .env files assign, and prints each one it exports.
 #
