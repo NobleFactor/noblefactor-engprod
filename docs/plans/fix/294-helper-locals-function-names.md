@@ -174,8 +174,11 @@ which is this one. They are ticked here, from NobleFactor/noblefactor-ops#293's 
 
 ### Phase 3: Set-Environment (Requirement 2)
 
-- [ ] `Home/common/.local/share/functions/Set-Environment`, the one implementation, sourced by the helper, and its
-  entry in the helper's man page.
+- [x] `Home/common/.local/share/functions/Set-Environment`, the one implementation, sourced by the helper, and its
+  entry in the helper's man page. 2026-10-10: shfmt, `bash -n` and shellcheck clean on both files, `zsh -n` on the
+  function file, and mandoc clean at warning level, the page's unparsable date and the entry's lost quotes fixed with
+  it. A script sourcing the helper expanded `$HOME` and `$(hostname)`, kept `\"; echo RAN; \"` as written and ran
+  nothing, left out a name `--whitelist` did not list, and printed nothing under `SILENT`.
 
 ### Phase 4: The tests (Requirement 3)
 

@@ -1,0 +1,68 @@
+# shellcheck shell=bash
+
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2025-2026 Noble Factor. All rights reserved.
+
+# Set-Environment - the one Set-Environment: Declare-BashScript sources this file, and a prompt, bash or zsh, loads it
+# from ~/.local/share/functions (#294).
+
+# Set-Environment exports the variables one or more .env files assign, and prints each one it exports.
+#
+# A file holds an assignment a line, `NAME=value` or `export NAME=value`. Blank lines and lines that begin with # are
+# skipped, and so, with a warning, is a line whose name the shell cannot take. With --whitelist, only the names listed
+# are exported.
+#
+# A value is expanded as the shell expands a word in double quotes: `$NAME` and `$(command)` are replaced, and nothing
+# else in it runs. A .env file is therefore code, to be loaded only where it could be sourced. A value in single
+# quotes is taken as written, and a command inside a value quotes its arguments with single quotes.
+#
+# Each export is printed on standard error as `export NAME="value"`, unless SILENT is set.
+#
+# Parameters:
+#   - `$1`, `$2`: `--whitelist` and the space-separated names to export, when the first argument is `--whitelist`.
+#   - `$@` after them: the .env files, read in order; with none, nothing is exported.
+#
+# Returns:
+#   - 0 when every file is read; a file that cannot be read, or a `$(...)` that fails, ends a script through errexit.
+function Set-Environment {
+    local env_file line name value whitelist=""
+
+    if [[ ${1:-} == "--whitelist" ]]; then
+        whitelist="${2:-}"
+        shift 2
+    fi
+
+    for env_file in "$@"; do
+        while IFS= read -r line || [[ -n $line ]]; do
+            line="${line#"${line%%[![:space:]]*}"}"
+            line="${line%"${line##*[![:space:]]}"}"
+            [[ -z $line || $line == \#* ]] && continue
+
+            [[ $line != export[[:space:]]* ]] || line="${line#export}"
+            IFS='=' read -r name value <<<"$line"
+            name="${name#"${name%%[![:space:]]*}"}"
+            name="${name%"${name##*[![:space:]]}"}"
+            value="${value#"${value%%[![:space:]]*}"}"
+            value="${value%"${value##*[![:space:]]}"}"
+
+            if [[ -z $name || $name == [0-9]* || $name == *[!A-Za-z0-9_]* ]]; then
+                printf 'Set-Environment: no variable name in %s: %s\n' "$env_file" "$line" >&2
+                continue
+            fi
+
+            # Backslashes, then double quotes, are escaped so that nothing in the value can end the word.
+            if [[ $value == \'*\' ]]; then
+                value="${value:1:${#value}-2}"
+            else
+                [[ $value != \"*\" ]] || value="${value:1:${#value}-2}"
+                value="${value//\\/\\\\}"
+                eval "value=\"${value//\"/\\\"}\""
+            fi
+
+            if [[ -z $whitelist || " $whitelist " == *" $name "* ]]; then
+                export "$name"="$value"
+                [[ -n ${SILENT:-} ]] || printf 'export %s="%s"\n' "$name" "$value" >&2
+            fi
+        done <"$env_file"
+    done
+}
