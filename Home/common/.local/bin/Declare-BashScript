@@ -66,84 +66,13 @@ readonly EX_PROTOCOL=76    # remote error in protocol
 readonly EX_NOPERM=77      # permission denied
 readonly EX_CONFIG=78      # configuration error (unsupported platform)
 
-# Useful for printing text to console...
+# The marks error, success and usage print.
 
-readonly Heavy_ballot='✘' Heavy_check_mark='✔'
-
-readonly b=$'\033[1m'   # bold
-readonly n=$'\033[0m'   # normal (reset)
-readonly u=$'\033[4m'   # underline
-readonly u_=$'\033[24m' # underline off
+readonly HEAVY_BALLOT='✘' HEAVY_CHECK_MARK='✔'
 
 ###########
 # Functions
 ###########
-
-# Set-Environment exports the variables one or more .env files assign, naming each in a note as it exports it.
-#
-# Each file is read a line at a time. A blank line, and a line that begins with #, are skipped. A line reads as
-# `export NAME=value` or `NAME=value`; the name and the value lose the whitespace around them, and the value loses one
-# pair of double or single quotes around it. With --whitelist, only the names the list holds are exported.
-#
-# Parameters:
-#   - `$1`, `$2`: `--whitelist` and the space-separated names to export, when the first argument is `--whitelist`.
-#   - `$@` after them: the .env files, read in order.
-#
-# Returns:
-#   - 0 when every file is read; a file that cannot be read ends the script through errexit.
-function Set-Environment {
-    local envFile
-    local whitelist
-
-    # Optional first args: --whitelist "VAR1 VAR2 ..."
-
-    if [[ "$1" == "--whitelist" ]]; then
-        whitelist="$2"
-        shift 2
-    fi
-
-    for envFile in "$@"; do
-
-        while read -r line; do
-
-            trimmed_line="$(echo "${line}" | xargs)"
-            [[ -z ${trimmed_line:-} ]] || [[ "${trimmed_line}" =~ ^#.* ]] && continue
-
-            # Parse export VAR="value" or VAR="value"
-
-            if [[ $trimmed_line =~ ^export[[:space:]]+([^=]+)=(.*)$ ]]; then
-                name="${BASH_REMATCH[1]}"
-                value="${BASH_REMATCH[2]}"
-            else
-                IFS='=' read -r name value <<<"$trimmed_line"
-            fi
-
-            # Trim whitespace
-
-            name="${name#"${name%%[![:space:]]*}"}"
-            name="${name%"${name##*[![:space:]]}"}"
-            value="${value#"${value%%[![:space:]]*}"}"
-            value="${value%"${value##*[![:space:]]}"}"
-
-            # Strip outer quotes from value
-
-            if [[ $value =~ ^\"(.*)\"$ ]]; then
-                value="${BASH_REMATCH[1]}"
-            elif [[ $value =~ ^\'(.*)\'$ ]]; then
-                value="${BASH_REMATCH[1]}"
-            fi
-
-            # If whitelist is provided, ensure name is in whitelist
-
-            if [[ -z "$whitelist" || " $whitelist " == *" $name "* ]]; then
-                export "$name"="$value"
-                note "export $name=\"$value\""
-            fi
-
-        done <"$envFile"
-
-    done
-}
 
 # Set-Traps sends ERR, HUP, INT and TERM to on_error_or_interrupt, and EXIT to the cleanup function a script names.
 #
@@ -178,11 +107,11 @@ function Set-Traps {
 # Returns:
 #   - 0 when `$1` is 0; otherwise it does not return: the script exits with `$1`.
 function error {
-    local rc=$1
+    local status=$1
     shift 1
-    printf '[%s] [\033[31m%s\033[0m] %s\n' "$script_name" "$Heavy_ballot" "$*" >&2
-    if ((rc != 0)); then
-        exit "$rc"
+    printf '[%s] [\033[31m%s\033[0m] %s\n' "$script_name" "$HEAVY_BALLOT" "$*" >&2
+    if ((status != 0)); then
+        exit "$status"
     fi
 }
 
@@ -239,13 +168,13 @@ function on_error_or_interrupt {
 # Returns:
 #   - 0 when every one is found; otherwise it does not return: the script exits 69, EX_UNAVAILABLE.
 function require_command {
-    local name missing=()
+    local name missing_list=()
 
     for name in "$@"; do
-        hash "$name" 2>/dev/null || missing+=("$name")
+        hash "$name" 2>/dev/null || missing_list+=("$name")
     done
 
-    ((${#missing[@]} == 0)) || error $EX_UNAVAILABLE "requires ${missing[*]}: not found on PATH"
+    ((${#missing_list[@]} == 0)) || error $EX_UNAVAILABLE "requires ${missing_list[*]}: not found on PATH"
 }
 
 # require_darwin ends the script unless it runs on macOS.
@@ -313,7 +242,7 @@ function require_root {
 # Returns:
 #   - 0.
 function success {
-    printf '[%s] [\033[32m%s\033[0m] %s\n' "$script_name" "$Heavy_check_mark" "$*" >&2
+    printf '[%s] [\033[32m%s\033[0m] %s\n' "$script_name" "$HEAVY_CHECK_MARK" "$*" >&2
 }
 
 # usage shows the script's man page, or prints the synopsis it is given when there is none, and ends the script.
@@ -327,12 +256,12 @@ function success {
 # Returns:
 #   - it does not return: the script exits 0, or 2 when `$1` is missing or empty.
 function usage {
-    local _synopsis="${1:-}"
+    local synopsis_text="${1:-}"
 
     # Require a synopsis so callers can provide a fallback when man is unavailable
 
-    if [[ -z "$_synopsis" ]]; then
-        printf '[%s] \033[31m%s\033[0m usage() requires a synopsis argument.\n' "$script_name" "$Heavy_ballot" >&2
+    if [[ -z "$synopsis_text" ]]; then
+        printf '[%s] \033[31m%s\033[0m usage() requires a synopsis argument.\n' "$script_name" "$HEAVY_BALLOT" >&2
         exit 2
     fi
 
@@ -352,9 +281,17 @@ function usage {
 
     # Final fallback: print the synopsis provided by the caller
 
-    printf "%s\n" "$_synopsis"
+    printf "%s\n" "$synopsis_text"
     exit 0
 }
+
+# Set-Environment is the base layer's one, sourced from ${XDG_DATA_HOME:-$HOME/.local/share}/shell/functions, where a
+# prompt loads it too. A test of a checkout points XDG_DATA_HOME at the checkout's Home/common/.local/share (#294).
+set_environment_file="${XDG_DATA_HOME:-$HOME/.local/share}/shell/functions/Set-Environment"
+[[ -r $set_environment_file ]] || error $EX_OSFILE "requires Set-Environment, which is not at ${set_environment_file}"
+# shellcheck source=../share/shell/functions/Set-Environment
+source "$set_environment_file"
+unset set_environment_file
 
 ###########
 # Arguments

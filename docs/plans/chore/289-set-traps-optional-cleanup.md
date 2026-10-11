@@ -1,9 +1,9 @@
 ---
 title: "The helper's shellcheck notes are gone, and it stops when a tool it needs is missing"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/289
-status: active
+status: complete
 created: 2026-10-09
-updated: 2026-10-09
+updated: 2026-10-11
 ---
 
 # Plan: The helper's shellcheck notes and the tools it needs
@@ -139,8 +139,9 @@ David-Noble-at-work/personal#267 and stays open for lane 62, so plan 268 stays `
 
 ### Phase 6: Verification
 
-- [ ] `make check` clean on this Mac, and CI green on the pull request. This Mac: clean 2026-10-09, in phase 5's
-  commit run.
+- [x] `make check` clean on this Mac, and CI green on the pull request. This Mac: clean 2026-10-09, in phase 5's
+  commit run. CI, from NobleFactor/noblefactor-ops#293's record, read 2026-10-11: `quality-gate` passed in 27 s on
+  2026-10-10.
 - [x] Shellcheck at every severity, against this worktree's helper: nothing at personal's five calls as merged in
   David-Noble-at-work/personal#267, nothing in `tests/Test-DeclareBashScript`. Done 2026-10-09, after phases 3 and 4
   changed the helper and its test: `-x` with `-P` at this worktree's helper, clean on personal's five, the test and the
@@ -165,8 +166,10 @@ David-Noble-at-work/personal#267 and stays open for lane 62, so plan 268 stays `
 This box, and phase 6's CI box, close with the pull request itself, after this plan's last commit, so the plan stays
 active until they do (agent-rules rule 12). The next noblefactor-ops pull request, lane 66's (#291), ticks them.
 
-- [ ] The pull request, the merge, and `git close-branch`; lanes 63 and 65 marked on NobleFactor/devlore-cli#916, and
-  the plan rows of #289 and #290 pointed at `develop`.
+- [x] The pull request, the merge, and `git close-branch`; lanes 63 and 65 marked on NobleFactor/devlore-cli#916, and
+  the plan rows of #289 and #290 pointed at `develop`. From #293's record, read 2026-10-11 and ticked by #294's pull
+  request: merged 2026-10-10 as c942f54; its branch is gone from GitHub and its worktree from this Mac; lanes 63 and
+  65 read "merged as noblefactor-ops#293"; #289 and #290 are closed, their plan rows pointing at `develop`.
 
 ## Files
 
