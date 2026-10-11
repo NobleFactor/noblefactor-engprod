@@ -100,6 +100,20 @@ the third.
   ~/.local/share/shell/functions. This means updating bash/zsh rc files, and Declare-BashScript. Can we do that on the
   next PR?" Offered this pull request, before anything is deployed at the old path, with personal#269 taking the new
   path for the rc files (1), or the pull request after it (2): "go with 1. next question."
+- pushup and up, 2026-10-11: "we have two functions that are still installed to ~/.functions. they should be moved
+  such that they install to ~/.local/share/shell/functions"; "we should do that on the same PR"; "the up and pushup
+  functions are for interactive sessions only." Asked which pull request that is, the owner: "I don't get one. what
+  other same PR might i be talking about. I need the alternatives". Offered personal#269's, moving them within
+  personal with `git mv` beside the rc files that load them (1), or this one, adding them to the base layer (2):
+  "go with 1. next question." They are personal#269's, not this pull request's.
+- Testing, 2026-10-11. Shown that the plan checked nothing deployed before the pull request, and offered a deployed
+  check on this Mac and the two virtual machines (1), on this Mac only (2), or none (3): "I want local testing before
+  the pr and after the pr. I would like to setup a test user account on all VMs. The should be normal user accounts
+  without sudo or — on Windows—administrators group membership."
+- The virtual machines, 2026-10-11. Asked whether this pull request waits for those accounts, offered going ahead
+  with its local checks before and after it, the accounts their own issue and the virtual machines checked as them
+  from then on (1), or waiting for them (2): "1. Present Q2 and when that's settled, Q3". The accounts are #296, under
+  feature #295, lane 96 of NobleFactor/devlore-cli#916: "It goes to the end of your schedule."
 
 ## Goals
 
@@ -243,6 +257,16 @@ which is this one. They are ticked here, from NobleFactor/noblefactor-ops#293's 
   before. 2026-10-11, after the move: 123 files in personal's main clone and 129 in Start-Claude's worktree, none
   failing, Install-JetBrainsToolbox among them; shellcheck follows the helper into Set-Environment, reporting no
   SC1091.
+- [x] The local check before the pull request, ruled 2026-10-11, as plan 289's phase 6 ran it: by a script the owner
+  runs, the base clone, `~/Workspace/NobleFactor/noblefactor-ops`, checks out this branch and `writ deploy
+  --allow-dirty` deploys it; the helper's test and the `--help` of `git open-branch`, `git close-branch` and
+  `git reset-branch` run against the deployed helper, and `~/.local/share/shell/functions/Set-Environment` resolves
+  into the clone; then the clone goes back to `develop` and is deployed again. 2026-10-11 on this Mac, run on the
+  owner's grant: writ rebuilt to develop's 4d18e48c; 56f413d detached and 267 links deployed; the helper and
+  Set-Environment resolved into the clone; all 49 cases passed; with `XDG_DATA_HOME` unset, the deployed helper
+  exported `A="1"`; the three `--help` exited 0; the clone went back to `develop`, 266 links. The restore left
+  `~/.local/share/shell/functions/Set-Environment` dangling, the lifecycle behavior of NobleFactor/devlore-cli#971
+  (lane 17); it resolves again when this merges and the clone pulls `develop`.
 
 ### Phase 6: Plan 289 (Requirement 5)
 
@@ -251,11 +275,18 @@ which is this one. They are ticked here, from NobleFactor/noblefactor-ops#293's 
 
 ### Phase 7: Acceptance and closure
 
+These boxes, and phase 5's CI box, close with the pull request itself, after this plan's last commit, so the plan
+stays active until they do (agent-rules rule 12). The next noblefactor-ops pull request ticks them from this one's
+record.
+
 - [ ] The pull request, the merge and `git close-branch`; lanes 66 and 93 marked on NobleFactor/devlore-cli#916, #291
   and #294 closed, and their plan rows pointed at `develop`.
 - [ ] writ's deploy, run on this Mac once the merged helper is in the main clone and before any script sources it,
   so that `~/.local/share/shell/functions/Set-Environment` resolves: until then every script that sources the helper,
   `git open-branch` and `git close-branch` among them, stops (agent-rules rule 5).
+- [ ] The local check after the pull request, ruled 2026-10-11: phase 5's check run again against the deployed
+  `develop`, the helper's test and the three `git-*` commands' `--help`, with `Set-Environment` resolving into the
+  main clone.
 
 ## Files to Create/Modify
 
@@ -272,9 +303,9 @@ which is this one. They are ticked here, from NobleFactor/noblefactor-ops#293's 
 ## Out of Scope
 
 - A prompt's Set-Environment: personal's loaders (`.bashrc`, `.zshrc`, `.zprofile`, and Install-UnixUserConfiguration's
-  `zcompile`) look in `${XDG_DATA_HOME:-$HOME/.local/share}/shell/functions`, and personal's own copy is deleted. That
-  is David-Noble-at-work/personal#269, lane 95 of NobleFactor/devlore-cli#916, after this merges; until it lands, a
-  prompt keeps personal's copy.
+  `zcompile`) look in `${XDG_DATA_HOME:-$HOME/.local/share}/shell/functions`, personal's own copy is deleted, and
+  personal's `pushup` and `up` move there with `git mv`. That is David-Noble-at-work/personal#269, lane 95 of
+  NobleFactor/devlore-cli#916, after this merges; until it lands, a prompt keeps personal's copy.
 - The PowerShell Set-Environment in personal's `Home/common/.config/powershell/profile.ps1`: another language, and
   whether it should behave as this one does is to be raised on its own.
 - devlore-cli's copies of the helper's functions, which keep c942f54's names (requirement 1).
@@ -291,10 +322,4 @@ which is this one. They are ticked here, from NobleFactor/noblefactor-ops#293's 
 
 ## Open Questions
 
-1. **pushup and up.** The owner, 2026-10-11: "we have two functions that are still installed to ~/.functions. they
-   should be moved such that they install to ~/.local/share/shell/functions"; "we should do that on the same PR"; and
-   "the up and pushup functions are for interactive sessions only." They are personal's, `Home/common.Unix/.functions/`,
-   and this pull request changes only noblefactor-ops. (1) They join Set-Environment in this layer's
-   `Home/common/.local/share/shell/functions`, written to the house's rules and passing its gate, and personal#269
-   deletes personal's copies; or (2) they move within personal, to `Home/common.Unix/.local/share/shell/functions`, in
-   personal#269's pull request with the rc files that load them. Proposed: (1).
+None. The findings of 2026-10-11 are ruled; see Rulings.
