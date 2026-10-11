@@ -3,7 +3,7 @@ title: "Declare-BashScript's names follow the house's rules, and one Set-Environ
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/294
 status: active
 created: 2026-10-10
-updated: 2026-10-10
+updated: 2026-10-11
 ---
 
 # Plan: Declare-BashScript's names, and one Set-Environment
@@ -73,6 +73,29 @@ the third.
 - The plan, 2026-10-10, offered approving it, committed with phase 1 ticked (1), or changes first (2): "go with 1. next
   question". It was offered as "chartered", a status the frontmatter gate refuses; a reviewed plan's status is
   `approved` (development-process.md § Plans).
+- zsh in CI, 2026-10-11. Requirement 3 runs its cases in bash and in zsh, and CI's runner, `ubuntu-26.04`, lists no
+  zsh among its packages (actions/runner-images, `images/ubuntu/Ubuntu2604-Readme.md`, read 2026-10-11). Offered CI's
+  Tools step installing zsh beside shellcheck, with `.github/workflows/ci.yaml` in the files table (1), or the test
+  running its zsh cases only where zsh is on PATH, so CI tests bash alone (2): "go with 1. next question".
+- Where the helper finds Set-Environment, 2026-10-11. Asked whether the helper's exit 72, in its code since phase 3
+  and in neither requirement 2 nor the man page, should be stated with exactly where the helper looks in requirement
+  2 and the man page (1), in requirement 2 alone (2), or dropped with its check (3): "go with 1. next question." Then:
+  "I change my mind on the answer to Q 2 of 4. we use ${XDG_DATA_HOME:-~/.local/share}/functions to locate
+  Set-Environment." The code writes it `${XDG_DATA_HOME:-$HOME/.local/share}`: inside double quotes, bash and zsh
+  leave a `~` as written (measured 2026-10-11).
+- The refusal, 2026-10-11. Asked whether, with the new lookup, the helper still stops with 72 when Set-Environment is
+  not there, requirement 2 and the man page saying so with the new path (1), or drops its check, a missing file
+  ending the script with `source`'s own error and status 1 (2): "go with 1. next question."
+- Cases for the lookup, 2026-10-11. Offered three bash cases, none needing a temporary directory, for Set-Environment
+  found through `XDG_DATA_HOME`, found through `HOME` with `XDG_DATA_HOME` unset, and not found (1), or none (2): "go
+  with 1. next question."
+- Requirement 3's list, 2026-10-11. Shown that it leaves out three behaviors requirement 2 states, `--whitelist`
+  exporting only the names it lists, the `export NAME="value"` line on standard error, and nothing printed under
+  `SILENT`, and offered adding the three, in bash and in zsh (1), or keeping the list as written (2): "Yes".
+- Set-Environment's split, 2026-10-11. Shown that zsh feeds its here-string through a temporary file and that bash's
+  `read` drops a value's trailing `=`, and offered splitting each line with parameter expansion (1) or keeping the
+  here-string (2); asked what the here-string's loss would be and how the two differ, and answered: "make the change
+  to parameter expansion".
 
 ## Goals
 
@@ -122,31 +145,41 @@ writ's test data) keep the names of c942f54, which they say they copy.
 ### Requirement 2: Set-Environment (#291)
 
 One file in this base layer, `Home/common/.local/share/functions/Set-Environment`, which writ deploys to
-`~/.local/share/functions/`, XDG's data directory. Declare-BashScript sources it from `../share/functions` beside the
-directory its own file is in, links followed, which holds in a clone and once deployed, so every script that sources
-the helper has it. A prompt loads the same file.
+`~/.local/share/functions/`, XDG's data directory. Declare-BashScript sources it from
+`${XDG_DATA_HOME:-$HOME/.local/share}/functions`, where a prompt loads it too, so a script and a prompt run the one
+deployed file. A test of a checkout sets `XDG_DATA_HOME` to the checkout's `Home/common/.local/share`, so that it runs
+the file under review with nothing deployed. When the file is not there, the helper stops with 72, `EX_OSFILE`,
+naming the path it looked for.
 
 One implementation, the same for a script and for a prompt, in bash and in zsh. Every variable it assigns is `local`.
 With no argument it returns 0 and changes nothing. Without `--whitelist` it exports every assignment its files make,
 and with it only the names listed. It reads `$1` and its whitelist so that `nounset` never stops it. It reads a last
-line that has no newline, and takes `NAME=value` or `export NAME=value`. A line whose name the shell cannot take is
-skipped, and said so. A value in single quotes is kept as written; any other value, its double quotes removed, is
-expanded with `eval` as a double-quoted word, so `$NAME` and `$(command)` are replaced. Before `eval`, the value's
-backslashes and then its double quotes are escaped, so a quote or a backslash in it cannot end the word and run what
-follows, as the first proposal let it (anthropics/claude-code#101183). So a literal `$` needs single quotes around
-the value, and a command in a value quotes its arguments with single quotes: `$(date '+%Y')`. For each variable it
-exports, it prints `export NAME="value"`, the value as expanded, on standard error, at a prompt and in a script;
-redirecting standard error hides it, and its warnings with it. Like the helper's notes, it prints nothing when
-`SILENT` is set. Its documentation, in the form ruled on #267, and its entry in Declare-BashScript's man page say all
-of this.
+line that has no newline, and takes `NAME=value` or `export NAME=value`, split at its first `=` with parameter
+expansion, in memory and alike in bash and zsh, so a value keeps every `=` after that one. A line whose name the shell
+cannot take is skipped, and said so. A value in single quotes is kept as written; any other value, its double quotes
+removed, is expanded with `eval` as a double-quoted word, so `$NAME` and `$(command)` are replaced. Before `eval`, the
+value's backslashes and then its double quotes are escaped, so a quote or a backslash in it cannot end the word and
+run what follows, as the first proposal let it (anthropics/claude-code#101183). So a literal `$` needs single quotes
+around the value, and a command in a value quotes its arguments with single quotes: `$(date '+%Y')`. For each
+variable it exports, it prints `export NAME="value"`, the value as expanded, on standard error, at a prompt and in a
+script; redirecting standard error hides it, and its warnings with it. Like the helper's notes, it prints nothing
+when `SILENT` is set. Its documentation, in the form ruled on #267, and its entry in Declare-BashScript's man page say
+all of this.
 
 ### Requirement 3: the tests
 
 `tests/Test-DeclareBashScript` gains a case for each of #291's three: no argument, no `--whitelist`, and a caller's
 variables untouched after a call. And one for each behavior of requirement 2, in bash and in zsh: a last line with no
 newline; the `export` prefix; a name the shell cannot take; a value in single quotes; `$HOME` and `$(hostname)`
-expanded; `$(date '+%Y')`; and the values that must run nothing, `x; echo RAN`, `\"; echo RAN; \"`, and one ending
-in a backslash. Every case that passes today still passes.
+expanded; `$(date '+%Y')`; the values that must run nothing, `x; echo RAN`, `\"; echo RAN; \"`, and one ending in a
+backslash; values with `=` in them, `A=b=c` and `K=dGVzdDE=`, kept whole; `--whitelist` exporting only the names it
+lists; each export printed on standard error as
+`export NAME="value"`; and nothing printed when `SILENT` is set. And three in bash for the helper's lookup, none
+needing a temporary directory: Set-Environment found through `XDG_DATA_HOME`, set to the checkout's
+`Home/common/.local/share`; found through `HOME`, set to the checkout's `Home/common`, with `XDG_DATA_HOME` unset; and
+not found, with `XDG_DATA_HOME` set to a directory that has no `functions`, where the helper stops with 72 and names
+the path. Every case that passes today still passes. CI's Tools step installs zsh beside shellcheck, so the zsh cases
+run in CI as they do on a Mac.
 
 ### Requirement 4: the consumers
 
@@ -171,6 +204,8 @@ which is this one. They are ticked here, from NobleFactor/noblefactor-ops#293's 
 - [x] `missing_list`, `env_file`, `HEAVY_BALLOT`, `HEAVY_CHECK_MARK`, `status` and `synopsis_text`; `b`, `n`, `u` and
   `u_` removed. 2026-10-10: `make check` clean, and personal's whole shell gate passes against this branch's helper,
   Install-JetBrainsToolbox included: 123 files in its main clone, 129 in Start-Claude's worktree.
+- [x] The man page's entry for `b`, `n`, `u` and `u_`, which phase 2's commit left in place, removed
+  (anthropics/claude-code#101310). 2026-10-11: mandoc clean at warning level.
 
 ### Phase 3: Set-Environment (Requirement 2)
 
@@ -179,10 +214,19 @@ which is this one. They are ticked here, from NobleFactor/noblefactor-ops#293's 
   function file, and mandoc clean at warning level, the page's unparsable date and the entry's lost quotes fixed with
   it. A script sourcing the helper expanded `$HOME` and `$(hostname)`, kept `\"; echo RAN; \"` as written and ran
   nothing, left out a name `--whitelist` did not list, and printed nothing under `SILENT`.
+- [x] Set-Environment splits each line with parameter expansion, ruled 2026-10-11. 2026-10-11: phase 4's cases pass in
+  bash and in zsh, values ending in `=` among them.
+- [x] The helper sources Set-Environment from `${XDG_DATA_HOME:-$HOME/.local/share}/functions` and stops with 72 when
+  it is not there, both ruled 2026-10-11; its comment, Set-Environment's header and the man page's entry say so.
+  2026-10-11: shfmt, `bash -n` and shellcheck clean on the helper and Set-Environment, `zsh -n` on Set-Environment,
+  mandoc clean at warning level, and phase 4's three cases for the lookup pass.
 
 ### Phase 4: The tests (Requirement 3)
 
-- [ ] Requirement 3's cases in the helper's test, in bash and in zsh, and every case passing.
+- [x] Requirement 3's cases in the helper's test, in bash and in zsh, and every case passing. 2026-10-11, on this Mac
+  with bash 5.3.20 and zsh 5.9: all 49 cases pass, and pass again with `TMPDIR` and `TMPPREFIX` pointed at a missing
+  directory, so neither shell needed a temporary file; shfmt, `bash -n` and shellcheck clean on the test, and
+  `make check` clean. CI's run, with zsh installed, is phase 5's.
 
 ### Phase 5: Verification (Requirement 4)
 
@@ -198,6 +242,9 @@ which is this one. They are ticked here, from NobleFactor/noblefactor-ops#293's 
 
 - [ ] The pull request, the merge and `git close-branch`; lanes 66 and 93 marked on NobleFactor/devlore-cli#916, #291
   and #294 closed, and their plan rows pointed at `develop`.
+- [ ] writ's deploy, run on this Mac once the merged helper is in the main clone and before any script sources it,
+  so that `~/.local/share/functions/Set-Environment` resolves: until then every script that sources the helper,
+  `git open-branch` and `git close-branch` among them, stops (agent-rules rule 5).
 
 ## Files to Create/Modify
 
@@ -205,8 +252,9 @@ which is this one. They are ticked here, from NobleFactor/noblefactor-ops#293's 
 | --- | --- | --- |
 | `Home/common/.local/bin/Declare-BashScript` | Modify | Requirements 1 and 2: the names, and sourcing Set-Environment |
 | `Home/common/.local/share/functions/Set-Environment` | Create | Requirement 2 |
-| `Home/common/.local/share/man/man1/Declare-BashScript.1` | Modify | Requirement 2: Set-Environment's entry |
+| `Home/common/.local/share/man/man1/Declare-BashScript.1` | Modify | Requirements 1 and 2: two entries |
 | `tests/Test-DeclareBashScript` | Modify | Requirement 3 |
+| `.github/workflows/ci.yaml` | Modify | Requirement 3: zsh, for the zsh cases |
 | `docs/plans/chore/289-set-traps-optional-cleanup.md` | Modify | Requirement 5 |
 | `docs/plans/fix/294-helper-locals-function-names.md` | Create | This plan |
 
@@ -232,4 +280,4 @@ which is this one. They are ticked here, from NobleFactor/noblefactor-ops#293's 
 
 ## Open Questions
 
-None.
+None. The findings of 2026-10-11 are ruled; see Rulings.

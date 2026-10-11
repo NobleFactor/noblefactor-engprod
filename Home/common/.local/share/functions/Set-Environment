@@ -3,14 +3,14 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2025-2026 Noble Factor. All rights reserved.
 
-# Set-Environment - the one Set-Environment: Declare-BashScript sources this file, and a prompt, bash or zsh, loads it
-# from ~/.local/share/functions (#294).
+# Set-Environment - the one Set-Environment: Declare-BashScript sources this file, and a prompt, bash or zsh, loads it,
+# both from ${XDG_DATA_HOME:-$HOME/.local/share}/functions (#294).
 
 # Set-Environment exports the variables one or more .env files assign, and prints each one it exports.
 #
-# A file holds an assignment a line, `NAME=value` or `export NAME=value`. Blank lines and lines that begin with # are
-# skipped, and so, with a warning, is a line whose name the shell cannot take. With --whitelist, only the names listed
-# are exported.
+# A file holds an assignment a line, `NAME=value` or `export NAME=value`, split at its first `=`: a value keeps every
+# `=` after that one. Blank lines and lines that begin with # are skipped, and so, with a warning, is a line whose name
+# the shell cannot take. With --whitelist, only the names listed are exported.
 #
 # A value is expanded as the shell expands a word in double quotes: `$NAME` and `$(command)` are replaced, and nothing
 # else in it runs. A .env file is therefore code, to be loaded only where it could be sourced. A value in single
@@ -39,7 +39,9 @@ function Set-Environment {
             [[ -z $line || $line == \#* ]] && continue
 
             [[ $line != export[[:space:]]* ]] || line="${line#export}"
-            IFS='=' read -r name value <<<"$line"
+            name="${line%%=*}"
+            value=""
+            [[ $line != *=* ]] || value="${line#*=}"
             name="${name#"${name%%[![:space:]]*}"}"
             name="${name%"${name##*[![:space:]]}"}"
             value="${value#"${value%%[![:space:]]*}"}"

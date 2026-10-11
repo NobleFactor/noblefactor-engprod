@@ -1,45 +1,50 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2016 # Each case's program is for a child shell, so its $ must reach it unexpanded (#289, #294).
 
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2025 Noble Factor. All rights reserved.
 
-# Test-DeclareBashScript - Tests Declare-BashScript's traps, the bash and getopt it requires, and require_command
+# Test-DeclareBashScript - Tests Declare-BashScript's traps, the bash and getopt it requires, require_command, and the
+# Set-Environment it sources, in bash and in zsh
 
 [[ -r "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" ]] || {
     printf '%s: cannot find Declare-BashScript in %s\n' "${0##*/}" "$(dirname "$0")/../Home/common/.local/bin" >&2
     exit 72 # EX_OSFILE
 }
+
+# The helper sources Set-Environment from ${XDG_DATA_HOME:-$HOME/.local/share}/functions. This checkout's is the file
+# under review, so the test points XDG_DATA_HOME at it and needs nothing deployed (#294).
+XDG_DATA_HOME="$(cd "$(dirname "$0")/../Home/common/.local/share" && pwd)" || exit 72 # EX_OSFILE
+export XDG_DATA_HOME
+
 # shellcheck source=Declare-BashScript
 source "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" "$0" "help" "h" "$@"
 require_nix
+require_command zsh
 
 ###########
 # Functions
 ###########
 
-# run_case runs one program under the helper in a child bash and checks how it ends.
+# check_case prints one case as passed, or as failed with its child's output, and counts the failures.
 #
-# A case passes when the child exits with the status expected, the handler reports the number of times expected, every
-# pattern matches the child's output, and no line of that output reads "not reached".
+# A case passes when its child exited with the status expected, the handler reported the number of times expected,
+# every pattern matches the child's output, and no line of that output reads "not reached".
 #
 # Parameters:
-#   - `$1`: the case's name, which the child also takes as its script name.
+#   - `$1`: the case's name.
 #   - `$2`: the exit status the program must end with.
 #   - `$3`: how many times the handler must report: 0 or 1.
 #   - `$4`: extended regular expressions the program's output must match, one per line, or "" for none.
-#   - `$5`: the program, run after the helper is sourced.
-#   - `$6`: the bash to run it with; bash on PATH when omitted.
-#   - `$7`: commands the child runs before it sources the helper; none when omitted.
+#   - `$5`: the status the child exited with.
+#   - `$6`: the child's output, its standard error with its standard output.
 #
 # Returns:
 #   - 0, having printed the case as passed, or as failed with the child's output and counted it in `failures`.
-function run_case {
-    local name="$1" expected_status="$2" expected_reports="$3" patterns="$4" program="$5" shell="${6:-bash}"
-    local prelude="${7:-}" output pattern reports status=0 matched=true
+function check_case {
+    local name="$1" expected_status="$2" expected_reports="$3" patterns="$4" status="$5" output="$6" pattern reports
+    local matched=true
 
-    output="$("${shell}" -c "${prelude}
-source '${helper}' \"\$0\" '' ''
-${program}" "${name}" 2>&1)" || status=$?
     reports="$(grep --count --extended-regexp '\] (exited with status|interrupted by SIG)' <<<"${output}" || true)"
 
     while IFS= read -r pattern; do
@@ -55,6 +60,65 @@ ${program}" "${name}" 2>&1)" || status=$?
     error 0 "${name}: wanted status ${expected_status} and ${expected_reports} report, got ${status} and ${reports}:"
     printf '    %s\n' "${output//$'\n'/$'\n'    }" >&2
     failures=$((failures + 1))
+}
+
+# run_case runs one program under the helper in a child bash and checks how it ends, as check_case judges it.
+#
+# Parameters:
+#   - `$1`: the case's name, which the child also takes as its script name.
+#   - `$2`: the exit status the program must end with.
+#   - `$3`: how many times the handler must report: 0 or 1.
+#   - `$4`: extended regular expressions the program's output must match, one per line, or "" for none.
+#   - `$5`: the program, run after the helper is sourced.
+#   - `$6`: the bash to run it with; bash on PATH when omitted.
+#   - `$7`: commands the child runs before it sources the helper; none when omitted.
+#
+# Returns:
+#   - 0, having printed the case as passed, or as failed with the child's output and counted it in `failures`.
+function run_case {
+    local name="$1" expected_status="$2" expected_reports="$3" patterns="$4" program="$5" shell="${6:-bash}"
+    local prelude="${7:-}" output status=0
+
+    output="$("${shell}" -c "${prelude}
+source '${helper}' \"\$0\" '' ''
+${program}" "${name}" 2>&1)" || status=$?
+    check_case "${name}" "${expected_status}" "${expected_reports}" "${patterns}" "${status}" "${output}"
+}
+
+# run_set_environment_case runs one Set-Environment case twice: in bash through the helper, as a script does, and in
+# zsh from Set-Environment's own file, as a prompt does.
+#
+# Parameters:
+#   - `$1`: what the case tries, which names both runs.
+#   - `$2`: extended regular expressions each run's output must match, one per line, or "" for none.
+#   - `$3`: the program, which bash and zsh must each run to a status of 0.
+#
+# Returns:
+#   - 0, having printed both runs and counted any that failed in `failures`.
+function run_set_environment_case {
+    run_case "Set-Environment: $1, in bash" 0 0 "$2" "$3"
+    run_zsh_case "Set-Environment: $1, in zsh" 0 "$2" "$3"
+}
+
+# run_zsh_case runs one program in a child zsh that has loaded Set-Environment, as a prompt does, and checks how it
+# ends, as check_case judges it.
+#
+# The child reads none of the user's startup files, so a case sees only what it sets.
+#
+# Parameters:
+#   - `$1`: the case's name.
+#   - `$2`: the exit status the program must end with.
+#   - `$3`: extended regular expressions the program's output must match, one per line, or "" for none.
+#   - `$4`: the program, run after Set-Environment is loaded.
+#
+# Returns:
+#   - 0, having printed the case as passed, or as failed with the child's output and counted it in `failures`.
+function run_zsh_case {
+    local name="$1" expected_status="$2" patterns="$3" program="$4" output status=0
+
+    output="$(zsh -f -c "source '${set_environment}'
+${program}" "${name}" 2>&1)" || status=$?
+    check_case "${name}" "${expected_status}" 0 "${patterns}" "${status}" "${output}"
 }
 
 Set-Traps
@@ -85,8 +149,11 @@ done
 # Main
 ######
 
-helper="$(cd "$(dirname "$0")/../Home/common/.local/bin" && pwd)/Declare-BashScript"
+checkout_home="$(cd "$(dirname "$0")/../Home/common" && pwd)"
 failures=0
+helper="$(cd "$(dirname "$0")/../Home/common/.local/bin" && pwd)/Declare-BashScript"
+set_environment="${XDG_DATA_HOME}/functions/Set-Environment"
+tests_directory="$(cd "$(dirname "$0")" && pwd)"
 
 # A cleanup that says it ran and with what status, for the cases that check the EXIT trap.
 cleanup='function cleanup { echo "cleanup ran, status $?"; }
@@ -105,13 +172,11 @@ f() {
 }
 f'
 
-# shellcheck disable=SC2016 # The program is for the child bash, so its $ must reach it unexpanded (#289).
 run_case "a failing command substitution" 1 1 'x="\$\(false\)"$' '
 Set-Traps
 x="$(false)"
 echo not reached'
 
-# shellcheck disable=SC2016 # The program is for the child bash, so its $ must reach it unexpanded (#289).
 run_case "a failure before the last command of a substitution" 1 1 '' '
 Set-Traps
 x="$(false; echo hi)"
@@ -172,6 +237,91 @@ echo not reached'
 run_case "require_command with every tool found" 0 0 'carried on' '
 require_command bash getopt
 echo carried on'
+
+# The helper sources Set-Environment from ${XDG_DATA_HOME:-$HOME/.local/share}/functions (#294). HOME first points
+# where there is none, so only XDG_DATA_HOME can supply it; then XDG_DATA_HOME is unset, so only HOME can.
+run_case "Set-Environment: found through XDG_DATA_HOME" 0 0 'found' \
+    '[[ "$(type -t Set-Environment)" == function ]] && echo found' bash "HOME='${tests_directory}'"
+
+run_case "Set-Environment: found through HOME, with XDG_DATA_HOME unset" 0 0 'found' \
+    '[[ "$(type -t Set-Environment)" == function ]] && echo found' bash \
+    "unset XDG_DATA_HOME; HOME='${checkout_home}'"
+
+run_case "Set-Environment: not found, which stops the helper with 72" 72 0 \
+    'requires Set-Environment, which is not at .*/tests/functions/Set-Environment$' 'echo not reached' bash \
+    "XDG_DATA_HOME='${tests_directory}'"
+
+# #291's three, under the helper's errexit and nounset: no argument, no --whitelist, and a caller's variables of the
+# names Set-Environment uses.
+run_case "Set-Environment: no argument, which changes nothing" 0 0 'unchanged' '
+before="$(export -p)"
+Set-Environment
+[[ "$(export -p)" == "$before" ]] && echo unchanged'
+
+run_case "Set-Environment: no --whitelist" 0 0 '^A=\[1\] B=\[2\]$' '
+Set-Environment <(printf "%s\n" A=1 B=2) 2>/dev/null
+printf "A=[%s] B=[%s]\n" "$A" "$B"'
+
+run_case "Set-Environment: its caller's variables, left alone" 0 0 '^e l n v w$' '
+env_file=e line=l name=n value=v whitelist=w
+Set-Environment --whitelist A <(printf "%s\n" A=1 B=2) 2>/dev/null
+printf "%s\n" "$env_file $line $name $value $whitelist"'
+
+# Requirement 2's behaviors, in bash and in zsh (#294). A program prints the values it gets in brackets, so a space
+# that should not be there shows.
+run_set_environment_case "a last line with no newline" '^A=\[1\]$' '
+Set-Environment <(printf "A=1") 2>/dev/null
+printf "A=[%s]\n" "$A"'
+
+run_set_environment_case "the export prefix" '^A=\[1\]$' '
+Set-Environment <(printf "%s\n" "export A=1") 2>/dev/null
+printf "A=[%s]\n" "$A"'
+
+run_set_environment_case "a name the shell cannot take" 'no variable name in .*: 1A=1$
+no variable name in .*: B-C=2$
+^A=\[3\]$' '
+Set-Environment <(printf "%s\n" 1A=1 B-C=2 A=3)
+printf "A=[%s]\n" "$A"'
+
+run_set_environment_case "a value in single quotes, taken as written" '^A=\[\$HOME \$\(echo not reached\)\]$' '
+Set-Environment <(printf "A=\047\$HOME \$(echo not reached)\047\n") 2>/dev/null
+printf "A=[%s]\n" "$A"'
+
+run_set_environment_case "\$HOME and \$(hostname), expanded" 'expanded' '
+Set-Environment <(printf "%s\n" "A=\$HOME" "B=\$(hostname)") 2>/dev/null
+[[ $A == "$HOME" && $B == "$(hostname)" ]] && echo expanded'
+
+run_set_environment_case "\$(date '+%Y'), expanded" 'year' '
+Set-Environment <(printf "A=\$(date \047+%%Y\047)\n") 2>/dev/null
+[[ $A == "$(date +%Y)" ]] && echo year'
+
+run_set_environment_case "a value with a ; in it, which runs nothing" '^A=\[x; echo not reached\]$' '
+Set-Environment <(printf "%s\n" "A=x; echo not reached") 2>/dev/null
+printf "A=[%s]\n" "$A"'
+
+run_set_environment_case "a value with \\\" in it, which runs nothing" '^A=\[\\"; echo not reached; \\"\]$' '
+Set-Environment <(printf "%s\n" "A=\\\"; echo not reached; \\\"") 2>/dev/null
+printf "A=[%s]\n" "$A"'
+
+run_set_environment_case "a value ending in a backslash" '^A=\[x\\\]$' '
+Set-Environment <(printf "%s\n" "A=x\\") 2>/dev/null
+printf "A=[%s]\n" "$A"'
+
+run_set_environment_case "values with = in them, kept whole" '^A=\[b=c\] K=\[dGVzdDE=\]$' '
+Set-Environment <(printf "%s\n" A=b=c K=dGVzdDE=) 2>/dev/null
+printf "A=[%s] K=[%s]\n" "$A" "$K"'
+
+run_set_environment_case "--whitelist, which exports only the names it lists" '^A=\[1\] B=\[unset\] C=\[3\]$' '
+Set-Environment --whitelist "A C" <(printf "%s\n" A=1 B=2 C=3) 2>/dev/null
+printf "A=[%s] B=[%s] C=[%s]\n" "$A" "${B-unset}" "$C"'
+
+run_set_environment_case "each export, printed on standard error" '^printed=\[export A="1"\]$' '
+printed="$(Set-Environment <(printf "%s\n" A=1) 2>&1 >/dev/null)"
+printf "printed=[%s]\n" "$printed"'
+
+run_set_environment_case "SILENT, under which nothing is printed" '^printed=\[\]$' '
+printed="$(SILENT=1 Set-Environment <(printf "%s\n" A=1) 2>&1)"
+printf "printed=[%s]\n" "$printed"'
 
 # An older bash is refused before the helper does anything else. A machine whose /bin/bash is current has none to try.
 if /bin/bash -c '((BASH_VERSINFO[0] < 5 || (BASH_VERSINFO[0] == 5 && BASH_VERSINFO[1] < 3)))' 2>/dev/null; then

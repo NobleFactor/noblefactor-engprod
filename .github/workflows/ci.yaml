@@ -39,7 +39,8 @@ jobs:
       # Each tool is pinned: a gate whose tool changes under CI fails on someone else's commit. shfmt
       # and buildifier are pinned to a release and its digest; upstream publishes no checksum file for
       # shfmt, so its digest was computed from the release asset on 2026-09-06. codespell is pinned to
-      # a version through pipx. shellcheck comes from apt, as personal takes it.
+      # a version through pipx. shellcheck comes from apt, as personal takes it, and so does zsh, for
+      # the zsh cases of Declare-BashScript's test (#294).
       - name: Tools
         env:
           SHFMT_VERSION: v3.14.0
@@ -50,7 +51,7 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update -y
-          sudo apt-get install -y shellcheck findutils
+          sudo apt-get install -y findutils shellcheck zsh
           curl -sSfL -o shfmt \
             "https://github.com/mvdan/sh/releases/download/${SHFMT_VERSION}/shfmt_${SHFMT_VERSION}_linux_amd64"
           echo "${SHFMT_SHA256}  shfmt" | sha256sum --check --strict

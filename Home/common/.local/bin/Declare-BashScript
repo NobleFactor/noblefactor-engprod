@@ -285,9 +285,9 @@ function usage {
     exit 0
 }
 
-# Set-Environment is the base layer's one, which a prompt loads too: share/functions beside the directory this file is
-# in, its links followed, so a clone and a deployment both find it (#294).
-set_environment_file="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)/../share/functions/Set-Environment"
+# Set-Environment is the base layer's one, sourced from ${XDG_DATA_HOME:-$HOME/.local/share}/functions, where a prompt
+# loads it too. A test of a checkout points XDG_DATA_HOME at the checkout's Home/common/.local/share (#294).
+set_environment_file="${XDG_DATA_HOME:-$HOME/.local/share}/functions/Set-Environment"
 [[ -r $set_environment_file ]] || error $EX_OSFILE "requires Set-Environment, which is not at ${set_environment_file}"
 # shellcheck source=../share/functions/Set-Environment
 source "$set_environment_file"
