@@ -1,7 +1,7 @@
 ---
 title: "git close-branch syncs the main worktree, says so, and fails when it cannot"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/306
-status: draft
+status: approved
 created: 2026-10-15
 updated: 2026-10-15
 ---
@@ -83,8 +83,9 @@ A sync fails in three ways, and each is an `error 0` naming the reason and the f
 3. git refuses the fast-forward: the local target has commits `origin/<target>` lacks, or uncommitted changes touch
    files the fast-forward changes.
 
-Branches already closed stay closed and are reported, as today. The run then exits with the sync's own status
-(question 1); when a branch also failed, it exits 65, having reported both (proposed).
+Branches already closed stay closed and are reported, as today. The run then exits 75, the sync's own status
+(question 1); when a branch also failed, it exits 65, having reported both (proposed). A fetch of origin that fails,
+which stops the run before anything is touched, exits 69 rather than today's 75 (question 1).
 
 ### Requirement 3: `--dry-run` previews the sync
 
@@ -103,8 +104,8 @@ worktree.
 
 NAME and DESCRIPTION name both things. Step 3 keeps the switch before the close, without "left as found"; a new step
 says how the sync is made, what it prints and how it fails. `--dry-run` says it previews the sync, FAILURE HANDLING
-counts a failed sync, and EXIT STATUS gives the sync its status and a failed fetch its own line (question 1). SYNOPSIS
-gains `-f`, which the command takes. The date is October 2026.
+counts a failed sync, and EXIT STATUS gives 75 to a sync that cannot happen and 69 to a fetch of origin that fails,
+beside `--merged`'s missing `gh` (question 1). SYNOPSIS gains `-f`, which the command takes. The date is October 2026.
 
 ### Requirement 6: the PR script template
 
@@ -129,7 +130,9 @@ that answers MERGED and 1. The cases:
 | On the target, with a commit origin lacks | The branch closed, the sync's failure with its reason and status |
 | Each of the above, with `--dry-run` | The preview says what the run would do, and nothing changes |
 
-How the cases' repositories are made and removed is question 2.
+The cases' repositories are made in one `mktemp -d` directory per run, which the test's own cleanup removes, wherever
+it runs (question 2). The cleanup is set with the helper's `Set-Traps`, so it runs however the run ends: every case
+passed, a case failed, an error stopped the test, or a signal did.
 
 ### Requirement 8: every host the command runs on
 
@@ -142,12 +145,14 @@ snapshotted (ruled 2026-10-05).
 
 ### Phase 1: The plan
 
-- [ ] This plan, committed on the branch and reviewed with the owner, and its open questions ruled.
+- [x] This plan, committed on the branch and reviewed with the owner, and its open questions ruled. Committed as a
+  draft in 0fb5480d; approved 2026-10-15: "The plan is settled. go"
 
 ### Phase 2: The tests
 
 - [ ] `tests/Test-GitCloseBranch` with every case of requirement 7, run first against today's command: the sync's
-  cases fail where today's command is silent or exits 0, and the rest pass.
+  cases fail where today's command is silent or exits 0, and the rest pass. Committed with phase 3, since
+  `make check` runs every test, so a test today's command fails cannot be committed alone.
 
 ### Phase 3: The command
 
@@ -186,9 +191,11 @@ snapshotted (ruled 2026-10-05).
 
 ## Open Questions
 
-1. **The sync's exit status (proposed).** Offered: 75, which git-close-branch(1) already describes as "the target
-   branch could not be pulled", with a failed fetch of origin moving from 75 to 69, beside `--merged`'s missing `gh`
-   (1, recommended); 75 for both, the message telling them apart (2); or a status no other failure uses (3).
-2. **The tests' repositories (proposed).** Made in one `mktemp -d` directory per run, which the test's own cleanup
-   removes whenever the test runs, the agent's runs included (1, recommended); or left in place and printed, for the
-   owner's scripts to remove (2).
+1. **The sync's exit status. Ruled 2026-10-15, offered 75, which git-close-branch(1) already describes as "the
+   target branch could not be pulled", with a failed fetch of origin moving from 75 to 69, beside `--merged`'s
+   missing `gh` (1), or the fetch left at 75 and the sync given a status nothing else uses (2): "Yes, 75 for the
+   sync, 69 for the fetch."** Requirements 2 and 5 carry it.
+2. **How the tests' repositories are removed. Ruled 2026-10-15, offered one `mktemp -d` directory per run, which the
+   test's own cleanup removes whenever the test runs, the agent's runs included (1), or the directories left in place
+   and printed, for the owner's scripts to remove (2): "The test removes them itself." Then: "One might set a trap to
+   ensure they go away no matter what."** Requirement 7 carries both: the cleanup is set with `Set-Traps`.
