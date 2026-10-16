@@ -1,9 +1,9 @@
 ---
 title: "git close-branch syncs the main worktree, says so, and fails when it cannot"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/306
-status: approved
+status: active
 created: 2026-10-15
-updated: 2026-10-15
+updated: 2026-10-16
 ---
 
 # Plan: git close-branch syncs the main worktree, and says so
@@ -150,18 +150,35 @@ snapshotted (ruled 2026-10-05).
 
 ### Phase 2: The tests
 
-- [ ] `tests/Test-GitCloseBranch` with every case of requirement 7, run first against today's command: the sync's
+- [x] `tests/Test-GitCloseBranch` with every case of requirement 7, run first against today's command: the sync's
   cases fail where today's command is silent or exits 0, and the rest pass. Committed with phase 3, since
   `make check` runs every test, so a test today's command fails cannot be committed alone.
 
+  Run 2026-10-16 on this Mac against 9e0246ce's command, after the owner reviewed the test: "Run the test". All 12
+  cases failed, each at its sync and nowhere else: no line printed for a sync that worked, 0 where 75 was wanted,
+  and a preview that leaves the main worktree alone. Every check of the branch's close passed, and the trap removed
+  the run's directory. The test runs from the clone, naming the branch, as the Windows PR script runs the command,
+  since Windows will not delete a directory that is a process's current directory.
+
 ### Phase 3: The command
 
-- [ ] Requirements 1 to 4 in `git-close-branch`; the tests pass; shfmt with the gate's flags, `bash -n`, shellcheck
+- [x] Requirements 1 to 4 in `git-close-branch`; the tests pass; shfmt with the gate's flags, `bash -n`, shellcheck
   and `make check` are clean.
+
+  Run 2026-10-16 on this Mac, after the owner reviewed the change: "Please run the test script". All 12 cases
+  passed, and the trap removed the run's directory. shfmt with the gate's flags, `bash -n` and shellcheck at every
+  severity are clean, and `make check` runs in this commit's script. Nine lines over 120 columns, six of them older
+  than this change, are wrapped with the same output.
 
 ### Phase 4: The documents
 
-- [ ] Requirements 5 and 6.
+- [x] Requirements 5 and 6.
+
+  git-close-branch(1): its NAME, SYNOPSIS with `-f`, DESCRIPTION, step 3 and a new step 7, `-t`, `--dry-run`, FAILURE
+  HANDLING, EXIT STATUS's 0, 69 and 75, the `-t` example, and its date, now in the ISO form mandoc parses; mandoc is
+  clean at warning level. `docs/guides/pr-script-template.md`: its bash comment, rules 6, 8 and 12, Windows rule 4
+  and `updated:`, and its description, shortened to fit 120 columns (the agent's call). Nothing in it, the man page,
+  the command, development-process.md or agent-rules.md still says the main clone is left alone, or cites #209.
 
 ### Phase 5: Every host
 

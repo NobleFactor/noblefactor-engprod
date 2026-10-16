@@ -1,11 +1,11 @@
 ---
 title: PR Script Template
-description: Standard PR script structure, bash on Unix and PowerShell on Windows, for Claude Code to create, verify, merge, and clean up pull requests
+description: The PR script Claude Code writes, in bash on Unix and PowerShell on Windows, from staging to cleanup
 type: Process
 audience: Engineers, Claude Code
 status: Approved
 created: 2026-03-16
-updated: 2026-10-03
+updated: 2026-10-16
 ---
 
 # PR Script Template
@@ -206,9 +206,9 @@ git close-branch
 # first step back to the main clone, or it runs from a deleted directory and exits 128.
 cd ~/Workspace/NobleFactor/<repo>
 
-# Pull after the merge: git close-branch switches and pulls the main worktree only when that worktree
-# holds the branch being closed (#209). A branch from git open-branch lives in a linked worktree, so
-# the main clone -- the layer writ deploys from -- is left behind without this.
+# Pull after the merge, to confirm: git close-branch syncs the main clone -- the layer writ deploys from -- to
+# the target itself, and exits 75 when it cannot (#306), so this pull finds it current. Never fetch into the
+# target branch here: the main clone has it checked out, and git refuses.
 git pull --ff-only origin <target>
 git log --oneline -1
 
@@ -249,13 +249,14 @@ git status --short
 6. **`git close-branch` for cleanup.** Handles both worktree and regular-branch scenarios.
    It also **removes the worktree the script is standing in**, so nothing after it may assume `cwd`
    survives: `cd` to the main clone first. Observed as a spurious exit 128 after a successful merge
-   on devlore-cli#811.
+   on devlore-cli#811. Then it **syncs the main clone** to the target branch, whatever it had checked out,
+   prints what it had and the commit it is at now, and exits 75 when the sync cannot happen (#306).
 7. **One PR at a time.** Merge and clean up before starting the next branch.
 8. **Always `--squash`, never `--delete-branch`.** The merge command carries `--squash` and no other
    deletion flag. `--delete-branch` deletes the local branch first, which fails when a linked
    worktree holds it, and under `set -e` that aborts the script after the merge and before cleanup.
    `git close-branch` deletes in the order that survives a failure: remote, then worktree, then local.
-   It does not pull the main clone (rule 12).
+   Then it syncs the main clone itself (rules 6 and 12).
 9. **The epic report ends a pull request when one is asked for.** Table form, all states, scoped to the
    epic, feature or thread the pull request served, printed last, after cleanup, so the reader sees the
    state the merge produced. Not automatic: ruled 2026-09-12 in `development-process.md`, which retired
@@ -275,11 +276,10 @@ git status --short
     never into the pull request as fact.
 
 12. **Pull before and after the merge.** Ruled 2026-09-24. Before the push, the branch takes the target by
-    a merge commit (`git pull --no-rebase`), so what CI passes is what merges. After `git close-branch`, the
-    main clone takes the squash commit (`git pull --ff-only`), because `git close-branch` switches and pulls
-    a main worktree only when that worktree holds the branch being closed (#209), and a branch from
-    `git open-branch` never is: it lives in a linked worktree. Every script written on 2026-09-24 had to add
-    both by hand; the template owes them.
+    a merge commit (`git pull --no-rebase`), so what CI passes is what merges. After the merge, `git
+    close-branch` syncs the main clone to the target, the squash commit with it, and exits 75 when it cannot
+    (#306); the script's `git pull --ff-only` then confirms it, finding the clone current. Every script
+    written on 2026-09-24 had to add both pulls by hand; the template owes them.
 
 ---
 
@@ -298,8 +298,8 @@ template does, in the same order. The rules above hold; these are the ones Power
    body=@<file>`, as every Windows PR script has done. PowerShell has no `printf ... | --body-file -` idiom worth
    copying, and a file keeps the body byte-for-byte.
 4. **Clean-up runs from the main clone.** `Set-Location` to it before `git close-branch`, because Windows won't
-   delete a directory that is a process's current directory. Then `git pull --ff-only`: `git close-branch` does
-   not fast-forward a main worktree that did not hold the branch (rule 12).
+   delete a directory that is a process's current directory. Then `git pull --ff-only`, which confirms the sync
+   `git close-branch` made of the main clone (rule 12).
 5. **No PATH changes.** The script runs from a pwsh whose `git` is `Git\cmd\git.exe`, Git for Windows' launcher, which
    gives git's children the `sh` and `bash` they need without putting them on PATH. From a pwsh started by Git Bash,
    `git` resolves to the raw `Git\clangarm64\bin\git.exe`, and an HTTPS push, a credential helper or `git

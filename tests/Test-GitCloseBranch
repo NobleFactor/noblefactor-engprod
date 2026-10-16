@@ -1,0 +1,277 @@
+#!/usr/bin/env bash
+
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Noble Factor. All rights reserved.
+
+# Test-GitCloseBranch - Tests git-close-branch's two jobs, closing a merged branch and syncing the main worktree to the
+# target branch: the line the sync prints, the three ways it can fail, and what --dry-run says of it (#306)
+
+[[ -r "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" ]] || {
+    printf '%s: cannot find Declare-BashScript in %s\n' "${0##*/}" "$(dirname "$0")/../Home/common/.local/bin" >&2
+    exit 72 # EX_OSFILE
+}
+
+# The helper sources Set-Environment from ${XDG_DATA_HOME:-$HOME/.local/share}/shell/functions. This checkout's is the
+# file under review, so the test points XDG_DATA_HOME at it, for itself and for every git-close-branch it runs.
+XDG_DATA_HOME="$(cd "$(dirname "$0")/../Home/common/.local/share" && pwd)" || exit 72 # EX_OSFILE
+export XDG_DATA_HOME
+
+# shellcheck source=Declare-BashScript
+source "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" "$0" "help" "h" "$@"
+require_command git mktemp
+
+# Every case's repositories are git's alone: no global or system configuration reaches them, so no hook, signing key,
+# line-ending rule or identity of whoever runs the test does either.
+export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
+export GIT_AUTHOR_NAME=Test GIT_AUTHOR_EMAIL=test@example.invalid
+export GIT_COMMITTER_NAME=Test GIT_COMMITTER_EMAIL=test@example.invalid
+
+###########
+# Functions
+###########
+
+# cleanup removes the run's directory, which holds every case's repositories, however the run ends.
+#
+# Set as the EXIT trap through Set-Traps, so it runs when every case passed, when one failed, and when an error or a
+# signal stopped the run (#306, question 2).
+#
+# Returns:
+#   - 0, the run's directory gone.
+function cleanup {
+    if [[ -n "${run_directory:-}" && -d "${run_directory}" ]]; then
+        rm -rf -- "${run_directory}"
+    fi
+}
+
+# make_repositories lays out one case's repositories as a merged pull request leaves them.
+#
+# A bare origin whose main carries the squash commit GitHub makes, its subject ending in "(#1)"; a clone of it whose
+# main is one commit behind, since it was made before the merge; and the merged branch, feature/x, pushed, with a
+# commit of its own, in a linked worktree.
+#
+# Parameters:
+#   - `$1`: the case's directory, which must not exist yet.
+#
+# Returns:
+#   - 0, with origin.git, clone and worktree under `$1`.
+function make_repositories {
+    local origin="$1/origin.git" seed="$1/seed" clone="$1/clone" worktree="$1/worktree"
+
+    mkdir -p -- "$1"
+    git init --quiet --bare --initial-branch=main "${origin}"
+    git init --quiet --initial-branch=main "${seed}"
+    git -C "${seed}" commit --quiet --allow-empty --message="Begin"
+    printf 'a\n' >"${seed}/a.txt"
+    git -C "${seed}" add a.txt
+    git -C "${seed}" commit --quiet --message="Add a"
+    git -C "${seed}" push --quiet "${origin}" main
+
+    git clone --quiet "${origin}" "${clone}"
+    git -C "${clone}" worktree add --quiet -b feature/x "${worktree}"
+    printf 'x\n' >"${worktree}/x.txt"
+    git -C "${worktree}" add x.txt
+    git -C "${worktree}" commit --quiet --message="Add x"
+    git -C "${worktree}" push --quiet --set-upstream origin feature/x
+
+    printf 'x\n' >"${seed}/x.txt"
+    git -C "${seed}" add x.txt
+    git -C "${seed}" commit --quiet --message="Add x (#1)"
+    git -C "${seed}" push --quiet "${origin}" main
+}
+
+# set_up puts one case's main worktree in the state the case names.
+#
+# Parameters:
+#   - `$1`: the state: on-main, as the clone left it, one commit behind origin; on-another-branch; detached;
+#     detached-with-changes, a tracked file changed; in-the-way, detached where a.txt is not tracked, with an untracked
+#     a.txt that checking out main would overwrite; or diverged, on main with a commit origin lacks.
+#   - `$2`: the clone, whose own directory is the main worktree.
+#
+# Returns:
+#   - 0, the main worktree in that state.
+function set_up {
+    local state="$1" clone="$2"
+
+    case ${state} in
+        on-main) ;;
+        on-another-branch)
+            git -C "${clone}" switch --quiet --create other
+            ;;
+        detached)
+            git -C "${clone}" switch --quiet --detach
+            ;;
+        detached-with-changes)
+            git -C "${clone}" switch --quiet --detach
+            printf 'changed\n' >>"${clone}/a.txt"
+            ;;
+        in-the-way)
+            git -C "${clone}" switch --quiet --detach HEAD~1
+            printf 'in the way\n' >"${clone}/a.txt"
+            ;;
+        diverged)
+            git -C "${clone}" commit --quiet --allow-empty --message="Only here"
+            ;;
+        *)
+            error $EX_SOFTWARE "set_up knows no state '${state}'."
+            ;;
+    esac
+}
+
+# main_state prints what the main worktree has checked out, a branch or "detached", and its commit.
+#
+# Parameters:
+#   - `$1`: the clone.
+#
+# Returns:
+#   - stdout: `<branch or detached> <commit>`.
+function main_state {
+    local branch
+
+    branch="$(git -C "$1" symbolic-ref --quiet --short HEAD || echo detached)"
+    printf '%s %s\n' "${branch}" "$(git -C "$1" rev-parse HEAD)"
+}
+
+# traces prints which of the merged branch's three traces remain: its local branch, its branch on origin, its worktree.
+#
+# Parameters:
+#   - `$1`: the clone.
+#   - `$2`: the bare origin.
+#   - `$3`: the linked worktree's path.
+#
+# Returns:
+#   - stdout: "local remote worktree" when all three remain, nothing when none does, or the ones that do.
+function traces {
+    local left=""
+
+    if git -C "$1" rev-parse --verify --quiet refs/heads/feature/x >/dev/null; then left+="local "; fi
+    if git -C "$2" rev-parse --verify --quiet refs/heads/feature/x >/dev/null; then left+="remote "; fi
+    if [[ -e "$3" ]]; then left+="worktree "; fi
+
+    printf '%s' "${left% }"
+}
+
+# run_case runs git-close-branch in one case's main worktree, naming the merged branch, then checks its status, its
+# output, the branch's traces and the main worktree.
+#
+# From the main worktree, as the Windows PR script runs it, rather than from the linked worktree the run removes:
+# Windows will not delete a directory that is a process's current directory.
+#
+# Parameters:
+#   - `$1`: the case's name.
+#   - `$2`: the main worktree's state, as set_up names it.
+#   - `$3`: the exit status the run must end with.
+#   - `$4`: extended regular expressions the run's output must match, one per line.
+#   - `$5`: "synced" when the main worktree must end on main at origin's main, "unchanged" when as it was.
+#   - `$6`: "closed" when no trace of the branch may remain, "kept" when all three must.
+#   - `$@` after them: options for git-close-branch.
+#
+# Returns:
+#   - 0, having printed the case as passed, or as failed with the run's output and counted it in `failures`.
+function run_case {
+    local name="$1" state="$2" expected_status="$3" patterns="$4" expected_main="$5" expected_branch="$6"
+    shift 6
+    case_count=$((case_count + 1))
+    local directory="${run_directory}/${case_count}"
+    local clone="${directory}/clone" origin="${directory}/origin.git" worktree="${directory}/worktree"
+    local output status=0 before after origin_main left pattern problem=""
+
+    make_repositories "${directory}"
+    set_up "${state}" "${clone}"
+    before="$(main_state "${clone}")"
+
+    output="$(cd "${clone}" && PATH="${run_directory}/bin:${PATH}" "${close_branch}" "$@" feature/x 2>&1)" || status=$?
+
+    if ((status != expected_status)); then
+        problem+="its status was ${status}, not ${expected_status}; "
+    fi
+
+    while IFS= read -r pattern; do
+        if [[ -n "${pattern}" ]] && ! grep --quiet --extended-regexp --regexp="${pattern}" <<<"${output}"; then
+            problem+="no line matches '${pattern}'; "
+        fi
+    done <<<"${patterns}"
+
+    after="$(main_state "${clone}")"
+    origin_main="$(git -C "${clone}" rev-parse refs/remotes/origin/main)"
+
+    if [[ "${expected_main}" == synced && "${after}" != "main ${origin_main}" ]]; then
+        problem+="the main worktree is at '${after}', not synced to origin's main; "
+    elif [[ "${expected_main}" == unchanged && "${after}" != "${before}" ]]; then
+        problem+="the main worktree moved from '${before}' to '${after}'; "
+    fi
+
+    left="$(traces "${clone}" "${origin}" "${worktree}")"
+
+    if [[ "${expected_branch}" == closed && -n "${left}" ]]; then
+        problem+="the branch's traces remain: ${left}; "
+    elif [[ "${expected_branch}" == kept && "${left}" != "local remote worktree" ]]; then
+        problem+="the branch's traces were touched, leaving '${left}'; "
+    fi
+
+    if [[ -z "${problem}" ]]; then
+        success "${name}"
+        return 0
+    fi
+
+    error 0 "${name}: ${problem%; }:"
+    printf '    %s\n' "${output//$'\n'/$'\n'    }" >&2
+    failures=$((failures + 1))
+}
+
+######
+# Main
+######
+
+case_count=0
+close_branch="$(cd "$(dirname "$0")/../Home/common/.local/bin" && pwd)/git-close-branch"
+failures=0
+run_directory=""
+
+Set-Traps cleanup
+run_directory="$(mktemp -d)"
+
+# A stand-in for gh on PATH: every branch's pull request is number 1, and merged.
+mkdir -p -- "${run_directory}/bin"
+cat >"${run_directory}/bin/gh" <<'GH'
+#!/usr/bin/env bash
+case "$*" in
+    *'--json state'*) echo MERGED ;;
+    *'--json number'*) echo 1 ;;
+    *) exit 1 ;;
+esac
+GH
+chmod +x "${run_directory}/bin/gh"
+
+synced_from='Synced .+/clone. to main at [0-9a-f]{8}, from'
+would_sync='Would sync .+/clone. to main, from'
+
+# The sync: one line when it works, naming what the main worktree had checked out.
+run_case "on main, one commit behind origin: synced" on-main 0 "Closed: feature/x
+${synced_from} main at [0-9a-f]{8}$" synced closed
+run_case "on another branch: synced" on-another-branch 0 "Closed: feature/x
+${synced_from} other at [0-9a-f]{8}$" synced closed
+run_case "detached: synced" detached 0 "Closed: feature/x
+${synced_from} a detached HEAD at [0-9a-f]{8}$" synced closed
+
+# The three ways a sync fails: the branch still closes, and the run says why and exits 75.
+run_case "detached, with a tracked file changed: not synced" detached-with-changes 75 "Closed: feature/x
+Cannot sync .+/clone. to main: it has uncommitted changes" unchanged closed
+run_case "an untracked file in the checkout's way: not synced" in-the-way 75 "Closed: feature/x
+Cannot sync .+/clone. to main: git could not check out main" unchanged closed
+run_case "on main, with a commit origin lacks: not synced" diverged 75 "Closed: feature/x
+Cannot sync .+/clone. to main: main cannot be fast-forwarded to origin/main" unchanged closed
+
+# --dry-run says what the run would do with the main worktree, and changes nothing.
+run_case "--dry-run, on main" on-main 0 "${would_sync} main at [0-9a-f]{8}$" unchanged kept --dry-run
+run_case "--dry-run, on another branch" on-another-branch 0 "${would_sync} other at [0-9a-f]{8}$" unchanged kept \
+    --dry-run
+run_case "--dry-run, detached" detached 0 "${would_sync} a detached HEAD at [0-9a-f]{8}$" unchanged kept --dry-run
+run_case "--dry-run, detached, with a tracked file changed" detached-with-changes 0 \
+    "Would fail to sync .+/clone. to main: it has uncommitted changes" unchanged kept --dry-run
+run_case "--dry-run, an untracked file in the checkout's way, which only trying finds" in-the-way 0 \
+    "${would_sync} a detached HEAD at [0-9a-f]{8}$" unchanged kept --dry-run
+run_case "--dry-run, on main, with a commit origin lacks" diverged 0 \
+    "Would fail to sync .+/clone. to main: main cannot be fast-forwarded to origin/main" unchanged kept --dry-run
+
+((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
+success "every case passed"
