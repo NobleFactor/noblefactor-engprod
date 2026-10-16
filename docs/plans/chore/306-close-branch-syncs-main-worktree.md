@@ -1,7 +1,7 @@
 ---
 title: "git close-branch syncs the main worktree, says so, and fails when it cannot"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/306
-status: active
+status: complete
 created: 2026-10-15
 updated: 2026-10-16
 ---
@@ -182,12 +182,24 @@ snapshotted (ruled 2026-10-05).
 
 ### Phase 5: Every host
 
-- [ ] Requirement 8, on `danoble-ud24-1` and `danoble-wd11-3`.
+- [x] Requirement 8, on `danoble-ud24-1` and `danoble-wd11-3`.
+
+  Run 2026-10-16 at a7295212 by the agent, on the owner's "Run the phase 5 script to test on our windows and Linux
+  boxes", from copies the script made and removed: all 12 cases passed on `danoble-ud24-1`, bash 5.3.9 and git
+  2.53.0, and on `danoble-wd11-3`, Git for Windows' bash 5.3.15 and git 2.55.0.windows.3. Neither host kept a copy.
+  Each links its `git-close-branch` into writ's clone of the base layer, so each has the change once that clone is
+  pulled.
 
 ### Phase 6: Acceptance and closure
 
-- [ ] The pull request closes #306. Its own script's `git close-branch` is the live check: the line printed, and the
+- [x] The pull request closes #306. Its own script's `git close-branch` is the live check: the line printed, and the
   main clone synced, leaving the script's pull nothing to do.
+
+  Ticked in the pull request's last commit, as the process has it. Its script pulls the base clone before
+  `git close-branch`, because this Mac's command is a link into that clone, so the merged command is the one that
+  runs; the script then requires its sync line, and checks the deployed copy carries the change. `danoble-ud24-1`'s
+  clone of the base layer is pulled by the script; `danoble-wd11-3`'s is the owner's, in an interactive ssh session,
+  since a `git fetch` started there without a terminal hangs.
 
 ## Files
 
