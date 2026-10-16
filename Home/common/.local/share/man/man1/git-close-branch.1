@@ -1,8 +1,8 @@
 .\" SPDX-License-Identifier: Apache-2.0
 .\" Copyright (c) 2025-2026 Noble Factor. All rights reserved.
-.TH GIT-CLOSE-BRANCH 1 "September 2026" "Noble Factor" "User Commands"
+.TH GIT-CLOSE-BRANCH 1 2026-10-16 "Noble Factor" "User Commands"
 .SH NAME
-git-close-branch \- switch to the target branch, pull, and delete merged feature branches
+git-close-branch \- close merged feature branches, then sync the main worktree to the target branch
 .SH SYNOPSIS
 .B git-close-branch
 .RB [ \-h | \-\-help ]
@@ -12,12 +12,14 @@ git-close-branch \- switch to the target branch, pull, and delete merged feature
 .IR target ]
 .RB [ \-m | \-\-merged ]
 .RB [ \-n | \-\-dry\-run ]
+.RB [ \-f | \-\-force ]
 .RI [ branch ...]
 .SH DESCRIPTION
 .B git-close-branch
-automates the cleanup after feature branches have been merged.
-It deletes each selected branch locally and on the remote, switching the main
-worktree to the target branch only when that worktree holds one of them.
+automates the cleanup after feature branches have been merged, and does two things. It deletes each selected
+branch on the remote, removes the linked worktree that has it checked out, and deletes it locally. Then it syncs
+the main worktree to the target branch: it checks the target out there when the main worktree has anything else
+checked out, and fast-forwards it from the remote.
 .PP
 Branches may be named as trailing operands, selected repeatedly with
 .BR \-b ,
@@ -32,12 +34,12 @@ Resolves the set of branches to close, excluding the target branch
 .IP 2. 3
 Moves to the main worktree, so the caller's own location cannot block the removal of a worktree
 .IP 3. 3
-Checks out the target branch there and pulls once, but
+Checks out the target branch there, but
 .B only
 when one of the selected branches is checked out in the main worktree. Git refuses to delete a branch
-from a worktree holding it, and that is the sole reason for the switch. A branch living in a linked
-worktree needs none: the worktree is removed, then the branch is deleted. An unrelated main worktree is
-left as found, uncommitted changes and all.
+from a worktree holding it, and that is the sole reason for this switch. A branch living in a linked
+worktree needs none: the worktree is removed, then the branch is deleted, and the main worktree is synced at
+the end, in step 7.
 .IP 4. 3
 Surveys each branch \(em what exists, what it would cost, and whether the close may proceed \(em and
 decides. Nothing is removed until every check has passed, so a refusal leaves every trace of the branch
@@ -53,6 +55,13 @@ irreversible act. The local branch is last, because
 refuses a branch a worktree holds.
 .IP 6. 3
 Reports what was closed and what failed, naming which trace failed and what had already been removed
+.IP 7. 3
+Syncs the main worktree to the target branch, even when a branch failed to close: checks the target out
+there when the main worktree has another branch or a detached HEAD checked out, then fast-forwards it from
+.IR origin/<target> ,
+which the run fetched before it began. One line says what the main worktree had checked out and the commit it is
+at now. A sync that cannot happen \(em uncommitted changes to tracked files, a checkout git refuses, or a target
+that cannot be fast-forwarded \(em is reported with its reason and what to do about it, and the run exits 75.
 .PP
 When the main worktree does hold a selected branch and cannot be switched \(em uncommitted changes \(em
 only the branches that needed the switch fail. The rest are closed, and the message names the worktree and
@@ -66,7 +75,8 @@ Show usage information and exit.
 A feature branch to close. May be repeated. Equivalent to naming the branch as a trailing operand.
 .TP
 .BR \-t ", " \-\-target " " \fIbranch\fR
-The parent branch to switch to. Defaults to the repository's default branch (e.g., main or master).
+The branch the main worktree is synced to, and the one whose history must carry each pull request's squash
+commit. Defaults to the repository's default branch (e.g., main or master).
 .TP
 .BR \-m ", " \-\-merged
 Add every local branch whose pull request GitHub reports as
@@ -79,10 +89,12 @@ CLI and issues one query per local branch.
 Print, for each selected branch, what the run would do: the delete flag it would receive and any worktree it
 would remove, or the refusal that would stop it. The preview is the same survey the run acts on, printed
 rather than executed, so it cannot disagree with the run. A refused branch names no removal, because a
-refusal removes nothing. Changes nothing.
+refusal removes nothing. Then it says how the run would sync the main worktree, or why the sync would fail, as
+far as that can be known without trying: a checkout git would refuse is found only by the run. Changes nothing.
 .SH FAILURE HANDLING
 Each branch is closed independently. A branch that cannot be closed is reported and the run continues, so one
-unmerged branch in a set does not strand the rest. The exit status is non-zero if any branch failed.
+unmerged branch in a set does not strand the rest. The main worktree is synced after them either way. The run
+exits 65 if any branch failed, and otherwise 75 if the sync could not happen.
 .SH FORCE DELETION
 A squash merge creates one new commit on the target with a different SHA, so the branch's own commits never
 enter the target's history and
@@ -133,7 +145,7 @@ with it the worktree is removed and the same number is reported as discarded.
 .SH EXIT STATUS
 .TP
 .B 0
-Success \- every selected branch closed.
+Success \- every selected branch closed, and the main worktree synced to the target branch.
 .TP
 .B 64
 Usage error \- missing or invalid options, or no branches to close.
@@ -146,7 +158,7 @@ Unavailable \-
 .B \-\-merged
 was requested without the
 .BR gh (1)
-CLI.
+CLI, or the remote could not be fetched.
 .TP
 .B 72
 Critical file missing \-
@@ -154,7 +166,8 @@ Critical file missing \-
 is not beside the command.
 .TP
 .B 75
-Temporary failure \- the target branch could not be pulled.
+Temporary failure \- every selected branch closed, but the main worktree could not be synced to the target branch.
+The run says why and what to do.
 .SH EXAMPLES
 Close the current branch after merging:
 .PP
@@ -180,7 +193,7 @@ Close every merged branch:
 git-close-branch --merged
 .fi
 .PP
-Close a branch and switch to a specific target branch:
+Close a branch and sync the main worktree to a target branch other than the default:
 .PP
 .nf
 git-close-branch -b hotfix/urgent-fix -t staging

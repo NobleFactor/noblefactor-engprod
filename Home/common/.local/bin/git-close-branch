@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2025-2026 Noble Factor. All rights reserved.
 
-# git-close-branch - Switch to the target branch, pull, and delete merged feature branches
+# git-close-branch - Close merged feature branches, then sync the main worktree to the target branch
 # for documentation: man git-close-branch
 
 # Fail closed when the helper is missing. It defines error handling and errexit, so its absence cannot be
@@ -21,7 +21,8 @@ source "$(dirname "$0")/Declare-BashScript" "$0" "help,branch:,target:,merged,dr
 # Arguments
 ###########
 
-declare -r synopsis="git-close-branch [-b <branch>] [-t <target>] [-m|--merged] [-n|--dry-run] [-f|--force] [<branch>...]"
+synopsis="git-close-branch [-b <branch>] [-t <target>] [-m|--merged] [-n|--dry-run] [-f|--force]"
+declare -r synopsis="${synopsis} [<branch>...]"
 eval set -- "$script_arguments"
 
 declare -a branches=()
@@ -107,6 +108,56 @@ function main_worktree_branch {
         /^worktree /  { path = substr($0, 10) }
         /^branch /    { if (path == main) { sub(/^refs\/heads\//, "", $2); print $2; exit } }
     '
+}
+
+# describe_checkout prints what a worktree has checked out and at which commit, as the sync's lines name it.
+#
+# Parameters:
+#   - `$1`: the worktree.
+#
+# Returns:
+#   - stdout: `<branch> at <commit>`, or `a detached HEAD at <commit>`, the commit abbreviated to eight characters.
+function describe_checkout {
+    local worktree="$1" branch commit
+
+    branch="$(git -C "${worktree}" symbolic-ref --quiet --short HEAD || true)"
+    commit="$(git -C "${worktree}" rev-parse --short=8 HEAD)"
+
+    if [[ -n "${branch}" ]]; then
+        printf '%s at %s' "${branch}" "${commit}"
+    else
+        printf 'a detached HEAD at %s' "${commit}"
+    fi
+}
+
+# sync_blocker prints why the main worktree cannot be synced to the target branch, as far as that can be told without
+# trying, or nothing when nothing yet stands in the way.
+#
+# Two things stop a sync before it starts: uncommitted changes to tracked files in a main worktree that must first
+# check the target out, and a local target that origin's has not kept up with, so it cannot be fast-forwarded. A
+# checkout git refuses, as it does for an untracked file in its way, is found only by trying. The dry run and the live
+# run both ask this, so the preview cannot disagree with the run on anything it can know (#306).
+#
+# Parameters:
+#   - `$1`: the main worktree.
+#   - `$2`: the branch it has checked out, or nothing when it is detached.
+#
+# Returns:
+#   - stdout: the reason, worded to follow "Cannot sync '<main worktree>' to <target>: ", or nothing.
+function sync_blocker {
+    local worktree="$1" branch="$2"
+
+    if [[ "${branch}" != "${target_branch}" ]] &&
+        [[ -n "$(git -C "${worktree}" status --porcelain --untracked-files=no)" ]]; then
+        printf 'it has uncommitted changes'
+        return 0
+    fi
+
+    if git -C "${worktree}" rev-parse --verify --quiet "refs/heads/${target_branch}" >/dev/null &&
+        ! git -C "${worktree}" merge-base --is-ancestor "refs/heads/${target_branch}" \
+            "refs/remotes/origin/${target_branch}" 2>/dev/null; then
+        printf '%s cannot be fast-forwarded to origin/%s' "${target_branch}" "${target_branch}"
+    fi
 }
 
 # merged_branches prints every local branch whose pull request GitHub reports as MERGED.
@@ -395,7 +446,7 @@ function remove_branch {
 
     # shellcheck disable=SC2178 # a nameref to an associative array; see survey_branch
     local -n rec="$2"
-    local did="" done=""
+    local did="" done="" message
     local -a remove_options=()
 
     if [[ -n "${rec["remote_branch"]}" ]]; then
@@ -414,7 +465,8 @@ function remove_branch {
 
         if ! git worktree remove "${remove_options[@]}" "${rec["worktree_path"]}"; then
             done="${did:-nothing else was changed; }"
-            error 0 "'${branch}': worktree '${rec["worktree_path"]}' could not be removed (${done%; }). Finish by hand, then re-run."
+            message="'${branch}': worktree '${rec["worktree_path"]}' could not be removed (${done%; })."
+            error 0 "${message} Finish by hand, then re-run."
             return 1
         fi
 
@@ -428,7 +480,8 @@ function remove_branch {
     if [[ -n "${rec["local_branch"]}" ]]; then
         if ! git branch "${rec["branch_flag"]}" "${branch}"; then
             done="${did:-nothing else was changed; }"
-            error 0 "'${branch}': 'git branch ${rec["branch_flag"]}' could not delete the local branch (${done%; }). Finish with: git branch -D ${branch}, or re-run with --force."
+            message="'${branch}': 'git branch ${rec["branch_flag"]}' could not delete the local branch (${done%; })."
+            error 0 "${message} Finish with: git branch -D ${branch}, or re-run with --force."
             return 1
         fi
     fi
@@ -446,7 +499,7 @@ function preview_line {
 
     # shellcheck disable=SC2178 # a nameref to an associative array; see survey_branch
     local -n rec="$2"
-    local what=""
+    local what="" removes=""
 
     # A refusal removes nothing, so it names no removal. Saying "removes worktree X" beside REFUSED was
     # true when a refusal could still strike after the worktree was gone; it is false now.
@@ -465,8 +518,12 @@ function preview_line {
         what="${rec["branch_flag"]}"
     fi
 
-    printf '  %-40s %s%s\n' "${branch}" "${what}" \
-        "${rec["worktree_path"]:+  (removes worktree ${rec["worktree_path"]}${rec["dirt_count"]:+, discarding ${rec["dirt_count"]} file(s)})}" >&2
+    if [[ -n "${rec["worktree_path"]}" ]]; then
+        removes="  (removes worktree ${rec["worktree_path"]}"
+        removes+="${rec["dirt_count"]:+, discarding ${rec["dirt_count"]} file(s)})"
+    fi
+
+    printf '  %-40s %s%s\n' "${branch}" "${what}" "${removes}" >&2
 }
 
 ######
@@ -511,7 +568,9 @@ done
 # ref produces a confident wrong answer. The live run happens to pull the target before its checks; --dry-run
 # does not, and a preview that disagrees with the run it previews is worse than no preview.
 
-git fetch --prune --quiet origin || error $EX_TEMPFAIL "Cannot fetch from origin."
+# 69, unavailable, as for --merged without gh: 75 belongs to a sync that cannot happen (#306, question 1).
+
+git fetch --prune --quiet origin || error $EX_UNAVAILABLE "Cannot fetch from origin."
 
 # The main worktree is where the target gets checked out and where branches are deleted from; linked
 # worktrees are removed. Resolved once, and needed by both the preview and the live run.
@@ -544,15 +603,17 @@ fi
 
 if [[ -n "${dry_run}" ]]; then
 
-    # Whether the main worktree gets switched is now a decision rather than a given, so the preview says
-    # which it will be. A preview that disagrees with the run it previews is worse than no preview.
+    # The preview says what the run will do with the main worktree: the switch before the close, when it has a
+    # closing branch checked out, and the sync after it, or the reason the sync would fail, as far as sync_blocker
+    # can tell without trying. A preview that disagrees with the run it previews is worse than no preview.
 
     preview_main_branch="$(main_worktree_branch "${main_worktree}")"
 
     if [[ -n "${preview_main_branch}" ]] && [[ " ${selected[*]} " == *" ${preview_main_branch} "* ]]; then
-        note "Would switch '${main_worktree}' from '${preview_main_branch}' to '${target_branch}' and close: ${selected[*]}"
+        switch_note="Would switch '${main_worktree}' from '${preview_main_branch}' to '${target_branch}'"
+        note "${switch_note} and close: ${selected[*]}"
     else
-        note "Would close: ${selected[*]} (leaving '${main_worktree}' on '${preview_main_branch:-a detached HEAD}')"
+        note "Would close: ${selected[*]}"
     fi
 
     # The preview prints the record the run would act on. It derives nothing of its own, so it cannot
@@ -565,6 +626,14 @@ if [[ -n "${dry_run}" ]]; then
         preview_line "${branch}" preview
     done
 
+    preview_blocker="$(sync_blocker "${main_worktree}" "${preview_main_branch}")"
+
+    if [[ -n "${preview_blocker}" ]]; then
+        note "Would fail to sync '${main_worktree}' to ${target_branch}: ${preview_blocker}"
+    else
+        note "Would sync '${main_worktree}' to ${target_branch}, from $(describe_checkout "${main_worktree}")"
+    fi
+
     exit 0
 fi
 
@@ -574,12 +643,16 @@ fi
 
 cd "${main_worktree}" || error $EX_OSFILE "Cannot enter the main worktree '${main_worktree}'."
 
-# The main worktree is switched only when it holds one of the selected branches, because that is the only
-# case the switch is for: git will not delete a branch from a worktree that has it checked out. A branch
-# living in a LINKED worktree needs no switch — the worktree is removed, then the branch is deleted — so an
-# unrelated main worktree is left exactly as it was found, uncommitted changes and all.
+# What the main worktree had checked out before this run touched it, for the sync's line at the end.
+
+main_before="$(describe_checkout "${main_worktree}")"
+
+# Before the close, the main worktree is switched only when it holds one of the selected branches, because that is
+# the only case this switch is for: git will not delete a branch from a worktree that has it checked out. A branch
+# living in a LINKED worktree needs no switch here -- the worktree is removed, then the branch is deleted -- and the
+# main worktree is synced after the close, below, as the command's second job.
 #
-# Switching unconditionally made a dirty main worktree fatal to closing a branch it had nothing to do with.
+# Switching unconditionally here made a dirty main worktree fatal to closing a branch it had nothing to do with.
 
 main_branch="$(main_worktree_branch "${main_worktree}")"
 
@@ -607,7 +680,8 @@ if ((${#needs_switch[@]} > 0)); then
 
     if ! git -C "${main_worktree}" checkout "${target_branch}"; then
 
-        error 0 "Cannot switch '${main_worktree}' from '${main_branch}' to '${target_branch}': commit or stash its changes, then re-run."
+        switch_error="Cannot switch '${main_worktree}' from '${main_branch}' to '${target_branch}'"
+        error 0 "${switch_error}: commit or stash its changes, then re-run."
 
         for branch in "${needs_switch[@]}"; do
             blocked["${branch}"]=1
@@ -649,35 +723,53 @@ done
 
 ((${#closed[@]} == 0)) || success "Closed: ${closed[*]}"
 
-## Leave the main worktree on the default branch, current
+## The main worktree, synced to the target branch: the command's second job
 #
-# Not conditional on anything the close did. Freeing a branch for deletion and leaving the
-# repository where the next piece of work starts are two jobs; conflating them meant closing a
-# branch that lived in a linked worktree -- the normal case under git-open-branch -- left the main
-# worktree wherever it happened to be, at whatever commit it happened to hold.
+# The owner, 2026-10-15 (#306): "two things should happen: 1. linked worktree removed and its branch deleted
+# locally and remotely 2. main worktree synced to PR target branch". Freeing a branch for deletion and leaving the
+# repository where the next piece of work starts are two jobs; conflating them meant closing a branch that lived in a
+# linked worktree -- the normal case under git-open-branch -- left the main worktree wherever it happened to be.
 #
-# Run even when branches failed to close: being current is independent of whether anything was
-# deleted.
+# Run even when branches failed to close: being current is independent of whether anything was deleted. The fetch at
+# the top of the run already refreshed origin/<target>, so fast-forwarding from it needs no second round trip, and
+# --ff-only refuses rather than inventing a merge commit. A sync that cannot happen is reported with its reason and
+# its remedy, and ends the run with 75, once any branch's failure has ended it with 65 instead.
 
 main_branch="$(main_worktree_branch "${main_worktree}")"
+sync_failure="$(sync_blocker "${main_worktree}" "${main_branch}")"
 
-if [[ "${main_branch}" != "${target_branch}" ]]; then
-    if [[ -n "$(git -C "${main_worktree}" status --porcelain)" ]]; then
-        note "'${main_worktree}' has uncommitted changes; left on '${main_branch}'."
-    elif ! git -C "${main_worktree}" checkout --quiet "${target_branch}"; then
-        note "Cannot switch '${main_worktree}' to '${target_branch}'; left on '${main_branch}'."
-    fi
+if [[ -z "${sync_failure}" && "${main_branch}" != "${target_branch}" ]] &&
+    ! git -C "${main_worktree}" checkout --quiet "${target_branch}"; then
+    sync_failure="git could not check out ${target_branch}"
 fi
 
-# The fetch at the top of the run already refreshed origin/<target>. Fast-forwarding from it avoids
-# a second network round trip, and --ff-only refuses rather than inventing a merge commit if the
-# main worktree has diverged.
-
-if [[ "$(main_worktree_branch "${main_worktree}")" == "${target_branch}" ]]; then
-    git -C "${main_worktree}" merge --ff-only --quiet "origin/${target_branch}" 2>/dev/null ||
-        note "'${target_branch}' could not be fast-forwarded to origin/${target_branch}."
+if [[ -z "${sync_failure}" ]] && ! git -C "${main_worktree}" merge --ff-only --quiet "origin/${target_branch}"; then
+    sync_failure="${target_branch} cannot be fast-forwarded to origin/${target_branch}"
 fi
+
+sync_message="Cannot sync '${main_worktree}' to ${target_branch}: ${sync_failure}."
+switch_and_pull="git switch ${target_branch} and git pull --ff-only there"
+
+case ${sync_failure} in
+    "")
+        main_after="$(git -C "${main_worktree}" rev-parse --short=8 HEAD)"
+        success "Synced '${main_worktree}' to ${target_branch} at ${main_after}, from ${main_before}"
+        ;;
+    "it has uncommitted changes")
+        error 0 "${sync_message} Commit or stash them, then run ${switch_and_pull}."
+        ;;
+    "git could not check out "*)
+        error 0 "${sync_message} Move what git names out of the way, then run ${switch_and_pull}."
+        ;;
+    *)
+        error 0 "${sync_message} Reconcile it with origin/${target_branch}, then run git pull --ff-only there."
+        ;;
+esac
 
 if ((${#failed[@]} > 0)); then
     error $EX_DATAERR "Failed: ${failed[*]}"
+fi
+
+if [[ -n "${sync_failure}" ]]; then
+    exit $EX_TEMPFAIL
 fi
