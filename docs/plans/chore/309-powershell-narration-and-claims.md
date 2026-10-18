@@ -3,7 +3,7 @@ title: "The PowerShell style guide narrates as Microsoft's guidance does, and ag
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/309
 status: active
 created: 2026-10-17
-updated: 2026-10-17
+updated: 2026-10-18
 ---
 
 # Plan: The PowerShell style guide narrates as Microsoft's guidance does, and agent-rules requires labeled claims
@@ -39,7 +39,8 @@ same day, in the plan for #273, question 6:
 And for agent-rules, the owner's rule on claims: "I'm taking action based on what you say. Understand that when you
 fail to identify certain from uncertain messages that I am taking action with the assumption that what you say is
 fact." (2026-10-05), and "I expect probability statements, not statements of fact when there is uncertainty."
-(2026-10-06). Broken twice on 2026-10-17: anthropics/claude-code#103060 and anthropics/claude-code#103075.
+(2026-10-06). Broken twice on 2026-10-17: anthropics/claude-code#103060 and anthropics/claude-code#103075. Broken a
+third time the same day, during phase 2: anthropics/claude-code#103117.
 
 ## Summary
 
@@ -134,9 +135,11 @@ In the document's form. **The rule:** every claim is marked verified, saying how
 own action; or a probability; and a summary is no stronger than its source. **The breakage:** 2026-10-17, twice: a
 stored value reported correct from a check whose two decoding errors canceled out (anthropics/claude-code#103060),
 and a cited issue's claim turned into a false absolute by dropping its stated exception
-(anthropics/claude-code#103075), with the owner's words of 2026-10-05 and 2026-10-06. **Compliance:** name the
-command behind every "verified"; check an encoding by its code points, not its glyphs; quote a source with its
-exceptions. The document's `updated:` is the day it lands.
+(anthropics/claude-code#103075), with the owner's words of 2026-10-05 and 2026-10-06; and the third time that day,
+during phase 2 (question 6): a refusal's form reported verified from an exit status left over from a loop's earlier
+cases (anthropics/claude-code#103117). **Compliance:** name the command behind every "verified"; check an encoding by
+its code points, not its glyphs; quote a source with its exceptions; and read each case's result from a run of its
+own, a fresh session or its state reset first (question 6). The document's `updated:` is the day it lands.
 
 ### Requirement 3: what this settles elsewhere
 
@@ -162,7 +165,8 @@ exceptions. The document's `updated:` is the day it lands.
 
 ### Phase 3: agent-rules
 
-- [ ] Requirement 2.
+- [x] Requirement 2: rule 14, "A claim says how it is known", with the three breaches of 2026-10-17 (question 6),
+  and the document's `updated:` set to 2026-10-18. Reviewed by the owner the same day: "Commit these changes".
 
 ### Phase 4: The gates and closure
 
@@ -216,6 +220,10 @@ exceptions. The document's `updated:` is the day it lands.
 5. **#266's title** names bash alone: "Scripting standards: every bash script follows one written pattern". Proposed:
    "Scripting standards: every script follows one written pattern". **Ruled 2026-10-17:** "Retitle". Retitled the
    same day, and #309's Feature line with it.
+6. **Rule 14's third breach.** anthropics/claude-code#103117 came during phase 2, after the plan was approved with
+   two. Asked whether rule 14 lists it too; recommended yes, with one compliance line, each case's result read from a
+   fresh run of its own. **Ruled 2026-10-18:** "List all three". The compliance line is taken as part of the
+   recommendation the ruling accepted (proposed).
 
 [guide]: https://learn.microsoft.com/powershell/scripting/developer/cmdlet/strongly-encouraged-development-guidelines
 [output]: https://learn.microsoft.com/powershell/scripting/developer/cmdlet/types-of-cmdlet-output
