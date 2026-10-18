@@ -1,7 +1,7 @@
 ---
 title: "The PowerShell style guide narrates as Microsoft's guidance does, and agent-rules requires labeled claims"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/309
-status: active
+status: complete
 created: 2026-10-17
 updated: 2026-10-18
 ---
@@ -50,8 +50,9 @@ the debug stream; progress is shown only for a long operation the script can mea
 stream or the host; a refusal is a terminating error; every preference's default is honored; the common parameters
 are passed on where PowerShell does not pass them; and a native program's output is read as UTF-8 without the
 console's code page being changed. Each rule cites Microsoft's guidance to cmdlet authors, or says why the house goes
-further. `docs/guides/agent-rules.md` gains rule 14: a claim says how it is known. Lane 10 then brings Start-Claude.ps1
-into line, and the house's other scripts follow later.
+further. `docs/guides/agent-rules.md` gains rule 14, a claim says how it is known, and rule 15, an issue is checked for
+its documents table before it is filed. Lane 10 then brings Start-Claude.ps1 into line, and the house's other scripts
+follow later.
 
 ## Goals
 
@@ -148,6 +149,14 @@ own, a fresh session or its state reset first (question 6). The document's `upda
 - The house's other scripts follow later, as the owner ruled, one issue in each repository:
   NobleFactor/noblefactor-ops#310, NobleFactor/devlore-cli#1043 and David-Noble-at-work/personal#283 (question 4).
 
+### Requirement 4: agent-rules' rule 15, "An issue is checked for its documents table before it is filed"
+
+In the document's form, as shown to the owner 2026-10-18 and ruled (question 7). **The rule:** every issue is filed
+with the table of its documents that development-process.md § Plans requires, and the script that files it refuses a
+body without the table. **The breakage:** six issues filed without it from 2026-10-15 to 2026-10-17, in a session that
+filed nine others with it (anthropics/claude-code#103299). **Compliance:** the filing script's `grep` for the table's
+heading before `gh issue create`. The table alone: the marker that places an issue was not broken.
+
 ## Implementation Phases
 
 ### Phase 1: The plan
@@ -167,10 +176,14 @@ own, a fresh session or its state reset first (question 6). The document's `upda
 
 - [x] Requirement 2: rule 14, "A claim says how it is known", with the three breaches of 2026-10-17 (question 6),
   and the document's `updated:` set to 2026-10-18. Reviewed by the owner the same day: "Commit these changes".
+- [x] Requirement 4: rule 15, "An issue is checked for its documents table before it is filed" (question 7), in the
+  pull request's last commit.
 
 ### Phase 4: The gates and closure
 
-- [ ] `make check`; the pull request, closing #309, and lane 14's row on #301 set to it.
+- [x] `make check`; the pull request, closing #309, and lane 14's row on #301 set to it. Ticked in the pull request's
+  last commit, as the process has it: its script runs `make check` before that commit, opens the pull request closing
+  #309, waits for CI's quality-gate and merges it; lane 14's row on #301 is set to the merge after it.
 
 ## Files
 
@@ -178,7 +191,7 @@ own, a fresh session or its state reset first (question 6). The document's `upda
 | --- | --- | --- |
 | `docs/plans/chore/309-powershell-narration-and-claims.md` | Create | This plan |
 | `docs/guides/powershell-style-guidelines.md` | Modify | Requirement 1 |
-| `docs/guides/agent-rules.md` | Modify | Requirement 2 |
+| `docs/guides/agent-rules.md` | Modify | Requirements 2 and 4 |
 
 ## Out of Scope
 
@@ -230,7 +243,9 @@ own, a fresh session or its state reset first (question 6). The document's `upda
    same day. The global instructions say of agent-rules: "Add one there the day you break one." Proposed: rule 15 in
    this pull request, "An issue is checked against the standards before it is filed": its breakage that one, and its
    compliance a filing script that refuses a body without the table or the marker that places the issue. Or: a lane
-   of its own, after this one.
+   of its own, after this one. **Ruled 2026-10-18,** of rule 15 as then shown, "An issue is checked for its documents
+   table before it is filed", the table alone: "Yes all changes can go into the next pr for the repos in which they
+   are contained". So it is in this pull request (requirement 4).
 
 [guide]: https://learn.microsoft.com/powershell/scripting/developer/cmdlet/strongly-encouraged-development-guidelines
 [output]: https://learn.microsoft.com/powershell/scripting/developer/cmdlet/types-of-cmdlet-output

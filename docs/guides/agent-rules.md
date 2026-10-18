@@ -264,6 +264,19 @@ statements, not statements of fact when there is uncertainty." (#309)
 glyphs. Quote a source with its exceptions. Read each case's result from a run of its own: a fresh session, or
 its state reset first.
 
+## 15. An issue is checked for its documents table before it is filed
+
+**The rule.** Every issue is filed with the table of its documents, headed `## Plan and design documents`, as
+development-process.md § Plans requires: a plan row, its link or "Not yet opened", and a row for each design
+document it bears on. The script that files an issue checks its body and refuses to file one without the table.
+
+**The breakage.** 2026-10-15 to 2026-10-17: six issues filed without the table, in a session that filed nine
+others with it. The rule was known, applied, then dropped, and nothing checked it. Found 2026-10-18 while
+preparing the pull request that closes one of the six; reported as anthropics/claude-code#103299. (#309)
+
+**Compliance.** Before `gh issue create`, the filing script runs
+`grep -q '^## Plan and design documents' <<<"$body" || exit 1`.
+
 ---
 
 A rule is added here the day it is broken, with the breakage. A rule an engineer would need belongs
