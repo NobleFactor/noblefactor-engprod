@@ -1,7 +1,7 @@
 ---
 title: "The PowerShell style guide narrates as Microsoft's guidance does, and agent-rules requires labeled claims"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/309
-status: draft
+status: approved
 created: 2026-10-17
 updated: 2026-10-17
 ---
@@ -74,7 +74,8 @@ Read 2026-10-17 at develop.
 
 ### Requirement 1: the style guide's section on messages and failure
 
-A new section, after section 6 (question 1), states each rule with its source:
+Section 7, "Messages and failure", after section 6, "Error Handling", sections 7 to 10 renumbered 8 to 11 (question
+1), states each rule with its source:
 
 1. **A result is an output object,** written to the success stream. Microsoft, of `WriteObject`: "We recommend that
    you call this method instead of the System.Console.WriteLine or
@@ -95,11 +96,18 @@ A new section, after section 6 (question 1), states each rule with its source:
    PowerShell 6, was called "quite literally unprecedented" (PowerShell/PowerShell#6768). Microsoft: "Unless a cmdlet
    is specifically designed to generate a graphical user interface (GUI), it should not bypass the host". ([guide])
    The analyzer already refuses `Write-Host`.
-7. **A refusal is a terminating error,** which a caller can catch. Microsoft: "When a terminating error occurs, the
-   cmdlet throws an exception." ([output])
-8. **Every preference's default is honored.** A script sets no `$VerbosePreference`, `$WarningPreference`,
-   `$InformationPreference`, `$DebugPreference` or `$ProgressPreference`, and forces no stream on with its common
-   parameter (question 2, on section 6's `$ErrorActionPreference = 'Stop'`).
+7. **A script catches every error, stops, and lets the caller decide what the error does to them** (question 2). Its
+   work sits inside `try` and `catch`: one around the whole body, or one in each of `begin`, `process` and `end`,
+   because a `try` cannot span blocks. On any error, its own refusals included, the script stops. It reports the error
+   as a cmdlet would, with `$PSCmdlet.WriteError` under the caller's error action, so the caller sees the script's
+   name and the error's own category, and exits 1. A caller who continues on error continues, one who silences errors
+   hears nothing, and one who stops on error stops. Microsoft: "When a non-terminating error occurs, the cmdlet calls
+   the ... WriteError method to send an error record to the error data stream." ([output]) Phase 2 settles, with a
+   sample, how a refusal is written so that it names the script rather than "Exception:".
+8. **The defaults are the caller's.** A script sets none of `$VerbosePreference`, `$WarningPreference`,
+   `$InformationPreference`, `$DebugPreference` or `$ProgressPreference`, and turns no stream on by force. The one
+   preference it sets is section 6's `$ErrorActionPreference = 'Stop'`, for its own work, and it puts the caller's
+   back before it reports an error (item 7).
 9. **The common parameters are passed on where PowerShell does not pass them.** The eight that work through a
    preference variable, `-Verbose`, `-Debug`, `-ErrorAction`, `-WarningAction`, `-InformationAction`,
    `-ProgressAction`, `-WhatIf` and `-Confirm`, reach the scripts and compiled cmdlets a script calls, and not a
@@ -129,15 +137,16 @@ exceptions. The document's `updated:` is the day it lands.
 ### Requirement 3: what this settles elsewhere
 
 - The plan for personal#273 cites the section for Start-Claude.ps1, lane 10.
-- #262's message form and statuses are settled by requirement 1 (question 3).
-- `Test-PowerShell.ps1`, `Remove-BrokenLinks.ps1` and the house's other scripts follow later, as the owner ruled
-  (question 4).
+- #262 is closed as superseded by this issue, and lane 56 of NobleFactor/devlore-cli#916 with it (question 3).
+- The house's other scripts follow later, as the owner ruled, one issue in each repository:
+  NobleFactor/noblefactor-ops#310, NobleFactor/devlore-cli#1043 and David-Noble-at-work/personal#283 (question 4).
 
 ## Implementation Phases
 
 ### Phase 1: The plan
 
-- [ ] This plan, committed on the branch as a draft, reviewed with the owner, and its open questions ruled.
+- [x] This plan, committed on the branch as a draft in d0e441f, reviewed with the owner, and its five open questions
+  ruled, 2026-10-17. Approved the same day: "Commit the rulings and let's move on with the task at hand".
 
 ### Phase 2: The style guide
 
@@ -162,20 +171,43 @@ exceptions. The document's `updated:` is the day it lands.
 ## Out of Scope
 
 - Start-Claude.ps1: lane 10, personal#273.
-- `Test-PowerShell.ps1`, `Remove-BrokenLinks.ps1` and every other script: later, as ruled.
+- `Test-PowerShell.ps1`, `Remove-BrokenLinks.ps1` and every other script: later, as ruled, in #310,
+  NobleFactor/devlore-cli#1043 and David-Noble-at-work/personal#283.
 - Declare-BashScript and the bash style guide, #267.
 
 ## Open Questions
 
 1. **Where the section goes.** Proposed: section 7, "Messages and failure", after section 6, "Error Handling", with
-   sections 7 to 10 renumbered 8 to 11. Or: section 11, at the end, nothing renumbered.
-2. **Section 6's `$ErrorActionPreference = 'Stop'`,** where "honor all defaults" meets it. Proposed: it stays, as the
-   script's handling of its own failures, which no caller sets for it; a refusal is a terminating error either way.
+   sections 7 to 10 renumbered 8 to 11. Or: section 11, at the end, nothing renumbered. No document cites sections 7
+   to 10 (searched 2026-10-17: base, team and personal cite sections 1, 2, 3 and 6). **Ruled 2026-10-17:** "[Use]
+   Section 7 as the new section number".
+2. **Section 6's `$ErrorActionPreference = 'Stop'`,** where "honor all defaults" meets it. A script's own `Stop`
+   overrides a caller's `-ErrorAction` for the script's cmdlets, and leaves the caller's preference as it was (seen
+   2026-10-17). **Ruled 2026-10-17:** "A cmdlet that produces an error causes processing to stop, but the script's
+   error action honors the caller's preference. Downstream from our script the caller might continue following an
+   error in our script, but we stop processing following an error." And: "I'm talking about error handling. We catch
+   all errors. What we do on error depends on the ErrorActionPreference." So `Stop` stays for the script's own work,
+   and the caller's error action decides what the script's error does to the caller. The idiom (proposed): note the
+   caller's error action, set `Stop`, and in the `catch` around the work, put the caller's action back, report the
+   error with `$PSCmdlet.WriteError`, and exit 1. Seen to work on 2026-10-17: under the caller's `Continue`, the error
+   shows and the caller runs on, with `$LASTEXITCODE` 1; under `SilentlyContinue`, it is recorded in `$Error` and not
+   shown; under `Stop`, the caller's `try` catches it; and run as a process, the script exits 1. `Write-Error` does the
+   same, but the caller sees "Write-Error:" where `$PSCmdlet.WriteError` shows the script's name, and its `-Message`
+   form loses the error's category and leaves a second record in `$Error` (seen the same day). **Ruled 2026-10-17:**
+   "It seems that $PSCmdlet.WriteError is the one we want."
 3. **#262,** whose message form and statuses this settles; its platform requirements stand. Proposed: retitle it to
-   the platform requirements alone.
-4. **The house's other scripts.** An issue for each now, or when their turn comes.
+   the platform requirements alone. Then, once section 7's error handling was ruled, offered: close it as superseded,
+   since a platform requirement is one check at the start of a script's caught work (1), or retitle it to the platform
+   requirements alone, as a helper scripts dot-source (2). **Ruled 2026-10-17:** "1". Closed the same day with a
+   comment, and lane 56 of NobleFactor/devlore-cli#916 marked to match.
+4. **The house's other scripts.** An issue for each now, or when their turn comes. A first screen on 2026-10-17
+   found 19 of the 48 `.ps1` in base, team and personal writing to the information stream or the host, or exiting
+   with a status of their own; Start-Claude.ps1 is one, and lane 10's. **Ruled 2026-10-17:** "File one issue in each
+   repos for the lot." Filed the same day, each a chore under #266 that waits on this issue, unscheduled:
+   NobleFactor/noblefactor-ops#310, NobleFactor/devlore-cli#1043 and David-Noble-at-work/personal#283.
 5. **#266's title** names bash alone: "Scripting standards: every bash script follows one written pattern". Proposed:
-   "Scripting standards: every script follows one written pattern".
+   "Scripting standards: every script follows one written pattern". **Ruled 2026-10-17:** "Retitle". Retitled the
+   same day, and #309's Feature line with it.
 
 [guide]: https://learn.microsoft.com/powershell/scripting/developer/cmdlet/strongly-encouraged-development-guidelines
 [output]: https://learn.microsoft.com/powershell/scripting/developer/cmdlet/types-of-cmdlet-output
