@@ -224,6 +224,13 @@ own, a fresh session or its state reset first (question 6). The document's `upda
    two. Asked whether rule 14 lists it too; recommended yes, with one compliance line, each case's result read from a
    fresh run of its own. **Ruled 2026-10-18:** "List all three". The compliance line is taken as part of the
    recommendation the ruling accepted (proposed).
+7. **A rule for the day's breach.** anthropics/claude-code#103299, found 2026-10-18 preparing this pull request: six
+   issues filed from 2026-10-15 to 2026-10-17 without the "Plan and design documents" table that
+   development-process.md requires of every issue the day it is filed, #309 among them; the tables were added the
+   same day. The global instructions say of agent-rules: "Add one there the day you break one." Proposed: rule 15 in
+   this pull request, "An issue is checked against the standards before it is filed": its breakage that one, and its
+   compliance a filing script that refuses a body without the table or the marker that places the issue. Or: a lane
+   of its own, after this one.
 
 [guide]: https://learn.microsoft.com/powershell/scripting/developer/cmdlet/strongly-encouraged-development-guidelines
 [output]: https://learn.microsoft.com/powershell/scripting/developer/cmdlet/types-of-cmdlet-output
