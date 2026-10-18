@@ -5,7 +5,7 @@ type: Process
 audience: Claude Code, Codex
 status: Approved
 created: 2026-09-07
-updated: 2026-10-03
+updated: 2026-10-18
 ---
 
 # Agent Rules
@@ -245,6 +245,37 @@ not the commits to carry these messages." (#254)
 **Compliance.** Read the repository's CONTRIBUTING.md before the first PR script. The description carries
 the disclosure and both trailers, the merge step writes the squash message from it, and after the merge the
 commit that landed is checked for both: [pr-script-template.md](pr-script-template.md), rule 2.
+
+## 14. A claim says how it is known
+
+**The rule.** Every claim says which kind it is: verified, naming how and when; certain, because it follows
+from the agent's own action; or a probability. A summary is no stronger than its source.
+
+**The breakage.** 2026-10-17, three times. A stored value was reported correct from a check whose two
+decoding errors canceled out (anthropics/claude-code#103060). A cited issue's claim became a false absolute
+when its stated exception was dropped (anthropics/claude-code#103075). A refusal's form was reported verified
+from an exit status left over from a loop's earlier cases; in a fresh session, that form never reached the
+script's own catch (anthropics/claude-code#103117). Each went to the user as fact. Ruled 2026-10-05: "I'm
+taking action based on what you say. Understand that when you fail to identify certain from uncertain messages
+that I am taking action with the assumption that what you say is fact." And 2026-10-06: "I expect probability
+statements, not statements of fact when there is uncertainty." (#309)
+
+**Compliance.** Name the command behind every "verified". Check an encoding by its code points, not its
+glyphs. Quote a source with its exceptions. Read each case's result from a run of its own: a fresh session, or
+its state reset first.
+
+## 15. An issue is checked for its documents table before it is filed
+
+**The rule.** Every issue is filed with the table of its documents, headed `## Plan and design documents`, as
+development-process.md § Plans requires: a plan row, its link or "Not yet opened", and a row for each design
+document it bears on. The script that files an issue checks its body and refuses to file one without the table.
+
+**The breakage.** 2026-10-15 to 2026-10-17: six issues filed without the table, in a session that filed nine
+others with it. The rule was known, applied, then dropped, and nothing checked it. Found 2026-10-18 while
+preparing the pull request that closes one of the six; reported as anthropics/claude-code#103299. (#309)
+
+**Compliance.** Before `gh issue create`, the filing script runs
+`grep -q '^## Plan and design documents' <<<"$body" || exit 1`.
 
 ---
 
