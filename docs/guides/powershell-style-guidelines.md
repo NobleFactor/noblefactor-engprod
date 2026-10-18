@@ -18,7 +18,8 @@ Every PowerShell script, in exact order:
 2. **Comment-based help** — `.SYNOPSIS`, `.DESCRIPTION`, parameters, and examples when useful
 3. **`#Requires` declarations** — PowerShell 7.0 or later and required modules
 4. **Script-level `[CmdletBinding()]` and `param()`** — before executable statements
-5. **Script configuration** — preference variables and constants
+5. **Script configuration** — the caller's error action noted, `$ErrorActionPreference = 'Stop'` set (section 7),
+   and constants
 6. **Helper functions** — in a `Helper functions` region immediately after `$ErrorActionPreference`
 7. **Main operation** — the executable workflow, after all helper definitions
 
@@ -126,17 +127,137 @@ lines should separate the surrounding pipeline logically rather than interruptin
 
 ## 6. Error Handling
 
-- Set `$ErrorActionPreference = 'Stop'` when the script requires fail-fast behavior.
+- Set `$ErrorActionPreference = 'Stop'` for the script's own work, having noted the caller's: a cmdlet that fails stops
+  the script, and section 7 says how the error reaches the caller.
 - Check the result of an external command immediately after invocation.
 - Check `$LASTEXITCODE` immediately after native commands that expose it.
-- Throw an actionable message that identifies the failed operation and relevant input.
+- Refuse with an actionable message that identifies the failed operation and relevant input, raised as section 7
+  says.
 - When absence is an expected branch, use `-ErrorAction Ignore` and handle that branch explicitly. Not
   `SilentlyContinue`: it hides the error from the screen but still records it in `$Error`, so a profile that probes
   for absent things leaves `$Error` full on every load.
 - Return `$null` only when absence is part of the function contract; do not silently discard unexpected failures.
 - Validate user input at the parameter boundary with validation attributes or immediately after parsing it.
 
-## 7. External Commands and Working Directories
+## 7. Messages and Failure
+
+A script speaks to its caller as a cmdlet does, through PowerShell's own streams, after Microsoft's guidance to cmdlet
+authors ([Strongly encouraged development guidelines][ms-guide], [Types of cmdlet output][ms-output]). Each stream
+has one use, and the caller decides what is shown: every preference keeps the default PowerShell gives it, or the one
+the caller sets.
+
+- **A result is an output object** on the success stream, never text written to the console or the host. Microsoft
+  recommends `WriteObject` "instead of the System.Console.WriteLine or
+  System.Management.Automation.Host.PSHostUserInterface.WriteLine methods."
+- **What the script is doing goes to the verbose stream,** with `Write-Verbose`, Microsoft's place for "some detail
+  about what the cmdlet is doing". The caller sees it with `-Verbose`.
+- **A warning goes to the warning stream,** with `Write-Warning`, when the script "is about to perform an operation
+  that might have an unintended result". The caller sees it unless they say otherwise.
+- **A diagnostic goes to the debug stream,** with `Write-Debug`, for when "a developer or product support engineer
+  must understand what has corrupted the cmdlet operation".
+- **Progress is shown only for a long operation whose progress the script can compute,** as a download's, with
+  `Write-Progress`. Microsoft asks it of "Cmdlet operations that take a long time to complete and that cannot run in
+  the background". A command whose results show as they arrive needs none: the PowerShell Committee ruled so for
+  Test-Connection, 2019-05-08 ([PowerShell/PowerShell#6768][test-connection]).
+- **Nothing goes to the information stream or the host.** Microsoft's guidance to cmdlet authors never names the
+  information stream, and no cmdlet that ships with PowerShell narrates there. When Test-Connection did, in
+  PowerShell 6, the PowerShell Committee ruled that it emit an object for each reply instead. A cmdlet "should not
+  bypass the host" unless it draws a graphical interface, and the analyzer refuses `Write-Host`.
+- **The defaults are the caller's.** A script sets none of `$VerbosePreference`, `$WarningPreference`,
+  `$InformationPreference`, `$DebugPreference` or `$ProgressPreference`, and turns no stream on by force with its
+  common parameter. The one preference it sets is `$ErrorActionPreference`, below.
+
+### Errors
+
+A script catches every error, stops, and lets its caller decide what the error does to them. It notes its caller's
+error action, sets `Stop` for its own work, and runs that work inside `try` and `catch`. In the `catch` it puts its
+caller's error action back, reports the error with `$PSCmdlet.WriteError`, and exits 1. A caller who continues on
+error continues; one who silences errors hears nothing, though `$Error` keeps the record; one who stops on error
+stops, and their own `try` catches it. Run as a process, the script exits 1.
+
+```powershell
+[CmdletBinding()]
+param()
+
+$callerErrorAction = $ErrorActionPreference
+$ErrorActionPreference = 'Stop'
+
+try {
+    if (-not $IsWindows) {
+        throw [System.Management.Automation.ErrorRecord]::new(
+            [System.InvalidOperationException]::new('This script requires Windows.'),
+            'RequiresWindows',
+            [System.Management.Automation.ErrorCategory]::InvalidOperation,
+            $null)
+    }
+
+    # The script's work.
+}
+catch {
+    $caught = $_
+    $ErrorActionPreference = $callerErrorAction
+    $PSCmdlet.WriteError($caught)
+    exit 1
+}
+```
+
+- **`$PSCmdlet.WriteError`, not `Write-Error`.** Both honor the caller's error action, but `Write-Error` shows the
+  caller "Write-Error:" where `$PSCmdlet.WriteError` shows the script's name, and `Write-Error -Message` also trades
+  the error's own category for a generic one and leaves a second record in `$Error`.
+- **A refusal is an error record of the script's own,** with an id and a category, thrown inside the caught work, so
+  the `catch` reports it like any other error: the caller sees the script's name, the record's id and its category. A
+  thrown string reaches the caller as "Exception:", its message standing in for an id. Not
+  `$PSCmdlet.ThrowTerminatingError`: it skips the script's own `catch`, so the error never reaches the caller under
+  their error action, and the script never exits 1.
+- **A script with `begin`, `process` and `end` catches in each block,** since a `try` cannot span them. It checks its
+  requirements first, in `begin`, before any input is processed; an `exit` there skips `process` and `end`.
+
+### Common parameters
+
+The common parameters that work through a preference variable, `-Verbose`, `-Debug`, `-ErrorAction`,
+`-WarningAction`, `-InformationAction`, `-ProgressAction`, `-WhatIf` and `-Confirm`, reach the scripts and compiled
+cmdlets a script calls on their own. They do not reach a script module's functions, which see only global settings
+([PowerShell/PowerShell#4568][preferences-in-modules]), nor jobs and other runspaces. A script passes them to those
+itself, as `-WhatIf:$WhatIfPreference`: without it, a module function makes the change a user ran with `-WhatIf`.
+The other common parameters, the `-*Variable` ones, `-OutBuffer` and `-PipelineVariable`, belong to the one command
+they are given to ([about_CommonParameters][parameters]).
+
+### Native programs
+
+PowerShell reads what a native program writes in the console's code page, the OEM one at a Windows console, so text
+beyond ASCII is lost: an em dash arrives as three other characters. A script that reads a program's output reads it
+through .NET's `Process`, with `StandardOutputEncoding` and `StandardErrorEncoding` set to UTF-8 and the program's
+standard input closed. It never changes the console's code page, and calls no Win32 API to write to the console.
+
+```powershell
+$start = [System.Diagnostics.ProcessStartInfo]::new((Get-Command -Name gh -CommandType Application).Source)
+$start.ArgumentList.Add('--version')
+$start.WorkingDirectory = (Get-Location -PSProvider FileSystem).ProviderPath
+$start.UseShellExecute = $false
+$start.RedirectStandardInput = $true
+$start.RedirectStandardOutput = $true
+$start.RedirectStandardError = $true
+$start.StandardOutputEncoding = [System.Text.UTF8Encoding]::new($false)
+$start.StandardErrorEncoding = [System.Text.UTF8Encoding]::new($false)
+
+$process = [System.Diagnostics.Process]::Start($start)
+$process.StandardInput.Close()
+$errorRead = $process.StandardError.ReadToEndAsync()
+$output = $process.StandardOutput.ReadToEnd()
+$process.WaitForExit()
+$errorText = $errorRead.GetAwaiter().GetResult()
+$exitCode = $process.ExitCode
+```
+
+### References
+
+Microsoft's [Strongly encouraged development guidelines][ms-guide], [Types of cmdlet output][ms-output],
+[about_CommonParameters][parameters], [about_Preference_Variables][preferences] and
+[about_Output_Streams][output-streams]; [PowerShell/PowerShell#6768][test-connection], the PowerShell Committee's
+ruling on Test-Connection; [PowerShell/PowerShell#4568][preferences-in-modules], a script module's functions and their
+callers' preferences.
+
+## 8. External Commands and Working Directories
 
 Prefer PowerShell APIs and cmdlets for filesystem and process operations. External dependencies must be explicit and
 minimal. Keep working-directory changes local to the operation that requires them.
@@ -144,7 +265,7 @@ minimal. Keep working-directory changes local to the operation that requires the
 A launcher that invokes Bash must not acquire general Bash dependencies. Bash dependencies are limited to commands whose
 names begin with `git-`; PowerShell launchers should use native PowerShell and Windows commands instead.
 
-## 8. Formatting
+## 9. Formatting
 
 - Use four spaces for indentation.
 - Use BSD braces consistently.
@@ -157,7 +278,7 @@ names begin with `git-`; PowerShell launchers should use native PowerShell and W
 - Avoid one-line expressions when a block makes control flow clearer.
 - Preserve argument quoting and array structure; do not use `Invoke-Expression` for command construction.
 
-## 9. Comments and Help
+## 10. Comments and Help
 
 Script-level comment-based help documents the command contract. Function comments are required for exported module
 functions and recommended for non-obvious private helpers.
@@ -165,7 +286,7 @@ functions and recommended for non-obvious private helpers.
 Comments should explain why the code has a non-obvious shape, especially when it works around native command parsing,
 Windows Terminal behavior, transcript naming, or path semantics. Keep implementation narration out of comments.
 
-## 10. Validation
+## 11. Validation
 
 Every change is followed by a focused check before further edits:
 
@@ -179,3 +300,11 @@ Every change is followed by a focused check before further edits:
 
 A launcher should be validated without invoking its external interactive session unless the test specifically
 requires it.
+
+[ms-guide]: https://learn.microsoft.com/powershell/scripting/developer/cmdlet/strongly-encouraged-development-guidelines
+[ms-output]: https://learn.microsoft.com/powershell/scripting/developer/cmdlet/types-of-cmdlet-output
+[parameters]: https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_commonparameters
+[preferences]: https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_preference_variables
+[output-streams]: https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_output_streams
+[test-connection]: https://github.com/PowerShell/PowerShell/issues/6768
+[preferences-in-modules]: https://github.com/PowerShell/PowerShell/issues/4568

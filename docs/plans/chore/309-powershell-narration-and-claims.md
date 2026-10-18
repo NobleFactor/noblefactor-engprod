@@ -1,7 +1,7 @@
 ---
 title: "The PowerShell style guide narrates as Microsoft's guidance does, and agent-rules requires labeled claims"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/309
-status: approved
+status: active
 created: 2026-10-17
 updated: 2026-10-17
 ---
@@ -102,8 +102,12 @@ Section 7, "Messages and failure", after section 6, "Error Handling", sections 7
    as a cmdlet would, with `$PSCmdlet.WriteError` under the caller's error action, so the caller sees the script's
    name and the error's own category, and exits 1. A caller who continues on error continues, one who silences errors
    hears nothing, and one who stops on error stops. Microsoft: "When a non-terminating error occurs, the cmdlet calls
-   the ... WriteError method to send an error record to the error data stream." ([output]) Phase 2 settles, with a
-   sample, how a refusal is written so that it names the script rather than "Exception:".
+   the ... WriteError method to send an error record to the error data stream." ([output]) A refusal is an error
+   record of the script's own, with an id and a category, thrown inside the caught work (proposed, phase 2): the
+   `catch` reports it like any other error, and the caller sees the script's name, `RequiresWindows` and
+   `InvalidOperation`, where a thrown string shows "Exception:" with its message for an id.
+   `$PSCmdlet.ThrowTerminatingError` is not the way: it skips the script's own `catch`, so the error never reaches the
+   caller under their error action and the script never exits 1 (all seen 2026-10-17, each in a fresh session).
 8. **The defaults are the caller's.** A script sets none of `$VerbosePreference`, `$WarningPreference`,
    `$InformationPreference`, `$DebugPreference` or `$ProgressPreference`, and turns no stream on by force. The one
    preference it sets is section 6's `$ErrorActionPreference = 'Stop'`, for its own work, and it puts the caller's
@@ -150,7 +154,11 @@ exceptions. The document's `updated:` is the day it lands.
 
 ### Phase 2: The style guide
 
-- [ ] Requirement 1, with its references.
+- [x] Requirement 1, with its references: section 7, "Messages and Failure", sections 7 to 10 renumbered 8 to 11,
+  section 1's script configuration and section 6's first and fourth bullets brought to it, 2026-10-17. Its two examples
+  were run on this Mac as printed: the error example in fresh sessions, the caller under `Continue` (shown, exit
+  status 1), `SilentlyContinue` (recorded only) and `Stop` (caught), and as a process (exit 1); the process example
+  read gh's output, exit code 0. Reviewed by the owner: "Let's commit."
 
 ### Phase 3: agent-rules
 
