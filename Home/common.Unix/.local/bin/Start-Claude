@@ -1,0 +1,1261 @@
+#!/usr/bin/env bash
+
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Noble Factor. All rights reserved.
+# Redistribution and use in source and binary forms, with or without modification, are permitted under the terms of the MIT License.
+
+# Start-Claude - Opens a tmux workspace onto a Claude Code conversation that claude runs in its background.
+
+[[ -r "$(dirname "$0")/Declare-BashScript" ]] || {
+    printf '%s: cannot find Declare-BashScript in %s\n' "${0##*/}" "$(dirname "$0")" >&2
+    exit 72 # EX_OSFILE
+}
+# shellcheck source=Declare-BashScript
+source "$(dirname "$0")/Declare-BashScript" "$0" \
+    "continue,detach,directory:,help,no-remote-control,resume:,schedule:,shell-width-percent:" "cdC:hr:s:w:" "$@"
+require_nix
+require_command claude gh jq tmux
+
+# tmux starts claude's viewer by its path, whatever PATH the session's shell sets.
+claude_binary="$(command -v claude)" && readonly claude_binary
+
+# What this platform deploys for the script lives off PATH, in ../libexec/start-claude from this script's directory
+# (question 57), so that no file here branches on its platform (requirement 17).
+libexec_directory="$(dirname "$0")/../libexec/start-claude"
+readonly libexec_directory
+
+# The store's lock is taken with this platform's lock-store.sh: lockf on macOS and flock on Linux (requirement 17).
+[[ -r ${libexec_directory}/lock-store.sh ]] ||
+    error $EX_UNAVAILABLE "lock-store.sh, the store's lock, is required in ${libexec_directory}."
+# shellcheck source=/dev/null
+source "${libexec_directory}/lock-store.sh"
+
+# Whether the login keychain is locked, and its unlock, come from this platform's keychain.sh: macOS locks the keychain
+# in an ssh session, and Linux has none to unlock (requirement 19).
+[[ -r ${libexec_directory}/keychain.sh ]] ||
+    error $EX_UNAVAILABLE "keychain.sh, the login keychain's check, is required in ${libexec_directory}."
+# shellcheck source=/dev/null
+source "${libexec_directory}/keychain.sh"
+
+###########
+# Functions
+###########
+
+## Name composition
+
+# repository_name prints the name of the repository a directory holds, as its origin names it.
+#
+# A linked worktree's directory is decorated, as devlore-cli.docker.devlore-package is, and its origin keeps one
+# repository from reading as several. With no origin, the name is the directory's own.
+#
+# Parameters:
+#   - `$1`: the directory, the root of a clone (requirement 1).
+#
+# Returns:
+#   - 0.
+function repository_name {
+    local directory="$1" url
+
+    url="$(git -C "$directory" config --get remote.origin.url 2>/dev/null || true)"
+    basename -s .git "${url:-$directory}"
+}
+
+## The schedule
+
+# repository_slug prints the `<owner>/<repository>` that GitHub knows a directory's repository by.
+#
+# A bare `--schedule` number means the startup directory's repository, and `--schedule new` opens the schedule there.
+#
+# Parameters:
+#   - `$1`: the directory.
+#
+# Returns:
+#   - 0; 1 when the directory's origin is not on GitHub.
+function repository_slug {
+    local directory="$1" url
+
+    url="$(git -C "$directory" config --get remote.origin.url 2>/dev/null || true)"
+    url="${url%.git}"
+    [[ "$url" =~ github\.com[:/]([^/]+/[^/]+)$ ]] || return 1
+
+    printf '%s\n' "${BASH_REMATCH[1]}"
+}
+
+# schedule_fields prints a schedule's title, link and labels, separated by tabs, from the schedule's own repository.
+#
+# Parameters:
+#   - `$1`: the repository, `<owner>/<repository>`.
+#   - `$2`: the issue's number.
+#
+# Returns:
+#   - 0; gh's status when the issue cannot be read, with what gh wrote, which says why, in place of the fields.
+function schedule_fields {
+    local slug="$1" number="$2"
+
+    gh issue view "$number" --repo "$slug" --json title,url,labels \
+        --jq '[.title, .url, ([.labels[].name] | join(","))] | @tsv' 2>&1
+}
+
+## The store
+
+# One entry per schedule, ${XDG_STATE_HOME:-~/.local/state}/start-claude/<owner>/<repository>/<number>, holds what
+# nothing can compute: on its one line, the short id of the background session claude runs the schedule's conversation
+# in, which claude keeps across /clear, or a conversation's id, until a start puts that conversation in claude's
+# background (requirement 21). A conversation joins a schedule only through the store, never through its name, and
+# Claude Code's files are read only for a transcript's presence and age.
+
+# has_transcript reports whether a conversation's transcript is in any project folder.
+#
+# Parameters:
+#   - `$1`: the conversation's id.
+#
+# Returns:
+#   - 0 when it is; 1 when it is not.
+function has_transcript {
+    local found_list=("${config_directory}"/projects/*/"$1".jsonl)
+
+    [[ -f ${found_list[0]} ]]
+}
+
+# store_entries prints the path of every entry in the store, one per line.
+#
+# An entry is named for its schedule's number alone: a lock, a temporary file or anything else beside it is not one.
+#
+# Parameters:
+#   - none.
+#
+# Returns:
+#   - 0.
+function store_entries {
+    local entry
+
+    for entry in "${store_root}"/*/*/*; do
+        [[ -f "$entry" && "${entry##*/}" =~ ^[0-9]+$ ]] || continue
+        printf '%s\n' "$entry"
+    done
+}
+
+# key_of prints the key of the schedule an entry's path names, `<owner>/<repository>#<number>`.
+#
+# Parameters:
+#   - `$1`: the entry's path.
+#
+# Returns:
+#   - 0.
+function key_of {
+    local path="${1#"${store_root}/"}"
+
+    printf '%s#%s\n' "${path%/*}" "${path##*/}"
+}
+
+# session_of prints the id an entry holds: a background session's short id, or a conversation's id.
+#
+# Parameters:
+#   - `$1`: the entry's path.
+#
+# Returns:
+#   - 0; 1 when the entry cannot be read or holds neither.
+function session_of {
+    local id=""
+
+    { IFS= read -r id || [[ -n $id ]]; } 2>/dev/null <"$1" || return 1
+    [[ "$id" =~ ^[0-9a-f]{8}((-[0-9a-f]{4}){3}-[0-9a-f]{12})?$ ]] || return 1
+    printf '%s\n' "$id"
+}
+
+# background_id_of prints the short id a session's id comes to, so that two ids of one session compare equal: a
+# background session's own id as it is, and a conversation's id as the background session claude runs it in, or else
+# as its first eight characters, the id a start in claude's background gives it (requirement 21).
+#
+# Parameters:
+#   - `$1`: the id.
+#
+# Returns:
+#   - 0.
+function background_id_of {
+    local wanted="$1" session kind handle
+
+    if [[ $wanted =~ ^[0-9a-f]{8}$ ]]; then
+        printf '%s\n' "$wanted"
+        return 0
+    fi
+
+    while IFS=$'\t' read -r session kind handle _; do
+        [[ $kind == background && $session == "$wanted" ]] || continue
+        printf '%s\n' "$handle"
+        return 0
+    done <<<"$instances"
+
+    printf '%s\n' "${wanted:0:8}"
+}
+
+# schedule_holding prints the key of a schedule other than this launch's whose entry holds a session (rule 4).
+#
+# Parameters:
+#   - `$1`: the session's id: a background session's short id, or a conversation's id.
+#
+# Returns:
+#   - 0 when one does; 1 when none does.
+function schedule_holding {
+    local entry held wanted
+
+    wanted="$(background_id_of "$1")"
+
+    while IFS= read -r entry; do
+        [[ "$entry" != "$store_entry" ]] || continue
+        held="$(session_of "$entry" || true)"
+        [[ -n $held && "$(background_id_of "$held")" == "$wanted" ]] || continue
+        key_of "$entry"
+        return 0
+    done < <(store_entries)
+
+    return 1
+}
+
+# schedule_recording prints the key of the schedule whose entry holds a session (requirement 7).
+#
+# Parameters:
+#   - `$1`: the session's id: a background session's short id, or a conversation's id.
+#
+# Returns:
+#   - 0, printing nothing when no entry holds it: the session is on no schedule.
+function schedule_recording {
+    local entry held wanted
+
+    wanted="$(background_id_of "$1")"
+
+    while IFS= read -r entry; do
+        held="$(session_of "$entry" || true)"
+        [[ -n $held && "$(background_id_of "$held")" == "$wanted" ]] || continue
+        key_of "$entry"
+        return 0
+    done < <(store_entries)
+}
+
+# store_write records the schedule's background session as its entry, written whole so that no reader finds half of
+# it.
+#
+# Parameters:
+#   - none: the entry is `store_entry`, and the background session `background_id`.
+#
+# Returns:
+#   - 0; it does not return when the entry cannot be written: the script exits 73, EX_CANTCREAT.
+function store_write {
+    local failure
+
+    store_temporary="${store_entry}.$$.tmp"
+    failure="$({ printf '%s\n' "$background_id" >"$store_temporary" &&
+        mv "$store_temporary" "$store_entry"; } 2>&1)" ||
+        error $EX_CANTCREAT "The store cannot be written: ${store_entry}. ${failure##*: }."
+    store_temporary=""
+}
+
+## The store's lock
+
+# lock_store takes the store's lock for a schedule on descriptor 9, which the caller holds open on the lock file.
+#
+# The lock ends when the descriptor closes, as the launch attaches or the script ends, so it never goes stale. A
+# launch waits up to 10 seconds for it (requirement 13, question 41). take_store_lock, from this platform's
+# lock-store.sh, takes it (requirement 17).
+#
+# Parameters:
+#   - none.
+#
+# Returns:
+#   - 0; it does not return when another launch holds the lock for 10 seconds: the script exits 75, EX_TEMPFAIL.
+function lock_store {
+    take_store_lock || error $EX_TEMPFAIL "Another launch holds the store's lock for ${schedule_key}."
+}
+
+## The exit handler
+
+# on_exit undoes what the launch changed and never handed over: a temporary store file, and a tmux session never
+# attached.
+#
+# The helper's traps run it on any exit or signal. A session attached was handed over first, so nothing is left to
+# undo when its client leaves.
+#
+# Parameters:
+#   - none.
+#
+# Returns:
+#   - 0.
+# shellcheck disable=SC2329 # Set-Traps runs it, by name.
+function on_exit {
+    [[ -z "${store_temporary:-}" ]] || rm -f "$store_temporary"
+    [[ -z "${made_session:-}" ]] || tmux kill-session -t "$made_session" 2>/dev/null || true
+}
+
+## tmux
+
+# A tmux session is addressed by its id: tmux keeps "." and ":" in a name but cannot address a session by such a name,
+# and issue titles carry colons (phase 18). No tmux session is ever found again: each launch opens its own.
+
+# tmux_session_name prints a tmux session's name: the schedule's repository and number, then the session's own id, as
+# in `devlore-cli#916 $34`, since tmux refuses a second session of one name and never reuses an id while its server
+# runs (question 78). Start-Claude.ps1 gives a psmux session the same name, which psmux needs: it loses a session whose
+# name carries "/" or "|" (personal#273's plan, question 1). A conversation on no schedule names it for its id.
+#
+# Parameters:
+#   - `$1`: the tmux session's id.
+#
+# Returns:
+#   - 0.
+function tmux_session_name {
+    local id="$1"
+
+    if [[ ${schedule_key:-} ]]; then
+        printf '%s %s\n' "${schedule_key#*/}" "$id"
+    else
+        printf '%s %s\n' "${chosen:-$background_id}" "$id"
+    fi
+}
+
+## What runs
+
+# running_conversations sets the variable it is named to the sessions claude lists, one per line, separated by tabs:
+# the conversation's id; its kind, interactive or background; the process id of an interactive one or the short id of a
+# background one; the directory it runs in; and its state, `stopped` for a background session claude has stopped.
+#
+# Stopped and finished sessions are listed too: a stopped background session is still the schedule's, and `claude
+# attach` starts it again (requirement 21). It runs in the script's own shell, never in a command substitution, so
+# that a refusal ends the script with one report.
+#
+# Parameters:
+#   - `$1`: the name of the variable to set.
+#
+# Returns:
+#   - 0; it does not return when claude cannot list them: the script exits 69, EX_UNAVAILABLE, or 65, EX_DATAERR, when
+#     the list is not what this script reads.
+# shellcheck disable=SC2034 # listed is a nameref: the assignment sets the caller's variable.
+function running_conversations {
+    local -n listed="$1"
+    local listing
+
+    listing="$("$claude_binary" agents --json --all </dev/null 2>/dev/null)" ||
+        error $EX_UNAVAILABLE "claude cannot list its sessions: claude agents --json --all failed."
+    listed="$(jq --raw-output '.[] | [.sessionId, .kind, (if .kind == "background" then .id else "\(.pid)" end),
+        .cwd // "", .state // ""] | @tsv' <<<"$listing" 2>/dev/null)" ||
+        error $EX_DATAERR "claude's list of sessions is not the JSON this script reads: claude agents --json --all."
+}
+
+# place_of prints where claude lists a session, as fields separated by tabs: `background`, the background session's
+# short id, its state and its conversation's id, for one claude runs in its background, running or stopped; or
+# `interactive` and the process id, for a conversation a claude runs in the foreground (requirement 21).
+#
+# Parameters:
+#   - `$1`: the id: a background session's short id, or a conversation's id.
+#
+# Returns:
+#   - 0 when claude lists it; 1 when it does not.
+function place_of {
+    local wanted="$1" session kind handle state foreground=""
+
+    while IFS=$'\t' read -r session kind handle _ state; do
+        if [[ $kind == background ]]; then
+            [[ $handle == "$wanted" || $session == "$wanted" ]] || continue
+            printf 'background\t%s\t%s\t%s\n' "$handle" "$state" "$session"
+            return 0
+        fi
+
+        if [[ -n $session && $session == "$wanted" && -z $foreground ]]; then
+            foreground="$handle"
+        fi
+    done <<<"$instances"
+
+    [[ -n $foreground ]] || return 1
+    printf 'interactive\t%s\n' "$foreground"
+}
+
+# resolve_resume sets the variable it is named to the conversation a --resume argument names, as claude --resume takes
+# it but its picker (personal#273's question 12): a conversation's id, a UUID; a background session's short id, as
+# claude lists it; the absolute path to a conversation's transcript; or a name, matched whole against the names claude
+# lists for its background sessions and the last name each transcript records. It runs in the script's own shell,
+# never in a command substitution, so that a refusal ends the script with one report.
+#
+# Parameters:
+#   - `$1`: the name of the variable to set.
+#   - `$2`: the argument.
+#
+# Returns:
+#   - 0; it does not return when the argument names no conversation, or a name names several: the script exits 66,
+#     EX_NOINPUT, or 65, EX_DATAERR; or 69, EX_UNAVAILABLE, when claude cannot list its sessions.
+# shellcheck disable=SC2034 # resolved is a nameref: each assignment sets the caller's variable.
+function resolve_resume {
+    local -n resolved="$1"
+    local wanted="$2" lowered place file title session listing escaped
+    local -a match_list=()
+
+    lowered="${wanted,,}"
+
+    # A conversation's id: a session claude lists, or a transcript on this machine. A background session no prompt has
+    # reached has no transcript yet, and claude --resume takes its id all the same (seen 2026-10-19).
+    if [[ $lowered =~ ^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$ ]]; then
+        place_of "$lowered" >/dev/null || has_transcript "$lowered" ||
+            error $EX_NOINPUT "No conversation ${lowered}: claude lists no session by that id, and there is no" \
+                "${lowered}.jsonl under ${config_directory}/projects"
+        resolved="$lowered"
+        return 0
+    fi
+
+    # A background session's short id, as claude lists it.
+    if [[ $lowered =~ ^[0-9a-f]{8}$ ]]; then
+        place="$(place_of "$lowered")" && [[ $place == background$'\t'* ]] ||
+            error $EX_NOINPUT "No background session ${lowered}: claude agents --json --all lists none."
+        resolved="${place##*$'\t'}"
+        return 0
+    fi
+
+    # A transcript's absolute path: its file is named for its conversation's id.
+    if [[ $wanted == /*.jsonl ]]; then
+        [[ -f $wanted ]] || error $EX_NOINPUT "No transcript: ${wanted}"
+        file="${wanted##*/}"
+        file="${file%.jsonl}"
+        [[ $file =~ ^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$ ]] ||
+            error $EX_DATAERR "A transcript is named for its conversation's id, a UUID: ${wanted}"
+        resolved="$file"
+        return 0
+    fi
+
+    # A name, matched whole: claude's names for its background sessions, since a session no prompt has reached has no
+    # transcript yet, and the last name each transcript records, since a name can change.
+    listing="$("$claude_binary" agents --json --all </dev/null 2>/dev/null)" ||
+        error $EX_UNAVAILABLE "claude cannot list its sessions: claude agents --json --all failed."
+
+    while IFS= read -r session; do
+        [[ -z $session ]] || match_list+=("$session")
+    done < <(jq --raw-output --arg name "$wanted" \
+        '.[] | select(.kind == "background" and .name == $name) | .sessionId' <<<"$listing" 2>/dev/null)
+
+    escaped="$(jq --null-input --compact-output --arg name "$wanted" '$name')"
+
+    while IFS= read -r file; do
+        title="$(grep -F '"type":"custom-title"' "$file" | tail -n 1 |
+            jq --raw-output '.customTitle // empty' 2>/dev/null)"
+        [[ $title == "$wanted" ]] || continue
+        session="${file##*/}"
+        match_list+=("${session%.jsonl}")
+    done < <(grep -l -r -F --include='*.jsonl' "\"customTitle\":${escaped}" "${config_directory}/projects" 2>/dev/null)
+
+    # A session claude lists and its transcript are one conversation.
+    mapfile -t match_list < <(printf '%s\n' "${match_list[@]}" | sed '/^$/d' | sort -u)
+
+    case ${#match_list[@]} in
+        0)
+            error $EX_NOINPUT "No conversation named ${wanted}: claude lists no background session by that name, and" \
+                "no transcript under ${config_directory}/projects records it."
+            ;;
+        1)
+            resolved="${match_list[0]}"
+            ;;
+        *)
+            error $EX_DATAERR "Several conversations are named ${wanted}: ${match_list[*]}. Give one's id."
+            ;;
+    esac
+}
+
+# conversation_running_in prints the conversation claude lists in a directory, in its background or in the foreground:
+# of several, the one whose transcript was written last, which claude's own --continue would pick (phase 18).
+#
+# Parameters:
+#   - `$1`: the directory, by its physical path.
+#
+# Returns:
+#   - 0 when claude lists one there; 1 when it lists none.
+function conversation_running_in {
+    local wanted="$1" id directory transcript newest="" newest_transcript=""
+    local -a transcript_list
+
+    while IFS=$'\t' read -r id _ _ directory _; do
+        [[ -n $id && "$(cd -- "$directory" 2>/dev/null && pwd -P)" == "$wanted" ]] || continue
+        transcript_list=("${config_directory}"/projects/*/"${id}".jsonl)
+        transcript="${transcript_list[0]}"
+
+        # A conversation with a transcript outranks one with none yet, and of two transcripts, the later one wins.
+        if [[ -z $newest ]] || { [[ -f $transcript ]] &&
+            { [[ ! -f $newest_transcript ]] || [[ $transcript -nt $newest_transcript ]]; }; }; then
+            newest="$id"
+            newest_transcript="$transcript"
+        fi
+    done <<<"$instances"
+
+    [[ -n $newest ]] || return 1
+    printf '%s\n' "$newest"
+}
+
+# meet_running meets a session where claude lists it: a background session, running or stopped, becomes the launch's,
+# and a conversation a claude runs in the foreground is refused (requirement 21).
+#
+# Parameters:
+#   - `$1`: the id: a background session's short id, or a conversation's id.
+#
+# Returns:
+#   - 0, with `background_id`, `background_state` and `background_session` set for a background session, or left empty
+#     when claude runs the conversation nowhere; it does not return for one a claude runs in the foreground, which it
+#     refuses with 75.
+function meet_running {
+    local id="$1" kind handle state session
+
+    IFS=$'\t' read -r kind handle state session < <(place_of "$id") || return 0
+
+    if [[ $kind == background ]]; then
+        background_id="$handle"
+        background_state="$state"
+        background_session="$session"
+    else
+        refuse_interactive "$id" "$handle"
+    fi
+}
+
+# refuse_interactive stops the launch for a conversation a claude runs in the foreground, which Start-Claude cannot
+# open, naming that claude and the way to move the conversation into claude's background whole. A claude killed outright
+# can leave its record behind: one whose process is gone is passed over.
+#
+# Parameters:
+#   - `$1`: the conversation's id.
+#   - `$2`: the claude's process id.
+#
+# Returns:
+#   - 0 when the process is gone; it does not return otherwise: the script exits 75, EX_TEMPFAIL.
+function refuse_interactive {
+    local id="$1" process="$2" terminal started
+
+    ps -p "$process" >/dev/null 2>&1 || return 0
+    terminal="$(ps -o tty= -p "$process" 2>/dev/null | tr -d ' ')"
+    [[ $terminal != '??' && $terminal != '?' ]] || terminal=""
+    started="$(ps -o lstart= -p "$process" 2>/dev/null | sed 's/^ *//; s/ *$//')"
+
+    error $EX_TEMPFAIL "Conversation ${id} runs in claude's process ${process} on ${host}, terminal" \
+        "${terminal:-none}, started ${started:-at a time ps does not say}, in the foreground, where Start-Claude" \
+        "cannot open it. Exit it there with /exit, or end it with: kill -TERM ${process}. Then run the same command" \
+        "again: it resumes the conversation in claude's background under its own id. /bg would move it under a new" \
+        "id, which the store does not hold."
+}
+
+# attach_to attaches the terminal to a tmux session, or switches to it from inside tmux, and only then sets the
+# session's destroy-unattached, so that it ends when its last client leaves: set on a session no client has attached,
+# tmux ends it at once (question 77; seen 2026-10-15).
+#
+# When the client leaves, the launch prints the background session's short id on standard output, as claude --bg
+# prints it (personal#273's question 11). tmux draws through the descriptor it reads from, so its own words, such as
+# "[exited]", go to standard error, and standard output carries the id alone.
+#
+# Parameters:
+#   - `$1`: the session's id.
+#
+# Returns:
+#   - it does not return: the script prints the background session's id and exits 0, or ends with tmux's failure.
+function attach_to {
+    local id="$1"
+
+    # Under a schedule, descriptor 9 holds the store's lock: closed here, it is released before tmux takes over.
+    exec 9>&-
+
+    # Switched to from inside tmux, the session leaves the one the client was in with no client, and tmux ends that one
+    # when it is Start-Claude's, as it does after a detach (seen 2026-10-15). A title piped to --schedule new leaves
+    # standard input at the pipe's end: tmux attaches through the controlling terminal, which the launch found before
+    # anything started, named for its device, since it refuses /dev/tty, and opened for reading and writing, since it
+    # draws through the descriptor it reads from (question 73).
+    if [[ -n "${TMUX:-}" ]]; then
+        tmux switch-client -t "$id" \; set-option -t "$id" destroy-unattached on >&2
+    elif [[ ! -t 0 ]]; then
+        tmux attach-session -t "$id" \; set-option -t "$id" destroy-unattached on <>"$(terminal_device)" >&2
+    else
+        tmux attach-session -t "$id" \; set-option -t "$id" destroy-unattached on >&2
+    fi
+
+    printf '%s\n' "$background_id"
+    exit 0
+}
+
+# leave_detached ends a --detach launch: claude runs the background session, available on this host, and no tmux
+# session is opened (requirement 21). It prints the background session's short id on standard output, as claude --bg
+# prints it (personal#273's question 11).
+#
+# Parameters:
+#   - none.
+#
+# Returns:
+#   - it does not return: the script prints the background session's id and exits 0.
+function leave_detached {
+    local attach_command
+
+    # Under a schedule, descriptor 9 holds the store's lock: closed here, it is released.
+    exec 9>&-
+
+    # After --schedule new the same command would open another schedule, so the note names the one it opened
+    # (question 59).
+    if [[ ${schedule_argument:-} == new ]]; then
+        attach_command="$(printf '%q ' Start-Claude --directory "$startup_directory" --schedule "$schedule_key")"
+        note "Detached: claude runs background session ${background_id}, which Remote Control lists as" \
+            "${session_name}. To open it in a terminal, run ${attach_command% }."
+    else
+        note "Detached: claude runs background session ${background_id}, which Remote Control lists as" \
+            "${session_name}. To open it in a terminal, run the same command without --detach."
+    fi
+
+    printf '%s\n' "$background_id"
+    exit 0
+}
+
+## The terminal
+
+# has_terminal reports whether there is a terminal to attach a session to: standard input is one, the controlling
+# terminal opens by its device's name, as it does when a title is piped to --schedule new, or the script runs inside
+# tmux, whose client switches to it.
+#
+# Parameters:
+#   - none.
+#
+# Returns:
+#   - 0 when there is one; 1 when there is none.
+function has_terminal {
+    local device
+
+    [[ -n ${TMUX:-} || -t 0 ]] && return 0
+    device="$(terminal_device)" && (exec <>"$device") 2>/dev/null
+}
+
+# terminal_device prints the device of the launch's controlling terminal, /dev/ttys010 on macOS or /dev/pts/3 on
+# Linux, as ps names it.
+#
+# tmux attaches only through a terminal named for its device: handed /dev/tty, it stops with "open terminal failed:
+# can't use /dev/tty" (question 73).
+#
+# Parameters:
+#   - none.
+#
+# Returns:
+#   - 0 and the device's path; 1 and nothing when the launch has no controlling terminal, which ps names ? or ??.
+function terminal_device {
+    local name
+
+    name="$(ps -o tty= -p $$ 2>/dev/null)" || return 1
+    name="${name//[[:space:]]/}"
+    [[ -n $name && $name != \?* ]] || return 1
+    printf '/dev/%s\n' "$name"
+}
+
+# launch_arguments prints this launch's own options and arguments as a command line that starts it carries them, each
+# quoted for the shell that reads it and preceded by a space.
+#
+# The startup directory goes as its full path, since ssh and mosh start a command in the home directory.
+#
+# Parameters:
+#   - `$@`: the arguments passed through to claude.
+#
+# Returns:
+#   - 0.
+function launch_arguments {
+    local argument
+    local -a argument_list=(--directory "$startup_directory")
+
+    [[ ! $schedule_argument ]] || argument_list+=(--schedule "$schedule_argument")
+    [[ ! $resume_argument ]] || argument_list+=(--resume "$resume_argument")
+    ((! continue_argument)) || argument_list+=(--continue)
+    ((shell_width_percent == default_shell_width_percent)) ||
+        argument_list+=(--shell-width-percent "$shell_width_percent")
+    (($# == 0)) || argument_list+=(-- "$@")
+
+    for argument in "${argument_list[@]}"; do
+        printf ' %q' "$argument"
+    done
+}
+
+# ssh_command_line prints the ssh command line that runs a command on a host, the remote command quoted as one argument:
+# in single quotes, each single quote in it closed, escaped and reopened.
+#
+# As one argument, the command's options cannot be taken for ssh's own, as Blink Shell's ssh takes an unquoted
+# --directory (question 71). The shell on the host reads the command's arguments as the command quotes them.
+#
+# Parameters:
+#   - `$1`: the host's name.
+#   - `$2`: the command, its arguments quoted for the shell on the host.
+#
+# Returns:
+#   - 0.
+function ssh_command_line {
+    local command="$2" quote="'"
+
+    printf "ssh -t %s '%s'" "$1" "${command//$quote/$quote\\$quote$quote}"
+}
+
+# refuse_without_terminal stops a launch that has no terminal and no --detach, before anything is opened, named or
+# started, and offers the full command line for each way to start it: non-interactive, with --detach, and
+# interactive, in a terminal here, over ssh or over mosh (requirement 15).
+#
+# Each line carries this launch's own options and arguments, as launch_arguments quotes them, and the ssh line quotes
+# its command as one argument, as ssh_command_line does. --detach needs Remote Control, so its line leaves
+# --no-remote-control out.
+#
+# Parameters:
+#   - `$@`: the arguments passed through to claude.
+#
+# Returns:
+#   - it does not return: the script exits 69, EX_UNAVAILABLE.
+function refuse_without_terminal {
+    local detach_line host_name terminal_line
+
+    detach_line="$(launch_arguments "$@")"
+    terminal_line="$detach_line"
+    ((remote_control)) || terminal_line=" --no-remote-control${terminal_line}"
+    host_name="${HOSTNAME:-$(hostname)}"
+
+    error 0 "No terminal to attach the session to; nothing was started."
+    note "Non-interactive, with no terminal: start it detached, for Remote Control:"
+    note "  ${script_name} --detach${detach_line}"
+    note "Interactive, with a terminal: in one here, over ssh, or over mosh for a link that drops:"
+    note "  ${script_name}${terminal_line}"
+    note "  $(ssh_command_line "$host_name" "${script_name}${terminal_line}")"
+    note "  mosh ${host_name} -- ${script_name}${terminal_line}"
+    note "See STARTING AND ATTACHING in ${script_name}(1)."
+    exit $EX_UNAVAILABLE
+}
+
+## The login keychain
+
+# refuse_locked_keychain stops a launch whose login keychain stays locked, before anything is opened, named or started:
+# on macOS gh and claude keep their logins in it, and with no terminal, or after security failed to unlock it, they
+# cannot read them (requirement 19). It offers the full command line for each way to start with a terminal, in which
+# the script asks for the keychain's password itself.
+#
+# Each line carries this launch's own options and arguments, as launch_arguments quotes them, and its --detach and
+# --no-remote-control as given; the ssh line quotes its command as one argument, as ssh_command_line does.
+#
+# Parameters:
+#   - `$1`: the message's first line, saying what kept the keychain locked.
+#   - `$2` and on: the arguments passed through to claude.
+#
+# Returns:
+#   - it does not return: the script exits 69, EX_UNAVAILABLE.
+function refuse_locked_keychain {
+    local host_name option_line="" reason="$1" terminal_line
+
+    shift
+    ((! detach)) || option_line+=" --detach"
+    ((remote_control)) || option_line+=" --no-remote-control"
+    terminal_line="${option_line}$(launch_arguments "$@")"
+    host_name="${HOSTNAME:-$(hostname)}"
+
+    error 0 "$reason"
+    note "gh and claude keep their logins in it. With a terminal, ${script_name} unlocks it, asking for its password:"
+    note "  ${script_name}${terminal_line}"
+    note "  $(ssh_command_line "$host_name" "${script_name}${terminal_line}")"
+    note "  mosh ${host_name} -- ${script_name}${terminal_line}"
+    note "See STARTING AND ATTACHING in ${script_name}(1)."
+    exit $EX_UNAVAILABLE
+}
+
+## claude's background
+
+# start_background starts a conversation in claude's background with `claude --bg`, and sets `background_id` to the
+# id claude prints (requirement 21). The session is named for the launch, has Remote Control unless --no-remote-control
+# was given, carries the schedule's variables through --settings (question 79), and takes the arguments passed through,
+# which it keeps.
+#
+# claude reads its own records: what it refuses, as a start in a folder it does not trust, is passed through in its own
+# words, and nothing is opened (question 79). A note it prints, as when it starts a copy of a conversation rather than
+# the conversation itself, is passed through too.
+#
+# Parameters:
+#   - `$@`: what to start: nothing for a new conversation, `--resume <id>` for a conversation claude runs nowhere, or
+#     `--continue`.
+#
+# Returns:
+#   - 0; it does not return when claude starts nothing: the script exits 69, EX_UNAVAILABLE, or 65, EX_DATAERR, when
+#     claude's words name no background session this script reads.
+function start_background {
+    local output
+    local -a argument_list=(--bg "$@" --name "$session_name")
+
+    # --remote-control takes an optional value, so it is given one explicitly. Left bare, it would absorb the first
+    # argument passed through that does not start with a dash (question 32).
+    ((! remote_control)) || argument_list+=(--remote-control "$session_name")
+    [[ -z ${environment_settings:-} ]] || argument_list+=(--settings "$environment_settings")
+    argument_list+=("${pass_through_list[@]}")
+
+    # claude runs without descriptor 9: a background service it starts would hold the store's lock for as long as the
+    # service lives (question 53).
+    output="$("$claude_binary" "${argument_list[@]}" </dev/null 2>&1 9>&-)" ||
+        error $EX_UNAVAILABLE "claude started nothing: ${output//$'\n'/ }"
+
+    [[ $output != note:* ]] || note "claude: ${output%%$'\n'*}"
+
+    background_id="$(sed -n -E 's/^[[:space:]]+claude attach ([0-9a-f]{8})([[:space:]].*)?$/\1/p' <<<"$output" |
+        head -n 1)"
+    [[ -n $background_id ]] ||
+        error $EX_DATAERR "claude's words name no background session this script reads: ${output//$'\n'/ }"
+    background_state=""
+}
+
+# wake_background starts a stopped background session again, for --detach, under its own id and with the options it
+# was started with: `claude --bg --resume` of its conversation's full id wakes it (seen 2026-10-15). Without --detach,
+# the viewer's `claude attach` starts it.
+#
+# Its note passes on claude's line that begins "backgrounded", its word that the session runs again, or else claude's
+# first line: when claude starts its background service first, its first line is "Starting background service" (seen
+# 2026-10-16; personal#273's plan, question 7).
+#
+# Parameters:
+#   - none: the session is `background_id`, and its conversation `background_session`.
+#
+# Returns:
+#   - 0; it does not return when claude wakes nothing: the script exits 69, EX_UNAVAILABLE.
+function wake_background {
+    local output said
+
+    output="$("$claude_binary" --bg --resume "$background_session" </dev/null 2>&1 9>&-)" ||
+        error $EX_UNAVAILABLE "claude did not start background session ${background_id} again: ${output//$'\n'/ }"
+    said="$(sed -n '/^backgrounded/{p;q;}' <<<"$output")"
+    note "claude: ${said:-${output%%$'\n'*}}"
+}
+
+## The workspace
+
+# open_workspace opens a new tmux session onto the launch's background session, and attaches to it: the viewer,
+# `claude attach`, beside a shell that carries the schedule's variables, which the viewer has no need of (requirement
+# 21). Leaving the viewer ends the tmux session; claude runs the background session on.
+#
+# Parameters:
+#   - none: the background session is `background_id`.
+#
+# Returns:
+#   - it does not return: it attaches, as attach_to does.
+function open_workspace {
+    local session_id viewer_pane
+    local -a environment_argument_list=()
+
+    if [[ ${schedule_key:-} ]]; then
+        environment_argument_list=(-e "NFEP_AGENT_SCHEDULE=${schedule_key}"
+            -e "NFEP_AGENT_SCHEDULE_URL=${schedule_url}")
+    fi
+
+    note "Opening ${session_name} onto claude's background session ${background_id}"
+
+    # Each assignment stands alone, so errexit stops the script when tmux fails: in an && list it would not, and the
+    # script would go on with no session. tmux runs without descriptor 9: a server it starts would hold the store's
+    # lock for as long as the server lives (question 53). The session is made under a name tmux picks, then given its
+    # own, which carries its id: the id is known only once it exists (question 78).
+
+    session_id="$(tmux new-session -d -P -F '#{session_id}' -c "$startup_directory" -- \
+        "$claude_binary" attach "$background_id" 9>&-)"
+    made_session="$session_id"
+    tmux rename-session -t "$session_id" "$(tmux_session_name "$session_id")"
+    viewer_pane="$(tmux list-panes -t "$session_id" -F '#{pane_id}' | head -1)"
+
+    # The pane runs the user's default shell, which is what split-window starts when handed no command.
+    tmux split-window -h -l "${shell_width_percent}%" -t "$session_id" -c "$startup_directory" \
+        "${environment_argument_list[@]}"
+
+    # Leaving the viewer ends its pane, and the hook, scoped to the viewer's pane by hook_pane, the pane the event is
+    # about, ends the session: the shell exiting on its own leaves it standing. The viewer's pane remains when it exits,
+    # dead, and the hook runs on pane-died rather than pane-exited: a pane that closed would take the session, and its
+    # hooks, with it when it is the last (phase 18).
+    tmux set-option -p -t "$viewer_pane" remain-on-exit on
+    tmux set-hook -t "$session_id" -a pane-died \
+        "if-shell -F '#{==:#{hook_pane},${viewer_pane}}' 'kill-session -t ${session_id}'"
+    tmux select-pane -t "$viewer_pane"
+
+    # The session exists, and is handed over: the exit handler leaves it.
+    made_session=""
+
+    attach_to "$session_id"
+}
+
+# arrive ends the launch at its background session: with --detach, the session runs, started again when it was stopped,
+# and nothing more opens; otherwise a new tmux session opens onto it (requirement 21).
+#
+# Parameters:
+#   - none.
+#
+# Returns:
+#   - it does not return: the script exits 0, or attaches.
+function arrive {
+    if ((detach)); then
+        [[ $background_state != stopped ]] || wake_background
+        leave_detached
+    fi
+
+    open_workspace
+}
+
+# Set before the arguments are read, as the helper asks.
+Set-Traps on_exit
+
+###########
+# Arguments
+###########
+
+declare -r synopsis="${script_name} [-C|--directory <directory>] [-w|--shell-width-percent <percent>]
+    [-d|--detach | --no-remote-control] -s|--schedule <schedule> [-r|--resume <conversation>] [-- <claude argument>...]
+${script_name} [-C|--directory <directory>] [-w|--shell-width-percent <percent>]
+    [-d|--detach | --no-remote-control] -r|--resume <conversation> [-- <claude argument>...]
+${script_name} [-C|--directory <directory>] [-w|--shell-width-percent <percent>]
+    [-d|--detach | --no-remote-control] -c|--continue [-- <claude argument>...]
+${script_name} -h|--help
+
+Opens a tmux session onto a Claude Code conversation that claude runs in its background: its viewer,
+claude attach, in the left pane, and a shell in the right. Each start opens a tmux session of its
+own, named for its schedule and its own tmux id, which ends when its last client leaves, and the
+conversation runs on in claude's background. --schedule opens the conversation of a schedule:
+<owner>/<repository>#<number>, a bare <number> in the startup directory's repository, or new, which
+opens one titled from standard input. --resume opens the conversation it names, as claude --resume
+takes it but its picker: its id, its background session's short id, its name, or its transcript's
+path, and given with --schedule puts it on that schedule; --continue opens the conversation claude lists in the startup
+directory, or else hands the directory to claude's own --continue, which starts a copy of the
+conversation it picks. A conversation claude runs nowhere is resumed in its background under its own
+id; one that a claude runs in the foreground is refused, with the way to move it. The conversation
+starts in the directory --directory names, or else the current one, which must be the root of a
+repository clone. Remote Control is on, under the conversation's name; --no-remote-control leaves it
+off. Start-Claude attaches your terminal to the tmux session; with no terminal it starts nothing,
+and prints the command lines that start it. --detach starts the conversation in claude's background,
+or wakes it, and opens no tmux session: the conversation is then available on this host, for Remote
+Control, or for the same command run later in a terminal, which after --schedule new it prints,
+naming the schedule it opened. On macOS, where gh and claude keep their logins in the login keychain,
+a locked keychain is unlocked from a terminal, and with none, --detach included, nothing starts. What
+claude refuses, as a start in a folder it does not trust, it says, and nothing starts. See STARTING
+AND ATTACHING in Start-Claude(1). Arguments after -- are passed through to a conversation the launch
+starts. It prints the background session's short id on standard output, the id claude --bg prints:
+with --detach at once, and otherwise when the tmux session's client leaves."
+
+eval set -- "$script_arguments"
+
+declare continue_argument=0
+declare -r default_shell_width_percent=40
+declare detach=0
+declare directory_argument=""
+declare remote_control=1
+declare resume_argument=""
+declare schedule_argument=""
+declare shell_width_percent=$default_shell_width_percent
+
+while :; do
+    case $1 in
+        -h | --help)
+            usage "$synopsis"
+            ;;
+        -c | --continue)
+            continue_argument=1
+            shift 1
+            ;;
+        -C | --directory)
+            directory_argument="$2"
+            shift 2
+            ;;
+        -d | --detach)
+            detach=1
+            shift 1
+            ;;
+        --no-remote-control)
+            remote_control=0
+            shift 1
+            ;;
+        -r | --resume)
+            resume_argument="$2"
+            shift 2
+            ;;
+        -s | --schedule)
+            schedule_argument="$2"
+            shift 2
+            ;;
+        -w | --shell-width-percent)
+            shell_width_percent="$2"
+            shift 2
+            ;;
+        --)
+            shift 1
+            break
+            ;;
+        *) error $EX_USAGE "Unrecognized option: $1" ;;
+    esac
+done
+
+if [[ ! "$shell_width_percent" =~ ^[0-9]+$ ]] || ((shell_width_percent < 1 || shell_width_percent > 99)); then
+    error $EX_USAGE "--shell-width-percent takes a percentage between 1 and 99: $shell_width_percent"
+fi
+
+# One way in (requirement 7): --schedule, --resume or --continue, or --resume with --schedule.
+ways=$((continue_argument))
+[[ ! $resume_argument && ! $schedule_argument ]] || ways=$((ways + 1))
+((ways == 1)) || error $EX_USAGE "Give one of --schedule, --resume and --continue, or --resume with --schedule."
+
+# A session left detached is reached through Remote Control, which --no-remote-control turns off (requirement 15).
+((! detach || remote_control)) || error $EX_USAGE "--detach leaves the session for Remote Control, which" \
+    "--no-remote-control turns off: give one or the other."
+
+if [[ $schedule_argument && $schedule_argument != new &&
+    ! $schedule_argument =~ ^([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+#)?[0-9]+$ ]]; then
+    error $EX_USAGE "--schedule takes <owner>/<repository>#<number>, a bare <number>, or new: ${schedule_argument}"
+fi
+
+# The arguments after --, passed through to a conversation this launch starts in claude's background, which keeps them.
+declare -a pass_through_list=("$@")
+readonly pass_through_list
+
+###########
+# Main
+###########
+
+## The startup directory: --directory names it, or else the current one
+
+# Its physical path, since claude files a conversation under the path it is handed: ~/Workspace/Personal is a
+# symlink to the checkout, and left logical, one repository would split across two project folders.
+
+startup_directory="$(cd -- "${directory_argument:-.}" 2>/dev/null && pwd -P)" ||
+    error $EX_NOINPUT "No such directory: ${directory_argument:-.}"
+
+# The root of a repository clone, or of a linked worktree, which git answers the same way. Checked before anything is
+# named or started.
+
+toplevel="$(git -C "$startup_directory" rev-parse --show-toplevel 2>/dev/null || true)"
+
+[[ "$toplevel" == "$startup_directory" ]] ||
+    error $EX_NOINPUT "Not the root of a repository clone: ${startup_directory}"
+
+readonly startup_directory
+
+## A terminal to attach the session to, or --detach (requirement 15)
+
+# Looked for before anything is opened, named or started, so that a launch with neither leaves nothing behind.
+((detach)) || has_terminal || refuse_without_terminal "$@"
+
+## The login keychain, open (requirement 19)
+
+# gh and claude keep their logins in macOS's login keychain, which an ssh session finds locked. It is unlocked from a
+# terminal; a launch with none, --detach included, stops here, before anything is opened, named or started. Linux's
+# keychain.sh finds nothing to unlock.
+if login_keychain_is_locked; then
+    keychain_message="The login keychain is locked, and with no terminal it cannot be unlocked; nothing was started."
+    has_terminal || refuse_locked_keychain "$keychain_message" "$@"
+    keychain_message="The login keychain is still locked: security unlock-keychain failed; nothing was started."
+    unlock_login_keychain || refuse_locked_keychain "$keychain_message" "$@"
+fi
+
+# claude's trust in the startup directory is claude's to check: a start in its background in a folder it does not
+# trust is refused in claude's own words, and nothing is opened (question 79).
+
+# Everything the session is named for is read from here, gh included, and claude starts here.
+cd "$startup_directory"
+
+config_directory="${CLAUDE_CONFIG_DIR:-${HOME}/.claude}"
+store_root="${XDG_STATE_HOME:-${HOME}/.local/state}/start-claude"
+readonly config_directory store_root
+
+# What the exit handler undoes: a temporary store file, and a tmux session never attached. What a launch learns from
+# claude's list of the session it opens: the background session's short id, its state and its conversation's id
+# (requirement 21). What a background session it starts carries: the schedule's variables, through --settings.
+declare store_temporary="" made_session="" background_id="" background_state="" background_session=""
+declare environment_settings=""
+
+## Where the session runs, computed and never stored
+
+repository="$(repository_name "$startup_directory")" && readonly repository
+branch="$(git -C "$startup_directory" branch --show-current 2>/dev/null || true)"
+branch="${branch:-detached}" && readonly branch
+
+# The host follows the schedule, for remote sessions: a conversation lives on the box whose transcripts hold it, and
+# Remote Control lists every box's sessions together. Its domain is dropped, so the name never carries a ".".
+host_name="${HOSTNAME:-$(hostname)}" && host="${host_name%%.*}" && readonly host
+
+## What runs: claude's own list, read once
+
+running_conversations instances
+readonly instances
+
+## The conversation --resume names, or the one --continue finds running here, and its schedule
+
+# --resume names a conversation as claude --resume takes it (personal#273's question 12). Given with --schedule, its
+# conversation joins that schedule; alone, it is on the schedule whose entry holds it, or else on none. --continue
+# takes the conversation claude lists in the startup directory, the one claude's own --continue would pick, so that it
+# is met where it runs (phase 18).
+
+chosen=""
+
+if [[ $resume_argument ]]; then
+    resolve_resume chosen "$resume_argument"
+elif ((continue_argument)); then
+    chosen="$(conversation_running_in "$startup_directory" || true)"
+fi
+
+[[ ! $chosen || $schedule_argument ]] || schedule_argument="$(schedule_recording "$chosen" || true)"
+readonly chosen
+
+## A conversation on no schedule
+
+# --resume of a conversation no entry holds names the session for its id, as does --continue of one claude lists here;
+# --continue with none hands the startup directory to claude's own --continue, which in claude's background starts a
+# copy of the conversation it picks and says so, and the session is named for where it runs. Nothing is stored either
+# way.
+
+if [[ ! $schedule_argument ]]; then
+
+    if [[ $chosen ]]; then
+        session_name="$chosen"
+    else
+        session_name="${host} | ${repository} | ${branch}"
+    fi
+
+    readonly session_name
+
+    # Met where claude lists it: its background session, running or stopped, or refused in the foreground; running
+    # nowhere, it is resumed in claude's background under its own id.
+    [[ ! $chosen ]] || meet_running "$chosen"
+
+    if [[ $background_id ]]; then
+        (($# == 0)) || note "Background session ${background_id} keeps the options it was started with: the" \
+            "arguments after -- go only to a conversation a launch starts."
+    elif [[ $chosen ]]; then
+        note "This conversation is on no schedule. To put it on one: ${script_name} --resume ${chosen} --schedule" \
+            "<owner>/<repository>#<number>."
+        note "Resuming conversation ${chosen} in claude's background"
+        start_background --resume "$chosen"
+    else
+        note "Continuing the conversation claude picks in ${startup_directory}, in its background"
+        start_background --continue
+    fi
+
+    arrive
+fi
+
+## The schedule: <owner>/<repository>#<number>, a bare <number> in this repository, or new
+
+if [[ "$schedule_argument" == new || "$schedule_argument" =~ ^[0-9]+$ ]]; then
+    schedule_slug="$(repository_slug "$startup_directory")" ||
+        error $EX_NOINPUT "The startup directory's origin is not on GitHub: ${startup_directory}"
+fi
+
+if [[ "$schedule_argument" == new ]]; then
+
+    # The title is read from standard input, so it can be piped. The prompt goes to standard error, and only when
+    # standard input is a terminal.
+
+    [[ ! -t 0 ]] || printf 'Schedule title: ' >&2
+    IFS= read -r answer || true
+    answer="${answer#"${answer%%[![:space:]]*}"}"
+    answer="${answer%"${answer##*[![:space:]]}"}"
+    [[ -n "$answer" ]] || error $EX_DATAERR "No schedule title was given; nothing is opened."
+
+    # It opens empty: a deliverable to state, and a lane table the report reads, with no rows yet.
+
+    schedule_body="## Deliverable"$'\n\n'"To be stated: what the owner has today, and what they will have when the"
+    schedule_body+=" last lane closes."$'\n\n'"## Lanes"$'\n\n'"| Lane | Item | Next | Waits on |"$'\n'
+    schedule_body+="| --- | --- | --- | --- |"
+
+    schedule_url="$(gh issue create --repo "$schedule_slug" --title "Schedule: ${answer}" --label chore \
+        --body "$schedule_body" 2>&1)" ||
+        error $EX_CANTCREAT "The schedule could not be opened in ${schedule_slug}. gh: ${schedule_url//$'\n'/; }"
+
+    schedule_number="${schedule_url##*/}"
+    schedule_title="Schedule: ${answer}"
+    note "Opened ${schedule_url}"
+else
+    if [[ "$schedule_argument" =~ ^[0-9]+$ ]]; then
+        schedule_number="$schedule_argument"
+    else
+        schedule_slug="${schedule_argument%#*}"
+        schedule_number="${schedule_argument##*#}"
+    fi
+
+    fields="$(schedule_fields "$schedule_slug" "$schedule_number")" ||
+        error $EX_NOINPUT "The issue cannot be read: ${schedule_slug}#${schedule_number}. gh: ${fields//$'\n'/; }"
+    IFS=$'\t' read -r schedule_title schedule_url schedule_labels <<<"$fields"
+
+    if [[ "$schedule_title" != Schedule:* || ",${schedule_labels}," != *,chore,* ]]; then
+        message="${schedule_slug}#${schedule_number} is not a schedule: a schedule is of kind chore and its title"
+        error $EX_DATAERR "${message} begins \"Schedule:\"."
+    fi
+fi
+
+# The key is written as GitHub writes it, so names compare exactly. Rule 8: a schedule moved to another repository
+# answers from there, its key follows it, and an entry under the old key is reported, not carried over.
+
+if [[ "$schedule_url" =~ github\.com/([^/]+/[^/]+)/issues/([0-9]+)$ ]]; then
+
+    if [[ "${BASH_REMATCH[1],,}#${BASH_REMATCH[2]}" != "${schedule_slug,,}#${schedule_number}" ]]; then
+        moved_entry="${store_root}/${schedule_slug}/${schedule_number}"
+        note "${schedule_slug}#${schedule_number} moved to ${BASH_REMATCH[1]}#${BASH_REMATCH[2]}."
+        [[ ! -f "$moved_entry" ]] || note "Its entry under the old key, ${moved_entry}, is not carried over."
+    fi
+
+    schedule_slug="${BASH_REMATCH[1]}"
+    schedule_number="${BASH_REMATCH[2]}"
+fi
+
+schedule_key="${schedule_slug}#${schedule_number}"
+readonly schedule_key schedule_title schedule_url
+
+## Compose the name claude carries, which each tmux session carries with its own id
+
+session_name="${schedule_key} | ${host} | ${repository} | ${branch} | ${schedule_title}"
+readonly session_name
+
+## The store, under its lock
+
+# The section from reading the schedule's entry to the moment its background session exists runs under the store's
+# lock, held on this brace group's descriptor 9 (requirement 13, question 41): a second launch of the schedule waits,
+# then finds the first's background session and opens a tmux session of its own onto it. Attaching, or leaving it
+# detached, closes the descriptor, and with it the lock.
+
+store_entry="${store_root}/${schedule_slug}/${schedule_number}"
+readonly store_entry
+
+failure="$(mkdir -p "${store_entry%/*}" 2>&1)" ||
+    error $EX_CANTCREAT "The store cannot be written: ${store_entry%/*}. ${failure##*: }."
+
+{
+    lock_store
+
+    ## The schedule's session: the store's, or the one --resume names, or else a new conversation
+
+    conversation="$chosen"
+
+    if [[ -f "$store_entry" ]]; then
+        stored_id="$(session_of "$store_entry")" ||
+            error $EX_IOERR "The store's entry cannot be read: ${store_entry}"
+
+        # Rule 1: a session claude lists nowhere, and with no transcript here or under another configuration directory,
+        # is set aside, and the schedule has none: a running conversation may have no transcript yet (question 55), and
+        # a background session's short id names none. Rule 2: one whose transcript is in another project folder is
+        # resumed all the same. --resume with --schedule links a schedule only when it has no session, or this one
+        # (questions 43 and 44).
+        if ! place_of "$stored_id" >/dev/null && ! has_transcript "$stored_id"; then
+            note "Session ${stored_id} is set aside: claude lists it nowhere, and there is no ${stored_id}.jsonl" \
+                "under ${config_directory}/projects."
+        elif [[ -z $chosen ]]; then
+            conversation="$stored_id"
+        elif [[ "$(background_id_of "$stored_id")" != "$(background_id_of "$chosen")" ]]; then
+            error $EX_CANTCREAT "${schedule_key} is worked by ${stored_id}. To give it ${chosen}, remove" \
+                "${store_entry} and run again."
+        fi
+    fi
+
+    # Rule 4: one schedule per session. It is asked before the session is met where claude lists it, so that a session
+    # on another schedule is never opened.
+    if [[ $conversation ]] && other="$(schedule_holding "$conversation")"; then
+        error $EX_CANTCREAT "Session ${conversation} is already the session of ${other}; one schedule per session."
+    fi
+
+    # The schedule's variables reach a background session this launch starts through --settings: claude's background
+    # service starts a session without this launch's environment (question 79).
+    environment_settings="$(jq --compact-output --null-input --arg schedule "$schedule_key" --arg url "$schedule_url" \
+        '{env: {NFEP_AGENT_SCHEDULE: $schedule, NFEP_AGENT_SCHEDULE_URL: $url}}')"
+
+    # Met where claude lists it: its background session, running or stopped, or refused in the foreground. Running
+    # nowhere, it is resumed in claude's background under its own id; with none, a new conversation starts there.
+    [[ -z $conversation ]] || meet_running "$conversation"
+
+    if [[ $background_id ]]; then
+        (($# == 0)) || note "Background session ${background_id} keeps the options it was started with: the" \
+            "arguments after -- go only to a conversation a launch starts."
+    elif [[ $conversation ]]; then
+        note "Resuming conversation ${conversation} in claude's background"
+        start_background --resume "$conversation"
+    else
+        note "Starting a new conversation in claude's background as ${session_name}"
+        start_background
+    fi
+
+    store_write
+
+    arrive
+} 9>"${store_entry}.lock"

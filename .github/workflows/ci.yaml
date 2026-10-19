@@ -11,7 +11,8 @@ name: CI
 # not misspelled, and -- since #161 put star extensions in Home/ -- that the Starlark is well formed.
 # Since #268 the gates are the Makefile's targets: this workflow installs their tools and runs
 # `make check`, which runs every gate and then the tests under tests/, so a local run and CI are one
-# command. Each gate's reasons are written beside its target in the Makefile.
+# command. Each gate's reasons are written beside its target in the Makefile. Since #312 two jobs
+# beside it run the tests on macOS and Windows, as make test runs them there.
 #
 # The job name must stay `quality-gate`. Organization ruleset 12426847 requires that context on every
 # repository, so renaming it would leave a required check that never arrives -- which blocks every
@@ -39,8 +40,8 @@ jobs:
       # Each tool is pinned: a gate whose tool changes under CI fails on someone else's commit. shfmt
       # and buildifier are pinned to a release and its digest; upstream publishes no checksum file for
       # shfmt, so its digest was computed from the release asset on 2026-09-06. codespell is pinned to
-      # a version through pipx. shellcheck comes from apt, as personal takes it, and so does zsh, for
-      # the zsh cases of Declare-BashScript's test (#294).
+      # a version through pipx. shellcheck comes from apt, as personal takes it, and so do zsh, for
+      # the zsh cases of Declare-BashScript's test (#294), and tmux, for Start-Claude's (#312).
       - name: Tools
         env:
           SHFMT_VERSION: v3.14.0
@@ -51,7 +52,7 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update -y
-          sudo apt-get install -y findutils shellcheck zsh
+          sudo apt-get install -y findutils shellcheck tmux zsh
           curl -sSfL -o shfmt \
             "https://github.com/mvdan/sh/releases/download/${SHFMT_VERSION}/shfmt_${SHFMT_VERSION}_linux_amd64"
           echo "${SHFMT_SHA256}  shfmt" | sha256sum --check --strict
@@ -76,3 +77,40 @@ jobs:
 
       - name: make check
         run: make check
+
+  # The tests on macOS, as make test runs them there (#312), with what the owner's Mac puts first on PATH:
+  # bash 5.3 and GNU getopt, which Declare-BashScript requires (#268, #290), GNU make, for .ONESHELL, and
+  # the GNU coreutils, diffutils, findutils, grep, sed and awk the scripts are run with there; and tmux, for
+  # Start-Claude's test. macOS ships bash 3.2, BSD getopt, make 3.81 and BSD tools, so Homebrew's go first
+  # on PATH. Homebrew's formulas are not pinned: they are whatever it installs on the day.
+  test-macos:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tools
+        run: |
+          set -euo pipefail
+          brew install bash coreutils diffutils findutils gawk gnu-getopt gnu-sed grep make tmux
+          prefix="$(brew --prefix)"
+          {
+            echo "${prefix}/bin"
+            echo "${prefix}/opt/gnu-getopt/bin"
+            for formula in coreutils findutils gawk gnu-sed grep make; do
+              echo "${prefix}/opt/${formula}/libexec/gnubin"
+            done
+          } >> "$GITHUB_PATH"
+
+      - name: make test
+        run: make test
+
+  # The PowerShell tests on Windows, as make test runs them there (#312). The runner has pwsh and git and
+  # no psmux, for which Test-StartClaude.ps1 stands in a tmux that refuses every command.
+  test-windows:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: The PowerShell tests
+        shell: pwsh
+        run: ./scripts/Test-Here.ps1
