@@ -1,0 +1,35 @@
+#compdef Start-Claude
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Noble Factor. All rights reserved.
+
+_Start-Claude() {
+    local -a opts schedules
+    local context state state_descr line
+    typeset -A opt_args
+
+    opts=(
+        '(-c --continue -r --resume -s --schedule)'{-c,--continue}"[Open what claude lists here, else a copy]"
+        '(-C --directory)'{-C,--directory}'[Start in this directory, the root of a clone]:directory:_directories'
+        '(-d --detach --no-remote-control)'{-d,--detach}"[Start or wake it in claude's background, no tmux]"
+        '(-h --help)'{-h,--help}'[Show usage information and exit]'
+        '(-d --detach)--no-remote-control[Start claude without Remote Control]'
+        '(-c --continue -r --resume)'{-r,--resume}'[Open a conversation by id, short id, name or path]:conversation:'
+        '(-c --continue -s --schedule)'{-s,--schedule}'[The schedule the conversation works]:schedule:->schedule'
+        '(-w --shell-width-percent)'{-w,--shell-width-percent}'[Width of the shell pane]:percent:(25 30 33 40 50)'
+    )
+
+    # -S stops option completion at --, which is where arguments start belonging to claude.
+    _arguments -s -S -C $opts
+
+    case $state in
+        schedule)
+            # new, and the open schedules of the repository holding the working directory. Silent when gh is
+            # missing or unauthenticated.
+            schedules=(new ${(f)"$(gh issue list --state open --label chore --limit 50 --json number,title \
+                --jq '.[] | select(.title | startswith("Schedule:")) | .number' 2>/dev/null)"})
+            compadd -a schedules
+            ;;
+    esac
+}
+
+_Start-Claude "$@"

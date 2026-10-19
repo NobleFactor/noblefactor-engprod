@@ -1,0 +1,883 @@
+.\" SPDX-License-Identifier: MIT
+.\" Copyright (c) 2026 Noble Factor. All rights reserved.
+.\" Redistribution and use in source and binary forms, with or without modification, are permitted under the terms of the MIT License.
+.TH START-CLAUDE 1 "2026-10-19" "Noble Factor" "User Commands"
+.SH NAME
+Start-Claude \- open a tmux workspace onto the Claude Code conversation of a
+schedule, or of a conversation it names, that claude runs in its background
+.SH SYNOPSIS
+.B Start-Claude
+.RB [ \-C | \-\-directory
+.IR DIRECTORY ]
+.RB [ \-w | \-\-shell\-width\-percent
+.IR PERCENT ]
+.RB [ \-d | \-\-detach | \-\-no\-remote\-control ]
+.BR \-s | \-\-schedule
+.I SCHEDULE
+.RB [ \-r | \-\-resume
+.IR CONVERSATION ]
+.RI [ \-\- " claude-argument" ...]
+.br
+.B Start-Claude
+.RB [ \-C | \-\-directory
+.IR DIRECTORY ]
+.RB [ \-w | \-\-shell\-width\-percent
+.IR PERCENT ]
+.RB [ \-d | \-\-detach | \-\-no\-remote\-control ]
+.BR \-r | \-\-resume
+.I CONVERSATION
+.RI [ \-\- " claude-argument" ...]
+.br
+.B Start-Claude
+.RB [ \-C | \-\-directory
+.IR DIRECTORY ]
+.RB [ \-w | \-\-shell\-width\-percent
+.IR PERCENT ]
+.RB [ \-d | \-\-detach | \-\-no\-remote\-control ]
+.BR \-c | \-\-continue
+.RI [ \-\- " claude-argument" ...]
+.br
+.B Start-Claude
+.BR \-h | \-\-help
+.SH DESCRIPTION
+.B Start-Claude
+opens a
+.BR tmux (1)
+session onto a Claude Code conversation that claude runs in its background, as
+.B "claude \-\-bg"
+starts one: the conversation's viewer,
+.BR "claude attach" ,
+in the left pane, and your shell in the right, then attaches. The left pane
+holds keyboard focus on attach. With
+.B \-\-detach
+it opens no tmux session; see
+.BR "STARTING AND ATTACHING" .
+.PP
+It prints the background session's short id on standard output, the id
+.B "claude \-\-bg"
+prints and
+.B "claude attach"
+takes: with
+.B \-\-detach
+at once, and otherwise when the tmux session's client leaves.
+Everything else it says, and tmux's own words, go to standard error.
+.PP
+Each start opens a tmux session of its own. Two starts of one schedule, from two
+terminals or two devices, open two tmux sessions onto the same conversation, and
+a tmux session ends when its last client leaves, while the conversation runs on
+in claude's background; see
+.BR "SESSION LIFECYCLE" .
+.PP
+The conversation works a schedule: a GitHub issue of kind
+.I chore
+whose title begins
+.IR Schedule: ,
+its lane table listing the work.
+.I SCHEDULE
+is
+.IR <owner>/<repository>#<number> ,
+a bare
+.I <number>
+in the startup directory's repository, or
+.BR new .
+The issue is read with
+.BR gh (1)
+from its own repository, never the caller's, and an issue that is not a
+schedule is refused.
+.PP
+.B "\-\-schedule new"
+opens a schedule in the startup directory's repository. Its title is read from
+standard input, with the prompt
+.I "Schedule title:"
+when standard input is a terminal, and it opens as
+.IR "Schedule: <title>" ,
+with an empty lane table. An empty title opens nothing. A title can be piped;
+the tmux session then attaches through the terminal the launch runs in,
+so a terminal is still needed, unless
+.B \-\-detach
+is given.
+.PP
+The conversation is handed its schedule:
+.B NFEP_AGENT_SCHEDULE
+holds
+.IR <owner>/<repository>#<number> ,
+and
+.B NFEP_AGENT_SCHEDULE_URL
+its link, in claude's background session, through
+.BR "claude \-\-settings" ,
+and in the shell pane. The viewer has no need of them.
+.PP
+When it is run from inside a tmux session it switches the client rather than
+attempting to nest, and tmux ends the tmux session the client leaves when
+Start-Claude opened it.
+.PP
+It starts in
+.IR DIRECTORY ,
+or else in the current directory, which must be the root of a repository clone
+or of a linked worktree; otherwise it stops before anything is named or
+started. Everything the conversation is named for is read there,
+.BR gh (1)
+lookups included, and
+.B claude
+starts there. The directory is resolved to its physical path first: a symlinked
+path and its target are one repository but two project folders to Claude Code,
+and neither could resume the other's conversations.
+.SH SESSION NAMING
+claude's background session carries the name
+.PP
+.nf
+\&<owner>/<repository>#<number> | <host> | <repository> | <branch> | <title>
+.fi
+.PP
+and each tmux session onto it the schedule's repository and number, with the
+tmux session's own identifier after them, as Start-Claude.ps1 names a psmux
+session, since psmux loses a session whose name carries / or |:
+.PP
+.nf
+\&<repository>#<number> $<n>
+.fi
+.PP
+A conversation on no schedule names its tmux session for its own identifier.
+.PP
+so that the
+.B /resume
+picker inside Claude Code, Remote Control and tmux show what the work is, and two
+tmux sessions onto one conversation are told apart: tmux refuses a second session
+of one name, and never reuses an identifier while its server runs. The name
+claude carries is also the Remote Control session's, unless
+.B \-\-no\-remote\-control
+leaves Remote Control off.
+.PP
+The schedule comes first and in full: it is the conversation's key. Everything
+after it is written afresh at each launch that starts the conversation, so a
+retitled schedule, another host or another branch changes the name then.
+.PP
+.I <host>
+is this box's short name, its domain dropped so the name never carries a dot.
+A conversation resumes only on the box whose transcripts hold it, and Remote
+Control lists every box's sessions together, so the name says which box runs
+each.
+.PP
+.I <repository>
+is the repository rather than the directory holding it, taken from
+.IR remote.origin.url ,
+then the toplevel directory, then the startup directory. A linked worktree is a
+decorated
+directory such as
+.IR devlore\-cli.docker.devlore\-package ,
+and naming it that way would make one repository look like several.
+.PP
+.I <title>
+is the schedule's title, whole. No part of the name is cut.
+.PP
+A tmux session is never found again, by its name or otherwise: each start opens
+its own, and every reference to one uses its identifier.
+.B .
+and
+.B :
+are legal in a session name but not in a tmux target, which is written
+.IR session:window.pane ,
+and issue titles carry colons constantly, so the name is kept verbatim.
+.SH SESSION LIFECYCLE
+Every conversation Start-Claude starts runs in claude's background service. The
+store holds, for each schedule, the short identifier of the background session
+that runs its conversation, as
+.B "claude \-\-bg"
+prints it and
+.B "claude agents"
+lists it: one file per schedule, under
+.IR ${XDG_STATE_HOME:-~/.local/state}/start\-claude ,
+its path the schedule's key. claude keeps that identifier across
+.BR /clear ,
+which gives the conversation a new one, so the store needs no updating as the
+conversation goes on.
+.PP
+A start looks the stored identifier up in
+.BR "claude agents \-\-json \-\-all" :
+.IP \(bu 2
+A background session of that identifier, running or stopped, is the schedule's,
+and a new tmux session opens onto it:
+.B "claude attach"
+starts a stopped one again under the same identifier.
+.IP \(bu 2
+An entry can hold a conversation's identifier instead, as one written before its
+conversation ran in claude's background does. The background session that runs
+that conversation is the schedule's, and its identifier is stored. A
+conversation that a claude runs in the foreground, which Start-Claude cannot
+open, stops the script with status 75: the message names the host, the
+process, its terminal and when it started, and says to end it there, with
+.B /exit
+or
+.BR "kill \-TERM" ,
+and run the same command again, and not to move it with
+.BR /bg ,
+which gives it a new identifier the store does not hold. A record whose process
+is gone, left by a claude killed outright, is passed over. A conversation claude
+runs nowhere is resumed in its background with
+.BR "claude \-\-bg \-\-resume" ,
+under its own identifier, which is stored.
+.IP \(bu 2
+With none stored, a new conversation starts in claude's background with
+.BR "claude \-\-bg" ,
+and the identifier it prints is stored.
+.PP
+A stored identifier that claude lists nowhere, and with no transcript here or
+under another
+.BR CLAUDE_CONFIG_DIR ,
+is set aside, and the schedule has none: a conversation that runs may have no
+transcript yet. A schedule moved to another repository is followed there, and
+its entry under the old key is reported, not carried over.
+.PP
+A conversation joins a schedule only through the store, never through its name:
+.B \-\-resume
+with
+.B \-\-schedule
+puts that conversation on a schedule that has none, or opens it on the schedule
+whose conversation it is. A schedule is one conversation's, and a conversation
+one schedule's: giving a schedule a second conversation, or a conversation a
+second schedule, stops the script with status 73. The message names the entry to
+remove to free the schedule. A conversation changed from inside Claude Code with
+.B /resume
+is not followed: the store keeps the background session the script started.
+.PP
+A schedule's conversation runs once, in claude's background, and is opened as
+many times, from as many terminals and devices, as anyone likes, each time in a
+tmux session of its own. The store keeps no tmux session, and none is found
+again. Each has
+.B destroy\-unattached
+on, so tmux ends it when its last client leaves: at a detach, when its
+connection ends or drops, or when its client switches to another tmux session.
+Its shell pane ends with it, and whatever runs there. Start-Claude sets the
+option once the client is attached, since on a tmux session no client has
+attached, tmux ends it at once. A client that goes without a word keeps its tmux
+session: one that
+.BR mosh\-server (1)
+holds for a client that is gone still counts as attached; see
+.B MOSH_SERVER_NETWORK_TMOUT
+under
+.BR ENVIRONMENT .
+.PP
+From reading the schedule's entry to the moment its background session exists,
+the script holds the store's lock, the kernel's lock on an empty file beside the
+entry, taken with
+.BR lockf (1)
+on macOS and
+.BR flock (1)
+on Linux. A second launch of the schedule waits up to 10 seconds for it, then
+finds the first's background session and opens a tmux session of its own onto
+it. The lock ends when the script attaches or exits, however it exits, so none is
+ever left behind. On any exit, the script removes a temporary store file, and a
+tmux session it made but had not finished setting up.
+.PP
+.B \-\-resume
+opens the conversation it names, as
+.B "claude \-\-resume"
+takes it but its picker: by its identifier, its background session's short
+identifier, its name, or its transcript's absolute path.
+.B \-\-continue
+opens the conversation that
+.B "claude agents \-\-json \-\-all"
+lists in the startup directory, of several the one whose transcript was written
+last, which claude's own
+.B \-\-continue
+would pick. With none listed,
+.B \-\-continue
+hands the startup directory to claude's own
+.BR \-\-continue ,
+which in claude's background starts a copy of the conversation it picks, under a
+new identifier, and says so. One of
+.BR \-\-schedule ,
+.B \-\-resume
+and
+.B \-\-continue
+is given, or
+.B \-\-resume
+with
+.BR \-\-schedule .
+A name is read only to find the conversation
+.B \-\-resume
+gives, never to choose a schedule. A conversation the store holds for a
+schedule is that schedule's. A conversation the store does not hold is opened on
+no schedule: claude's background session and Remote Control are named for its
+identifier, nothing is stored, and a note says how to put it on one with
+.B \-\-resume
+and
+.BR \-\-schedule .
+.B \-\-continue
+with none listed runs on no schedule too, named for the host, the repository and
+the branch, and nothing is stored.
+.PP
+Leaving the viewer ends the tmux session: a
+.B pane\-died
+hook scoped to the viewer's pane, by
+.BR #{hook_pane} ,
+the pane the event is about, ends it, so a shell that exits on its own leaves the
+workspace standing. The viewer's pane has
+.B remain\-on\-exit
+set, so it stays, dead, when the viewer exits, and the session with it until the
+hook ends it: a pane that closed outright would take the session, and its hooks,
+with it when it is the last.
+.SH STARTING AND ATTACHING
+Start-Claude attaches your terminal to the tmux session it opens, so how you
+start it depends on whether you have one. There are two scenarios. Each command
+line below works a schedule; give
+.B \-\-resume
+or
+.B \-\-continue
+in its place as you would anywhere.
+.SS Interactive: a terminal must be available
+Start-Claude attaches the terminal to a new tmux session. Leaving it, by leaving
+the viewer or by detaching, ends the tmux session and returns you to the shell
+that ran Start-Claude; claude runs the conversation on in its background.
+.TP
+.B Start-Claude \-\-schedule 916
+In a terminal on the host, in the clone: the usual way.
+.TP
+.BI "ssh \-t " host " 'Start-Claude \-\-directory " clone " \-\-schedule 916'"
+From another host. Start-Claude is the connection's command, so leaving the
+tmux session ends the connection and returns you to your own shell.
+.B ssh
+gives a command a terminal only when
+.B \-t
+asks for one, and starts it in your home directory on
+.IR host ,
+so
+.B \-\-directory
+names the clone there. The command is quoted as one argument, so that no
+.B ssh
+client takes its options for its own, as Blink Shell's takes an unquoted
+.BR \-\-directory .
+.TP
+.BI "mosh " host " \-\- Start-Claude \-\-directory " clone " \-\-schedule 916"
+From another host, over a link that drops or changes, as a phone's does or a
+sleeping laptop's. It works as it does over
+.BR ssh ,
+except that
+.B mosh
+reconnects on its own, and always gives its command a terminal.
+.SS Non-interactive: no terminal is available
+As from a script, cron, an iOS Shortcuts SSH action, or
+.B ssh
+without
+.BR \-t .
+None of the interactive command lines works there.
+.TP
+.BI "Start-Claude \-\-detach \-\-directory " clone " \-\-schedule 916"
+Starts the conversation in claude's background if none runs, wakes it when
+claude has stopped it, and opens no tmux session. The conversation is then
+available on the host: reach it through Remote Control, under its name, or open
+it later by running the same command in a terminal, without
+.BR \-\-detach .
+.PP
+Without a terminal and without
+.BR \-\-detach ,
+Start-Claude starts nothing. It exits 69 and prints these command lines, filled
+in with its own arguments, the startup directory's full path, and this host's
+name as
+.BR hostname (1)
+gives it.
+.SS On macOS: the login keychain
+.BR gh (1)
+and claude keep their logins in the login keychain, which an
+.B ssh
+session finds locked. Start-Claude checks it before it starts anything. Locked,
+with a terminal, it runs
+.BR "security unlock\-keychain login.keychain\-db" ,
+which asks for your password. With no terminal,
+.B \-\-detach
+included, or when
+.B security
+fails to unlock it, Start-Claude starts nothing, exits 69, and prints the
+interactive command lines above, filled in the same way. On macOS, then, a start
+with no terminal works only where the keychain is already open.
+.SS claude's trust in the folder
+claude starts nothing in its background in a folder it does not trust. It says
+what to do instead, which is to run
+.B claude
+there once and accept its trust question, and Start-Claude passes its words
+through, exits 69, and opens nothing. Trusting a folder is your decision, made in
+claude; Start-Claude reads and records nothing of it.
+.PP
+If the other host does not find Start-Claude, give its absolute path on that
+host, as
+.B "command \-v Start-Claude"
+prints it there. Over
+.BR ssh ,
+your own shell would expand a
+.B ~
+before ssh sends it, and
+.B mosh
+runs its command with no shell to expand one.
+.SH EXITING AND DETACHING
+Leaving a tmux session and stopping the conversation are different things.
+.PP
+To
+.B leave the tmux session
+leave the viewer, with Escape or Ctrl+Z, or detach from tmux: the tmux prefix,
+then
+.BR d .
+The prefix is
+.B C\-b
+unless you have rebound it; see
+.BR tmux (1).
+Either way the tmux session ends, its shell pane with it, and you are returned to
+the shell you started from, while claude runs the conversation on in its
+background: the same command opens a new tmux session onto it, from this
+terminal or another.
+.B /exit
+in a viewer does nothing.
+.PP
+To
+.B stop the conversation
+stop its background session with
+.BR "claude stop" ,
+given the identifier the store holds. claude keeps the conversation: the next
+start opens a tmux session onto it, and the viewer starts it again.
+.SS The prefix collides with Claude Code's own Ctrl+B
+Claude Code binds Ctrl+B to
+.IR "run in background" ,
+and at the default prefix tmux consumes that keystroke before claude sees it.
+.PP
+Claude Code detects this. It reads the prefix at startup and, when it is one of
+.BR "C-b C-c C-d C-t C-o C-r C-s C-g C-e" ,
+changes its own hint to read
+.I "ctrl+b ctrl+b (twice)"
+instead of
+.IR ctrl+b .
+Pressing the prefix twice works because tmux binds
+.B C\-b
+under the prefix to
+.BR send\-prefix ,
+which passes one through to the pane.
+.PP
+So nothing is lost, but the keystroke is doubled. Rebinding the tmux prefix to
+something outside that list \(em
+.B C\-a
+is the usual choice \(em gives Ctrl+B back to claude at the cost of the
+convention every other tmux user shares.
+.PP
+.TS
+tab(;);
+l l l.
+;\fBLeave the viewer\fR;\fBDetach\fR
+claude's background session;runs on;runs on
+The tmux session;ends;ends
+Where you land;your shell;your shell
+Re\-running the script;a new tmux session onto it;a new tmux session onto it
+.TE
+.PP
+Either way you land at the shell you started from rather than in another tmux
+session, because
+.B detach\-on\-destroy
+is
+.B on
+by default. With several sessions open that is worth knowing, since switching
+to
+one of the others is the plausible alternative.
+.PP
+Started as the command of an
+.B ssh
+or
+.B mosh
+connection, the shell you started from is your own, on your own host; see
+.BR "STARTING AND ATTACHING" .
+.SH THE SHELL PANE
+The right pane runs your default shell in the startup directory, with the
+schedule's
+.B NFEP_AGENT_SCHEDULE
+and
+.B NFEP_AGENT_SCHEDULE_URL
+in its environment. Nothing is sent to it and nothing
+is started in it.
+.PP
+Earlier revisions tailed a log there: a file named with
+.B \-\-log
+or the first of
+.IR app.log ,
+.IR development.log ,
+.IR output.log ,
+or
+.I server.log
+found in the launch directory. Both the option and the search are gone. A pane
+whose purpose is to
+run something already chosen is a pane that has spent the prompt it could have
+offered, and a
+.BR tail (1)
+is one command to type in a shell that is now there to take it.
+.PP
+Exiting the shell closes only that pane and leaves the viewer open; see
+.B SESSION LIFECYCLE
+for why the tmux session ends with the viewer's pane and not with this one.
+.SH OPTIONS
+.TP
+.BR \-c ", " \-\-continue
+Open the conversation claude lists in the startup directory, as
+.B "claude agents \-\-json \-\-all"
+lists it, of several the one whose transcript was written last; with none
+listed, hand the directory to claude's own
+.BR \-\-continue ,
+which in claude's background starts a copy of the conversation it picks, and
+says so. See
+.BR "SESSION LIFECYCLE" .
+.TP
+.BI \-C " DIRECTORY" "\fR, \fP" \-\-directory " DIRECTORY"
+Start in
+.IR DIRECTORY ,
+the root of a repository clone or of a linked worktree, instead of the current
+directory. See
+.BR DESCRIPTION .
+.TP
+.BR \-d ", " \-\-detach
+Start the conversation in claude's background, or wake it when claude has
+stopped it, and open no tmux session. Start-Claude exits 0, with a terminal or
+without, and the conversation is available on this host: reach it through Remote
+Control under its name, or open it later by running the same command without
+.BR \-\-detach .
+After
+.BR "\-\-schedule new" ,
+which that command would run again, Start-Claude prints the command to run
+instead, naming the schedule it opened. Remote Control needs claude signed in.
+Not with
+.BR \-\-no\-remote\-control .
+See
+.BR "STARTING AND ATTACHING" .
+.TP
+.BR \-h ", " \-\-help
+Print this page, or the synopsis when it is unavailable, and exit.
+.TP
+.B \-\-no\-remote\-control
+Start claude's background session without Remote Control. Without it, the
+session starts with
+.BR \-\-remote\-control ,
+named for the conversation. A background session that runs already keeps the
+options it was started with, and the option changes nothing there. Not with
+.BR \-\-detach .
+.TP
+.BI \-r " CONVERSATION" "\fR, \fP" \-\-resume " CONVERSATION"
+Open the conversation
+.I CONVERSATION
+names, as
+.B "claude \-\-resume"
+takes it but its picker: its identifier, a UUID, that claude lists or a
+transcript in any project folder holds; its background session's short
+identifier, as
+.B "claude agents \-\-json \-\-all"
+lists it; its name, matched whole against the names claude lists for its
+background sessions and the last name each transcript records; or its
+transcript's absolute path. Its background session is opened, or, when claude
+runs it nowhere, the conversation is resumed in claude's background under its
+own identifier. With
+.BR \-\-schedule ,
+put it on that schedule. See
+.BR "SESSION LIFECYCLE" .
+.TP
+.BI \-s " SCHEDULE" "\fR, \fP" \-\-schedule " SCHEDULE"
+The schedule the conversation works:
+.IR <owner>/<repository>#<number> ,
+a bare
+.I <number>
+in the startup directory's repository, or
+.BR new .
+See
+.BR DESCRIPTION .
+.TP
+.BI \-w " PERCENT" "\fR, \fP" \-\-shell\-width\-percent " PERCENT"
+Width of the right\-hand pane as a percentage of the window, between 1 and 99
+(default: 40).
+.SH ARGUMENTS
+.TP
+.I claude-argument
+Everything after
+.B \-\-
+is appended to the
+.B "claude \-\-bg"
+command line that starts a conversation in claude's background, after the flags
+the script supplies, and the background session keeps it. A background session
+that runs already keeps its own, and Start-Claude says so. Arguments reach
+.B claude
+through
+.BR execve (2)
+with no intervening shell, so quoting is preserved: an argument containing
+spaces arrives as
+one argument.
+.SH ENVIRONMENT
+.TP
+.B CLAUDE_CONFIG_DIR
+Where Claude Code keeps its configuration and its transcripts;
+.I ~/.claude
+when unset. The script looks in its
+.I projects
+directory for a conversation's transcript.
+.TP
+.B HOME
+Base for
+.I ~/.claude
+when
+.B CLAUDE_CONFIG_DIR
+is unset, and for
+.I ~/.local/state
+when
+.B XDG_STATE_HOME
+is unset.
+.TP
+.B HOSTNAME
+Its first label names the host in the conversation's name, and the command lines
+a launch with no terminal prints name the host by it whole;
+.BR hostname (1)
+is asked when it is unset.
+.TP
+.B MOSH_SERVER_NETWORK_TMOUT
+Not read by the script:
+.BR mosh\-server (1)
+reads it as it starts, so it is set, if at all, where the shell that ssh starts
+for mosh reads it, such as
+.IR ~/.zshenv .
+Unset, mosh\-server waits for its client indefinitely, so a client that goes
+without a word, as when Blink Shell is quit, leaves the tmux session it attached
+in place, its client still counted as attached. Set, mosh\-server exits that
+many seconds after its client was last heard from; the tmux session loses its
+last client, and tmux ends it. The conversation runs on in claude's background
+either way. Whether to set it, and to what, is the user's choice.
+.TP
+.B NFEP_AGENT_SCHEDULE
+Set to the conversation's schedule,
+.IR <owner>/<repository>#<number> ,
+in claude's background session, through
+.BR "claude \-\-settings" ,
+and in the tmux session's shell pane.
+.TP
+.B NFEP_AGENT_SCHEDULE_URL
+Set to the schedule's link, as
+.B NFEP_AGENT_SCHEDULE
+is set to the schedule.
+.TP
+.B TMUX
+When set, the script switches the current client to the new tmux session instead
+of attaching, and a launch counts as having a terminal. tmux then ends the tmux
+session the client left when Start-Claude opened it.
+.TP
+.B XDG_STATE_HOME
+Where the store lives, in
+.I start\-claude
+under it;
+.I ~/.local/state
+when unset.
+.SH FILES
+.TP
+.I ${CLAUDE_CONFIG_DIR:-~/.claude}/projects
+Checked for the transcript of the conversation the store holds or
+.B \-\-resume
+names, in whichever project folder holds it, and, for
+.BR \-\-continue ,
+for which listed conversation's transcript was written last. Nothing else of
+claude's is read.
+.TP
+.I ${XDG_STATE_HOME:-~/.local/state}/start\-claude/<owner>/<repository>/<number>
+The store's entry for a schedule. Its one line is the short identifier of the
+background session that runs the schedule's conversation, such as
+.BR 24b62a42 ,
+or a conversation's identifier until a start puts that conversation in claude's
+background: the one thing that cannot be computed. Its path is the schedule's
+key. Written through a temporary file and a rename, and never deleted by the
+script.
+.TP
+.I ${XDG_STATE_HOME:-~/.local/state}/start\-claude/<owner>/<repository>/<number>.lock
+The store's lock for the schedule: an empty file, locked while a launch
+reads the
+store and starts the background session. Kept, and never read.
+.TP
+.I ~/.local/libexec/start\-claude
+This platform's
+.I lock\-store.sh
+and
+.IR keychain.sh ,
+off the PATH, at
+.I ../libexec/start\-claude
+from the directory that holds Start-Claude: the store's lock, with
+.BR lockf (1)
+on macOS and
+.BR flock (1)
+on Linux, and the login keychain's check, which on Linux finds nothing to unlock.
+.SH EXIT STATUS
+.TP
+.B 0
+Success: the background session's short id is on standard output; with
+.BR \-\-detach ,
+claude runs the conversation in its background, available on this host.
+.TP
+.B 64
+Usage error: an unrecognized option; none of
+.BR \-\-schedule ,
+.B \-\-resume
+and
+.BR \-\-continue ,
+or
+.B \-\-continue
+with either of the others; a malformed
+.BR \-\-schedule ;
+a
+.B \-\-shell\-width\-percent
+outside 1\-99; or
+.B \-\-detach
+with
+.BR \-\-no\-remote\-control .
+.TP
+.B 65
+The schedule's issue is not a schedule;
+.B "\-\-schedule new"
+read an empty title; several conversations carry the name
+.B \-\-resume
+gives, or the transcript it names is not named for a conversation's identifier;
+claude's list of its sessions is not the JSON the script reads; or claude's words
+on a background start name no background session the script reads.
+.TP
+.B 66
+The startup directory does not exist or is not the root of a repository clone,
+its origin is not on GitHub where a bare number or
+.B new
+needs it, or the schedule's issue could not be read, the message ending with
+gh's own; or nothing answers to what
+.B \-\-resume
+gives: no session claude lists by that identifier and no transcript of it, no
+background session by that short identifier, no conversation by that name, or no
+transcript at that path.
+.TP
+.B 69
+.BR claude ,
+.BR gh (1),
+.BR jq (1)
+or
+.BR tmux (1)
+is not installed; this platform's
+.I lock\-store.sh
+or
+.I keychain.sh
+is not in
+.I ../libexec/start\-claude
+from the script's directory;
+.B "claude agents \-\-json \-\-all"
+failed; claude started nothing in its background, as in a folder it does not
+trust, the message ending with claude's own words; claude did not wake a stopped
+background session; there is no terminal to attach the tmux session to, and
+.B \-\-detach
+was not given; or, on macOS, the login keychain is locked and there is no
+terminal to unlock it from, or
+.B security
+failed to unlock it. Each of the last two starts nothing and prints the command
+lines that start it: see
+.BR "STARTING AND ATTACHING" .
+.TP
+.B 73
+.B "\-\-schedule new"
+could not open the schedule, the message ending with gh's own; the conversation
+is another schedule's; the schedule already has another conversation; or the
+store cannot be written.
+.TP
+.B 74
+The store's entry for the schedule could not be read, or holds neither a
+background session's identifier nor a conversation's.
+.TP
+.B 75
+Another launch held the store's lock for 10 seconds, the message naming the
+schedule; or a claude runs the conversation in the foreground, the message
+naming it and how to move the conversation into claude's background whole.
+.TP
+.B 78
+The host is neither macOS nor Linux.
+.B Start\-Claude.ps1
+is the script for Windows.
+.SH EXAMPLES
+Open the conversation of a schedule in the clone you are in, starting it in
+claude's background when it has none:
+.PP
+.nf
+\&Start-Claude --schedule 916
+.fi
+.PP
+On a schedule in another repository:
+.PP
+.nf
+\&Start-Claude --schedule NobleFactor/devlore-cli#916
+.fi
+.PP
+Open a workspace for another clone without leaving this one:
+.PP
+.nf
+\&Start-Claude --directory ~/Workspace/NobleFactor/noblefactor-ops --schedule NobleFactor/devlore-cli#916
+.fi
+.PP
+Open it on another host, and come back to your own shell when you leave it:
+.PP
+.nf
+\&ssh -t \fIhost\fP 'Start-Claude --directory \fIclone\fP --schedule 916'
+.fi
+.PP
+From a script, with no terminal: start the conversation in claude's background
+if none runs, and leave it for Remote Control:
+.PP
+.nf
+\&Start-Claude --detach --directory \fIclone\fP --schedule 916
+.fi
+.PP
+Open a conversation by its identifier, on its schedule when the store holds it:
+.PP
+.nf
+\&Start-Claude --resume 2ee3ba2e-2687-412d-8a4f-eabc597824ac
+.fi
+.PP
+Put a conversation started elsewhere on a schedule, and open it there:
+.PP
+.nf
+\&Start-Claude --resume 2ee3ba2e-2687-412d-8a4f-eabc597824ac --schedule 916
+.fi
+.PP
+Open a conversation by its name, or by its background session's short
+identifier:
+.PP
+.nf
+\&Start-Claude --resume 'release checklist'
+\&Start-Claude --resume 2ee3ba2e
+.fi
+.PP
+Open, in the clone you are in, the conversation claude lists there, or else a
+copy of the one claude picks:
+.PP
+.nf
+\&Start-Claude --continue
+.fi
+.PP
+Open a new schedule, asked for its title, or with the title piped:
+.PP
+.nf
+\&Start-Claude --schedule new
+\&echo 'Release 0.2' | Start-Claude --schedule new
+.fi
+.PP
+Stop a schedule's conversation; the next start opens it again:
+.PP
+.nf
+\&claude stop "$(cat ~/.local/state/start-claude/NobleFactor/devlore-cli/916)"
+.fi
+.PP
+Give the shell pane a third of the window:
+.PP
+.nf
+\&Start-Claude --schedule 916 --shell-width-percent 33
+.fi
+.PP
+Pass arguments through to a conversation the launch starts:
+.PP
+.nf
+\&Start-Claude --schedule 916 -- --model opus
+.fi
+.SH SEE ALSO
+.BR gh (1),
+.BR git (1),
+.BR mosh\-server (1),
+.BR tmux (1)
+.SH AUTHOR
+David Noble
+.SH COPYRIGHT
+Copyright (c) 2026 Noble Factor. All rights reserved.
+.SH LICENSE
+MIT License.

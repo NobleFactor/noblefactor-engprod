@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC2207,SC2034 # COMPREPLY and standard completion variables
+
+# bash completion for Start-Claude
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Noble Factor. All rights reserved.
+
+# _Start_Claude completes Start-Claude's options and their values for bash.
+#
+# Parameters:
+#   - none: bash's COMP_WORDS and COMP_CWORD say what is being completed.
+#
+# Returns:
+#   - 0, with the candidates in COMPREPLY.
+_Start_Claude() {
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD - 1]}"
+
+    opts="-c --continue -C --directory -d --detach -h --help --no-remote-control -r --resume -s --schedule"
+    opts+=" -w --shell-width-percent"
+
+    # Everything after -- belongs to claude, which completes its own arguments.
+    local word
+    for word in "${COMP_WORDS[@]:1:COMP_CWORD-1}"; do
+        [[ "${word}" == "--" ]] && return 0
+    done
+
+    case "${prev}" in
+        -C | --directory)
+            # Any directory completes; the script accepts only the root of a repository clone.
+            COMPREPLY=($(compgen -d -- "${cur}"))
+            return 0
+            ;;
+        -r | --resume)
+            # A conversation by its id, short id, name or transcript path, as claude --resume takes it: none is offered.
+            return 0
+            ;;
+        -s | --schedule)
+            # new, and the open schedules of the repository holding the working directory. Silent when gh is
+            # missing or unauthenticated: an empty completion is better than an error over the prompt.
+            local schedules="new"
+            if command -v gh >/dev/null 2>&1; then
+                schedules+=" $(gh issue list --state open --label chore --limit 50 --json number,title \
+                    --jq '.[] | select(.title | startswith("Schedule:")) | .number' 2>/dev/null | tr '\n' ' ')"
+            fi
+            COMPREPLY=($(compgen -W "${schedules}" -- "${cur}"))
+            return 0
+            ;;
+        -w | --shell-width-percent)
+            # Any percentage from 1 to 99 is valid; these are the useful ones.
+            COMPREPLY=($(compgen -W "25 30 33 40 50" -- "${cur}"))
+            return 0
+            ;;
+    esac
+
+    if [[ ${cur} == -* ]]; then
+        COMPREPLY=($(compgen -W "${opts}" -- "${cur}"))
+        return 0
+    fi
+
+    return 0
+}
+
+complete -F _Start_Claude Start-Claude

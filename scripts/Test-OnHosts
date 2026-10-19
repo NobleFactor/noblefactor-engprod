@@ -1,0 +1,252 @@
+#!/usr/bin/env bash
+
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Noble Factor. All rights reserved.
+
+# Test-OnHosts - Runs every test under tests/ on each host named (#312): here, through Test-Here, when a name is this
+# machine's; on any other, over ssh, on a copy of this working tree in a folder of its own, through Test-Here on macOS
+# and Linux and Test-Here.ps1 on Windows. make test HOSTS="<host> ..." runs it.
+
+[[ -r "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" ]] || {
+    printf '%s: cannot find Declare-BashScript in %s\n' "${0##*/}" "$(dirname "$0")/../Home/common/.local/bin" >&2
+    exit 72 # EX_OSFILE
+}
+
+# The helper sources Set-Environment from ${XDG_DATA_HOME:-$HOME/.local/share}/shell/functions: this checkout's.
+XDG_DATA_HOME="$(cd "$(dirname "$0")/../Home/common/.local/share" && pwd)" || exit 72 # EX_OSFILE
+export XDG_DATA_HOME
+
+# shellcheck source=Declare-BashScript
+source "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" "$0" "help" "h" "$@"
+require_nix
+require_command base64 git hostname ssh tar
+
+###########
+# Functions
+###########
+
+# use_console_agent points ssh at the console's ssh-agent when no agent answers, as in a session started over ssh on
+# macOS, where launchd keeps the console's.
+#
+# Returns:
+#   - 0, SSH_AUTH_SOCK exported when an agent was found that way.
+function use_console_agent {
+    local socket
+
+    ssh-add -l >/dev/null 2>&1 || (($? != 2)) || ! command -v launchctl >/dev/null || {
+        socket="$(launchctl print "gui/${UID}/com.openssh.ssh-agent" 2>/dev/null |
+            awk 'BEGIN { FS = "=> " } /SSH_AUTH_SOCK/ { print $2; exit }')"
+        [[ -z ${socket} ]] || export SSH_AUTH_SOCK="${socket}"
+    }
+}
+
+# is_this_machine reports whether a host name is this machine's: localhost, or this machine's short name, in any case.
+#
+# Parameters:
+#   - `$1`: the host name.
+#
+# Returns:
+#   - 0 when it is; 1 when it is not.
+function is_this_machine {
+    local wanted="${1,,}" mine
+
+    mine="$(hostname -s)"
+    mine="${mine,,}"
+    [[ ${wanted} == localhost || ${wanted%%.*} == "${mine%%.*}" ]]
+}
+
+# platform_of prints a host's platform, unix or windows, as the host answers: uname on macOS and Linux, and on
+# Windows, whose sshd hands a command to PowerShell, $env:OS.
+#
+# Parameters:
+#   - `$1`: the host.
+#
+# Returns:
+#   - stdout: unix or windows; 0. 1 when the host answers neither, or is not reached.
+function platform_of {
+    local answer
+
+    answer="$(ssh "${ssh_options[@]}" "$1" uname -s </dev/null 2>/dev/null || true)"
+
+    case ${answer} in
+        Darwin* | Linux*)
+            printf 'unix'
+            return 0
+            ;;
+    esac
+
+    # shellcheck disable=SC2016 # PowerShell's variable, expanded on the host.
+    answer="$(ssh "${ssh_options[@]}" "$1" '$env:OS' </dev/null 2>/dev/null | tr -d '\r' || true)"
+    [[ ${answer} == *Windows_NT* ]] || return 1
+    printf 'windows'
+}
+
+# tree_archive prints a gzipped tar of what the named paths hold in this working tree: what git tracks, and what is new
+# and not ignored, as a branch's work in progress is.
+#
+# Parameters:
+#   - `$@`: the paths, relative to the repository's root.
+#
+# Returns:
+#   - stdout: the archive; 0.
+function tree_archive {
+    local path
+
+    git -C "${repository_root}" ls-files -z --cached --others --exclude-standard -- "$@" |
+        while IFS= read -r -d '' path; do
+            [[ ! -e ${repository_root}/${path} ]] || printf '%s\0' "${path}"
+        done |
+        tar -C "${repository_root}" --no-xattrs --null -T - -czf -
+}
+
+# run_on_unix copies this working tree's Home, scripts and tests to a folder of its own on a macOS or Linux host, runs
+# its tests there, straight to its login shell, as the owner runs a test there, and removes the folder when they pass.
+#
+# Parameters:
+#   - `$1`: the host.
+#
+# Returns:
+#   - 0 when every test passed there; else 1, the folder left in place and named.
+function run_on_unix {
+    local host="$1" directory status=0
+
+    directory="$(
+        ssh "${ssh_options[@]}" "${host}" bash -s <<'SETUP'
+set -euo pipefail
+mkdir -p -- "$HOME/.local/state/noblefactor-ops-tests"
+mktemp -d "$HOME/.local/state/noblefactor-ops-tests/run.XXXXXX"
+SETUP
+    )" || true
+
+    if [[ ${directory} != /* ]]; then
+        error 0 "${host}: no folder for the copy could be made there."
+        return 1
+    fi
+
+    # shellcheck disable=SC2029 # The folder is named here, in the command the host's login shell runs.
+    if ! tree_archive Home scripts tests | ssh "${ssh_options[@]}" "${host}" "tar -C '${directory}' -xzf -"; then
+        error 0 "${host}: the working tree could not be copied to ${directory} there."
+        return 1
+    fi
+
+    # shellcheck disable=SC2029 # The folder is named here, in the command the host's login shell runs.
+    ssh "${ssh_options[@]}" "${host}" "${directory}/scripts/Test-Here" </dev/null || status=$?
+
+    if ((status != 0)); then
+        error 0 "${host}: tests failed; the copy is in ${directory} there."
+        return 1
+    fi
+
+    ssh "${ssh_options[@]}" "${host}" bash -s -- "${directory}" <<<'rm -rf -- "$1"'
+}
+
+# run_on_windows copies what the PowerShell tests need, the Windows layer, scripts and tests, to a folder of its own on
+# a Windows host, through pwsh, runs them there in the owner's pwsh, and removes the folder when they pass.
+#
+# Parameters:
+#   - `$1`: the host.
+#
+# Returns:
+#   - 0 when every test passed there; else 1, the folder left in place and named.
+function run_on_windows {
+    local host="$1" directory setup status=0
+
+    setup="$(
+        cat <<'POWERSHELL'
+$ErrorActionPreference = 'Stop'
+$root = Join-Path -Path $HOME -ChildPath '.local\state\noblefactor-ops-tests'
+$null = New-Item -ItemType Directory -Force -Path $root
+$directory = Join-Path -Path $root -ChildPath ('run.' + [guid]::NewGuid().ToString('N').Substring(0, 6))
+$null = New-Item -ItemType Directory -Path $directory
+$archive = Join-Path -Path $directory -ChildPath 'tree.tgz'
+[IO.File]::WriteAllBytes($archive, [Convert]::FromBase64String('@ARCHIVE@'))
+tar -xzf $archive -C $directory
+if ($LASTEXITCODE -ne 0) { throw 'tar could not unpack the copy.' }
+Remove-Item -LiteralPath $archive
+$directory
+POWERSHELL
+    )"
+    setup="${setup/@ARCHIVE@/$(tree_archive Home/common.Windows scripts tests | base64 | tr -d '\n')}"
+    directory="$(printf '%s\n' "${setup}" |
+        ssh "${ssh_options[@]}" "${host}" pwsh -NoProfile -NonInteractive -Command - | tr -d '\r' | tail -n 1)" || true
+
+    if [[ ! ${directory} =~ ^[A-Za-z]:\\ ]]; then
+        error 0 "${host}: the working tree could not be copied there."
+        return 1
+    fi
+
+    # shellcheck disable=SC2029 # The folder is named here, in the command the owner's pwsh runs.
+    ssh "${ssh_options[@]}" "${host}" "& '${directory}\\scripts\\Test-Here.ps1'" </dev/null || status=$?
+
+    if ((status != 0)); then
+        error 0 "${host}: tests failed; the copy is in ${directory} there."
+        return 1
+    fi
+
+    # shellcheck disable=SC2029 # As above.
+    ssh "${ssh_options[@]}" "${host}" "Remove-Item -LiteralPath '${directory}' -Recurse -Force" </dev/null
+}
+
+###########
+# Arguments
+###########
+
+declare -r synopsis="${script_name} [-h|--help] <host>...
+
+Runs every test under tests/ on each host named, in turn, and fails when any host's tests fail, naming each. A name
+that is this machine's, by its short host name or localhost, runs here. Any other host gets a copy of this working
+tree's Home, scripts and tests, what git tracks and what is new and not ignored, in a folder of its own under
+~/.local/state/noblefactor-ops-tests, and runs its tests there over ssh, straight to its login shell. The folder goes
+when its tests pass, and stays, named, when they fail. Whether a host is Windows is asked of it."
+
+eval set -- "$script_arguments"
+
+while :; do
+    case $1 in
+        -h | --help)
+            usage "$synopsis"
+            ;;
+        --)
+            shift 1
+            break
+            ;;
+        *) error $EX_USAGE "Unrecognized option: $1" ;;
+    esac
+done
+
+(($# > 0)) || error $EX_USAGE "Name at least one host."
+
+######
+# Main
+######
+
+repository_root="$(cd "$(dirname "$0")/.." && pwd)"
+readonly repository_root
+ssh_options=(-T -o BatchMode=yes -o ConnectTimeout=10)
+readonly ssh_options
+
+use_console_agent
+failed_list=()
+
+for host in "$@"; do
+    note "${host}: every test under tests/"
+
+    if is_this_machine "${host}"; then
+        "${repository_root}/scripts/Test-Here" || failed_list+=("${host}")
+        continue
+    fi
+
+    if ! platform="$(platform_of "${host}")"; then
+        error 0 "${host}: not reached, or neither macOS, Linux nor Windows."
+        failed_list+=("${host}")
+        continue
+    fi
+
+    case ${platform} in
+        unix) run_on_unix "${host}" || failed_list+=("${host}") ;;
+        windows) run_on_windows "${host}" || failed_list+=("${host}") ;;
+    esac
+done
+
+((${#failed_list[@]} == 0)) || error $EX_SOFTWARE "Tests failed on: ${failed_list[*]}"
+success "every test passed on: $*"

@@ -1,0 +1,336 @@
+#!/usr/bin/env bash
+
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Noble Factor. All rights reserved.
+# Redistribution and use in source and binary forms, with or without modification, are permitted under the terms of the MIT License.
+
+# Test-StartClaude - Tests Start-Claude against a stand-in for claude, on macOS and Linux: every form --resume takes and
+# each of its refusals, the background session's short id alone on standard output, detached and attached, and the
+# refusals of usage (David-Noble-at-work/personal#273, questions 11 and 12). Test-StartClaude.ps1 runs the same cases,
+# from the same table, against Start-Claude.ps1 on Windows.
+
+[[ -r "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" ]] || {
+    printf '%s: cannot find Declare-BashScript in %s\n' "${0##*/}" "$(dirname "$0")/../Home/common/.local/bin" >&2
+    exit 72 # EX_OSFILE
+}
+
+# The helper sources Set-Environment from ${XDG_DATA_HOME:-$HOME/.local/share}/shell/functions. This checkout's is the
+# file under review, so the test points XDG_DATA_HOME at it, for itself and for every Start-Claude it runs.
+XDG_DATA_HOME="$(cd "$(dirname "$0")/../Home/common/.local/share" && pwd)" || exit 72 # EX_OSFILE
+export XDG_DATA_HOME
+
+# shellcheck source=Declare-BashScript
+source "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" "$0" "help" "h" "$@"
+require_nix
+require_command git jq mktemp script tmux
+
+# The startup repository is git's alone: no global or system configuration reaches it.
+export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
+
+# Start-Claude attaches unless it runs inside tmux, where it switches the client instead: these cases attach.
+unset TMUX
+
+###########
+# Functions
+###########
+
+# cleanup ends the run's own tmux server and removes the run's directory, however the run ends.
+#
+# Set as the EXIT trap through Set-Traps, so it runs when every case passed, when one failed, and when an error or a
+# signal stopped the run. The server is named by its socket, under the run's directory, so no other tmux server is ever
+# reached.
+#
+# Returns:
+#   - 0, the run's tmux server ended and its directory gone.
+function cleanup {
+    if [[ -n "${run_directory:-}" && -d "${run_directory}" ]]; then
+        tmux -S "${run_directory}/tmux/tmux-$(id -u)/default" kill-server 2>/dev/null || true
+        rm -rf -- "${run_directory}"
+    fi
+}
+
+# record_titles writes a transcript that records the names a conversation was given, in order.
+#
+# Parameters:
+#   - `$1`: the project folder.
+#   - `$2`: the conversation's id, which names the transcript.
+#   - `$@` after them: the names, the last the conversation's own.
+#
+# Returns:
+#   - 0, with `$1/$2.jsonl` written.
+function record_titles {
+    local folder="$1" session="$2" title
+    shift 2
+
+    for title in "$@"; do
+        jq --null-input --compact-output --arg title "${title}" --arg session "${session}" \
+            '{type: "custom-title", customTitle: $title, sessionId: $session}'
+    done >"${folder}/${session}.jsonl"
+}
+
+# stage lays out what one run of Start-Claude needs, under the run's directory.
+#
+# A copy of Start-Claude beside Declare-BashScript, as writ deploys them, with this platform's lock-store.sh and the
+# Linux layer's keychain.sh, which finds nothing to unlock, since the keychain is not under test; stand-ins for claude
+# and gh first on PATH; claude's configuration, with the transcripts the cases name; a store; a tmux server of its own;
+# and the startup repository, with an origin, since Start-Claude names the repository from it.
+#
+# The stand-in for claude lists one background session, abcd1234, named "probe session", whose conversation,
+# abcd1234-0000-4000-8000-000000000009, has no transcript. Its viewer stays a second, then leaves. A background resume
+# answers as claude does, its short id the conversation's first eight characters.
+#
+# Parameters:
+#   - `$1`: the run's directory.
+#
+# Returns:
+#   - 0, with bin, libexec, config, state, tmux and repository under `$1`.
+function stage {
+    local directory="$1" platform_layer projects
+
+    # This platform's layer, as writ deploys it: the store's lock is lockf on macOS and flock on Linux.
+    case "$(uname -s)" in
+        Darwin) platform_layer=common.Darwin ;;
+        Linux) platform_layer=common.Linux ;;
+        *) error $EX_UNAVAILABLE "Start-Claude runs on macOS and Linux; Test-StartClaude.ps1 tests Start-Claude.ps1." ;;
+    esac
+
+    mkdir -p -- "${directory}/bin" "${directory}/libexec/start-claude" "${directory}/state" "${directory}/tmux"
+    cp -- "${repository_root}/Home/common.Unix/.local/bin/Start-Claude" "${directory}/bin/Start-Claude"
+    cp -- "${repository_root}/Home/common/.local/bin/Declare-BashScript" "${directory}/bin/Declare-BashScript"
+    cp -- "${repository_root}/Home/${platform_layer}/.local/libexec/start-claude/lock-store.sh" \
+        "${directory}/libexec/start-claude/lock-store.sh"
+    cp -- "${repository_root}/Home/common.Linux/.local/libexec/start-claude/keychain.sh" \
+        "${directory}/libexec/start-claude/keychain.sh"
+
+    cat >"${directory}/bin/claude" <<'CLAUDE'
+#!/usr/bin/env bash
+case "$1" in
+    agents)
+        jq --null-input --compact-output --arg id "${STAND_IN_ID}" --arg cwd "${STAND_IN_CWD}" \
+            --arg session "${STAND_IN_SESSION}" --arg name "${STAND_IN_NAME}" \
+            '[{id: $id, cwd: $cwd, kind: "background", startedAt: 1760000000000, sessionId: $session, name: $name,
+               state: "running"}]'
+        ;;
+    attach)
+        sleep 1
+        ;;
+    --bg)
+        resumed=""
+        while (($#)); do
+            [[ $1 != --resume ]] || resumed="$2"
+            shift
+        done
+        [[ -n ${resumed} ]] || {
+            printf 'stand-in claude: --bg without --resume is not handled\n' >&2
+            exit 1
+        }
+        printf 'backgrounded · %s\n  claude attach %s\n' "${resumed:0:8}" "${resumed:0:8}"
+        ;;
+    *)
+        printf 'stand-in claude: not handled: %s\n' "$*" >&2
+        exit 1
+        ;;
+esac
+CLAUDE
+
+    cat >"${directory}/bin/gh" <<'GH'
+#!/usr/bin/env bash
+printf 'stand-in gh: not handled: %s\n' "$*" >&2
+exit 1
+GH
+    chmod +x -- "${directory}/bin/Start-Claude" "${directory}/bin/claude" "${directory}/bin/gh"
+
+    projects="${directory}/config/projects/test-project"
+    mkdir -p -- "${projects}"
+    record_titles "${projects}" eeee5555-0000-4000-8000-000000000002 "probe transcript"
+    record_titles "${projects}" ffff6666-0000-4000-8000-000000000003 "twin name"
+    record_titles "${projects}" ffff7777-0000-4000-8000-000000000004 "twin name"
+    record_titles "${projects}" 99998888-0000-4000-8000-000000000005 "old name" "new name"
+    printf '%s\n' '{"type":"user"}' >"${projects}/notes.jsonl"
+
+    git init --quiet "${directory}/repository"
+    git -C "${directory}/repository" remote add origin https://github.com/example/start-claude-test.git
+}
+
+# trim prints its argument without the spaces around it.
+#
+# Parameters:
+#   - `$1`: the text.
+#
+# Returns:
+#   - stdout: the text, its leading and trailing spaces gone.
+function trim {
+    local text="$1"
+
+    text="${text#"${text%%[![:space:]]*}"}"
+    printf '%s' "${text%"${text##*[![:space:]]}"}"
+}
+
+# report prints a case as passed, or as failed with what went wrong and what the run wrote, counting it in `failures`.
+#
+# Parameters:
+#   - `$1`: the case's name.
+#   - `$2`: what went wrong, each problem ending "; ", or nothing.
+#   - `$3`: what the run wrote to standard error.
+#
+# Returns:
+#   - 0.
+function report {
+    local name="$1" problem="$2" written="$3"
+
+    if [[ -z "${problem}" ]]; then
+        success "${name}"
+        return 0
+    fi
+
+    error 0 "${name}: ${problem%; }:"
+    printf '    %s\n' "${written//$'\n'/$'\n'    }" >&2
+    failures=$((failures + 1))
+}
+
+# run_case runs Start-Claude with the arguments a case gives, its standard input closed, then checks its exit status
+# and that standard output holds the id the case expects, alone, or nothing at a refusal.
+#
+# Parameters:
+#   - `$1`: the case's name.
+#   - `$2`: what the case expects: the background session's short id, or a refusal: usage, 64; not-found, 66; or
+#     data-error, 65.
+#   - `$@` after them: Start-Claude's arguments.
+#
+# Returns:
+#   - 0, having reported the case.
+function run_case {
+    local name="$1" expected="$2" output status=0 expected_status=0 written problem=""
+    shift 2
+    case_count=$((case_count + 1))
+
+    case ${expected} in
+        usage) expected_status=64 ;;
+        data-error) expected_status=65 ;;
+        not-found) expected_status=66 ;;
+    esac
+
+    output="$(Start-Claude --directory "${repository}" "$@" </dev/null 2>"${run_directory}/case.err")" || status=$?
+    written="$(cat "${run_directory}/case.err")"
+
+    if ((status != expected_status)); then
+        problem+="its status was ${status}, not ${expected_status}; "
+    fi
+
+    if ((expected_status == 0)) && [[ "${output}" != "${expected}" ]]; then
+        problem+="standard output held '${output}', not ${expected} alone; "
+    elif ((expected_status != 0)) && [[ -n "${output}" ]]; then
+        problem+="standard output held '${output}' at a refusal; "
+    fi
+
+    report "${name}" "${problem}" "${written}"
+}
+
+# run_attached_case runs Start-Claude attached, in a pseudo-terminal of its own, onto the stand-in's background
+# session: the viewer leaves after a second, which ends the tmux session, and the session's short id must then be on
+# standard output, alone, with no tmux session left on the run's server.
+#
+# script(1) gives the pseudo-terminal: util-linux's, which knows --version, takes the command with -c and runs it with
+# $SHELL, set here to this bash, since a login shell's startup files would put another claude first on PATH; BSD's
+# takes the command after the log file. The pseudo-terminal's type is set too, xterm-256color, which tmux can attach
+# through: a run with no terminal of its own, as over ssh with none, has no TERM to hand on.
+#
+# Parameters:
+#   - `$1`: the case's name.
+#
+# Returns:
+#   - 0, having reported the case.
+function run_attached_case {
+    local name="$1" command output status written waited problem="" pid remaining
+    local out="${run_directory}/attached.out" err="${run_directory}/attached.err"
+    local status_file="${run_directory}/attached.status"
+    case_count=$((case_count + 1))
+
+    # shellcheck disable=SC2016 # $? is the command's own, expanded in the pseudo-terminal's shell.
+    printf -v command '%q --directory %q --resume abcd1234 >%q 2>%q; echo $? >%q' \
+        "${run_directory}/bin/Start-Claude" "${repository}" "${out}" "${err}" "${status_file}"
+
+    if script --version >/dev/null 2>&1; then
+        TERM=xterm-256color SHELL="${BASH}" script -q -e -c "${command}" /dev/null </dev/null >/dev/null 2>&1 &
+    else
+        TERM=xterm-256color script -q /dev/null bash -c "${command}" </dev/null >/dev/null 2>&1 &
+    fi
+
+    pid=$!
+
+    for ((waited = 0; waited < 30; waited++)); do
+        [[ -s "${status_file}" ]] && break
+        sleep 1
+    done
+
+    kill "${pid}" 2>/dev/null || true
+    wait "${pid}" 2>/dev/null || true
+
+    status="$(cat "${status_file}" 2>/dev/null || printf 'none: it never ended')"
+    output="$(cat "${out}" 2>/dev/null || true)"
+    written="$(cat "${err}" 2>/dev/null || true)"
+
+    [[ "${status}" == 0 ]] || problem+="its status was ${status}, not 0; "
+    [[ "${output}" == abcd1234 ]] || problem+="standard output held '${output}', not abcd1234 alone; "
+
+    remaining="$(tmux -S "${tmux_socket}" list-sessions -F '#{session_name}' 2>/dev/null | tr '\n' ' ' || true)"
+    [[ -z "${remaining}" ]] || problem+="tmux sessions remain: ${remaining}; "
+
+    report "${name}" "${problem}" "${written}"
+}
+
+######
+# Main
+######
+
+case_count=0
+failures=0
+repository_root="$(cd "$(dirname "$0")/.." && pwd)"
+run_directory=""
+
+Set-Traps cleanup
+run_directory="$(mktemp -d)"
+stage "${run_directory}"
+
+repository="${run_directory}/repository"
+projects="${run_directory}/config/projects/test-project"
+tmux_socket="${run_directory}/tmux/tmux-$(id -u)/default"
+export PATH="${run_directory}/bin:${PATH}" XDG_STATE_HOME="${run_directory}/state" TMUX_TMPDIR="${run_directory}/tmux"
+export CLAUDE_CONFIG_DIR="${run_directory}/config"
+export STAND_IN_ID=abcd1234 STAND_IN_SESSION=abcd1234-0000-4000-8000-000000000009 STAND_IN_NAME="probe session"
+export STAND_IN_CWD="${repository}"
+
+# Every form --resume takes, and each refusal, one line each: the case, the argument, what it must give (the id, or
+# not-found or data-error), and the error id Start-Claude.ps1 must give. Test-StartClaude.ps1 holds the same table,
+# line for line. {projects} is the stand-in configuration's project folder.
+case_table='short id | abcd1234 | abcd1234 |
+full id claude lists, with no transcript | abcd1234-0000-4000-8000-000000000009 | abcd1234 |
+full id in capitals | ABCD1234-0000-4000-8000-000000000009 | abcd1234 |
+full id of a transcript claude does not list | eeee5555-0000-4000-8000-000000000002 | eeee5555 |
+full id nothing holds | 00000000-0000-4000-8000-00000000000f | not-found | ConversationNotFound
+short id claude does not list | 12345678 | not-found | BackgroundSessionNotFound
+transcript path | {projects}/eeee5555-0000-4000-8000-000000000002.jsonl | eeee5555 |
+transcript path with no file | {projects}/00000000-0000-4000-8000-0000000000aa.jsonl | not-found | TranscriptNotFound
+transcript path not named for an id | {projects}/notes.jsonl | data-error | TranscriptNotNamedForId
+name claude lists for its background session | probe session | abcd1234 |
+the last name a transcript records | new name | 99998888 |
+an earlier name a transcript records | old name | not-found | ConversationNotFound
+name two transcripts record | twin name | data-error | ConversationNameAmbiguous
+name nothing records | no such name | not-found | ConversationNotFound'
+
+while IFS='|' read -r name argument expected _; do
+    argument="$(trim "${argument}")"
+    run_case "--resume, $(trim "${name}")" "$(trim "${expected}")" --detach --resume \
+        "${argument//\{projects\}/${projects}}"
+done <<<"${case_table}"
+
+# The refusals of usage, and a refusal's status, run as a process, as every case here runs.
+run_case "no way in" usage --detach
+run_case "--detach with --no-remote-control" usage --detach --no-remote-control --resume abcd1234
+run_case "a refusal, run as a process" not-found --detach --resume "no such name"
+
+# Attached: the id when the client leaves.
+run_attached_case "attached, the id on standard output when the viewer leaves"
+
+((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
+success "every case passed"

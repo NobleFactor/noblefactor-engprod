@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Noble Factor. All rights reserved.
+
+# Test-Here - Runs every test under tests/ that macOS and Linux run, each as a program: every test but the PowerShell
+# ones, which Test-Here.ps1 runs on Windows (#312). make test runs it, and Test-OnHosts runs it on each macOS and Linux
+# host it is handed.
+
+[[ -r "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" ]] || {
+    printf '%s: cannot find Declare-BashScript in %s\n' "${0##*/}" "$(dirname "$0")/../Home/common/.local/bin" >&2
+    exit 72 # EX_OSFILE
+}
+
+# The helper sources Set-Environment from ${XDG_DATA_HOME:-$HOME/.local/share}/shell/functions. This checkout's is the
+# one its tests review, and a host that has never deployed it, as a CI runner, has no other.
+XDG_DATA_HOME="$(cd "$(dirname "$0")/../Home/common/.local/share" && pwd)" || exit 72 # EX_OSFILE
+export XDG_DATA_HOME
+
+# shellcheck source=Declare-BashScript
+source "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" "$0" "help" "h" "$@"
+require_nix
+
+###########
+# Arguments
+###########
+
+declare -r synopsis="${script_name} [-h|--help]
+
+Runs every test under tests/ that macOS and Linux run, each as a program, from the repository's root, and fails when
+any test fails, naming each that did. The PowerShell tests are Test-Here.ps1's, on Windows."
+
+eval set -- "$script_arguments"
+
+while :; do
+    case $1 in
+        -h | --help)
+            usage "$synopsis"
+            ;;
+        --)
+            shift 1
+            break
+            ;;
+        *) error $EX_USAGE "Unrecognized option: $1" ;;
+    esac
+done
+
+######
+# Main
+######
+
+# From the repository's root, as make runs each test.
+cd "$(dirname "$0")/.." || error $EX_OSFILE "Cannot enter the repository's root."
+
+failed_list=()
+
+for test in tests/*; do
+    [[ ${test} != *.ps1 ]] || continue
+    "./${test}" || failed_list+=("${test#tests/}")
+done
+
+((${#failed_list[@]} == 0)) || error $EX_SOFTWARE "Failed: ${failed_list[*]}"
+success "every test passed"

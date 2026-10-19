@@ -53,7 +53,15 @@ starlark: ## Format-check and lint every Starlark file
 		xargs --null --no-run-if-empty buildifier -mode=check -lint=warn \
 			-warnings=-function-docstring-args,-function-docstring-return
 
-test: ## Run every test under tests/
-	for test in tests/*; do
-		"./$${test}"
-	done
+# Every test under tests/ that this platform runs (#312): on macOS and Linux every test but the PowerShell ones, through
+# scripts/Test-Here; on Windows the PowerShell tests, through scripts/Test-Here.ps1. With HOSTS, the same on each host
+# named, through scripts/Test-OnHosts: here for a name that is this machine's, and over ssh, on a copy of this working
+# tree, for any other, as in make test HOSTS="Danoble-MBP-A danoble-ud24-1.local danoble-wd11-3.local".
+test: ## Run every test under tests/, here, or on each host HOSTS names
+ifdef HOSTS
+	./scripts/Test-OnHosts $(HOSTS)
+else ifeq ($(OS),Windows_NT)
+	pwsh -NoProfile -NonInteractive -File ./scripts/Test-Here.ps1
+else
+	./scripts/Test-Here
+endif
