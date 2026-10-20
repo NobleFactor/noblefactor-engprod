@@ -15,12 +15,13 @@ Every PowerShell script, in exact order:
 
 0. **Shebang** — `#!/usr/bin/env pwsh`, alone on line 1, with no byte-order mark ahead of it
 1. **Copyright header** — SPDX identifier and copyright notice
-2. **Comment-based help** — `.SYNOPSIS`, `.DESCRIPTION`, parameters, and examples when useful
+2. **Comment-based help** — the script's own, in the form of section 10
 3. **`#Requires` declarations** — PowerShell 7.0 or later and required modules
 4. **Script-level `[CmdletBinding()]` and `param()`** — before executable statements
 5. **Script configuration** — the caller's error action noted, `$ErrorActionPreference = 'Stop'` set (section 7),
    and constants
-6. **Helper functions** — in a `Helper functions` region immediately after `$ErrorActionPreference`
+6. **Helper functions** — in a `Helper functions` region immediately after `$ErrorActionPreference`, each documented
+   as section 10 says
 7. **Main operation** — the executable workflow, after all helper definitions
 
 **The shebang is on every `.ps1`,** dot-sourced profiles and fragments included, so the rule has no exception to
@@ -273,18 +274,91 @@ names begin with `git-`; PowerShell launchers should use native PowerShell and W
 - Put a blank line after a function's `param()` block before its body.
 - Use blank lines to separate logical blocks, with exactly one blank line around control structures.
 - Do not add a blank line before a short function's final `return`.
-- Keep comments short and explain decisions, constraints, or non-obvious behavior.
-- Do not add comments that merely narrate the following statement.
+- Comments take the form of section 10.
 - Avoid one-line expressions when a block makes control flow clearer.
 - Preserve argument quoting and array structure; do not use `Invoke-Expression` for command construction.
 
 ## 10. Comments and Help
 
-Script-level comment-based help documents the command contract. Function comments are required for exported module
-functions and recommended for non-obvious private helpers.
+Every comment is in the form of the Go Style Guidelines, section 4, except the help of what an end user runs. Ruled
+2026-10-20: "Use Go-style format for comments, including function documentation headers. Use PowerShell help format
+for the main entry point to a script or any function intended for use by end users," and "If you source a file, it
+should document the functions using PowerShell help format. Otherwise, document functions like you would for Go."
 
-Comments should explain why the code has a non-obvious shape, especially when it works around native command parsing,
-Windows Terminal behavior, transcript naming, or path semantics. Keep implementation narration out of comments.
+| What | Documented with |
+| --- | --- |
+| A script's entry point | Comment-based help, where section 1 puts it |
+| Every function of a file that is dot-sourced: a profile, or a library a session loads | Comment-based help |
+| Every other function: the helpers of a script that is run | A Go-style documentation header |
+
+### Comment-based help
+
+`.SYNOPSIS`, `.DESCRIPTION`, a `.PARAMETER` for each parameter, `.EXAMPLE` when one helps, and `.OUTPUTS` when the
+command writes output. A function's help sits in a `<# #>` block immediately above its `function` line, so
+`Get-Help` finds it:
+
+```powershell
+<#
+.SYNOPSIS
+    Opens a terminal at a repository.
+
+.DESCRIPTION
+    Opens a new Windows Terminal tab whose working directory is the repository's root.
+
+.PARAMETER Name
+    The repository's directory name under the workspace.
+
+.EXAMPLE
+    Open-Repository devlore-cli
+#>
+function Open-Repository {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $Name
+    )
+
+    ...
+}
+```
+
+### Documentation headers
+
+A function that is not an end user's carries a header of `#` line comments immediately above its `function` line,
+in the Go form:
+
+- The first line is the function's name and a present-tense verb phrase.
+- An extended description follows a blank `#` line when the name and phrase do not say enough.
+- `Parameters:` lists each parameter, a backticked name without `$` and its description, a default stated inline.
+- `Returns:` names what the function writes to the output stream, by type, and what it is.
+
+Each section is written only when it has an item, as the Go code writes them: a function that takes nothing has no
+`Parameters:`, and one that writes nothing has no `Returns:`.
+
+```powershell
+# Find-OnPath finds the first copy of an installed file on the PATH a new terminal searches.
+#
+# The folders are searched in the order Windows searches them, with Get-ChildItem -LiteralPath, so a folder named
+# with brackets is searched as named.
+#
+# Parameters:
+#   - `Installed`: The full path of the installed file.
+#   - `MachinePath`: The machine PATH (default: the registry's, expanded).
+#   - `UserPath`: The user PATH (default: the registry's, expanded).
+#
+# Returns:
+#   - pscustomobject: `State`, one of OnPath, Shadowed or NotOnPath, and `Found`, the first copy's full path.
+function Find-OnPath {
+    ...
+}
+```
+
+### Every other comment
+
+Every other comment is `#` line comments, full sentences, filled to column 120. `<# #>` is for comment-based help
+alone. A comment explains why the code has a non-obvious shape, especially when it works around native command
+parsing, Windows Terminal behavior, transcript naming, or path semantics; it does not narrate the statement it
+precedes.
 
 ## 11. Validation
 
@@ -294,6 +368,8 @@ Every change is followed by a focused check before further edits:
 - Check the first line: it is exactly `#!/usr/bin/env pwsh`, and the file's first two bytes are `#!`. A UTF-8 BOM
   ahead of the shebang still parses, but it hides the shebang from the loader.
 - Verify every function has `[CmdletBinding()]` and an immediate `param()` block.
+- Verify every function is documented in the form section 10 gives it: comment-based help in a file that is
+  dot-sourced, and for a script's entry point; a Go-style header for every other function.
 - Check brace placement and blank-line rules when formatting changes are involved.
 - Run the narrowest available behavior check without launching interactive workflows unnecessarily.
 - Fix every parser, lint, or validation issue as discovered; do not pass by warnings or errors.
