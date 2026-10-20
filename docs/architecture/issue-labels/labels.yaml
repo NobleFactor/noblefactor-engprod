@@ -1,0 +1,59 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Noble Factor. All rights reserved.
+
+# The labels every NobleFactor repository carries: docs/architecture/issue-labels/1-labels-file.md. Each entry is in
+# the GitHub API's own fields, so the command that applies this file hands it to GitHub unchanged. Every color is
+# quoted: unquoted, 008672 would read as a number and 5319e7 as one in exponent form. A repository's own Epic:<Name>
+# and Thread:<Name> labels are not here; they stay with the repository that hosts the epic or thread.
+
+labels:
+  # The five kinds: docs/issue-standards.md.
+  - name: bug
+    color: "d73a4a"
+    description: Something isn't working
+  - name: chore
+    color: "BFD4F2"
+    description: "Maintenance work on the repo: build, CI, tooling, process"
+  - name: epic
+    color: "7057ff"
+    description: Top-level initiative
+  - name: feature
+    color: "0e8a16"
+    description: Deliverable unit within an epic
+  - name: task
+    color: "1d76db"
+    description: Implementation work item
+
+  # The process epic's label, which every participating repository provides: docs/issue-standards.md.
+  - name: Epic:Ops:Process
+    color: "5319e7"
+    description: "Tooling axis: process work; never closes"
+
+  # The GitHub defaults the organization keeps, and business.
+  - name: business
+    color: "fbca04"
+    description: Business priority
+  - name: documentation
+    color: "0075ca"
+    description: Improvements or additions to documentation
+  - name: duplicate
+    color: "cfd3d7"
+    description: This issue or pull request already exists
+  - name: enhancement
+    color: "a2eeef"
+    description: New feature or request
+  - name: good first issue
+    color: "7057ff"
+    description: Good for newcomers
+  - name: help wanted
+    color: "008672"
+    description: Extra attention is needed
+  - name: invalid
+    color: "e4e669"
+    description: This doesn't seem right
+  - name: question
+    color: "d876e3"
+    description: Further information is requested
+  - name: wontfix
+    color: "ffffff"
+    description: This will not be worked on
