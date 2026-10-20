@@ -9,7 +9,7 @@
 # devlore-cli's scripts/Get-EpicReport. The result is the rows; --markdown returns the document the
 # script prints instead, for the reader and for the parity diff.
 
-load("commands/scheme.star", "audit", "audit_lines", "axis", "by_axis", "by_number", "epic_name", "epic_rows", "epic_tag", "exempt_numbers", "feature_rows", "feature_table_lines", "fetch_issues", "is_bug", "is_child", "key", "label_space", "line", "parent_feature", "resolve_repos", "schedule_issues", "schedule_rows", "schedule_table_lines", "table_lines", "tagged", "task_row", "thread_names", "thread_rows", "thread_table_lines")
+load("commands/scheme.star", "audit", "audit_lines", "axis", "by_axis", "by_number", "epic_name", "epic_rows", "epic_tag", "exempt_numbers", "feature_rows", "feature_table_lines", "fetch_issues", "is_bug", "is_child", "key", "label_space", "lane_repos", "line", "parent_feature", "resolve_repos", "schedule_issues", "schedule_rows", "schedule_table_lines", "short", "table_lines", "tagged", "task_row", "thread_names", "thread_rows", "thread_table_lines")
 
 def _epics(all, epic_filter):
     return by_axis(by_number([i for i in all if tagged(i, "epic") and (epic_filter == "" or epic_tag(i) == "Epic:" + epic_filter)]), epic_name)
@@ -109,8 +109,22 @@ def _schedule_document(scheds, all, state, repos):
         return out
     for sc in scheds:
         out.append("\n## " + sc["title"] + " [" + sc["ref"] + "](" + sc["url"] + ")\n")
-        out.extend(schedule_table_lines(schedule_rows(sc, all, repos)))
+        out.extend(schedule_table_lines(schedule_rows(sc, all, repos, state)))
     return out
+
+def _with_lane_repos(scheds, all, repos, state, limit):
+    """The issue set and repositories, with every repository the schedules' lanes name and the report has not read.
+
+    A schedule spans what its lanes name, wherever they are (noblefactor-ops#253, ruled 2026-10-19). Once more than one
+    repository is read, every ref names its repository, so the refs fetched before are written that way too.
+    """
+    extra = [r for r in lane_repos(scheds) if r not in repos]
+    if len(extra) == 0:
+        return all, repos
+    note("repositories the lanes name: " + ", ".join(extra))
+    for it in all:
+        it["ref"] = short(it["repo"]) + "#" + str(it["number"])
+    return all + fetch_issues(state, limit, extra, True), repos + extra
 
 def _names_schedule(spec, sched):
     """Whether spec, <owner>/<repository>#<number> or a bare <number>, names the schedule issue sched."""
@@ -184,11 +198,13 @@ def run(_command, ctx):
                 fail("no schedule is issue '" + schedule_filter + "'; the schedules are " + ", ".join([key(sc) for sc in schedule_issues(all)]))
             if len(scheds) > 1:
                 fail("'" + schedule_filter + "' names " + str(len(scheds)) + " schedules, " + ", ".join([key(sc) for sc in scheds]) + "; write <owner>/<repository>#<number>")
+        if not repo_flag:
+            all, repos = _with_lane_repos(scheds, all, repos, state, limit)
         if markdown:
             return "\n".join(_schedule_document(scheds, all, state, repos))
         rows = []
         for sc in scheds:
-            rows.extend(schedule_rows(sc, all, repos))
+            rows.extend(schedule_rows(sc, all, repos, state))
         return rows
 
     epics = _epics(all, epic_filter)

@@ -1,7 +1,7 @@
 ---
 title: "star gh's commands find their repositories through writ's layers, a schedule report adds the repositories its lanes name, and gh.repositories goes"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/253
-status: approved
+status: active
 created: 2026-10-19
 updated: 2026-10-19
 ---
@@ -94,9 +94,10 @@ be read says that.
 
 The extension has no test harness here; the commands are proven by running them. The deployed copy is not touched:
 each run is made from a scratch git repository with no remote, whose `star/extensions/com.noblefactor.ops.GitHub` is a
-link to this branch's. star reads project scope, `<git root>/star/extensions`, ahead of the user scope writ deploys to
-(`cmd/star/extension/loader.go:319` in devlore-cli), so the branch's copy answers, and the scratch repository names no
-repository of its own.
+copy of this branch's. star reads project scope, `<git root>/star/extensions`, ahead of the user scope writ deploys to
+(`cmd/star/extension/loader.go:318` in devlore-cli), so the branch's copy answers, and the scratch repository names no
+repository of its own. A copy, not a link: with a symbolic link to the directory there, the deployed copy answered
+instead (found 2026-10-19), so star does not take a linked extension directory at project scope.
 
 - From the scratch repository: `star gh issues report --by schedule --schedule NobleFactor/devlore-cli#949`
   reads devlore-cli, noblefactor-ops and personal, then devlore.noblefactor.com and devlore-registry; lanes 4 to 6 and
@@ -120,8 +121,14 @@ The gate this repository's CI runs: `./.github/scripts/Test-Frontmatter.sh`, `co
 
 ### Phase 2: The layers, and the schedule's lanes (Requirements 1 to 3)
 
-- [ ] `resolve_repos` reads the layers; the schedule report adds its lanes' repositories; a lane says why it
-      resolved to nothing. Requirement 5's runs pass; `buildifier` clean
+- [x] `resolve_repos` reads the layers; the schedule report adds its lanes' repositories; a lane says why it
+      resolved to nothing. Requirement 5's runs pass; `buildifier` clean. Run 2026-10-19 with star
+      `v0.1.0-dev.20261010200947`: the schedule report for #949 read noblefactor-ops, devlore-cli and personal from the
+      layers, then devlore.noblefactor.com and devlore-registry from the lanes, and lanes 4 to 6 and 54 resolved; under
+      `--state open` a closed lane read "is not among the open issues"; the epic report, the issues audit and the labels
+      audit read the three layers; `--repo NobleFactor/devlore-cli,NobleFactor/noblefactor-ops` read those two, and
+      lane 4 read "is in NobleFactor/devlore.noblefactor.com, which this report did not read". buildifier 8.5.1, CI's
+      pin, clean on every `.star` file
 
 ### Phase 3: gh.repositories goes (Requirement 4)
 
