@@ -83,7 +83,8 @@ be read says that.
 - The four `--repo` helps say the default: "Repositories to report on, owner/name, comma-separated; default: the
   repositories of writ's layers" (and the audit's and sync's alike); the report's says a schedule adds its lanes'.
   `--repo` stays one comma-separated value: ruled 2026-10-19, "For now, it is not repeatable."
-- `star/config.yaml` here drops `gh.repositories`; its comment says where the repositories come from.
+- `star/config.yaml` here held `gh.repositories` and nothing else, so it goes: a file that configures nothing is
+  removed (`git rm`).
 - `docs/guides/agent-rules.md:72`: the report runs from anywhere.
 - `docs/plans/feature/140-star-report-epics.md` and `docs/plans/chore/202-repositories-gain-personal.md` each get a
   dated note: their `gh.repositories` is retired by this plan.
@@ -132,7 +133,12 @@ The gate this repository's CI runs: `./.github/scripts/Test-Frontmatter.sh`, `co
 
 ### Phase 3: gh.repositories goes (Requirement 4)
 
-- [ ] The setting, the helps, this repository's `star/config.yaml`, the guide, the two plans' notes. The gate passes
+- [x] The setting, the helps, this repository's `star/config.yaml` (removed), the guide, the two plans' notes. The
+      gate: `Test-Frontmatter.sh` and buildifier 8.5.1 pass; codespell is not installed here and runs in the PR
+      script's pre-flight and CI. Re-run 2026-10-19 after the helps were quoted (their "default:" broke the YAML,
+      which star reported by skipping the extension): every run above holds. From a directory without devlore-cli's
+      `star/config.yaml`, the issues audit lists devlore-cli#65, since `gh.exempt` is read from the working
+      directory's configuration too (Out of Scope)
 
 ### Phase 4: Merge
 

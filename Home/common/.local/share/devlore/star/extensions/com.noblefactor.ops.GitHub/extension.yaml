@@ -6,7 +6,7 @@ description: GitHub under the NobleFactor classification scheme -- the issue rep
 
 commands:
   - name: gh.issues.report
-    help: Render the epic / feature / task tree from GitHub issues, by epic, across the configured repositories
+    help: Render the epic / feature / task tree from GitHub issues, by epic, across the repositories of writ's layers
     implementation: commands/gh-issues-report.star
     flags:
       - name: by
@@ -40,7 +40,7 @@ commands:
       - name: repo
         type: string
         default: ""
-        help: Repositories to report on, owner/name, comma-separated; overrides gh.repositories in star/config.yaml
+        help: "Repositories to report on, owner/name, comma-separated; default: the repositories of writ's layers, and with --by schedule, every repository its lanes name"
       - name: directory
         type: string
         default: ""
@@ -69,7 +69,7 @@ commands:
       - name: repo
         type: string
         default: ""
-        help: Repositories to audit, owner/name, comma-separated; overrides gh.repositories in star/config.yaml
+        help: "Repositories to audit, owner/name, comma-separated; default: the repositories of writ's layers"
       - name: directory
         type: string
         default: ""
@@ -80,13 +80,13 @@ commands:
         help: Return the audit section Get-EpicReport prints, as one string (render with -o value)
 
   - name: gh.labels.audit
-    help: Which configured repositories lack a kind, Epic:Ops:Process, or a thread label, and which carry one that has drifted
+    help: Which repositories lack a kind, Epic:Ops:Process, or a thread label, and which carry one that has drifted
     implementation: commands/gh-labels-audit.star
     flags:
       - name: repo
         type: string
         default: ""
-        help: Repositories to audit, owner/name, comma-separated; overrides gh.repositories in star/config.yaml
+        help: "Repositories to audit, owner/name, comma-separated; default: the repositories of writ's layers"
       - name: directory
         type: string
         default: ""
@@ -103,7 +103,7 @@ commands:
       - name: repo
         type: string
         default: ""
-        help: Repositories to sync, owner/name, comma-separated; overrides gh.repositories in star/config.yaml
+        help: "Repositories to sync, owner/name, comma-separated; default: the repositories of writ's layers"
       - name: directory
         type: string
         default: ""
@@ -113,8 +113,6 @@ config:
   path: gh
   type: GitHubConfig
   fields:
-    repositories: "[]string"
     exempt: "[]int"
   defaults:
-    repositories: []
     exempt: []

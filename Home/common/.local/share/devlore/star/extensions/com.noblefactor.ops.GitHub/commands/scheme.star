@@ -351,7 +351,7 @@ def audit_lines(a):
 # in the thread issue's body; the two must agree, and disagreement either way is a fault.
 
 def thread_names(space):
-    """Every thread across the configured repositories, from the label space, sorted."""
+    """Every thread across the repositories read, from the label space, sorted."""
     names = {}
     for repo in space:
         for label in space[repo]:
@@ -629,7 +629,7 @@ def schedule_name(sched):
     return sched["title"][len("Schedule:"):].strip()
 
 def _short_refs(text, repos):
-    """owner/repo#N rendered as repo#N for the configured repositories."""
+    """owner/repo#N rendered as repo#N for the repositories read."""
     for repo in repos:
         text = text.replace(repo + "#", short(repo) + "#")
     return text
