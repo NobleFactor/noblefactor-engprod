@@ -1,5 +1,5 @@
 ---
-title: "The PowerShell style guide states how a function is documented: Go-style headers, and comment-based help for what is sourced"
+title: "The PowerShell style guide says how every function is documented"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/323
 status: active
 created: 2026-10-20
@@ -48,7 +48,7 @@ Section 1's file layout names the forms; section 11's checks verify them.
 
 The existing scripts are named in the pull request, each its repository's own work: devlore-cli's `install.ps1` and
 `scripts/Test-InstallScript.ps1` in lane 34 (#1050), already planned to; this repository's and personal's scripts in
-an issue filed for them.
+#324.
 
 ## Implementation Phases
 
@@ -58,12 +58,13 @@ an issue filed for them.
 
 ### Phase 2: The guide (Requirements 1 and 2)
 
-- [ ] Sections 1, 10 and 11
-- [ ] `Test-Frontmatter.sh`, codespell where it runs, and the other documents that cite section 10 read again
+- [x] Sections 1, 9, 10 and 11 (section 9's two comment rules move into 10)
+- [x] `Test-Frontmatter.sh`, codespell where it runs, and the other documents that cite section 10 read again: only
+      plans 216 and 218, which cite the section numbering of their day
 
 ### Phase 3: Merge (Requirement 3)
 
-- [ ] The issue for the scripts that do not follow the rule yet, filed
+- [x] The issue for the scripts that do not follow the rule yet, filed: #324, under feature #266
 - [ ] The gate this repository's CI runs, finished green before the PR script is called ready
 - [ ] PR script written, shown, and handed over; the PR resolves #323
 - [ ] CI on the pull request; nothing acts on the checks while the script's gate watches them
