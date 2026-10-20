@@ -68,8 +68,8 @@ tool built for exactly that. "You should be running a `star gh` command to get t
 "it is our tool and we spent significant resources to write that command. USE IT." The report's first
 run found three of the agent's own filings missing their parent feature.
 
-**Compliance.** From `~/Workspace/NobleFactor/noblefactor-ops`, whose configuration names both
-repositories:
+**Compliance.** From any directory: the report reads the repositories of writ's layers, and a schedule report
+also reads every repository its lanes name (#253):
 
 ```bash
 star gh issues report --epic <Name> --view table --state open --markdown -o value --silent

@@ -3,10 +3,14 @@ title: "star gh issues report: the epic report as a base-layer extension"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/140
 status: active
 created: 2026-09-05
-updated: 2026-09-05
+updated: 2026-10-19
 ---
 
 # Plan: star gh issues report: the epic report as a base-layer extension
+
+> **2026-10-19 (#253):** `gh.repositories` is retired. The commands read the repositories of writ's layers by default,
+> a schedule report also reads every repository its lanes name, and `--repo` names any others. The setting below is
+> described as it was built.
 
 ## Summary
 

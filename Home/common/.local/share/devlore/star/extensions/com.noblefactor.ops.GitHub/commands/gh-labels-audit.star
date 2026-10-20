@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright Noble Factor. All rights reserved.
 
-"""Which configured repositories lack a kind, Epic:Ops:Process, or a thread label; and which carry one that has drifted."""
+"""Which repositories lack a kind, Epic:Ops:Process, or a thread label; and which carry one that has drifted."""
 
 # gh-labels-audit.star
 

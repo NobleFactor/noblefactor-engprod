@@ -209,10 +209,17 @@ def table_lines(rows):
 
 # ── fetching ────────────────────────────────────────────────────────────────
 
+# owner/name at the end of a remote's URL, by HTTPS or by SSH, with or without .git.
+_ORIGIN = "[:/]([^/:]+/[^/]+?)(?:\\.git)?\\s*$"
+
+# writ's layers, in their order. Each registered one is an entry under writ's data directory naming a repository's
+# working tree; reading them needs nothing from writ (noblefactor-ops#253).
+_LAYERS = ["base", "team", "personal"]
+
 def _origin_repo(directory):
     """owner/name from the origin remote of a working tree."""
     r = shell.exec(command = "git -C '" + directory + "' remote get-url origin")
-    m = regex.find_submatch(pattern = "[:/]([^/:]+/[^/]+?)(?:\\.git)?\\s*$", text = r.stdout)
+    m = regex.find_submatch(pattern = _ORIGIN, text = r.stdout)
     if m == None or len(m) < 2:
         fail("cannot read owner/name from the origin of " + directory + ": " + r.stdout.strip())
     return m[1]
@@ -222,28 +229,57 @@ def _current_repo():
     r = shell.exec(command = "gh repo view --json nameWithOwner --jq .nameWithOwner")
     return r.stdout.strip()
 
-def configured_repos():
-    """gh.repositories from star/config.yaml, or an empty list."""
-    cfg = config.get
-    if hasattr(cfg, "gh") and hasattr(getattr(cfg, "gh"), "repositories"):
-        return [str(x) for x in getattr(cfg, "gh").repositories]
-    return []
+def layer_repos():
+    """owner/name of each registered writ layer's repository, base first, each once.
+
+    A layer's entry is ${XDG_DATA_HOME:-$HOME/.local/share}/devlore/writ/layers/<layer>, naming a git working tree. One
+    that is absent, or names nothing git can read an origin from, is skipped, as writ reads an empty directory as no
+    layer. The script never fails, since shell.exec raises on a non-zero exit (devlore-cli#824).
+    """
+    script = ("layers=\"${XDG_DATA_HOME:-$HOME/.local/share}/devlore/writ/layers\"; for layer in " + " ".join(_LAYERS) +
+              "; do if [ -e \"$layers/$layer\" ]; then git -C \"$layers/$layer\" remote get-url origin 2>/dev/null; fi; done; true")
+    repos = []
+    for origin in shell.exec(command = script).stdout.split("\n"):
+        m = regex.find_submatch(pattern = _ORIGIN, text = origin)
+        if m != None and len(m) > 1 and m[1] not in repos:
+            repos.append(m[1])
+    return repos
 
 def resolve_repos(repo_flag, directory):
-    """The repositories to report on: --repo, else --directory's origin, else gh.repositories, else the current one."""
+    """The repositories to report on: --repo, else --directory's origin, else writ's layers', else the current one."""
     if repo_flag:
         return [r.strip() for r in repo_flag.split(",") if r.strip()]
     if directory:
         return [_origin_repo(directory)]
-    repos = configured_repos()
+    repos = layer_repos()
     return repos if repos else [_current_repo()]
 
-def fetch_issues(state, limit, repos):
-    """Every issue of each repository via gh issue list -- authoritative and immediate, unlike search -- tagged with its repository and display ref."""
+def lane_repos(scheds):
+    """Every repository a lane of the schedules names, owner/name, in lane order, each once."""
+    repos = []
+    for sc in scheds:
+        for lane in lane_table(sc):
+            if "key" in lane["spec"]:
+                repo = lane["spec"]["key"].split("#")[0]
+                if repo not in repos:
+                    repos.append(repo)
+    return repos
+
+def fetch_issues(state, limit, repos, multi = None):
+    """Every issue of each repository via gh issue list -- authoritative and immediate, unlike search -- tagged with its repository and display ref.
+
+    Args:
+      state: open, closed, or all.
+      limit: the most issues to fetch from each repository.
+      repos: the repositories, owner/name.
+      multi: whether a ref names its repository; by default, when more than one repository is read. A report that reads
+        more repositories after its first fetch passes True, so every ref is written one way.
+    """
 
     # shell.exec raises on a non-zero exit (devlore-cli#824), so a failed gh never reaches this code;
     # there is no exit_code to check.
-    multi = len(repos) > 1
+    if multi == None:
+        multi = len(repos) > 1
     issues = []
     for repo in repos:
         r = shell.exec(command = "gh issue list -R " + repo + " --state " + state + " --limit " + str(limit) + " --json number,title,state,labels,body,url")
@@ -315,7 +351,7 @@ def audit_lines(a):
 # in the thread issue's body; the two must agree, and disagreement either way is a fault.
 
 def thread_names(space):
-    """Every thread across the configured repositories, from the label space, sorted."""
+    """Every thread across the repositories read, from the label space, sorted."""
     names = {}
     for repo in space:
         for label in space[repo]:
@@ -593,7 +629,7 @@ def schedule_name(sched):
     return sched["title"][len("Schedule:"):].strip()
 
 def _short_refs(text, repos):
-    """owner/repo#N rendered as repo#N for the configured repositories."""
+    """owner/repo#N rendered as repo#N for the repositories read."""
     for repo in repos:
         text = text.replace(repo + "#", short(repo) + "#")
     return text
@@ -640,7 +676,16 @@ def _aggregate(frows):
     state = "no tasks filed" if total == 0 else (str(done) + " of " + str(total) + " done across " + str(n) + " feature(s)")
     return {"done": done, "open": open_, "features": n, "state": state}
 
-def resolve_lane(spec, all):
+def _missing(spec_key, repos, state):
+    """Why a lane's issue is not in the set: its repository was not read, or the issue is not among the state's."""
+    repo = spec_key.split("#")[0]
+    if repo not in repos:
+        return spec_key + " is in " + repo + ", which this report did not read"
+    if state == "all":
+        return spec_key + " was not found"
+    return spec_key + " is not among the " + state + " issues"
+
+def resolve_lane(spec, all, repos, state):
     """The issue a lane names and its live progress. An epic aggregates its features; a feature rolls up its children; anything else reports its own state."""
     it = None
     if "epic" in spec:
@@ -654,7 +699,7 @@ def resolve_lane(spec, all):
         hits = [i for i in all if key(i) == spec["key"]]
         it = hits[0] if hits else None
         if it == None:
-            return None, {"done": 0, "open": 0, "features": 0, "state": spec["key"] + " is not in the configured repositories"}
+            return None, {"done": 0, "open": 0, "features": 0, "state": _missing(spec["key"], repos, state)}
         if tagged(it, "epic"):
             return it, _aggregate(feature_rows([it], all))
         if tagged(it, "feature"):
@@ -666,11 +711,11 @@ def resolve_lane(spec, all):
         return it, {"done": 1 if it["state"] == "CLOSED" else 0, "open": 0 if it["state"] == "CLOSED" else 1, "features": 0, "state": "closed" if it["state"] == "CLOSED" else "open"}
     return None, {"done": 0, "open": 0, "features": 0, "state": "unresolved: " + spec.get("unresolved", "")}
 
-def schedule_rows(sched, all, repos):
+def schedule_rows(sched, all, repos, state):
     """The lanes of one schedule, in declared order, with live progress."""
     rows = []
     for lane in lane_table(sched):
-        it, prog = resolve_lane(lane["spec"], all)
+        it, prog = resolve_lane(lane["spec"], all, repos, state)
         rows.append({
             "schedule": schedule_name(sched),
             "lane": lane["lane"],

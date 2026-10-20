@@ -3,10 +3,13 @@ title: "gh.repositories names David-Noble-at-work/personal, so the report and th
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/202
 status: complete
 created: 2026-09-10
-updated: 2026-09-11
+updated: 2026-10-19
 ---
 
 # Plan: gh.repositories gains personal
+
+> **2026-10-19 (#253):** `gh.repositories` is retired. personal is read as writ's personal layer, with base and team,
+> wherever the commands run.
 
 Lane 1 of `Schedule: process tooling` (#206).
 
