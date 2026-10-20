@@ -142,7 +142,7 @@ The gate this repository's CI runs: `./.github/scripts/Test-Frontmatter.sh`, `co
 
 ### Phase 4: Merge
 
-- [ ] PR script written, shown, and handed over. The PR resolves #253
+- [x] PR script written, shown, and handed over. The PR resolves #253
 - [ ] After the merge and `writ deploy`, on this machine: Requirement 5's first run, from a directory outside every
       repository, against the deployed extension
 - [ ] In devlore-cli's next pull request: its `star/config.yaml` drops `gh.repositories`; `configuration.md`'s Open
