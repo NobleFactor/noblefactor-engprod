@@ -10,19 +10,21 @@ title: "Issue labels — one set, applied to every NobleFactor repository"
 > [plan](../../plans/chore/320-labels-file.md) holds its phases and the owner's rulings, each quoted with its date.
 
 Every NobleFactor repository carries the same labels, the ones [issue-standards.md](../../issue-standards.md) defines.
-A repository gets them from one file this design keeps, [labels.yaml](labels.yaml), applied by one command, which also
-says where a repository differs from it.
+A repository gets them from one file this design keeps, [labels.yaml](labels.yaml), which star's `gh labels sync`
+applies and `gh labels audit` checks.
 
 ## Sections
 
 | Section | What it holds | Status |
 | --- | --- | --- |
-| [1. The labels file](1-labels-file.md) | The problem, the file, the command that applies it, and their open items | [Stub](1-labels-file.status.md) |
+| [1. The labels file](1-labels-file.md) | The problem, the file, the star commands that read it, and their open items | [Stub](1-labels-file.status.md) |
 
 ## Terms
 
 - **Label:** a GitHub issue label: a name, a color and a description.
 - **The organization's labels:** the ones every repository carries: the five kinds, `Epic:Ops:Process`, and the GitHub
   defaults the organization keeps. [labels.yaml](labels.yaml) lists them.
-- **A repository's own labels:** an `Epic:<Name>` or `Thread:<Name>` label, which only the repository that hosts its
-  epic or thread carries, as issue-standards.md has it.
+- **An epic's label:** an `Epic:<Name>` label, which only the repository that hosts its epic carries, as
+  issue-standards.md has it.
+- **A thread label:** a `Thread:<Name>` label, which star's audit expects in every repository it reads, since a
+  thread's issues span repositories.

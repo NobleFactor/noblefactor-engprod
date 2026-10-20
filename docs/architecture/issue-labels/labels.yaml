@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2026 Noble Factor. All rights reserved.
 
-# The labels every NobleFactor repository carries: docs/architecture/issue-labels/1-labels-file.md. Each entry is in
-# the GitHub API's own fields, so the command that applies this file hands it to GitHub unchanged. Every color is
-# quoted: unquoted, 008672 would read as a number and 5319e7 as one in exponent form. A repository's own Epic:<Name>
-# and Thread:<Name> labels are not here; they stay with the repository that hosts the epic or thread.
+# The labels every NobleFactor repository carries: docs/architecture/issue-labels/1-labels-file.md. star's gh labels
+# audit and gh labels sync read it. Each entry is in the GitHub API's own fields. Every color is quoted: unquoted,
+# 008672 would read as a number and 5319e7 as one in exponent form. An Epic:<Name> label stays with the repository
+# that hosts its epic; the Thread:<Name> labels, which star finds in every repository it reads, are not listed here.
 
 labels:
   # The five kinds: docs/issue-standards.md.

@@ -11,8 +11,8 @@ updated: 2026-10-19
 ## Summary
 
 noblefactor-ops keeps the organization's labels as data, `docs/architecture/issue-labels/labels.yaml`, the live asset
-of the issue-labels design, and one command applies that file to a repository: it creates each label missing there,
-corrects one whose color or description differs, and with `--check` reports the difference and changes nothing.
+of the issue-labels design, and star's `gh labels audit` and `gh labels sync`, which find and repair a repository's
+labels today from a set in code, read that file instead.
 
 ## Schedule
 
@@ -23,7 +23,7 @@ is not ruled.
 ## Goals
 
 1. **One record.** The organization's labels are written down once, as data.
-2. **One command.** It applies the record to a repository, and reports what differs without changing anything.
+2. **The commands read it.** star's audit and sync take their set from the record, not from code.
 3. **Every repository.** Each NobleFactor repository carries the organization's labels.
 
 ## Current State
@@ -32,7 +32,7 @@ is not ruled.
 | --- | --- |
 | The labels | Made by hand, one repository at a time. Before 2026-10-19, eight of the organization's eleven repositories had no `chore` label; of the eight compared that day, four have no `feature`, `task` or `epic` either. |
 | A record of them | None. [issue-standards.md](../../issue-standards.md) states the label families, not their names, colors and descriptions. |
-| A command | None. |
+| The commands | star's `gh labels audit` and `gh labels sync`, in the base layer's GitHub extension. Their names are code, `REQUIRED_EVERYWHERE` in `scheme.star`; each color and description is the first repository's. |
 
 ## Requirements
 
@@ -41,15 +41,17 @@ is not ruled.
 The issue-labels design's [1. The labels file](../../architecture/issue-labels/1-labels-file.md) says what the file
 holds and what it leaves to each repository; [labels.yaml](../../architecture/issue-labels/labels.yaml) is the file.
 
-### Requirement 2: the command
+### Requirement 2: star reads the file
 
-Applied to a repository, it creates each label in the file that is missing there and corrects one whose color or
-description differs; `--check` reports the difference and changes nothing. It removes nothing: a label outside the
-file is the repository's own. Its name and form are the design's first open item.
+star's `gh labels audit` and `gh labels sync` take their set from labels.yaml. The audit says which labels a
+repository lacks and which differ from the file; the sync creates the missing and aligns the rest, deletes nothing,
+and honors `--dry-run`. Where star reads the file is the design's second open item. Asked on 2026-10-19 whether to
+build on these two commands rather than a new one, the owner: "Yes".
 
 ### Requirement 3: every repository
 
-The command runs on each of the organization's repositories, and each carries the organization's labels.
+`star gh labels sync --repo <owner>/<repository>` runs on each of the organization's repositories, and each carries
+the organization's labels.
 
 ## Implementation Phases
 
@@ -58,13 +60,13 @@ The command runs on each of the organization's repositories, and each carries th
 - [ ] This plan, and the issue-labels design's stub with labels.yaml, committed on the branch and reviewed with the
   owner.
 
-### Phase 2: The command
+### Phase 2: star reads the file
 
-- [ ] Requirement 2, its form as the owner rules it.
+- [ ] Requirement 2.
 
 ### Phase 3: Every repository
 
-- [ ] Requirement 3: the command's `--check` clean on each repository.
+- [ ] Requirement 3: `star gh labels audit` clean on each repository.
 
 ### Phase 4: Closure
 
@@ -78,7 +80,7 @@ The command runs on each of the organization's repositories, and each carries th
 | `docs/architecture/issue-labels/index.md` | Create | the design's index |
 | `docs/architecture/issue-labels/1-labels-file.md` and its status companion | Create | the design |
 | `docs/architecture/issue-labels/labels.yaml` | Create | the organization's labels, the design's live asset |
-| the command | Create | applies labels.yaml to a repository; its place is the design's first open item |
+| `Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/scheme.star` | Modify | the set from labels.yaml, not from code |
 
 ## Related Documents
 
@@ -88,4 +90,5 @@ The command runs on each of the organization's repositories, and each carries th
 
 ## Open Questions
 
-The design's three open items: the command, which GitHub defaults stay, and where the command runs.
+The design's four open items: thread labels, where star reads the file, which GitHub defaults stay, and where the
+commands run.
