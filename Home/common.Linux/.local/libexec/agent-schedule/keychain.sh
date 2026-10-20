@@ -1,10 +1,10 @@
 # shellcheck shell=bash
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2026 Noble Factor. All rights reserved.
 
 # keychain.sh - Linux's login keychain, for Start-Claude
 #
-# Start-Claude sources this file, which only Linux deploys, from ~/.local/libexec/start-claude
+# Start-Claude sources this file, which only Linux deploys, from ~/.local/libexec/agent-schedule
 # (David-Noble-at-work/personal#277, requirement 19 of its plan). Linux has no keychain to unlock for it: claude keeps
 # its login in ~/.claude/.credentials.json, and gh's keyring answers an ssh session, as both did on danoble-ud24-1 on
 # 2026-10-13.

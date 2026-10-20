@@ -1,7 +1,7 @@
 ---
 title: "Every start-claude directory becomes agent-schedule, on every platform and every host"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/321
-status: approved
+status: active
 created: 2026-10-20
 updated: 2026-10-20
 ---
@@ -64,9 +64,10 @@ script for the owner to run there.
 
 ### Phase 2: The names
 
-- [ ] Requirement 1: `make check`, and every test on Danoble-MBP-A, danoble-ud24-1 and danoble-wd11-3 through
+- [x] Requirement 1: `make check`, and every test on Danoble-MBP-A, danoble-ud24-1 and danoble-wd11-3 through
   `make test HOSTS="..."`, in a script the owner runs. The owner, 2026-10-19: "you must prepare a script for me to run
-  in all cases."
+  in all cases." Done 2026-10-20: the script moved both helpers' directories with `git mv`, and committed the names
+  once both gates passed.
 
 ### Phase 3: The hosts
 
@@ -74,9 +75,10 @@ script for the owner to run there.
 
 ### Phase 4: Closure
 
-- [ ] The pull request, closing #321, the agent-schedule design's status companions saying so; lane 13 of #301 closes
-  with NobleFactor/noblefactor-ops#322. It also ticks 2-command-line.status.md's item for the move to noblefactor-ops,
-  owed since NobleFactor/noblefactor-ops#313 merged.
+- [ ] The pull request, closing #321 and NobleFactor/noblefactor-ops#314, which rides it; lane 13 of #301 closes with
+  NobleFactor/noblefactor-ops#322. The agent-schedule design's status companions say so, and 2-command-line.status.md's
+  item for the move to noblefactor-ops, owed since NobleFactor/noblefactor-ops#313 merged, is ticked, both in the
+  commit that makes the names. The owner, 2026-10-20, of #314: "this goes in with the next pr."
 
 ## Migration Path
 
@@ -91,7 +93,7 @@ Requirement 2: each host's store keeps its entries under the new name. Nothing r
 | `Home/common.Windows/.local/bin/Start-Claude.ps1` | Modify | the store root and its help |
 | `Home/common.Darwin/.local/libexec/start-claude/` and `Home/common.Linux/.local/libexec/start-claude/` | Move | to `agent-schedule/` |
 | `Home/common.Unix/.local/share/man/man1/Start-Claude.1` | Modify | its files |
-| `tests/Test-StartClaude` and `tests/Test-StartClaude.ps1` | Modify | the new names |
+| `tests/Test-StartClaude` | Modify | the new names; `tests/Test-StartClaude.ps1` names neither directory |
 | `docs/architecture/agent-schedule/` | Modify | the store's name, and the status companions |
 
 ## Related Documents
@@ -100,6 +102,7 @@ Requirement 2: each host's store keeps its entries under the new name. Nothing r
   other half; NobleFactor/noblefactor-ops#151
 - NobleFactor/noblefactor-ops#301 (schedule), lane 13
 - NobleFactor/noblefactor-ops#300, lane 9 of #301: where a script that only other programs run lives
+- NobleFactor/noblefactor-ops#314, which rides this pull request: Start-Claude's files take Apache-2.0
 - [2. Command line](../../architecture/agent-schedule/2-command-line.md) and
   [1. Session model](../../architecture/agent-schedule/1-session-model.md)
 

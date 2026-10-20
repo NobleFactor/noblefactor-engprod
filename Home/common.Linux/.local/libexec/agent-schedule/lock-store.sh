@@ -1,10 +1,10 @@
 # shellcheck shell=bash
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2026 Noble Factor. All rights reserved.
 
 # lock-store.sh - Linux's lock on Start-Claude's store
 #
-# Start-Claude and Sync-ClaudeSession source this file, which only Linux deploys, from ~/.local/libexec/start-claude
+# Start-Claude sources this file, which only Linux deploys, from ~/.local/libexec/agent-schedule
 # (David-Noble-at-work/personal#259, requirement 17 of its plan).
 
 require_command flock

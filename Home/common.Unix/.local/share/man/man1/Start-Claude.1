@@ -1,7 +1,6 @@
-.\" SPDX-License-Identifier: MIT
+.\" SPDX-License-Identifier: Apache-2.0
 .\" Copyright (c) 2026 Noble Factor. All rights reserved.
-.\" Redistribution and use in source and binary forms, with or without modification, are permitted under the terms of the MIT License.
-.TH START-CLAUDE 1 "2026-10-19" "Noble Factor" "User Commands"
+.TH START-CLAUDE 1 "2026-10-20" "Noble Factor" "User Commands"
 .SH NAME
 Start-Claude \- open a tmux workspace onto the Claude Code conversation of a
 schedule, or of a conversation it names, that claude runs in its background
@@ -186,7 +185,7 @@ that runs its conversation, as
 prints it and
 .B "claude agents"
 lists it: one file per schedule, under
-.IR ${XDG_STATE_HOME:-~/.local/state}/start\-claude ,
+.IR ${XDG_STATE_HOME:-~/.local/state}/agent\-schedule ,
 its path the schedule's key. claude keeps that identifier across
 .BR /clear ,
 which gives the conversation a new one, so the store needs no updating as the
@@ -658,7 +657,7 @@ session the client left when Start-Claude opened it.
 .TP
 .B XDG_STATE_HOME
 Where the store lives, in
-.I start\-claude
+.I agent\-schedule
 under it;
 .I ~/.local/state
 when unset.
@@ -672,7 +671,7 @@ names, in whichever project folder holds it, and, for
 for which listed conversation's transcript was written last. Nothing else of
 claude's is read.
 .TP
-.I ${XDG_STATE_HOME:-~/.local/state}/start\-claude/<owner>/<repository>/<number>
+.I ${XDG_STATE_HOME:-~/.local/state}/agent\-schedule/<owner>/<repository>/<number>
 The store's entry for a schedule. Its one line is the short identifier of the
 background session that runs the schedule's conversation, such as
 .BR 24b62a42 ,
@@ -681,18 +680,18 @@ background: the one thing that cannot be computed. Its path is the schedule's
 key. Written through a temporary file and a rename, and never deleted by the
 script.
 .TP
-.I ${XDG_STATE_HOME:-~/.local/state}/start\-claude/<owner>/<repository>/<number>.lock
+.I ${XDG_STATE_HOME:-~/.local/state}/agent\-schedule/<owner>/<repository>/<number>.lock
 The store's lock for the schedule: an empty file, locked while a launch
 reads the
 store and starts the background session. Kept, and never read.
 .TP
-.I ~/.local/libexec/start\-claude
+.I ~/.local/libexec/agent\-schedule
 This platform's
 .I lock\-store.sh
 and
 .IR keychain.sh ,
 off the PATH, at
-.I ../libexec/start\-claude
+.I ../libexec/agent\-schedule
 from the directory that holds Start-Claude: the store's lock, with
 .BR lockf (1)
 on macOS and
@@ -753,7 +752,7 @@ is not installed; this platform's
 or
 .I keychain.sh
 is not in
-.I ../libexec/start\-claude
+.I ../libexec/agent\-schedule
 from the script's directory;
 .B "claude agents \-\-json \-\-all"
 failed; claude started nothing in its background, as in a folder it does not
@@ -856,7 +855,7 @@ Open a new schedule, asked for its title, or with the title piped:
 Stop a schedule's conversation; the next start opens it again:
 .PP
 .nf
-\&claude stop "$(cat ~/.local/state/start-claude/NobleFactor/devlore-cli/916)"
+\&claude stop "$(cat ~/.local/state/agent-schedule/NobleFactor/devlore-cli/916)"
 .fi
 .PP
 Give the shell pane a third of the window:
@@ -880,4 +879,4 @@ David Noble
 .SH COPYRIGHT
 Copyright (c) 2026 Noble Factor. All rights reserved.
 .SH LICENSE
-MIT License.
+Apache License, Version 2.0.

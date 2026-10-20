@@ -1,5 +1,5 @@
 #compdef Start-Claude
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2026 Noble Factor. All rights reserved.
 
 _Start-Claude() {

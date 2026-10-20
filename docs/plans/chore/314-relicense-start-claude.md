@@ -61,8 +61,8 @@ owner, 2026-10-19: "all licenses for noblefactor repos MUST be Apache."
 
 ### Phase 2: The headers
 
-- [ ] Requirements 1 and 2: `make check`, and every test on Danoble-MBP-A, danoble-ud24-1 and danoble-wd11-3 through
-  `make test HOSTS="..."`, in the script that commits NobleFactor/noblefactor-ops#321's names.
+- [x] Requirements 1 and 2: `make check`, and every test on Danoble-MBP-A, danoble-ud24-1 and danoble-wd11-3 through
+  `make test HOSTS="..."`, in the script that commits NobleFactor/noblefactor-ops#321's names. Done 2026-10-20.
 
 ### Phase 3: Closure
 
