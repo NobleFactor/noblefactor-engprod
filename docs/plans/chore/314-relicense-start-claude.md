@@ -1,7 +1,7 @@
 ---
 title: "Start-Claude, Start-Claude.ps1 and their files take Apache-2.0"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/314
-status: active
+status: complete
 created: 2026-10-20
 updated: 2026-10-20
 ---
@@ -66,7 +66,7 @@ owner, 2026-10-19: "all licenses for noblefactor repos MUST be Apache."
 
 ### Phase 3: Closure
 
-- [ ] NobleFactor/noblefactor-ops#321's pull request closes this issue as well.
+- [x] NobleFactor/noblefactor-ops#321's pull request closes this issue as well.
 
 ## Files to Create/Modify
 

@@ -67,15 +67,19 @@ script for the owner to run there.
 - [x] Requirement 1: `make check`, and every test on Danoble-MBP-A, danoble-ud24-1 and danoble-wd11-3 through
   `make test HOSTS="..."`, in a script the owner runs. The owner, 2026-10-19: "you must prepare a script for me to run
   in all cases." Done 2026-10-20: the script moved both helpers' directories with `git mv`, and committed the names
-  once both gates passed.
+  once both gates passed. Its small calls, which the owner accepted the same day ("I accept the small calls you
+  made."): lock-store.sh's header names Start-Claude alone, Sync-ClaudeSession being gone; the tests' fake remote,
+  example/start-claude-test, keeps its name, since it names a repository, not a directory; and
+  2-command-line.status.md ticks the rename and the move to noblefactor-ops in the commit that makes the names.
 
 ### Phase 3: The hosts
 
-- [ ] Requirement 2, after the merge.
+- [ ] Requirement 2, after the merge: Danoble-MBP-A and danoble-ud24-1 in the pull request's script, and
+  danoble-wd11-3 in a PowerShell script the owner runs there. Ticked in the next noblefactor-ops pull request.
 
 ### Phase 4: Closure
 
-- [ ] The pull request, closing #321 and NobleFactor/noblefactor-ops#314, which rides it; lane 13 of #301 closes with
+- [x] The pull request, closing #321 and NobleFactor/noblefactor-ops#314, which rides it; lane 13 of #301 closes with
   NobleFactor/noblefactor-ops#322. The agent-schedule design's status companions say so, and 2-command-line.status.md's
   item for the move to noblefactor-ops, owed since NobleFactor/noblefactor-ops#313 merged, is ticked, both in the
   commit that makes the names. The owner, 2026-10-20, of #314: "this goes in with the next pr."
