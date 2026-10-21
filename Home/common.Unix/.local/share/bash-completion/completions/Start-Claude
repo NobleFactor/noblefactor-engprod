@@ -2,7 +2,7 @@
 # shellcheck disable=SC2207,SC2034 # COMPREPLY and standard completion variables
 
 # bash completion for Start-Claude
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2026 Noble Factor. All rights reserved.
 
 # _Start_Claude completes Start-Claude's options and their values for bash.

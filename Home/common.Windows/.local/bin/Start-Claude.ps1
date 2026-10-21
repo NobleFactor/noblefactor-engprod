@@ -1,6 +1,6 @@
 #!/usr/bin/env pwsh
-# SPDX-License-Identifier: MIT Copyright (c) 2026 Noble Factor. All rights reserved. Redistribution and use in source
-# and binary forms, with or without modification, are permitted under the terms of the MIT License.
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Noble Factor. All rights reserved.
 
 <#
 .SYNOPSIS
@@ -143,10 +143,10 @@
     directory only for whether a conversation's transcript is there.
 
     The store, under XDG_STATE_HOME, or else ~/.local/state, keeps one entry per schedule,
-    start-claude\<owner>\<repository>\<number>, holding on its one line the background session's short id, as
+    agent-schedule\<owner>\<repository>\<number>, holding on its one line the background session's short id, as
     Start-Claude keeps it. From reading the entry until the background session exists, the script holds the
-    schedule's lock, start-claude\<owner>\<repository>\<number>.lock, which the operating system releases if the shell
-    dies: a second launch waits 10 seconds, then stops, naming this one.
+    schedule's lock, agent-schedule\<owner>\<repository>\<number>.lock, which the operating system releases if the
+    shell dies: a second launch waits 10 seconds, then stops, naming this one.
 
     It requires claude, git, psmux as tmux, and gh for a schedule. What it does goes to the verbose stream, shown
     with -Verbose. Each refusal is a terminating error that says why: the caller's error action decides what it does
@@ -1473,7 +1473,7 @@ end {
             $stateHome = Join-Path -Path $HOME -ChildPath '.local\state'
         }
 
-        $storeRoot = Join-Path -Path $stateHome -ChildPath 'start-claude'
+        $storeRoot = Join-Path -Path $stateHome -ChildPath 'agent-schedule'
 
         # Where the session runs, computed and never stored. The host follows the schedule in the session's name, for
         # remote sessions: a conversation lives on the box whose transcripts hold it, and Remote Control lists every

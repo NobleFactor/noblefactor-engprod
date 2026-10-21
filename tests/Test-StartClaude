@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2026 Noble Factor. All rights reserved.
-# Redistribution and use in source and binary forms, with or without modification, are permitted under the terms of the MIT License.
 
 # Test-StartClaude - Tests Start-Claude against a stand-in for claude, on macOS and Linux: every form --resume takes and
 # each of its refusals, the background session's short id alone on standard output, detached and attached, and the
@@ -94,13 +93,13 @@ function stage {
         *) error $EX_UNAVAILABLE "Start-Claude runs on macOS and Linux; Test-StartClaude.ps1 tests Start-Claude.ps1." ;;
     esac
 
-    mkdir -p -- "${directory}/bin" "${directory}/libexec/start-claude" "${directory}/state" "${directory}/tmux"
+    mkdir -p -- "${directory}/bin" "${directory}/libexec/agent-schedule" "${directory}/state" "${directory}/tmux"
     cp -- "${repository_root}/Home/common.Unix/.local/bin/Start-Claude" "${directory}/bin/Start-Claude"
     cp -- "${repository_root}/Home/common/.local/bin/Declare-BashScript" "${directory}/bin/Declare-BashScript"
-    cp -- "${repository_root}/Home/${platform_layer}/.local/libexec/start-claude/lock-store.sh" \
-        "${directory}/libexec/start-claude/lock-store.sh"
-    cp -- "${repository_root}/Home/common.Linux/.local/libexec/start-claude/keychain.sh" \
-        "${directory}/libexec/start-claude/keychain.sh"
+    cp -- "${repository_root}/Home/${platform_layer}/.local/libexec/agent-schedule/lock-store.sh" \
+        "${directory}/libexec/agent-schedule/lock-store.sh"
+    cp -- "${repository_root}/Home/common.Linux/.local/libexec/agent-schedule/keychain.sh" \
+        "${directory}/libexec/agent-schedule/keychain.sh"
 
     cat >"${directory}/bin/claude" <<'CLAUDE'
 #!/usr/bin/env bash

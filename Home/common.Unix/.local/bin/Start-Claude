@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2026 Noble Factor. All rights reserved.
-# Redistribution and use in source and binary forms, with or without modification, are permitted under the terms of the MIT License.
 
 # Start-Claude - Opens a tmux workspace onto a Claude Code conversation that claude runs in its background.
 
@@ -19,9 +18,9 @@ require_command claude gh jq tmux
 # tmux starts claude's viewer by its path, whatever PATH the session's shell sets.
 claude_binary="$(command -v claude)" && readonly claude_binary
 
-# What this platform deploys for the script lives off PATH, in ../libexec/start-claude from this script's directory
+# What this platform deploys for the script lives off PATH, in ../libexec/agent-schedule from this script's directory
 # (question 57), so that no file here branches on its platform (requirement 17).
-libexec_directory="$(dirname "$0")/../libexec/start-claude"
+libexec_directory="$(dirname "$0")/../libexec/agent-schedule"
 readonly libexec_directory
 
 # The store's lock is taken with this platform's lock-store.sh: lockf on macOS and flock on Linux (requirement 17).
@@ -98,7 +97,7 @@ function schedule_fields {
 
 ## The store
 
-# One entry per schedule, ${XDG_STATE_HOME:-~/.local/state}/start-claude/<owner>/<repository>/<number>, holds what
+# One entry per schedule, ${XDG_STATE_HOME:-~/.local/state}/agent-schedule/<owner>/<repository>/<number>, holds what
 # nothing can compute: on its one line, the short id of the background session claude runs the schedule's conversation
 # in, which claude keeps across /clear, or a conversation's id, until a start puts that conversation in claude's
 # background (requirement 21). A conversation joins a schedule only through the store, never through its name, and
@@ -1038,7 +1037,7 @@ fi
 cd "$startup_directory"
 
 config_directory="${CLAUDE_CONFIG_DIR:-${HOME}/.claude}"
-store_root="${XDG_STATE_HOME:-${HOME}/.local/state}/start-claude"
+store_root="${XDG_STATE_HOME:-${HOME}/.local/state}/agent-schedule"
 readonly config_directory store_root
 
 # What the exit handler undoes: a temporary store file, and a tmux session never attached. What a launch learns from

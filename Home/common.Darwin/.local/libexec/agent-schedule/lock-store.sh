@@ -1,10 +1,10 @@
 # shellcheck shell=bash
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2026 Noble Factor. All rights reserved.
 
 # lock-store.sh - macOS's lock on Start-Claude's store
 #
-# Start-Claude and Sync-ClaudeSession source this file, which only macOS deploys, from ~/.local/libexec/start-claude
+# Start-Claude sources this file, which only macOS deploys, from ~/.local/libexec/agent-schedule
 # (David-Noble-at-work/personal#259, requirement 17 of its plan).
 
 # take_store_lock locks Start-Claude's store on descriptor 9, which the caller holds open on the lock file, waiting up

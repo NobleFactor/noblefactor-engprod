@@ -40,9 +40,9 @@ claude for the host, the repository and the branch; its tmux session is named fo
 
 ## Its store
 
-One file per schedule, `${XDG_STATE_HOME:-~/.local/state}/start-claude/<owner>/<repository>/<number>`, holding the
+One file per schedule, `${XDG_STATE_HOME:-~/.local/state}/agent-schedule/<owner>/<repository>/<number>`, holding the
 background session's short id, with a lock beside it; [1. Session model](1-session-model.md) says how a start reads
-it. The directory is to be renamed `agent-schedule`: David-Noble-at-work/personal#278.
+it.
 
 ## Where it runs
 

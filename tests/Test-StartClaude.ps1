@@ -1,6 +1,6 @@
 #!/usr/bin/env pwsh
-# SPDX-License-Identifier: MIT Copyright (c) 2026 Noble Factor. All rights reserved. Redistribution and use in source
-# and binary forms, with or without modification, are permitted under the terms of the MIT License.
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Noble Factor. All rights reserved.
 
 <#
 .SYNOPSIS

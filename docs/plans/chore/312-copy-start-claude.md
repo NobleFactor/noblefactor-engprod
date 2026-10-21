@@ -3,7 +3,7 @@ title: "Start-Claude and Start-Claude.ps1 come to noblefactor-ops, and make and 
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/312
 status: complete
 created: 2026-10-19
-updated: 2026-10-19
+updated: 2026-10-20
 ---
 
 # Plan: Start-Claude and Start-Claude.ps1 come to noblefactor-ops, and make and CI run every test
@@ -154,9 +154,12 @@ David-Noble-at-work/personal#285 removes personal's copies once this merges, and
 ## Open Questions
 
 1. **The license lines.** The copied files say MIT, as personal's do; this repository's say Apache-2.0. Proposed: they
-   keep MIT, as copies.
+   keep MIT, as copies. Ruled otherwise 2026-10-19, of NobleFactor/noblefactor-ops#313: "I see you give an MIT license
+   to Start-Claude and--I assume--the other artifacts in the pr for noblefactor-ops. Update the license. We use apache
+   at noblefactor." NobleFactor/noblefactor-ops#314 relicenses them Apache-2.0.
 2. **Three new layer directories,** `Home/common.Unix`, `Home/common.Darwin` and `Home/common.Linux`, where personal has
    `noblefactor-ops.Unix`, `.Darwin` and `.Linux`. Proposed: these, so that each file deploys where it did.
 3. **The deploy order.** Proposed: both pull requests merge before any host deploys.
 
-None of the three is ruled; the work follows each proposal, under the owner's order to execute.
+The work followed each proposal, under the owner's order to execute; question 1 was ruled afterward, and questions 2
+and 3 are not ruled.

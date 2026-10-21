@@ -31,7 +31,7 @@ it, and opens a tmux session onto it: the conversation on the left, a shell on t
 - **Conversation:** a Claude Code session, its transcript under `${CLAUDE_CONFIG_DIR:-~/.claude}/projects` and its id.
 - **Schedule:** a GitHub issue, `<owner>/<repository>#<number>`, whose lane table says what to work next. One
   conversation works it.
-- **Store:** one file per schedule, `${XDG_STATE_HOME:-~/.local/state}/start-claude/<owner>/<repository>/<number>`,
+- **Store:** one file per schedule, `${XDG_STATE_HOME:-~/.local/state}/agent-schedule/<owner>/<repository>/<number>`,
   which binds the schedule to its background session.
 - **Viewer:** `claude attach <id>`, a client of a background session. Several attach at once (seen 2026-10-14).
 

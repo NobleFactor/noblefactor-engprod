@@ -1,10 +1,10 @@
 # shellcheck shell=bash
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2026 Noble Factor. All rights reserved.
 
 # keychain.sh - macOS's login keychain, for Start-Claude
 #
-# Start-Claude sources this file, which only macOS deploys, from ~/.local/libexec/start-claude
+# Start-Claude sources this file, which only macOS deploys, from ~/.local/libexec/agent-schedule
 # (David-Noble-at-work/personal#277, requirement 19 of its plan). gh and claude keep their logins in the login keychain,
 # which an ssh session finds locked until it is unlocked there.
 

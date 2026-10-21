@@ -8,7 +8,9 @@ title: "2. Command line — Status"
 **Feature:** [NobleFactor/noblefactor-ops#151](https://github.com/NobleFactor/noblefactor-ops/issues/151)
 **Plan:** [259-start-claude-documents-claude.md][plan-259]
 **State:** Start-Claude built on macOS and Linux, its man page and completions with it; Start-Claude.ps1 built on
-Windows with psmux, David-Noble-at-work/personal#273, 2026-10-19.
+Windows with psmux, David-Noble-at-work/personal#273, 2026-10-19. Both moved to noblefactor-ops in
+NobleFactor/noblefactor-ops#312; the store and Start-Claude's helpers took the name `agent-schedule` in
+NobleFactor/noblefactor-ops#321, 2026-10-20.
 
 ## Completion
 
@@ -23,8 +25,9 @@ Windows with psmux, David-Noble-at-work/personal#273, 2026-10-19.
   built on personal#273's branch, 2026-10-18; tested on Danoble-MBP-A and danoble-wd11-3, test plan rows 11 and 13.
 - [x] `--resume` and `-Resume` take what `claude --resume` takes but its picker: a conversation's id, a background
   session's short id, a name, or a transcript's absolute path (personal#273's plan, question 12), 2026-10-19.
-- [ ] The store's directory renamed `agent-schedule`: David-Noble-at-work/personal#278.
-- [ ] Start-Claude and Start-Claude.ps1 moved to noblefactor-ops, with these documents and their test scripts: copied
+- [x] The store's directory, and the directory of Start-Claude's helpers, renamed `agent-schedule`:
+  NobleFactor/noblefactor-ops#321, 2026-10-20. Each host's store moves, its entries with it, after the merge.
+- [x] Start-Claude and Start-Claude.ps1 moved to noblefactor-ops, with these documents and their test scripts: copied
   in NobleFactor/noblefactor-ops#312, where make and CI run the tests on Ubuntu, macOS and Windows, and removed from
   personal in David-Noble-at-work/personal#285.
 
