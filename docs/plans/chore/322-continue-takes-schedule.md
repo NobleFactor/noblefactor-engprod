@@ -1,7 +1,7 @@
 ---
 title: "Start-Claude --continue takes --schedule, and both test scripts prove every way in, with a schedule and without"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/322
-status: draft
+status: active
 created: 2026-10-21
 updated: 2026-10-21
 ---
@@ -47,13 +47,15 @@ Start-Claude's check of the ways in lets `--schedule` come with `--continue`, as
 `-Schedule` joins the `Continue` parameter set. Given a schedule, the conversation `--continue` finds, the one claude
 lists in the startup directory, joins it as `--resume`'s does: refused when the schedule's entry holds another
 conversation, and when the conversation is another schedule's. Given a schedule and no conversation claude lists in
-the directory, it refuses (open question 1). Without a schedule, `--continue` is what it is today.
+the directory, it refuses and starts nothing; the owner, 2026-10-21: "Yes, refuse and start nothing." Without a
+schedule, `--continue` is what it is today.
 
 ### Requirement 2: every way in, with a schedule and without
 
 A case in `tests/Test-StartClaude` and in `tests/Test-StartClaude.ps1` for each: `--schedule` alone, `--resume` alone,
 `--resume` with `--schedule`, `--continue` alone, `--continue` with `--schedule`, and `--continue` with `--schedule`
-where claude lists nothing, the refusal. The stand-ins answer as claude and gh answer.
+where claude lists nothing, the refusal. The stand-ins answer as claude and gh answer. Of the case for `--schedule`
+alone, the owner, 2026-10-21: "Yes, add the --schedule alone case."
 
 ### Requirement 3: row 2's check
 
@@ -71,7 +73,8 @@ status companion say that `--continue` takes `--schedule`.
 
 ### Phase 1: The plan
 
-- [ ] This plan, committed on its branch and reviewed with the owner.
+- [x] This plan, committed on its branch as 877b892 on 2026-10-21, then revised with the owner's two rulings. Asked
+  whether to proceed, the owner, the same day: "Yes, proceed with #322."
 
 ### Phase 2: The code and the cases
 
@@ -114,9 +117,9 @@ None: the change adds a form, and every form that works today works the same.
 
 ## Open Questions
 
-1. **`--continue` with a schedule, and no conversation claude lists in the directory.** Proposed: it refuses, saying
-   so, and starts nothing. Without a schedule it hands the directory to claude's own `--continue`, which picks by
-   transcript, and that pick is what David-Noble-at-work/personal#278 found takes the wrong conversation, so none is
-   put on a schedule.
-2. **`--schedule` alone, which no case covers today.** Proposed: requirement 2 adds its case, since "with a schedule"
-   starts there.
+1. **`--continue` with a schedule, and no conversation claude lists in the directory.** Ruled 2026-10-21: it refuses,
+   saying so, and starts nothing. The owner: "Yes, refuse and start nothing." Without a schedule it hands the
+   directory to claude's own `--continue`, which picks by transcript, and that pick is what
+   David-Noble-at-work/personal#278 found takes the wrong conversation, so none is put on a schedule.
+2. **`--schedule` alone, which no case covers today.** Ruled 2026-10-21: requirement 2 adds its case, since "with a
+   schedule" starts there. The owner: "Yes, add the --schedule alone case."
