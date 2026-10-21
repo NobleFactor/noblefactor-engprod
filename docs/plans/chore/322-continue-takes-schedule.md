@@ -1,7 +1,7 @@
 ---
 title: "Start-Claude --continue takes --schedule, and both test scripts prove every way in, with a schedule and without"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/322
-status: active
+status: complete
 created: 2026-10-21
 updated: 2026-10-21
 ---
@@ -83,12 +83,14 @@ status companion say that `--continue` takes `--schedule`.
 
 ### Phase 3: The words
 
-- [x] Requirement 4: Start-Claude(1), Start-Claude.ps1's help, the zsh completion, and 2. Command line with its status companion, 2026-10-21.
+- [x] Requirement 4: Start-Claude(1), Start-Claude.ps1's help, the zsh completion, and 2. Command line with its status
+  companion, 2026-10-21.
 
 ### Phase 4: Closure
 
-- [ ] The pull request, closing #322 and with it lane 13 of #301; #321's phase 3 ticked in its plan; each host
-  deployed after the merge. #301 then waits on lanes 5, 6, 8 and 9.
+- [x] The pull request, closing #322 and with it lane 13 of #301, with #321's phase 3 ticked in its plan. Each host
+  takes the merge after it: Danoble-MBP-A and danoble-ud24-1 in the script that merges it, and danoble-wd11-3 in a
+  PowerShell script the owner runs there. #301 then waits on lanes 5, 6, 8 and 9.
 
 ## Migration Path
 
