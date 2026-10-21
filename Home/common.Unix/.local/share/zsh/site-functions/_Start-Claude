@@ -8,13 +8,13 @@ _Start-Claude() {
     typeset -A opt_args
 
     opts=(
-        '(-c --continue -r --resume -s --schedule)'{-c,--continue}"[Open what claude lists here, else a copy]"
+        '(-c --continue -r --resume)'{-c,--continue}"[Open what claude lists here, else a copy]"
         '(-C --directory)'{-C,--directory}'[Start in this directory, the root of a clone]:directory:_directories'
         '(-d --detach --no-remote-control)'{-d,--detach}"[Start or wake it in claude's background, no tmux]"
         '(-h --help)'{-h,--help}'[Show usage information and exit]'
         '(-d --detach)--no-remote-control[Start claude without Remote Control]'
         '(-c --continue -r --resume)'{-r,--resume}'[Open a conversation by id, short id, name or path]:conversation:'
-        '(-c --continue -s --schedule)'{-s,--schedule}'[The schedule the conversation works]:schedule:->schedule'
+        '(-s --schedule)'{-s,--schedule}'[The schedule the conversation works]:schedule:->schedule'
         '(-w --shell-width-percent)'{-w,--shell-width-percent}'[Width of the shell pane]:percent:(25 30 33 40 50)'
     )
 

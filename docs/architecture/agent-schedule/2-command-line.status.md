@@ -26,7 +26,10 @@ NobleFactor/noblefactor-ops#321, 2026-10-20.
 - [x] `--resume` and `-Resume` take what `claude --resume` takes but its picker: a conversation's id, a background
   session's short id, a name, or a transcript's absolute path (personal#273's plan, question 12), 2026-10-19.
 - [x] The store's directory, and the directory of Start-Claude's helpers, renamed `agent-schedule`:
-  NobleFactor/noblefactor-ops#321, 2026-10-20. Each host's store moves, its entries with it, after the merge.
+  NobleFactor/noblefactor-ops#321, 2026-10-20. Each host's store moved, its entries with it, on 2026-10-21.
+- [x] `--continue` and `-Continue` take `--schedule` and `-Schedule`, as `--resume` and `-Resume` do, and refuse
+  with one when claude lists no conversation in the startup directory; every way in, with a schedule and without, and
+  personal#259's row 2, are cases in both test scripts: NobleFactor/noblefactor-ops#322, 2026-10-21.
 - [x] Start-Claude and Start-Claude.ps1 moved to noblefactor-ops, with these documents and their test scripts: copied
   in NobleFactor/noblefactor-ops#312, where make and CI run the tests on Ubuntu, macOS and Windows, and removed from
   personal in David-Noble-at-work/personal#285.
