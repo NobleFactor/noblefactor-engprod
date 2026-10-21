@@ -5,8 +5,10 @@
 
 # Test-StartClaude - Tests Start-Claude against a stand-in for claude, on macOS and Linux: every form --resume takes and
 # each of its refusals, the background session's short id alone on standard output, detached and attached, and the
-# refusals of usage (David-Noble-at-work/personal#273, questions 11 and 12). Test-StartClaude.ps1 runs the same cases,
-# from the same table, against Start-Claude.ps1 on Windows.
+# refusals of usage (David-Noble-at-work/personal#273, questions 11 and 12); every way in, with a schedule and without,
+# and row 2 of personal#259's plan, a conversation resumed in another clone that --continue finds there
+# (NobleFactor/noblefactor-ops#322). Test-StartClaude.ps1 runs the same cases, from the same table, against
+# Start-Claude.ps1 on Windows.
 
 [[ -r "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" ]] || {
     printf '%s: cannot find Declare-BashScript in %s\n' "${0##*/}" "$(dirname "$0")/../Home/common/.local/bin" >&2
@@ -75,8 +77,11 @@ function record_titles {
 # and the startup repository, with an origin, since Start-Claude names the repository from it.
 #
 # The stand-in for claude lists one background session, abcd1234, named "probe session", whose conversation,
-# abcd1234-0000-4000-8000-000000000009, has no transcript. Its viewer stays a second, then leaves. A background resume
-# answers as claude does, its short id the conversation's first eight characters.
+# abcd1234-0000-4000-8000-000000000009, has no transcript, and the case can change it through the STAND_IN variables.
+# Its viewer stays a second, then leaves. A background resume answers as claude does, its short id the conversation's
+# first eight characters, and a new conversation comes up as background session fedc4321. The stand-in for gh answers
+# for schedule 7 of the startup repository's origin, and for nothing else. A second clone of the repository, a directory
+# claude lists nothing in, and, in the second clone's own project folder, the newest transcript of all, are row 2's.
 #
 # Parameters:
 #   - `$1`: the run's directory.
@@ -114,16 +119,16 @@ case "$1" in
         sleep 1
         ;;
     --bg)
-        resumed=""
+        started=fedc4321
         while (($#)); do
-            [[ $1 != --resume ]] || resumed="$2"
+            [[ $1 != --continue ]] || {
+                printf 'stand-in claude: --bg --continue is not handled\n' >&2
+                exit 1
+            }
+            [[ $1 != --resume ]] || started="$2"
             shift
         done
-        [[ -n ${resumed} ]] || {
-            printf 'stand-in claude: --bg without --resume is not handled\n' >&2
-            exit 1
-        }
-        printf 'backgrounded · %s\n  claude attach %s\n' "${resumed:0:8}" "${resumed:0:8}"
+        printf 'backgrounded · %s\n  claude attach %s\n' "${started:0:8}" "${started:0:8}"
         ;;
     *)
         printf 'stand-in claude: not handled: %s\n' "$*" >&2
@@ -134,6 +139,12 @@ CLAUDE
 
     cat >"${directory}/bin/gh" <<'GH'
 #!/usr/bin/env bash
+# Schedule 7 of the startup repository's origin, as Start-Claude reads it: its title, link and labels, separated by
+# tabs, as gh's --jq gives them.
+if [[ $1 == issue && $2 == view && $3 == 7 && $4 == --repo && $5 == example/start-claude-test ]]; then
+    printf 'Schedule: probe\thttps://github.com/example/start-claude-test/issues/7\tchore\n'
+    exit 0
+fi
 printf 'stand-in gh: not handled: %s\n' "$*" >&2
 exit 1
 GH
@@ -149,6 +160,12 @@ GH
 
     git init --quiet "${directory}/repository"
     git -C "${directory}/repository" remote add origin https://github.com/example/start-claude-test.git
+
+    # Row 2's: the second clone, the directory claude lists nothing in, and the newest transcript, written last.
+    git init --quiet "${directory}/clone"
+    git -C "${directory}/clone" remote add origin https://github.com/example/start-claude-test.git
+    mkdir -p -- "${directory}/elsewhere" "${directory}/config/projects/clone-project"
+    record_titles "${directory}/config/projects/clone-project" aaaa1111-0000-4000-8000-00000000000a "newest transcript"
 }
 
 # trim prints its argument without the spaces around it.
@@ -187,21 +204,23 @@ function report {
     failures=$((failures + 1))
 }
 
-# run_case runs Start-Claude with the arguments a case gives, its standard input closed, then checks its exit status
-# and that standard output holds the id the case expects, alone, or nothing at a refusal.
+# probe runs Start-Claude in a directory with the arguments a case gives, its standard input closed, then checks its
+# exit status and that standard output holds the id the case expects, alone, or nothing at a refusal.
 #
 # Parameters:
-#   - `$1`: the case's name.
-#   - `$2`: what the case expects: the background session's short id, or a refusal: usage, 64; not-found, 66; or
+#   - `$1`: the name of the variable each problem is added to, each ending "; ".
+#   - `$2`: the startup directory.
+#   - `$3`: what the case expects: the background session's short id, or a refusal: usage, 64; not-found, 66; or
 #     data-error, 65.
 #   - `$@` after them: Start-Claude's arguments.
 #
 # Returns:
-#   - 0, having reported the case.
-function run_case {
-    local name="$1" expected="$2" output status=0 expected_status=0 written problem=""
-    shift 2
-    case_count=$((case_count + 1))
+#   - 0, with what the run wrote to standard error in the caller's `written`.
+# shellcheck disable=SC2034 # problem_list is a nameref: each addition is the caller's variable's.
+function probe {
+    local -n problem_list="$1"
+    local directory="$2" expected="$3" output status=0 expected_status=0
+    shift 3
 
     case ${expected} in
         usage) expected_status=64 ;;
@@ -209,20 +228,85 @@ function run_case {
         not-found) expected_status=66 ;;
     esac
 
-    output="$(Start-Claude --directory "${repository}" "$@" </dev/null 2>"${run_directory}/case.err")" || status=$?
+    output="$(Start-Claude --directory "${directory}" "$@" </dev/null 2>"${run_directory}/case.err")" || status=$?
     written="$(cat "${run_directory}/case.err")"
 
     if ((status != expected_status)); then
-        problem+="its status was ${status}, not ${expected_status}; "
+        problem_list+="its status was ${status}, not ${expected_status}; "
     fi
 
     if ((expected_status == 0)) && [[ "${output}" != "${expected}" ]]; then
-        problem+="standard output held '${output}', not ${expected} alone; "
+        problem_list+="standard output held '${output}', not ${expected} alone; "
     elif ((expected_status != 0)) && [[ -n "${output}" ]]; then
-        problem+="standard output held '${output}' at a refusal; "
+        problem_list+="standard output held '${output}' at a refusal; "
+    fi
+}
+
+# run_case runs a case in the startup repository, as probe runs one, and reports it.
+#
+# Parameters:
+#   - `$1`: the case's name.
+#   - `$2`: what the case expects, as probe takes it.
+#   - `$@` after them: Start-Claude's arguments.
+#
+# Returns:
+#   - 0, having reported the case.
+function run_case {
+    local name="$1" problem="" written=""
+    shift 1
+    case_count=$((case_count + 1))
+
+    probe problem "${repository}" "$@"
+    report "${name}" "${problem}" "${written}"
+}
+
+# run_store_case runs a case in a directory, as probe runs one, then checks schedule 7's entry in the store: the id it
+# must hold, or no entry at all, and reports the case.
+#
+# Parameters:
+#   - `$1`: the case's name.
+#   - `$2`: the startup directory.
+#   - `$3`: the id schedule 7's entry must hold, or nothing when there must be no entry.
+#   - `$4`: what the case expects, as probe takes it.
+#   - `$@` after them: Start-Claude's arguments.
+#
+# Returns:
+#   - 0, having reported the case.
+function run_store_case {
+    local name="$1" directory="$2" held="$3" problem="" written="" entry_held
+    shift 3
+    case_count=$((case_count + 1))
+
+    probe problem "${directory}" "$@"
+
+    if [[ -n ${held} ]]; then
+        entry_held="$(cat -- "${store}/7" 2>/dev/null || true)"
+        [[ ${entry_held} == "${held}" ]] || problem+="schedule 7's entry held '${entry_held}', not ${held}; "
+    elif [[ -e ${store}/7 ]]; then
+        problem+="schedule 7 has an entry, holding '$(cat -- "${store}/7")', where it must have none; "
     fi
 
     report "${name}" "${problem}" "${written}"
+}
+
+# clear_store removes every entry in the store, so that a case begins with no schedule's session recorded.
+#
+# Returns:
+#   - 0.
+function clear_store {
+    rm -rf -- "${XDG_STATE_HOME}/agent-schedule"
+}
+
+# seed_entry records a session as schedule 7's, as Start-Claude records one.
+#
+# Parameters:
+#   - `$1`: the session's id: a background session's short id, or a conversation's id.
+#
+# Returns:
+#   - 0.
+function seed_entry {
+    mkdir -p -- "${store}"
+    printf '%s\n' "$1" >"${store}/7"
 }
 
 # run_attached_case runs Start-Claude attached, in a pseudo-terminal of its own, onto the stand-in's background
@@ -292,7 +376,9 @@ run_directory="$(mktemp -d)"
 stage "${run_directory}"
 
 repository="${run_directory}/repository"
+clone="${run_directory}/clone"
 projects="${run_directory}/config/projects/test-project"
+store="${run_directory}/state/agent-schedule/example/start-claude-test"
 tmux_socket="${run_directory}/tmux/tmux-$(id -u)/default"
 export PATH="${run_directory}/bin:${PATH}" XDG_STATE_HOME="${run_directory}/state" TMUX_TMPDIR="${run_directory}/tmux"
 export CLAUDE_CONFIG_DIR="${run_directory}/config"
@@ -327,6 +413,42 @@ done <<<"${case_table}"
 run_case "no way in" usage --detach
 run_case "--detach with --no-remote-control" usage --detach --no-remote-control --resume abcd1234
 run_case "a refusal, run as a process" not-found --detach --resume "no such name"
+
+# Every way in, with a schedule and without (#322), on schedule 7, which the stand-in for gh answers for; --resume alone
+# is the table's cases above. Each case begins from a store holding what it names, and checks the entry it leaves.
+clear_store
+run_store_case "--schedule alone, with no entry: a new conversation, its entry written" "${repository}" fedc4321 \
+    fedc4321 --detach --schedule 7
+clear_store
+seed_entry abcd1234
+run_store_case "--schedule alone, with an entry: the conversation it holds" "${repository}" abcd1234 abcd1234 \
+    --detach --schedule 7
+clear_store
+run_store_case "--resume with --schedule: the conversation joins the schedule" "${repository}" abcd1234 abcd1234 \
+    --detach --resume abcd1234 --schedule 7
+clear_store
+run_store_case "--continue alone: the conversation claude lists here, on no schedule" "${repository}" "" abcd1234 \
+    --detach --continue
+run_store_case "--continue with --schedule: the conversation claude lists here joins the schedule" "${repository}" \
+    abcd1234 abcd1234 --detach --continue --schedule 7
+clear_store
+STAND_IN_CWD="${run_directory}/elsewhere"
+run_store_case "--continue with --schedule, claude listing none here: refused, nothing started" "${repository}" "" \
+    not-found --detach --continue --schedule 7
+STAND_IN_CWD="${repository}"
+
+# Row 2 of personal#259's plan: the conversation --schedule with --directory resumes in another clone, which claude
+# then lists there, is the one --continue finds there, and not the newest transcript in that clone's project folder,
+# the one claude's own --continue would take.
+clear_store
+seed_entry eeee5555-0000-4000-8000-000000000002
+run_store_case "row 2: --schedule with --directory resumes the schedule's conversation in another clone" "${clone}" \
+    eeee5555 eeee5555 --detach --schedule 7
+STAND_IN_ID=eeee5555 STAND_IN_SESSION=eeee5555-0000-4000-8000-000000000002 STAND_IN_CWD="${clone}"
+run_store_case "row 2: --continue in that clone finds that conversation" "${clone}" eeee5555 eeee5555 --detach \
+    --continue
+STAND_IN_ID=abcd1234 STAND_IN_SESSION=abcd1234-0000-4000-8000-000000000009 STAND_IN_CWD="${repository}"
+clear_store
 
 # Attached: the id when the client leaves.
 run_attached_case "attached, the id on standard output when the viewer leaves"

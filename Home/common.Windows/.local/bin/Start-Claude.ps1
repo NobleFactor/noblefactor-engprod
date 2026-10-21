@@ -26,9 +26,10 @@
     NFEP_AGENT_SCHEDULE_URL, through --settings; the shell pane gets them too. claude checks its own trust in the
     folder: what it refuses is passed through in its words, and nothing opens.
 
-    -Schedule with -Title, -Resume, alone or with -Schedule, and -Continue are three parameter sets, so exactly one of
-    them is given. The schedule is the only positional parameter and the title the only one taken from the pipeline,
-    so every argument after the script's own goes to claude as it is; PowerShell itself consumes a bare --.
+    -Schedule with -Title, and -Resume and -Continue, each alone or with -Schedule, are three parameter sets, so
+    exactly one of them is given. The schedule is the only positional parameter and the title the only one taken from
+    the pipeline, so every argument after the script's own goes to claude as it is; PowerShell itself consumes a bare
+    --.
 
     It starts in -Directory, or else the current directory, which must be the root of a repository clone or of a
     linked worktree; otherwise it stops before anything is named or started.
@@ -43,9 +44,9 @@
     The schedule the session works: <owner>/<repository>#<number>, a bare <number> in the startup directory's
     repository, or new. The only positional parameter. It is read with gh from its own repository, never the
     caller's, and an issue that is not a schedule is refused. With new, a schedule opens in the startup directory's
-    repository, titled "Schedule: <title>" from -Title, with an empty lane table. Requires gh. Given with -Resume, it
-    is the schedule the conversation joins, when the schedule has none or the conversation is already its own; a
-    schedule another conversation works, and a conversation on another schedule, are refused.
+    repository, titled "Schedule: <title>" from -Title, with an empty lane table. Requires gh. Given with -Resume or
+    -Continue, it is the schedule the conversation joins, when the schedule has none or the conversation is already
+    its own; a schedule another conversation works, and a conversation on another schedule, are refused.
 
 .PARAMETER Title
     The schedule's title without its "Schedule: " prefix, by name or from the pipeline. With -Schedule new it titles
@@ -62,7 +63,9 @@
 
 .PARAMETER Continue
     The conversation claude lists in the startup directory, the one claude's own --continue would pick; with none
-    there, claude's own --continue, in its background, which starts a copy of the conversation it picks.
+    there, claude's own --continue, in its background, which starts a copy of the conversation it picks. With
+    -Schedule, the conversation it opens joins that schedule, and with none there it refuses and starts nothing:
+    claude's own pick goes by transcript, and can be another conversation.
 
 .PARAMETER ShellWidthPercent
     The shell pane's width, as a percentage of the window's, 1 to 99, 40 by default.
@@ -124,6 +127,11 @@
     Puts a conversation started elsewhere on schedule 916, which has none, and opens it there.
 
 .EXAMPLE
+    Start-Claude -Continue -Schedule 916
+
+    Puts the conversation claude lists in the current directory on schedule 916, which has none, and opens it there.
+
+.EXAMPLE
     Start-Claude -Continue
 
     Opens the conversation claude lists in the current directory.
@@ -159,13 +167,14 @@
 
 #Requires -Version 7.3
 
-# -Schedule with -Title, -Resume, alone or with -Schedule, and -Continue are three parameter sets, so PowerShell refuses
-# any other two together (requirement 7). -Schedule is the only positional parameter and -Title the only one taken from
-# the pipeline, so every argument after the script's own is left for Claude.
+# -Schedule with -Title, and -Resume and -Continue, each alone or with -Schedule, are three parameter sets, so
+# PowerShell refuses any other two together (requirement 7; #322). -Schedule is the only positional parameter and
+# -Title the only one taken from the pipeline, so every argument after the script's own is left for Claude.
 [CmdletBinding(DefaultParameterSetName = 'Schedule', PositionalBinding = $false)]
 param(
     [Parameter(ParameterSetName = 'Schedule', Position = 0)]
     [Parameter(ParameterSetName = 'Resume')]
+    [Parameter(ParameterSetName = 'Continue')]
     [string]
     $Schedule,
 
@@ -1416,12 +1425,12 @@ end {
         Require-Command 'claude'
         Require-Command 'tmux'
 
-        # One of the three ways in, or -Resume with -Schedule (requirement 7): the parameter sets refuse any other two
-        # together, and the default set, -Schedule's, stands for none of them when -Schedule is missing. With none
-        # given, an argument meant for claude binds to -Schedule, the only positional parameter, so one that begins with
-        # a dash means none was given.
+        # One of the three ways in, or -Resume or -Continue with -Schedule (requirement 7; #322): the parameter sets
+        # refuse any other two together, and the default set, -Schedule's, stands for none of them when -Schedule is
+        # missing. With none given, an argument meant for claude binds to -Schedule, the only positional parameter, so
+        # one that begins with a dash means none was given.
         if ($PSCmdlet.ParameterSetName -ceq 'Schedule' -and (-not $Schedule -or $Schedule.StartsWith('-'))) {
-            $message = 'Give one of -Schedule, -Resume and -Continue, or -Resume with -Schedule.'
+            $message = 'Give one of -Schedule, -Resume and -Continue, or -Resume or -Continue with -Schedule.'
             Exit-Launch -ErrorId 'OneWayInRequired' -Category InvalidArgument -Message $message
         }
 
@@ -1501,10 +1510,18 @@ end {
         }
         elseif ($Continue) {
             $chosen = Get-ConversationRunningIn -Directory $startupDirectory -Instance $instances
+
+            # With -Schedule and none listed here it refuses and starts nothing: claude's own --continue picks by
+            # transcript, which can be another conversation (#322; the owner, 2026-10-21: "Yes, refuse and start
+            # nothing.").
+            if (-not $chosen -and $Schedule) {
+                $message = "claude lists no conversation in $startupDirectory to put on $Schedule; nothing was started."
+                Exit-Launch -ErrorId 'NoConversationToContinue' -Category ObjectNotFound -Message $message
+            }
         }
 
-        # Given with -Resume, -Schedule is the schedule the conversation joins; alone, -Resume's is the schedule whose
-        # entry holds it, or else none.
+        # Given with -Resume or -Continue, -Schedule is the schedule the conversation joins; alone, the conversation's
+        # is the schedule whose entry holds it, or else none.
         if ($chosen -and -not $Schedule) {
             $scheduleArgument = Get-ScheduleRecording -Id $chosen -Root $storeRoot -Instance $instances
         }

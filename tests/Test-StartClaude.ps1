@@ -10,13 +10,16 @@
     Runs the cases Test-StartClaude runs against Start-Claude on macOS and Linux, from the same table: every form
     -Resume takes and each of its refusals, by its error id and category; the background session's short id alone on
     the output, detached, and attached; the refusals of usage; and a refusal's exit status, run as a process
-    (David-Noble-at-work/personal#273, questions 11 and 12).
+    (David-Noble-at-work/personal#273, questions 11 and 12). Then every way in, with a schedule and without, each
+    checking the schedule's entry in the store, and row 2 of personal#259's plan, a conversation resumed in another
+    clone that -Continue finds there (NobleFactor/noblefactor-ops#322).
 
     Each case is an output object whose Result is passed, failed or skipped. A failure ends the run with a terminating
     error, so that run as a process it exits 1.
 
     The stand-in for claude, claude.cmd, is first on PATH, with claude's configuration, a store and a startup
-    repository of the run's own, in a folder under the temporary directory that the run removes. psmux, as tmux, is the
+    repository of the run's own, in a folder under the temporary directory that the run removes. The stand-in for gh,
+    gh.cmd, answers for schedule 7 of the startup repository's origin, and for nothing else. psmux, as tmux, is the
     real one where it is installed. Where it is not, as on a CI runner, a stand-in that refuses every command takes its
     place, since Start-Claude.ps1 requires tmux and only the attached case runs it.
 
@@ -74,10 +77,11 @@ function Initialize-RunFolder {
     )
 
     # The stand-in for claude, which lists one background session, abcd1234, named "probe session", whose conversation,
-    # abcd1234-0000-4000-8000-000000000009, has no transcript. Its viewer stays a second, then leaves. A background
-    # resume answers as claude does, its short id the conversation's first eight characters. It writes UTF-8, as claude
-    # does. claude.cmd, on PATH, runs it, since Start-Claude.ps1 runs claude as an application; the script is kept off
-    # PATH, where PowerShell would find it before claude.cmd.
+    # abcd1234-0000-4000-8000-000000000009, has no transcript, and the case can change it through the STAND_IN
+    # variables. Its viewer stays a second, then leaves. A background resume answers as claude does, its short id the
+    # conversation's first eight characters, and a new conversation comes up as background session fedc4321. It writes
+    # UTF-8, as claude does. claude.cmd, on PATH, runs it, since Start-Claude.ps1 runs claude as an application; the
+    # script is kept off PATH, where PowerShell would find it before claude.cmd.
     $bin = Join-Path -Path $Path -ChildPath 'bin'
     $standIn = Join-Path -Path $Path -ChildPath 'stand-in'
     $null = New-Item -ItemType Directory -Path $bin, $standIn
@@ -109,14 +113,19 @@ switch ($arguments[0]) {
         exit 0
     }
     '--bg' {
-        $index = [Array]::IndexOf($arguments, '--resume')
-
-        if ($index -lt 0) {
-            [Console]::Error.WriteLine('stand-in claude: --bg without --resume is not handled')
+        if ($arguments -contains '--continue') {
+            [Console]::Error.WriteLine('stand-in claude: --bg --continue is not handled')
             exit 1
         }
 
-        $short = ([string]$arguments[$index + 1]).Substring(0, 8)
+        $started = 'fedc4321'
+        $index = [Array]::IndexOf($arguments, '--resume')
+
+        if ($index -ge 0) {
+            $started = [String]$arguments[$index + 1]
+        }
+
+        $short = $started.Substring(0, 8)
         Write-Utf8Line ('backgrounded ' + [char]0x00B7 + " $short")
         Write-Utf8Line "  claude attach $short"
         exit 0
@@ -126,6 +135,25 @@ switch ($arguments[0]) {
         exit 1
     }
 }
+'@
+
+    # The stand-in for gh: schedule 7 of the startup repository's origin, as Start-Claude.ps1 reads it, and nothing
+    # else. gh.cmd, on PATH, runs it, as claude.cmd runs claude's.
+    Set-Content -LiteralPath (Join-Path -Path $bin -ChildPath 'gh.cmd') -Encoding ascii -Value (
+        '@pwsh -NoProfile -NonInteractive -File "%~dp0..\stand-in\gh.ps1" %*')
+    Set-Content -LiteralPath (Join-Path -Path $standIn -ChildPath 'gh.ps1') -Encoding utf8 -Value @'
+$arguments = @($args)
+
+if ($arguments.Count -ge 5 -and $arguments[0] -ceq 'issue' -and $arguments[1] -ceq 'view' -and
+    $arguments[2] -ceq '7' -and $arguments[3] -ceq '--repo' -and $arguments[4] -ceq 'example/start-claude-test') {
+    $issue = '{"labels":[{"name":"chore"}],"title":"Schedule: probe",'
+    $issue += '"url":"https://github.com/example/start-claude-test/issues/7"}'
+    [Console]::Out.WriteLine($issue)
+    exit 0
+}
+
+[Console]::Error.WriteLine("stand-in gh: not handled: $arguments")
+exit 1
 '@
 
     # Where psmux is missing, as on a CI runner, a tmux that refuses every command: Start-Claude.ps1 requires tmux, and
@@ -172,36 +200,100 @@ switch ($arguments[0]) {
     if ($LASTEXITCODE -ne 0) {
         throw "git remote add failed in $repository."
     }
+
+    # Row 2's: a second clone of the repository, a folder claude lists nothing in, and, in the second clone's own
+    # project folder, the newest transcript of all, written last, the one claude's own --continue would take.
+    $clone = Join-Path -Path $Path -ChildPath 'clone'
+    $null = & git init --quiet $clone
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "git init failed in $clone."
+    }
+
+    $null = & git -C $clone remote add origin 'https://github.com/example/start-claude-test.git'
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "git remote add failed in $clone."
+    }
+
+    $cloneProject = Join-Path -Path $Path -ChildPath 'config\projects\clone-project'
+    $null = New-Item -ItemType Directory -Path (Join-Path -Path $Path -ChildPath 'elsewhere'), $cloneProject
+    $newest = ConvertTo-Json -Compress -InputObject ([ordered]@{
+            type = 'custom-title'; customTitle = 'newest transcript'; sessionId = 'aaaa1111-0000-4000-8000-00000000000a'
+        })
+    Set-Content -LiteralPath (Join-Path -Path $cloneProject -ChildPath 'aaaa1111-0000-4000-8000-00000000000a.jsonl') `
+        -Encoding utf8 -Value $newest
 }
 
+# Invoke-StartClaudeCase runs Start-Claude.ps1 in this process with the parameters a case gives, and checks it.
+#
+# Start-Claude.ps1 runs under SilentlyContinue, then its output and its error records are checked: the id the case
+# expects, alone, with no error; or, at a refusal, no output and an error record with the case's id, if it names one,
+# and the category its kind of refusal takes. With CheckStore, schedule 7's entry in the store is checked as well.
+#
+# Parameters:
+#   - `Name`: The case's name.
+#   - `Expected`: The background session's short id the case expects, or a refusal: usage, data-error or not-found.
+#   - `ErrorId`: The error id a refusal must carry (default: any).
+#   - `Parameter`: Start-Claude.ps1's parameters, but -Directory.
+#   - `Directory`: The startup directory (default: the run's startup repository).
+#   - `CheckStore`: Check schedule 7's entry in the store.
+#   - `Held`: With CheckStore, the id the entry must hold, or nothing when there must be no entry.
+#
+# Returns:
+#   - PSCustomObject: the case's result, as ConvertTo-CaseResult makes it.
 function Invoke-StartClaudeCase {
     [CmdletBinding()]
-    [OutputType([pscustomobject])]
+    [OutputType([PSCustomObject])]
     param(
         [Parameter(Mandatory)]
-        [string]
+        [String]
         $Name,
 
         [Parameter(Mandatory)]
-        [string]
+        [String]
         $Expected,
 
-        [string]
+        [String]
         $ErrorId,
 
         [Parameter(Mandatory)]
-        [hashtable]
-        $Parameter
+        [Hashtable]
+        $Parameter,
+
+        [String]
+        $Directory = $script:repository,
+
+        [Switch]
+        $CheckStore,
+
+        [String]
+        $Held
     )
 
-    # Start-Claude.ps1 run in this process, under SilentlyContinue, with the parameters a case gives, then its output
-    # and its error records checked: the id the case expects, alone, with no error; or, at a refusal, no output and an
-    # error record with the case's id, if it names one, and the category its kind of refusal takes.
     $category = @{ 'usage' = 'InvalidArgument'; 'data-error' = 'InvalidData'; 'not-found' = 'ObjectNotFound' }
     $caught = $null
-    $output = @(& $script:startClaude @Parameter -Directory $script:repository -ErrorVariable caught `
+    $output = @(& $script:startClaude @Parameter -Directory $Directory -ErrorVariable caught `
             -ErrorAction SilentlyContinue)
     $problem = ''
+
+    if ($CheckStore) {
+        $entry = Join-Path -Path $script:store -ChildPath '7'
+
+        if ($Held) {
+            $entryHeld = Get-Content -LiteralPath $entry -TotalCount 1 -ErrorAction Ignore
+
+            if ($entryHeld -cne $Held) {
+                $problem += "schedule 7's entry held '$entryHeld', not $Held; "
+            }
+
+        }
+        elseif (Test-Path -LiteralPath $entry) {
+            $problem += "schedule 7 has an entry, holding '$(Get-Content -LiteralPath $entry -TotalCount 1)', where "
+            $problem += 'it must have none; '
+        }
+
+    }
 
     if (-not $category.ContainsKey($Expected)) {
 
@@ -240,6 +332,31 @@ function Invoke-StartClaudeCase {
     }
 
     return ConvertTo-CaseResult -Name $Name -Problem $problem
+}
+
+# Clear-TestStore removes every entry in the run's store, so that a case begins with no schedule's session recorded.
+function Clear-TestStore {
+    [CmdletBinding()]
+    param()
+
+    Remove-Item -LiteralPath (Join-Path -Path $env:XDG_STATE_HOME -ChildPath 'agent-schedule') -Recurse -Force `
+        -ErrorAction Ignore
+}
+
+# Write-TestStoreEntry records a session as schedule 7's, as Start-Claude.ps1 records one.
+#
+# Parameters:
+#   - `Id`: The session's id: a background session's short id, or a conversation's id.
+function Write-TestStoreEntry {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [String]
+        $Id
+    )
+
+    $null = New-Item -ItemType Directory -Path $script:store -Force
+    Set-Content -LiteralPath (Join-Path -Path $script:store -ChildPath '7') -Encoding ascii -Value $Id
 }
 
 function Invoke-ProcessCase {
@@ -330,6 +447,8 @@ $script:startClaude = Join-Path -Path $PSScriptRoot -ChildPath '..\Home\common.W
 $script:psmux = [bool](Get-Command -Name 'tmux' -CommandType Application -ErrorAction Ignore)
 $run = Join-Path -Path ([IO.Path]::GetTempPath()) -ChildPath "Test-StartClaude-$([guid]::NewGuid().ToString('N'))"
 $script:repository = Join-Path -Path $run -ChildPath 'repository'
+$script:clone = Join-Path -Path $run -ChildPath 'clone'
+$script:store = Join-Path -Path $run -ChildPath 'state\agent-schedule\example\start-claude-test'
 $projects = Join-Path -Path $run -ChildPath 'config\projects\test-project'
 $saved = @{}
 
@@ -378,6 +497,61 @@ name nothing records | no such name | not-found | ConversationNotFound
         $argument = $argument.Replace('{projects}', $projects).Replace('/', [IO.Path]::DirectorySeparatorChar)
         $result = Invoke-StartClaudeCase -Name "-Resume, $name" -Expected $expected -ErrorId $errorId `
             -Parameter @{ Resume = $argument; Detach = $true }
+        $results.Add($result)
+        $result
+    }
+
+    # Every way in, with a schedule and without (#322), on schedule 7, which the stand-in for gh answers for; -Resume
+    # alone is the table's cases above. Each case begins from a store holding what it names, and checks the entry it
+    # leaves. Then row 2 of personal#259's plan: the conversation -Schedule with -Directory resumes in another clone,
+    # which claude then lists there, is the one -Continue finds there, and not the newest transcript in that clone's
+    # project folder, the one claude's own --continue would take.
+    $ways = @(
+        Clear-TestStore
+        Invoke-StartClaudeCase -Name '-Schedule alone, with no entry: a new conversation, its entry written' `
+            -Expected 'fedc4321' -CheckStore -Held 'fedc4321' -Parameter @{ Schedule = '7'; Detach = $true }
+        Clear-TestStore
+        Write-TestStoreEntry -Id 'abcd1234'
+        Invoke-StartClaudeCase -Name '-Schedule alone, with an entry: the conversation it holds' `
+            -Expected 'abcd1234' -CheckStore -Held 'abcd1234' -Parameter @{ Schedule = '7'; Detach = $true }
+        Clear-TestStore
+        Invoke-StartClaudeCase -Name '-Resume with -Schedule: the conversation joins the schedule' `
+            -Expected 'abcd1234' -CheckStore -Held 'abcd1234' `
+            -Parameter @{ Resume = 'abcd1234'; Schedule = '7'; Detach = $true }
+        Clear-TestStore
+        Invoke-StartClaudeCase -Name '-Continue alone: the conversation claude lists here, on no schedule' `
+            -Expected 'abcd1234' -CheckStore -Parameter @{ Continue = $true; Detach = $true }
+        Invoke-StartClaudeCase -Name '-Continue with -Schedule: the conversation claude lists here joins the schedule' `
+            -Expected 'abcd1234' -CheckStore -Held 'abcd1234' `
+            -Parameter @{ Continue = $true; Schedule = '7'; Detach = $true }
+        Clear-TestStore
+    )
+
+    $env:STAND_IN_CWD = Join-Path -Path $run -ChildPath 'elsewhere'
+    $ways += Invoke-StartClaudeCase `
+        -Name '-Continue with -Schedule, claude listing none here: refused, nothing started' `
+        -Expected 'not-found' -ErrorId 'NoConversationToContinue' -CheckStore `
+        -Parameter @{ Continue = $true; Schedule = '7'; Detach = $true }
+    $env:STAND_IN_CWD = $script:repository
+
+    Clear-TestStore
+    Write-TestStoreEntry -Id 'eeee5555-0000-4000-8000-000000000002'
+    $ways += Invoke-StartClaudeCase `
+        -Name "row 2: -Schedule with -Directory resumes the schedule's conversation in another clone" `
+        -Directory $script:clone -Expected 'eeee5555' -CheckStore -Held 'eeee5555' `
+        -Parameter @{ Schedule = '7'; Detach = $true }
+    $env:STAND_IN_ID = 'eeee5555'
+    $env:STAND_IN_SESSION = 'eeee5555-0000-4000-8000-000000000002'
+    $env:STAND_IN_CWD = $script:clone
+    $ways += Invoke-StartClaudeCase -Name 'row 2: -Continue in that clone finds that conversation' `
+        -Directory $script:clone -Expected 'eeee5555' -CheckStore -Held 'eeee5555' `
+        -Parameter @{ Continue = $true; Detach = $true }
+    $env:STAND_IN_ID = 'abcd1234'
+    $env:STAND_IN_SESSION = 'abcd1234-0000-4000-8000-000000000009'
+    $env:STAND_IN_CWD = $script:repository
+    Clear-TestStore
+
+    foreach ($result in $ways) {
         $results.Add($result)
         $result
     }

@@ -78,12 +78,12 @@ status companion say that `--continue` takes `--schedule`.
 
 ### Phase 2: The code and the cases
 
-- [ ] Requirements 1 to 3: `make check`, and every test on Danoble-MBP-A, danoble-ud24-1 and danoble-wd11-3 through
-  `make test HOSTS="..."`, in a script the owner runs.
+- [x] Requirements 1 to 3: `make check`, and every test on Danoble-MBP-A, danoble-ud24-1 and danoble-wd11-3 through
+  `make test HOSTS="..."`, in a script the owner runs. Done 2026-10-21.
 
 ### Phase 3: The words
 
-- [ ] Requirement 4.
+- [x] Requirement 4: Start-Claude(1), Start-Claude.ps1's help, the zsh completion, and 2. Command line with its status companion, 2026-10-21.
 
 ### Phase 4: Closure
 

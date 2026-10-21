@@ -1,9 +1,9 @@
 ---
 title: "Every start-claude directory becomes agent-schedule, on every platform and every host"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/321
-status: active
+status: complete
 created: 2026-10-20
-updated: 2026-10-20
+updated: 2026-10-21
 ---
 
 # Plan: Every start-claude directory becomes agent-schedule, on every platform and every host
@@ -74,8 +74,10 @@ script for the owner to run there.
 
 ### Phase 3: The hosts
 
-- [ ] Requirement 2, after the merge: Danoble-MBP-A and danoble-ud24-1 in the pull request's script, and
-  danoble-wd11-3 in a PowerShell script the owner runs there. Ticked in the next noblefactor-ops pull request.
+- [x] Requirement 2, after the merge, 2026-10-21. On Danoble-MBP-A and danoble-ud24-1 a second script finished it: the
+  merge script stopped on the two old helper links writ deploy leaves, by design (anthropics/claude-code#103913), and
+  the second removed them. danoble-wd11-3 by the owner's run of its PowerShell script, which found no store to move;
+  the owner: "it otherwise finished cleanly". Ticked in NobleFactor/noblefactor-ops#322's pull request.
 
 ### Phase 4: Closure
 

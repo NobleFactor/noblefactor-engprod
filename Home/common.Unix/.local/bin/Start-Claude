@@ -890,7 +890,7 @@ declare -r synopsis="${script_name} [-C|--directory <directory>] [-w|--shell-wid
 ${script_name} [-C|--directory <directory>] [-w|--shell-width-percent <percent>]
     [-d|--detach | --no-remote-control] -r|--resume <conversation> [-- <claude argument>...]
 ${script_name} [-C|--directory <directory>] [-w|--shell-width-percent <percent>]
-    [-d|--detach | --no-remote-control] -c|--continue [-- <claude argument>...]
+    [-d|--detach | --no-remote-control] -c|--continue [-s|--schedule <schedule>] [-- <claude argument>...]
 ${script_name} -h|--help
 
 Opens a tmux session onto a Claude Code conversation that claude runs in its background: its viewer,
@@ -901,8 +901,9 @@ conversation runs on in claude's background. --schedule opens the conversation o
 opens one titled from standard input. --resume opens the conversation it names, as claude --resume
 takes it but its picker: its id, its background session's short id, its name, or its transcript's
 path, and given with --schedule puts it on that schedule; --continue opens the conversation claude lists in the startup
-directory, or else hands the directory to claude's own --continue, which starts a copy of the
-conversation it picks. A conversation claude runs nowhere is resumed in its background under its own
+directory, and given with --schedule puts it on that schedule, refusing when claude lists none there; alone, with
+none, it hands the directory to claude's own --continue, which starts a copy of the conversation it picks. A
+conversation claude runs nowhere is resumed in its background under its own
 id; one that a claude runs in the foreground is refused, with the way to move it. The conversation
 starts in the directory --directory names, or else the current one, which must be the root of a
 repository clone. Remote Control is on, under the conversation's name; --no-remote-control leaves it
@@ -973,10 +974,12 @@ if [[ ! "$shell_width_percent" =~ ^[0-9]+$ ]] || ((shell_width_percent < 1 || sh
     error $EX_USAGE "--shell-width-percent takes a percentage between 1 and 99: $shell_width_percent"
 fi
 
-# One way in (requirement 7): --schedule, --resume or --continue, or --resume with --schedule.
+# One way in (requirement 7): --schedule, --resume or --continue, and --resume or --continue with --schedule (#322).
 ways=$((continue_argument))
-[[ ! $resume_argument && ! $schedule_argument ]] || ways=$((ways + 1))
-((ways == 1)) || error $EX_USAGE "Give one of --schedule, --resume and --continue, or --resume with --schedule."
+[[ ! $resume_argument ]] || ways=$((ways + 1))
+((ways != 0)) || [[ ! $schedule_argument ]] || ways=1
+((ways == 1)) || error $EX_USAGE "Give one of --schedule, --resume and --continue, or --resume or --continue with" \
+    "--schedule."
 
 # A session left detached is reached through Remote Control, which --no-remote-control turns off (requirement 15).
 ((! detach || remote_control)) || error $EX_USAGE "--detach leaves the session for Remote Control, which" \
@@ -1063,10 +1066,12 @@ readonly instances
 
 ## The conversation --resume names, or the one --continue finds running here, and its schedule
 
-# --resume names a conversation as claude --resume takes it (personal#273's question 12). Given with --schedule, its
-# conversation joins that schedule; alone, it is on the schedule whose entry holds it, or else on none. --continue
-# takes the conversation claude lists in the startup directory, the one claude's own --continue would pick, so that it
-# is met where it runs (phase 18).
+# --resume names a conversation as claude --resume takes it (personal#273's question 12). --continue takes the
+# conversation claude lists in the startup directory, the one claude's own --continue would pick, so that it is met
+# where it runs (phase 18). Given with --schedule, either's conversation joins that schedule; alone, it is on the
+# schedule whose entry holds it, or else on none. --continue with --schedule refuses when claude lists none here, and
+# starts nothing: claude's own --continue picks by transcript, which can be another conversation (#322; the owner,
+# 2026-10-21: "Yes, refuse and start nothing.").
 
 chosen=""
 
@@ -1074,6 +1079,8 @@ if [[ $resume_argument ]]; then
     resolve_resume chosen "$resume_argument"
 elif ((continue_argument)); then
     chosen="$(conversation_running_in "$startup_directory" || true)"
+    [[ $chosen || ! $schedule_argument ]] || error $EX_NOINPUT "claude lists no conversation in ${startup_directory}" \
+        "to put on ${schedule_argument}; nothing was started."
 fi
 
 [[ ! $chosen || $schedule_argument ]] || schedule_argument="$(schedule_recording "$chosen" || true)"
@@ -1215,8 +1222,8 @@ failure="$(mkdir -p "${store_entry%/*}" 2>&1)" ||
         # Rule 1: a session claude lists nowhere, and with no transcript here or under another configuration directory,
         # is set aside, and the schedule has none: a running conversation may have no transcript yet (question 55), and
         # a background session's short id names none. Rule 2: one whose transcript is in another project folder is
-        # resumed all the same. --resume with --schedule links a schedule only when it has no session, or this one
-        # (questions 43 and 44).
+        # resumed all the same. --resume or --continue with --schedule links a schedule only when it has no session, or
+        # this one (questions 43 and 44).
         if ! place_of "$stored_id" >/dev/null && ! has_transcript "$stored_id"; then
             note "Session ${stored_id} is set aside: claude lists it nowhere, and there is no ${stored_id}.jsonl" \
                 "under ${config_directory}/projects."

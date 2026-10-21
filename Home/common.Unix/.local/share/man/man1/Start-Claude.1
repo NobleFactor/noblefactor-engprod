@@ -1,6 +1,6 @@
 .\" SPDX-License-Identifier: Apache-2.0
 .\" Copyright (c) 2026 Noble Factor. All rights reserved.
-.TH START-CLAUDE 1 "2026-10-20" "Noble Factor" "User Commands"
+.TH START-CLAUDE 1 "2026-10-21" "Noble Factor" "User Commands"
 .SH NAME
 Start-Claude \- open a tmux workspace onto the Claude Code conversation of a
 schedule, or of a conversation it names, that claude runs in its background
@@ -34,6 +34,8 @@ schedule, or of a conversation it names, that claude runs in its background
 .IR PERCENT ]
 .RB [ \-d | \-\-detach | \-\-no\-remote\-control ]
 .BR \-c | \-\-continue
+.RB [ \-s | \-\-schedule
+.IR SCHEDULE ]
 .RI [ \-\- " claude-argument" ...]
 .br
 .B Start-Claude
@@ -281,16 +283,21 @@ last, which claude's own
 .B \-\-continue
 would pick. With none listed,
 .B \-\-continue
-hands the startup directory to claude's own
+alone hands the startup directory to claude's own
 .BR \-\-continue ,
 which in claude's background starts a copy of the conversation it picks, under a
-new identifier, and says so. One of
+new identifier, and says so; given with
+.BR \-\-schedule ,
+it refuses and starts nothing, since claude's own pick goes by transcript and can
+be another conversation. One of
 .BR \-\-schedule ,
 .B \-\-resume
 and
 .B \-\-continue
 is given, or
 .B \-\-resume
+or
+.B \-\-continue
 with
 .BR \-\-schedule .
 A name is read only to find the conversation
@@ -516,7 +523,10 @@ lists it, of several the one whose transcript was written last; with none
 listed, hand the directory to claude's own
 .BR \-\-continue ,
 which in claude's background starts a copy of the conversation it picks, and
-says so. See
+says so. With
+.BR \-\-schedule ,
+put the conversation it opens on that schedule, and with none listed, refuse
+and start nothing. See
 .BR "SESSION LIFECYCLE" .
 .TP
 .BI \-C " DIRECTORY" "\fR, \fP" \-\-directory " DIRECTORY"
@@ -712,7 +722,9 @@ and
 .BR \-\-continue ,
 or
 .B \-\-continue
-with either of the others; a malformed
+with
+.BR \-\-resume ;
+a malformed
 .BR \-\-schedule ;
 a
 .B \-\-shell\-width\-percent
@@ -739,7 +751,11 @@ gh's own; or nothing answers to what
 .B \-\-resume
 gives: no session claude lists by that identifier and no transcript of it, no
 background session by that short identifier, no conversation by that name, or no
-transcript at that path.
+transcript at that path; or claude lists no conversation in the startup
+directory for
+.B \-\-continue
+with
+.BR \-\-schedule .
 .TP
 .B 69
 .BR claude ,

@@ -21,7 +21,7 @@ One of three ways in, and the options any of them takes:
 | --- | --- |
 | `Start-Claude --schedule <schedule>` | The schedule's conversation: `<owner>/<repository>#<number>`, a bare `<number>` in the startup directory's repository, or `new`, which opens a schedule titled from standard input |
 | `Start-Claude --resume <conversation> [--schedule <schedule>]` | The conversation it names, as `claude --resume` takes it but its picker: its id, its background session's short id, its name, or its transcript's absolute path (personal#273's plan, question 12); on that schedule when one is given |
-| `Start-Claude --continue` | The conversation claude lists in the startup directory, or else a copy of the one claude's own `--continue` picks |
+| `Start-Claude --continue [--schedule <schedule>]` | The conversation claude lists in the startup directory, on that schedule when one is given; with none listed, a copy of the one claude's own `--continue` picks, or, given a schedule, nothing: it refuses (NobleFactor/noblefactor-ops#322) |
 
 - `--directory <directory>`: the startup directory, the root of a clone or of a linked worktree; the current one
   otherwise.
