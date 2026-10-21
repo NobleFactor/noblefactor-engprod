@@ -48,7 +48,7 @@ Section 11's checks verify all three.
 ### Requirement 5: The scripts that do not follow them yet
 
 Named in the pull request, each its repository's work: noblefactor-ops' and personal's under #324; devlore-cli's
-`install.ps1` and `scripts/Test-InstallScript.ps1` in a devlore-cli issue filed with this pull request.
+`install.ps1` and `scripts/Test-InstallScript.ps1` in NobleFactor/devlore-cli#1109.
 
 ## Implementation Phases
 
@@ -58,14 +58,15 @@ Named in the pull request, each its repository's work: noblefactor-ops' and pers
 
 ### Phase 2: The guide (Requirements 1 to 4)
 
-- [ ] Sections 5, 9, 10 and 11, and the guide's examples
-- [ ] `Test-Frontmatter.sh`; every line within 120 columns
+- [x] Sections 5, 9, 10 and 11, and the guide's examples
+- [x] `Test-Frontmatter.sh`; every line within 120 columns
 
 ### Phase 3: Merge (Requirement 5)
 
-- [ ] The devlore-cli issue for its two scripts, filed
-- [ ] The gate this repository's CI runs, finished green before the PR script is called ready
-- [ ] PR script written, shown, and handed over; the PR resolves #326
+- [x] The devlore-cli issue for its two scripts, filed: NobleFactor/devlore-cli#1109, under #798
+- [x] The gate this repository's CI runs, finished green before the PR script is called ready: `make frontmatter
+      shell-lint powershell test`; codespell and buildifier are not installed here, so spelling runs in CI alone
+- [x] PR script written, shown, and handed over; the PR resolves #326
 - [ ] CI on the pull request; nothing acts on the checks while the script's gate watches them
 
 ## Files to Create/Modify

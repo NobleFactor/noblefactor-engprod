@@ -120,6 +120,10 @@ lines should separate the surrounding pipeline logically rather than interruptin
 
 - Use approved PowerShell verb-noun names for functions.
 - Use PascalCase for function and parameter names.
+- Write a type name as .NET cases it: `[String]`, `[Int32]`, `[Array]`, `[Environment]`, `HashSet[String]`, not
+  `[string]` or `[int]`. Where the name PowerShell uses is an accelerator with no .NET type of its own, it is cased the
+  same way: `[Switch]`, `[PSCustomObject]`. PowerShell reads a type name without regard to case, so the case is for the
+  reader (ruled 2026-10-20: "I really like using correctly cased type names").
 - Use descriptive names; do not use one-letter variables except for conventional short-lived indexes.
 - Use `[Parameter()]` and validation attributes when the contract requires them.
 - Put each significant parameter on its own declaration when attributes or defaults make the contract clearer.
@@ -273,7 +277,8 @@ names begin with `git-`; PowerShell launchers should use native PowerShell and W
 - Keep lines at or below 120 columns when practical; break long pipelines at natural command boundaries.
 - Put a blank line after a function's `param()` block before its body.
 - Use blank lines to separate logical blocks, with exactly one blank line around control structures.
-- Do not add a blank line before a short function's final `return`.
+- A function's last statement is its result: write the value, not `return` and the value (ruled 2026-10-20: "the
+  return value is the value of the last statement"). `return` is for leaving early.
 - Comments take the form of section 10.
 - Avoid one-line expressions when a block makes control flow clearer.
 - Preserve argument quoting and array structure; do not use `Invoke-Expression` for command construction.
@@ -315,7 +320,8 @@ function Open-Repository {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
-        [string] $Name
+        [String]
+        $Name
     )
 
     ...
@@ -327,7 +333,9 @@ function Open-Repository {
 A function that is not an end user's carries a header of `#` line comments immediately above its `function` line,
 in the Go form:
 
-- The first line is the function's name and a present-tense verb phrase.
+- The first line is the function's name and a present-tense verb phrase, on one line, no longer than 120 columns,
+  as the Go guide's section 4 says (ruled 2026-10-20: "the title line of a function comment MUST be no longer than
+  120"). A summary that needs more is shortened, and the rest goes to the description.
 - An extended description follows a blank `#` line when the name and phrase do not say enough.
 - `Parameters:` lists each parameter, a backticked name without `$` and its description, a default stated inline.
 - `Returns:` names what the function writes to the output stream, by type, and what it is.
@@ -369,7 +377,9 @@ Every change is followed by a focused check before further edits:
   ahead of the shebang still parses, but it hides the shebang from the loader.
 - Verify every function has `[CmdletBinding()]` and an immediate `param()` block.
 - Verify every function is documented in the form section 10 gives it: comment-based help in a file that is
-  dot-sourced, and for a script's entry point; a Go-style header for every other function.
+  dot-sourced, and for a script's entry point; a Go-style header for every other function, its first line one line
+  within 120 columns.
+- Verify no function ends with `return` and a value, and every type name is cased as section 5 says.
 - Check brace placement and blank-line rules when formatting changes are involved.
 - Run the narrowest available behavior check without launching interactive workflows unnecessarily.
 - Fix every parser, lint, or validation issue as discovered; do not pass by warnings or errors.
