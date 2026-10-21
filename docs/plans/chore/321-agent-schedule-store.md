@@ -16,7 +16,7 @@ lane's other half, `--continue` finding a conversation resumed in another clone,
 
 ## Schedule
 
-Lane 13 of NobleFactor/noblefactor-ops#301, its last, moved here from David-Noble-at-work/personal#278 and split the
+Lane 13 of NobleFactor/noblefactor-ops#301, moved here from David-Noble-at-work/personal#278 and split the
 same day. The owner, 2026-10-20: "Move Personal#278 to noblefactor-ops and let's finish it so that we can get this off
 our plate. Your primary mission then shifts to lifecycle management." Then: "We should split it into two issue."
 
@@ -82,7 +82,7 @@ script for the owner to run there.
 ### Phase 4: Closure
 
 - [x] The pull request, closing #321 and NobleFactor/noblefactor-ops#314, which rides it; lane 13 of #301 closes with
-  NobleFactor/noblefactor-ops#322. The agent-schedule design's status companions say so, and 2-command-line.status.md's
+  it, and #322 is lane 15. The agent-schedule design's status companions say so, and 2-command-line.status.md's
   item for the move to noblefactor-ops, owed since NobleFactor/noblefactor-ops#313 merged, is ticked, both in the
   commit that makes the names. The owner, 2026-10-20, of #314: "this goes in with the next pr."
 

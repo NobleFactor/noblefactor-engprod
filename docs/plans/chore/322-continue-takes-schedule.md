@@ -10,7 +10,7 @@ updated: 2026-10-21
 
 ## Summary
 
-The second half of lane 13 of NobleFactor/noblefactor-ops#301, the schedule's last lane. `--continue` and `-Continue`
+Lane 15 of NobleFactor/noblefactor-ops#301, split from lane 13 on 2026-10-20. `--continue` and `-Continue`
 take `--schedule` and `-Schedule`, as `--resume` and `-Resume` do, so that a conversation continued in a clone can be
 put on a schedule, and no way in requires one. Both test scripts gain a case for each way in, with a schedule and
 without, and the check David-Noble-at-work/personal#259's plan left as its row 2: a conversation resumed in another
@@ -88,7 +88,7 @@ status companion say that `--continue` takes `--schedule`.
 
 ### Phase 4: Closure
 
-- [x] The pull request, closing #322 and with it lane 13 of #301, with #321's phase 3 ticked in its plan. Each host
+- [x] The pull request, closing #322 and with it lane 15 of #301, with #321's phase 3 ticked in its plan. Each host
   takes the merge after it: Danoble-MBP-A and danoble-ud24-1 in the script that merges it, and danoble-wd11-3 in a
   PowerShell script the owner runs there. #301 then waits on lanes 5, 6, 8 and 9.
 
@@ -113,7 +113,7 @@ None: the change adds a form, and every form that works today works the same.
 
 - NobleFactor/noblefactor-ops#322; NobleFactor/noblefactor-ops#321, its other half, merged as
   NobleFactor/noblefactor-ops#327
-- NobleFactor/noblefactor-ops#301 (schedule), lane 13
+- NobleFactor/noblefactor-ops#301 (schedule), lane 15
 - [2. Command line](../../architecture/agent-schedule/2-command-line.md) and
   [1. Session model](../../architecture/agent-schedule/1-session-model.md)
 
