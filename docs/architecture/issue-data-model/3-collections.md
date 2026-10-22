@@ -23,7 +23,19 @@ The owner, 2026-10-21, on the third: "The Triage project is a little like a Sche
 issue type: Epic, (Chore | Feature), (Bug | Task), or no Issue Type." Its rows are added by a person, or periodically
 from the queries that find the untriaged ([section 1](1-hierarchy.md) § Triage); a row leaves when its issue is fully
 classified or closed with a reason. It is the one collection with no template and no lane: there is one of it, and
-its order is nobody's commitment.
+its order is nobody's commitment, and there is one per team: ruled 2026-10-22, "Teams triage their issues", so each
+team's Triage project has that team's triage epic as row 0, and a team's queue is what its own repositories log.
+**Two Triage projects, one per team**, ruled 2026-10-22 ("sounds good. doc it."), named for the collection's kind
+first and the team second, as schedule and thread issues are titled today:
+
+| Team | In GitHub on 2026-10-22 | Triage project | Row 0, the triage epic | Repositories whose issues fill it |
+| --- | --- | --- | --- | --- |
+| engprod | not yet: the organization's teams are `devlore` and `owners` | Triage: engprod | #142, Epic: Process, retitled as engprod's triage epic | noblefactor-ops, becoming noblefactor-engprod (#304); and personal, which belongs to no team and no organization, so its issues are triaged here |
+| devlore | `devlore`, DevLore | Triage: devlore | none yet: one epic to file in devlore-cli | devlore-cli, devlore-registry, devlore.noblefactor.com |
+
+**engprod's row 0 is the triage epic, #142.** The owner, 2026-10-22: "We need a triage epic. it is the place to put all new logged issue, pending assignment to a place in our issue hierarchy. It should be added as row zero in the schedule that represents the triage project. We can use this to guide the work and--maybe--facilitate handoffs." So a newly
+logged issue is filed as a sub-issue of #142, pending its place; triage moves it to its real parent; and #142's body
+is where the state of triage is reported, as any row 0's is.
 
 - A collection is a GitHub project in the NobleFactor organization, made from one of two organization templates, or
   the standing Triage project. A
@@ -57,27 +69,53 @@ its order is nobody's commitment.
 **Waits on** is not a field. GitHub links issues with blocked-by and blocking (the API's `Issue` type, 2026-10-21), and
 a lane that waits on another is an issue blocked by another. Whether that link crosses repositories is unverified.
 
-## The collection's own record
+## The collection's own record: row 0, an Epic
+
+Ruled 2026-10-22. The owner: "If you accept that a schedule is just a sequentially-numbered list of bugs and tasks that must be closed, a good question to ask is where do we keep status on the schedule? I might like to fully report my status on the issue at row 0. We work issues in the list starting at row 1. We keep our head straight and provide some insight to casual observers/owners/participants/reviewers by way of row zero. The question becomes: what is the issue type for row 0." And, approving the answer below: "I approve your recommendation."
 
 A schedule's issue holds three things today: its deliverable, its lane table and the owner's amendments. The table
-becomes the rows. The deliverable and the rulings need a home that keeps them, and there are two:
+becomes the rows. The deliverable, the rulings and the status need a home that keeps them, and it is **row 0, the
+collection's own issue**: its body keeps the deliverable, the amendments and the owner's full status with GitHub's
+edit history; its assignee is the collection's owner; the work is the rows from 1 on; and a session stays keyed by
+it, which is how Start-Claude's store and star-gh-assignment find a schedule today. The project's README was the
+other candidate, and sessions would have had to be keyed by the project instead.
 
-- **Row 0, the collection's own issue,** as the owner proposed on 2026-10-20. Its body keeps the deliverable and the
-  rulings with GitHub's edit history, its assignee is the collection's owner, and a session stays keyed by it, which
-  is how Start-Claude's store and star-gh-assignment find a schedule today. It needs one exemption: a collection's own
-  issue is not work, so "Every issue must be fit into this hierarchy" cannot hold for it, as the epic rule does not
-  hold for a schedule's or a thread's issue today.
-- **The project's README,** which every GitHub project has. No exemption is needed, but sessions would be keyed by the
-  project, and Start-Claude and star-gh-assignment would change their keys.
+**Row 0 is an Epic.** Three types were weighed:
 
-Proposed: row 0. The plan's question 5. Either way the schedule is two records, its rulings and its rows, and one
-ruling can change both: one star command adds a row and writes its amendment together, and the audit checks that every
-amendment's lane has its row.
+- A type of its own, Schedule: ruled out on 2026-10-21, when a schedule became a project and not a kind, and the
+  hierarchy "a very specific hierarchy based on Issue Type", Epic, then Chore or Feature, then Bug or Task. A fourth,
+  level-less type breaks it, and the asset's levels have no place for it.
+- Chore, which today's schedule issue is: a chore is level 1 and must have a parent epic, and a schedule has none,
+  because its lanes cross epics and a sequence has no owner. Today's standard carries an exemption for exactly this,
+  and the audit a special case; both would follow it into the model.
+- Epic: level 0, a body of work with an owner and no parent, which is what row 0 is. Its assignee is the owner the
+  collection has. It needs no exemption from the parent rule, because level 0 has none. GitHub shows it as the
+  top-level thing it is. And it is uniform: a thread's row 0 is an epic too, and the Triage project's row 0 is #142,
+  which already is one.
+
+So an epic means two things, and the report tells them apart by one fact, whether the epic is row 0 of a project. A
+**hierarchy epic** has features and chores as sub-issues. A **collection epic** has none: its rows are not its
+children, since each lane keeps its real parent, and the project is what joins them. The audit reports a collection
+epic that acquires sub-issues, and a hierarchy epic that sits in row 0. The plan's questions 5 and 3, closed together.
+
+Either way the schedule is two records, its rulings and its rows, and one ruling can change both: one star command
+adds a row and writes its amendment together, and the audit checks that every amendment's lane has its row.
 
 ## Ownership
 
-The owner, 2026-10-21: "schedules are owned by individuals and teams". A person owns a collection as the assignee of
-its own issue; GitHub's assignees are user accounts, never teams. A team owns one by its role on the project.
+The owner, 2026-10-21: "schedules are owned by individuals and teams". Three GitHub entities are involved and each can
+hold one part, ruled 2026-10-22 for a team's Triage project and holding for every collection:
+
+- **The project belongs to the organization.** GitHub has no team-owned project; an organization project has
+  collaborators, and a team is one with the Admin, Write or Read role. A team owns a collection by holding Admin on
+  its project.
+- **Row 0 is assigned to a person.** GitHub assigns issues to user accounts, never to teams, so the one on the hook
+  for a collection is a name on its epic: for a team's Triage project, the team's maintainer, GitHub's own name for a
+  team's lead. If the maintainer changes, the project's role stays and the assignee moves, one edit.
+- **The team holds the Triage role** on the repositories whose issues fill its queue, which lets its members type,
+  parent and label without write access to code.
+
+The owner is on every team and the maintainer of each today.
 
 ## A committed schedule
 

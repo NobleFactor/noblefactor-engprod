@@ -65,7 +65,8 @@ or no Issue Type. We can always search for specific issues based on no:type, no:
 periodically added to the Triage project."
 
 - An issue is fully classified or it is not. Fully classified is a Type and, for any level but an epic, a parent one
-  level up. An issue with no Type, or with no parent, is untriaged, and whoever files it does nothing more.
+  level up that is not the triage epic. An issue with no Type, or with no parent, or with the triage epic as its
+  parent, is untriaged, and whoever files it does nothing more.
 - The untriaged are found by query, GitHub's own: `no:type`, `no:parent-issue`, and the audit's reading of both. On
   2026-10-21, `is:open no:parent-issue` found 23 of noblefactor-ops's 89 open issues.
 - What is sent for review is what is added to the **Triage project**, the third collection of
@@ -75,10 +76,18 @@ periodically added to the Triage project."
 - The parent rule binds classified issues. The audit exempts untriaged ones and reports how long each has waited.
   Today's standard already exempts "a bug awaiting triage"; this keeps that and extends it to an issue filed with no
   Type at all.
-- No standing epic holds the unplaced. Today `Epic:Ops:Process`, #142, does: the owner, 2026-10-21, "#142 is
-  basically our triage epic", holding 90 open issues that day. Under this model each of them finds the epic it serves
-  or joins the Triage project; whether #142 is then repurposed or closed as not planned is the plan's question 3.
-- The triage team is open: the plan's question 4.
+- One standing epic holds the unplaced: the **triage epic**, #142, which the owner called "basically our triage epic"
+  on 2026-10-21 and ruled on 2026-10-22: "We need a triage epic. it is the place to put all new logged issue, pending assignment to a place in our issue hierarchy. It should be added as row zero in the schedule that represents the triage project. We can use this to guide the work and--maybe--facilitate handoffs." A newly logged issue that nobody can yet place is filed as a
+  sub-issue of #142 and so is never without a parent; triage re-parents it to the feature or chore it serves, or to
+  the epic it serves if it is a feature or chore itself. #142 is row 0 of the Triage project
+  ([section 3](3-collections.md)). The 90 issues it held on 2026-10-21 drain the same way, each to its real parent.
+  The plan's question 3, closed; the `no:parent-issue` query therefore finds nothing filed by the tooling, and the
+  untriaged are the sub-issues of #142.
+- **Teams triage their own issues.** Ruled 2026-10-22: "Teams triage their issues. I happen to be on every team. If devlore-cli logs issues against noblefactor-engprod, they should log a tracking issue or retain ownership of the issue on noblefactor-engprod. So keep the issue on your plate or move it and maybe track it on another team's triage schedule." So the triage team of a repository is the team that owns
+  it, holding the Triage role there; each team has its own Triage project with its own triage epic as row 0, #142
+  being engprod's; and an issue one team finds against another's repository is filed there, under that repository's
+  triage epic, the finder keeping a tracking issue of its own or simply letting it go. The owner is on every team
+  today, so every triage queue is one person's until a team is more than one. The plan's question 4, closed.
 
 ## How long a level lives
 

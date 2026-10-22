@@ -154,8 +154,13 @@ read before every operation; the report and the audit reading type and link firs
 
 - [x] Questions 1, 10 and 13 ruled; the hierarchy, storage and asset sections revised -- 2026-10-22
 - [x] The five issue types in GitHub with the level convention; `model.yaml`, the first pull -- 2026-10-22
-- [ ] Questions 3 and 4 ruled: the fate of #142, and the triage team
+- [x] Questions 3 and 4 ruled: the fate of #142, ruled 2026-10-22, the triage epic and row 0 of the Triage project, with
+      question 5 closed by the same ruling, row 0 an Epic; the team ruled the same day, teams triage their own --
+      2026-10-22
 - [ ] The write test: a sub-issue link across repositories and across owners, and a single-select option updated by id
+- [ ] #304, noblefactor-ops renamed noblefactor-engprod, done early: the owner, 2026-10-22, "bump up the priority of
+      the issue for renaming noblefactor-ops as noblefactor-engprod. we might do that before we go much further. it
+      will be one less thing to worry about at the end." Its own plan and pull request, before the rollout below
 - [ ] Section 5's deltas and order rewritten to the rulings so far; the status companions of sections 1, 4 and 6 set
 - [ ] The tasks filed under #332 and #333: the asset read by the extension, `pull`, the read before every operation,
       the report and audit reading type and link first; the reclassification, #363, as the rollout
@@ -167,8 +172,10 @@ read before every operation; the report and the audit reading type and link firs
 The first collection, purely additive. `push` for personal; the Triage project's rows read by the report.
 
 - [ ] Section 3's Triage rows and section 6's `push` built as tasks under #332
-- [ ] The Triage project made in the organization, on the owner's word, and #142 drained into it or into the epics
-      its issues serve
+- [ ] The `engprod` team created, with Admin on its Triage project and Triage on its repositories; the devlore
+      triage epic filed in devlore-cli; both organization writes on the owner's word
+- [ ] The two Triage projects made in the organization, Triage: engprod with #142 as row 0 and Triage: devlore with
+      the new epic, on the owner's word; #142's 90 issues drained to the epics they serve or left in the queue
 - [ ] personal pushed and proven participating
 
 ### Iteration 3: schedules and threads as projects
@@ -252,10 +259,9 @@ scheme retired last.
    tasks to our heart's content. I think we must either repurpose #142 or close it as <something>." Then: "#142 is
    basically our triage epic. i'm surprised it's not bigger than 90. These are things discovered over the course of a
    month that are bugs, gaps (missing parts of chores/features), and suspicious behaviors/implementation." So no
-   standing epic, and no rule that every repository carries `Epic:Ops:Process`. Open: whether #142 is repurposed as
-   this repository's own engineering epic or closed as not planned once its 90 open issues (counted 2026-10-21) have
-   each found an epic or joined the triage collection of question 4. GitHub's close reasons are completed, not
-   planned and duplicate, and no other (gh 2.103.0).
+   standing epic, and no rule that every repository carries `Epic:Ops:Process`. GitHub's close reasons are completed,
+   not planned and duplicate, and no other (gh 2.103.0). **Ruled 2026-10-22:** "We need a triage epic. it is the place to put all new logged issue, pending assignment to a place in our issue hierarchy. It should be added as row zero in the schedule that represents the triage project. We can use this to guide the work and--maybe--facilitate handoffs." #142 is the triage epic, row
+   0 of the Triage project, and the parent of every newly logged issue until triage places it. Closed.
 4. **Triage.** Proposed: untriaged is a state, not a place: an issue with no Type or no parent. Whoever files it does
    nothing more, the audit exempts it from the parent rule and reports its age, and the triage team works the query.
    Open: who the team is, and with what role. GitHub's Triage role exists for the organization's repositories; whether
@@ -266,13 +272,17 @@ scheme retired last.
    We can always search for specific issues based on no:type, no:parent-issue, etc. These issues can be periodically
    added to the Triage project." So: an issue is fully classified or it is not; the triage queue is a third
    collection, the Triage project, whose rows may be of any type or none; what is sent for review is what is added to
-   it, by a person or periodically from the queries. Still open: who the team is.
+   it, by a person or periodically from the queries. **Ruled 2026-10-22, the team:** "Teams triage their issues. I happen to be on every team. If devlore-cli logs issues against noblefactor-engprod, they should log a tracking issue or retain ownership of the issue on noblefactor-engprod. So keep the issue on your plate or move it and maybe track it on another team's triage schedule." The triage team of a
+   repository is the team that owns it, one Triage project per team, the owner on every team today. Closed.
 5. **A collection's own record: row 0, or the project's README.** Options: (a) row 0 is the collection's own issue, as
    the owner proposed on 2026-10-20, its body holding the deliverable and the rulings, its assignee the owner, and
    sessions keyed by it as today; it needs an exemption from "every issue must be fit into this hierarchy", as
    schedule and thread issues have from the epic rule today; (b) no row 0: the project's README holds the deliverable
    and the rulings, and sessions are keyed by the project. Proposed: (a). Start-Claude's store and
-   star-gh-assignment keep their keys, which section 5 needs.
+   star-gh-assignment keep their keys, which section 5 needs. **Ruled 2026-10-22:** (a), and row 0 is an Epic, which
+   needs no exemption because level 0 has no parent; the owner: "If you accept that a schedule is just a sequentially-numbered list of bugs and tasks that must be closed, a good question to ask is where do we keep status on the schedule? I might like to fully report my status on the issue at row 0. We work issues in the list starting at row 1. We keep our head straight and provide some insight to casual observers/owners/participants/reviewers by way of row zero. The question becomes: what is the issue type for row 0." Then, of the recommendation that row 0 be
+   an epic, a collection epic told from a hierarchy epic by its being row 0: "I approve your recommendation."
+   [Section 3](../../architecture/issue-data-model/3-collections.md) § The collection's own record. Closed.
 6. **Lane numbers.** Proposed: row 0 is the collection's own issue (question 5), and lanes 1..N follow it, so that
    today's lane numbers carry over. The tool that adds a row numbers it. GitHub projects have no number that counts by
    itself, so a row added in GitHub's interface has none, and the audit reports it.
