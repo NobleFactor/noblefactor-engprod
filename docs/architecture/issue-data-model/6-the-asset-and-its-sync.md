@@ -22,16 +22,11 @@ pulled:
   org: NobleFactor
   digest: sha256:9b1e…
 types:
-  - name: Epic
-    level: 0
-  - name: Feature
-    level: 1
-  - name: Chore
-    level: 1
-  - name: Task
-    level: 2
-  - name: Bug
-    level: 2
+  - { name: Epic,    id: IT_kwDO…a1, level: 0 }
+  - { name: Feature, id: IT_kwDO…b2, level: 1 }
+  - { name: Chore,   id: IT_kwDO…c3, level: 1 }
+  - { name: Task,    id: IT_kwDO…d4, level: 2 }
+  - { name: Bug,     id: IT_kwDO…e5, level: 2 }
 labels:
   - name: bug
     color: "d73a4a"
@@ -70,6 +65,23 @@ projects:
   no parent, the last level is the lanes, a parent is one level up, and the types of one level are mutually exclusive.
   The owner, 2026-10-21: "We've got a hierarchy and a level number might be sufficient. we assume mutual exclusion at
   each level in the hierarchy." Nothing in the extension names a type.
+- **A type is keyed by its id, never its name,** so that the owner can rename one. The owner, 2026-10-22: "i should be
+  able to rename issue types. Will I be able to do that?" GitHub's issue type has a name, a description, a color and
+  an enabled flag, and nothing about hierarchy; an issue holds its type by id, so a rename made in GitHub reaches every
+  issue at once. `pull` matches the same id under a new name, prints it as a rename, and rewrites the asset; the level
+  survives because it hangs on the id. The extension reads a type's name only to display it. A new type made in
+  GitHub arrives from `pull` with no level, and the asset refuses to load until one is written in by hand and the
+  digest renewed: a type with no level is a type the hierarchy cannot place. During the transition the parent markers
+  are the one text consumer, their words being type names; they retire with the markers
+  ([section 5](5-from-todays-scheme.md)). Level in the type's description, or depth measured from the sub-issue graph,
+  were considered; depth was set aside, since it measures what is rather than stating what should be, and the audit
+  needs the rule. **The description is the convention, ruled 2026-10-22:** every issue type's description in GitHub
+  begins `Level N:`, so that GitHub's own settings page states the hierarchy and a person has one place to look. The
+  owner: "We must rely on the convention. My experience: you might do it wrong, but you've got just one place to look
+  to see that it's wrong. In this case, the simplest way is to pull the model and take a look." `pull` reads the level
+  from the description, the asset records it, and the audit reports a type whose description names no level or a
+  level the asset disagrees with. A new type therefore arrives with its level when its description was written to the
+  convention, and without one otherwise.
 - **`labels`** is today's labels file from NobleFactor/noblefactor-ops#320, in the GitHub API's own fields, and
   **`projects`** the Schedule, Thread and Triage projects with their fields ([section 3](3-collections.md)).
 - **Ids beside names,** for every project, field and single-select option. GitHub holds a row's single-select value
