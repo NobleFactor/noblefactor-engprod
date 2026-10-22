@@ -5,7 +5,7 @@ type: Process
 audience: Engineers
 status: Approved
 created: 2026-09-01
-updated: 2026-09-24
+updated: 2026-10-21
 ---
 
 # Development Process
@@ -75,8 +75,32 @@ it is defined in [issue-standards.md](../issue-standards.md#threads).
 
 **A worktree is a pull request.** It branches from the default branch and resolves one or more of its
 feature's issues. As many worktrees may be open as there are pull requests in flight; they do not
-compete for attention, because `git-open-branch` names each one `<repo>.<issue>-<name>` and a directory
-listing is therefore the whole picture. Legibility comes from naming, not from scarcity.
+compete for attention, because `git-open-branch` names each one `<clone>.<issue>-<name>` and places it under
+`~/Workspace/<org>/`, so a directory listing is the whole picture. Legibility comes from naming, not from
+scarcity.
+
+**The structure is one directory per GitHub organization.** Ruled 2026-10-21 (#366): "key by GitHub Organization,
+clone name, and branch name". Under `~/Workspace/<org>/` sit three kinds of thing and nothing else: the clone,
+`<clone>`; its worktrees, `<clone>.<issue>-<name>`; and each worktree's pull-request script, `<worktree>.bash` or
+`<worktree>.ps1`, [pr-script-template.md](pr-script-template.md). A layer clone, the one writ deploys from, lives
+under writ's home, `~/.local/share/devlore/writ/repos/<clone>`, and `~/Workspace/<org>/<clone>` is a symlink to it.
+One clone per layer, on its default branch, with no branch ever checked out in it: a second clone of the same
+repository is a place for work to strand, and the day this was ruled one was found holding sixteen refs origin
+lacked. `git open-branch` runs in the clone, or in the symlink to it, and puts the worktree where the structure
+says.
+
+**A worktree and its script go when the pull request merges**, or when the branch is abandoned
+([agent-rules.md](agent-rules.md), rule 8): `git close-branch` removes both in one run. Ruled 2026-10-21: "scripts
+and worktrees should be removed as soon as possible. Lingering worktrees and scripts should be identified as soon
+as they're noticed." One that lingers is a defect, named by whoever notices it the moment it is noticed; the day it
+was ruled, a worktree was found seven months past its merge, and a script beside the clones that served no branch.
+
+**A clone is retired in four steps, and `rm -rf` is the last.** Ruled 2026-10-21 (#367), when a second clone was
+found carrying work origin lacked. First, save what origin lacks: every uncommitted change, stash and local commit
+as a patch, and every ref as a bundle, outside the clone. Second, carry what is live: a worktree that hangs off the
+clone is re-pointed at the clone that stays, with `git worktree repair`, or closed and reopened there. Third, check
+what points at the clone: writ's registration, symlinks, and scripts whose `cd` names it. Then remove it, and say
+what was saved where.
 
 Within that worktree:
 

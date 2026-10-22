@@ -117,9 +117,9 @@ moves, or closed and reopened), symlinks take the clones' places, and `~/Workspa
 
 ### Phase 3: the guides
 
-- [ ] `pr-script-template.md` (Requirement 3)
-- [ ] `development-process.md` (Requirement 4)
-- [ ] `agent-rules.md` (Requirement 5)
+- [x] `pr-script-template.md` (Requirement 3) -- 2026-10-21
+- [x] `development-process.md` (Requirement 4) -- 2026-10-21
+- [x] `agent-rules.md`: rule 16, and rule 8's compliance (Requirement 5) -- 2026-10-21
 
 ### Phase 4: the pull request
 

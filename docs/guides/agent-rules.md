@@ -5,7 +5,7 @@ type: Process
 audience: Claude Code, Codex
 status: Approved
 created: 2026-09-07
-updated: 2026-10-18
+updated: 2026-10-21
 ---
 
 # Agent Rules
@@ -146,8 +146,11 @@ parked for four days with twelve uncommitted files, ending 21 commits behind its
 branch.
 
 **Compliance.** Before deleting, diff anything uncommitted against wherever it came from, so the discard
-is knowingly empty, and say what was discarded. A parked branch is accumulation wearing a different hat:
-it goes stale, its work rots, and it hides the fact that the task never started.
+is knowingly empty, and say what was discarded. When what goes is a clone rather than a branch, #367's order
+holds: what origin lacks is saved as patches and every ref as a bundle before `rm -rf`, and the message says
+where. 2026-10-21: a second clone of personal, retired, was found holding sixteen refs origin lacked, a stash
+among them, after `rm -rf` had already been asked about. A parked branch is accumulation wearing a different
+hat: it goes stale, its work rots, and it hides the fact that the task never started.
 
 ## 9. A violation is disclosed as a violation
 
@@ -276,6 +279,22 @@ preparing the pull request that closes one of the six; reported as anthropics/cl
 
 **Compliance.** Before `gh issue create`, the filing script runs
 `grep -q '^## Plan and design documents' <<<"$body" || exit 1`.
+
+## 16. A worktree and its script go with the merge
+
+**The rule.** When a pull request merges, or its branch is abandoned (rule 8), the worktree and the script
+that landed it are removed in the same run, by `git close-branch`. A worktree or a script found lingering is
+named the moment it is noticed, by whoever notices it, and removed or filed.
+
+**The breakage.** 2026-10-21: `~/Workspace/NobleFactor/devlore-cli.resource-management` was found seven months
+past its merge; `~/Workspace/NobleFactor/go` sat beside the clones, a script belonging to whichever repository
+last used it; and `~/.local/share/devlore/writ/repos/go-personal` lay under writ's repos directory, where no
+script belongs. Ruled: "scripts and worktrees should be removed as soon as possible. Lingering worktrees and
+scripts should be identified as soon as they're noticed." (#366)
+
+**Compliance.** `ls ~/Workspace/<org>` shows the clones, the worktrees and the scripts named for them, and
+every worktree listed has a pull request in flight; `git worktree list` in each clone agrees. Anything else is
+named in the next message.
 
 ---
 
