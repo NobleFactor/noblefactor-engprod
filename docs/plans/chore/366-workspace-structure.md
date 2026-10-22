@@ -108,10 +108,12 @@ moves, or closed and reopened), symlinks take the clones' places, and `~/Workspa
 
 ### Phase 2: the commands
 
-- [ ] `git-open-branch` places the worktree under `~/Workspace/<org>/`; its man page and completions follow; a test
-      under `tests/` proves the path (Requirement 1)
-- [ ] `git-close-branch` removes `<worktree>.bash` or `.ps1` with the worktree; its man page follows;
-      `tests/Test-GitCloseBranch` gains the case (Requirement 2)
+- [x] `git-open-branch` places the worktree under `~/Workspace/<org>/`; its man page follows, and the completions
+      name no path, so they are unchanged; `tests/Test-GitOpenBranch` proves the path from ssh, https and `ssh://`
+      origins, the fallback off GitHub, and the dry run of each (Requirement 1) -- 2026-10-21
+- [x] `git-close-branch` removes `<worktree>.bash` and `.ps1` with the worktree, last of the traces; its man page
+      follows; `tests/Test-GitCloseBranch` gains four cases, one script, both, none, and the dry run
+      (Requirement 2) -- 2026-10-21
 
 ### Phase 3: the guides
 
