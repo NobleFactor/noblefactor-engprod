@@ -27,8 +27,8 @@ NobleFactor project held personal#259 as a row, with a custom field set on it, o
 
 | Part | Where it can live | What GitHub enforces | Reaches personal |
 | --- | --- | --- | --- |
-| Type | GitHub's issue type, or a label family | issue type: one value per issue | issue type: no. Labels: yes |
-| Parent | GitHub's sub-issue link, or the `**Feature:**` marker in the body | sub-issue: one parent | sub-issue across repositories or owners: unverified. Marker: yes, as text |
+| Type | GitHub's issue type (ruled 2026-10-22) | one value per issue | no |
+| Parent | GitHub's sub-issue link (ruled 2026-10-22); the `**Feature:**` and `**Chore:**` markers until the link is shown to cross | sub-issue: one parent | sub-issue across repositories or owners: unverified. Marker: yes, as text |
 | Severity, Priority | GitHub's issue fields, or labels | issue field: its type, and one value | issue field: no. Labels: yes |
 | Area, `good first issue` | labels | nothing | yes |
 | A thread's or a schedule's rows, lanes and status | a project's rows and fields | the field's type | yes, seen 2026-10-20 |
@@ -44,18 +44,19 @@ labels are defined and stored as yaml assets in noblefactor-ops."
 
 ## The choice it turns on
 
-Type, and Severity and Priority with it, can live three ways (the plan's question 1):
+Ruled 2026-10-22: "we are building a 3-tier hierarchy modeled with the parent-child relation between issues, so yes. Our hierarchy is based on epics that contain chores and features that contain bugs and tasks. It is a very specific hierarchy based on Issue Type." So Type is GitHub's issue type and the parent is GitHub's sub-issue link, both of them
+organization features. Neither reaches personal, and for personal the owner ruled the same day: "Star gh offers
+directed syncs. Person[al] will need to sync if it wants to participate." So:
 
-- **Labels everywhere.** One mechanism, in every repository, personal included. GitHub enforces nothing; the audit
-  enforces one Type, at most one Severity, at most one Priority.
-- **GitHub's own fields in the organization's repositories, labels in personal.** GitHub enforces where it reaches,
-  and star keeps two records of one fact in step, which is the kind of record that drifts.
-- **GitHub's own fields everywhere,** with personal's tracked work moved into an organization repository. Nothing to
-  sync and nothing for the audit to enforce, but personal changes.
+- **GitHub's own types and links in the organization's repositories, labels in personal.** The organization's record
+  is the truth; `star gh` syncs it one way into personal's labels, as `star gh labels sync` already syncs the label
+  set. The audit reads personal's labels as it reads the organization's types, and reports where the sync has not
+  run.
+- Not taken: moving personal's tracked work into an organization repository.
 
-The parent link is the same choice for edges: GitHub's sub-issue link is enforced and visible in GitHub's own views,
-and the marker is text that crosses anything. Which repositories the link can cross is unverified, and a write test
-settles it (the plan's question 13).
+The sub-issue link is in use within noblefactor-ops since 2026-10-20. Whether it crosses into another repository, or
+another owner's, is unverified, and the write test settles it (the plan's question 13); until then the markers remain
+the cross-repository form, as the standard states them since #370.
 
 ## What the audit does
 

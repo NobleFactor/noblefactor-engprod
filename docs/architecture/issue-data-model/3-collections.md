@@ -10,16 +10,23 @@ are almost synonymous. They vary in intent, but are otherwise the same." And: "P
 Threads track (Chore | Feature) work. Schedules track (Bug | Task) work. Threads represent use cases. Schedules track
 engineering work. Threads will ultimately drive Schedules and influence Priority."
 
-## One mechanism, two intents
+## One mechanism, three intents
 
-| | Thread | Schedule |
-| --- | --- | --- |
-| Represents | a use case | engineering work, in the order it is done |
-| Its rows | features and chores, level 1 | tasks and bugs, level 2 |
-| Ordered by | the story it tells | the order of execution |
-| Made from | the organization's Thread template | the organization's Schedule template |
+| | Thread | Schedule | Triage |
+| --- | --- | --- | --- |
+| Represents | a use case | engineering work, in the order it is done | what is sent for review |
+| Its rows | features and chores, level 1 | tasks and bugs, level 2 | any issue, of any Type or none |
+| Ordered by | the story it tells | the order of execution | nothing: a queue, worked and emptied |
+| Made from | the organization's Thread template | the organization's Schedule template | one project, standing |
 
-- A collection is a GitHub project in the NobleFactor organization, made from one of two organization templates. A
+The owner, 2026-10-21, on the third: "The Triage project is a little like a Schedule or a Thread, but it allows any
+issue type: Epic, (Chore | Feature), (Bug | Task), or no Issue Type." Its rows are added by a person, or periodically
+from the queries that find the untriaged ([section 1](1-hierarchy.md) § Triage); a row leaves when its issue is fully
+classified or closed with a reason. It is the one collection with no template and no lane: there is one of it, and
+its order is nobody's commitment.
+
+- A collection is a GitHub project in the NobleFactor organization, made from one of two organization templates, or
+  the standing Triage project. A
   project can be marked as a template, and a NobleFactor project holds personal's issues as rows, with custom fields
   set on them: both seen on 2026-10-20, on two test projects made and then deleted.
 - A row is one issue. An issue's place in a collection is a field of its row, never a label on the issue.

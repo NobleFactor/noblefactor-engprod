@@ -36,9 +36,10 @@ the order they are worked.
 | --- | --- | --- |
 | [1. The hierarchy](1-hierarchy.md) | Type and its five values, the three levels, parents, triage, and how long a level lives | [Draft](1-hierarchy.status.md) |
 | [2. Attributes](2-attributes.md) | Severity, Priority and Area: what an issue has on its own, outside any collection | [Draft](2-attributes.status.md) |
-| [3. Collections](3-collections.md) | Threads and schedules as GitHub projects: who joins which, rows and lanes, the collection's own record, ownership | [Draft](3-collections.status.md) |
+| [3. Collections](3-collections.md) | Threads, schedules and the Triage project as GitHub projects: who joins which, rows and lanes, the collection's own record, ownership | [Draft](3-collections.status.md) |
 | [4. Storage and reach](4-storage-and-reach.md) | Where each part lives in GitHub, what enforces it, and which repositories it reaches | [Draft](4-storage-and-reach.status.md) |
 | [5. From today's scheme](5-from-todays-scheme.md) | The deltas the task list is drawn from, and the order that keeps running work running | [Draft](5-from-todays-scheme.status.md) |
+| [6. The asset and its sync](6-the-asset-and-its-sync.md) | `model.yaml` beside the extension, `star gh model pull` and `push`, the ETag read before every operation | [Ruled](6-the-asset-and-its-sync.status.md) |
 
 ## Terms
 
@@ -46,11 +47,15 @@ the order they are worked.
   exactly one. Whether it is GitHub's own issue type or a label family is open (the plan's question 1).
 - **Level:** an issue's depth in the hierarchy: 0 for an epic, 1 for a feature or a chore, 2 for a task or a bug.
 - **Parent:** the issue one level up. An epic has none.
-- **Untriaged:** an issue with no Type or no parent. The triage queue is the set of untriaged issues.
+- **Untriaged:** an issue with no Type or no parent: not fully classified. The queries find them; the Triage project
+  holds those sent for review (ruled 2026-10-21).
 - **Attribute:** something an issue has on its own, outside any collection: its severity, its priority, its areas.
-- **Collection:** a GitHub project that orders issues for a purpose, a thread or a schedule.
+- **Collection:** a GitHub project that gathers issues for a purpose: a thread, a schedule, or the Triage project.
+- **Triage project:** the one collection any issue may join, of any Type or none, for review.
 - **Thread:** a collection of features and chores that tells a use case.
 - **Schedule:** a collection of tasks and bugs in the order they are worked.
 - **Row, lane:** an issue's place in a collection. A lane is a schedule's row, numbered in the order it is worked.
 - **The organization's repositories:** NobleFactor's, which GitHub's organization features reach.
 - **personal:** David-Noble-at-work/personal, a user's repository, which they do not reach.
+- **The asset:** `model.yaml` beside the star extension: the model as the tooling reads it, pulled from GitHub and
+  pushed to repositories ([section 6](6-the-asset-and-its-sync.md)).

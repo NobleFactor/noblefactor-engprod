@@ -33,16 +33,19 @@ become tasks, #303 and #321 among them.
 **The `Ops:` prefix** marks the tooling axis today ([issue-standards.md](../../issue-standards.md) § The Ops axis).
 Chore against feature now says the same thing, so the prefix has nothing left to mark.
 
-**The name.** The owner named the field Type and invited alternatives. Type is GitHub's own name for its issue-type
-field, which NobleFactor already has, with Task, Bug and Feature enabled. If the model's Type is GitHub's, Epic and
-Chore are added to it as types of the organization's own. If it is a label family, it is better called Kind, today's
-word, so that it is never mistaken for GitHub's Type in the same sidebar. [Section 4](4-storage-and-reach.md) says why
-the choice turns on personal. The plan's question 1.
+**The name, ruled.** The owner named the field Type and invited alternatives; labels were the other candidate. Ruled
+2026-10-22: "we are building a 3-tier hierarchy modeled with the parent-child relation between issues, so yes. Our hierarchy is based on epics that contain chores and features that contain bugs and tasks. It is a very specific hierarchy based on Issue Type." Type is GitHub's issue-type field, which NobleFactor already has with Task, Bug and Feature
+enabled; Epic and Chore are added to it as types of the organization's own. The kind labels of today's scheme are
+scaffolding on the way there ([section 5](5-from-todays-scheme.md)). What personal does, which GitHub's types do not
+reach, is [section 4](4-storage-and-reach.md)'s remaining question.
 
 ## Parents
 
 - Every issue but an epic has exactly one parent, one level up: a feature or a chore under an epic, a task or a bug
-  under a feature or a chore. Nothing skips a level, and a task or a bug is no issue's parent.
+  under a feature or a chore. Nothing skips a level, and a task or a bug is no issue's parent. The parent is GitHub's
+  own parent-child relation between issues, the sub-issue link: ruled 2026-10-22, "a 3-tier hierarchy modeled with the
+  parent-child relation between issues". It was already in use that day: 66 of noblefactor-ops's 89 open issues
+  carried one, #266 holding 43 under #142.
 - An issue's epic is not a label of its own. The owner, 2026-10-21: "epic is NOT a label, but ... a peer of
   `feature`, (`bug`|`chore`|`task`). It is a value that you assign to `kind`." An issue's epic is read from its
   parents, and the `Epic:<Name>` labels retire.
@@ -55,13 +58,26 @@ The owner, 2026-10-21: "we need the triage queue. Bugs are unplanned and must be
 fits into the hierarchy." Then: "It seems we must allow that bugs get filed without any ceremony. they are classified
 by a triage "team"."
 
-- An issue with no Type, or with no parent, is untriaged. Whoever files it does nothing more.
-- The triage queue is the set of untriaged issues: a query, not a place. A standing triage chore was considered and
-  set aside, since something would have to attach each new bug to it, which is ceremony done by a machine instead.
+The owner, 2026-10-21, ruling the plan's question 4: "we fully classify the issue or not and allow that any issue can
+be added to the Triage project. Issues sent for review by triage are those added to the Triage project. The Triage
+project is a little like a Schedule or a Thread, but it allows any issue type: Epic, (Chore | Feature), (Bug | Task),
+or no Issue Type. We can always search for specific issues based on no:type, no:parent-issue, etc. These issues can be
+periodically added to the Triage project."
+
+- An issue is fully classified or it is not. Fully classified is a Type and, for any level but an epic, a parent one
+  level up. An issue with no Type, or with no parent, is untriaged, and whoever files it does nothing more.
+- The untriaged are found by query, GitHub's own: `no:type`, `no:parent-issue`, and the audit's reading of both. On
+  2026-10-21, `is:open no:parent-issue` found 23 of noblefactor-ops's 89 open issues.
+- What is sent for review is what is added to the **Triage project**, the third collection of
+  [section 3](3-collections.md): any issue, of any Type or none, added by a person who wants it looked at, or
+  periodically from the queries. An issue leaves it classified, or closed with a reason.
 - Triage gives an issue its Type and its parent and, for a bug, its severity ([section 2](2-attributes.md)).
-- The parent rule binds triaged issues. The audit exempts untriaged ones and reports how long each has waited.
+- The parent rule binds classified issues. The audit exempts untriaged ones and reports how long each has waited.
   Today's standard already exempts "a bug awaiting triage"; this keeps that and extends it to an issue filed with no
   Type at all.
+- No standing epic holds the unplaced. Today `Epic:Ops:Process`, #142, does: the owner, 2026-10-21, "#142 is
+  basically our triage epic", holding 90 open issues that day. Under this model each of them finds the epic it serves
+  or joins the Triage project; whether #142 is then repurposed or closed as not planned is the plan's question 3.
 - The triage team is open: the plan's question 4.
 
 ## How long a level lives
