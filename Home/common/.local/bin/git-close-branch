@@ -235,6 +235,27 @@ function worktree_dirt {
     return 0
 }
 
+# scripts_beside prints the pull-request scripts that sit beside a worktree, one per line, or nothing when none does.
+#
+# The script that lands a worktree's pull request is named for the worktree, `<worktree>.bash` on macOS and Linux
+# and `<worktree>.ps1` on Windows, and goes with the worktree when the pull request merges (noblefactor-ops#366).
+# Both names are looked for, so that neither can linger.
+#
+# Parameters:
+#   - `$1`: the worktree path.
+#
+# Returns:
+#   - stdout: each script that exists, one per line.
+function scripts_beside {
+    local worktree="$1" suffix
+
+    for suffix in .bash .ps1; do
+        [[ -e "${worktree}${suffix}" ]] && printf '%s\n' "${worktree}${suffix}"
+    done
+
+    return 0
+}
+
 # delete_flag prints the flag git branch should use to delete a branch, or nothing when deletion is unsafe.
 #
 # A squash merge leaves the branch tip unreachable from the target, so -d refuses a branch GitHub considers
@@ -314,6 +335,8 @@ function delete_flag {
 #   - `worktree_path`  the linked worktree holding it, or empty.
 #   - `dirt_count`     changed and untracked entries in that worktree, counted NOW -- after removal there is
 #                      nothing left to count -- or empty when clean.
+#   - `script_paths`   the pull-request scripts beside that worktree, `<worktree>.bash` and `<worktree>.ps1`,
+#                      whichever exist, one per line; or empty.
 #   - `worktree_force` "yes" when git worktree remove needs --force (dirty, and --force was given).
 #   - `branch_flag`    -d or -D for git branch; -D under --force.
 #   - `forced`         "yes" when --force decided something here.
@@ -334,6 +357,7 @@ function survey_branch {
     rec["remote_branch"]=""
     rec["worktree_path"]=""
     rec["dirt_count"]=""
+    rec["script_paths"]=""
     rec["worktree_force"]=""
     rec["branch_flag"]=""
     rec["forced"]=""
@@ -353,6 +377,7 @@ function survey_branch {
 
     if [[ -n "${rec["worktree_path"]}" ]]; then
         rec["dirt_count"]="$(worktree_dirt "${rec["worktree_path"]}")"
+        rec["script_paths"]="$(scripts_beside "${rec["worktree_path"]}")"
     fi
 
     if [[ -n "${blocked_flag}" ]]; then
@@ -432,7 +457,8 @@ function survey_branch {
 # already understands: nothing was closed, re-run once the cause is fixed. Worktree second: the one
 # irreversible act, after the flaky step has passed. Local last: git branch -d refuses a branch a worktree
 # holds. git offers no transaction across the three, so the order is the whole safety; it is stated here and
-# nowhere else.
+# nowhere else. The worktree's script, when one sits beside it, goes last: nothing depends on it, and a failure
+# there leaves the branch closed and one file to remove by hand (noblefactor-ops#366).
 #
 # Parameters:
 #   - `$1`: the branch.
@@ -446,7 +472,7 @@ function remove_branch {
 
     # shellcheck disable=SC2178 # a nameref to an associative array; see survey_branch
     local -n rec="$2"
-    local did="" done="" message
+    local did="" done="" message script
     local -a remove_options=()
 
     if [[ -n "${rec["remote_branch"]}" ]]; then
@@ -484,6 +510,20 @@ function remove_branch {
             error 0 "${message} Finish with: git branch -D ${branch}, or re-run with --force."
             return 1
         fi
+
+        did+="the local branch was deleted; "
+    fi
+
+    if [[ -n "${rec["script_paths"]}" ]]; then
+        while IFS= read -r script; do
+            if ! rm -f -- "${script}"; then
+                done="${did:-nothing else was changed; }"
+                error 0 "'${branch}': the script '${script}' could not be removed (${done%; }). Remove it by hand."
+                return 1
+            fi
+
+            note "'${branch}': removed its script ${script}."
+        done <<<"${rec["script_paths"]}"
     fi
 
     return 0
@@ -520,7 +560,8 @@ function preview_line {
 
     if [[ -n "${rec["worktree_path"]}" ]]; then
         removes="  (removes worktree ${rec["worktree_path"]}"
-        removes+="${rec["dirt_count"]:+, discarding ${rec["dirt_count"]} file(s)})"
+        removes+="${rec["dirt_count"]:+, discarding ${rec["dirt_count"]} file(s)}"
+        removes+="${rec["script_paths"]:+ and script ${rec["script_paths"]//$'\n'/ and }})"
     fi
 
     printf '  %-40s %s%s\n' "${branch}" "${what}" "${removes}" >&2

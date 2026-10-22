@@ -1,0 +1,187 @@
+#!/usr/bin/env bash
+
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Noble Factor. All rights reserved.
+
+# Test-GitOpenBranch - Tests where git-open-branch puts the worktree: under ~/Workspace/<org>/, named for the clone,
+# when origin is on GitHub by ssh or https; beside the main worktree, and said so, when it is not; and what --dry-run
+# says of either (#366)
+
+[[ -r "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" ]] || {
+    printf '%s: cannot find Declare-BashScript in %s\n' "${0##*/}" "$(dirname "$0")/../Home/common/.local/bin" >&2
+    exit 72 # EX_OSFILE
+}
+
+# The helper sources Set-Environment from ${XDG_DATA_HOME:-$HOME/.local/share}/shell/functions. This checkout's is the
+# file under review, so the test points XDG_DATA_HOME at it, for itself and for every git-open-branch it runs.
+XDG_DATA_HOME="$(cd "$(dirname "$0")/../Home/common/.local/share" && pwd)" || exit 72 # EX_OSFILE
+export XDG_DATA_HOME
+
+# shellcheck source=Declare-BashScript
+source "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" "$0" "help" "h" "$@"
+require_command git mktemp
+
+# Every case's repositories are git's alone: no global or system configuration reaches them, so no hook, signing key,
+# line-ending rule or identity of whoever runs the test does either.
+export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
+export GIT_AUTHOR_NAME=Test GIT_AUTHOR_EMAIL=test@example.invalid
+export GIT_COMMITTER_NAME=Test GIT_COMMITTER_EMAIL=test@example.invalid
+
+###########
+# Functions
+###########
+
+# cleanup removes the run's directory, which holds every case's repositories, however the run ends.
+#
+# Returns:
+#   - 0, the run's directory gone.
+function cleanup {
+    if [[ -n "${run_directory:-}" && -d "${run_directory}" ]]; then
+        rm -rf -- "${run_directory}"
+    fi
+}
+
+# make_repositories lays out one case's repositories: a bare origin with a main branch, and a clone of it whose origin
+# is recorded under the URL the case names.
+#
+# The command reads the URL as recorded, and fetches from origin before it decides anything, so the recorded URL is
+# rewritten to the bare repository by url.<base>.insteadOf, which the fetch honors and the command's reading does not.
+#
+# Parameters:
+#   - `$1`: the case's directory, which must not exist yet.
+#   - `$2`: the URL origin is recorded under, or empty to leave it the bare repository's own path.
+#
+# Returns:
+#   - 0, with origin.git and clone under `$1`.
+function make_repositories {
+    local origin="$1/origin.git" seed="$1/seed" clone="$1/clone" url="$2"
+
+    mkdir -p -- "$1"
+    git init --quiet --bare --initial-branch=main "${origin}"
+    git init --quiet --initial-branch=main "${seed}"
+    git -C "${seed}" commit --quiet --allow-empty --message="Begin"
+    git -C "${seed}" push --quiet "${origin}" main
+
+    git clone --quiet "${origin}" "${clone}"
+
+    if [[ -n "${url}" ]]; then
+        git -C "${clone}" config "url.${origin}.insteadOf" "${url}"
+        git -C "${clone}" remote set-url origin "${url}"
+    fi
+}
+
+# run_case runs git-open-branch in one case's clone, for issue 12, then checks its status, its output, and where the
+# worktree is and what it has checked out.
+#
+# HOME is the case's own directory, so ~/Workspace is the case's and the machine's is never written.
+#
+# Parameters:
+#   - `$1`: the case's name.
+#   - `$2`: the URL origin is recorded under, or empty for the bare repository's own path.
+#   - `$3`: the exit status the run must end with.
+#   - `$4`: extended regular expressions the run's output must match, one per line.
+#   - `$5`: the worktree's path, relative to the case's directory, or "none" when the run may add no worktree.
+#   - `$@` after them: options for git-open-branch.
+#
+# Returns:
+#   - 0, having printed the case as passed, or as failed with the run's output and counted it in `failures`.
+function run_case {
+    local name="$1" url="$2" expected_status="$3" patterns="$4" expected_worktree="$5"
+    shift 5
+    case_count=$((case_count + 1))
+    local directory="${run_directory}/${case_count}"
+    local clone="${directory}/clone" home="${directory}/home"
+    local output status=0 pattern problem="" worktree checked_out worktree_count
+
+    make_repositories "${directory}" "${url}"
+    mkdir -p -- "${home}"
+
+    output="$(cd "${clone}" && HOME="${home}" PATH="${run_directory}/bin:${PATH}" "${open_branch}" "$@" 12 2>&1)" ||
+        status=$?
+
+    if ((status != expected_status)); then
+        problem+="its status was ${status}, not ${expected_status}; "
+    fi
+
+    while IFS= read -r pattern; do
+        if [[ -n "${pattern}" ]] && ! grep --quiet --extended-regexp --regexp="${pattern}" <<<"${output}"; then
+            problem+="no line matches '${pattern}'; "
+        fi
+    done <<<"${patterns}"
+
+    worktree_count="$(git -C "${clone}" worktree list --porcelain | grep --count '^worktree ')"
+
+    if [[ "${expected_worktree}" == none ]]; then
+        if ((worktree_count != 1)); then
+            problem+="a worktree was added; "
+        fi
+    else
+        worktree="${directory}/${expected_worktree}"
+
+        if [[ ! -d "${worktree}" ]]; then
+            problem+="no worktree at '${worktree}'; "
+        else
+            checked_out="$(git -C "${worktree}" symbolic-ref --quiet --short HEAD || echo detached)"
+
+            if [[ "${checked_out}" != "${branch}" ]]; then
+                problem+="the worktree has '${checked_out}' checked out, not '${branch}'; "
+            fi
+        fi
+    fi
+
+    if [[ -z "${problem}" ]]; then
+        success "${name}"
+        return 0
+    fi
+
+    error 0 "${name}: ${problem%; }:"
+    printf '    %s\n' "${output//$'\n'/$'\n'    }" >&2
+    failures=$((failures + 1))
+}
+
+######
+# Main
+######
+
+case_count=0
+open_branch="$(cd "$(dirname "$0")/../Home/common/.local/bin" && pwd)/git-open-branch"
+failures=0
+run_directory=""
+
+Set-Traps cleanup
+run_directory="$(mktemp -d)"
+
+# A stand-in for gh on PATH: issue 12 is open, titled "Add the thing", labeled chore.
+mkdir -p -- "${run_directory}/bin"
+cat >"${run_directory}/bin/gh" <<'GH'
+#!/usr/bin/env bash
+case "$*" in
+    *'issue view 12'*) printf 'Add the thing\tOPEN\tchore\n' ;;
+    *) exit 1 ;;
+esac
+GH
+chmod +x "${run_directory}/bin/gh"
+
+branch="chore/12-add-the-thing"
+placed="home/Workspace/Org/repo.12-add-the-thing"
+opened_at="Opened ${branch} for #12 at .+/${placed}$"
+fallback="Origin is not on GitHub, so the worktree is a sibling of the main worktree"
+
+# An origin on GitHub, in each form its URL takes: the worktree lands under ~/Workspace/<org>/, named for the clone.
+run_case "ssh origin: under ~/Workspace/<org>/" "git@github.com:Org/repo.git" 0 "${opened_at}" "${placed}"
+run_case "https origin: under ~/Workspace/<org>/" "https://github.com/Org/repo.git" 0 "${opened_at}" "${placed}"
+run_case "https origin without .git: under ~/Workspace/<org>/" "https://github.com/Org/repo" 0 "${opened_at}" \
+    "${placed}"
+run_case "ssh:// origin: under ~/Workspace/<org>/" "ssh://git@github.com/Org/repo.git" 0 "${opened_at}" "${placed}"
+
+# An origin elsewhere: the worktree is the main worktree's sibling, and the run says so.
+run_case "an origin off GitHub: beside the main worktree, and said so" "" 0 "${fallback}
+Opened ${branch} for #12 at .+/clone\.12-add-the-thing$" "clone.12-add-the-thing"
+
+# --dry-run names the path, and the placement when it is the fallback, and adds nothing.
+run_case "--dry-run, ssh origin" "git@github.com:Org/repo.git" 0 "worktree +.+/${placed}$" none --dry-run
+run_case "--dry-run, an origin off GitHub" "" 0 "worktree +.+/clone\.12-add-the-thing$
+placed +${fallback}" none --dry-run
+
+((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
+success "every case passed"

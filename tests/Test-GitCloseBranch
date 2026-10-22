@@ -4,7 +4,8 @@
 # Copyright (c) 2026 Noble Factor. All rights reserved.
 
 # Test-GitCloseBranch - Tests git-close-branch's two jobs, closing a merged branch and syncing the main worktree to the
-# target branch: the line the sync prints, the three ways it can fail, and what --dry-run says of it (#306)
+# target branch: the line the sync prints, the three ways it can fail, and what --dry-run says of it (#306); and the
+# pull-request script beside the worktree, removed with it and named, absent without error (#366)
 
 [[ -r "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" ]] || {
     printf '%s: cannot find Declare-BashScript in %s\n' "${0##*/}" "$(dirname "$0")/../Home/common/.local/bin" >&2
@@ -46,8 +47,9 @@ function cleanup {
 # make_repositories lays out one case's repositories as a merged pull request leaves them.
 #
 # A bare origin whose main carries the squash commit GitHub makes, its subject ending in "(#1)"; a clone of it whose
-# main is one commit behind, since it was made before the merge; and the merged branch, feature/x, pushed, with a
-# commit of its own, in a linked worktree.
+# main is one commit behind, since it was made before the merge; the merged branch, feature/x, pushed, with a
+# commit of its own, in a linked worktree; and the pull-request script named for that worktree, worktree.bash,
+# beside it (#366).
 #
 # Parameters:
 #   - `$1`: the case's directory, which must not exist yet.
@@ -72,6 +74,7 @@ function make_repositories {
     git -C "${worktree}" add x.txt
     git -C "${worktree}" commit --quiet --message="Add x"
     git -C "${worktree}" push --quiet --set-upstream origin feature/x
+    printf '#!/usr/bin/env bash\n' >"${worktree}.bash"
 
     printf 'x\n' >"${seed}/x.txt"
     git -C "${seed}" add x.txt
@@ -84,7 +87,9 @@ function make_repositories {
 # Parameters:
 #   - `$1`: the state: on-main, as the clone left it, one commit behind origin; on-another-branch; detached;
 #     detached-with-changes, a tracked file changed; in-the-way, detached where a.txt is not tracked, with an untracked
-#     a.txt that checking out main would overwrite; or diverged, on main with a commit origin lacks.
+#     a.txt that checking out main would overwrite; or diverged, on main with a commit origin lacks. Two more leave
+#     the main worktree on main and change what sits beside the linked worktree: no-script, nothing; two-scripts,
+#     worktree.ps1 beside worktree.bash (#366).
 #   - `$2`: the clone, whose own directory is the main worktree.
 #
 # Returns:
@@ -111,6 +116,12 @@ function set_up {
         diverged)
             git -C "${clone}" commit --quiet --allow-empty --message="Only here"
             ;;
+        no-script)
+            rm -- "$(dirname "${clone}")/worktree.bash"
+            ;;
+        two-scripts)
+            printf 'Write-Host\n' >"$(dirname "${clone}")/worktree.ps1"
+            ;;
         *)
             error $EX_SOFTWARE "set_up knows no state '${state}'."
             ;;
@@ -131,7 +142,8 @@ function main_state {
     printf '%s %s\n' "${branch}" "$(git -C "$1" rev-parse HEAD)"
 }
 
-# traces prints which of the merged branch's three traces remain: its local branch, its branch on origin, its worktree.
+# traces prints which of the merged branch's four traces remain: its local branch, its branch on origin, its worktree,
+# and a script beside the worktree.
 #
 # Parameters:
 #   - `$1`: the clone.
@@ -139,13 +151,14 @@ function main_state {
 #   - `$3`: the linked worktree's path.
 #
 # Returns:
-#   - stdout: "local remote worktree" when all three remain, nothing when none does, or the ones that do.
+#   - stdout: "local remote worktree script" when all four remain, nothing when none does, or the ones that do.
 function traces {
     local left=""
 
     if git -C "$1" rev-parse --verify --quiet refs/heads/feature/x >/dev/null; then left+="local "; fi
     if git -C "$2" rev-parse --verify --quiet refs/heads/feature/x >/dev/null; then left+="remote "; fi
     if [[ -e "$3" ]]; then left+="worktree "; fi
+    if [[ -e "$3.bash" || -e "$3.ps1" ]]; then left+="script "; fi
 
     printf '%s' "${left% }"
 }
@@ -162,7 +175,7 @@ function traces {
 #   - `$3`: the exit status the run must end with.
 #   - `$4`: extended regular expressions the run's output must match, one per line.
 #   - `$5`: "synced" when the main worktree must end on main at origin's main, "unchanged" when as it was.
-#   - `$6`: "closed" when no trace of the branch may remain, "kept" when all three must.
+#   - `$6`: "closed" when no trace of the branch may remain, "kept" when all four must.
 #   - `$@` after them: options for git-close-branch.
 #
 # Returns:
@@ -204,7 +217,7 @@ function run_case {
 
     if [[ "${expected_branch}" == closed && -n "${left}" ]]; then
         problem+="the branch's traces remain: ${left}; "
-    elif [[ "${expected_branch}" == kept && "${left}" != "local remote worktree" ]]; then
+    elif [[ "${expected_branch}" == kept && "${left}" != "local remote worktree script" ]]; then
         problem+="the branch's traces were touched, leaving '${left}'; "
     fi
 
@@ -272,6 +285,16 @@ run_case "--dry-run, an untracked file in the checkout's way, which only trying 
     "${would_sync} a detached HEAD at [0-9a-f]{8}$" unchanged kept --dry-run
 run_case "--dry-run, on main, with a commit origin lacks" diverged 0 \
     "Would fail to sync .+/clone. to main: main cannot be fast-forwarded to origin/main" unchanged kept --dry-run
+
+# The script beside the worktree (#366): removed with the worktree and named, both names when both exist, no error
+# when there is none, and named by --dry-run.
+run_case "the script beside the worktree: removed and named" on-main 0 "Closed: feature/x
+removed its script .+/worktree\.bash" synced closed
+run_case "both scripts beside the worktree: both removed" two-scripts 0 "removed its script .+/worktree\.bash
+removed its script .+/worktree\.ps1" synced closed
+run_case "no script beside the worktree: not an error" no-script 0 "Closed: feature/x" synced closed
+run_case "--dry-run names the script" on-main 0 \
+    "removes worktree .+/worktree and script .+/worktree\.bash\)" unchanged kept --dry-run
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"
