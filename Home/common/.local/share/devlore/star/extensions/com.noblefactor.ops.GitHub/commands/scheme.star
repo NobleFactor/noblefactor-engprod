@@ -60,23 +60,40 @@ def severity_rank(it):
     s = severity(it)
     return {"Severity:Critical": 0, "Severity:High": 1, "Severity:Medium": 2, "Severity:Low": 3}.get(s, 4)
 
-# A tier-three issue is a task, a bug, or a chore; they are peers under a feature. One with no parent
-# feature falls through to "unfiled" like any other child.
+# A tier-three issue -- a lane -- is a task or a bug; they are peers under a feature or a chore
+# (ruled 2026-10-21, noblefactor-ops#344). One with no parent falls through to "unfiled".
 def is_child(it):
-    return tagged(it, "task") or is_bug(it) or tagged(it, "chore")
+    return tagged(it, "task") or is_bug(it)
 
-# A task's parent feature, stated in its body as **Feature:** #123 or **Feature:** owner/repo#123.
-# The marker is the closing metadata line, so the LAST match wins: prose above it may mention another
-# feature in the same form, and the script's narrower regex happened never to see those.
-def parent_feature(it):
-    """The key of the parent feature the body names -- owner/repo#N -- or None. A bare #N is the issue's own repository."""
-    ms = regex.find_all_submatch(pattern = "Feature:\\*\\* (?:([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+))?#([0-9]+)", text = it.get("body", "") or "", count = -1)
+# A tier-two issue is a feature or a chore: the bodies of work an epic decomposes into, mutually
+# exclusive, each with its own lanes. A schedule issue is a chore by kind and a view by role, with
+# no lanes of its own, so it is not a parent; nor is a thread issue.
+def is_parent(it):
+    return (tagged(it, "feature") or tagged(it, "chore")) and not tagged(it, "epic") and not is_view_issue(it)
+
+# A lane's parent, stated in its body by the parent's kind: **Feature:** #123, or **Chore:**
+# owner/repo#123. The marker is the closing metadata line, so the LAST match of either wins: prose
+# above it may mention another parent in the same form, and the script's narrower regex happened
+# never to see those.
+def parent_marker(it):
+    """The last parent marker in the body as (key, kind named) -- (owner/repo#N, "feature" or "chore") -- or None. A bare #N is the issue's own repository."""
+    ms = regex.find_all_submatch(pattern = "(Feature|Chore):\\*\\* (?:([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+))?#([0-9]+)", text = it.get("body", "") or "", count = -1)
 
     # find_all_submatch returns None on no match; an optional group that did not participate is "".
     if ms == None or len(ms) == 0:
         return None
     m = ms[-1]
-    return (m[1] if m[1] else it["repo"]) + "#" + m[2]
+    return ((m[2] if m[2] else it["repo"]) + "#" + m[3], m[1].lower())
+
+def parent(it):
+    """The key of the parent the body names -- owner/repo#N -- or None."""
+    pm = parent_marker(it)
+    return pm[0] if pm else None
+
+def parents_of(tag, all):
+    """The tier-two issues of the epic carrying tag: its features by number, then its chores by number."""
+    mine = [i for i in all if is_parent(i) and epic_tag(i) == tag]
+    return by_number([i for i in mine if tagged(i, "feature")]) + by_number([i for i in mine if tagged(i, "chore") and not tagged(i, "feature")])
 
 # A bug awaiting triage has no feature yet, so it has no epic. That is the triage queue, not a fault.
 def awaiting_triage(it):
@@ -96,8 +113,8 @@ def is_view_issue(it):
     """A thread or schedule issue: organizes work, is not work, carries no epic."""
     return is_thread_issue(it) or is_schedule_issue(it)
 
-def faults(it):
-    """The classification faults of an open issue: wrong count of kind labels, wrong count of epic labels."""
+def faults(it, by_key = None):
+    """The classification faults of an open issue: wrong count of kind labels, wrong count of epic labels, a parent marker on tier two, and, given the issues by key, a marker naming the wrong kind."""
     if awaiting_triage(it):
         return []
     k = kinds(it)
@@ -111,6 +128,11 @@ def faults(it):
         out.append("no Epic:<Name> label")
     if len(e) > 1:
         out.append("multiple epics: " + ", ".join(e))
+    pm = parent_marker(it)
+    if pm != None and is_parent(it):
+        out.append("tier two names a parent: **" + pm[1].capitalize() + ":** " + pm[0])
+    if pm != None and is_child(it) and by_key != None and pm[0] in by_key and kind_of(by_key[pm[0]]) != pm[1]:
+        out.append("names " + pm[0] + " as a " + pm[1] + "; it is a " + kind_of(by_key[pm[0]]))
     return out
 
 def kind_of(it):
@@ -176,24 +198,26 @@ def task_row(it):
 def by_number(items):
     return sorted(items, key = lambda i: (i["number"], i["repo"]))
 
-# The rows of one epic, in tree order: the epic, then each feature and its children, then the unfiled.
+# The rows of one epic, in tree order: the epic, then each feature and its lanes, then each chore and
+# its lanes, then the unfiled.
 def epic_rows(e, all):
-    """The rows of one epic in tree order: the epic, each feature and its children, then the unfiled."""
+    """The rows of one epic in tree order: the epic, each feature and each chore with its lanes, then the unfiled."""
     tag = epic_tag(e)
-    features = by_number([i for i in all if tagged(i, "feature") and epic_tag(i) == tag and not tagged(i, "epic")])
+    parents = parents_of(tag, all)
     tasks = [i for i in all if is_child(i) and epic_tag(i) == tag]
-    feature_keys = [key(f) for f in features]
+    parent_keys = [key(f) for f in parents]
     rows = [row(e, "")]
-    for f in features:
-        rows.append(row(f, ""))
-        for t in by_number([t for t in tasks if parent_feature(t) == key(f)]):
-            r = row(t, "feature " + f["ref"])
+    for f in parents:
+        rows.append(row(f, "" if len(children_of(f, tasks)) > 0 else "awaiting decomposition"))
+        for t in children_of(f, tasks):
+            r = row(t, kind_of(f) + " " + f["ref"])
             r["feature"] = f["number"]
             r["feature_repo"] = f["repo"]
+            r["parent_kind"] = kind_of(f)
             rows.append(r)
-    for t in by_number([t for t in tasks if parent_feature(t) == None or parent_feature(t) not in feature_keys]):
-        rows.append(row(t, "unfiled, no parent feature"))
-    if len(features) == 0 and len(tasks) == 0:
+    for t in by_number([t for t in tasks if parent(t) == None or parent(t) not in parent_keys]):
+        rows.append(row(t, "unfiled, no parent" if parent(t) == None else "unfiled, names " + parent(t) + ", not a feature or chore of this epic"))
+    if len(parents) == 0 and len(tasks) == 0:
         rows[0]["comment"] = rows[0]["comment"] + "; awaiting plan and design"
         rows[0]["placement"] = "awaiting plan and design"
     for r in rows:
@@ -319,11 +343,12 @@ def exempt_numbers():
 def audit(all, exempt):
     """The classification audit: the faulty, the exempted, the open bugs, and those awaiting triage."""
     open_ = [i for i in all if i["state"] == "OPEN"]
-    bad = by_number([i for i in open_ if i["number"] not in exempt and len(faults(i)) > 0])
+    by_key = {key(i): i for i in all}
+    bad = by_number([i for i in open_ if i["number"] not in exempt and len(faults(i, by_key)) > 0])
     exempted = by_number([i for i in open_ if i["number"] in exempt])
     bugs = [i for i in open_ if is_bug(i)]
     untriaged = by_number([i for i in bugs if awaiting_triage(i)])
-    return {"bad": bad, "exempted": exempted, "bugs": bugs, "untriaged": untriaged}
+    return {"bad": bad, "exempted": exempted, "bugs": bugs, "untriaged": untriaged, "by_key": by_key}
 
 def audit_lines(a):
     """The audit section as the script prints it."""
@@ -333,13 +358,13 @@ def audit_lines(a):
     else:
         out.append("**" + str(len(a["bad"])) + " issue(s) are not properly classified.** An issue the scheme cannot place is invisible to the tree below.\n")
         for i in a["bad"]:
-            out.append("- " + line(i) + " — " + "; ".join(faults(i)))
+            out.append("- " + line(i) + " — " + "; ".join(faults(i, a["by_key"])))
     if len(a["exempted"]) > 0:
         out.append("\nDeliberately outside the scheme, by decision:\n")
         for i in a["exempted"]:
             out.append("- " + line(i))
     if len(a["untriaged"]) > 0:
-        out.append("\n**" + str(len(a["untriaged"])) + " bug(s) awaiting triage** — no feature, so no epic. Not a fault; this is the queue.\n")
+        out.append("\n**" + str(len(a["untriaged"])) + " bug(s) awaiting triage** — no parent, so no epic. Not a fault; this is the queue.\n")
         for i in a["untriaged"]:
             out.append("- " + line(i))
     return out
@@ -425,9 +450,9 @@ def thread_table_lines(rows):
 
 # ── the scheme's semantics: axes, and what an empty level means ────────────
 #
-# docs/issue-standards.md: the Ops: segment marks the tooling axis; an epic with no features is
-# awaiting plan and design; a feature with no tasks is awaiting decomposition; a child with no
-# feature is unfiled. The report says which, rather than rendering blank.
+# docs/issue-standards.md: the Ops: segment marks the tooling axis; an epic with no features and no
+# chores is awaiting plan and design; a feature or a chore with no lanes is awaiting decomposition; a
+# lane with no parent is unfiled. The report says which, rather than rendering blank.
 
 def axis(name):
     """tooling for a name carrying the Ops: segment, else product."""
@@ -442,11 +467,11 @@ def epic_name(it):
     return _strip(epic_tag(it), "Epic:")
 
 def children_of(f, tasks):
-    """The tier-three issues that name feature f as their parent."""
-    return by_number([t for t in tasks if parent_feature(t) == key(f)])
+    """The lanes that name the feature or chore f as their parent."""
+    return by_number([t for t in tasks if parent(t) == key(f)])
 
 def feature_state(f, kids):
-    """The named condition of a feature: closed; awaiting decomposition; children done; or n of m done."""
+    """The named condition of a feature or a chore: closed; awaiting decomposition; children done; or n of m done."""
     if f["state"] == "CLOSED":
         return "closed"
     if f["title"].startswith("Thread:"):
@@ -459,11 +484,11 @@ def feature_state(f, kids):
     return str(done) + " of " + str(len(kids)) + " done"
 
 def feature_rows(epics, all):
-    """One row per feature across the given epics, with its counts and state; an epic with none contributes a row saying so."""
+    """One row per feature or chore across the given epics, features first, with its counts and state; an epic with none contributes a row saying so."""
     rows = []
     for e in epics:
         tag = epic_tag(e)
-        features = by_number([i for i in all if tagged(i, "feature") and epic_tag(i) == tag and not tagged(i, "epic")])
+        features = parents_of(tag, all)
         tasks = [i for i in all if is_child(i) and epic_tag(i) == tag]
         if len(features) == 0:
             rows.append({
@@ -489,6 +514,7 @@ def feature_rows(epics, all):
                 "epic_name": epic_name(e),
                 "axis": axis(epic_name(e)),
                 "feature": f["number"],
+                "kind": kind_of(f),
                 "repo": f["repo"],
                 "ref": f["ref"],
                 "url": f["url"],
@@ -501,13 +527,13 @@ def feature_rows(epics, all):
     return rows
 
 def feature_table_lines(rows):
-    """The feature rollup: feature, done, open, state."""
-    out = ["| Feature | Done | Open | State |", "|---|---|---|---|"]
+    """The tier-two rollup: feature or chore, its kind, done, open, state."""
+    out = ["| Feature or chore | Kind | Done | Open | State |", "|---|---|---|---|---|"]
     for r in rows:
         if r["feature"] == None:
-            out.append("| _no features_ |  |  | " + r["state"] + " |")
+            out.append("| _no features or chores_ |  |  |  | " + r["state"] + " |")
         else:
-            out.append("| [" + r["ref"] + "](" + r["url"] + ") " + ("~~" + r["title"] + "~~" if r["closed"] else r["title"]) + " | " + str(r["done"]) + " | " + str(r["open"]) + " | " + r["state"] + " |")
+            out.append("| [" + r["ref"] + "](" + r["url"] + ") " + ("~~" + r["title"] + "~~" if r["closed"] else r["title"]) + " | " + r["kind"] + " | " + str(r["done"]) + " | " + str(r["open"]) + " | " + r["state"] + " |")
     return out
 
 # ── the label set every participating repository carries ───────────────────
@@ -686,7 +712,7 @@ def _missing(spec_key, repos, state):
     return spec_key + " is not among the " + state + " issues"
 
 def resolve_lane(spec, all, repos, state):
-    """The issue a lane names and its live progress. An epic aggregates its features; a feature rolls up its children; anything else reports its own state."""
+    """The issue a lane names and its live progress. An epic aggregates its features and chores; a feature or a chore rolls up its lanes; anything else reports its own state."""
     it = None
     if "epic" in spec:
         tag = "Epic:" + spec["epic"]
@@ -702,7 +728,7 @@ def resolve_lane(spec, all, repos, state):
             return None, {"done": 0, "open": 0, "features": 0, "state": _missing(spec["key"], repos, state)}
         if tagged(it, "epic"):
             return it, _aggregate(feature_rows([it], all))
-        if tagged(it, "feature"):
+        if is_parent(it):
             tag = epic_tag(it)
             tasks = [i for i in all if is_child(i) and epic_tag(i) == tag]
             kids = children_of(it, tasks)
@@ -743,12 +769,12 @@ def schedule_table_lines(rows):
 # ── the unthreaded validation ───────────────────────────────────────────────
 #
 # Zero threads is the normal state of most issues, so this is not a fault and not part of the
-# default audit. It is requested: every open tier-three issue carrying no Thread: label, grouped by
-# epic and feature, so "should this be in a thread?" is asked once of someone who can answer it.
+# default audit. It is requested: every open lane carrying no Thread: label, grouped by epic and
+# parent, so "should this be in a thread?" is asked once of someone who can answer it.
 
 def unthreaded(all, epic_filter):
-    """Open tasks, bugs and chores with no Thread: label, as rows carrying their epic and feature."""
-    features = {key(f): f for f in all if tagged(f, "feature")}
+    """Open tasks and bugs with no Thread: label, as rows carrying their epic and parent."""
+    features = {key(f): f for f in all if is_parent(f)}
     rows = []
     for it in all:
         if it["state"] != "OPEN" or not is_child(it):
@@ -757,7 +783,7 @@ def unthreaded(all, epic_filter):
             continue
         if epic_filter and epic_name(it) != epic_filter:
             continue
-        pf = parent_feature(it)
+        pf = parent(it)
         f = features.get(pf) if pf else None
         rows.append({
             "repo": it["repo"],
@@ -773,10 +799,10 @@ def unthreaded(all, epic_filter):
     return sorted(rows, key = lambda r: (r["epic_name"], r["feature_ref"], r["ref"]))
 
 def unthreaded_lines(rows):
-    """The validation as a document, grouped by epic and feature."""
+    """The validation as a document, grouped by epic and parent."""
     out = ["## Not in any thread\n"]
     if len(rows) == 0:
-        out.append("Every open task, bug and chore carries a thread label.")
+        out.append("Every open task and bug carries a thread label.")
         return out
     out.append("_" + str(len(rows)) + " open issue(s) carry no Thread: label. Zero threads is normal; this is a question, not a fault._")
     last = None

@@ -17,17 +17,25 @@ is organized once an issue exists.
 
 ## The five kinds
 
+Ruled 2026-10-21: "chore is now redefined to be a mutually-exclusive peer to feature in our issue
+hierarchy. The new hierarchy is epic, (chore|feature), (bug|task)." Before that day a chore was a
+tier-three leaf under an enabler feature of `Epic:Ops:Process`.
+
 | Kind | Tier | What it is |
 | --- | --- | --- |
-| `epic` | one | A body of work spanning several features |
-| `feature` | two | A capability the product gains; the unit an epic is decomposed into |
-| `task` | three | Work that **implements part of** a feature |
-| `bug` | three | Work that **repairs** a feature |
-| `chore` | three | Work on the **process**, not the product; the tooling axis, `Epic:Ops:Process` |
+| `epic` | one | A body of work spanning several features and chores |
+| `feature` | two | A capability the product gains; a unit an epic is decomposed into |
+| `chore` | two | A body of work on the **process**, not the product; the other unit an epic is decomposed into |
+| `task` | three | Work that **implements part of** a feature or a chore |
+| `bug` | three | Work that **repairs** a feature or a chore |
 
-**Tier three is a lane.** A lane is a leaf node in the epic hierarchy — a `task`, a `bug`, or a `chore` —
-and it is what a schedule sequences and what a pull request closes. An epic or a feature is never a lane:
-those close when their lanes do. The word matters because schedules are written in it (§Schedules).
+**Tier two is a body of work.** `feature` and `chore` are peers and **mutually exclusive**: an epic
+decomposes into both, and each has its own lanes. The question that separates them is the chore test
+below: if the change shipped to a user, would they notice?
+
+**Tier three is a lane.** A lane is a leaf node in the epic hierarchy — a `task` or a `bug` — and it
+is what a schedule sequences and what a pull request closes. An epic, a feature or a chore is never a
+lane: those close when their lanes do. The word matters because schedules are written in it (§Schedules).
 
 `task` and `bug` are peers and **mutually exclusive**. An issue carrying both is misclassified, and
 this is the most common fault the audit reports. The question that separates them is not difficulty
@@ -54,17 +62,18 @@ the product ships is a `task` under the feature that owns that code, or a `bug` 
 repairs something.
 
 **A chore is on a different axis, not outside the hierarchy.** The `Ops:` segment marks that axis
-(below). A chore is to process and tooling what a task is to the product: the leaf. It files under a
-feature, of an epic, exactly as a task does -- but the feature above a chore is not product
-functionality. It is a body of process and tooling work, what the literature calls an *enabler*
-feature ([SAFe](https://framework.scaledagile.com/enablers): work that "improve[s] the performance of
-the development value stream", managed as epics, features or stories like any other). A chore that
-names no feature is unfiled like any other tier-three issue.
+(below). A chore is to process and tooling what a feature is to the product: a body of work under an
+epic, with its own lanes. It files directly under an epic, exactly as a feature does, and its tasks
+and bugs file under it. What the literature calls an *enabler*
+([SAFe](https://framework.scaledagile.com/enablers): work that "improve[s] the performance of the
+development value stream", managed as epics, features or stories like any other) is here a chore. A
+chore with no epic label is a fault like any other tier-two issue; a lane that names no feature or
+chore is unfiled.
 
-| Axis | Epic | Feature | Leaves |
+| Axis | Epic | Tier two | Leaves |
 | --- | --- | --- | --- |
-| Product | a body of product work | product functionality | `task`, `bug` |
-| Process and tooling | `Epic:Ops:Process` | an enabler: a body of process and tooling work | `chore` |
+| Product | a body of product work | `feature`: product functionality | `task`, `bug` |
+| Process and tooling | `Epic:Ops:Process`, or the epic the work serves | `chore`: a body of process or tooling work | `task`, `bug` |
 
 The scheme has no *story*. Where scrum-based writing says story, this scheme says task.
 
@@ -73,7 +82,7 @@ they notice?** A chore is invisible to them and visible to everyone who works he
 
 ## The process epic
 
-Chores carry `Epic:Ops:Process`, and **that epic never closes.**
+Chores that serve no other epic carry `Epic:Ops:Process`, and **that epic never closes.**
 
 Every other epic is a body of work with an end: it decomposes into features, the features ship, and
 the epic closes. `Epic:Ops:Process` has no such state. There is no release in which friction is finished,
@@ -85,15 +94,19 @@ open epic reads as designed rather than as one nobody got round to closing.
 
 It also keeps the scheme uniform where it matters. Every issue carries exactly one `Epic:<Name>`
 label, and the audit needs no special case for chores — the one exception remains a bug awaiting
-triage, which genuinely has no epic yet because it has no feature yet.
+triage, which genuinely has no epic yet because it has no parent yet.
 
-**It needs features like any epic.** Ruled 2026-09-04: an epic with no features is not an epic — it
-is ill-defined, or incomplete and awaiting its plan. `Epic:Ops:Process` is no exception. Its
-permanence is about *closing*, not about *shape*. Its features are enabler features -- bodies of
-process and tooling work such as issue standards (#156) or PR tooling (#157), never product
-functionality -- and a chore files under one of them and carries the `**Feature:**` marker like any
-tier-three issue. When a process or tooling problem turns up, it is logged as a chore under the
-feature it improves.
+**It needs tier two like any epic.** Ruled 2026-09-04: an epic with nothing under it is not an epic —
+it is ill-defined, or incomplete and awaiting its plan. `Epic:Ops:Process` is no exception. Its
+permanence is about *closing*, not about *shape*. What it decomposes into is bodies of process and
+tooling work, never product functionality: the enabler features already filed there, issue standards
+(#156) and PR tooling (#157) among them, stay what they are, and a chore files beside them, directly
+under the epic, never under one of them. A chore names its epic by the label alone, as a feature does.
+
+**A chore's epic is the epic it serves.** `Epic:Ops:Process` is the home of a chore that serves no
+other epic. A chore that serves a product epic carries that epic's label, as devlore-cli#1119, #1120
+and #1121 do. When a process or tooling problem turns up, it is logged as a chore under the epic it
+serves, and its lanes as tasks and bugs under the chore.
 
 **Every participating repository provides the `Epic:Ops:Process` label**, since chores arise everywhere —
 unlike other epic labels, which exist only where their epic is hosted. The epic issue itself lives
@@ -104,19 +117,23 @@ Chores in other repositories reference it the way any cross-repository parent is
 
 **Every issue carries its epic's label**, `Epic:<Name>` — with the exception below.
 
-**Every tier-three issue — task, bug, or chore — names its parent** in its body:
+**Every lane — task or bug — names its parent** in its body, by the parent's kind:
 
 ```
 **Feature:** #<number>
+**Chore:** #<number>
 ```
 
-The number alone, or `owner/repo#<number>` when the feature lives in another repository, which
-happens: features cross repository boundaries. An issue without the marker is reported as
-**Unfiled** rather than being attached to something by guesswork.
+One or the other, never both. The number alone, or `owner/repo#<number>` when the parent lives in
+another repository, which happens: features and chores cross repository boundaries. A lane without
+either marker is reported as **Unfiled** rather than being attached to something by guesswork. A
+marker whose word does not match the parent's kind — `**Chore:**` naming a feature — is a fault the
+audit names. A feature or a chore names its epic by the label alone and carries no parent marker.
 
-**The marker is the last `**Feature:**` in the body** — the closing metadata line, conventionally
-`**Epic:** #N · **Feature:** #M`. Prose above it may cite the form as an example, as this very
-repository's #141 does; the report reads the last one and ignores the rest.
+**The marker is the last `**Feature:**` or `**Chore:**` in the body** — the closing metadata line,
+conventionally `**Epic:** #N · **Feature:** #M` or `**Epic:** #N · **Chore:** #M`. Prose above it may
+cite the form as an example, as this very repository's #141 does; the report reads the last one and
+ignores the rest.
 
 ### What carries no epic
 
@@ -126,16 +143,18 @@ repository's #141 does; the report reads the last one and ignores the rest.
   carrying its own `Thread:<Name>` label and no `Epic:`. A scenario has no owner; that is the whole
   reason it is a thread and not an epic.
 - **A schedule issue** — the declared order of execution. Kind `chore`, title beginning `Schedule:`,
-  carrying no `Epic:`. A sequence has no owner either.
+  carrying no `Epic:` and no lanes of its own: the one chore that is a view. A sequence has no owner
+  either.
 
 Both are placed by their own convention, so the one-epic rule's purpose — that nothing goes
 unplaced — is served. Ruled 2026-09-05; before that, thread issues carried the epic "that most
 owned the scenario", which was a fiction the rule imposed.
 
-**And one work item carries no epic yet:** a bug awaiting triage. It has no feature, so it has no
+**And one work item carries no epic yet:** a bug awaiting triage. It has no parent, so it has no
 epic, and the audit exempts it. That is the triage queue, not a fault.
 
-A chore carries `Epic:Ops:Process`, so the one-epic rule holds for every other work item.
+A chore carries the label of the epic it serves, `Epic:Ops:Process` when it serves no other, so the
+one-epic rule holds for every other work item.
 
 ## Three ways to slice the work
 
@@ -148,7 +167,7 @@ is an exception to another:
 | **Thread** | what **scenario** this serves | the thread issue, kind `feature`, title `Thread:` | `Thread:<Name>`, zero or more |
 | **Schedule** | in what **order** we execute | the schedule issue, kind `chore`, title `Schedule:` | none — lanes are named in the body (§Schedules) |
 
-A work item — a feature, or a lane: a task, bug or chore — carries exactly one epic and may carry threads. The
+A work item — a feature, a chore, or a lane: a task or a bug — carries exactly one epic and may carry threads. The
 organizing issue of a thread or a schedule carries no epic (§What carries no epic). The report
 renders each slice: `--by epic`, `--by thread`, `--by schedule`.
 
@@ -201,18 +220,19 @@ of the same report, and `Thread:Process` beside `Epic:Process` is unreadable.
 is being executed, in what order, and what is next* — which neither an epic (ownership) nor a thread
 (scenario) can express, because both are about what work *is* rather than when it will be done.
 
-Its lanes are **leaves**: tasks, bugs and chores, drawn from any epic and any feature, in any repository the
-report is configured to read. An epic or a feature in a lane row is a fault, not a shorthand.
+Its lanes are **leaves**: tasks and bugs, drawn from any epic and any feature or chore, in any repository the
+report is configured to read. An epic, a feature or a chore in a lane row is a fault, not a shorthand.
 
 | | `Epic:<Name>` | `Thread:<Name>` | A schedule |
 | --- | --- | --- | --- |
 | Answers | which body of work **owns** this | which scenario this **serves** | in what **order** we execute |
-| Its members | features, then lanes | lanes, across epics | lanes, across epics and features |
+| Its members | features and chores, then lanes | lanes, across epics | lanes, across epics, features and chores |
 | Its organizing issue | the epic, kind `epic` | kind `feature`, title `Thread:` | kind `chore`, title `Schedule:` |
 | Its label | one per work item | zero or more | none — lanes are named in the body |
 
 **The schedule issue** is kind `chore`, its title begins `Schedule:`, and it carries no `Epic:` label — a
-sequence has no owner (§What carries no epic). Two conventions the report reads, so they are rules: the
+sequence has no owner (§What carries no epic). It is the one chore with no lanes of its own: its table
+names other issues' lanes. Two conventions the report reads, so they are rules: the
 title prefix, and **a lane table whose first cell is the lane number and whose first issue reference on the
 row is the lane** — `#N` within the schedule's own repository, `owner/repo#N` across repositories. Prose may
 cite issues freely; only rows whose first cell is a number are read.
@@ -277,13 +297,13 @@ blank reads as an error whichever cause it has. The states are named:
 
 | Level | With nothing under it, it is |
 | --- | --- |
-| An epic with no features | **ill-defined**, or **awaiting plan and design** |
-| A feature with no tasks | **awaiting decomposition** |
-| A task, bug or chore with no feature | **unfiled** |
+| An epic with no features and no chores | **ill-defined**, or **awaiting plan and design** |
+| A feature or a chore with no lanes | **awaiting decomposition** |
+| A task or a bug with no feature or chore | **unfiled** |
 
 Ruled 2026-09-04: **an epic with no features is not an epic.** Either it should not carry the kind, or
-its plan has not yet produced the features it will decompose into — and until it has, that is its
-state, and the report should say so. `Epic:Ops:Process` is currently in it.
+its plan has not yet produced the features and chores it will decompose into — and until it has, that
+is its state, and the report should say so. `Epic:Ops:Process` is currently in it.
 
 ## Triage adds attributes, never a kind
 
@@ -305,7 +325,8 @@ An issue is well classified when it carries:
   thread or a schedule, which carry none, and
 - **zero or more** `Thread:<Name>` labels — there is no cardinality rule for threads
 
-Anything else is a fault the audit names: no kind, multiple kinds, no epic, multiple epics. Exempt
+Anything else is a fault the audit names: no kind, multiple kinds, no epic, multiple epics, a lane
+whose marker names the wrong kind for its parent, a feature or a chore carrying a parent marker. Exempt
 from the epic rule: a bug awaiting triage, a thread issue, a schedule issue (§What carries no epic).
 
 Only **open** issues are audited. Closed ones predate the scheme and cannot be reclassified without

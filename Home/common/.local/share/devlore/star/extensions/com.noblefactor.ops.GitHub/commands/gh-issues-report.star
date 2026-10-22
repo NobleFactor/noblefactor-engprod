@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright Noble Factor. All rights reserved.
 
-"""The epic / feature / task tree from GitHub issues."""
+"""The epic, feature-or-chore, lane tree from GitHub issues."""
 
 # gh-issues-report.star
 #
@@ -9,7 +9,7 @@
 # devlore-cli's scripts/Get-EpicReport. The result is the rows; --markdown returns the document the
 # script prints instead, for the reader and for the parity diff.
 
-load("commands/scheme.star", "audit", "audit_lines", "axis", "by_axis", "by_number", "epic_name", "epic_rows", "epic_tag", "exempt_numbers", "feature_rows", "feature_table_lines", "fetch_issues", "is_bug", "is_child", "key", "label_space", "lane_repos", "line", "parent_feature", "resolve_repos", "schedule_issues", "schedule_rows", "schedule_table_lines", "short", "table_lines", "tagged", "task_row", "thread_names", "thread_rows", "thread_table_lines")
+load("commands/scheme.star", "audit", "audit_lines", "axis", "by_axis", "by_number", "children_of", "epic_name", "epic_rows", "epic_tag", "exempt_numbers", "feature_rows", "feature_table_lines", "fetch_issues", "is_bug", "is_child", "key", "kind_of", "label_space", "lane_repos", "line", "parent", "parents_of", "resolve_repos", "schedule_issues", "schedule_rows", "schedule_table_lines", "short", "table_lines", "tagged", "task_row", "thread_names", "thread_rows", "thread_table_lines")
 
 def _epics(all, epic_filter):
     return by_axis(by_number([i for i in all if tagged(i, "epic") and (epic_filter == "" or epic_tag(i) == "Epic:" + epic_filter)]), epic_name)
@@ -47,25 +47,25 @@ def _tree_document(all, epics, state, repos, a):
     for i, e in enumerate(epics):
         out.extend(_divider(epics, epic_name, i))
         tag = epic_tag(e)
-        features = by_number([i for i in all if tagged(i, "feature") and epic_tag(i) == tag])
+        parents = parents_of(tag, all)
         tasks = [i for i in all if is_child(i) and epic_tag(i) == tag]
-        feature_keys = [key(f) for f in features]
+        parent_keys = [key(f) for f in parents]
         out.append("\n## " + line(e))
-        out.append("\n_" + str(len(features)) + " feature(s), " + str(len([t for t in tasks if not is_bug(t)])) + " task(s), " + str(len([t for t in tasks if is_bug(t)])) + " bug(s)._")
-        if len(features) == 0:
-            out.append("\n_Awaiting plan and design: no features filed._")
-        for f in features:
+        out.append("\n_" + str(len([f for f in parents if kind_of(f) == "feature"])) + " feature(s), " + str(len([f for f in parents if kind_of(f) == "chore"])) + " chore(s), " + str(len([t for t in tasks if not is_bug(t)])) + " task(s), " + str(len([t for t in tasks if is_bug(t)])) + " bug(s)._")
+        if len(parents) == 0:
+            out.append("\n_Awaiting plan and design: no features or chores filed._")
+        for f in parents:
             out.append("\n### " + line(f))
-            mine = by_number([t for t in tasks if parent_feature(t) == key(f)])
+            mine = children_of(f, tasks)
             if len(mine) == 0:
-                out.append("\n_Awaiting decomposition: no tasks filed._")
+                out.append("\n_Awaiting decomposition: no lanes filed._")
             else:
                 out.append("\n| Done | Issue | Title | Kind | Severity | Priority |")
                 out.append("|---|---|---|---|---|---|")
                 out.extend([task_row(t) for t in mine])
-        unfiled = by_number([t for t in tasks if parent_feature(t) == None or parent_feature(t) not in feature_keys])
+        unfiled = by_number([t for t in tasks if parent(t) == None or parent(t) not in parent_keys])
         if len(unfiled) > 0:
-            out.append("\n### Unfiled — no parent feature stated")
+            out.append("\n### Unfiled — no parent stated, or a parent outside this epic")
             out.append("\n| Done | Issue | Title | Kind | Severity | Priority |")
             out.append("|---|---|---|---|---|---|")
             out.extend([task_row(t) for t in unfiled])

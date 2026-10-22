@@ -6,13 +6,13 @@ description: GitHub under the NobleFactor classification scheme -- the issue rep
 
 commands:
   - name: gh.issues.report
-    help: Render the epic / feature / task tree from GitHub issues, by epic, across the repositories of writ's layers
+    help: Render the epic, feature-or-chore, lane tree from GitHub issues, by epic, across the repositories of writ's layers
     implementation: commands/gh-issues-report.star
     flags:
       - name: by
         type: string
         default: "epic"
-        help: Section the report by epic, by feature (one row per feature with its counts and state), by thread, or by schedule (lanes in declared order, progress derived)
+        help: Section the report by epic, by feature (one row per feature or chore with its counts and state), by thread, or by schedule (lanes in declared order, progress derived)
       - name: view
         type: string
         default: "table"
@@ -57,7 +57,7 @@ commands:
       - name: unthreaded
         type: bool
         default: "false"
-        help: "Instead of the classification audit, list open tasks, bugs and chores carrying no Thread: label, grouped by epic and feature; a question, not a fault"
+        help: "Instead of the classification audit, list open tasks and bugs carrying no Thread: label, grouped by epic and parent; a question, not a fault"
       - name: epic
         type: string
         default: ""
