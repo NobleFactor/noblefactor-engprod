@@ -117,8 +117,8 @@ This plan opened as #344's, the chore that held both halves; on 2026-10-21 the e
 
 ### Phase 3: the tooling
 
-- [ ] `scheme.star`, `gh-issues-report.star`, `gh-issues-audit.star` revised per Requirement 2
-- [ ] `make check` passes in the worktree (buildifier over the `.star` files is the check that reads them)
+- [x] `scheme.star`, `gh-issues-report.star`, `gh-issues-audit.star` revised per Requirement 2 -- 2026-10-21; `gh-issues-audit.star` named no old rule and is unchanged, and `extension.yaml`'s help text names chores
+- [x] `make check` passes in the worktree (buildifier over the `.star` files is the check that reads them) -- 2026-10-21: every gate and the tests pass; `shell-lint` fails six scripts this branch does not touch, and fails them on `develop` too, under shfmt v3.13.0
 
 ### Phase 4: the neighbors and the pull request
 
