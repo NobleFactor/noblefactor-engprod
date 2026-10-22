@@ -79,7 +79,8 @@ into pull requests that take nothing in use down.
 ## Schedule
 
 Lane 3 of Schedule: issue tracking, iteration 1, NobleFactor/noblefactor-ops#346, since 2026-10-21; it waited on lane
-1, #358, which merged in #370 that day. Before that, not on a schedule: this plan's session wrote the design and the
+1, #358, which merged in #370 that day. From 2026-10-22 the lane is the sweep below, whose iterations file their own lanes;
+the schedule's amendment for lanes 3 to 6 is the owner's, proposed in this plan's first sweep commit. Before that, not on a schedule: this plan's session wrote the design and the
 owner said another session would do the work (2026-10-20, above).
 
 ## Goals
@@ -130,24 +131,71 @@ from it, its lanes as rows. Creating organization projects is outward-facing, so
   in." Five lines of #322's and #321's plans, which #339 merged still naming lane 13 after the split of #301's lane 13,
   ride it. The owner, the same day: "You own #301; fix the five lines in your PR."
 
-### Phase 2: The review
+### The sweep, from 2026-10-22
 
-- [ ] Each open question ruled, quoted with its date.
-- [ ] The design revised to the rulings, and its status companions set.
+The owner, 2026-10-22, on Phases 2 to 5 as written: "I'm seeing that this will take at least a month to complete in a
+waterfall fashion. We will get a complete design and then stumble and redesign again and again. I might rather sweep
+broadly and refine the design at deeper levels as we go. The data model is critically important to get right and roll
+out correctly. The tool should follow close behind. An important constraint: we can't get in the way of 5 other
+session[s] I'm running." Then: "Start the sweep. I'll answer questions just-in-time as we progress."
 
-### Phase 3: The task list
+So the phases below replace Phases 2 to 5. Each iteration rules only what it needs, revises the sections it touches,
+builds, and rolls out before the next. The line that protects the running sessions is additive against subtractive:
+what the sessions read is the report and the audit through labels, markers and lane tables, Start-Claude keyed by a
+schedule's issue number, and the label set. Every iteration ships its additive half when ready; its subtractive half
+waits for a switch taken when the affected sessions are between lanes. The tooling of each iteration is its own task
+under #332, the rollout under #333, worked as lanes; this plan carries the design, the rulings and the documents.
 
-- [ ] Requirement 3, with the owner.
+### Iteration 1: the hierarchy
 
-### Phase 4: The prototype
+Epic and Chore added to the organization's issue types, done 2026-10-22; every noblefactor-ops issue typed and linked,
+which 66 of 89 already were; labels and markers kept. The tooling: the asset with its types as levels, `pull`, the
+read before every operation; the report and the audit reading type and link first, label and marker second.
 
-- [ ] Requirement 4, once section 3 is ruled far enough to build.
+- [x] Questions 1, 10 and 13 ruled; the hierarchy, storage and asset sections revised -- 2026-10-22
+- [x] The five issue types in GitHub with the level convention; `model.yaml`, the first pull -- 2026-10-22
+- [ ] Questions 3 and 4 ruled: the fate of #142, and the triage team
+- [ ] The write test: a sub-issue link across repositories and across owners, and a single-select option updated by id
+- [ ] Section 5's deltas and order rewritten to the rulings so far; the status companions of sections 1, 4 and 6 set
+- [ ] The tasks filed under #332 and #333: the asset read by the extension, `pull`, the read before every operation,
+      the report and audit reading type and link first; the reclassification, #363, as the rollout
+- [ ] Rolled out: every open noblefactor-ops issue typed and linked, the report placing it by type and link, and the
+      sessions running throughout
 
-### Phase 5: The standard and closure
+### Iteration 2: triage and the Triage project
 
-- [ ] [issue-standards.md](../../issue-standards.md) states the model, here or where the task list puts it.
-- [ ] #303 retitled and its body brought to the model, with the owner's approval.
-- [ ] The pull request, documents only.
+The first collection, purely additive. `push` for personal; the Triage project's rows read by the report.
+
+- [ ] Section 3's Triage rows and section 6's `push` built as tasks under #332
+- [ ] The Triage project made in the organization, on the owner's word, and #142 drained into it or into the epics
+      its issues serve
+- [ ] personal pushed and proven participating
+
+### Iteration 3: schedules and threads as projects
+
+The Schedule and Thread templates, #301 as the prototype, lane tables kept as the copy of record until the switch;
+rows and lanes read by the report; Start-Claude keyed as before.
+
+- [ ] Questions 5 to 9 ruled; section 3 revised
+- [ ] The templates and the prototype made, on the owner's word for each organization write
+- [ ] `star gh schedule add` and the report's row reading built as tasks under #332
+
+### Iteration 4: attributes
+
+Severity, Priority and Area in the asset and pushed everywhere; the audit's attribute rules.
+
+- [ ] Questions 11 and 14 ruled, then 2 and 12; section 2 revised
+- [ ] devlore-cli's attribute labels pulled into the asset's tiers and pushed to every participating repository
+
+### Iteration 5: the switch and the retirement
+
+The markers, the kind labels, the lane tables and the `Epic:` labels retired, and the old reading removed from the
+tooling, on a date when the sessions are clear.
+
+- [ ] [issue-standards.md](../../issue-standards.md) states the model in full
+- [ ] #303 retitled and its body brought to the model, with the owner's approval
+- [ ] The old scheme retired, one repository at a time, each confirmed by the audit before the next
+- [ ] Status `complete`
 
 ## Migration Path
 
