@@ -1,7 +1,7 @@
 ---
 title: "noblefactor-ops becomes noblefactor-engprod: GitHub once, then every machine, then the text"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/304
-status: draft
+status: approved
 created: 2026-10-22
 updated: 2026-10-22
 ---
@@ -59,7 +59,10 @@ and a fetch through the old URL to show the redirect holds. The owner runs it or
 `scripts/` beside the setup scripts, which the process exempts from `Declare-BashScript`. Each reads the base layer's
 root from `writ repo list` rather than assuming a path, refuses a dirty root, takes `--dry-run`, and does, in order:
 
-1. Renames the root directory to `noblefactor-engprod`, so writ's project name follows.
+1. Renames the root directory to `noblefactor-engprod`, so writ's project name follows. Verified 2026-10-22 in
+   devlore-cli's `cmd/writ/writ/selection.go`: the implicit projects are `common` plus one per configured layer
+   repository, "named for the repository: the registration's root directory", so the project is named from the
+   directory, not from the registration, and the rename of the directory is what renames the project.
 2. `git remote set-url origin git@github.com:NobleFactor/noblefactor-engprod.git`.
 3. `git worktree repair` for every worktree of the clone, so their `.git` files point into the renamed root. A
    worktree keeps its old clone name until `git close-branch` takes it, which the structure tolerates for a branch
@@ -89,8 +92,9 @@ written. One pull request per repository, the base layer first.
 
 ### Phase 1: the plan and the scripts
 
-- [ ] This plan reviewed with the owner, status `approved`
-- [ ] Both scripts written and proven with `--dry-run` on Media-Server, and the bash one on danoble-ud24-1 over ssh
+- [x] This plan reviewed with the owner, status `approved` -- 2026-10-22, "plan approved. go"
+- [x] Both scripts written and proven with `--dry-run` on Media-Server, the bash one on danoble-ud24-1 and the PowerShell
+      one on danoble-wd11-3 over ssh -- 2026-10-22; both pass the repository's gates
 - [ ] Pull request 1, documents and scripts only, merged; the scripts deployed by writ to every machine that pulls
 
 ### Phase 2: personal
