@@ -1,7 +1,7 @@
 ---
 title: "Clones, worktrees and pull-request scripts live under ~/Workspace/<org>, the script is named for its worktree, and both go when the pull request merges"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/366
-status: approved
+status: active
 created: 2026-10-21
 updated: 2026-10-21
 ---
@@ -123,11 +123,14 @@ moves, or closed and reopened), symlinks take the clones' places, and `~/Workspa
 
 ### Phase 4: the pull request
 
-- [ ] `make check` passes in the worktree, the whole gate, and `make test` runs the two command tests
-- [ ] The description says AI assisted and ends with `Signed-off-by:` and `Assisted-by: Claude Code`; the script is
+- [x] `make check` passes in the worktree, the whole gate, and `make test` runs the two command tests -- 2026-10-21,
+      after `brew install buildifier`, which the starlark gate needs and Media-Server lacked; the script runs it
+      again as its pre-flight
+- [x] The description says AI assisted and ends with `Signed-off-by:` and `Assisted-by: Claude Code`; the script is
       `~/Workspace/NobleFactor/noblefactor-ops.366-workspace-structure.bash`, the first named by the rule it lands
-- [ ] #335 closed into #366
-- [ ] Status `active` in the last commit, with Phase 5 named as the reason
+      -- 2026-10-21
+- [x] #335 closed into #366 -- 2026-10-21
+- [x] Status `active` in the last commit, with Phase 5 named as the reason -- 2026-10-21
 
 ### Phase 5: after the merge (rule 5)
 
@@ -135,7 +138,9 @@ moves, or closed and reopened), symlinks take the clones' places, and `~/Workspa
 - [ ] The duplicate clones on Media-Server retired by #367's order behind symlinks; the worktrees re-pointed; the bare
       `go` gone; `ls ~/Workspace/NobleFactor ~/Workspace/David-Noble-at-work` shows symlinked clones, live worktrees and
       their scripts, nothing else
-- [ ] This worktree and its script removed by `git close-branch`, the first removal under the rule
+- [ ] This worktree removed by `git close-branch`, and the script by its own last line, because the close-branch
+      the script runs is the one deployed before this merge, which knows nothing of scripts; the next pull
+      request's is the first removal under the rule
 - [ ] Status `complete`; #366 and #367 closed
 
 ## Files to Create/Modify
