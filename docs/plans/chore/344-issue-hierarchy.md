@@ -1,7 +1,7 @@
 ---
 title: "The hierarchy is epic, then chore or feature, then bug or task: the standard, the parent marker and the tooling say so"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/358
-status: approved
+status: active
 created: 2026-10-21
 updated: 2026-10-21
 ---
@@ -123,9 +123,10 @@ This plan opened as #344's, the chore that held both halves; on 2026-10-21 the e
 ### Phase 4: the neighbors and the pull request
 
 - [ ] `development-process.md` per Requirement 3 (done 2026-10-21); the comment on #303, drafted, waits on the owner to post it
-- [ ] The pull request's description says AI assisted and ends with `Signed-off-by:` and `Assisted-by: Claude Code`
-- [ ] This document's status set to `active` in the last commit of the pull request, with Phase 5 named as the reason
-      it is not `complete`
+- [x] The pull request's description says AI assisted and ends with `Signed-off-by:` and `Assisted-by: Claude Code` -- 2026-10-21, written by `~/Workspace/NobleFactor/noblefactor-ops.344-issue-hierarchy.bash`
+- [x] This document's status set to `active` in the last commit of the pull request, with Phase 5 named as the reason
+      it is not `complete` -- 2026-10-21: the extension reaches `star` only when writ deploys the merged layer, so Phase 5
+      closes after the merge, in a follow-up commit
 
 ### Phase 5: after the merge (rule 5: a layer change is finished when the machine is converged)
 
