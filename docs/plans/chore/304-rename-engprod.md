@@ -1,7 +1,7 @@
 ---
 title: "noblefactor-ops becomes noblefactor-engprod: GitHub once, then every machine, then the text"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/304
-status: approved
+status: active
 created: 2026-10-22
 updated: 2026-10-22
 ---
@@ -95,7 +95,8 @@ written. One pull request per repository, the base layer first.
 - [x] This plan reviewed with the owner, status `approved` -- 2026-10-22, "plan approved. go"
 - [x] Both scripts written and proven with `--dry-run` on Media-Server, the bash one on danoble-ud24-1 and the PowerShell
       one on danoble-wd11-3 over ssh -- 2026-10-22; both pass the repository's gates
-- [ ] Pull request 1, documents and scripts only, merged; the scripts deployed by writ to every machine that pulls
+- [x] Pull request 1, documents and scripts only, opened 2026-10-22 by this worktree's script; the status is `active`
+      because Phases 2 to 5 run after the merge, and the scripts reach every machine by writ as each pulls
 
 ### Phase 2: personal
 
