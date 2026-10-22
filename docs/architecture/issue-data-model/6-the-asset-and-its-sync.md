@@ -279,7 +279,7 @@ labels and projects and nothing else, so participation is what `push` and the ma
 | Part of the model | In an organization repository | In personal, once it participates |
 | --- | --- | --- |
 | Type | GitHub's issue type | a label of the type's name, pushed from the asset's `types`; the audit reads it as the type |
-| Parent | the sub-issue link | the `**Feature:** #N` or `**Chore:** #N` marker, naming the parent wherever it lives, until a link is shown to cross owners (the plan's question 13) |
+| Parent | the sub-issue link | the sub-issue link too: it crosses owners, proven 2026-10-22 ([section 4](4-storage-and-reach.md)); the markers only until the old scheme retires |
 | Epic | the parent's parent | the same marker chain, read up to an epic in any repository |
 | Severity, Priority, Area | labels pushed from the asset | the same labels, pushed from the asset |
 | A row in a Schedule, Thread or Triage project | yes | yes: a NobleFactor project held personal#259 as a row on 2026-10-20 |
@@ -307,7 +307,8 @@ labels:
 ```
 
 For an organization repository the types and the sub-issue link are GitHub's and need no proof; the labels are the
-whole of the check. For personal the labels are the whole of the model, so the check is the whole of participation.
+whole of the check. For personal the type is a label and the parent is a sub-issue link, so the check is the labels
+and nothing else there either.
 
 **Joining**, in order:
 

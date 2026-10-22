@@ -157,7 +157,8 @@ read before every operation; the report and the audit reading type and link firs
 - [x] Questions 3 and 4 ruled: the fate of #142, ruled 2026-10-22, the triage epic and row 0 of the Triage project, with
       question 5 closed by the same ruling, row 0 an Epic; the team ruled the same day, teams triage their own --
       2026-10-22
-- [ ] The write test: a sub-issue link across repositories and across owners, and a single-select option updated by id
+- [x] The write test, first half: a sub-issue link across repositories and across owners -- 2026-10-22, it crosses both
+- [ ] The write test, second half: a single-select option updated by id, once a project exists, iteration 3
 - [ ] #304, noblefactor-ops renamed noblefactor-engprod, done early: the owner, 2026-10-22, "bump up the priority of
       the issue for renaming noblefactor-ops as noblefactor-engprod. we might do that before we go much further. it
       will be one less thing to worry about at the end." Its own plan and pull request, before the rollout below
@@ -306,7 +307,9 @@ scheme retired last.
     sub-issue link. Already in use: 66 of noblefactor-ops's 89 open issues carried one on 2026-10-21, created under the
     owner's account on 2026-10-20 and 2026-10-21, #266 holding 43 under #142. Still unverified: whether the link crosses
     into another repository or another owner's, which the write test settles; until it does, the marker stays as the
-    cross-repository form.
+    cross-repository form. **Tested 2026-10-22, on the owner's "we need to test that now":** the link crosses both.
+    noblefactor-ops#355, a closed duplicate, took NobleFactor/devlore-cli#918 and David-Noble-at-work/personal#157 as
+    sub-issues, both read back, both removed; recorded on #355. Closed.
 16. **Organization, then teams, then repositories**, added and ruled 2026-10-22: "I would like as much as possible to
     be drawn from the org: NobleFactor by default. We then look to teams, and finally repositories." Types, projects and
     the participation property are the organization's; ownership and the triage role are a team's; labels are a

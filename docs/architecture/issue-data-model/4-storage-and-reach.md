@@ -28,7 +28,7 @@ NobleFactor project held personal#259 as a row, with a custom field set on it, o
 | Part | Where it can live | What GitHub enforces | Reaches personal |
 | --- | --- | --- | --- |
 | Type | GitHub's issue type (ruled 2026-10-22) | one value per issue | no |
-| Parent | GitHub's sub-issue link (ruled 2026-10-22); the `**Feature:**` and `**Chore:**` markers until the link is shown to cross | sub-issue: one parent | sub-issue across repositories or owners: unverified. Marker: yes, as text |
+| Parent | GitHub's sub-issue link (ruled 2026-10-22) | sub-issue: one parent | yes: the link crosses repositories and owners, proven by the write test of 2026-10-22 |
 | Severity, Priority | GitHub's issue fields, or labels | issue field: its type, and one value | issue field: no. Labels: yes |
 | Area, `good first issue` | labels | nothing | yes |
 | A thread's or a schedule's rows, lanes and status | a project's rows and fields | the field's type | yes, seen 2026-10-20 |
@@ -92,9 +92,13 @@ directed syncs. Person[al] will need to sync if it wants to participate." So:
   run.
 - Not taken: moving personal's tracked work into an organization repository.
 
-The sub-issue link is in use within noblefactor-ops since 2026-10-20. Whether it crosses into another repository, or
-another owner's, is unverified, and the write test settles it (the plan's question 13); until then the markers remain
-the cross-repository form, as the standard states them since #370.
+The sub-issue link is in use within noblefactor-ops since 2026-10-20, and **it crosses**: the write test of
+2026-10-22, on the closed duplicate noblefactor-ops#355 as parent, linked NobleFactor/devlore-cli#918 across
+repositories and David-Noble-at-work/personal#157 across owners through `POST .../issues/355/sub_issues`, read both
+back from `GET .../sub_issues` and from each child's `parent` field, and removed both through `DELETE
+.../sub_issue`; the record is a comment on #355. So personal's issues get real parents, and the markers are the old
+scheme's form only, retired with it ([section 5](5-from-todays-scheme.md)). The second half of the test, a
+single-select option updated by id, waits for a project and the `read:project` scope in iteration 3.
 
 ## What the audit does
 
