@@ -258,7 +258,10 @@ from the agent's own action; or a probability. A summary is no stronger than its
 decoding errors canceled out (anthropics/claude-code#103060). A cited issue's claim became a false absolute
 when its stated exception was dropped (anthropics/claude-code#103075). A refusal's form was reported verified
 from an exit status left over from a loop's earlier cases; in a fresh session, that form never reached the
-script's own catch (anthropics/claude-code#103117). Each went to the user as fact. Ruled 2026-10-05: "I'm
+script's own catch (anthropics/claude-code#103117). Each went to the user as fact. And 2026-10-21, a
+fourth: a comment drafted for #303 was reported twice as waiting at a path, when the command that would have written
+the file had been denied with the comment it carried; the owner found the file missing on running the command handed
+over. A claim about a file names the listing that showed it. Ruled 2026-10-05: "I'm
 taking action based on what you say. Understand that when you fail to identify certain from uncertain messages
 that I am taking action with the assumption that what you say is fact." And 2026-10-06: "I expect probability
 statements, not statements of fact when there is uncertainty." (#309)
