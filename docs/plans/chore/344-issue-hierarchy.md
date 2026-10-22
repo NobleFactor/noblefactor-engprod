@@ -1,6 +1,6 @@
 ---
 title: "The hierarchy is epic, then chore or feature, then bug or task: the standard, the parent marker and the tooling say so"
-issue: https://github.com/NobleFactor/noblefactor-ops/issues/344
+issue: https://github.com/NobleFactor/noblefactor-ops/issues/358
 status: approved
 created: 2026-10-21
 updated: 2026-10-21
@@ -18,10 +18,20 @@ under a chore renders as "unfiled, no parent feature": devlore-cli#679 does, and
 to #295, which were filed under personal#287 on the ruling. This plan changes the standard, the marker and the
 tooling together, in one pull request, and proves it on those eight issues.
 
-## Issue 344
+## Issue 358
 
-[The hierarchy is epic, then chore or feature, then bug or task](https://github.com/NobleFactor/noblefactor-ops/issues/344).
-Epic [#330](https://github.com/NobleFactor/noblefactor-ops/issues/330), Issue tracking.
+[issue-standards.md states epic, then chore or feature, then bug or task, and the two parent markers](https://github.com/NobleFactor/noblefactor-ops/issues/358):
+Requirements 1 and 3, Phases 2 and 4. A task under feature [#331](https://github.com/NobleFactor/noblefactor-ops/issues/331),
+the GitHub issue data model, of Epic [#330](https://github.com/NobleFactor/noblefactor-ops/issues/330), Issue tracking.
+
+## Issue 360
+
+[scheme.star reads either parent marker and places lanes under chores as under features](https://github.com/NobleFactor/noblefactor-ops/issues/360):
+Requirement 2, Phases 3 and 5. A task under feature [#332](https://github.com/NobleFactor/noblefactor-ops/issues/332), the issue
+tooling, of the same epic.
+
+This plan opened as #344's, the chore that held both halves; on 2026-10-21 the epic was found already decomposed into three features and
+#344 closed into these two tasks. The branch keeps its name.
 
 ## Goals
 
