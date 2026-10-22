@@ -1,6 +1,6 @@
 .\" SPDX-License-Identifier: Apache-2.0
 .\" Copyright (c) 2025-2026 Noble Factor. All rights reserved.
-.TH GIT-CLOSE-BRANCH 1 2026-10-16 "Noble Factor" "User Commands"
+.TH GIT-CLOSE-BRANCH 1 2026-10-21 "Noble Factor" "User Commands"
 .SH NAME
 git-close-branch \- close merged feature branches, then sync the main worktree to the target branch
 .SH SYNOPSIS
@@ -17,7 +17,8 @@ git-close-branch \- close merged feature branches, then sync the main worktree t
 .SH DESCRIPTION
 .B git-close-branch
 automates the cleanup after feature branches have been merged, and does two things. It deletes each selected
-branch on the remote, removes the linked worktree that has it checked out, and deletes it locally. Then it syncs
+branch on the remote, removes the linked worktree that has it checked out and the pull-request script named for
+that worktree beside it, and deletes it locally. Then it syncs
 the main worktree to the target branch: it checks the target out there when the main worktree has anything else
 checked out, and fast-forwards it from the remote.
 .PP
@@ -47,12 +48,17 @@ where it was.
 .IP 5. 3
 Removes what the survey found, in one order:
 .BR origin ,
-then the worktree, then the local branch. The remote goes first because it is the trace that fails for
-reasons having nothing to do with the branch \(em no network, an expired credential, a protected ref \(em
-and failing there leaves all three intact. The worktree follows, because discarding it is the one
-irreversible act. The local branch is last, because
+then the worktree, then the local branch, then the worktree's script. The remote goes first because it is the
+trace that fails for reasons having nothing to do with the branch \(em no network, an expired credential, a
+protected ref \(em and failing there leaves all three intact. The worktree follows, because discarding it is
+the one irreversible act. The local branch comes next, because
 .B git branch \-d
-refuses a branch a worktree holds.
+refuses a branch a worktree holds. The script,
+.IR worktree .bash
+or
+.IR worktree .ps1
+beside the worktree, is last: nothing depends on it, a failure there leaves the branch closed and one file to
+remove by hand, and a worktree with no script beside it is not an error. The report names each script removed.
 .IP 6. 3
 Reports what was closed and what failed, naming which trace failed and what had already been removed
 .IP 7. 3
@@ -86,8 +92,8 @@ Requires the
 CLI and issues one query per local branch.
 .TP
 .BR \-n ", " \-\-dry\-run
-Print, for each selected branch, what the run would do: the delete flag it would receive and any worktree it
-would remove, or the refusal that would stop it. The preview is the same survey the run acts on, printed
+Print, for each selected branch, what the run would do: the delete flag it would receive and any worktree, and
+script beside it, it would remove, or the refusal that would stop it. The preview is the same survey the run acts on, printed
 rather than executed, so it cannot disagree with the run. A refused branch names no removal, because a
 refusal removes nothing. Then it says how the run would sync the main worktree, or why the sync would fail, as
 far as that can be known without trying: a checkout git would refuse is found only by the run. Changes nothing.

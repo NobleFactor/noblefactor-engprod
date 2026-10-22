@@ -1,6 +1,6 @@
 .\" SPDX-License-Identifier: Apache-2.0
 .\" Copyright (c) 2025-2026 Noble Factor. All rights reserved.
-.TH GIT-OPEN-BRANCH 1 "September 2026" "Noble Factor" "User Commands"
+.TH GIT-OPEN-BRANCH 1 2026-10-21 "Noble Factor" "User Commands"
 .SH NAME
 git-open-branch \- open a branch and its worktree for a GitHub issue
 .SH SYNOPSIS
@@ -52,11 +52,28 @@ was given
 .SH NAMING
 The branch is
 .IR type / issue - name .
-The worktree is the main worktree's path with
+The worktree is
+.IR ~/Workspace/ org / clone . issue - name ,
+where
+.I org
+and
+.I clone
+are the organization and the repository in origin's URL,
+.IR github.com[:/] org / clone ,
+read as recorded rather than as any
+.B url.<base>.insteadOf
+rewrites it. The path is therefore the same whether the command ran in the
+clone, in a symlink to it, or in one of its worktrees, and
+.I ls ~/Workspace/<org>
+is the whole picture of an organization's work in flight: its clones, their
+worktrees, and the pull-request scripts named for them (noblefactor-ops#366).
+The type prefix is dropped, because a directory listing is read by someone who
+already knows what the work is and needs to tell one worktree from another.
+.PP
+When origin is not on GitHub, or there is none, the worktree is a sibling of
+the main worktree, its path with
 .RI . issue - name
-appended \(em a sibling directory, the type prefix dropped, because a directory
-listing is read by someone who already knows what the work is and needs to tell
-one worktree from another.
+appended, and the command says so.
 .PP
 Organization ruleset 12515090 constrains every ref to
 .PP
