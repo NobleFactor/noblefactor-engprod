@@ -96,7 +96,7 @@ This plan opened as #344's, the chore that held both halves; on 2026-10-21 the e
 - The epic's "awaiting plan and design" placement applies when it has neither features nor chores.
 - Every docstring and comment that says "under a feature" says "under a feature or a chore".
 
-### Requirement 3: the neighbours
+### Requirement 3: the neighbors
 
 - `docs/guides/development-process.md`: lanes are "tasks and bugs"; a worktree may still resolve a chore.
 - `docs/plans/TEMPLATE.md`: no change; it names no tier.
@@ -113,16 +113,16 @@ This plan opened as #344's, the chore that held both halves; on 2026-10-21 the e
 
 ### Phase 2: the standard
 
-- [ ] `docs/issue-standards.md` revised per Requirement 1
+- [x] `docs/issue-standards.md` revised per Requirement 1 -- 2026-10-21
 
 ### Phase 3: the tooling
 
 - [ ] `scheme.star`, `gh-issues-report.star`, `gh-issues-audit.star` revised per Requirement 2
 - [ ] `make check` passes in the worktree (buildifier over the `.star` files is the check that reads them)
 
-### Phase 4: the neighbours and the pull request
+### Phase 4: the neighbors and the pull request
 
-- [ ] `development-process.md` per Requirement 3; the comment on #303
+- [ ] `development-process.md` per Requirement 3 (done 2026-10-21); the comment on #303, drafted, waits on the owner to post it
 - [ ] The pull request's description says AI assisted and ends with `Signed-off-by:` and `Assisted-by: Claude Code`
 - [ ] This document's status set to `active` in the last commit of the pull request, with Phase 5 named as the reason
       it is not `complete`

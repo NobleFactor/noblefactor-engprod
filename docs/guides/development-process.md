@@ -63,7 +63,7 @@ not how long it took to do; effort, where anyone estimates it, is said elsewhere
 report and the span are what a merged pull request leaves behind.
 
 **A schedule is how the work is ordered, not another size of it.** A feature, a worktree and a session are
-nested; a schedule cuts across them. It is a sequence of **lanes** — leaf issues, tasks, bugs and chores,
+nested; a schedule cuts across them. It is a sequence of **lanes** — leaf issues, tasks and bugs,
 drawn from any feature and any epic — in the order someone has committed to working them, and it is what an
 agent actually executes: one lane after the next, in the declared order, until the last one closes. Its
 shape, its commitment and its deliverable are [issue-standards.md](../issue-standards.md) §Schedules.
