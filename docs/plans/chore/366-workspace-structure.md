@@ -1,7 +1,7 @@
 ---
 title: "Clones, worktrees and pull-request scripts live under ~/Workspace/<org>, the script is named for its worktree, and both go when the pull request merges"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/366
-status: active
+status: complete
 created: 2026-10-21
 updated: 2026-10-21
 ---
@@ -134,14 +134,21 @@ moves, or closed and reopened), symlinks take the clones' places, and `~/Workspa
 
 ### Phase 5: after the merge (rule 5)
 
-- [ ] `writ deploy`; `readlink -f ~/.local/bin/git-open-branch` resolves into the base layer at the merge
-- [ ] The duplicate clones on Media-Server retired by #367's order behind symlinks; the worktrees re-pointed; the bare
+- [x] `writ deploy`; `readlink -f ~/.local/bin/git-open-branch` resolves into the base layer at the merge -- 2026-10-21,
+      278 links, none dangling
+- [x] The duplicate clones on Media-Server retired by #367's order behind symlinks; the worktrees re-pointed; the bare
       `go` gone; `ls ~/Workspace/NobleFactor ~/Workspace/David-Noble-at-work` shows symlinked clones, live worktrees and
-      their scripts, nothing else
-- [ ] This worktree removed by `git close-branch`, and the script by its own last line, because the close-branch
+      their scripts, nothing else -- 2026-10-21. Patches and bundles under `~/Workspace/.retired/<org>/<clone>/`, and
+      the clones themselves moved there whole rather than deleted, with `go` and `go-devlore-cli`; `rm -rf` of that
+      directory is the owner's, on his word, as #367 says. The 344 worktree was re-pointed by moving its
+      `.git/worktrees/<name>` directory to the layer clone and rewriting its gitfile, its branch fetched locally first;
+      its status before and after is identical
+- [x] This worktree removed by `git close-branch`, and the script by its own last line, because the close-branch
       the script runs is the one deployed before this merge, which knows nothing of scripts; the next pull
-      request's is the first removal under the rule
-- [ ] Status `complete`; #366 and #367 closed
+      request's is the first removal under the rule -- 2026-10-21, #368
+- [x] Status `complete`; #366 and #367 closed -- 2026-10-21, in the pull request that lands this tick, opened by the
+      deployed `git open-branch` at the path the rule names, and closed by the deployed `git close-branch`, the
+      first removal of a script under the rule
 
 ## Files to Create/Modify
 
@@ -174,5 +181,7 @@ moves, or closed and reopened), symlinks take the clones' places, and `~/Workspa
   name with the extension the platform runs; ruled as `.bash` and `.ps1`, so a listing says which shell reads it.
 - **The fallback when origin is not GitHub**: today's sibling placement, or refusal. The plan takes the fallback, since
   the command must still work on a clone with no origin.
-- **`git worktree repair` versus close-and-reopen** for the two live worktrees when their main clones become symlinks
-  (Phase 5). Decided when it is done, and said in the pull request.
+- **`git worktree repair` versus close-and-reopen** for the live worktree when its main clone became a symlink
+  (Phase 5). Neither: `git worktree repair` re-links a worktree to the repository that already owns it, and
+  close-and-reopen would have lost six files of uncommitted work. The branch was fetched into the layer clone from
+  the retiring one, the worktree's `.git/worktrees/<name>` directory moved across, and its gitfile rewritten.
