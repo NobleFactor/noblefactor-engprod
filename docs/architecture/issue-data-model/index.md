@@ -40,6 +40,7 @@ the order they are worked.
 | [4. Storage and reach](4-storage-and-reach.md) | Where each part lives in GitHub, what enforces it, and which repositories it reaches | [Draft](4-storage-and-reach.status.md) |
 | [5. From today's scheme](5-from-todays-scheme.md) | The deltas the task list is drawn from, and the order that keeps running work running | [Draft](5-from-todays-scheme.status.md) |
 | [6. The asset and its sync](6-the-asset-and-its-sync.md) | `model.yaml` beside the extension, `star gh model pull` and `push`, the ETag read before every operation | [Ruled](6-the-asset-and-its-sync.status.md) |
+| [7. The workflow, before and after](7-the-workflow-before-and-after.md) | Why this epic: filing an issue, writing a schedule and reporting progress, as a session does them today and once the model is in | [Written](7-the-workflow-before-and-after.status.md) |
 
 ## Terms
 

@@ -249,6 +249,14 @@ scheme retired last.
     owner's account on 2026-10-20 and 2026-10-21, #266 holding 43 under #142. Still unverified: whether the link crosses
     into another repository or another owner's, which the write test settles; until it does, the marker stays as the
     cross-repository form.
+16. **Organization, then teams, then repositories**, added and ruled 2026-10-22: "I would like as much as possible to
+    be drawn from the org: NobleFactor by default. We then look to teams, and finally repositories." Types, projects and
+    the participation property are the organization's; ownership and the triage role are a team's; labels are a
+    repository's, so they get the precedence in the asset's three tiers.
+    [Section 4](../../architecture/issue-data-model/4-storage-and-reach.md) § Where each part is defined. A custom
+    property marking participating repositories, and a version of the model, were proposed and set aside the same
+    day: "Versioning is too complex. ... I don't think we need to worry about who's participating. We ask that
+    question when we need to know: when building and reporting on schedules and threads or creating a new issue."
 15. **The asset and its sync**, added and ruled 2026-10-22: the model travels as `model.yaml` beside the extension and
     drives it; `star gh model pull` rewrites the asset from GitHub's record and `push` brings a repository's labels to
     the asset; every `star gh issues` operation reads the record first, by ETag. The owner: "Use the etag. Offer pull

@@ -35,6 +35,44 @@ NobleFactor project held personal#259 as a row, with a custom field set on it, o
 | Waits on | GitHub's blocked-by link | the link | across repositories: unverified |
 | A collection's deliverable and rulings | its own issue's body, or the project's README | nothing | not applicable |
 
+## Where each part is defined
+
+The owner, 2026-10-22: "I would like as much as possible to be drawn from the org: NobleFactor by default. We then
+look to teams, and finally repositories." GitHub gives the three levels different powers, so the split follows what
+each can hold: the organization defines, a team owns and is granted, a repository carries.
+
+| Part | Defined at | In the asset | Reaches a repository by |
+| --- | --- | --- | --- |
+| Issue types and their levels | the organization, nowhere else | `types` | GitHub, every organization repository |
+| Projects: the Schedule and Thread templates, the Triage project, their fields | the organization | `projects` | rows, any repository including personal |
+| Who owns a collection; who triages | a team: project roles for ownership, the Triage repository role for the triage team | `teams` | GitHub's permissions |
+| Labels: attributes, `Epic:<Name>`, `Thread:<Name>` | a repository only; GitHub has no organization label, just a default set that seeds a new repository once | `labels`, in three tiers | `push` |
+| Issue templates and forms | a repository, or the organization's `.github` repository as the default | not in the asset | GitHub's fallback |
+
+A team on GitHub holds rights, not definitions: it cannot be assigned an issue or own a label, but it can own a
+project and hold the Triage role. So "look to teams" is where ownership and access are looked up, and the triage team
+of the plan's question 4 is a GitHub team with that role. Labels, having no organization home, get the precedence in
+the asset instead: a push to a repository takes the organization's tier, then its teams', then its own; a lower tier
+may add and may not redefine a name from above, and the audit reports a repository label that shadows one. Personal,
+with no organization and no team, takes the organization tier and its own.
+
+**Nothing records which repositories participate.** An organization custom property, `issue-model`, was proposed on
+2026-10-22 to mark participating repositories and to version the model, and set aside the same day: "Versioning is
+too complex. If we edit in GitHub, the tooling picks up whatever it picks up from every participating repository. I
+don't think we need to worry about who's participating. We ask that question when we need to know: when building and
+reporting on schedules and threads or creating a new issue." So a repository is in when something names it: a
+schedule's lane or a thread's row that lives there, an issue being filed there, or `--repo`. The tooling reads
+whatever those repositories hold, and there is one model, changed for everyone at once through `pull` and `push`.
+
+**Participation is proven when it matters, never declared.** The owner, the same day: "We do want to be able to say,
+hey, you aren't participating so I cannot create a task for developing a feature or doing a chore to complete an
+epic, and put it on my schedule. Why? Because this repo is not participating. I might save the digest or an etag to
+ensure we've got reason to believe that you're really participating and not yanking my chain." So when an issue is
+about to be filed in a repository, or one of its issues about to become a row, the tooling reads that repository's
+record and compares it with the asset: the labels it must carry, by tier, are there. If they are, it is participating
+and the filing or the row goes ahead; if not, the refusal names the repository and says `push` first. How the check is
+kept cheap is [section 6](6-the-asset-and-its-sync.md) § Participation.
+
 ## Labels
 
 A label belongs to one repository; GitHub has no organization label. The labels file, `labels.yaml` in the issue-labels

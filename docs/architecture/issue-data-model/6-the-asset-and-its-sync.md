@@ -27,10 +27,17 @@ types:
   - { name: Chore,   id: IT_kwDO…c3, level: 1 }
   - { name: Task,    id: IT_kwDO…d4, level: 2 }
   - { name: Bug,     id: IT_kwDO…e5, level: 2 }
+teams:
+  - { name: engprod, slug: engprod, id: T_kwDO…, role: triage }
 labels:
-  - name: bug
-    color: "d73a4a"
-    description: Something isn't working
+  organization:                # every participating repository
+    - { name: bug, color: "d73a4a", description: "Something isn't working" }
+  teams:
+    engprod:                   # the repositories the team owns
+      - { name: "Area:Process", color: "…", description: "…" }
+  repositories:
+    NobleFactor/devlore-cli:
+      - { name: "Area:CLI", color: "…", description: "…" }
 projects:
   - name: Schedule
     id: PVT_kwDO…
@@ -82,8 +89,14 @@ projects:
   from the description, the asset records it, and the audit reports a type whose description names no level or a
   level the asset disagrees with. A new type therefore arrives with its level when its description was written to the
   convention, and without one otherwise.
-- **`labels`** is today's labels file from NobleFactor/noblefactor-ops#320, in the GitHub API's own fields, and
-  **`projects`** the Schedule, Thread and Triage projects with their fields ([section 3](3-collections.md)).
+- **`teams`** is the teams that own collections or triage, with their roles ([section 4](4-storage-and-reach.md)
+  § Where each part is defined). Ruled 2026-10-22: the organization first, then teams, then repositories. Nothing in
+  the asset says which repositories participate: a repository is in when a schedule, a thread, a filing or `--repo`
+  names it, ruled the same day.
+- **`labels`** is today's labels file from NobleFactor/noblefactor-ops#320, in the GitHub API's own fields, in three
+  tiers: the organization's, pushed to every participating repository; each team's, pushed to the repositories it
+  owns; each repository's own. A lower tier adds and never redefines a name from above. **`projects`** is the
+  Schedule, Thread and Triage projects with their fields ([section 3](3-collections.md)).
 - **Ids beside names,** for every project, field and single-select option. GitHub holds a row's single-select value
   as the option's id, not its text, as it holds a label and an issue type on an issue by id: rename the option and
   every row shows the new name; delete it and every row holding it goes blank. With the ids in the asset, `pull` can
@@ -101,14 +114,25 @@ returns for each record is kept per machine, outside the repository, at
 ${XDG_CACHE_HOME:-~/.cache}/devlore/star/gh/model/<organization>.yaml
 ```
 
-one file per organization, holding the ETag of each record and the time it was read:
+one file per organization, holding for each record what GitHub gives to detect a change by, and the time it was
+read:
 
 ```yaml
 issue-types: { etag: 'W/"3f9c…"', read: 2026-10-22T09:02:51Z }
+teams:       { etag: 'W/"b8d4…"', read: 2026-10-22T09:02:51Z }
 labels:
   NobleFactor/noblefactor-ops: { etag: 'W/"66b6…"', read: 2026-10-22T09:02:51Z }
-projects: { etag: 'W/"a1d0…"', read: 2026-10-22T09:02:51Z }
+  NobleFactor/devlore-cli:     { etag: 'W/"0c5a…"', read: 2026-10-22T09:02:51Z }
+projects:
+  PVT_kwDO…: { updatedAt: 2026-10-22T08:40:16Z, read: 2026-10-22T09:02:51Z }
 ```
+
+| Asset record | Read from | Change detected by |
+| --- | --- | --- |
+| `types` | `GET /orgs/{org}/issue-types` | one ETag for the list; `updated_at` per type |
+| `teams` | `GET /orgs/{org}/teams` and each team's repositories | one ETag per list |
+| `labels` | `GET /repos/{owner}/{repo}/labels`, per repository | one ETag per repository; no per-label time |
+| `projects` | GraphQL `projectsV2` with fields and options | `updatedAt` per project; GraphQL takes no ETag, so this read is never 304 and costs one query |
 
 A read that sends the ETag back is answered 304 Not Modified when nothing changed, at no cost against the rate
 limit; the cache is what makes the read before every operation cheap. It is a cache in the XDG sense: deleting it
@@ -130,8 +154,10 @@ star gh model push [--org <organization>] [--repo <owner/repo>[,...]] [--delete]
 
 Both target an organization, NobleFactor by default: the owner, 2026-10-22, "We need pull and push to target an
 organization, I think. The default organization is NobleFactor." An organization's record is its issue types, its
-projects with their fields, and the labels of its repositories; `--repo` narrows a push to some of those
-repositories, and names a repository outside any organization, personal, whose record is labels alone. Direction is
+projects with their fields, and the labels of its repositories; `--repo` names the repositories a push writes labels
+to, and a repository outside any organization, personal, whose record is labels alone. A push with no `--repo`
+writes the organization's types and projects and no repository's labels: which repositories are in is asked when
+something names them, never kept ([section 4](4-storage-and-reach.md)). Direction is
 in the verb, as in `git pull` and `git push`, because one end is always the asset. rsync and rclone put direction in
 the argument order instead, and rclone splits "identical" from "add, never delete" into `sync` and `copy`; here the
 split falls between the two verbs.
@@ -258,6 +284,30 @@ labels and projects and nothing else, so participation is what `push` and the ma
 | Severity, Priority, Area | labels pushed from the asset | the same labels, pushed from the asset |
 | A row in a Schedule, Thread or Triage project | yes | yes: a NobleFactor project held personal#259 as a row on 2026-10-20 |
 | What enforces the rules | GitHub, for one type and one parent | nothing but the audit |
+
+**Proven, not declared.** The owner, 2026-10-22: a repository that is not participating must be refused when
+someone tries "to create a task for developing a feature or doing a chore to complete an epic, and put it on my
+schedule", and "I might save the digest or an etag to ensure we've got reason to believe that you're really
+participating and not yanking my chain." So nothing records that a repository participates; the tooling proves it at
+the two moments it matters, filing an issue there and adding one of its issues as a row:
+
+1. It reads the repository's label list, sending the ETag the cache holds. 304 means the list is what it was.
+2. It compares the list with the labels the asset says that repository must carry, the organization's tier, its
+   teams' and its own, and keeps a digest of the matching list in the cache beside the ETag, written only when the
+   comparison passed, by a `push` or an audit.
+3. A 304 against a cached digest is proof at no cost. A changed list is compared again. A list that lacks a label the
+   asset requires is a refusal: "NobleFactor/foo is not participating: 3 labels missing; run star gh model push
+   --repo NobleFactor/foo", and nothing is filed and no row is added.
+
+The cache's entry for a repository therefore holds its ETag, the digest of its labels as last proven, and when:
+
+```yaml
+labels:
+  NobleFactor/noblefactor-ops: { etag: 'W/"66b6…"', proven: sha256:4c1d…, read: 2026-10-22T09:02:51Z }
+```
+
+For an organization repository the types and the sub-issue link are GitHub's and need no proof; the labels are the
+whole of the check. For personal the labels are the whole of the model, so the check is the whole of participation.
 
 **Joining**, in order:
 
