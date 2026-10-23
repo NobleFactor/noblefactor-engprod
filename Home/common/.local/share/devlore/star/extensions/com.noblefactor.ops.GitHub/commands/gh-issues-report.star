@@ -9,7 +9,7 @@
 # devlore-cli's scripts/Get-EpicReport. The result is the rows; --markdown returns the document the
 # script prints instead, for the reader and for the parity diff.
 
-load("commands/scheme.star", "LEAF_KINDS", "PARENT_KINDS", "audit", "audit_lines", "axis", "by_axis", "by_number", "canonical_repo", "children_of", "epic_name", "epic_rows", "epic_tag", "exempt_numbers", "feature_rows", "feature_table_lines", "fetch_issues", "is_child", "is_root", "key", "kind_of", "label_space", "lane_repos", "line", "parent", "parents_of", "resolve_repos", "schedule_issues", "schedule_rows", "schedule_table_lines", "short", "table_lines", "task_row", "thread_names", "thread_rows", "thread_table_lines")
+load("commands/scheme.star", "LEAF_KINDS", "PARENT_KINDS", "audit", "audit_lines", "axis", "by_axis", "by_number", "canonical_repo", "children_of", "epic_name", "epic_rows", "epic_tag", "exempt_numbers", "feature_rows", "feature_table_lines", "fetch_issues", "is_child", "is_root", "key", "kind_of", "label_space", "lane_repos", "line", "parent", "parents_of", "resolve_all", "resolve_repos", "schedule_issues", "schedule_rows", "schedule_table_lines", "short", "table_lines", "task_row", "thread_names", "thread_rows", "thread_table_lines")
 
 def _epics(all, epic_filter):
     return by_axis(by_number([i for i in all if is_root(i) and (epic_filter == "" or epic_tag(i) == "Epic:" + epic_filter)]), epic_name)
@@ -124,7 +124,7 @@ def _with_lane_repos(scheds, all, repos, state, limit):
     note("repositories the lanes name: " + ", ".join(extra))
     for it in all:
         it["ref"] = short(it["repo"]) + "#" + str(it["number"])
-    return all + fetch_issues(state, limit, extra, True), repos + extra
+    return resolve_all(all + fetch_issues(state, limit, extra, True)), repos + extra
 
 def _names_schedule(spec, sched):
     """Whether spec, <owner>/<repository>#<number> or a bare <number>, names the schedule issue sched."""
