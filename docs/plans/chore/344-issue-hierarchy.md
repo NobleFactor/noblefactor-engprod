@@ -1,7 +1,7 @@
 ---
 title: "The hierarchy is epic, then chore or feature, then bug or task: the standard, the parent marker and the tooling say so"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/358
-status: active
+status: complete
 created: 2026-10-21
 updated: 2026-10-21
 ---
@@ -109,7 +109,7 @@ This plan opened as #344's, the chore that held both halves; on 2026-10-21 the e
 ### Phase 1: the plan lands
 
 - [x] Reviewed with the owner, status `approved`, committed alone on `chore/344-issue-hierarchy` -- 2026-10-21
-- [ ] #344's documents table carries this plan's link on `develop`
+- [x] #344's documents table carries this plan's link on `develop` -- 2026-10-21, with #370's merge
 
 ### Phase 2: the standard
 
@@ -122,7 +122,7 @@ This plan opened as #344's, the chore that held both halves; on 2026-10-21 the e
 
 ### Phase 4: the neighbors and the pull request
 
-- [ ] `development-process.md` per Requirement 3 (done 2026-10-21); the comment on #303, drafted, waits on the owner to post it
+- [x] `development-process.md` per Requirement 3 -- 2026-10-21; the comment on #303 posted by the owner the same evening
 - [x] The pull request's description says AI assisted and ends with `Signed-off-by:` and `Assisted-by: Claude Code` -- 2026-10-21, written by `~/Workspace/NobleFactor/noblefactor-ops.344-issue-hierarchy.bash`
 - [x] This document's status set to `active` in the last commit of the pull request, with Phase 5 named as the reason
       it is not `complete` -- 2026-10-21: the extension reaches `star` only when writ deploys the merged layer, so Phase 5
@@ -133,12 +133,12 @@ This plan opened as #344's, the chore that held both halves; on 2026-10-21 the e
 The extension ships from this layer's `Home/common`, so the change reaches `star` only when writ deploys it. This
 phase cannot close inside the pull request, so the plan stays `active` through it and closes in a follow-up commit.
 
-- [ ] `writ deploy` on this machine; `readlink -f ~/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/scheme.star`
+- [x] `writ deploy` on this machine (2026-10-21, build 272e6a98); `readlink -f ~/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/scheme.star`
       resolves into the layer at the merge
-- [ ] `star gh issues report --epic Authorization --view table --state open` shows devlore-cli#679 under #520 as a
+- [x] `star gh issues report --epic Authorization --view table --state open` shows devlore-cli#679 under #520 as a
       chore awaiting decomposition, and `--epic SystemTree` shows personal#289 to #295 under personal#287
-- [ ] `star gh issues audit` reports no fault on those eight
-- [ ] Status `complete`; #344 closed
+- [x] `star gh issues audit` reports no fault on those eight -- 2026-10-21, on the deployed star; 71 faults in all, the 67 chores carrying a `**Feature:**` marker among them, for #363
+- [x] Status `complete`; #344 closed, and #358 and #360 closed by the owner after the proof -- 2026-10-21
 
 ## Files to Create/Modify
 

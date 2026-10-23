@@ -27,13 +27,51 @@ NobleFactor project held personal#259 as a row, with a custom field set on it, o
 
 | Part | Where it can live | What GitHub enforces | Reaches personal |
 | --- | --- | --- | --- |
-| Type | GitHub's issue type, or a label family | issue type: one value per issue | issue type: no. Labels: yes |
-| Parent | GitHub's sub-issue link, or the `**Feature:**` marker in the body | sub-issue: one parent | sub-issue across repositories or owners: unverified. Marker: yes, as text |
+| Type | GitHub's issue type (ruled 2026-10-22) | one value per issue | no |
+| Parent | GitHub's sub-issue link (ruled 2026-10-22) | sub-issue: one parent | yes: the link crosses repositories and owners, proven by the write test of 2026-10-22 |
 | Severity, Priority | GitHub's issue fields, or labels | issue field: its type, and one value | issue field: no. Labels: yes |
 | Area, `good first issue` | labels | nothing | yes |
 | A thread's or a schedule's rows, lanes and status | a project's rows and fields | the field's type | yes, seen 2026-10-20 |
 | Waits on | GitHub's blocked-by link | the link | across repositories: unverified |
 | A collection's deliverable and rulings | its own issue's body, or the project's README | nothing | not applicable |
+
+## Where each part is defined
+
+The owner, 2026-10-22: "I would like as much as possible to be drawn from the org: NobleFactor by default. We then
+look to teams, and finally repositories." GitHub gives the three levels different powers, so the split follows what
+each can hold: the organization defines, a team owns and is granted, a repository carries.
+
+| Part | Defined at | In the asset | Reaches a repository by |
+| --- | --- | --- | --- |
+| Issue types and their levels | the organization, nowhere else | `types` | GitHub, every organization repository |
+| Projects: the Schedule and Thread templates, the Triage project, their fields | the organization | `projects` | rows, any repository including personal |
+| Who owns a collection; who triages | a team: project roles for ownership, the Triage repository role for the triage team | `teams` | GitHub's permissions |
+| Labels: attributes, `Epic:<Name>`, `Thread:<Name>` | a repository only; GitHub has no organization label, just a default set that seeds a new repository once | `labels`, in three tiers | `push` |
+| Issue templates and forms | a repository, or the organization's `.github` repository as the default | not in the asset | GitHub's fallback |
+
+A team on GitHub holds rights, not definitions: it cannot be assigned an issue or own a label, but it can own a
+project and hold the Triage role. So "look to teams" is where ownership and access are looked up, and the triage team
+of the plan's question 4 is a GitHub team with that role. Labels, having no organization home, get the precedence in
+the asset instead: a push to a repository takes the organization's tier, then its teams', then its own; a lower tier
+may add and may not redefine a name from above, and the audit reports a repository label that shadows one. Personal,
+with no organization and no team, takes the organization tier and its own.
+
+**Nothing records which repositories participate.** An organization custom property, `issue-model`, was proposed on
+2026-10-22 to mark participating repositories and to version the model, and set aside the same day: "Versioning is
+too complex. If we edit in GitHub, the tooling picks up whatever it picks up from every participating repository. I
+don't think we need to worry about who's participating. We ask that question when we need to know: when building and
+reporting on schedules and threads or creating a new issue." So a repository is in when something names it: a
+schedule's lane or a thread's row that lives there, an issue being filed there, or `--repo`. The tooling reads
+whatever those repositories hold, and there is one model, changed for everyone at once through `pull` and `push`.
+
+**Participation is proven when it matters, never declared.** The owner, the same day: "We do want to be able to say,
+hey, you aren't participating so I cannot create a task for developing a feature or doing a chore to complete an
+epic, and put it on my schedule. Why? Because this repo is not participating. I might save the digest or an etag to
+ensure we've got reason to believe that you're really participating and not yanking my chain." So when an issue is
+about to be filed in a repository, or one of its issues about to become a row, the tooling reads that repository's
+record and compares it with the asset: the labels it must carry, by tier, are there. If they are, it is participating
+and the filing or the row goes ahead; if not, the refusal names the repository and says `push` first. How the check is
+kept cheap is [section 6](6-the-asset-and-its-sync.md) § Participation.
 
 ## Labels
 
@@ -44,18 +82,23 @@ labels are defined and stored as yaml assets in noblefactor-ops."
 
 ## The choice it turns on
 
-Type, and Severity and Priority with it, can live three ways (the plan's question 1):
+Ruled 2026-10-22: "we are building a 3-tier hierarchy modeled with the parent-child relation between issues, so yes. Our hierarchy is based on epics that contain chores and features that contain bugs and tasks. It is a very specific hierarchy based on Issue Type." So Type is GitHub's issue type and the parent is GitHub's sub-issue link, both of them
+organization features. Neither reaches personal, and for personal the owner ruled the same day: "Star gh offers
+directed syncs. Person[al] will need to sync if it wants to participate." So:
 
-- **Labels everywhere.** One mechanism, in every repository, personal included. GitHub enforces nothing; the audit
-  enforces one Type, at most one Severity, at most one Priority.
-- **GitHub's own fields in the organization's repositories, labels in personal.** GitHub enforces where it reaches,
-  and star keeps two records of one fact in step, which is the kind of record that drifts.
-- **GitHub's own fields everywhere,** with personal's tracked work moved into an organization repository. Nothing to
-  sync and nothing for the audit to enforce, but personal changes.
+- **GitHub's own types and links in the organization's repositories, labels in personal.** The organization's record
+  is the truth; `star gh` syncs it one way into personal's labels, as `star gh labels sync` already syncs the label
+  set. The audit reads personal's labels as it reads the organization's types, and reports where the sync has not
+  run.
+- Not taken: moving personal's tracked work into an organization repository.
 
-The parent link is the same choice for edges: GitHub's sub-issue link is enforced and visible in GitHub's own views,
-and the marker is text that crosses anything. Which repositories the link can cross is unverified, and a write test
-settles it (the plan's question 13).
+The sub-issue link is in use within noblefactor-ops since 2026-10-20, and **it crosses**: the write test of
+2026-10-22, on the closed duplicate noblefactor-ops#355 as parent, linked NobleFactor/devlore-cli#918 across
+repositories and David-Noble-at-work/personal#157 across owners through `POST .../issues/355/sub_issues`, read both
+back from `GET .../sub_issues` and from each child's `parent` field, and removed both through `DELETE
+.../sub_issue`; the record is a comment on #355. So personal's issues get real parents, and the markers are the old
+scheme's form only, retired with it ([section 5](5-from-todays-scheme.md)). The second half of the test, a
+single-select option updated by id, waits for a project and the `read:project` scope in iteration 3.
 
 ## What the audit does
 

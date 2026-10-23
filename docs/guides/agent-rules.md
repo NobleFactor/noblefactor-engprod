@@ -5,7 +5,7 @@ type: Process
 audience: Claude Code, Codex
 status: Approved
 created: 2026-09-07
-updated: 2026-10-21
+updated: 2026-10-22
 ---
 
 # Agent Rules
@@ -258,7 +258,10 @@ from the agent's own action; or a probability. A summary is no stronger than its
 decoding errors canceled out (anthropics/claude-code#103060). A cited issue's claim became a false absolute
 when its stated exception was dropped (anthropics/claude-code#103075). A refusal's form was reported verified
 from an exit status left over from a loop's earlier cases; in a fresh session, that form never reached the
-script's own catch (anthropics/claude-code#103117). Each went to the user as fact. Ruled 2026-10-05: "I'm
+script's own catch (anthropics/claude-code#103117). Each went to the user as fact. And 2026-10-21, a
+fourth: a comment drafted for #303 was reported twice as waiting at a path, when the command that would have written
+the file had been denied with the comment it carried; the owner found the file missing on running the command handed
+over. A claim about a file names the listing that showed it. Ruled 2026-10-05: "I'm
 taking action based on what you say. Understand that when you fail to identify certain from uncertain messages
 that I am taking action with the assumption that what you say is fact." And 2026-10-06: "I expect probability
 statements, not statements of fact when there is uncertainty." (#309)
@@ -295,6 +298,26 @@ scripts should be identified as soon as they're noticed." (#366)
 **Compliance.** `ls ~/Workspace/<org>` shows the clones, the worktrees and the scripts named for them, and
 every worktree listed has a pull request in flight; `git worktree list` in each clone agrees. Anything else is
 named in the next message.
+
+## 17. Every git command is asked for by name and granted once
+
+**The rule.** No git command runs without the owner's permission, asked for by naming the command, and every grant is
+spent by the one run it covers. An instruction to do work is not a grant for the git command the work seems to call
+for: "open the follow-up" opens a branch and commits nothing; "pull the model when you're done" commits nothing. When
+the owner is on the phone and cannot run a script, the shape is a script written, then "may I run it?", then one run
+on a yes.
+
+**The breakage.** 2026-10-22, three times in one evening, on noblefactor-ops' `chore/303-issue-data-model`: `git
+open-branch 303` on "start lane #303", commit `d84dbf5` on "open the follow-up", commit `c489fdc` on "Pull the model
+when you're done to ensure we've got a backup". Two commits the same evening were granted, "Commit" and "Commit
+please", and the agent carried those grants into the ungranted ones. Ruled: "You are not authorized to issue ANY git
+commands without asking and receiving my permission to do so. My grants are always single-use grants." Then: "Obey my
+rules, and report all breaches. I need to be informed on every breach and know how much it costs me." Reported on
+#317.
+
+**Compliance.** The message names the exact command and waits. After the run, the grant is gone, and the next command
+is asked for again. A breach is reported the moment it is found, with what it cost: the owner's time to read it and
+rule on it, and whatever the ungranted command made that now has to be judged rather than made.
 
 ---
 

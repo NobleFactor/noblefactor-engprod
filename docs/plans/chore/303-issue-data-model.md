@@ -1,9 +1,9 @@
 ---
 title: "The GitHub issue data model: one hierarchy, its attributes, and the collections that order it"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/303
-status: draft
+status: active
 created: 2026-10-21
-updated: 2026-10-21
+updated: 2026-10-22
 ---
 
 # Plan: The GitHub issue data model: one hierarchy, its attributes, and the collections that order it
@@ -78,8 +78,10 @@ into pull requests that take nothing in use down.
 
 ## Schedule
 
-Not on a schedule. This session writes the design and builds the prototype; another session does the work (the
-owner, 2026-10-20, above).
+Lane 3 of Schedule: issue tracking, iteration 1, NobleFactor/noblefactor-ops#346, since 2026-10-21; it waited on lane
+1, #358, which merged in #370 that day. From 2026-10-22 the lane is the sweep below, whose iterations file their own lanes;
+the schedule's amendment for lanes 3 to 6 is the owner's, proposed in this plan's first sweep commit. Before that, not on a schedule: this plan's session wrote the design and the
+owner said another session would do the work (2026-10-20, above).
 
 ## Goals
 
@@ -129,24 +131,84 @@ from it, its lanes as rows. Creating organization projects is outward-facing, so
   in." Five lines of #322's and #321's plans, which #339 merged still naming lane 13 after the split of #301's lane 13,
   ride it. The owner, the same day: "You own #301; fix the five lines in your PR."
 
-### Phase 2: The review
+### The sweep, from 2026-10-22
 
-- [ ] Each open question ruled, quoted with its date.
-- [ ] The design revised to the rulings, and its status companions set.
+Status `active` from the second pull request, 2026-10-22, which takes the rulings of 2026-10-21 and 2026-10-22,
+sections 6 and 7, the first `model.yaml` and iteration 1's progress to develop; the sweep continues past the merge,
+iteration by iteration, and this plan closes with iteration 5.
 
-### Phase 3: The task list
 
-- [ ] Requirement 3, with the owner.
+The owner, 2026-10-22, on Phases 2 to 5 as written: "I'm seeing that this will take at least a month to complete in a
+waterfall fashion. We will get a complete design and then stumble and redesign again and again. I might rather sweep
+broadly and refine the design at deeper levels as we go. The data model is critically important to get right and roll
+out correctly. The tool should follow close behind. An important constraint: we can't get in the way of 5 other
+session[s] I'm running." Then: "Start the sweep. I'll answer questions just-in-time as we progress."
 
-### Phase 4: The prototype
+So the phases below replace Phases 2 to 5. Each iteration rules only what it needs, revises the sections it touches,
+builds, and rolls out before the next. The line that protects the running sessions is additive against subtractive:
+what the sessions read is the report and the audit through labels, markers and lane tables, Start-Claude keyed by a
+schedule's issue number, and the label set. Every iteration ships its additive half when ready; its subtractive half
+waits for a switch taken when the affected sessions are between lanes. The tooling of each iteration is its own task
+under #332, the rollout under #333, worked as lanes; this plan carries the design, the rulings and the documents.
 
-- [ ] Requirement 4, once section 3 is ruled far enough to build.
+### Iteration 1: the hierarchy
 
-### Phase 5: The standard and closure
+Epic and Chore added to the organization's issue types, done 2026-10-22; every noblefactor-ops issue typed and linked,
+which 66 of 89 already were; labels and markers kept. The tooling: the asset with its types as levels, `pull`, the
+read before every operation; the report and the audit reading type and link first, label and marker second.
 
-- [ ] [issue-standards.md](../../issue-standards.md) states the model, here or where the task list puts it.
-- [ ] #303 retitled and its body brought to the model, with the owner's approval.
-- [ ] The pull request, documents only.
+- [x] Questions 1, 10 and 13 ruled; the hierarchy, storage and asset sections revised -- 2026-10-22
+- [x] The five issue types in GitHub with the level convention; `model.yaml`, the first pull -- 2026-10-22
+- [x] Questions 3 and 4 ruled: the fate of #142, ruled 2026-10-22, the triage epic and row 0 of the Triage project, with
+      question 5 closed by the same ruling, row 0 an Epic; the team ruled the same day, teams triage their own --
+      2026-10-22
+- [x] The write test, first half: a sub-issue link across repositories and across owners -- 2026-10-22, it crosses both
+- [ ] The write test, second half: a single-select option updated by id, once a project exists, iteration 3
+- [ ] #304, noblefactor-ops renamed noblefactor-engprod, done early: the owner, 2026-10-22, "bump up the priority of
+      the issue for renaming noblefactor-ops as noblefactor-engprod. we might do that before we go much further. it
+      will be one less thing to worry about at the end." Its own plan and pull request, before the rollout below
+- [ ] Section 5's deltas and order rewritten to the rulings so far; the status companions of sections 1, 4 and 6 set
+- [ ] The tasks filed under #332 and #333: the asset read by the extension, `pull`, the read before every operation,
+      the report and audit reading type and link first; the reclassification, #363, as the rollout
+- [ ] Rolled out: every open noblefactor-ops issue typed and linked, the report placing it by type and link, and the
+      sessions running throughout
+
+### Iteration 2: triage and the Triage project
+
+The first collection, purely additive. `push` for personal; the Triage project's rows read by the report.
+
+- [ ] Section 3's Triage rows and section 6's `push` built as tasks under #332
+- [ ] The `engprod` team created, with Admin on its Triage project and Triage on its repositories; the devlore
+      triage epic filed in devlore-cli; both organization writes on the owner's word
+- [ ] The two Triage projects made in the organization, Triage: engprod with #142 as row 0 and Triage: devlore with
+      the new epic, on the owner's word; #142's 90 issues drained to the epics they serve or left in the queue
+- [ ] personal pushed and proven participating
+
+### Iteration 3: schedules and threads as projects
+
+The Schedule and Thread templates, #301 as the prototype, lane tables kept as the copy of record until the switch;
+rows and lanes read by the report; Start-Claude keyed as before.
+
+- [ ] Questions 5 to 9 ruled; section 3 revised
+- [ ] The templates and the prototype made, on the owner's word for each organization write
+- [ ] `star gh schedule add` and the report's row reading built as tasks under #332
+
+### Iteration 4: attributes
+
+Severity, Priority and Area in the asset and pushed everywhere; the audit's attribute rules.
+
+- [ ] Questions 11 and 14 ruled, then 2 and 12; section 2 revised
+- [ ] devlore-cli's attribute labels pulled into the asset's tiers and pushed to every participating repository
+
+### Iteration 5: the switch and the retirement
+
+The markers, the kind labels, the lane tables and the `Epic:` labels retired, and the old reading removed from the
+tooling, on a date when the sessions are clear.
+
+- [ ] [issue-standards.md](../../issue-standards.md) states the model in full
+- [ ] #303 retitled and its body brought to the model, with the owner's approval
+- [ ] The old scheme retired, one repository at a time, each confirmed by the audit before the next
+- [ ] Status `complete`
 
 ## Migration Path
 
@@ -159,7 +221,7 @@ scheme retired last.
 | File | Action | Purpose |
 | --- | --- | --- |
 | `docs/plans/chore/303-issue-data-model.md` | Create | this plan |
-| `docs/architecture/issue-data-model/` | Create | the design: its index, five sections and their status companions |
+| `docs/architecture/issue-data-model/` | Create | the design: its index, six sections and their status companions; section 6, the asset and its sync, added 2026-10-22 on the owner's "Doc it" |
 | `docs/issue-standards.md` | Modify | states the model, once ruled |
 
 ## Related Documents
@@ -186,24 +248,47 @@ scheme retired last.
    the organization's repositories. Options: (a) labels everywhere, the family called Kind so that it is not mistaken
    for GitHub's Type, its five names as today's; (b) GitHub's Type in the organization's repositories and labels in
    personal, kept in step by star; (c) GitHub's Type everywhere, personal's tracked work moved into an organization
-   repository. Proposed: (a), and (c) if personal's tracked work moves.
+   repository. Proposed: (a), and (c) if personal's tracked work moves. **Ruled 2026-10-22:** "we are building a 3-tier hierarchy modeled with the parent-child relation between issues, so yes. Our hierarchy is based on epics that contain chores and features that contain bugs and tasks. It is a very specific hierarchy based on Issue Type." So Type is
+   GitHub's issue type, Epic and Chore added to the organization's Task, Bug and Feature, and the parent is GitHub's
+   sub-issue link. Neither reaches a user's repository, and for personal, 32 open issues on 2026-10-22, **ruled
+   2026-10-22:** "Star gh offers directed syncs. Person[al] will need to sync if it wants to participate." So (b):
+   labels in personal, the organization's types and links the record of truth, and `star gh` syncing one way, from
+   the organization's record to personal's labels. Question 1 is closed.
 2. **How long a level-1 issue lives.** Today a feature ships and closes, and its epic closes when its features do.
    Gemini's write-up proposes that features and chores stay open for the life of what they deliver, a bug in shipped
    work parented to the original, so that its whole cost can be counted. Options: today's lifecycle, a bug in shipped
    work finding a current parent at triage; or long-lived level 1. Not proposed: it changes what "done" means for a
    feature.
 3. **The standing engineering epic.** Every chore needs an epic. Proposed: #142, Epic: Process, renamed for
-   engineering, and open for good, as it is today.
+   engineering, and open for good, as it is today. **Ruled in part, 2026-10-21:** "I do not thin[k] that we need to
+   have a home for chores anymore. we can create an epic in any repo and create features and chores with bugs and
+   tasks to our heart's content. I think we must either repurpose #142 or close it as <something>." Then: "#142 is
+   basically our triage epic. i'm surprised it's not bigger than 90. These are things discovered over the course of a
+   month that are bugs, gaps (missing parts of chores/features), and suspicious behaviors/implementation." So no
+   standing epic, and no rule that every repository carries `Epic:Ops:Process`. GitHub's close reasons are completed,
+   not planned and duplicate, and no other (gh 2.103.0). **Ruled 2026-10-22:** "We need a triage epic. it is the place to put all new logged issue, pending assignment to a place in our issue hierarchy. It should be added as row zero in the schedule that represents the triage project. We can use this to guide the work and--maybe--facilitate handoffs." #142 is the triage epic, row
+   0 of the Triage project, and the parent of every newly logged issue until triage places it. Closed.
 4. **Triage.** Proposed: untriaged is a state, not a place: an issue with no Type or no parent. Whoever files it does
    nothing more, the audit exempts it from the parent rule and reports its age, and the triage team works the query.
    Open: who the team is, and with what role. GitHub's Triage role exists for the organization's repositories; whether
-   it can set types and parents is unverified, and personal has collaborators rather than roles.
+   it can set types and parents is unverified, and personal has collaborators rather than roles. **Ruled 2026-10-21:**
+   "I would say then that we fully classify the issue or not and allow that any issue can be added to the Triage
+   project. Issues sent for review by triage are those added to the Triage project. The Triage project is a little
+   like a Schedule or a Thread, but it allows any issue type: Epic, (Chore | Feature), (Bug | Task), or no Issue Type.
+   We can always search for specific issues based on no:type, no:parent-issue, etc. These issues can be periodically
+   added to the Triage project." So: an issue is fully classified or it is not; the triage queue is a third
+   collection, the Triage project, whose rows may be of any type or none; what is sent for review is what is added to
+   it, by a person or periodically from the queries. **Ruled 2026-10-22, the team:** "Teams triage their issues. I happen to be on every team. If devlore-cli logs issues against noblefactor-engprod, they should log a tracking issue or retain ownership of the issue on noblefactor-engprod. So keep the issue on your plate or move it and maybe track it on another team's triage schedule." The triage team of a
+   repository is the team that owns it, one Triage project per team, the owner on every team today. Closed.
 5. **A collection's own record: row 0, or the project's README.** Options: (a) row 0 is the collection's own issue, as
    the owner proposed on 2026-10-20, its body holding the deliverable and the rulings, its assignee the owner, and
    sessions keyed by it as today; it needs an exemption from "every issue must be fit into this hierarchy", as
    schedule and thread issues have from the epic rule today; (b) no row 0: the project's README holds the deliverable
    and the rulings, and sessions are keyed by the project. Proposed: (a). Start-Claude's store and
-   star-gh-assignment keep their keys, which section 5 needs.
+   star-gh-assignment keep their keys, which section 5 needs. **Ruled 2026-10-22:** (a), and row 0 is an Epic, which
+   needs no exemption because level 0 has no parent; the owner: "If you accept that a schedule is just a sequentially-numbered list of bugs and tasks that must be closed, a good question to ask is where do we keep status on the schedule? I might like to fully report my status on the issue at row 0. We work issues in the list starting at row 1. We keep our head straight and provide some insight to casual observers/owners/participants/reviewers by way of row zero. The question becomes: what is the issue type for row 0." Then, of the recommendation that row 0 be
+   an epic, a collection epic told from a hierarchy epic by its being row 0: "I approve your recommendation."
+   [Section 3](../../architecture/issue-data-model/3-collections.md) § The collection's own record. Closed.
 6. **Lane numbers.** Proposed: row 0 is the collection's own issue (question 5), and lanes 1..N follow it, so that
    today's lane numbers carry over. The tool that adds a row numbers it. GitHub projects have no number that counts by
    itself, so a row added in GitHub's interface has none, and the audit reports it.
@@ -223,6 +308,25 @@ scheme retired last.
 12. **How a thread influences priority.** Open.
 13. **Parent links across repositories and owners.** GitHub's sub-issue link, or the `**Feature:**` marker. Unverified:
     whether a sub-issue may live in another repository (#176), or in another owner's repository, as personal's do.
-    Proposed: a write test before section 4 is ruled.
+    Proposed: a write test before section 4 is ruled. **Ruled 2026-10-22,** with question 1: the parent is the
+    sub-issue link. Already in use: 66 of noblefactor-ops's 89 open issues carried one on 2026-10-21, created under the
+    owner's account on 2026-10-20 and 2026-10-21, #266 holding 43 under #142. Still unverified: whether the link crosses
+    into another repository or another owner's, which the write test settles; until it does, the marker stays as the
+    cross-repository form. **Tested 2026-10-22, on the owner's "we need to test that now":** the link crosses both.
+    noblefactor-ops#355, a closed duplicate, took NobleFactor/devlore-cli#918 and David-Noble-at-work/personal#157 as
+    sub-issues, both read back, both removed; recorded on #355. Closed.
+16. **Organization, then teams, then repositories**, added and ruled 2026-10-22: "I would like as much as possible to
+    be drawn from the org: NobleFactor by default. We then look to teams, and finally repositories." Types, projects and
+    the participation property are the organization's; ownership and the triage role are a team's; labels are a
+    repository's, so they get the precedence in the asset's three tiers.
+    [Section 4](../../architecture/issue-data-model/4-storage-and-reach.md) § Where each part is defined. A custom
+    property marking participating repositories, and a version of the model, were proposed and set aside the same
+    day: "Versioning is too complex. ... I don't think we need to worry about who's participating. We ask that
+    question when we need to know: when building and reporting on schedules and threads or creating a new issue."
+15. **The asset and its sync**, added and ruled 2026-10-22: the model travels as `model.yaml` beside the extension and
+    drives it; `star gh model pull` rewrites the asset from GitHub's record and `push` brings a repository's labels to
+    the asset; every `star gh issues` operation reads the record first, by ETag. The owner: "Use the etag. Offer pull
+    and push as star gh commands." Then, of the proposed syntax and file: "That's great. Doc it."
+    [Section 6](../../architecture/issue-data-model/6-the-asset-and-its-sync.md).
 14. **GitHub's issue fields NobleFactor already has:** Priority, Effort, Start date and Target date. None reaches
     personal. Proposed: Priority as labels, one record of it; the other three outside the model until a need appears.
