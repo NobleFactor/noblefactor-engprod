@@ -127,6 +127,12 @@ Invoke-Psmux -Argument @('kill-session', '-t', $viewer)
 Without `--detach` or `-Detach`, the keys go to the viewer pane of the tmux or psmux session the launch opens anyway,
 so nothing extra opens.
 
+On Windows, a running session is renamed only when a terminal is attached, that is, without `-Detach`: with no client
+attached to its psmux session, claude's viewer takes no keys from `send-keys`, though a pwsh prompt, a raw console
+reader and node in raw mode there all do (anthropics/claude-code#104688, seen on danoble-wd11-3 2026-10-23). A
+`-Detach` launch leaves a running session's name to its next wake. The owner, 2026-10-23: "Yes, rename only when a
+terminal is attached."
+
 ### Requirement 3: the cases
 
 In `tests/Test-StartClaude` and `tests/Test-StartClaude.ps1`. The stand-in claude starts a copy when a wake carries a
@@ -162,8 +168,10 @@ Then #260's requirement 4, lane 5's acceptance, runs again.
 
 ### Phase 2: The code and the cases
 
-- [ ] psmux's `capture-pane` and `send-keys`, proved on danoble-wd11-3 with a throwaway session before Start-Claude.ps1
-  uses them. If they fail, the work stops here for a replan with the owner.
+- [x] psmux's `capture-pane` and `send-keys`, proved on danoble-wd11-3 with a throwaway session before Start-Claude.ps1
+  uses them. If they fail, the work stops here for a replan with the owner. Done 2026-10-23: `capture-pane` works, and
+  `send-keys` reaches claude's viewer only with a client attached, so the work stopped and was replanned: requirement
+  2's Windows paragraph. Filed as anthropics/claude-code#104688.
 - [ ] Open question 4, checked again: a session mid-turn whose viewer is killed right after the keys, watched until
   its turn ends. A bug is filed if it still reads `working` long after its twin finishes.
 - [ ] Requirements 1 to 3: `make check`, and every test on Danoble-MBP-A, danoble-ud24-1 and danoble-wd11-3 through
@@ -208,6 +216,7 @@ noblefactor-ops, is renamed by its next launch.
   which added the flag
 - NobleFactor/noblefactor-engprod#341, lane 16: a wake after `/clear`, the same wake
 - anthropics/claude-code#104658: a flag on `claude --bg --resume` of a stopped session starts a copy, which fails
+- anthropics/claude-code#104688: on Windows, `claude attach` in a psmux pane with no client attached takes no keys
 - [1. Session model](../../architecture/agent-schedule/1-session-model.md), item 3 of a start
 
 ## Open Questions
@@ -217,8 +226,9 @@ noblefactor-ops, is renamed by its next launch.
 2. **Which issue holds the rename of a running session?** Ruled 2026-10-23: #384. The owner: "We don't need two bugs.
    Just the one in the current tree."
 3. **Start-Claude.ps1.** Ruled 2026-10-23: it does the same, through psmux. The owner: "Do the same for
-   start-claude.ps1." psmux's `capture-pane` and `send-keys` are untested on danoble-wd11-3, so phase 2 proves them
-   first.
+   start-claude.ps1." Phase 2 then found that claude's viewer on Windows takes keys only with a client attached.
+   Ruled the same day: on Windows, a running session is renamed only when a terminal is attached. The owner: "Yes,
+   rename only when a terminal is attached."
 4. **A session that read `working` for two minutes.** In the test whose viewer was killed right after the keys, the
    session still read `working` 120 seconds later, when its twin, viewer kept open, finished the same turn in 20.
    Unexplained. Ruled 2026-10-23: phase 2 checks it again, and a bug is filed if it repeats. The owner: "Yes".
