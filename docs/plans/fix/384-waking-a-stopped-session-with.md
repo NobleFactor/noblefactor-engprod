@@ -157,7 +157,8 @@ Then #260's requirement 4, lane 5's acceptance, runs again.
 
 ### Phase 1: The plan
 
-- [ ] This plan, committed on its branch, and reviewed with the owner.
+- [x] This plan, committed on its branch as bcfc25f on 2026-10-23, and reviewed with the owner the same day, one
+  question at a time. Asked whether to start phase 2, the owner: "Yes".
 
 ### Phase 2: The code and the cases
 
