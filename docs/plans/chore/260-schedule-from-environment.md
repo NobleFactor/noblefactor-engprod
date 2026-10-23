@@ -1,7 +1,7 @@
 ---
 title: "A session reads its schedule and its link from its environment, and keeps the name Start-Claude gives it"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/260
-status: draft
+status: approved
 created: 2026-10-21
 updated: 2026-10-21
 ---
@@ -80,7 +80,8 @@ from the commands the pull request's script prints.
 
 ### Phase 1: The plan
 
-- [ ] This plan, committed on its branch and reviewed with the owner.
+- [x] This plan, committed on its branch as 4d1ab1a on 2026-10-21, and reviewed with the owner the same day. Given
+  its summary, the owner said: "Continue".
 
 ### Phase 2: The skill and the name
 
