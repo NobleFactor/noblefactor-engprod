@@ -543,6 +543,13 @@ terminal or without, and the conversation is available on this host: reach it
 through Remote Control under its name, or open it later by running the same
 command without
 .BR \-\-detach .
+A schedule's session that claude lists under a name other than the launch's is
+renamed to it with
+.BR /rename :
+a stopped one as its wake's first prompt, a running one in a viewer that
+Start-Claude opens and closes. Without
+.BR \-\-detach ,
+the rename is typed into the viewer the terminal attaches to.
 After
 .BR "\-\-schedule new" ,
 which that command would run again, Start-Claude prints the command to run

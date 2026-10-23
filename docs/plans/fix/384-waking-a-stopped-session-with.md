@@ -131,7 +131,9 @@ On Windows, a running session is renamed only when a terminal is attached, that 
 attached to its psmux session, claude's viewer takes no keys from `send-keys`, though a pwsh prompt, a raw console
 reader and node in raw mode there all do (anthropics/claude-code#104688, seen on danoble-wd11-3 2026-10-23). A
 `-Detach` launch leaves a running session's name to its next wake. The owner, 2026-10-23: "Yes, rename only when a
-terminal is attached."
+terminal is attached." Then, of the `-Detach` rename: "We do this on Unix. We write the code on Windows. We guard
+against running it without an environment variable set." The variable is `NFEP_AGENT_SCHEDULE_DETACHED_RENAME`: set,
+Start-Claude.ps1 renames a running session through a viewer no client attaches.
 
 ### Requirement 3: the cases
 
@@ -139,9 +141,11 @@ In `tests/Test-StartClaude` and `tests/Test-StartClaude.ps1`. The stand-in claud
 flag, as claude does, takes a first prompt, and its `attach` draws `❯` and records the lines typed into it:
 
 - a `--detach` wake of a stopped session carries no flag and the prompt `/rename <the launch's name>`, and wakes the
-  session itself;
-- a running session listed under another name gets `/rename <the launch's name>` typed, with `--detach` and without;
-- a running session listed under the launch's name gets nothing typed.
+  session itself; listed under the launch's name, it carries no prompt;
+- on macOS and Linux, a running session listed under another name gets `/rename <the launch's name>` typed, with
+  `--detach` and without; listed under the launch's name, it gets nothing typed;
+- on Windows, a `-Detach` launch onto a running session listed under another name leaves it as it is, without
+  `NFEP_AGENT_SCHEDULE_DETACHED_RENAME`.
 
 ### Requirement 4: the words
 
@@ -174,13 +178,19 @@ Then #260's requirement 4, lane 5's acceptance, runs again.
   2's Windows paragraph. Filed as anthropics/claude-code#104688.
 - [ ] Open question 4, checked again: a session mid-turn whose viewer is killed right after the keys, watched until
   its turn ends. A bug is filed if it still reads `working` long after its twin finishes.
-- [ ] Requirements 1 to 3: `make check`, and every test on Danoble-MBP-A, danoble-ud24-1 and danoble-wd11-3 through
-  `make test HOSTS="..."`, in a script the owner runs. The tests run git, `git init` among it, so the run is asked for
-  by name (agent-rules.md, rule 17).
+- [x] Requirements 1 to 3: `make check`, and every test on Danoble-MBP-A, danoble-ud24-1 and danoble-wd11-3. Done
+  2026-10-23: `make check` on Danoble-MBP-A, `tests/Test-StartClaude` there and on danoble-ud24-1, and
+  `tests/Test-StartClaude.ps1` on danoble-wd11-3, each run directly rather than through `make test HOSTS="..."`, since
+  the owner had the agent run them. Every case passed; on danoble-wd11-3 the attached case was skipped, since ssh gave
+  it no console, and with `NFEP_AGENT_SCHEDULE_DETACHED_RENAME` set the Windows rename case was skipped too, since a
+  psmux server was running there. Without the variable, its place is the case that leaves a running session be, which
+  passed. The attached case on macOS and Linux first failed for a fault of the harness's own: script(1), given
+  no input, hands the attached client an end of input, which reached the stand-in viewer as an empty line. The
+  stand-in reads past it.
 
 ### Phase 3: The words
 
-- [ ] Requirement 4.
+- [x] Requirement 4, 2026-10-23, in the commit with the code (agent-rules.md, rule 12).
 
 ### Phase 4: Closure
 
@@ -228,7 +238,8 @@ noblefactor-ops, is renamed by its next launch.
 3. **Start-Claude.ps1.** Ruled 2026-10-23: it does the same, through psmux. The owner: "Do the same for
    start-claude.ps1." Phase 2 then found that claude's viewer on Windows takes keys only with a client attached.
    Ruled the same day: on Windows, a running session is renamed only when a terminal is attached. The owner: "Yes,
-   rename only when a terminal is attached."
+   rename only when a terminal is attached." Then the `-Detach` rename is written for Windows too, behind
+   `NFEP_AGENT_SCHEDULE_DETACHED_RENAME`: "We guard against running it without an environment variable set."
 4. **A session that read `working` for two minutes.** In the test whose viewer was killed right after the keys, the
    session still read `working` 120 seconds later, when its twin, viewer kept open, finished the same turn in 20.
    Unexplained. Ruled 2026-10-23: phase 2 checks it again, and a bug is filed if it repeats. The owner: "Yes".

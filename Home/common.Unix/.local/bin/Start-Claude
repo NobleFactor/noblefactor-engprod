@@ -788,42 +788,127 @@ function start_background {
 }
 
 # wake_background starts a stopped background session again, for --detach, under its own id and with the options it
-# was started with: `claude --bg --resume` of its conversation's full id wakes it (seen 2026-10-15). It passes the
-# launch's name too, since a session woken without one shows its name only while it runs, read from its transcript, and
-# none once it stops (seen 2026-10-21): the title holds everywhere (NobleFactor/noblefactor-ops#260, requirement 3).
-# Without --detach, the viewer's `claude attach` starts it.
+# was started with, its name among them: `claude --bg --resume` of its conversation's full id wakes it (seen
+# 2026-10-15 and 2026-10-23). It passes no flag: given one, `--name` included, claude starts a copy under a new id,
+# which fails, and the session stays stopped (NobleFactor/noblefactor-engprod#384; anthropics/claude-code#104658). A
+# name the session must take goes as its first prompt, `/rename <name>`, which claude runs in the session it wakes
+# (seen 2026-10-23). Without --detach, the viewer's `claude attach` starts it.
 #
 # Its note passes on claude's line that begins "backgrounded", its word that the session runs again, or else claude's
 # first line: when claude starts its background service first, its first line is "Starting background service" (seen
 # 2026-10-16; personal#273's plan, question 7).
 #
 # Parameters:
-#   - none: the session is `background_id`, and its conversation `background_session`.
+#   - `$1`: `/rename <name>`, or nothing when claude lists the session under the launch's name. The session is
+#     `background_id`, and its conversation `background_session`.
 #
 # Returns:
 #   - 0; it does not return when claude wakes nothing: the script exits 69, EX_UNAVAILABLE.
 function wake_background {
-    local output said
+    local rename="$1" output said
+    local -a argument_list=(--bg --resume "$background_session")
 
-    output="$("$claude_binary" --bg --resume "$background_session" --name "$session_name" </dev/null 2>&1 9>&-)" ||
+    [[ -z $rename ]] || argument_list+=("$rename")
+    output="$("$claude_binary" "${argument_list[@]}" </dev/null 2>&1 9>&-)" ||
         error $EX_UNAVAILABLE "claude did not start background session ${background_id} again: ${output//$'\n'/ }"
     said="$(sed -n '/^backgrounded/{p;q;}' <<<"$output")"
     note "claude: ${said:-${output%%$'\n'*}}"
+}
+
+## The session's name
+
+# background_name_of prints the name claude lists for a background session, read from claude's list afresh: a name
+# compares whole, and a field of `instances`, split at tabs, would not keep an empty one.
+#
+# Parameters:
+#   - `$1`: the background session's short id.
+#
+# Returns:
+#   - 0, printing nothing when claude lists no such session, or lists it with no name.
+function background_name_of {
+    "$claude_binary" agents --json --all </dev/null 2>/dev/null 9>&- |
+        jq --raw-output --arg id "$1" '.[] | select(.kind == "background" and .id == $id) | .name // ""' \
+            2>/dev/null || true
+}
+
+# wait_for_input waits for the viewer in a tmux pane to draw its input line, `❯`, from which it takes keys: within a
+# second of `claude attach` starting (seen 2026-10-23).
+#
+# Parameters:
+#   - `$1`: the pane, or the tmux session whose pane it is.
+#
+# Returns:
+#   - 0 once the line is drawn; 1 when it is not, within 30 seconds.
+function wait_for_input {
+    local pane="$1" deadline=$((SECONDS + 30)) screen
+
+    # The screen is matched in the shell: grep -q, ending at its match, can leave tmux writing into a closed pipe, and
+    # pipefail would then take tmux's SIGPIPE for the pipeline's failure.
+    while ((SECONDS < deadline)); do
+        screen="$(tmux capture-pane -p -t "$pane" 2>/dev/null)" || screen=""
+        [[ $'\n'"$screen" != *$'\n❯'* ]] || return 0
+        sleep 0.1
+    done
+
+    return 1
+}
+
+# rename_running renames a background session claude runs under another name than the launch's, for --detach (#384,
+# requirement 2). claude sends a running session no prompt from a command line that begins with /, and starts a copy
+# for `--bg` (the sessions guide, "Resume a running background session"; seen 2026-10-23), so the launch types
+# `/rename <name>` into a viewer of its own, a tmux session no client attaches, and ends the viewer once claude lists
+# the name. A viewer that never draws its input line, or a name claude has not taken within ten seconds, leaves the
+# session as it is, with a note, and the launch goes on.
+#
+# Parameters:
+#   - `$1`: `/rename <name>`. The session is `background_id`.
+#
+# Returns:
+#   - 0.
+function rename_running {
+    local rename="$1" viewer deadline
+
+    # tmux runs without descriptor 9: a server it starts would hold the store's lock (question 53).
+    viewer="$(tmux new-session -d -P -F '#{session_id}' -c "$startup_directory" -- \
+        "$claude_binary" attach "$background_id" 9>&-)" || {
+        note "Background session ${background_id} keeps its name: tmux opened no viewer to rename it in."
+        return 0
+    }
+
+    if wait_for_input "$viewer"; then
+        tmux send-keys -t "$viewer" "$rename" Enter 2>/dev/null || true
+        deadline=$((SECONDS + 10))
+
+        while ((SECONDS < deadline)) && [[ "$(background_name_of "$background_id")" != "$session_name" ]]; do
+            sleep 0.2
+        done
+    fi
+
+    tmux kill-session -t "$viewer" 2>/dev/null || true
+
+    if [[ "$(background_name_of "$background_id")" == "$session_name" ]]; then
+        note "Renamed background session ${background_id} to ${session_name}"
+    else
+        note "Background session ${background_id} keeps its name: claude did not take ${rename} in a viewer."
+    fi
 }
 
 ## The workspace
 
 # open_workspace opens a new tmux session onto the launch's background session, and attaches to it: the viewer,
 # `claude attach`, beside a shell that carries the schedule's variables, which the viewer has no need of (requirement
-# 21). Leaving the viewer ends the tmux session; claude runs the background session on.
+# 21). Leaving the viewer ends the tmux session; claude runs the background session on. A session claude lists under
+# another name than the launch's is renamed in the viewer, `/rename <name>` typed once the viewer takes keys, while
+# the terminal attaches (#384, requirement 2).
 #
 # Parameters:
-#   - none: the background session is `background_id`.
+#   - `$1`: `/rename <name>`, or nothing when claude lists the session under the launch's name. The background session
+#     is `background_id`.
 #
 # Returns:
 #   - it does not return: it attaches, as attach_to does.
 function open_workspace {
-    local session_id viewer_pane
+    local rename="$1" session_id viewer_pane
     local -a environment_argument_list=()
 
     if [[ ${schedule_key:-} ]]; then
@@ -860,11 +945,23 @@ function open_workspace {
     # The session exists, and is handed over: the exit handler leaves it.
     made_session=""
 
+    # The keys go in the background, so that the terminal attaches meanwhile, and without descriptor 9, so that the
+    # store's lock ends with the attach.
+    if [[ $rename ]]; then
+        { wait_for_input "$viewer_pane" && tmux send-keys -t "$viewer_pane" "$rename" Enter; } \
+            </dev/null >/dev/null 2>&1 9>&- &
+    fi
+
     attach_to "$session_id"
 }
 
 # arrive ends the launch at its background session: with --detach, the session runs, started again when it was stopped,
 # and nothing more opens; otherwise a new tmux session opens onto it (requirement 21).
+#
+# A schedule's session carries the launch's name (#260, requirement 3). One claude lists under another name is renamed
+# with `/rename <name>`, never with a flag on the wake (#384): as the wake's first prompt when it is stopped, typed
+# into a viewer when it runs. A session this launch started has the name already, and one on no schedule keeps its
+# own.
 #
 # Parameters:
 #   - none.
@@ -872,12 +969,24 @@ function open_workspace {
 # Returns:
 #   - it does not return: the script exits 0, or attaches.
 function arrive {
+    local rename=""
+
+    if [[ ${schedule_key:-} && -n $background_state ]] &&
+        [[ "$(background_name_of "$background_id")" != "$session_name" ]]; then
+        rename="/rename ${session_name}"
+    fi
+
     if ((detach)); then
-        [[ $background_state != stopped ]] || wake_background
+        if [[ $background_state == stopped ]]; then
+            wake_background "$rename"
+        elif [[ $rename ]]; then
+            rename_running "$rename"
+        fi
+
         leave_detached
     fi
 
-    open_workspace
+    open_workspace "$rename"
 }
 
 # Set before the arguments are read, as the helper asks.

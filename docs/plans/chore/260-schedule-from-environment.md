@@ -68,6 +68,12 @@ Start-Claude and Start-Claude.ps1 pass the session's name with `--name` on every
 resume, and a wake. A case in both test scripts proves the wake passes it. The owner, 2026-10-21: "The titles are a
 significant organizational assist for me." Then: "Yes, make the title hold everywhere."
 
+Changed 2026-10-23 by NobleFactor/noblefactor-engprod#384: `--name` on a wake made claude start a copy, which failed,
+and this plan's acceptance failed on it. The wake now passes no flag, the session's name goes as its first prompt,
+`/rename <name>`, and a running session is renamed in a viewer
+([384-waking-a-stopped-session-with.md](../fix/384-waking-a-stopped-session-with.md)). Phase 3 runs again once #384
+is deployed.
+
 ### Requirement 4: acceptance
 
 Row 4 of David-Noble-at-work/personal#259's plan, moved to this issue on 2026-10-14: a session Start-Claude starts on a

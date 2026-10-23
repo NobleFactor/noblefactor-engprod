@@ -27,8 +27,10 @@ deploy.
 - [x] On Windows, Start-Claude.ps1 on psmux, with the four differences psmux needs (personal#273's plan, requirement
   4): built on personal#273's branch 2026-10-17 to 19, and tested on danoble-wd11-3, test plan rows 1 to 3 and 10 to
   12; the rest of its tests are its test scripts', under `tests/`.
-- [x] The title holds everywhere: a `--detach` wake of a stopped session passes the launch's name, in both scripts,
-  and a case in both test scripts proves it (NobleFactor/noblefactor-ops#260, requirement 3).
+- [x] The title holds everywhere (NobleFactor/noblefactor-ops#260, requirement 3), by `/rename` since
+  NobleFactor/noblefactor-engprod#384: a `--detach` wake passes no flag and gives the launch's name as its first
+  prompt, and a running session is renamed in a viewer, on Windows only with a console attached; cases in both test
+  scripts prove it.
 - [x] The schedule's variables read: `star-gh-assignment` answers with `NFEP_AGENT_SCHEDULE`, and with the session's
   name only when it is unset, and gives the link from `NFEP_AGENT_SCHEDULE_URL` or the key (#260, requirements 1 and
   2).

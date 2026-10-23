@@ -27,6 +27,10 @@
     The attached case needs psmux, a console, and no psmux server running: a pane finds claude on its server's PATH, so
     on a server started before the run its viewer would not be the stand-in. Otherwise it is skipped, and says why.
 
+    With NFEP_AGENT_SCHEDULE_DETACHED_RENAME set, as for Start-Claude.ps1, a case that renames a running session through
+    a viewer no client attaches takes the place of the one that leaves it be, and needs psmux and no psmux server
+    running, as the attached case does (#384).
+
 .EXAMPLE
     pwsh -NoProfile -File tests\Test-StartClaude.ps1
 #>
@@ -105,15 +109,55 @@ function Write-Utf8Line {
 switch ($arguments[0]) {
     'agents' {
         $state = if ($env:STAND_IN_STATE) { $env:STAND_IN_STATE } else { 'running' }
+        $name = $env:STAND_IN_NAME
+        $renamed = Join-Path -Path $env:STAND_IN_DIR -ChildPath 'renamed'
+
+        if (Test-Path -LiteralPath $renamed -PathType Leaf) {
+            $name = Get-Content -LiteralPath $renamed -Raw -Encoding utf8
+        }
+
         $session = [ordered]@{
             id = $env:STAND_IN_ID; cwd = $env:STAND_IN_CWD; kind = 'background'; startedAt = 1760000000000
-            sessionId = $env:STAND_IN_SESSION; name = $env:STAND_IN_NAME; state = $state
+            sessionId = $env:STAND_IN_SESSION; name = $name; state = $state
         }
         Write-Utf8Line (ConvertTo-Json -InputObject @($session) -Compress)
         exit 0
     }
     'attach' {
-        Start-Sleep -Seconds 1
+        # It draws its input line and takes one line typed into it, two seconds at most, then leaves; a /rename it
+        # takes renames the session, as claude does, through renamed in STAND_IN_DIR (#384).
+        Write-Utf8Line ([string][char]0x276F + ' ')
+        $deadline = (Get-Date).AddSeconds(2)
+
+        try {
+
+            while ((Get-Date) -lt $deadline) {
+
+                if ([Console]::KeyAvailable) {
+                    $line = [Console]::ReadLine()
+
+                    if ($line) {
+                        Add-Content -LiteralPath (Join-Path -Path $env:STAND_IN_DIR -ChildPath 'typed') -Encoding utf8 `
+                            -Value $line
+                    }
+
+                    if ($line -and $line.StartsWith('/rename ')) {
+                        Set-Content -LiteralPath (Join-Path -Path $env:STAND_IN_DIR -ChildPath 'renamed') `
+                            -Encoding utf8 -NoNewline -Value $line.Substring('/rename '.Length)
+                    }
+
+                    break
+                }
+
+                Start-Sleep -Milliseconds 100
+            }
+
+        }
+        catch [InvalidOperationException] {
+            # No console to read keys from: it leaves after a second, as before.
+            Start-Sleep -Seconds 1
+        }
+
         exit 0
     }
     '--bg' {
@@ -131,6 +175,16 @@ switch ($arguments[0]) {
 
         if ($index -ge 0) {
             $started = [String]$arguments[$index + 1]
+        }
+
+        # A flag on a wake of the listed session starts a copy, as claude does (anthropics/claude-code#104658).
+        $flags = @($arguments | Select-Object -Skip ($index + 2) | Where-Object { ([String]$_).StartsWith('-') })
+
+        if ($index -ge 0 -and $flags.Count -gt 0 -and ($started -ceq $env:STAND_IN_ID -or
+                $started -ceq $env:STAND_IN_SESSION)) {
+            $note = "note: background session $env:STAND_IN_ID keeps its own saved options, so the flags you passed"
+            Write-Utf8Line "$note started a copy as cccc0000."
+            $started = 'cccc0000'
         }
 
         $short = $started.Substring(0, 8)
@@ -342,13 +396,16 @@ function Invoke-StartClaudeCase {
     return ConvertTo-CaseResult -Name $Name -Problem $problem
 }
 
-# Clear-TestStore removes every entry in the run's store, so that a case begins with no schedule's session recorded.
+# Clear-TestStore removes every entry in the run's store, so that a case begins with no schedule's session recorded,
+# and the stand-in's record of what was typed into its viewer and the name it took.
 function Clear-TestStore {
     [CmdletBinding()]
     param()
 
     Remove-Item -LiteralPath (Join-Path -Path $env:XDG_STATE_HOME -ChildPath 'agent-schedule') -Recurse -Force `
         -ErrorAction Ignore
+    Remove-Item -LiteralPath (Join-Path -Path $env:STAND_IN_DIR -ChildPath 'typed'),
+        (Join-Path -Path $env:STAND_IN_DIR -ChildPath 'renamed') -Force -ErrorAction Ignore
 }
 
 # Write-TestStoreEntry records a session as schedule 7's, as Start-Claude.ps1 records one.
@@ -367,13 +424,18 @@ function Write-TestStoreEntry {
     Set-Content -LiteralPath (Join-Path -Path $script:store -ChildPath '7') -Encoding ascii -Value $Id
 }
 
-# Invoke-WakeCase runs a -Detach launch of schedule 7, whose entry holds the stand-in's session, listed stopped, as
-# Invoke-StartClaudeCase runs one, then checks the claude --bg that woke it: the wake must carry the launch's name, the
-# schedule's key first and its title last, so that the session keeps its title (NobleFactor/noblefactor-ops#260,
-# requirement 3).
+# Invoke-WakeCase runs a -Detach launch of schedule 7, whose entry holds the stand-in's session, listed under a name, as
+# Invoke-StartClaudeCase runs one, then checks the claude --bg it ran (#384). Listed stopped, the session is woken with
+# no flag, which would start a copy, and with /rename and the launch's name, the schedule's key first and its title
+# last, as the wake's first prompt when the listed name is another, or no prompt when it is the launch's. Listed
+# running, it is not woken, and without NFEP_AGENT_SCHEDULE_DETACHED_RENAME nothing renames it. The first case keeps
+# the launch's name, from the prompt, for the cases after it.
 #
 # Parameters:
 #   - `Name`: The case's name.
+#   - `Listed`: The name the stand-in lists the session under.
+#   - `State`: The state the stand-in lists it in: stopped, or running.
+#   - `Expected`: What the wake's prompt must be: rename, or none; for a running session, none.
 #
 # Returns:
 #   - PSCustomObject: the case's result, as ConvertTo-CaseResult makes it.
@@ -383,15 +445,31 @@ function Invoke-WakeCase {
     param(
         [Parameter(Mandatory)]
         [String]
-        $Name
+        $Name,
+
+        [Parameter(Mandatory)]
+        [AllowEmptyString()]
+        [String]
+        $Listed,
+
+        [Parameter(Mandatory)]
+        [ValidateSet('stopped', 'running')]
+        [String]
+        $State,
+
+        [Parameter(Mandatory)]
+        [ValidateSet('rename', 'none')]
+        [String]
+        $Expected
     )
 
     $log = Join-Path -Path $env:XDG_STATE_HOME -ChildPath 'claude-bg.log'
     Clear-TestStore
     Write-TestStoreEntry -Id 'abcd1234'
     Set-Content -LiteralPath $log -Encoding utf8 -Value @()
-    $env:STAND_IN_STATE = 'stopped'
+    $env:STAND_IN_STATE = $State
     $env:STAND_IN_LOG = $log
+    $env:STAND_IN_NAME = $Listed
 
     try {
         $result = Invoke-StartClaudeCase -Name $Name -Expected 'abcd1234' -CheckStore -Held 'abcd1234' `
@@ -400,6 +478,7 @@ function Invoke-WakeCase {
     finally {
         $env:STAND_IN_STATE = $null
         $env:STAND_IN_LOG = $null
+        $env:STAND_IN_NAME = 'probe session'
     }
 
     $problem = if ($result.Result -ceq 'failed') { "$($result.Detail); " } else { '' }
@@ -407,20 +486,40 @@ function Invoke-WakeCase {
     $woke = @(Get-Content -LiteralPath $log -Encoding utf8 -ErrorAction Ignore) |
         Where-Object { $_.Split($separator) -ccontains '--resume' } | Select-Object -Last 1
 
-    if (-not $woke) {
-        $problem += 'no claude --bg --resume woke the stopped session; '
-    }
-    else {
-        $field = $woke.Split($separator)
-        $at = [Array]::IndexOf($field, '--name')
-        $wakeName = if ($at -ge 0 -and $at + 1 -lt $field.Count) { $field[$at + 1] } else { '' }
-        $keyFirst = $wakeName.StartsWith('example/start-claude-test#7 | ', [StringComparison]::Ordinal)
-        $titleLast = $wakeName.EndsWith(' | Schedule: probe', [StringComparison]::Ordinal)
+    if ($State -ceq 'running') {
 
-        if (-not ($keyFirst -and $titleLast)) {
-            $problem += "the wake was named '$wakeName', not the launch's name; "
+        if ($woke) {
+            $problem += "a running session was woken: $($woke.Replace($separator, ' ')); "
         }
 
+        return ConvertTo-CaseResult -Name $Name -Problem $problem
+    }
+
+    if (-not $woke) {
+        $problem += 'no claude --bg --resume woke the stopped session; '
+        return ConvertTo-CaseResult -Name $Name -Problem $problem
+    }
+
+    # The stand-in's record: --bg, --resume, the conversation, then what the wake gave beyond them.
+    $field = $woke.Split($separator)
+
+    foreach ($extra in @($field | Select-Object -Skip 3 | Where-Object { $_.StartsWith('-') })) {
+        $problem += "the wake carried $extra, which starts a copy; "
+    }
+
+    $prompt = if ($field.Count -gt 3) { $field[3] } else { '' }
+    $keyFirst = $prompt.StartsWith('/rename example/start-claude-test#7 | ', [StringComparison]::Ordinal)
+    $titleLast = $prompt.EndsWith(' | Schedule: probe', [StringComparison]::Ordinal)
+
+    if ($Expected -ceq 'none' -and $prompt) {
+        $problem += "the wake's prompt was '$prompt', where claude lists the launch's name; "
+    }
+    elseif ($Expected -ceq 'rename' -and -not ($keyFirst -and $titleLast)) {
+        $problem += "the wake's prompt was '$prompt', not /rename with the launch's name; "
+    }
+
+    if ($Expected -ceq 'rename' -and -not $script:launchName) {
+        $script:launchName = $prompt.Substring('/rename '.Length)
     }
 
     return ConvertTo-CaseResult -Name $Name -Problem $problem
@@ -447,6 +546,53 @@ function Invoke-ProcessCase {
 
     if ($output.Count -ne 0) {
         $problem += "its output was [$($output -join '|')]; "
+    }
+
+    return ConvertTo-CaseResult -Name $Name -Problem $problem
+}
+
+# Invoke-DetachedRenameCase runs a -Detach launch of schedule 7 onto the stand-in's session, listed running under
+# another name than the launch's, with NFEP_AGENT_SCHEDULE_DETACHED_RENAME set, then checks what was typed into the
+# viewer the launch opened for it: /rename with the launch's name (#384, requirement 2). Like the attached case it needs
+# psmux and no psmux server running, since a pane finds claude on its server's PATH; otherwise it is skipped, and says
+# why.
+#
+# Parameters:
+#   - `Name`: The case's name.
+#
+# Returns:
+#   - PSCustomObject: the case's result, as ConvertTo-CaseResult makes it.
+function Invoke-DetachedRenameCase {
+    [CmdletBinding()]
+    [OutputType([PSCustomObject])]
+    param(
+        [Parameter(Mandatory)]
+        [String]
+        $Name
+    )
+
+    if (-not $script:psmux) {
+        return ConvertTo-CaseResult -Name $Name -Skipped -Problem 'no psmux on this machine'
+    }
+
+    $null = & tmux list-sessions 2>$null
+
+    if ($LASTEXITCODE -eq 0) {
+        $reason = "a psmux server is running, whose panes find claude on the server's own PATH, not the stand-in: "
+        $reason += 'end its sessions and run again to include this case'
+        return ConvertTo-CaseResult -Name $Name -Skipped -Problem $reason
+    }
+
+    Clear-TestStore
+    Write-TestStoreEntry -Id 'abcd1234'
+    $result = Invoke-StartClaudeCase -Name $Name -Expected 'abcd1234' -CheckStore -Held 'abcd1234' `
+        -Parameter @{ Schedule = '7'; Detach = $true }
+    $problem = if ($result.Result -ceq 'failed') { "$($result.Detail); " } else { '' }
+    $typedPath = Join-Path -Path $env:STAND_IN_DIR -ChildPath 'typed'
+    $typed = @(Get-Content -LiteralPath $typedPath -Encoding utf8 -ErrorAction Ignore) -join '|'
+
+    if ($typed -cne "/rename $script:launchName") {
+        $problem += "'$typed' was typed into a viewer, not /rename with the launch's name; "
     }
 
     return ConvertTo-CaseResult -Name $Name -Problem $problem
@@ -516,11 +662,14 @@ $run = Join-Path -Path ([IO.Path]::GetTempPath()) -ChildPath "Test-StartClaude-$
 $script:repository = Join-Path -Path $run -ChildPath 'repository'
 $script:clone = Join-Path -Path $run -ChildPath 'clone'
 $script:store = Join-Path -Path $run -ChildPath 'state\agent-schedule\example\start-claude-test'
+
+# The launch's name, as the first wake case finds it in the wake's prompt, for the cases after it.
+$script:launchName = ''
 $projects = Join-Path -Path $run -ChildPath 'config\projects\test-project'
 $saved = @{}
 
 foreach ($name in 'PATH', 'XDG_STATE_HOME', 'CLAUDE_CONFIG_DIR', 'STAND_IN_ID', 'STAND_IN_SESSION', 'STAND_IN_NAME',
-    'STAND_IN_CWD', 'STAND_IN_STATE', 'STAND_IN_LOG', 'TMUX') {
+    'STAND_IN_CWD', 'STAND_IN_STATE', 'STAND_IN_LOG', 'STAND_IN_DIR', 'TMUX') {
     $saved[$name] = [Environment]::GetEnvironmentVariable($name)
 }
 
@@ -537,6 +686,7 @@ try {
     $env:STAND_IN_SESSION = 'abcd1234-0000-4000-8000-000000000009'
     $env:STAND_IN_NAME = 'probe session'
     $env:STAND_IN_CWD = $script:repository
+    $env:STAND_IN_DIR = $run
     $env:TMUX = $null
 
     # Every form -Resume takes, and each refusal, one line each: the case, the argument, what it must give (the id, or
@@ -618,8 +768,27 @@ name nothing records | no such name | not-found | ConversationNotFound
     $env:STAND_IN_CWD = $script:repository
     Clear-TestStore
 
-    # A -Detach wake of a stopped session keeps the launch's name (#260, requirement 3).
-    $ways += Invoke-WakeCase -Name "a -Detach wake of a stopped session keeps the launch's name"
+    # A -Detach wake of a stopped session passes no flag, which would start a copy, and gives the launch's name as its
+    # first prompt only when claude lists the session under another (#384; #260, requirement 3).
+    $ways += Invoke-WakeCase `
+        -Name 'a -Detach wake of a stopped session listed under another name renames it with its first prompt' `
+        -Listed 'probe session' -State 'stopped' -Expected 'rename'
+    $ways += Invoke-WakeCase `
+        -Name "a -Detach wake of a stopped session listed under the launch's name passes no prompt" `
+        -Listed $script:launchName -State 'stopped' -Expected 'none'
+
+    # A running one is renamed with -Detach only when NFEP_AGENT_SCHEDULE_DETACHED_RENAME is set, since claude on
+    # Windows takes no keys in a viewer no client attaches (anthropics/claude-code#104688): the cases follow it.
+    if ($env:NFEP_AGENT_SCHEDULE_DETACHED_RENAME) {
+        $ways += Invoke-DetachedRenameCase -Name ('with NFEP_AGENT_SCHEDULE_DETACHED_RENAME, a -Detach launch onto a ' +
+            'running session listed under another name types /rename into a viewer')
+    }
+    else {
+        $ways += Invoke-WakeCase `
+            -Name 'a -Detach launch onto a running session listed under another name leaves it be' `
+            -Listed 'probe session' -State 'running' -Expected 'none'
+    }
+
     Clear-TestStore
 
     foreach ($result in $ways) {
