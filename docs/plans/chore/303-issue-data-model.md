@@ -1,9 +1,9 @@
 ---
 title: "The GitHub issue data model: one hierarchy, its attributes, and the collections that order it"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/303
-status: draft
+status: active
 created: 2026-10-21
-updated: 2026-10-21
+updated: 2026-10-22
 ---
 
 # Plan: The GitHub issue data model: one hierarchy, its attributes, and the collections that order it
@@ -132,6 +132,11 @@ from it, its lanes as rows. Creating organization projects is outward-facing, so
   ride it. The owner, the same day: "You own #301; fix the five lines in your PR."
 
 ### The sweep, from 2026-10-22
+
+Status `active` from the second pull request, 2026-10-22, which takes the rulings of 2026-10-21 and 2026-10-22,
+sections 6 and 7, the first `model.yaml` and iteration 1's progress to develop; the sweep continues past the merge,
+iteration by iteration, and this plan closes with iteration 5.
+
 
 The owner, 2026-10-22, on Phases 2 to 5 as written: "I'm seeing that this will take at least a month to complete in a
 waterfall fashion. We will get a complete design and then stumble and redesign again and again. I might rather sweep
