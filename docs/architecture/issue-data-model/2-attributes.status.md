@@ -7,7 +7,7 @@ title: "2. Attributes — Status"
 **Document:** [2-attributes.md](2-attributes.md)
 **Feature:** [NobleFactor/noblefactor-ops#331](https://github.com/NobleFactor/noblefactor-ops/issues/331)
 **Work:** [NobleFactor/noblefactor-ops#303](https://github.com/NobleFactor/noblefactor-ops/issues/303)
-**State:** Draft, 2026-10-21; for the owner's review, not ruled.
+**State:** Draft, 2026-10-21; for the owner's review in iteration 4, not ruled.
 
 ## Completion
 

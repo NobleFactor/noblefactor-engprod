@@ -167,7 +167,8 @@ read before every operation; the report and the audit reading type and link firs
 - [ ] #304, noblefactor-ops renamed noblefactor-engprod, done early: the owner, 2026-10-22, "bump up the priority of
       the issue for renaming noblefactor-ops as noblefactor-engprod. we might do that before we go much further. it
       will be one less thing to worry about at the end." Its own plan and pull request, before the rollout below
-- [ ] Section 5's deltas and order rewritten to the rulings so far; the status companions of sections 1, 4 and 6 set
+- [x] Section 5's deltas and order rewritten to the rulings so far, each delta with its state; the status companions of
+      sections 1, 3, 4 and 5 set -- 2026-10-22
 - [ ] The tasks filed under #332 and #333: the asset read by the extension, `pull`, the read before every operation,
       the report and audit reading type and link first; the reclassification, #363, as the rollout
 - [ ] Rolled out: every open noblefactor-ops issue typed and linked, the report placing it by type and link, and the

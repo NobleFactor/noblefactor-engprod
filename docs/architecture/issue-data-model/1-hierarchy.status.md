@@ -7,7 +7,8 @@ title: "1. The hierarchy — Status"
 **Document:** [1-hierarchy.md](1-hierarchy.md)
 **Feature:** [NobleFactor/noblefactor-ops#331](https://github.com/NobleFactor/noblefactor-ops/issues/331)
 **Work:** [NobleFactor/noblefactor-ops#303](https://github.com/NobleFactor/noblefactor-ops/issues/303)
-**State:** Draft, 2026-10-21, from the owner's stakes of that day; for the owner's review, not ruled.
+**State:** Ruled in part, 2026-10-22: Type is GitHub's issue type, the parent the sub-issue link, chore a tier-two peer, #142 the
+triage epic, teams triaging their own; question 2, how long a level lives, open. The five types exist in GitHub.
 
 ## Completion
 

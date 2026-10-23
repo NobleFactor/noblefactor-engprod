@@ -7,8 +7,9 @@ title: "3. Collections — Status"
 **Document:** [3-collections.md](3-collections.md)
 **Feature:** [NobleFactor/noblefactor-ops#331](https://github.com/NobleFactor/noblefactor-ops/issues/331)
 **Work:** [NobleFactor/noblefactor-ops#303](https://github.com/NobleFactor/noblefactor-ops/issues/303)
-**State:** Draft, 2026-10-21; for the owner's review, not ruled. Two test projects, made and deleted on 2026-10-20,
-showed that a NobleFactor project holds personal's issues as rows and can be marked as a template.
+**State:** Ruled in part, 2026-10-22: the Triage project is the third collection, one per team; row 0 is the collection's own
+issue, typed Epic. Questions 6 to 9 open for iteration 3. Two test projects, made and deleted on 2026-10-20, showed that a
+NobleFactor project holds personal's issues as rows and can be marked as a template.
 
 ## Completion
 
