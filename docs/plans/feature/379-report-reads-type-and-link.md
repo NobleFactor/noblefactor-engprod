@@ -67,13 +67,13 @@ lists that disagreement; every such case is recorded in this plan as a finding f
 
 ### Phase 1: the plan
 
-- [ ] This plan committed on `feature/379-report-and-the-audit-place-an`, status `approved` with the task list
+- [x] This plan committed on `feature/379-report-and-the-audit-place-an`, status `approved` with the task list -- 2026-10-22
 
 ### Phase 2: the change
 
-- [ ] The fetch, the resolution pass and the three fields; the readers; the three faults
-- [ ] `make check` passes; the five renders compared, every difference traced to a disagreement the audit names
-- [ ] A fixture of one issue with a type and a link and nothing else renders under its parent
+- [x] The fetch, the resolution pass and the three fields; the readers; the three faults -- 2026-10-22
+- [x] `make check` passes; six renders compared, every difference traced to a disagreement the audit names -- 2026-10-22
+- [x] A fixture of one issue with a type and a link, its label disagreeing, renders under its parent -- 2026-10-22
 
 ### Phase 3: the pull request
 
