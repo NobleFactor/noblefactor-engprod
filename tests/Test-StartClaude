@@ -7,8 +7,9 @@
 # each of its refusals, the background session's short id alone on standard output, detached and attached, and the
 # refusals of usage (David-Noble-at-work/personal#273, questions 11 and 12); every way in, with a schedule and without,
 # and row 2 of personal#259's plan, a conversation resumed in another clone that --continue finds there
-# (NobleFactor/noblefactor-ops#322); and a --detach wake of a stopped session, which keeps the launch's name
-# (NobleFactor/noblefactor-ops#260). Test-StartClaude.ps1 runs the same cases, from the same table, against
+# (NobleFactor/noblefactor-ops#322); a --detach wake of a stopped session, which passes no flag and renames the session
+# with its first prompt when claude lists it under another name; and a running session so listed, renamed in a viewer
+# (NobleFactor/noblefactor-engprod#384). Test-StartClaude.ps1 runs the same cases, from the same table, against
 # Start-Claude.ps1 on Windows.
 
 [[ -r "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" ]] || {
@@ -79,12 +80,15 @@ function record_titles {
 #
 # The stand-in for claude lists one background session, abcd1234, named "probe session", whose conversation,
 # abcd1234-0000-4000-8000-000000000009, has no transcript, and the case can change it through the STAND_IN variables:
-# STAND_IN_STATE lists it stopped, and STAND_IN_LOG names a file where each claude --bg it is given is written, one line
-# each, its arguments joined by the unit separator.
-# Its viewer stays a second, then leaves. A background resume answers as claude does, its short id the conversation's
-# first eight characters, and a new conversation comes up as background session fedc4321. The stand-in for gh answers
-# for schedule 7 of the startup repository's origin, and for nothing else. A second clone of the repository, a directory
-# claude lists nothing in, and, in the second clone's own project folder, the newest transcript of all, are row 2's.
+# STAND_IN_STATE lists it stopped, STAND_IN_NAME names it, and STAND_IN_LOG names a file where each claude --bg it is
+# given is written, one line each, its arguments joined by the unit separator.
+# Its viewer draws its input line, takes one line typed into it, writing it to typed under STAND_IN_DIR, and leaves
+# after two seconds at most; a `/rename <name>` it takes renames the session, as claude does, through renamed there. A
+# background resume answers as claude does, its short id the conversation's first eight characters; one of the listed
+# session that carries a flag starts a copy, cccc0000, as claude does (anthropics/claude-code#104658); and a new
+# conversation comes up as background session fedc4321. The stand-in for gh answers for schedule 7 of the startup
+# repository's origin, and for nothing else. A second clone of the repository, a directory claude lists nothing in,
+# and, in the second clone's own project folder, the newest transcript of all, are row 2's.
 #
 # Parameters:
 #   - `$1`: the run's directory.
@@ -113,24 +117,48 @@ function stage {
 #!/usr/bin/env bash
 case "$1" in
     agents)
+        name="${STAND_IN_NAME}"
+        [[ ! -s ${STAND_IN_DIR}/renamed ]] || name="$(cat -- "${STAND_IN_DIR}/renamed")"
         jq --null-input --compact-output --arg id "${STAND_IN_ID}" --arg cwd "${STAND_IN_CWD}" \
-            --arg session "${STAND_IN_SESSION}" --arg name "${STAND_IN_NAME}" \
+            --arg session "${STAND_IN_SESSION}" --arg name "${name}" \
             --arg state "${STAND_IN_STATE:-running}" \
             '[{id: $id, cwd: $cwd, kind: "background", startedAt: 1760000000000, sessionId: $session, name: $name,
                state: $state}]'
         ;;
     attach)
-        sleep 1
+        # It reads on past an empty line: script(1), given no input, hands its terminal an end of input, which
+        # reaches an attached viewer as one.
+        printf '❯ \n'
+        deadline=$((SECONDS + 2))
+        while ((SECONDS < deadline)); do
+            if IFS= read -r -t 1 line && [[ -n ${line} ]]; then
+                printf '%s\n' "${line}" >>"${STAND_IN_DIR}/typed"
+                [[ ${line} != "/rename "* ]] || printf '%s' "${line#/rename }" >"${STAND_IN_DIR}/renamed"
+                break
+            fi
+            sleep 0.1
+        done
         ;;
     --bg)
         [[ -z ${STAND_IN_LOG:-} ]] || (IFS=$'\x1f' && printf '%s\n' "$*") >>"${STAND_IN_LOG}"
         started=fedc4321
+        resumed=""
         while (($#)); do
             [[ $1 != --continue ]] || {
                 printf 'stand-in claude: --bg --continue is not handled\n' >&2
                 exit 1
             }
-            [[ $1 != --resume ]] || started="$2"
+            if [[ $1 == --resume ]]; then
+                started="$2"
+                resumed="$2"
+                shift
+            elif [[ $1 == -* && (${resumed} == "${STAND_IN_ID}" || ${resumed} == "${STAND_IN_SESSION}") ]]; then
+                printf 'note: background session %s keeps its own saved options, so the flags you passed started' \
+                    "${STAND_IN_ID}"
+                printf ' a copy as cccc0000.\n'
+                started=cccc0000
+                break
+            fi
             shift
         done
         printf 'backgrounded · %s\n  claude attach %s\n' "${started:0:8}" "${started:0:8}"
@@ -294,12 +322,14 @@ function run_store_case {
     report "${name}" "${problem}" "${written}"
 }
 
-# clear_store removes every entry in the store, so that a case begins with no schedule's session recorded.
+# clear_store removes every entry in the store, so that a case begins with no schedule's session recorded, and the
+# stand-in's record of what was typed into its viewer and the name it took.
 #
 # Returns:
 #   - 0.
 function clear_store {
     rm -rf -- "${XDG_STATE_HOME}/agent-schedule"
+    rm -f -- "${STAND_IN_DIR}/typed" "${STAND_IN_DIR}/renamed"
 }
 
 # seed_entry records a session as schedule 7's, as Start-Claude records one.
@@ -314,17 +344,21 @@ function seed_entry {
     printf '%s\n' "$1" >"${store}/7"
 }
 
-# run_wake_case runs a --detach launch of schedule 7, whose entry holds the stand-in's session, listed stopped, as
-# probe runs one, then checks the claude --bg that woke it: the wake must carry the launch's name, the schedule's key
-# first and its title last, so that the session keeps its title (NobleFactor/noblefactor-ops#260, requirement 3).
+# run_wake_case runs a --detach launch of schedule 7, whose entry holds the stand-in's session, listed stopped under a
+# name, as probe runs one, then checks the claude --bg that woke it (#384). The wake carries no flag, which would start
+# a copy, and its first prompt is `/rename` with the launch's name, the schedule's key first and its title last, when
+# the listed name is another, or nothing when it is the launch's. The first case sets `launch_name` from the prompt,
+# for the cases after it.
 #
 # Parameters:
 #   - `$1`: the case's name.
+#   - `$2`: the name the stand-in lists the session under.
+#   - `$3`: what the wake's prompt must be: rename, or none.
 #
 # Returns:
 #   - 0, having reported the case.
 function run_wake_case {
-    local name="$1" problem="" written="" woke="" wake_name="" index
+    local name="$1" listed="$2" expected="$3" problem="" written="" woke="" prompt="" index
     local log="${run_directory}/claude-bg.log"
     local -a argument_list=()
     case_count=$((case_count + 1))
@@ -332,22 +366,30 @@ function run_wake_case {
     clear_store
     seed_entry abcd1234
     : >"${log}"
-    export STAND_IN_STATE=stopped STAND_IN_LOG="${log}"
+    export STAND_IN_STATE=stopped STAND_IN_LOG="${log}" STAND_IN_NAME="${listed}"
     probe problem "${repository}" abcd1234 --detach --schedule 7
     unset STAND_IN_STATE STAND_IN_LOG
+    STAND_IN_NAME="probe session"
 
+    # The stand-in's record: --bg, --resume, the conversation, then what the wake gave beyond them.
     woke="$(grep -F -- --resume "${log}" | tail -n 1 || true)"
     IFS=$'\x1f' read -r -a argument_list <<<"${woke}"
 
-    for ((index = 0; index < ${#argument_list[@]}; index++)); do
-        [[ ${argument_list[index]} != --name ]] || wake_name="${argument_list[index + 1]:-}"
+    for ((index = 3; index < ${#argument_list[@]}; index++)); do
+        [[ ${argument_list[index]} != -* ]] || problem+="the wake carried ${argument_list[index]}, which starts a copy; "
     done
+
+    prompt="${argument_list[3]:-}"
 
     if [[ -z ${woke} ]]; then
         problem+="no claude --bg --resume woke the stopped session; "
-    elif [[ ${wake_name} != "example/start-claude-test#7 | "*" | Schedule: probe" ]]; then
-        problem+="the wake was named '${wake_name}', not the launch's name; "
+    elif [[ ${expected} == none && -n ${prompt} ]]; then
+        problem+="the wake's prompt was '${prompt}', where claude lists the launch's name; "
+    elif [[ ${expected} == rename && ${prompt} != "/rename example/start-claude-test#7 | "*" | Schedule: probe" ]]; then
+        problem+="the wake's prompt was '${prompt}', not /rename with the launch's name; "
     fi
+
+    [[ ${expected} != rename || -n ${launch_name} ]] || launch_name="${prompt#/rename }"
 
     [[ "$(cat -- "${store}/7" 2>/dev/null || true)" == abcd1234 ]] ||
         problem+="schedule 7's entry no longer holds abcd1234; "
@@ -355,9 +397,46 @@ function run_wake_case {
     report "${name}" "${problem}" "${written}"
 }
 
+# run_rename_case runs a --detach launch of schedule 7, whose entry holds the stand-in's session, listed running under
+# a name, as probe runs one, then checks what was typed into its viewer (#384, requirement 2): `/rename` with the
+# launch's name when the listed name is another, and nothing when it is the launch's. No viewer may be left on the
+# run's tmux server.
+#
+# Parameters:
+#   - `$1`: the case's name.
+#   - `$2`: the name the stand-in lists the session under.
+#   - `$3`: what must be typed: rename, or none.
+#
+# Returns:
+#   - 0, having reported the case.
+function run_rename_case {
+    local name="$1" listed="$2" expected="$3" problem="" written="" typed remaining
+    case_count=$((case_count + 1))
+
+    clear_store
+    seed_entry abcd1234
+    export STAND_IN_NAME="${listed}"
+    probe problem "${repository}" abcd1234 --detach --schedule 7
+    STAND_IN_NAME="probe session"
+
+    typed="$(cat -- "${STAND_IN_DIR}/typed" 2>/dev/null || true)"
+
+    if [[ ${expected} == none && -n ${typed} ]]; then
+        problem+="'${typed}' was typed into a viewer, where claude lists the launch's name; "
+    elif [[ ${expected} == rename && ${typed} != "/rename ${launch_name}" ]]; then
+        problem+="'${typed}' was typed into a viewer, not /rename with the launch's name; "
+    fi
+
+    remaining="$(tmux -S "${tmux_socket}" list-sessions -F '#{session_name}' 2>/dev/null | tr '\n' ' ' || true)"
+    [[ -z "${remaining}" ]] || problem+="tmux sessions remain: ${remaining}; "
+
+    report "${name}" "${problem}" "${written}"
+}
+
 # run_attached_case runs Start-Claude attached, in a pseudo-terminal of its own, onto the stand-in's background
-# session: the viewer leaves after a second, which ends the tmux session, and the session's short id must then be on
-# standard output, alone, with no tmux session left on the run's server.
+# session: the viewer leaves after the line typed into it, or two seconds, which ends the tmux session, and the
+# session's short id must then be on standard output, alone, with no tmux session left on the run's server. What was
+# typed into the viewer must be `/rename` with the launch's name, or nothing (#384, requirement 2).
 #
 # script(1) gives the pseudo-terminal: util-linux's, which knows --version, takes the command with -c and runs it with
 # $SHELL, set here to this bash, since a login shell's startup files would put another claude first on PATH; BSD's
@@ -366,18 +445,27 @@ function run_wake_case {
 #
 # Parameters:
 #   - `$1`: the case's name.
+#   - `$2`: what must be typed into the viewer: rename, or none.
+#   - `$@` after them: Start-Claude's arguments after --directory.
 #
 # Returns:
 #   - 0, having reported the case.
 function run_attached_case {
-    local name="$1" command output status written waited problem="" pid remaining
+    local name="$1" expected="$2" command argument output status written waited problem="" pid remaining typed
     local out="${run_directory}/attached.out" err="${run_directory}/attached.err"
     local status_file="${run_directory}/attached.status"
+    shift 2
     case_count=$((case_count + 1))
+    rm -f -- "${status_file}"
+
+    printf -v command '%q --directory %q' "${run_directory}/bin/Start-Claude" "${repository}"
+
+    for argument in "$@"; do
+        printf -v command '%s %q' "${command}" "${argument}"
+    done
 
     # shellcheck disable=SC2016 # $? is the command's own, expanded in the pseudo-terminal's shell.
-    printf -v command '%q --directory %q --resume abcd1234 >%q 2>%q; echo $? >%q' \
-        "${run_directory}/bin/Start-Claude" "${repository}" "${out}" "${err}" "${status_file}"
+    printf -v command '%s >%q 2>%q; echo $? >%q' "${command}" "${out}" "${err}" "${status_file}"
 
     if script --version >/dev/null 2>&1; then
         TERM=xterm-256color SHELL="${BASH}" script -q -e -c "${command}" /dev/null </dev/null >/dev/null 2>&1 &
@@ -405,6 +493,14 @@ function run_attached_case {
     remaining="$(tmux -S "${tmux_socket}" list-sessions -F '#{session_name}' 2>/dev/null | tr '\n' ' ' || true)"
     [[ -z "${remaining}" ]] || problem+="tmux sessions remain: ${remaining}; "
 
+    typed="$(cat -- "${STAND_IN_DIR}/typed" 2>/dev/null || true)"
+
+    if [[ ${expected} == none && -n ${typed} ]]; then
+        problem+="'${typed}' was typed into the viewer, where none was due; "
+    elif [[ ${expected} == rename && ${typed} != "/rename ${launch_name}" ]]; then
+        problem+="'${typed}' was typed into the viewer, not /rename with the launch's name; "
+    fi
+
     report "${name}" "${problem}" "${written}"
 }
 
@@ -414,6 +510,7 @@ function run_attached_case {
 
 case_count=0
 failures=0
+launch_name=""
 repository_root="$(cd "$(dirname "$0")/.." && pwd)"
 run_directory=""
 
@@ -429,7 +526,7 @@ tmux_socket="${run_directory}/tmux/tmux-$(id -u)/default"
 export PATH="${run_directory}/bin:${PATH}" XDG_STATE_HOME="${run_directory}/state" TMUX_TMPDIR="${run_directory}/tmux"
 export CLAUDE_CONFIG_DIR="${run_directory}/config"
 export STAND_IN_ID=abcd1234 STAND_IN_SESSION=abcd1234-0000-4000-8000-000000000009 STAND_IN_NAME="probe session"
-export STAND_IN_CWD="${repository}"
+export STAND_IN_CWD="${repository}" STAND_IN_DIR="${run_directory}"
 
 # Every form --resume takes, and each refusal, one line each: the case, the argument, what it must give (the id, or
 # not-found or data-error), and the error id Start-Claude.ps1 must give. Test-StartClaude.ps1 holds the same table,
@@ -496,12 +593,26 @@ run_store_case "row 2: --continue in that clone finds that conversation" "${clon
 STAND_IN_ID=abcd1234 STAND_IN_SESSION=abcd1234-0000-4000-8000-000000000009 STAND_IN_CWD="${repository}"
 clear_store
 
-# A --detach wake of a stopped session keeps the launch's name (#260, requirement 3).
-run_wake_case "a --detach wake of a stopped session keeps the launch's name"
+# A --detach wake of a stopped session passes no flag, which would start a copy, and gives the launch's name as its
+# first prompt only when claude lists the session under another (#384; #260, requirement 3).
+run_wake_case "a --detach wake of a stopped session listed under another name renames it with its first prompt" \
+    "probe session" rename
+run_wake_case "a --detach wake of a stopped session listed under the launch's name passes no prompt" \
+    "${launch_name}" none
+
+# A running session claude lists under another name is renamed in a viewer; one under the launch's name is left be.
+run_rename_case "a --detach launch onto a running session listed under another name types /rename into a viewer" \
+    "probe session" rename
+run_rename_case "a --detach launch onto a running session listed under the launch's name types nothing" \
+    "${launch_name}" none
 clear_store
 
-# Attached: the id when the client leaves.
-run_attached_case "attached, the id on standard output when the viewer leaves"
+# Attached: the id when the client leaves, and a schedule's session listed under another name renamed in the viewer.
+run_attached_case "attached, the id on standard output when the viewer leaves" none --resume abcd1234
+seed_entry abcd1234
+run_attached_case "attached, a schedule's session listed under another name is renamed in its viewer" rename \
+    --schedule 7
+clear_store
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"

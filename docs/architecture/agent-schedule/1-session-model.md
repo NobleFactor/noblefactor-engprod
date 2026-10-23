@@ -7,7 +7,8 @@ title: "1. Session model — every conversation in claude's background, a tmux s
 > **Status:** built 2026-10-15, in phase 33 of the [plan][plan-259],
 > as 07413ae2, and accepted on the deployed scripts the same day, in phase 34; on Windows, on psmux, in
 > David-Noble-at-work/personal#273, 2026-10-19; the variables read and the title held on a wake in
-> NobleFactor/noblefactor-ops#260, 2026-10-22. Companion: [`1-session-model.status.md`](1-session-model.status.md).
+> NobleFactor/noblefactor-ops#260, 2026-10-22; the wake with no flag, and the name by `/rename`, in
+> NobleFactor/noblefactor-engprod#384, 2026-10-23. Companion: [`1-session-model.status.md`](1-session-model.status.md).
 > Feature:
 > [NobleFactor/noblefactor-ops#151](https://github.com/NobleFactor/noblefactor-ops/issues/151).
 >
@@ -102,7 +103,13 @@ a tree of its own and runs on in every case.
 3. **The background session.** The entry's id is looked up in claude's list, `claude agents --json --all`:
    - a background session of that id, running or stopped, is the schedule's, and `claude attach` restarts a stopped
      one under the same id (seen 2026-10-14); with `--detach`, `claude --bg --resume` of its conversation wakes it
-     instead, and is given the launch's name, so that its title holds once it stops again (#260, requirement 3);
+     instead, with no flag: given one, `--name` included, claude starts a copy under a new id, which fails
+     (NobleFactor/noblefactor-engprod#384; anthropics/claude-code#104658);
+   - one claude lists under another name than the launch's takes the launch's with `/rename`, so that its title holds
+     (#260, requirement 3): stopped, as the wake's first prompt; running, typed into a viewer, the one the terminal
+     attaches to, or with `--detach` one of the launch's own, closed once claude lists the name. On Windows a running
+     one is renamed only when a console attaches, since claude there takes no keys in a viewer no client attaches
+     (anthropics/claude-code#104688), unless `NFEP_AGENT_SCHEDULE_DETACHED_RENAME` is set;
    - a conversation's id is met where claude lists it, as item 6 of the model says;
    - with no entry, `claude --bg` starts a new conversation in the startup directory, named for the schedule, with
      Remote Control unless `--no-remote-control` is given, the schedule's variables, and the arguments after `--`,

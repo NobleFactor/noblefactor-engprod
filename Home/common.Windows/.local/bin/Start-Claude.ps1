@@ -82,7 +82,9 @@
 
 .PARAMETER Detach
     Start the conversation in claude's background, or wake it under its name, and open no psmux session: for Remote
-    Control.
+    Control. A schedule's session that claude lists under a name other than the launch's is renamed to it with
+    /rename when it is woken. A running one keeps its name until a launch opens it in a console, where the rename is
+    typed into its viewer, unless NFEP_AGENT_SCHEDULE_DETACHED_RENAME is set.
 
 .PARAMETER ClaudeArgument
     The arguments after the script's own, passed to claude as they are. A conversation a launch starts keeps them; a
@@ -655,6 +657,7 @@ begin {
                 Id      = [string]$background.id
                 State   = [string]$background.state
                 Session = [string]$background.sessionId
+                Name    = [string]$background.name
             }
         }
 
@@ -1195,17 +1198,23 @@ begin {
             [string]
             $Session,
 
-            [Parameter(Mandatory)]
             [string]
-            $Name
+            $Rename
         )
 
         # A stopped background session is started again, for -Detach, under its own id and with the options it was
-        # started with: claude --bg --resume of its conversation's full id wakes it. It is given the launch's name too,
-        # since a session woken without one shows its name only while it runs, and none once it stops: the title holds
-        # everywhere (NobleFactor/noblefactor-ops#260, requirement 3). Without -Detach, the viewer's claude attach
-        # starts it.
-        $result = Invoke-Program -Name $ClaudeBinary -Argument @('--bg', '--resume', $Session, '--name', $Name)
+        # started with, its name among them: claude --bg --resume of its conversation's full id wakes it. It is given
+        # no flag: given one, --name included, claude starts a copy under a new id, which fails, and the session stays
+        # stopped (NobleFactor/noblefactor-engprod#384; anthropics/claude-code#104658). A name the session must take
+        # goes as its first prompt, /rename <name>, which claude runs in the session it wakes (seen 2026-10-23).
+        # Without -Detach, the viewer's claude attach starts it.
+        $argumentList = @('--bg', '--resume', $Session)
+
+        if ($Rename) {
+            $argumentList += $Rename
+        }
+
+        $result = Invoke-Program -Name $ClaudeBinary -Argument $argumentList
         $output = @($result.Error) + @($result.Output)
 
         if ($result.ExitCode -ne 0) {
@@ -1223,6 +1232,134 @@ begin {
         }
 
         Write-Verbose "claude: $said"
+    }
+
+    ## The session's name
+
+    function Get-BackgroundName {
+        [CmdletBinding()]
+        [OutputType([string])]
+        param(
+            [Parameter(Mandatory)]
+            [string]
+            $ClaudeBinary,
+
+            [Parameter(Mandatory)]
+            [string]
+            $Id
+        )
+
+        # The name claude lists for a background session now, read from claude's list afresh; empty when it lists none.
+        $listed = Get-ClaudeInstance -ClaudeBinary $ClaudeBinary |
+            Where-Object { $_.kind -ceq 'background' -and $_.id -ceq $Id } | Select-Object -First 1
+
+        return [string]$listed.name
+    }
+
+    function Wait-ViewerInput {
+        [CmdletBinding()]
+        [OutputType([bool])]
+        param(
+            [Parameter(Mandatory)]
+            [string]
+            $Target
+        )
+
+        # The viewer in a psmux pane takes keys once it has drawn its input line, which begins with U+276F: within a
+        # second of claude attach starting (seen 2026-10-23). It waits 30 seconds at most.
+        $prompt = [string][char]0x276F
+        $deadline = (Get-Date).AddSeconds(30)
+
+        while ((Get-Date) -lt $deadline) {
+            $screen = Invoke-Program -Name 'tmux' -Argument @('capture-pane', '-p', '-t', $Target)
+
+            if ($screen.ExitCode -eq 0 -and @($screen.Output | Where-Object { $_.StartsWith($prompt) }).Count -gt 0) {
+                return $true
+            }
+
+            Start-Sleep -Milliseconds 100
+        }
+
+        return $false
+    }
+
+    function Rename-RunningSession {
+        [CmdletBinding()]
+        param(
+            [Parameter(Mandatory)]
+            [string]
+            $ClaudeBinary,
+
+            [Parameter(Mandatory)]
+            [string]
+            $Id,
+
+            [Parameter(Mandatory)]
+            [string]
+            $Rename,
+
+            [Parameter(Mandatory)]
+            [string]
+            $Name
+        )
+
+        # For -Detach, a running session claude lists under another name than the launch's gets /rename typed into a
+        # viewer of the launch's own, a psmux session no client attaches, which ends once claude lists the name (#384,
+        # requirement 2). claude on Windows takes no keys in a viewer no client attaches
+        # (anthropics/claude-code#104688), so the launch does this only when NFEP_AGENT_SCHEDULE_DETACHED_RENAME is set:
+        # https://github.com/NobleFactor/noblefactor-engprod/pull/387
+        $opened = Invoke-Program -Name 'tmux' -Argument @(
+            'new-session', '-d', '-P', '-F', '#{session_id}', '--',
+            'pwsh', '-NoProfile', '-Command', "claude attach $Id")
+        $viewer = [string]($opened.Output | Select-Object -First 1)
+
+        if ($opened.ExitCode -ne 0 -or $viewer -notmatch '^\$[0-9]+$') {
+            Write-Verbose "Background session $Id keeps its name: psmux opened no viewer to rename it in."
+            return
+        }
+
+        if (Wait-ViewerInput -Target $viewer) {
+            $null = Invoke-Program -Name 'tmux' -Argument @('send-keys', '-t', $viewer, $Rename, 'Enter')
+            $deadline = (Get-Date).AddSeconds(10)
+
+            while ((Get-Date) -lt $deadline -and (Get-BackgroundName -ClaudeBinary $ClaudeBinary -Id $Id) -cne $Name) {
+                Start-Sleep -Milliseconds 200
+            }
+
+        }
+
+        $null = Invoke-Program -Name 'tmux' -Argument @('kill-session', '-t', $viewer)
+
+        if ((Get-BackgroundName -ClaudeBinary $ClaudeBinary -Id $Id) -ceq $Name) {
+            Write-Verbose "Renamed background session $Id to $Name"
+        }
+        else {
+            Write-Verbose "Background session $Id keeps its name: claude did not take $Rename in a viewer."
+        }
+    }
+
+    function Send-WorkspaceRename {
+        [CmdletBinding()]
+        param(
+            [Parameter(Mandatory)]
+            [string]
+            $Session,
+
+            [Parameter(Mandatory)]
+            [string]
+            $Rename
+        )
+
+        # Typed into the viewer of the psmux session a console has attached to: with a client attached, claude's viewer
+        # on Windows takes the keys (seen 2026-10-23). The viewer is the session's first pane, named with its session,
+        # since psmux looks a bare pane id up in another session.
+        $panes = Invoke-Program -Name 'tmux' -Argument @('list-panes', '-t', $Session, '-F', '#{pane_index}')
+        $target = "${Session}:.$($panes.Output | Select-Object -First 1)"
+
+        if ($panes.ExitCode -eq 0 -and (Wait-ViewerInput -Target $target)) {
+            $null = Invoke-Program -Name 'tmux' -Argument @('send-keys', '-t', $target, $Rename, 'Enter')
+        }
+
     }
 
     ## The workspace, on psmux
@@ -1315,15 +1452,24 @@ begin {
         param(
             [Parameter(Mandatory)]
             [string]
-            $Session
+            $Session,
+
+            [string]
+            $Rename
         )
 
         # From inside psmux the current client switches to the session; otherwise the console attaches to it, through a
         # process of its own that has the console, so that a caller who keeps the script's output, its id, never takes
-        # psmux's in its place.
+        # psmux's in its place. A session claude lists under another name is renamed in its viewer once a client is
+        # there (#384, requirement 2).
         if ($env:TMUX) {
             $null = & tmux switch-client -t $Session
             $status = $LASTEXITCODE
+
+            if ($Rename -and $status -eq 0) {
+                Send-WorkspaceRename -Session $Session -Rename $Rename
+            }
+
         }
         else {
             # It waits for psmux's client alone: Start-Process -Wait waits for every process the client leaves behind
@@ -1331,6 +1477,11 @@ begin {
             $attach = Start-Process -FilePath 'tmux' -ArgumentList @('attach-session', '-t', $Session) -NoNewWindow `
                 -PassThru
             $null = $attach.Handle
+
+            if ($Rename) {
+                Send-WorkspaceRename -Session $Session -Rename $Rename
+            }
+
             $attach.WaitForExit()
             $status = $attach.ExitCode
         }
@@ -1359,11 +1510,32 @@ begin {
         # The launch ends at its background session: with -Detach, the session runs, started again when it was stopped,
         # and nothing more opens; otherwise a new psmux session opens onto it. The store's lock is released first.
         # Either way the launch returns the session's short id, as claude --bg prints it (personal#273's question 11).
+        #
+        # A schedule's session carries the launch's name (#260, requirement 3). One claude lists under another name is
+        # renamed with /rename, never with a flag on the wake (#384): as the wake's first prompt when it is stopped, and
+        # typed into the viewer a console attaches to when it runs. With -Detach a running one keeps its name, unless
+        # NFEP_AGENT_SCHEDULE_DETACHED_RENAME is set (anthropics/claude-code#104688;
+        # https://github.com/NobleFactor/noblefactor-engprod/pull/387). A session this launch started has the name
+        # already, and one on no schedule keeps its own.
+        $rename = $null
+
+        if ($scheduleKey -and $Background.State -and $Background.Name -cne $sessionName) {
+            $rename = "/rename $sessionName"
+        }
+
         if ($Detach) {
 
             if ($Background.State -ceq 'stopped') {
                 Resume-BackgroundSession -ClaudeBinary $claudeBinary -Id $Background.Id -Session $Background.Session `
-                    -Name $sessionName
+                    -Rename $rename
+            }
+            elseif ($rename -and $env:NFEP_AGENT_SCHEDULE_DETACHED_RENAME) {
+                Rename-RunningSession -ClaudeBinary $claudeBinary -Id $Background.Id -Rename $rename -Name $sessionName
+            }
+            elseif ($rename) {
+                $message = "Background session $($Background.Id) keeps its name until a launch opens it in a console: "
+                $message += 'claude on Windows takes no keys in a viewer no client attaches.'
+                Write-Verbose $message
             }
 
             Unlock-Store
@@ -1380,7 +1552,7 @@ begin {
         # The session exists, and is handed over: the clean block leaves it.
         $script:madeSession = $null
         Unlock-Store
-        Enter-Workspace -Session $session
+        Enter-Workspace -Session $session -Rename $rename
         return $Background.Id
     }
 
