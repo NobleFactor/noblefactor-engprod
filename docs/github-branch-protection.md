@@ -16,7 +16,7 @@ what is actually enforced today.
 | devlore-cli | develop |
 | devlore-registry | develop |
 | noblefactor | main |
-| noblefactor-ops | develop |
+| noblefactor-engprod | develop |
 
 ## Protected Branches
 
@@ -174,7 +174,7 @@ repository's full requirement is legible in one place rather than split across t
 the same refs as the organization ruleset, with `strict` false and both bypass actors at
 `pull_request`.
  `test (darwin-arm64)` exists only in
-devlore-cli; requiring it org-wide would leave devlore-registry and noblefactor-ops waiting forever
+devlore-cli; requiring it org-wide would leave devlore-registry and noblefactor-engprod waiting forever
 for a check that never arrives, blocking every merge in both.
 
 Repository rulesets compose with organization rulesets: the org keeps enforcing squash-only, one

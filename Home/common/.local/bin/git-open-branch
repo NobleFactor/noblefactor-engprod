@@ -176,12 +176,29 @@ IFS=$'\t' read -r issue_title issue_state issue_labels <<<"${issue_facts}"
 
 branch="${branch_type}/${issue}-${name}"
 
-# The main worktree names the repository, and a linked worktree is its sibling: <repo>.<issue>-<name>. The
-# type prefix is dropped, because a directory listing is read by a human who already knows what the work is
-# and needs to tell one worktree from another.
+# The worktree lives under ~/Workspace/<org>/, named <clone>.<issue>-<name>: the organization and the clone's
+# name are read from origin's URL, so the path is the same whether the command ran in the layer clone under
+# writ's home, the Workspace symlink to it, or one of its worktrees, and `ls ~/Workspace/<org>` is the whole
+# picture of an organization's work in flight (noblefactor-ops#366). The type prefix is dropped, because a
+# directory listing is read by a human who already knows what the work is and needs to tell one worktree from
+# another. An origin that is not on GitHub, or no origin at all, falls back to a sibling of the main worktree,
+# and the command says so.
 main_worktree="$(git worktree list --porcelain | awk 'NR == 1 { print substr($0, 10) }')"
 [[ -n "${main_worktree}" ]] || error $EX_OSFILE "Cannot locate the main worktree."
-worktree="${main_worktree}.${issue}-${name}"
+
+# The recorded value, not `git remote get-url`, which expands url.<base>.insteadOf and would name whatever a
+# rewrite points at rather than the repository the caller wrote down.
+origin_url="$(git config --get remote.origin.url 2>/dev/null || true)"
+placement=""
+
+if [[ "${origin_url}" =~ github\.com[:/]([^/]+)/([^/]+)/?$ ]]; then
+    organization="${BASH_REMATCH[1]}"
+    clone="${BASH_REMATCH[2]%.git}"
+    worktree="${HOME}/Workspace/${organization}/${clone}.${issue}-${name}"
+else
+    worktree="${main_worktree}.${issue}-${name}"
+    placement="Origin is not on GitHub, so the worktree is a sibling of the main worktree."
+fi
 
 #########
 # Refusals
@@ -222,6 +239,7 @@ if [[ -n "${dry_run}" ]]; then
     printf '  %-12s %s\n' "branch" "${branch}" >&2
     printf '  %-12s %s\n' "from" "origin/${target_branch}" >&2
     [[ -n "${want_worktree}" ]] && printf '  %-12s %s\n' "worktree" "${worktree}" >&2
+    [[ -n "${want_worktree}" && -n "${placement}" ]] && printf '  %-12s %s\n' "placed" "${placement}" >&2
     exit 0
 fi
 
@@ -239,6 +257,12 @@ if [[ -z "${want_worktree}" ]]; then
     exit 0
 fi
 
+[[ -z "${placement}" ]] || note "${placement}"
+
+# The organization's directory is made here rather than left to git, so a listing of ~/Workspace shows the
+# organization the moment its first worktree exists.
+mkdir -p -- "$(dirname "${worktree}")" || error $EX_CANTCREAT "Cannot create '$(dirname "${worktree}")'."
+
 # `git worktree add` touches no other worktree: no checkout elsewhere, no index change, no stash. Whatever
 # the caller is standing in is left exactly as it was found, uncommitted changes and all — which is the
 # property that makes opening a branch safe while another is mid-edit.
@@ -250,9 +274,9 @@ git worktree add --no-checkout --no-track "${worktree}" -b "${branch}" "origin/$
 # dies on the first encrypted file it meets. That is why the checkout is deferred: the link has to exist
 # before any content is written. devlore does the same thing for its snapshot worktrees of this repository,
 # and the link is absolute there, so it is absolute here -- and physical, because `pwd` alone would
-# record the path the caller happened to arrive by. This repository is normally reached through
-# ~/Workspace/Personal, a symlink outside the repository, and a key link pointing through it would
-# dangle if that convenience ever went away while the repository stayed.
+# record the path the caller happened to arrive by. A layer clone is normally reached through
+# ~/Workspace/<org>/<clone>, a symlink outside the repository to the clone under writ's home, and a key link
+# pointing through it would dangle if that convenience ever went away while the repository stayed.
 #
 # A repository without git-crypt has no such directory, and the checkout below simply proceeds.
 common_git_dir="$(cd "$(git rev-parse --git-common-dir)" && pwd -P)"

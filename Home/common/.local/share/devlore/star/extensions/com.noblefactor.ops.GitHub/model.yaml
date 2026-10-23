@@ -1,0 +1,105 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Noble Factor. All rights reserved.
+
+# The issue data model as GitHub holds it, pulled from the NobleFactor organization: docs/architecture/issue-data-model/
+# 6-the-asset-and-its-sync.md. Written by hand on 2026-10-22 from gh api reads, the first pull, before star gh model pull
+# exists; the digest is a SHA-256 over this file with its own line excluded. Projects need the read:project scope, which
+# the token lacked, and none exist yet. Labels are the hub repository's, NobleFactor/noblefactor-ops; devlore-cli's
+# Area:, Severity: and Priority: labels join when the attributes are pulled.
+
+version: 1
+pulled:
+  at: 2026-10-22T19:03:08Z
+  org: NobleFactor
+  digest: sha256:8ba59638fb4755a85cbd10307c5a4fa403e9c1c975e6304b78692ef24503b656
+types:
+  - name: Epic
+    id: 914457658
+    level: 0
+    color: purple
+    description: "Level 0: a body of work with an owner, the root every other issue rolls up to; decomposes into features and chores"
+  - name: Chore
+    id: 914457671
+    level: 1
+    color: gray
+    description: "Level 1: engineering value, a body of process or tooling work the team receives; decomposes into tasks and bugs"
+  - name: Feature
+    id: 344350
+    level: 1
+    color: blue
+    description: "Level 1: product value, a capability the product gains; decomposes into tasks and bugs"
+  - name: Bug
+    id: 344348
+    level: 2
+    color: red
+    description: "Level 2: unplanned work, a defect found rather than planned; repairs a feature or a chore"
+  - name: Task
+    id: 344346
+    level: 2
+    color: yellow
+    description: "Level 2: planned work, a step in delivering a feature or a chore"
+labels:
+  - name: "bug"
+    color: "d73a4a"
+    description: "Something isn't working"
+  - name: "business"
+    color: "fbca04"
+    description: "Business priority"
+  - name: "chore"
+    color: "BFD4F2"
+    description: "Maintenance work on the repo: build, CI, tooling, process"
+  - name: "documentation"
+    color: "0075ca"
+    description: "Improvements or additions to documentation"
+  - name: "duplicate"
+    color: "cfd3d7"
+    description: "This issue or pull request already exists"
+  - name: "enhancement"
+    color: "a2eeef"
+    description: "New feature or request"
+  - name: "epic"
+    color: "7057ff"
+    description: "Top-level initiative"
+  - name: "Epic:Ops:IssueTracking"
+    color: "5319e7"
+    description: "Tooling axis: how NobleFactor tracks its work in GitHub"
+  - name: "Epic:Ops:Process"
+    color: "5319e7"
+    description: "Tooling axis: process work; never closes"
+  - name: "feature"
+    color: "0e8a16"
+    description: "Deliverable unit within an epic"
+  - name: "good first issue"
+    color: "7057ff"
+    description: "Good for newcomers"
+  - name: "help wanted"
+    color: "008672"
+    description: "Extra attention is needed"
+  - name: "invalid"
+    color: "e4e669"
+    description: "This doesn't seem right"
+  - name: "question"
+    color: "d876e3"
+    description: "Further information is requested"
+  - name: "task"
+    color: "1d76db"
+    description: "Implementation work item"
+  - name: "Thread:Ops:PortableTooling"
+    color: "8a63d2"
+    description: "Tooling axis: the process commands work the same on every platform, shipped by the base layer"
+  - name: "Thread:WritDeploy"
+    color: "1D76DB"
+    description: "deploying converges the machine"
+  - name: "Thread:WritOrigin"
+    color: "0e8a16"
+    description: "Cross-cutting: writ records and verifies where a deployment came from"
+  - name: "Thread:WritRepo"
+    color: "1D76DB"
+    description: "a layer points where you say"
+  - name: "Thread:WritSelfInstall"
+    color: "1D76DB"
+    description: "a fresh machine installs writ and can use it"
+  - name: "wontfix"
+    color: "ffffff"
+    description: "This will not be worked on"
+projects: []

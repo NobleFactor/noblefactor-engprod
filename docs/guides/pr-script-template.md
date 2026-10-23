@@ -5,18 +5,26 @@ type: Process
 audience: Engineers, Claude Code
 status: Approved
 created: 2026-03-16
-updated: 2026-10-16
+updated: 2026-10-21
 ---
 
 # PR Script Template
 
-Standard structure for the PR script that Claude Code generates as `go-<repo>`, one level above the repository it
-acts on: `~/Workspace/NobleFactor/go-devlore-cli` for `~/Workspace/NobleFactor/devlore-cli`, and so on. Never the bare
-`~/Workspace/NobleFactor/go`, which belongs to whichever repository last used it. Each script is self-contained:
+Standard structure for the PR script that Claude Code generates, named for the worktree it serves and placed beside
+it: `~/Workspace/<org>/<worktree>.bash` on macOS and Linux and `<worktree>.ps1` on Windows, where `<worktree>` is
+the directory `git-open-branch` made, `<clone>.<issue>-<name>`. The script for
+`~/Workspace/NobleFactor/devlore-cli.1119-broker-specification` is
+`~/Workspace/NobleFactor/devlore-cli.1119-broker-specification.bash`; `ls ~/Workspace/NobleFactor` shows which
+worktree each script lands; and `git close-branch` removes the two together when the pull request merges. Ruled
+2026-10-21 (#366), retiring `go-<repo>` one level above the repository: a script named for the clone outlived every
+worktree it served, and the bare `go` belonged to whichever repository last used it. Each script is self-contained:
 stage, commit, push, create PR, verify CI, verify mergeability, squash merge, clean up.
 
+A script is read before it is overwritten, whatever it is called: its `cd` says which worktree it serves, and one
+whose `cd` names another worktree is the wrong file. Only a script that is not there is written from nothing.
+
 On macOS and Linux the script is bash, [the template below](#template). On Windows it is PowerShell,
-`go-<repo>.ps1`, [its own form](#on-windows-powershell). Bash PR scripts are not written on Windows (ruled
+`<worktree>.ps1`, [its own form](#on-windows-powershell). Bash PR scripts are not written on Windows (ruled
 2026-09-21). The owner runs the script: the agent writes it, shows it, and hands over one command.
 
 ---
@@ -29,9 +37,9 @@ in and use what it actually runs:
 
 | Repository | CI entry point |
 | --- | --- |
-| `personal` | `.github/scripts/shell-lint.sh`, with `DECLARE_BASHSCRIPT_DIR` naming a directory that holds `Declare-BashScript` (a deployed `~/.local/bin` locally; CI checks out `noblefactor-ops`) |
+| `personal` | `.github/scripts/shell-lint.sh`, with `DECLARE_BASHSCRIPT_DIR` naming a directory that holds `Declare-BashScript` (a deployed `~/.local/bin` locally; CI checks out `noblefactor-engprod`) |
 | `devlore-cli` | `make vet-all`, `make lint-all`, `./build/star lint go ./...` |
-| `noblefactor-ops` | `./.github/scripts/Test-Frontmatter.sh`, `codespell`, `./.github/scripts/shell-lint.sh`, `./.github/scripts/Test-PowerShell.ps1`, `buildifier -mode=check -lint=warn -warnings=-function-docstring-args,-function-docstring-return $(git ls-files '*.star')` |
+| `noblefactor-engprod` | `make check`: every gate, then the tests under `tests/`, which is what `ci.yaml` runs since #268 |
 
 Where a repository routes through a build tool, call the target rather than the underlying binary:
 the target is what CI runs and it carries the flags. Where CI uses a GitHub Action rather than a
@@ -39,7 +47,7 @@ command — `codespell-project/actions-codespell`, say — run the CLI it wraps 
 arguments the workflow passes it.
 
 Read the workflow each time rather than trusting this table. It went stale during the change that
-introduced it: `noblefactor-ops` dropped its Go trees and re-based its gate on documents while this
+introduced it: `noblefactor-engprod` dropped its Go trees and re-based its gate on documents while this
 edit was in the working tree, turning a `go build` pre-flight into a command with nothing to
 build.
 
@@ -59,7 +67,7 @@ maintaining a second copy of the gate.
 #!/usr/bin/env bash
 set -euo pipefail
 
-cd ~/Workspace/NobleFactor/<repo>
+cd ~/Workspace/<org>/<clone>.<issue>-<name>
 
 # Stage specific files (never git add -A or git add .)
 git add \
@@ -202,9 +210,10 @@ printf '%s\n' "${span}"
 # Clean up (works from both worktrees and regular branches)
 git close-branch
 
-# close-branch removed the worktree this script was standing in. Anything that runs after it must
-# first step back to the main clone, or it runs from a deleted directory and exits 128.
-cd ~/Workspace/NobleFactor/<repo>
+# close-branch removed the worktree this script was standing in, and this script with it. Anything that runs
+# after it must first step back to the main clone, or it runs from a deleted directory and exits 128; bash
+# keeps reading the unlinked file, so nothing below is lost.
+cd ~/Workspace/<org>/<clone>
 
 # Pull after the merge, to confirm: git close-branch syncs the main clone -- the layer writ deploys from -- to
 # the target itself, and exits 75 when it cannot (#306), so this pull finds it current. Never fetch into the
@@ -249,14 +258,16 @@ git status --short
 6. **`git close-branch` for cleanup.** Handles both worktree and regular-branch scenarios.
    It also **removes the worktree the script is standing in**, so nothing after it may assume `cwd`
    survives: `cd` to the main clone first. Observed as a spurious exit 128 after a successful merge
-   on devlore-cli#811. Then it **syncs the main clone** to the target branch, whatever it had checked out,
-   prints what it had and the commit it is at now, and exits 75 when the sync cannot happen (#306).
+   on devlore-cli#811. It **removes the script itself**, `<worktree>.bash` or `.ps1` beside the worktree
+   (#366); bash reads on from the unlinked file and PowerShell parsed the file before running it, so the
+   lines after it still run. Then it **syncs the main clone** to the target branch, whatever it had checked
+   out, prints what it had and the commit it is at now, and exits 75 when the sync cannot happen (#306).
 7. **One PR at a time.** Merge and clean up before starting the next branch.
 8. **Always `--squash`, never `--delete-branch`.** The merge command carries `--squash` and no other
    deletion flag. `--delete-branch` deletes the local branch first, which fails when a linked
    worktree holds it, and under `set -e` that aborts the script after the merge and before cleanup.
-   `git close-branch` deletes in the order that survives a failure: remote, then worktree, then local.
-   Then it syncs the main clone itself (rules 6 and 12).
+   `git close-branch` deletes in the order that survives a failure: remote, then worktree, then local,
+   then the script. Then it syncs the main clone itself (rules 6 and 12).
 9. **The epic report ends a pull request when one is asked for.** Table form, all states, scoped to the
    epic, feature or thread the pull request served, printed last, after cleanup, so the reader sees the
    state the merge produced. Not automatic: ruled 2026-09-12 in `development-process.md`, which retired
@@ -285,7 +296,7 @@ git status --short
 
 ## On Windows: PowerShell
 
-On Windows the PR script is `go-<repo>.ps1`, PowerShell 7, written to the
+On Windows the PR script is `<worktree>.ps1`, beside the worktree, PowerShell 7, written to the
 [PowerShell style guide](powershell-style-guidelines.md): shebang, header, help, `#Requires`, `[CmdletBinding()]` and
 `param()`, `$ErrorActionPreference = 'Stop'`, a helpers region, then the main operation. It does what the bash
 template does, in the same order. The rules above hold; these are the ones PowerShell changes.
@@ -298,13 +309,15 @@ template does, in the same order. The rules above hold; these are the ones Power
    body=@<file>`, as every Windows PR script has done. PowerShell has no `printf ... | --body-file -` idiom worth
    copying, and a file keeps the body byte-for-byte.
 4. **Clean-up runs from the main clone.** `Set-Location` to it before `git close-branch`, because Windows won't
-   delete a directory that is a process's current directory. Then `git pull --ff-only`, which confirms the sync
-   `git close-branch` made of the main clone (rule 12).
+   delete a directory that is a process's current directory. `git close-branch` also removes this script, which
+   PowerShell parsed in full before running, so the lines after it still run. Then `git pull --ff-only`, which
+   confirms the sync `git close-branch` made of the main clone (rule 12).
 5. **No PATH changes.** The script runs from a pwsh whose `git` is `Git\cmd\git.exe`, Git for Windows' launcher, which
    gives git's children the `sh` and `bash` they need without putting them on PATH. From a pwsh started by Git Bash,
    `git` resolves to the raw `Git\clangarm64\bin\git.exe`, and an HTTPS push, a credential helper or `git
    close-branch` exits 128 with no message. The fix is where the script runs, never a PATH line in it.
-6. **The owner runs it.** `! C:/Users/<you>/Workspace/<...>/go-<repo>.ps1`, with a full path and forward slashes.
+6. **The owner runs it.** `! C:/Users/<you>/Workspace/<org>/<clone>.<n>-<name>.ps1`, with a full path and forward
+   slashes.
 
 ```powershell
 #!/usr/bin/env pwsh
@@ -320,7 +333,7 @@ template does, in the same order. The rules above hold; these are the ones Power
     request's time span, and closes the branch. Every commit is made and pushed; there is nothing to stage.
 
 .EXAMPLE
-    C:/Users/<you>/Workspace/NobleFactor/go-<repo>.ps1
+    C:/Users/<you>/Workspace/<org>/<clone>.<n>-<name>.ps1
 #>
 
 #Requires -Version 7.0
@@ -332,8 +345,8 @@ $ErrorActionPreference = 'Stop'
 
 $branch = '<branch>'
 $repository = '<owner>/<repo>'
-$worktree = Join-Path -Path $HOME -ChildPath 'Workspace' -AdditionalChildPath 'NobleFactor', '<repo>.<n>-<name>'
-$mainClone = Join-Path -Path $HOME -ChildPath 'Workspace' -AdditionalChildPath 'NobleFactor', '<repo>'
+$worktree = Join-Path -Path $HOME -ChildPath 'Workspace' -AdditionalChildPath '<org>', '<clone>.<n>-<name>'
+$mainClone = Join-Path -Path $HOME -ChildPath 'Workspace' -AdditionalChildPath '<org>', '<clone>'
 
 ###########
 # Helper functions

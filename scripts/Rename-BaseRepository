@@ -1,0 +1,167 @@
+#!/usr/bin/env bash
+
+# SPDX-License-Identifier: Apache-2.0
+# Copyright Noble Factor. All rights reserved.
+
+#
+# Rename-BaseRepository: the base layer's clone follows its repository's new name on this machine
+#
+# After the repository is renamed on GitHub, run once on each machine (docs/plans/chore/304-rename-engprod.md,
+# Requirement 2). Reads the base layer's root from writ's registration, never from an assumed path, and in order:
+# renames the root so writ's project name follows; re-points origin; repairs every worktree of the clone; re-registers
+# the layer with writ; moves the Workspace symlink and Start-Claude's store; deploys; and checks that a deployed link
+# resolves into the renamed root, that no link dangles, and that writ reconcile reports every entry linked.
+#
+# Usage:
+#   scripts/Rename-BaseRepository [--to <name>] [--url <git-url>] [--dry-run]
+#
+# Defaults: --to noblefactor-engprod, --url git@github.com:NobleFactor/<name>.git. --dry-run prints every step and
+# changes nothing. Refuses a dirty root. A repository tool under scripts/, which the process exempts from
+# Declare-BashScript (development-process.md, Where a script lives).
+#
+
+set -euo pipefail
+
+new_name="noblefactor-engprod"
+new_url=""
+dry_run=false
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --to)
+            new_name="$2"
+            shift 2
+            ;;
+        --url)
+            new_url="$2"
+            shift 2
+            ;;
+        --dry-run)
+            dry_run=true
+            shift
+            ;;
+        -h | --help)
+            sed -n '7,20p' "$0" | sed 's/^# \{0,1\}//'
+            exit 0
+            ;;
+        *)
+            echo "unknown argument: $1" >&2
+            exit 64
+            ;;
+    esac
+done
+
+say() { printf '[Rename-BaseRepository] %s\n' "$*"; }
+run() {
+    if $dry_run; then
+        say "would: $*"
+    else
+        say "$*"
+        "$@"
+    fi
+}
+
+for tool in writ git jq; do
+    command -v "$tool" >/dev/null || {
+        say "$tool is not on PATH"
+        exit 69
+    }
+done
+
+# The base layer's root, from writ's registration.
+root="$(writ repo list -o json 2>/dev/null | jq -r '.[] | select(.layer == "base") | .root')"
+[[ -n "$root" && -d "$root" ]] || {
+    say "writ registers no base layer with a root on this machine"
+    exit 78
+}
+old_name="$(basename "$root")"
+repos_home="$(dirname "$root")"
+new_root="$repos_home/$new_name"
+org="$(git -C "$root" remote get-url origin | sed -E 's#.*[:/]([^/]+)/[^/]+(\.git)?$#\1#')"
+[[ -n "$new_url" ]] || new_url="git@github.com:$org/$new_name.git"
+workspace="$HOME/Workspace/$org"
+store="${XDG_STATE_HOME:-$HOME/.local/state}/agent-schedule/$org"
+
+say "base layer root: $root (origin $(git -C "$root" remote get-url origin))"
+say "renaming $old_name to $new_name; origin to $new_url"
+
+if [[ "$old_name" == "$new_name" ]]; then
+    say "the root is already named $new_name; nothing to do"
+    exit 0
+fi
+[[ -e "$new_root" ]] && {
+    say "$new_root already exists; refusing"
+    exit 73
+}
+[[ -z "$(git -C "$root" status --porcelain)" ]] || {
+    say "the root has uncommitted changes; refusing:"
+    git -C "$root" status --short
+    exit 75
+}
+
+# The worktrees of the clone, whose .git files point into the root and need repairing after the move.
+mapfile -t worktrees < <(git -C "$root" worktree list --porcelain | awk '$1 == "worktree" && NR > 1 {print $2}')
+
+# 1. The root, so writ's project name follows.
+run mv "$root" "$new_root"
+
+# 2. origin.
+run git -C "$new_root" remote set-url origin "$new_url"
+
+# 3. The worktrees.
+if ((${#worktrees[@]} > 0)); then
+    run git -C "$new_root" worktree repair "${worktrees[@]}"
+fi
+
+# 4. writ's registration.
+run writ repo set base "$new_root"
+
+# 5. The Workspace symlink. When the clone itself lives under the Workspace directory, as on a machine laid out before
+# #366, the renamed directory already is the Workspace entry, and a link onto itself would be a loop inside it; found
+# on Danoble-MBP-A on 2026-10-22 and run there as a patched copy.
+if [[ -L "$workspace/$old_name" ]]; then
+    run rm "$workspace/$old_name"
+fi
+if [[ "$new_root" != "$workspace/$new_name" ]]; then
+    run ln -s "$new_root" "$workspace/$new_name"
+else
+    say "the clone is the Workspace entry itself; no link to make"
+fi
+
+# 6. Start-Claude's store, keyed by the repository's name.
+if [[ -d "$store/$old_name" ]]; then
+    run mv "$store/$old_name" "$store/$new_name"
+fi
+
+# 7. Deploy, then rule 5's checks.
+run writ deploy
+
+if $dry_run; then
+    say "dry run: nothing changed; the checks run on a real run"
+    exit 0
+fi
+
+link="$HOME/.local/bin/git-open-branch"
+resolved="$(readlink -f "$link")"
+[[ "$resolved" == "$new_root"/* ]] || {
+    say "$link resolves to $resolved, not into $new_root"
+    exit 70
+}
+say "$link resolves into $new_root"
+
+dangling="$(find "$HOME/.local/bin" "$HOME/.local/share" -type l ! -exec test -e {} \; -print 2>/dev/null || true)"
+[[ -z "$dangling" ]] || {
+    say "dangling links:"
+    printf '  %s\n' "$dangling"
+    exit 70
+}
+say "no deployed link dangles"
+
+not_linked="$(writ reconcile -o json 2>/dev/null | jq -r '[.entries[] | select(.state != "linked")] | length')"
+[[ "$not_linked" == "0" ]] || {
+    say "writ reconcile reports $not_linked entries not linked"
+    exit 70
+}
+say "writ reconcile: every entry linked"
+
+say "done: $new_root, origin $new_url, writ registered, $(git -C "$new_root" worktree list | wc -l | tr -d ' ') worktrees"
