@@ -193,8 +193,14 @@ if ((Test-Path -LiteralPath $oldLink) -and (Get-Item -LiteralPath $oldLink).Link
     Invoke-Step "Remove-Item $oldLink" { Remove-Item -LiteralPath $oldLink }
 }
 
-Invoke-Step "New-Item -ItemType SymbolicLink $newLink -> $newRoot" {
-    New-Item -ItemType SymbolicLink -Path $newLink -Target $newRoot | Out-Null
+# When the clone itself lives under the Workspace directory, the renamed directory already is the Workspace entry.
+if ($newRoot -ne $newLink) {
+    Invoke-Step "New-Item -ItemType SymbolicLink $newLink -> $newRoot" {
+        New-Item -ItemType SymbolicLink -Path $newLink -Target $newRoot | Out-Null
+    }
+}
+else {
+    Say 'the clone is the Workspace entry itself; no link to make'
 }
 
 # 6. Start-Claude's store, keyed by the repository's name.

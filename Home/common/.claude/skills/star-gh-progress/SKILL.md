@@ -34,7 +34,7 @@ for status on the current issue, i get status on the lane you're working."*
 
 ## Where to run it
 
-From `~/Workspace/NobleFactor/noblefactor-ops`, whose `star/config.yaml` names all three
+From `~/Workspace/NobleFactor/noblefactor-engprod`, whose `star/config.yaml` names all three
 repositories. Elsewhere, pass `--repo` or `--directory`.
 
 ## Verify star first, and do not clobber it

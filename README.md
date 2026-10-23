@@ -1,9 +1,9 @@
 ---
-title: "noblefactor-ops"
+title: "noblefactor-engprod"
 description: "The NobleFactor base layer: engineering standards, process tooling and star extensions, deployed by DevLore's writ"
 ---
 
-# noblefactor-ops
+# noblefactor-engprod
 
 This is the NobleFactor **base layer**: the organization's engineering standards, the tooling that
 runs its process, and the `star` extensions that ship with them. Every NobleFactor machine deploys
@@ -71,10 +71,10 @@ before a README.
 
 `writ` is DevLore's environment deployer, part of [devlore-cli](https://github.com/NobleFactor/devlore-cli).
 Register this repository as the base layer, then deploy. `common` and the projects named for the
-configured layers — here, `noblefactor-ops` — are implicit; nothing is named unless it is extra:
+configured layers — here, `noblefactor-engprod` — are implicit; nothing is named unless it is extra:
 
 ```bash
-writ repo set base https://github.com/NobleFactor/noblefactor-ops.git
+writ repo set base https://github.com/NobleFactor/noblefactor-engprod.git
 writ deploy
 ```
 

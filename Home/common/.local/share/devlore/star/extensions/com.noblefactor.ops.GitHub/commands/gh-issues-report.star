@@ -9,7 +9,7 @@
 # devlore-cli's scripts/Get-EpicReport. The result is the rows; --markdown returns the document the
 # script prints instead, for the reader and for the parity diff.
 
-load("commands/scheme.star", "audit", "audit_lines", "axis", "by_axis", "by_number", "children_of", "epic_name", "epic_rows", "epic_tag", "exempt_numbers", "feature_rows", "feature_table_lines", "fetch_issues", "is_bug", "is_child", "key", "kind_of", "label_space", "lane_repos", "line", "parent", "parents_of", "resolve_repos", "schedule_issues", "schedule_rows", "schedule_table_lines", "short", "table_lines", "tagged", "task_row", "thread_names", "thread_rows", "thread_table_lines")
+load("commands/scheme.star", "audit", "audit_lines", "axis", "by_axis", "by_number", "canonical_repo", "children_of", "epic_name", "epic_rows", "epic_tag", "exempt_numbers", "feature_rows", "feature_table_lines", "fetch_issues", "is_bug", "is_child", "key", "kind_of", "label_space", "lane_repos", "line", "parent", "parents_of", "resolve_repos", "schedule_issues", "schedule_rows", "schedule_table_lines", "short", "table_lines", "tagged", "task_row", "thread_names", "thread_rows", "thread_table_lines")
 
 def _epics(all, epic_filter):
     return by_axis(by_number([i for i in all if tagged(i, "epic") and (epic_filter == "" or epic_tag(i) == "Epic:" + epic_filter)]), epic_name)
@@ -129,7 +129,8 @@ def _with_lane_repos(scheds, all, repos, state, limit):
 def _names_schedule(spec, sched):
     """Whether spec, <owner>/<repository>#<number> or a bare <number>, names the schedule issue sched."""
     if "#" in spec:
-        return spec == key(sched)
+        owner_repo, number = spec.rsplit("#", 1)
+        return canonical_repo(owner_repo) + "#" + number == key(sched)
     return spec == str(sched["number"])
 
 def run(_command, ctx):

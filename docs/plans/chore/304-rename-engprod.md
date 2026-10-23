@@ -108,15 +108,35 @@ written. One pull request per repository, the base layer first.
 
 ### Phase 4: each machine
 
-- [ ] Media-Server, run by the owner or under one grant, every check passing
-- [ ] danoble-ud24-1 over ssh
-- [ ] danoble-wd11-3 over ssh, the PowerShell script
-- [ ] Danoble-MBP-A when it answers
-- [ ] The two open worktrees here still attached and clean afterwards; lane 3's session unaffected
+Each machine gets the scripts by pulling develop into its clone, not by writ: `scripts/` is not deployed. The
+corrected sequence is pull, then the script.
+
+- [x] Media-Server, run by the owner, every check passing -- 2026-10-22
+- [x] danoble-ud24-1 over ssh; `writ deploy` refused personal's uncommitted inventory and a script tweak, which the
+      owner keeps, so the owner finished it with `writ deploy --allow-dirty`; checks passed -- 2026-10-22
+- [x] danoble-wd11-3, by the owner from an interactive shell: over ssh every `git` fetch there hangs in Windows
+      OpenSSH's `ssh.exe` when its stdin is a pipe with no console, which is how git runs it; a finding of its own.
+      Deploy finished with `--allow-dirty`; 71 links, none unlinked -- 2026-10-22
+- [x] Danoble-MBP-A, where the clone lives under `~/Workspace/NobleFactor` itself: the script as merged would have
+      linked the renamed directory onto itself, so a patched copy ran, and the fix lands in Phase 5's commit; deploy
+      finished with `--allow-dirty` against the team layer's work in progress; checks passed -- 2026-10-22
+- [x] The open worktrees attached and clean afterwards, lane 3's here and #260's and #320's on Danoble-MBP-A; no
+      session stopped -- 2026-10-22
+
+Found on the way and not this plan's: writ narrates `noblefactor-ops (recorded)` after the rename, a remembered
+project name no layer carries and no flag forgets; `star gh issues report --schedule` with the old key no longer
+matches the repository name writ reports, which Phase 5 fixes in the extension; a stale second clone at
+`C:\Users\david-noble\Workspace\NobleFactor\noblefactor-ops` on danoble-wd11-3 and the retired `go-*` scripts on
+danoble-ud24-1, named for #367's order.
 
 ### Phase 5: the text
 
-- [ ] noblefactor-engprod's live references, pull request 3
+- [x] noblefactor-engprod's live references, pull request 3 -- 2026-10-22: the README, NOTICE, the guides, the
+      standard, the branch-protection document, the skill, Start-Claude's examples and Test-OnHosts' state directory;
+      issue citations and issue links left as written, since they redirect and record what was true. The star
+      extension gains `canonical_repo`: the old name reads as the new wherever an owner/repo is parsed, markers,
+      lane and beat tables, `--repo` and `--schedule`, so the sessions named by the old key keep working; proven
+      against the live repositories through a private copy of the extension
 - [ ] devlore-cli's live references, pull request 4
 - [ ] personal's live references and the owner's CLAUDE.md, pull request 5
 - [ ] Status `complete`; #304 closed
