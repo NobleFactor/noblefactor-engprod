@@ -1,7 +1,7 @@
 ---
 title: "The star extension reads the hierarchy from model.yaml: types as levels, nothing in its code naming a type"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/376
-status: approved
+status: active
 created: 2026-10-22
 updated: 2026-10-22
 ---
@@ -74,8 +74,9 @@ live repositories, through a private copy of the extension, for `--epic Ops:Issu
 
 ### Phase 3: the pull request
 
-- [ ] The pull request, documents and the extension; status `complete` in its last commit; `writ deploy` after the merge
-      and the deployed report rendering #346
+- [x] The pull request, documents and the extension, opened by this worktree's script -- 2026-10-22; status `active`,
+      because the box below closes only after the merge
+- [ ] `writ deploy` on every machine, and the deployed report rendering #346 from the asset; then status `complete`
 
 ## Files to Create/Modify
 
