@@ -1,7 +1,7 @@
 ---
 title: "The report and the audit place an issue by its type and its sub-issue parent first, by label and marker second"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/379
-status: approved
+status: active
 created: 2026-10-22
 updated: 2026-10-22
 ---
@@ -77,7 +77,7 @@ lists that disagreement; every such case is recorded in this plan as a finding f
 
 ### Phase 3: the pull request
 
-- [ ] The pull request, opened by this worktree's script; status `active` until the deploy
+- [x] The pull request, opened by this worktree's script -- 2026-10-22; status `active` until the deploy
 - [ ] `writ deploy` on every machine and the deployed report placing by link; then status `complete`
 
 ## Files to Create/Modify
