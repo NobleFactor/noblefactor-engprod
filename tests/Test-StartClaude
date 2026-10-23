@@ -7,7 +7,8 @@
 # each of its refusals, the background session's short id alone on standard output, detached and attached, and the
 # refusals of usage (David-Noble-at-work/personal#273, questions 11 and 12); every way in, with a schedule and without,
 # and row 2 of personal#259's plan, a conversation resumed in another clone that --continue finds there
-# (NobleFactor/noblefactor-ops#322). Test-StartClaude.ps1 runs the same cases, from the same table, against
+# (NobleFactor/noblefactor-ops#322); and a --detach wake of a stopped session, which keeps the launch's name
+# (NobleFactor/noblefactor-ops#260). Test-StartClaude.ps1 runs the same cases, from the same table, against
 # Start-Claude.ps1 on Windows.
 
 [[ -r "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" ]] || {
@@ -77,7 +78,9 @@ function record_titles {
 # and the startup repository, with an origin, since Start-Claude names the repository from it.
 #
 # The stand-in for claude lists one background session, abcd1234, named "probe session", whose conversation,
-# abcd1234-0000-4000-8000-000000000009, has no transcript, and the case can change it through the STAND_IN variables.
+# abcd1234-0000-4000-8000-000000000009, has no transcript, and the case can change it through the STAND_IN variables:
+# STAND_IN_STATE lists it stopped, and STAND_IN_LOG names a file where each claude --bg it is given is written, one line
+# each, its arguments joined by the unit separator.
 # Its viewer stays a second, then leaves. A background resume answers as claude does, its short id the conversation's
 # first eight characters, and a new conversation comes up as background session fedc4321. The stand-in for gh answers
 # for schedule 7 of the startup repository's origin, and for nothing else. A second clone of the repository, a directory
@@ -112,13 +115,15 @@ case "$1" in
     agents)
         jq --null-input --compact-output --arg id "${STAND_IN_ID}" --arg cwd "${STAND_IN_CWD}" \
             --arg session "${STAND_IN_SESSION}" --arg name "${STAND_IN_NAME}" \
+            --arg state "${STAND_IN_STATE:-running}" \
             '[{id: $id, cwd: $cwd, kind: "background", startedAt: 1760000000000, sessionId: $session, name: $name,
-               state: "running"}]'
+               state: $state}]'
         ;;
     attach)
         sleep 1
         ;;
     --bg)
+        [[ -z ${STAND_IN_LOG:-} ]] || (IFS=$'\x1f' && printf '%s\n' "$*") >>"${STAND_IN_LOG}"
         started=fedc4321
         while (($#)); do
             [[ $1 != --continue ]] || {
@@ -309,6 +314,47 @@ function seed_entry {
     printf '%s\n' "$1" >"${store}/7"
 }
 
+# run_wake_case runs a --detach launch of schedule 7, whose entry holds the stand-in's session, listed stopped, as
+# probe runs one, then checks the claude --bg that woke it: the wake must carry the launch's name, the schedule's key
+# first and its title last, so that the session keeps its title (NobleFactor/noblefactor-ops#260, requirement 3).
+#
+# Parameters:
+#   - `$1`: the case's name.
+#
+# Returns:
+#   - 0, having reported the case.
+function run_wake_case {
+    local name="$1" problem="" written="" woke="" wake_name="" index
+    local log="${run_directory}/claude-bg.log"
+    local -a argument_list=()
+    case_count=$((case_count + 1))
+
+    clear_store
+    seed_entry abcd1234
+    : >"${log}"
+    export STAND_IN_STATE=stopped STAND_IN_LOG="${log}"
+    probe problem "${repository}" abcd1234 --detach --schedule 7
+    unset STAND_IN_STATE STAND_IN_LOG
+
+    woke="$(grep -F -- --resume "${log}" | tail -n 1 || true)"
+    IFS=$'\x1f' read -r -a argument_list <<<"${woke}"
+
+    for ((index = 0; index < ${#argument_list[@]}; index++)); do
+        [[ ${argument_list[index]} != --name ]] || wake_name="${argument_list[index + 1]:-}"
+    done
+
+    if [[ -z ${woke} ]]; then
+        problem+="no claude --bg --resume woke the stopped session; "
+    elif [[ ${wake_name} != "example/start-claude-test#7 | "*" | Schedule: probe" ]]; then
+        problem+="the wake was named '${wake_name}', not the launch's name; "
+    fi
+
+    [[ "$(cat -- "${store}/7" 2>/dev/null || true)" == abcd1234 ]] ||
+        problem+="schedule 7's entry no longer holds abcd1234; "
+
+    report "${name}" "${problem}" "${written}"
+}
+
 # run_attached_case runs Start-Claude attached, in a pseudo-terminal of its own, onto the stand-in's background
 # session: the viewer leaves after a second, which ends the tmux session, and the session's short id must then be on
 # standard output, alone, with no tmux session left on the run's server.
@@ -448,6 +494,10 @@ STAND_IN_ID=eeee5555 STAND_IN_SESSION=eeee5555-0000-4000-8000-000000000002 STAND
 run_store_case "row 2: --continue in that clone finds that conversation" "${clone}" eeee5555 eeee5555 --detach \
     --continue
 STAND_IN_ID=abcd1234 STAND_IN_SESSION=abcd1234-0000-4000-8000-000000000009 STAND_IN_CWD="${repository}"
+clear_store
+
+# A --detach wake of a stopped session keeps the launch's name (#260, requirement 3).
+run_wake_case "a --detach wake of a stopped session keeps the launch's name"
 clear_store
 
 # Attached: the id when the client leaves.

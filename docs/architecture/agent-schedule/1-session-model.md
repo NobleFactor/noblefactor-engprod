@@ -6,7 +6,8 @@ title: "1. Session model — every conversation in claude's background, a tmux s
 
 > **Status:** built 2026-10-15, in phase 33 of the [plan][plan-259],
 > as 07413ae2, and accepted on the deployed scripts the same day, in phase 34; on Windows, on psmux, in
-> David-Noble-at-work/personal#273, 2026-10-19. Companion: [`1-session-model.status.md`](1-session-model.status.md).
+> David-Noble-at-work/personal#273, 2026-10-19; the variables read and the title held on a wake in
+> NobleFactor/noblefactor-ops#260, 2026-10-22. Companion: [`1-session-model.status.md`](1-session-model.status.md).
 > Feature:
 > [NobleFactor/noblefactor-ops#151](https://github.com/NobleFactor/noblefactor-ops/issues/151).
 >
@@ -48,6 +49,8 @@ This model replaced claude running in the tmux session's left pane, and the tmux
     through an `env` block in `claude --bg --settings` (question 79; seen reaching a session's startup hook
     2026-10-15), since claude's background service starts a session without the environment of the command that
     starts it (seen 2026-10-14). The tmux session's shell pane gets them too; the viewer has no need of them.
+    `star-gh-assignment` reads them (#260, requirements 1 and 2): the schedule's key from `NFEP_AGENT_SCHEDULE`, and
+    from the session's name only when it is unset; its link from `NFEP_AGENT_SCHEDULE_URL`, or the link the key makes.
 11. **`MOSH_SERVER_NETWORK_TMOUT` is the user's to set,** not Start-Claude's, and Start-Claude(1) names it (question
     77).
 
@@ -98,7 +101,8 @@ a tree of its own and runs on in every case.
    keychain that stays locked. Each refusal says what to do instead.
 3. **The background session.** The entry's id is looked up in claude's list, `claude agents --json --all`:
    - a background session of that id, running or stopped, is the schedule's, and `claude attach` restarts a stopped
-     one under the same id (seen 2026-10-14);
+     one under the same id (seen 2026-10-14); with `--detach`, `claude --bg --resume` of its conversation wakes it
+     instead, and is given the launch's name, so that its title holds once it stops again (#260, requirement 3);
    - a conversation's id is met where claude lists it, as item 6 of the model says;
    - with no entry, `claude --bg` starts a new conversation in the startup directory, named for the schedule, with
      Remote Control unless `--no-remote-control` is given, the schedule's variables, and the arguments after `--`,

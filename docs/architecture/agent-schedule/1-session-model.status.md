@@ -9,7 +9,9 @@ title: "1. Session model — Status"
 **Plan:** [259-start-claude-documents-claude.md][plan-259]
 **State:** Built in phase 33, 07413ae2, 2026-10-15, tested on Danoble-MBP-A before its commit, and deployed there and
 on danoble-ud24-1; accepted on the deployed scripts the same day, in phase 34. On Windows, Start-Claude.ps1 on psmux,
-David-Noble-at-work/personal#273, 2026-10-19.
+David-Noble-at-work/personal#273, 2026-10-19. The schedule's variables read and the title held on a wake,
+NobleFactor/noblefactor-ops#260: built in be16108, tested on all three hosts 2026-10-22; its acceptance follows its
+deploy.
 
 ## Completion
 
@@ -25,5 +27,11 @@ David-Noble-at-work/personal#273, 2026-10-19.
 - [x] On Windows, Start-Claude.ps1 on psmux, with the four differences psmux needs (personal#273's plan, requirement
   4): built on personal#273's branch 2026-10-17 to 19, and tested on danoble-wd11-3, test plan rows 1 to 3 and 10 to
   12; the rest of its tests are its test scripts', under `tests/`.
+- [x] The title holds everywhere: a `--detach` wake of a stopped session passes the launch's name, in both scripts,
+  and a case in both test scripts proves it (NobleFactor/noblefactor-ops#260, requirement 3).
+- [x] The schedule's variables read: `star-gh-assignment` answers with `NFEP_AGENT_SCHEDULE`, and with the session's
+  name only when it is unset, and gives the link from `NFEP_AGENT_SCHEDULE_URL` or the key (#260, requirements 1 and
+  2).
+- [ ] Acceptance on the deployed scripts, #260's requirement 4, after its merge.
 
 [plan-259]: https://github.com/David-Noble-at-work/personal/blob/main/docs/plans/chore/259-start-claude-documents-claude.md

@@ -788,8 +788,10 @@ function start_background {
 }
 
 # wake_background starts a stopped background session again, for --detach, under its own id and with the options it
-# was started with: `claude --bg --resume` of its conversation's full id wakes it (seen 2026-10-15). Without --detach,
-# the viewer's `claude attach` starts it.
+# was started with: `claude --bg --resume` of its conversation's full id wakes it (seen 2026-10-15). It passes the
+# launch's name too, since a session woken without one shows its name only while it runs, read from its transcript, and
+# none once it stops (seen 2026-10-21): the title holds everywhere (NobleFactor/noblefactor-ops#260, requirement 3).
+# Without --detach, the viewer's `claude attach` starts it.
 #
 # Its note passes on claude's line that begins "backgrounded", its word that the session runs again, or else claude's
 # first line: when claude starts its background service first, its first line is "Starting background service" (seen
@@ -803,7 +805,7 @@ function start_background {
 function wake_background {
     local output said
 
-    output="$("$claude_binary" --bg --resume "$background_session" </dev/null 2>&1 9>&-)" ||
+    output="$("$claude_binary" --bg --resume "$background_session" --name "$session_name" </dev/null 2>&1 9>&-)" ||
         error $EX_UNAVAILABLE "claude did not start background session ${background_id} again: ${output//$'\n'/ }"
     said="$(sed -n '/^backgrounded/{p;q;}' <<<"$output")"
     note "claude: ${said:-${output%%$'\n'*}}"
