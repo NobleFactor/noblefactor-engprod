@@ -4,33 +4,34 @@
 # The issue data model as GitHub holds it, pulled from the NobleFactor organization: docs/architecture/issue-data-model/
 # 6-the-asset-and-its-sync.md. Written by hand on 2026-10-22 from gh api reads, the first pull, before star gh model pull
 # exists; the digest is a SHA-256 over this file with its own line excluded. Projects need the read:project scope, which
-# the token lacked, and none exist yet. Labels are the hub repository's, NobleFactor/noblefactor-ops; devlore-cli's
+# the token lacked, and none exist yet. Within a level the types' order is the render order; Bug is the unplanned leaf. Labels are the hub repository's, NobleFactor/noblefactor-ops; devlore-cli's
 # Area:, Severity: and Priority: labels join when the attributes are pulled.
 
 version: 1
 pulled:
   at: 2026-10-22T19:03:08Z
   org: NobleFactor
-  digest: sha256:8ba59638fb4755a85cbd10307c5a4fa403e9c1c975e6304b78692ef24503b656
+  digest: sha256:fbf1a2b8cb66de149b2841f876bb6eb4c47d553b6771e75765731b52f20429ff
 types:
   - name: Epic
     id: 914457658
     level: 0
     color: purple
     description: "Level 0: a body of work with an owner, the root every other issue rolls up to; decomposes into features and chores"
-  - name: Chore
-    id: 914457671
-    level: 1
-    color: gray
-    description: "Level 1: engineering value, a body of process or tooling work the team receives; decomposes into tasks and bugs"
   - name: Feature
     id: 344350
     level: 1
     color: blue
     description: "Level 1: product value, a capability the product gains; decomposes into tasks and bugs"
+  - name: Chore
+    id: 914457671
+    level: 1
+    color: gray
+    description: "Level 1: engineering value, a body of process or tooling work the team receives; decomposes into tasks and bugs"
   - name: Bug
     id: 344348
     level: 2
+    unplanned: true
     color: red
     description: "Level 2: unplanned work, a defect found rather than planned; repairs a feature or a chore"
   - name: Task

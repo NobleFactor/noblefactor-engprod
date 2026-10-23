@@ -22,11 +22,11 @@ pulled:
   org: NobleFactor
   digest: sha256:9b1e…
 types:
-  - { name: Epic,    id: IT_kwDO…a1, level: 0 }
-  - { name: Feature, id: IT_kwDO…b2, level: 1 }
-  - { name: Chore,   id: IT_kwDO…c3, level: 1 }
-  - { name: Task,    id: IT_kwDO…d4, level: 2 }
-  - { name: Bug,     id: IT_kwDO…e5, level: 2 }
+  - { name: Epic,    id: 914457658, level: 0 }
+  - { name: Feature, id: 344350,    level: 1 }
+  - { name: Chore,   id: 914457671, level: 1 }
+  - { name: Bug,     id: 344348,    level: 2, unplanned: true }
+  - { name: Task,    id: 344346,    level: 2 }
 teams:
   - { name: engprod, slug: engprod, id: T_kwDO…, role: triage }
 labels:
@@ -71,7 +71,10 @@ projects:
 - **`types`** is the hierarchy as data: each type's name and its level. The extension derives the rest: level 0 has
   no parent, the last level is the lanes, a parent is one level up, and the types of one level are mutually exclusive.
   The owner, 2026-10-21: "We've got a hierarchy and a level number might be sufficient. we assume mutual exclusion at
-  each level in the hierarchy." Nothing in the extension names a type.
+  each level in the hierarchy." Nothing in the extension names a type (noblefactor-engprod#376, 2026-10-22). Two
+  things the levels do not say, so the asset does: the order of the types within a level is the order the report
+  renders them in, features before chores; and `unplanned: true` marks the leaf type that is found rather than
+  planned, which is what triage waits on and what Severity attaches to.
 - **A type is keyed by its id, never its name,** so that the owner can rename one. The owner, 2026-10-22: "i should be
   able to rename issue types. Will I be able to do that?" GitHub's issue type has a name, a description, a color and
   an enabled flag, and nothing about hierarchy; an issue holds its type by id, so a rename made in GitHub reaches every
