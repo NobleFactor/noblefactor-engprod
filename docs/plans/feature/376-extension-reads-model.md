@@ -64,13 +64,13 @@ live repositories, through a private copy of the extension, for `--epic Ops:Issu
 
 ### Phase 1: the plan
 
-- [ ] This plan committed on `feature/376-star-extension-reads-the`, status `approved` with the task list
+- [x] This plan committed on `feature/376-star-extension-reads-the`, status `approved` with the task list -- 2026-10-22
 
 ### Phase 2: the change
 
-- [ ] `model()` and the derivations in `scheme.star`; the report's and the labels commands' literals replaced
-- [ ] `make check` passes; the four renders above compare equal before and after through a private copy
-- [ ] A doctored asset, no level on one type, and a doctored digest, are refused with the fault named
+- [x] `model()` and the derivations in `scheme.star`; the report's literals replaced; the labels commands named none -- 2026-10-22
+- [x] `make check` passes; table, feature, schedule and thread render byte-for-byte as before through a private copy, the audit differs by the order of kinds in one message -- 2026-10-22
+- [x] A doctored asset, no level on one type, a doctored digest, and an unknown version, are refused with the fault named -- 2026-10-22
 
 ### Phase 3: the pull request
 

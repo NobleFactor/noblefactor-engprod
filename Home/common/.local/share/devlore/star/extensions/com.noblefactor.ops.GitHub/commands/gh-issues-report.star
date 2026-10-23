@@ -9,10 +9,10 @@
 # devlore-cli's scripts/Get-EpicReport. The result is the rows; --markdown returns the document the
 # script prints instead, for the reader and for the parity diff.
 
-load("commands/scheme.star", "audit", "audit_lines", "axis", "by_axis", "by_number", "canonical_repo", "children_of", "epic_name", "epic_rows", "epic_tag", "exempt_numbers", "feature_rows", "feature_table_lines", "fetch_issues", "is_bug", "is_child", "key", "kind_of", "label_space", "lane_repos", "line", "parent", "parents_of", "resolve_repos", "schedule_issues", "schedule_rows", "schedule_table_lines", "short", "table_lines", "tagged", "task_row", "thread_names", "thread_rows", "thread_table_lines")
+load("commands/scheme.star", "LEAF_KINDS", "PARENT_KINDS", "audit", "audit_lines", "axis", "by_axis", "by_number", "canonical_repo", "children_of", "epic_name", "epic_rows", "epic_tag", "exempt_numbers", "feature_rows", "feature_table_lines", "fetch_issues", "is_child", "is_root", "key", "kind_of", "label_space", "lane_repos", "line", "parent", "parents_of", "resolve_repos", "schedule_issues", "schedule_rows", "schedule_table_lines", "short", "table_lines", "task_row", "thread_names", "thread_rows", "thread_table_lines")
 
 def _epics(all, epic_filter):
-    return by_axis(by_number([i for i in all if tagged(i, "epic") and (epic_filter == "" or epic_tag(i) == "Epic:" + epic_filter)]), epic_name)
+    return by_axis(by_number([i for i in all if is_root(i) and (epic_filter == "" or epic_tag(i) == "Epic:" + epic_filter)]), epic_name)
 
 # Between the last product section and the first tooling section, when both are present.
 def _divider(items, name_of, idx):
@@ -51,7 +51,7 @@ def _tree_document(all, epics, state, repos, a):
         tasks = [i for i in all if is_child(i) and epic_tag(i) == tag]
         parent_keys = [key(f) for f in parents]
         out.append("\n## " + line(e))
-        out.append("\n_" + str(len([f for f in parents if kind_of(f) == "feature"])) + " feature(s), " + str(len([f for f in parents if kind_of(f) == "chore"])) + " chore(s), " + str(len([t for t in tasks if not is_bug(t)])) + " task(s), " + str(len([t for t in tasks if is_bug(t)])) + " bug(s)._")
+        out.append("\n_" + ", ".join([str(len([f for f in parents if kind_of(f) == k])) + " " + k + "(s)" for k in PARENT_KINDS] + [str(len([x for x in tasks if kind_of(x) == k])) + " " + k + "(s)" for k in LEAF_KINDS]) + "._")
         if len(parents) == 0:
             out.append("\n_Awaiting plan and design: no features or chores filed._")
         for f in parents:
