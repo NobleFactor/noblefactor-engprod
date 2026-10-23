@@ -81,7 +81,8 @@
     session. Not with -Detach, which leaves the session for Remote Control.
 
 .PARAMETER Detach
-    Start the conversation in claude's background, or wake it, and open no psmux session: for Remote Control.
+    Start the conversation in claude's background, or wake it under its name, and open no psmux session: for Remote
+    Control.
 
 .PARAMETER ClaudeArgument
     The arguments after the script's own, passed to claude as they are. A conversation a launch starts keeps them; a
@@ -1192,13 +1193,19 @@ begin {
 
             [Parameter(Mandatory)]
             [string]
-            $Session
+            $Session,
+
+            [Parameter(Mandatory)]
+            [string]
+            $Name
         )
 
         # A stopped background session is started again, for -Detach, under its own id and with the options it was
-        # started with: claude --bg --resume of its conversation's full id wakes it. Without -Detach, the viewer's
-        # claude attach starts it.
-        $result = Invoke-Program -Name $ClaudeBinary -Argument @('--bg', '--resume', $Session)
+        # started with: claude --bg --resume of its conversation's full id wakes it. It is given the launch's name too,
+        # since a session woken without one shows its name only while it runs, and none once it stops: the title holds
+        # everywhere (NobleFactor/noblefactor-ops#260, requirement 3). Without -Detach, the viewer's claude attach
+        # starts it.
+        $result = Invoke-Program -Name $ClaudeBinary -Argument @('--bg', '--resume', $Session, '--name', $Name)
         $output = @($result.Error) + @($result.Output)
 
         if ($result.ExitCode -ne 0) {
@@ -1355,7 +1362,8 @@ begin {
         if ($Detach) {
 
             if ($Background.State -ceq 'stopped') {
-                Resume-BackgroundSession -ClaudeBinary $claudeBinary -Id $Background.Id -Session $Background.Session
+                Resume-BackgroundSession -ClaudeBinary $claudeBinary -Id $Background.Id -Session $Background.Session `
+                    -Name $sessionName
             }
 
             Unlock-Store

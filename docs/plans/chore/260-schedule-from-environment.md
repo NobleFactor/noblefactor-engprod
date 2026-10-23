@@ -1,9 +1,9 @@
 ---
 title: "A session reads its schedule and its link from its environment, and keeps the name Start-Claude gives it"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/260
-status: approved
+status: active
 created: 2026-10-21
-updated: 2026-10-21
+updated: 2026-10-22
 ---
 
 # Plan: A session reads its schedule and its link from its environment, and keeps the name Start-Claude gives it
@@ -85,8 +85,8 @@ from the commands the pull request's script prints.
 
 ### Phase 2: The skill and the name
 
-- [ ] Requirements 1 to 3: `make check`, and every test on Danoble-MBP-A, danoble-ud24-1 and danoble-wd11-3 through
-  `make test HOSTS="..."`, in a script the owner runs.
+- [x] Requirements 1 to 3: `make check`, and every test on Danoble-MBP-A, danoble-ud24-1 and danoble-wd11-3 through
+  `make test HOSTS="..."`, in a script the owner runs. Done 2026-10-22.
 
 ### Phase 3: Acceptance
 

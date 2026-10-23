@@ -12,7 +12,8 @@
     the output, detached, and attached; the refusals of usage; and a refusal's exit status, run as a process
     (David-Noble-at-work/personal#273, questions 11 and 12). Then every way in, with a schedule and without, each
     checking the schedule's entry in the store, and row 2 of personal#259's plan, a conversation resumed in another
-    clone that -Continue finds there (NobleFactor/noblefactor-ops#322).
+    clone that -Continue finds there (NobleFactor/noblefactor-ops#322); and a -Detach wake of a stopped session, which
+    keeps the launch's name (NobleFactor/noblefactor-ops#260).
 
     Each case is an output object whose Result is passed, failed or skipped. A failure ends the run with a terminating
     error, so that run as a process it exits 1.
@@ -78,10 +79,12 @@ function Initialize-RunFolder {
 
     # The stand-in for claude, which lists one background session, abcd1234, named "probe session", whose conversation,
     # abcd1234-0000-4000-8000-000000000009, has no transcript, and the case can change it through the STAND_IN
-    # variables. Its viewer stays a second, then leaves. A background resume answers as claude does, its short id the
-    # conversation's first eight characters, and a new conversation comes up as background session fedc4321. It writes
-    # UTF-8, as claude does. claude.cmd, on PATH, runs it, since Start-Claude.ps1 runs claude as an application; the
-    # script is kept off PATH, where PowerShell would find it before claude.cmd.
+    # variables: STAND_IN_STATE lists it stopped, and STAND_IN_LOG names a file where each claude --bg it is given is
+    # written, one line each, its arguments joined by the unit separator. Its viewer stays a second, then leaves. A
+    # background resume answers as claude does, its short id the conversation's first eight characters, and a new
+    # conversation comes up as background session fedc4321. It writes UTF-8, as claude does. claude.cmd, on PATH, runs
+    # it, since Start-Claude.ps1 runs claude as an application; the script is kept off PATH, where PowerShell would find
+    # it before claude.cmd.
     $bin = Join-Path -Path $Path -ChildPath 'bin'
     $standIn = Join-Path -Path $Path -ChildPath 'stand-in'
     $null = New-Item -ItemType Directory -Path $bin, $standIn
@@ -101,9 +104,10 @@ function Write-Utf8Line {
 
 switch ($arguments[0]) {
     'agents' {
+        $state = if ($env:STAND_IN_STATE) { $env:STAND_IN_STATE } else { 'running' }
         $session = [ordered]@{
             id = $env:STAND_IN_ID; cwd = $env:STAND_IN_CWD; kind = 'background'; startedAt = 1760000000000
-            sessionId = $env:STAND_IN_SESSION; name = $env:STAND_IN_NAME; state = 'running'
+            sessionId = $env:STAND_IN_SESSION; name = $env:STAND_IN_NAME; state = $state
         }
         Write-Utf8Line (ConvertTo-Json -InputObject @($session) -Compress)
         exit 0
@@ -113,6 +117,10 @@ switch ($arguments[0]) {
         exit 0
     }
     '--bg' {
+        if ($env:STAND_IN_LOG) {
+            Add-Content -LiteralPath $env:STAND_IN_LOG -Encoding utf8 -Value ($arguments -join [char]0x1f)
+        }
+
         if ($arguments -contains '--continue') {
             [Console]::Error.WriteLine('stand-in claude: --bg --continue is not handled')
             exit 1
@@ -359,6 +367,65 @@ function Write-TestStoreEntry {
     Set-Content -LiteralPath (Join-Path -Path $script:store -ChildPath '7') -Encoding ascii -Value $Id
 }
 
+# Invoke-WakeCase runs a -Detach launch of schedule 7, whose entry holds the stand-in's session, listed stopped, as
+# Invoke-StartClaudeCase runs one, then checks the claude --bg that woke it: the wake must carry the launch's name, the
+# schedule's key first and its title last, so that the session keeps its title (NobleFactor/noblefactor-ops#260,
+# requirement 3).
+#
+# Parameters:
+#   - `Name`: The case's name.
+#
+# Returns:
+#   - PSCustomObject: the case's result, as ConvertTo-CaseResult makes it.
+function Invoke-WakeCase {
+    [CmdletBinding()]
+    [OutputType([PSCustomObject])]
+    param(
+        [Parameter(Mandatory)]
+        [String]
+        $Name
+    )
+
+    $log = Join-Path -Path $env:XDG_STATE_HOME -ChildPath 'claude-bg.log'
+    Clear-TestStore
+    Write-TestStoreEntry -Id 'abcd1234'
+    Set-Content -LiteralPath $log -Encoding utf8 -Value @()
+    $env:STAND_IN_STATE = 'stopped'
+    $env:STAND_IN_LOG = $log
+
+    try {
+        $result = Invoke-StartClaudeCase -Name $Name -Expected 'abcd1234' -CheckStore -Held 'abcd1234' `
+            -Parameter @{ Schedule = '7'; Detach = $true }
+    }
+    finally {
+        $env:STAND_IN_STATE = $null
+        $env:STAND_IN_LOG = $null
+    }
+
+    $problem = if ($result.Result -ceq 'failed') { "$($result.Detail); " } else { '' }
+    $separator = [string][char]0x1f
+    $woke = @(Get-Content -LiteralPath $log -Encoding utf8 -ErrorAction Ignore) |
+        Where-Object { $_.Split($separator) -ccontains '--resume' } | Select-Object -Last 1
+
+    if (-not $woke) {
+        $problem += 'no claude --bg --resume woke the stopped session; '
+    }
+    else {
+        $field = $woke.Split($separator)
+        $at = [Array]::IndexOf($field, '--name')
+        $wakeName = if ($at -ge 0 -and $at + 1 -lt $field.Count) { $field[$at + 1] } else { '' }
+        $keyFirst = $wakeName.StartsWith('example/start-claude-test#7 | ', [StringComparison]::Ordinal)
+        $titleLast = $wakeName.EndsWith(' | Schedule: probe', [StringComparison]::Ordinal)
+
+        if (-not ($keyFirst -and $titleLast)) {
+            $problem += "the wake was named '$wakeName', not the launch's name; "
+        }
+
+    }
+
+    return ConvertTo-CaseResult -Name $Name -Problem $problem
+}
+
 function Invoke-ProcessCase {
     [CmdletBinding()]
     [OutputType([pscustomobject])]
@@ -453,7 +520,7 @@ $projects = Join-Path -Path $run -ChildPath 'config\projects\test-project'
 $saved = @{}
 
 foreach ($name in 'PATH', 'XDG_STATE_HOME', 'CLAUDE_CONFIG_DIR', 'STAND_IN_ID', 'STAND_IN_SESSION', 'STAND_IN_NAME',
-    'STAND_IN_CWD', 'TMUX') {
+    'STAND_IN_CWD', 'STAND_IN_STATE', 'STAND_IN_LOG', 'TMUX') {
     $saved[$name] = [Environment]::GetEnvironmentVariable($name)
 }
 
@@ -549,6 +616,10 @@ name nothing records | no such name | not-found | ConversationNotFound
     $env:STAND_IN_ID = 'abcd1234'
     $env:STAND_IN_SESSION = 'abcd1234-0000-4000-8000-000000000009'
     $env:STAND_IN_CWD = $script:repository
+    Clear-TestStore
+
+    # A -Detach wake of a stopped session keeps the launch's name (#260, requirement 3).
+    $ways += Invoke-WakeCase -Name "a -Detach wake of a stopped session keeps the launch's name"
     Clear-TestStore
 
     foreach ($result in $ways) {
