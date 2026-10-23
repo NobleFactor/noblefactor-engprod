@@ -169,8 +169,20 @@ read before every operation; the report and the audit reading type and link firs
       will be one less thing to worry about at the end." Its own plan and pull request, before the rollout below
 - [x] Section 5's deltas and order rewritten to the rulings so far, each delta with its state; the status companions of
       sections 1, 3, 4 and 5 set -- 2026-10-22
-- [ ] The tasks filed under #332 and #333: the asset read by the extension, `pull`, the read before every operation,
-      the report and audit reading type and link first; the reclassification, #363, as the rollout
+- [x] The tasks filed under #332 and #333 -- 2026-10-22, approved that day, nine in the order of their pull requests,
+      the waits-on recorded as GitHub blocked-by links and in the lane table:
+
+      | # | Task | Issue | Waits on |
+      | --- | --- | --- | --- |
+      | 1 | the extension reads the hierarchy from `model.yaml`, nothing in its code naming a type | #376 | — |
+      | 2 | `star gh model pull`, the ETag cache, the digest; #320's labels file becomes the asset | #377 | 1 |
+      | 3 | every `star gh issues` operation reads the record first and says when the asset is behind | #378 | 2 |
+      | 4 | the report and the audit place an issue by type and sub-issue parent first, label and marker second | #379 | 1 |
+      | 5 | the audit names the model's faults | #361 | 4 |
+      | 6 | every open noblefactor-engprod issue typed and linked from its label and marker, both kept | #380 | 4 |
+      | 7 | the reclassification by the owner's rule, from the inventory | #363 | 6 |
+      | 8 | `star gh issues create` files with type, parent and attributes, and refuses a non-participating repository | #338 | 4 |
+      | 9 | deployed and proved: every open leaf under its parent by link | #365 | 5, 7 |
 - [ ] Rolled out: every open noblefactor-ops issue typed and linked, the report placing it by type and link, and the
       sessions running throughout
 
