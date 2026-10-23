@@ -37,9 +37,9 @@ in and use what it actually runs:
 
 | Repository | CI entry point |
 | --- | --- |
-| `personal` | `.github/scripts/shell-lint.sh`, with `DECLARE_BASHSCRIPT_DIR` naming a directory that holds `Declare-BashScript` (a deployed `~/.local/bin` locally; CI checks out `noblefactor-ops`) |
+| `personal` | `.github/scripts/shell-lint.sh`, with `DECLARE_BASHSCRIPT_DIR` naming a directory that holds `Declare-BashScript` (a deployed `~/.local/bin` locally; CI checks out `noblefactor-engprod`) |
 | `devlore-cli` | `make vet-all`, `make lint-all`, `./build/star lint go ./...` |
-| `noblefactor-ops` | `make check`: every gate, then the tests under `tests/`, which is what `ci.yaml` runs since #268 |
+| `noblefactor-engprod` | `make check`: every gate, then the tests under `tests/`, which is what `ci.yaml` runs since #268 |
 
 Where a repository routes through a build tool, call the target rather than the underlying binary:
 the target is what CI runs and it carries the flags. Where CI uses a GitHub Action rather than a
@@ -47,7 +47,7 @@ command — `codespell-project/actions-codespell`, say — run the CLI it wraps 
 arguments the workflow passes it.
 
 Read the workflow each time rather than trusting this table. It went stale during the change that
-introduced it: `noblefactor-ops` dropped its Go trees and re-based its gate on documents while this
+introduced it: `noblefactor-engprod` dropped its Go trees and re-based its gate on documents while this
 edit was in the working tree, turning a `go build` pre-flight into a command with nothing to
 build.
 

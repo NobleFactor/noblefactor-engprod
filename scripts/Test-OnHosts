@@ -113,8 +113,8 @@ function run_on_unix {
     directory="$(
         ssh "${ssh_options[@]}" "${host}" bash -s <<'SETUP'
 set -euo pipefail
-mkdir -p -- "$HOME/.local/state/noblefactor-ops-tests"
-mktemp -d "$HOME/.local/state/noblefactor-ops-tests/run.XXXXXX"
+mkdir -p -- "$HOME/.local/state/noblefactor-engprod-tests"
+mktemp -d "$HOME/.local/state/noblefactor-engprod-tests/run.XXXXXX"
 SETUP
     )" || true
 
@@ -154,7 +154,7 @@ function run_on_windows {
     setup="$(
         cat <<'POWERSHELL'
 $ErrorActionPreference = 'Stop'
-$root = Join-Path -Path $HOME -ChildPath '.local\state\noblefactor-ops-tests'
+$root = Join-Path -Path $HOME -ChildPath '.local\state\noblefactor-engprod-tests'
 $null = New-Item -ItemType Directory -Force -Path $root
 $directory = Join-Path -Path $root -ChildPath ('run.' + [guid]::NewGuid().ToString('N').Substring(0, 6))
 $null = New-Item -ItemType Directory -Path $directory
@@ -196,7 +196,7 @@ declare -r synopsis="${script_name} [-h|--help] <host>...
 Runs every test under tests/ on each host named, in turn, and fails when any host's tests fail, naming each. A name
 that is this machine's, by its short host name or localhost, runs here. Any other host gets a copy of this working
 tree's Home, scripts and tests, what git tracks and what is new and not ignored, in a folder of its own under
-~/.local/state/noblefactor-ops-tests, and runs its tests there over ssh, straight to its login shell. The folder goes
+~/.local/state/noblefactor-engprod-tests, and runs its tests there over ssh, straight to its login shell. The folder goes
 when its tests pass, and stays, named, when they fail. Whether a host is Windows is asked of it."
 
 eval set -- "$script_arguments"

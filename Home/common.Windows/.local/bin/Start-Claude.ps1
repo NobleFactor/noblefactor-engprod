@@ -100,7 +100,7 @@
     launch starts is passed --model opus.
 
 .EXAMPLE
-    Start-Claude -Directory ..\noblefactor-ops NobleFactor/devlore-cli#916
+    Start-Claude -Directory ..\noblefactor-engprod NobleFactor/devlore-cli#916
 
     Opens a session for another clone without leaving this one.
 
