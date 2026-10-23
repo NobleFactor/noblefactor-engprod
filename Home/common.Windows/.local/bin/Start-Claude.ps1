@@ -1306,7 +1306,8 @@ begin {
         # For -Detach, a running session claude lists under another name than the launch's gets /rename typed into a
         # viewer of the launch's own, a psmux session no client attaches, which ends once claude lists the name (#384,
         # requirement 2). claude on Windows takes no keys in a viewer no client attaches
-        # (anthropics/claude-code#104688), so the launch does this only when NFEP_AGENT_SCHEDULE_DETACHED_RENAME is set.
+        # (anthropics/claude-code#104688), so the launch does this only when NFEP_AGENT_SCHEDULE_DETACHED_RENAME is set:
+        # https://github.com/NobleFactor/noblefactor-engprod/pull/387
         $opened = Invoke-Program -Name 'tmux' -Argument @(
             'new-session', '-d', '-P', '-F', '#{session_id}', '--',
             'pwsh', '-NoProfile', '-Command', "claude attach $Id")
@@ -1513,8 +1514,9 @@ begin {
         # A schedule's session carries the launch's name (#260, requirement 3). One claude lists under another name is
         # renamed with /rename, never with a flag on the wake (#384): as the wake's first prompt when it is stopped, and
         # typed into the viewer a console attaches to when it runs. With -Detach a running one keeps its name, unless
-        # NFEP_AGENT_SCHEDULE_DETACHED_RENAME is set (anthropics/claude-code#104688). A session this launch started has
-        # the name already, and one on no schedule keeps its own.
+        # NFEP_AGENT_SCHEDULE_DETACHED_RENAME is set (anthropics/claude-code#104688;
+        # https://github.com/NobleFactor/noblefactor-engprod/pull/387). A session this launch started has the name
+        # already, and one on no schedule keeps its own.
         $rename = $null
 
         if ($scheduleKey -and $Background.State -and $Background.Name -cne $sessionName) {
