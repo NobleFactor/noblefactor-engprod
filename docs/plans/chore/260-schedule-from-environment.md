@@ -94,7 +94,9 @@ from the commands the pull request's script prints.
 
 ### Phase 4: Closure
 
-- [ ] The pull request, closing #260 and lane 5 of #301, the agent-schedule design's status companions saying so.
+- [x] The pull request, closing #260 and with it lane 5 of #301, the agent-schedule design's status companions saying
+  so. Each host takes the merge in the script that merges it: Danoble-MBP-A, danoble-ud24-1 and danoble-wd11-3. The
+  plan stays `active` until phase 3, which follows the deploy.
 
 ## Migration Path
 

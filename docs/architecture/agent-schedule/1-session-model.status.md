@@ -9,7 +9,9 @@ title: "1. Session model — Status"
 **Plan:** [259-start-claude-documents-claude.md][plan-259]
 **State:** Built in phase 33, 07413ae2, 2026-10-15, tested on Danoble-MBP-A before its commit, and deployed there and
 on danoble-ud24-1; accepted on the deployed scripts the same day, in phase 34. On Windows, Start-Claude.ps1 on psmux,
-David-Noble-at-work/personal#273, 2026-10-19.
+David-Noble-at-work/personal#273, 2026-10-19. The schedule's variables read and the title held on a wake,
+NobleFactor/noblefactor-ops#260: built in be16108, tested on all three hosts 2026-10-22; its acceptance follows its
+deploy.
 
 ## Completion
 

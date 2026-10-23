@@ -6,7 +6,8 @@ title: "1. Session model — every conversation in claude's background, a tmux s
 
 > **Status:** built 2026-10-15, in phase 33 of the [plan][plan-259],
 > as 07413ae2, and accepted on the deployed scripts the same day, in phase 34; on Windows, on psmux, in
-> David-Noble-at-work/personal#273, 2026-10-19. Companion: [`1-session-model.status.md`](1-session-model.status.md).
+> David-Noble-at-work/personal#273, 2026-10-19; the variables read and the title held on a wake in
+> NobleFactor/noblefactor-ops#260, 2026-10-22. Companion: [`1-session-model.status.md`](1-session-model.status.md).
 > Feature:
 > [NobleFactor/noblefactor-ops#151](https://github.com/NobleFactor/noblefactor-ops/issues/151).
 >
