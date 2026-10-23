@@ -110,7 +110,7 @@ serves, and its lanes as tasks and bugs under the chore.
 
 **Every participating repository provides the `Epic:Ops:Process` label**, since chores arise everywhere —
 unlike other epic labels, which exist only where their epic is hosted. The epic issue itself lives
-once, in the hub: [NobleFactor/noblefactor-ops#142](https://github.com/NobleFactor/noblefactor-ops/issues/142).
+once, in the hub: [NobleFactor/noblefactor-engprod#142](https://github.com/NobleFactor/noblefactor-engprod/issues/142).
 Chores in other repositories reference it the way any cross-repository parent is referenced.
 
 ## Placement and the two markers
@@ -241,8 +241,8 @@ cite issues freely; only rows whose first cell is a number are read.
 the work proceeds, gaining a closed lane at a time, which is how progress is read.
 
 **A lane in progress names its worktree.** When work on a lane starts, its Next says "in progress" and
-names the worktree, as in "noblefactor-ops, its own PR, in progress in
-`noblefactor-ops.257-star-gh-assignment-names-the`", and it is kept current as the work moves. Status
+names the worktree, as in "noblefactor-engprod, its own PR, in progress in
+`noblefactor-engprod.257-star-gh-assignment-names-the`", and it is kept current as the work moves. Status
 reads the work there: a session starts in a repository clone, and its worktrees come later. Ruled
 2026-10-05 (#257).
 

@@ -116,11 +116,17 @@ fi
 # 4. writ's registration.
 run writ repo set base "$new_root"
 
-# 5. The Workspace symlink.
+# 5. The Workspace symlink. When the clone itself lives under the Workspace directory, as on a machine laid out before
+# #366, the renamed directory already is the Workspace entry, and a link onto itself would be a loop inside it; found
+# on Danoble-MBP-A on 2026-10-22 and run there as a patched copy.
 if [[ -L "$workspace/$old_name" ]]; then
     run rm "$workspace/$old_name"
 fi
-run ln -s "$new_root" "$workspace/$new_name"
+if [[ "$new_root" != "$workspace/$new_name" ]]; then
+    run ln -s "$new_root" "$workspace/$new_name"
+else
+    say "the clone is the Workspace entry itself; no link to make"
+fi
 
 # 6. Start-Claude's store, keyed by the repository's name.
 if [[ -d "$store/$old_name" ]]; then

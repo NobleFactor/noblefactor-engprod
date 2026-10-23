@@ -11,8 +11,18 @@
 
 KINDS = ["epic", "feature", "task", "bug", "chore"]
 
+# A repository renamed on GitHub keeps its old name as a redirect, and the record keeps it as text: markers in
+# bodies, lane and beat tables, and the schedule keys sessions are named by. Every owner/repo the extension parses
+# goes through canonical_repo, so the old name reads as the new. noblefactor-ops became noblefactor-engprod on
+# 2026-10-22 (noblefactor-ops#304).
+RENAMED = {"NobleFactor/noblefactor-ops": "NobleFactor/noblefactor-engprod"}
+
+def canonical_repo(name):
+    """owner/repo as it is named today: a renamed repository's old name maps to its new one, anything else is itself."""
+    return RENAMED.get(name, name)
+
 def short(repo):
-    """The repository's name without its owner: noblefactor-ops for NobleFactor/noblefactor-ops."""
+    """The repository's name without its owner: noblefactor-engprod for NobleFactor/noblefactor-engprod."""
     return repo.split("/")[-1]
 
 def key(it):
@@ -83,7 +93,7 @@ def parent_marker(it):
     if ms == None or len(ms) == 0:
         return None
     m = ms[-1]
-    return ((m[2] if m[2] else it["repo"]) + "#" + m[3], m[1].lower())
+    return ((canonical_repo(m[2]) if m[2] else it["repo"]) + "#" + m[3], m[1].lower())
 
 def parent(it):
     """The key of the parent the body names -- owner/repo#N -- or None."""
@@ -272,7 +282,7 @@ def layer_repos():
 def resolve_repos(repo_flag, directory):
     """The repositories to report on: --repo, else --directory's origin, else writ's layers', else the current one."""
     if repo_flag:
-        return [r.strip() for r in repo_flag.split(",") if r.strip()]
+        return [canonical_repo(r.strip()) for r in repo_flag.split(",") if r.strip()]
     if directory:
         return [_origin_repo(directory)]
     repos = layer_repos()
@@ -400,7 +410,7 @@ def beat_table(thread):
         if refs == None or len(refs) == 0:
             continue
         m = refs[0]
-        beats.append((int(cells[0]), (m[1] if m[1] else thread["repo"]) + "#" + m[2]))
+        beats.append((int(cells[0]), (canonical_repo(m[1]) if m[1] else thread["repo"]) + "#" + m[2]))
     return beats
 
 def thread_rows(name, all):
@@ -673,7 +683,7 @@ def lane_table(sched):
         if epic != None and len(epic) > 1:
             spec = {"epic": epic[1]}
         elif ref != None and len(ref) > 2:
-            spec = {"key": (ref[1] if ref[1] else sched["repo"]) + "#" + ref[2]}
+            spec = {"key": (canonical_repo(ref[1]) if ref[1] else sched["repo"]) + "#" + ref[2]}
         else:
             spec = {"unresolved": item}
         lanes.append({

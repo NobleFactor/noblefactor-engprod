@@ -305,7 +305,7 @@ forget; they do not define them, and a team without the scripts is held to the s
 The rule, as ruled 2026-09-07 (noblefactor-ops#147) and corrected 2026-09-24 (noblefactor-ops#240):
 
 - Code that takes a dependency on, or contributes to, a repository's stack goes into a directory named
-  for that repository: `Home/noblefactor-ops[.<selector>]` for anything that needs the base beyond
+  for that repository: `Home/noblefactor-engprod[.<selector>]` for anything that needs the base beyond
   `Declare-BashScript`.
 - If not, it goes elsewhere. What is to be deployed unconditionally, wherever you go, goes into
   `common[.<selector>]` — so `common` depends on nothing outside itself.
