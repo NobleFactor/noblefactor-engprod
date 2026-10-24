@@ -1,7 +1,7 @@
 ---
 title: "#384's plan reads active, with its closure box ticked for #387"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/393
-status: draft
+status: complete
 created: 2026-10-24
 updated: 2026-10-24
 ---
@@ -24,14 +24,17 @@ alone. The owner, asked to close that worktree and open this one: "Yes".
 a pull request's last commit, and a plan with a box still open at that commit stays `active`. The rule broken is rule
 12 of [agent-rules.md](../../guides/agent-rules.md). This pull request sets the plan `active` and ticks phase 4, and
 the box says the tick came late and from where. Phase 2's open box, open question 4, stays open and names #388, which
-now holds it. Phase 5, the owner's acceptance, stays open.
+now holds it. Phase 5, the owner's acceptance, stays open, and its requirement 5 gains a step on Windows: the check of
+Remote Control on danoble-wd11-3, once that VM is rebuilt.
 
 ## Goals
 
 1. **#384's plan says what is true:** it is `active`, and phase 4 is ticked for #387 and `aa274de`.
 2. **A late tick reads as late:** the box says when it was ticked and by which issue, so a reader can tell it from a
    box ticked on time.
-3. **This plan closes the way #384's should have:** its pull request's last commit ticks its closure box and sets it
+3. **#384's acceptance covers Windows:** its requirement 5 gains a step for Remote Control on danoble-wd11-3, run
+   once that VM is rebuilt.
+4. **This plan closes the way #384's should have:** its pull request's last commit ticks its closure box and sets it
    `complete`.
 
 ## Current State
@@ -42,6 +45,7 @@ now holds it. Phase 5, the owner's acceptance, stays open.
 | Phase 4, the closure | unticked | #387 merged as `aa274de` on 2026-10-23 and closed #384 |
 | Phase 2, open question 4 | unticked | open, and held by #388, which the box does not name |
 | Phase 5, the acceptance | unticked | open: the owner's, on Danoble-MBP-A |
+| Requirement 5, the acceptance's steps | on Danoble-MBP-A only | it takes a step on danoble-wd11-3, after the rebuild |
 
 Seen on 2026-10-24 with `gh`: #387 merged at 2026-10-23T22:08:21Z as `aa274de2`, and #384 closed as completed two
 seconds later. The deploy is checked in phase 2, before the tick.
@@ -63,22 +67,39 @@ danoble-wd11-3. The deploy is checked first: each host's deployed script, `Start
 
 Phase 2's box for open question 4 stays unticked and names #388, where that check now lives.
 
+### Requirement 4: a Windows step in the acceptance
+
+Requirement 5 of [384-waking-a-stopped-session-with.md](384-waking-a-stopped-session-with.md) gains a third step,
+run on danoble-wd11-3 once it is rebuilt from a clean image and has taken the deploy:
+
+> 3. On danoble-wd11-3: `Start-Claude.ps1 -Schedule <n> -Detach`, then `claude stop <id>`, then
+>    `Start-Claude.ps1 -Schedule <n> -Detach` again. The start passes `--remote-control <name>`, which the Microsoft
+>    Defender left on the VM by its old image refused (#394). `claude agents --json --all` lists the session running
+>    under its own id and the launch's name, and no copy, and Remote Control lists it under that name.
+
+Its phase 5 says this step waits on the rebuild, so a reader can tell the open box from a forgotten one; the plan
+stays `active` until then.
+
 ## Implementation Phases
 
 ### Phase 1: The plan
 
-- [ ] This plan, committed on its branch and reviewed with the owner.
+- [x] This plan, committed on its branch as `c48818f` on 2026-10-24, and reviewed with the owner the same day. Its one
+  open question was ruled; asked whether to start the fix, the owner: "Start the fix".
 
 ### Phase 2: The fix
 
-- [ ] Requirements 1 to 3, with the deploy checked on the three hosts before phase 4's tick, and `make check`.
+- [x] Requirements 1 to 4, with the deploy checked on the three hosts before phase 4's tick, and `make check`. Done
+  2026-10-24: the deployed `Start-Claude` on Danoble-MBP-A and danoble-ud24-1, and `Start-Claude.ps1` on
+  danoble-wd11-3, matched the files at `aa274de` by SHA-256 of their text with carriage returns removed. `make check`
+  ran in the pull request's script, before its commit.
 
 ### Phase 3: Closure
 
-- [ ] The pull request, closing #393 and with it lane 19 of #301 once recorded. Its last commit ticks this box and
+- [x] The pull request, closing #393 and with it lane 19 of #301 once recorded. Its last commit ticks this box and
   sets this plan `complete`, since
   [§ Documents on every commit](../../guides/development-process.md#documents-on-every-commit) gives that commit
-  both. No deploy follows, because the change is to documents only.
+  both. No deploy follows, because the change is to documents only. Ticked by that commit, 2026-10-24.
 
 ## Migration Path
 
@@ -89,7 +110,7 @@ None: the change is to documents only.
 | File | Action | Purpose |
 | --- | --- | --- |
 | `docs/plans/fix/393-384-s-plan-merged-as-draft-with.md` | Create | this plan |
-| `docs/plans/fix/384-waking-a-stopped-session-with.md` | Modify | its status, its phase 4, and phase 2's pointer to #388 |
+| `docs/plans/fix/384-waking-a-stopped-session-with.md` | Modify | its status, phase 4, phase 2's pointer to #388, and requirement 5's Windows step |
 
 ## Related Documents
 
@@ -97,6 +118,8 @@ None: the change is to documents only.
 - NobleFactor/noblefactor-engprod#384 and [its plan](384-waking-a-stopped-session-with.md), and
   NobleFactor/noblefactor-engprod#387, which merged them
 - NobleFactor/noblefactor-engprod#388: open question 4 of #384's plan
+- NobleFactor/noblefactor-engprod#394: Microsoft Defender on danoble-wd11-3 refuses `claude --remote-control`; closed
+  as not planned, the VM to be rebuilt
 - [§ Documents on every commit](../../guides/development-process.md#documents-on-every-commit), and rule 12 of
   [agent-rules.md](../../guides/agent-rules.md)
 
@@ -104,6 +127,6 @@ None: the change is to documents only.
 
 1. **Where does the Windows check of Remote Control go?** #394's closing comment, 2026-10-23, says Remote Control on
    danoble-wd11-3 "will be verified after the VM is rebuilt from a clean image; that verification rides #384's Windows
-   acceptance lane". But #384's requirement 5 runs on Danoble-MBP-A only, so there is no such lane. Either
-   requirement 5 gains a Windows step after the rebuild, or the check is logged as an issue of its own. Not yet
-   ruled.
+   acceptance lane". But #384's requirement 5 ran on Danoble-MBP-A only, so there was no such lane. Ruled
+   2026-10-24: a step in requirement 5, requirement 4 here. The owner: "add the Windows Remote Control check into a
+   step in requirement 5."
