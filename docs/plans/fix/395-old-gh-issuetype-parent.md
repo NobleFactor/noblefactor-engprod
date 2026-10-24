@@ -1,7 +1,7 @@
 ---
 title: "The report and the audit read type and parent through GraphQL, so a gh too old to know issueType and parent still works"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/395
-status: draft
+status: complete
 created: 2026-10-24
 updated: 2026-10-24
 ---
@@ -61,17 +61,17 @@ newest; the extra issues are ignored.
 
 ### Phase 1: the plan
 
-- [ ] This plan committed on `fix/395-report-and-the-audit-fail-on-a`, reviewed with the owner, status `approved`
+- [x] This plan committed on `fix/395-report-and-the-audit-fail-on-a`, reviewed with the owner, status `approved`
 
 ### Phase 2: the fix
 
-- [ ] `fetch_issues` changed; `make check` passes
-- [ ] The renders identical before and after on the current gh
-- [ ] The report and the audit run on gh 2.46.0
+- [x] `fetch_issues` changed; `make check` passes
+- [x] The renders identical before and after on the current gh
+- [x] The report and the audit run on gh 2.46.0
 
 ### Phase 3: the pull request
 
-- [ ] The pull request; status `complete` in its last commit
+- [x] The pull request; status `complete` in its last commit
 
 ## Files to Create/Modify
 
@@ -79,6 +79,15 @@ newest; the extra issues are ignored.
 | --- | --- | --- |
 | `Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/scheme.star` | Modify | `fetch_issues` |
 | `docs/plans/fix/395-old-gh-issuetype-parent.md` | Create | this plan |
+
+## The proof, 2026-10-24
+
+| Run | gh | Result |
+| --- | --- | --- |
+| the deployed extension, unfixed | 2.46.0, the release's own binary | exit 1 at `scheme.star:433`, as danoble-ud24-1 reported |
+| the fixed extension | 2.46.0 | the report by epic, the schedule #346 report and the audit, all rendered |
+| the fixed extension against the unfixed | 2.103.2 | all three renders byte-identical; the audit's nine link faults present, so parents are read |
+| the fixed extension, 2.46.0 against 2.103.2 | both | all three renders byte-identical |
 
 ## Related Documents
 
