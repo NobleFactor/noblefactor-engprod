@@ -2,7 +2,7 @@
 # Copyright Noble Factor. All rights reserved.
 
 extension: com.noblefactor.ops.GitHub
-description: GitHub under the NobleFactor classification scheme -- the issue report and audit, and the label set
+description: GitHub under the NobleFactor classification scheme -- the issue report and audit, the label set, and the model's pull
 
 commands:
   - name: gh.issues.report
@@ -108,6 +108,36 @@ commands:
         type: string
         default: ""
         help: A working tree; the sync targets the repository its origin names
+
+  - name: gh.model.pull
+    help: Pull the organization's issue types, the hub's labels and the projects into model.yaml, read by ETag, and print the diff; --check previews
+    implementation: commands/gh-model-pull.star
+    flags:
+      - name: org
+        type: string
+        default: "NobleFactor"
+        help: The organization whose record is pulled
+      - name: asset
+        type: string
+        default: ""
+        help: "The model.yaml to write; default: the one beside this extension. A real pull writes only an asset on a branch, so name a worktree's"
+      - name: check
+        type: bool
+        default: "false"
+        help: "Print what would change and write nothing. A workaround for NobleFactor/devlore-cli#1170: star's --dry-run skips the reads a preview needs, so this command refuses it"
+
+  - name: gh.model.digest
+    help: Re-sign a deliberately hand-edited model.yaml, its digest over the file with its own line excluded; --check previews
+    implementation: commands/gh-model-digest.star
+    flags:
+      - name: asset
+        type: string
+        default: ""
+        help: "The model.yaml to re-sign; default: the one beside this extension"
+      - name: check
+        type: bool
+        default: "false"
+        help: "Print what would change and write nothing. A workaround for NobleFactor/devlore-cli#1170: star's --dry-run skips the reads a preview needs, so this command refuses it"
 
 config:
   path: gh

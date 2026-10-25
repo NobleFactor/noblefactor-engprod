@@ -1,9 +1,9 @@
 ---
 title: "star gh model pull: the organization's types, labels and projects into model.yaml, by ETag, with a digest; #320's labels file becomes the asset"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/377
-status: draft
+status: active
 created: 2026-10-23
-updated: 2026-10-23
+updated: 2026-10-24
 ---
 
 # Plan: star gh model pull
@@ -17,8 +17,8 @@ asset was pulled by hand on 2026-10-22; after this, the command writes it.
 
 ## Goals
 
-1. **`star gh model pull`** rewrites the asset from GitHub's record and prints the diff, or with `--dry-run` prints
-   it and writes nothing.
+1. **`star gh model pull`** rewrites the asset from GitHub's record and prints the diff, or with `--check` prints it
+   and writes nothing.
 2. **Reads are conditional.** A second pull with nothing changed costs a 304 for every record that has an ETag.
 3. **A rename in GitHub pulls as a rename:** same id, new name; for a type, the level kept.
 4. **`star gh model digest`** re-signs a deliberately hand-edited asset.
@@ -47,12 +47,25 @@ asset was pulled by hand on 2026-10-22; after this, the command writes it.
 In `extension.yaml`, beside the issues and labels commands:
 
 ```
-star gh model pull   [--org <organization>] [--asset <path>]     # honors --dry-run
-star gh model digest [--asset <path>]
+star gh model pull   [--org <organization>] [--asset <path>] [--check]
+star gh model digest [--asset <path>] [--check]
 ```
 
-`--org` defaults to NobleFactor. `--asset` defaults to the file beside the extension. Both commands live in a new
-`commands/model.star` that does not load `scheme.star`, so they run whatever state the asset is in.
+`--org` defaults to NobleFactor. `--asset` defaults to the file beside the extension. The two commands are
+`commands/gh-model-pull.star` and `commands/gh-model-digest.star`, over a shared `commands/model.star` that does not
+load `scheme.star`.
+
+**`--check` previews, as a workaround. Ruled 2026-10-24:** star's global `--dry-run` skips every `shell.exec`, reads
+included, so a preview that must read GitHub sees nothing. The owner: "we'll add a --check flag as a workaround.
+Ensure that the flag is documented as a workaround in the code and include a link to the issue." `--check` reads,
+prints, and writes neither the asset nor the cache; both commands refuse `--dry-run` and name `--check` and
+[devlore-cli#1170](https://github.com/NobleFactor/devlore-cli/issues/1170), which makes a dry run run the methods
+that declare themselves non-mutating. `--check` retires when it lands.
+
+**A mismatched digest no longer fails the extension's load.** Star loads every command file when an extension loads,
+so `scheme.star`'s check on load took `digest` and `pull` down with the rest, the two commands that repair a
+hand-edited asset. Found 2026-10-24; `scheme.star` records the mismatch in `MODEL_DIGEST_FAULT` and goes on, as
+section 6 says a read-only operation does. Printing it in the report's header is #378's.
 
 ### Requirement 2: what `pull` reads
 
@@ -88,8 +101,9 @@ never stands in for content the asset does not hold. Deleting the cache costs on
   renamed, added, removed.
 - **Only on a branch, in a clean file.** `pull` resolves the asset's real path, and refuses when its git tree is on
   the default branch or the asset has uncommitted changes. The deployed asset is a link into the layer clone on
-  develop, so a real pull names a worktree's asset with `--asset`. `--dry-run` runs anywhere.
-- **The cache,** after every pull, real or dry.
+  develop, so a real pull names a worktree's asset with `--asset`. `--check` runs anywhere.
+- **The cache,** after a real pull, and after a `--check` that finds nothing changed: only when the asset holds what
+  the ETags vouch for.
 
 ### Requirement 5: `digest`
 
@@ -112,16 +126,16 @@ grant, saying its file became the asset's organization tier and its design stays
 
 ### Phase 1: the plan
 
-- [ ] This plan committed on `feature/377-star-gh-model-pull-the`, reviewed with the owner, status `approved`
+- [x] This plan committed on `feature/377-star-gh-model-pull-the`, reviewed with the owner, status `approved`
 
 ### Phase 2: the commands
 
-- [ ] `commands/model.star` and the two commands in `extension.yaml`; `make check` passes
-- [ ] The asset restructured into tiers and re-signed by `star gh model digest`
+- [x] `commands/model.star` and the two commands in `extension.yaml`; `make check` passes
+- [x] The asset restructured into tiers and re-signed by `star gh model digest`
 
 ### Phase 3: proof
 
-- [ ] One real pull from the worktree; then `--dry-run` prints no diff
+- [ ] One real pull from the worktree; then `--check` prints no diff
 - [ ] A second pull reads 304 for types and labels, by the cache
 - [ ] The Thread project's field and option renamed in GitHub and back pull as renames both ways, ids kept
 - [ ] The report renders as before against the pulled asset, by the test-without-deploy copy
@@ -135,7 +149,10 @@ grant, saying its file became the asset's organization tier and its design stays
 
 | File | Action | Purpose |
 | --- | --- | --- |
-| `Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/model.star` | Create | `pull` and `digest` |
+| `Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/model.star` | Create | the sync's reads, merge, render, digest and cache |
+| `Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/gh-model-pull.star` | Create | `pull` |
+| `Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/gh-model-digest.star` | Create | `digest` |
+| `Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/scheme.star` | Modify | a mismatched digest recorded, not fatal |
 | `Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/extension.yaml` | Modify | the two commands |
 | `Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/model.yaml` | Modify | tiers; the command's first pull |
 | `docs/architecture/issue-data-model/6-the-asset-and-its-sync.md` | Modify | the build's differences |
