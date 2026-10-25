@@ -1,43 +1,43 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2026 Noble Factor. All rights reserved.
 
-# The issue data model as GitHub holds it, pulled from the NobleFactor organization: docs/architecture/issue-data-model/
-# 6-the-asset-and-its-sync.md. Written by hand on 2026-10-22 from gh api reads, the first pull, before star gh model pull
-# exists; the digest is a SHA-256 over this file with its own line excluded. Projects need the read:project scope, which
-# the token lacked, and none exist yet. Within a level the types' order is the render order; Bug is the unplanned leaf. Labels are in three tiers since 2026-10-24
-# (#377): the organization's, NobleFactor/noblefactor-ops#320's fifteen; each team's; the hub's own.
+# The issue data model as GitHub holds it: docs/architecture/issue-data-model/6-the-asset-and-its-sync.md. Written by
+# star gh model pull; edit it by hand only deliberately, then run star gh model digest. The digest is a SHA-256 over this
+# file with its own line excluded. A type is keyed by its id and takes its level from its description's "Level N:".
+# Within a level the types' order is the render order. Labels are in three tiers: the organization's, which every
+# participating repository carries; each team's; each repository's own.
 
 version: 1
 pulled:
-  at: 2026-10-22T19:03:08Z
+  at: 2026-10-25T01:30:01Z
   org: NobleFactor
-  digest: sha256:def1786c8317ba3d1e912ae1324a3c0dcb338a0a2d1e461eb205bcd124c65f5d
+  digest: sha256:24d539f3a6da5109a3521d58dbed98e285ca8c7b05174af18b9295ea32cbabc1
 types:
-  - name: Epic
+  - name: "Epic"
     id: 914457658
     level: 0
-    color: purple
+    color: "purple"
     description: "Level 0: a body of work with an owner, the root every other issue rolls up to; decomposes into features and chores"
-  - name: Feature
+  - name: "Feature"
     id: 344350
     level: 1
-    color: blue
+    color: "blue"
     description: "Level 1: product value, a capability the product gains; decomposes into tasks and bugs"
-  - name: Chore
+  - name: "Chore"
     id: 914457671
     level: 1
-    color: gray
+    color: "gray"
     description: "Level 1: engineering value, a body of process or tooling work the team receives; decomposes into tasks and bugs"
-  - name: Bug
+  - name: "Bug"
     id: 344348
     level: 2
     unplanned: true
-    color: red
+    color: "red"
     description: "Level 2: unplanned work, a defect found rather than planned; repairs a feature or a chore"
-  - name: Task
+  - name: "Task"
     id: 344346
     level: 2
-    color: yellow
+    color: "yellow"
     description: "Level 2: planned work, a step in delivering a feature or a chore"
 labels:
   organization:
@@ -107,4 +107,19 @@ labels:
       - name: "Thread:WritSelfInstall"
         color: "1D76DB"
         description: "a fresh machine installs writ and can use it"
-projects: []
+projects:
+  - name: "Thread: the model follows a rename"
+    id: "PVT_kwDOAD1Dfc4Boeo4"
+    number: 4
+    template: false
+    fields:
+      - name: "Status"
+        id: "PVTSSF_lADOAD1Dfc4Boeo4zhm-lb0"
+        type: single-select
+        options:
+          - { name: "Todo", id: "f75ad846" }
+          - { name: "In Progress", id: "47fc9ee4" }
+          - { name: "Done", id: "98236657" }
+      - name: "Step"
+        id: "PVTF_lADOAD1Dfc4Boeo4zhm-lhk"
+        type: number

@@ -135,10 +135,14 @@ grant, saying its file became the asset's organization tier and its design stays
 
 ### Phase 3: proof
 
-- [ ] One real pull from the worktree; then `--check` prints no diff
-- [ ] A second pull reads 304 for types and labels, by the cache
+- [x] One real pull from the worktree; then `--check` prints no diff
+- [x] A second pull reads 304 for types and labels, by the cache
 - [ ] The Thread project's field and option renamed in GitHub and back pull as renames both ways, ids kept
-- [ ] The report renders as before against the pulled asset, by the test-without-deploy copy
+- [x] The report renders as before against the pulled asset, by the test-without-deploy copy
+
+Run 2026-10-25, 01:30 UTC: the first real pull rewrote the asset, added the Thread project with its two fields and
+three options, and wrote the cache; `--check` then read 304 for the types and the labels and found the asset unchanged.
+The report by epic, by schedule for #346, and the audit render byte-identical against it and against develop's.
 
 ### Phase 4: the record
 
