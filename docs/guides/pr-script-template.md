@@ -209,7 +209,7 @@ printf '%s\n' "${span}"
 
 # --- The schedule: the lanes this pull request lands, recorded as it lands (rule 13) ---
 #
-# A lane's row says where its work is (agent-rules.md, rule 18), and once the merge lands, that is the merge. AFTER
+# A lane's row says where its work is (agent-rules.md, rule 19), and once the merge lands, that is the merge. AFTER
 # the merge, since a row names the squash commit. Each row is written with the script, whole, as the schedule's table
 # has it, with {pr} and {merged} filled in here from GitHub; it replaces the row whose first cell is its lane number,
 # and the step stops unless that row occurs exactly once. The write is guarded on the schedule's updatedAt as this
@@ -341,7 +341,7 @@ git status --short
     squash commit, replacing the row whose first cell is its lane number, guarded on the schedule's `updatedAt`
     and read back. A merge that leaves its lanes reading "in progress" keeps the owner in the dark on progress, and
     every session that reads the schedule with them, this one too once its context is compacted
-    ([agent-rules.md](agent-rules.md), rule 18). #396 merged that way: its lanes on #301 kept reading "in progress"
+    ([agent-rules.md](agent-rules.md), rule 19). #396 merged that way: its lanes on #301 kept reading "in progress"
     in a worktree `git close-branch` had removed.
 
 ---

@@ -106,7 +106,7 @@ row. A rule of the template's own says so: a pull request that closes a lane rec
 
 ### Requirement 5: the rule
 
-[agent-rules.md](../../guides/agent-rules.md) gains rule 18, "A session keeps its lanes current as it goes". A lane's
+[agent-rules.md](../../guides/agent-rules.md) gains rule 19, "A session keeps its lanes current as it goes". A lane's
 row says where its work is the moment it moves: in progress, naming the worktree, when the worktree opens; moved, when
 it moves; merged, as its pull request lands; closed, when it closes any other way. Each is recorded by the worktree's
 script. Its breakage is 2026-10-24's, lanes 18 and 19 of #301. Its ruling is the owner's of 2026-10-25, quoted with
@@ -141,7 +141,9 @@ names it.
 - [x] Requirement 4: the template's step, in both forms, and its rule. `make check`. Done 2026-10-25: both forms
   parse with their placeholders filled, by `bash -n` and shellcheck and by PowerShell's parser and PSScriptAnalyzer,
   and the PowerShell form stays ASCII. This pull request's script records lane 20 by the step.
-- [x] Requirement 5: agent-rules.md, rule 18. `make check`. Done 2026-10-25.
+- [x] Requirement 5: agent-rules.md, rule 19. `make check`. Done 2026-10-25, numbered 19: the agent-to-agent rule,
+  #402, took 18 while this branch was open, and the merge from develop met it there. Asked whether the collision was
+  substantive, the owner: "No." Then: "OK, pick another number for your rule."
 - [x] Requirement 6: § Blocking issues and its row in the section status table. `make check`. Done 2026-10-25.
 
 ### Phase 3: Closure
@@ -153,7 +155,7 @@ names it.
 ## Migration Path
 
 None: the change is to #301's text, to three guides and to this plan. A PR script written before the merge carries no
-lane step, and its session records its lanes as rule 18 says.
+lane step, and its session records its lanes as rule 19 says.
 
 ## Files to Create/Modify
 
@@ -161,7 +163,7 @@ lane step, and its session records its lanes as rule 18 says.
 | --- | --- | --- |
 | `docs/plans/fix/401-396-merged-without-recording-its.md` | Create | this plan |
 | `docs/guides/pr-script-template.md` | Modify | the step that records a pull request's lanes as it lands, in both forms, and its rule |
-| `docs/guides/agent-rules.md` | Modify | rule 18 |
+| `docs/guides/agent-rules.md` | Modify | rule 19 |
 | `docs/guides/development-process.md` | Modify | § Blocking issues: a merged pull request that blocks, and its status row |
 
 #301 and #401 are issues, edited by this worktree's scripts.
