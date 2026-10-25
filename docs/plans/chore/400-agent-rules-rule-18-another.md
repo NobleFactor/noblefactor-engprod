@@ -1,7 +1,7 @@
 ---
 title: "agent-rules rule 18: another agent is spoken to only on the owner's yes, every exchange is reported, and nothing is done outside the owner's orders"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/400
-status: approved
+status: active
 created: 2026-10-25
 updated: 2026-10-25
 ---
@@ -63,7 +63,8 @@ git commands only; rule 10 covers findings, not the scope of an agent's actions.
 
 ### Phase 2: The rule (Requirements 1 and 2)
 
-- [ ] Rule 18 written; `make check` finished green, read before this box is ticked
+- [x] Rule 18 written; `make check` finished green, read before this box is ticked: exit 0, frontmatter 102 checked
+      with 0 errors, codespell, shell lint, PowerShell, buildifier and every test suite passing
 
 ### Phase 3: Merge
 
