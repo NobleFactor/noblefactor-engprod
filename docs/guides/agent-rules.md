@@ -5,7 +5,7 @@ type: Process
 audience: Claude Code, Codex
 status: Approved
 created: 2026-09-07
-updated: 2026-10-22
+updated: 2026-10-25
 ---
 
 # Agent Rules
@@ -318,6 +318,26 @@ rules, and report all breaches. I need to be informed on every breach and know h
 **Compliance.** The message names the exact command and waits. After the run, the grant is gone, and the next command
 is asked for again. A breach is reported the moment it is found, with what it cost: the owner's time to read it and
 rule on it, and whatever the ungranted command made that now has to be judged rather than made.
+
+## 18. A session keeps its lanes current as it goes
+
+**The rule.** A lane's row on its schedule says where the lane's work is the moment it moves: in progress, naming the
+worktree, when the worktree opens; the new worktree, when the work moves; merged, as its pull request lands; closed,
+when it closes any other way. Each is recorded by the worktree's script, the one place the process gives a script,
+and none waits for the end of the work. The schedule is how the owner sees progress, how other sessions find the work,
+and how a session finds its own place again after its context is compacted.
+
+**The breakage.** 2026-10-24, lanes 18 and 19 of #301. Lane 18's issue, #394, closed as not planned; lane 19 moved to
+a worktree of its own and merged in #396. Both rows went on reading "in progress" in a worktree `git close-branch` had
+removed, and lane 17 went on waiting on lane 18: the PR script template had no step for a schedule, and the session
+recorded nothing. Filed the next day as #401, a bug against #396. Ruled 2026-10-25: "yes. as it lands." Then:
+"updating your own lanes as you go is an absolute hard requirement. to do otherwise is to keep me in the dark on
+progress." Then: "not to mention other sessions as well as the current session, especially following compression."
+
+**Compliance.** A worktree's first script records its lanes in progress, naming the worktree. The pull request's script
+records them as it lands, by the template's step ([pr-script-template.md](pr-script-template.md), rule 13). A lane that
+moves to another worktree, or closes without a merge, is recorded by the script of the worktree that held it, before
+`git close-branch`. Every record is guarded on the schedule's `updatedAt` and read back.
 
 ---
 
