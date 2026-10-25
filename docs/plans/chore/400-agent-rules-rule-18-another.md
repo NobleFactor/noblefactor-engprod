@@ -1,7 +1,7 @@
 ---
 title: "agent-rules rule 18: another agent is spoken to only on the owner's yes, every exchange is reported, and nothing is done outside the owner's orders"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/400
-status: active
+status: complete
 created: 2026-10-25
 updated: 2026-10-25
 ---
@@ -68,7 +68,7 @@ git commands only; rule 10 covers findings, not the scope of an agent's actions.
 
 ### Phase 3: Merge
 
-- [ ] PR script `~/Workspace/NobleFactor/noblefactor-engprod.400-agent-rules-rule-18-another.bash` written, shown,
+- [x] PR script `~/Workspace/NobleFactor/noblefactor-engprod.400-agent-rules-rule-18-another.bash` written, shown,
       and handed over; the PR resolves #400. This box's commit, the pull request's last, sets this plan `complete`
 
 CI on the pull request is the script's gate, not a box here: the script merges only when every check has passed, and
