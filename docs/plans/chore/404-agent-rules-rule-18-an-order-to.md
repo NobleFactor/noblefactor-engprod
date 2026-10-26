@@ -1,7 +1,7 @@
 ---
 title: "agent-rules rule 18: an order to message a session is not the yes; the message is proposed and the owner approves it or not"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/404
-status: active
+status: complete
 created: 2026-10-25
 updated: 2026-10-25
 ---
@@ -64,7 +64,7 @@ after the owner's yes in the turn before." Neither says what an order to send on
 
 ### Phase 3: Merge
 
-- [ ] PR script `~/Workspace/NobleFactor/noblefactor-engprod.404-agent-rules-rule-18-an-order-to.bash` written, shown,
+- [x] PR script `~/Workspace/NobleFactor/noblefactor-engprod.404-agent-rules-rule-18-an-order-to.bash` written, shown,
       and handed over; the PR resolves #404. This box's commit, the pull request's last, sets this plan `complete`
 
 CI on the pull request is the script's gate, not a box here: the script merges only when every check has passed, and
