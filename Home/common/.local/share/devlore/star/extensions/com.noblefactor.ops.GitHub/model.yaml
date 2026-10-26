@@ -9,9 +9,9 @@
 
 version: 1
 pulled:
-  at: 2026-10-25T01:30:01Z
+  at: 2026-10-26T20:51:21Z
   org: NobleFactor
-  digest: sha256:24d539f3a6da5109a3521d58dbed98e285ca8c7b05174af18b9295ea32cbabc1
+  digest: sha256:b66ab822632aecbb529307a1d1bc7607f612350a34d63892e2675abfbe730415
 types:
   - name: "Epic"
     id: 914457658
@@ -113,13 +113,34 @@ projects:
     number: 4
     template: false
     fields:
+      - name: "Step"
+        id: "PVTF_lADOAD1Dfc4Boeo4zhm-lhk"
+        type: number
       - name: "Status"
         id: "PVTSSF_lADOAD1Dfc4Boeo4zhm-lb0"
+        type: single-select
+        options:
+          - { name: "Not run", id: "f75ad846" }
+          - { name: "Fails", id: "47fc9ee4" }
+          - { name: "Passes", id: "98236657" }
+      - name: "Passed"
+        id: "PVTF_lADOAD1Dfc4Boeo4zhnVSlw"
+        type: date
+      - name: "Failed"
+        id: "PVTF_lADOAD1Dfc4Boeo4zhnVSmg"
+        type: date
+      - name: "Check"
+        id: "PVTF_lADOAD1Dfc4Boeo4zhnVSmo"
+        type: text
+  - name: "Triage: engprod"
+    id: "PVT_kwDOAD1Dfc4Bo3Lb"
+    number: 5
+    template: false
+    fields:
+      - name: "Status"
+        id: "PVTSSF_lADOAD1Dfc4Bo3LbzhnVTqQ"
         type: single-select
         options:
           - { name: "Todo", id: "f75ad846" }
           - { name: "In Progress", id: "47fc9ee4" }
           - { name: "Done", id: "98236657" }
-      - name: "Step"
-        id: "PVTF_lADOAD1Dfc4Boeo4zhm-lhk"
-        type: number

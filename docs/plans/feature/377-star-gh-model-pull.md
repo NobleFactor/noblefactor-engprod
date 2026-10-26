@@ -1,7 +1,7 @@
 ---
 title: "star gh model pull: the organization's types, labels and projects into model.yaml, by ETag, with a digest; #320's labels file becomes the asset"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/377
-status: active
+status: complete
 created: 2026-10-23
 updated: 2026-10-26
 ---
@@ -165,7 +165,8 @@ the access half of #378's read before every operation; the conditional read itse
 
 - [x] One real pull from the worktree; then `--check` prints no diff
 - [x] A second pull reads 304 for types and labels, by the cache
-- [ ] The Thread project's field and option renamed in GitHub and back pull as renames both ways, ids kept
+- [x] The Thread project's field and option renamed in GitHub pull as renames, ids kept: Step to Order and Todo to
+  Open, 2026-10-26. Status, a field GitHub builds into every project, cannot be renamed, so the field renamed was Step
 - [x] The report renders as before against the pulled asset, by the test-without-deploy copy
 
 Run 2026-10-25, 01:30 UTC: the first real pull rewrote the asset, added the Thread project with its two fields and
@@ -186,8 +187,17 @@ The report by epic, by schedule for #346, and the audit render byte-identical ag
 
 ### Phase 6: the record
 
-- [ ] #320's comment posted under a grant
-- [ ] The pull request; status `complete` in its last commit
+- [x] #320's comment posted, by the pull request's script
+- [x] The pull request, after the last real pull records project 4's final names; status `complete` in its last commit
+
+### Project 4, kept: the first thread
+
+Ruled 2026-10-26: "you are right that this is a test. We will leave this in place, document it and plan it
+retroactively." Project 4 stays as the first thread, its fields as ruled the same day: Step, a number, 2.1 for a branch
+off step 2; Status, the latest result, Not run, Passes, Fails; Passed and Failed, dates; Check, the command that
+exercises a step. Its design and the commands that record a run are #408; triage's are #409. The last real pull here
+records its final names. The renames to those names were made 2026-10-26 through the API, each option sent with its id:
+the ids held and every row kept its value, the write test section 6's risk table waited on.
 
 ## Files to Create/Modify
 
