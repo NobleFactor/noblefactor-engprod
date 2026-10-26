@@ -5,7 +5,7 @@ type: Process
 audience: Engineers, Claude Code
 status: Approved
 created: 2026-03-16
-updated: 2026-10-21
+updated: 2026-10-25
 ---
 
 # PR Script Template
@@ -18,7 +18,7 @@ the directory `git-open-branch` made, `<clone>.<issue>-<name>`. The script for
 worktree each script lands; and `git close-branch` removes the two together when the pull request merges. Ruled
 2026-10-21 (#366), retiring `go-<repo>` one level above the repository: a script named for the clone outlived every
 worktree it served, and the bare `go` belonged to whichever repository last used it. Each script is self-contained:
-stage, commit, push, create PR, verify CI, verify mergeability, squash merge, clean up.
+stage, commit, push, create PR, verify CI, verify mergeability, squash merge, record its time and its lanes, clean up.
 
 A script is read before it is overwritten, whatever it is called: its `cd` says which worktree it serves, and one
 whose `cd` names another worktree is the wrong file. Only a script that is not there is written from nothing.
@@ -207,6 +207,50 @@ gh pr view "${pr_number}" --json body --jq .body | grep -q '^## Time' || {
 }
 printf '%s\n' "${span}"
 
+# --- The schedule: the lanes this pull request lands, recorded as it lands (rule 13) ---
+#
+# A lane's row says where its work is (agent-rules.md, rule 19), and once the merge lands, that is the merge. AFTER
+# the merge, since a row names the squash commit. Each row is written with the script, whole, as the schedule's table
+# has it, with {pr} and {merged} filled in here from GitHub; it replaces the row whose first cell is its lane number,
+# and the step stops unless that row occurs exactly once. The write is guarded on the schedule's updatedAt as this
+# script last saw it, so an edit made since stops the script instead of being overwritten, and each row is read back.
+# Leave the step out only when the pull request lands no lane.
+schedule_repo=<owner>/<repo>
+schedule=<n>
+schedule_seen_at=<updatedAt>
+rows=$(cat <<'EOF'
+| <lane> | [<owner>/<repo>#<issue>](https://github.com/<owner>/<repo>/issues/<issue>) — <title> | <repo>, merged as [<owner>/<repo>#{pr}](https://github.com/<owner>/<repo>/pull/{pr}), {merged} | — |
+EOF
+)
+merged=$(gh pr view "${pr_number}" --json mergeCommit,mergedAt --jq '"\(.mergeCommit.oid[0:7]), \(.mergedAt[0:10]) UTC"')
+rows=${rows//\{pr\}/${pr_number}}
+rows=${rows//\{merged\}/${merged}}
+seen=$(gh issue view "${schedule}" --repo "${schedule_repo}" --json updatedAt --jq .updatedAt)
+[[ "${seen}" == "${schedule_seen_at}" ]] || {
+    echo "#${schedule} changed at ${seen}, since this script last read it; its lanes are not recorded"
+    exit 1
+}
+gh issue view "${schedule}" --repo "${schedule_repo}" --json body --jq .body |
+    ROWS="${rows}" python3 -c '
+import os, sys
+body = sys.stdin.read().split("\n")
+for row in os.environ["ROWS"].split("\n"):
+    lane = row.split(" | ")[0] + " | "
+    at = [i for i, line in enumerate(body) if line.startswith(lane)]
+    if len(at) != 1:
+        sys.exit(f"the row for lane {lane!r} occurs {len(at)} times")
+    body[at[0]] = row
+sys.stdout.write("\n".join(body))
+' > "${message_file}"
+gh issue edit "${schedule}" --repo "${schedule_repo}" --body-file "${message_file}" >/dev/null
+landed_rows=$(gh issue view "${schedule}" --repo "${schedule_repo}" --json body --jq .body)
+while IFS= read -r row; do
+    grep -qxF -- "${row}" <<<"${landed_rows}" || {
+        echo "#${schedule} does not show the row: ${row}"
+        exit 1
+    }
+done <<<"${rows}"
+
 # Clean up (works from both worktrees and regular branches)
 git close-branch
 
@@ -292,6 +336,14 @@ git status --short
     (#306); the script's `git pull --ff-only` then confirms it, finding the clone current. Every script
     written on 2026-09-24 had to add both pulls by hand; the template owes them.
 
+13. **Every pull request records its lanes as it lands.** Ruled 2026-10-25 (#401). After the merge and its span,
+    the script writes the rows of the lanes it lands on their schedule: each whole, naming the pull request and its
+    squash commit, replacing the row whose first cell is its lane number, guarded on the schedule's `updatedAt`
+    and read back. A merge that leaves its lanes reading "in progress" keeps the owner in the dark on progress, and
+    every session that reads the schedule with them, this one too once its context is compacted
+    ([agent-rules.md](agent-rules.md), rule 19). #396 merged that way: its lanes on #301 kept reading "in progress"
+    in a worktree `git close-branch` had removed.
+
 ---
 
 ## On Windows: PowerShell
@@ -330,7 +382,8 @@ template does, in the same order. The rules above hold; these are the ones Power
 
 .DESCRIPTION
     Opens the pull request for <branch>, waits for CI, checks the merge state, squash-merges, records the pull
-    request's time span, and closes the branch. Every commit is made and pushed; there is nothing to stage.
+    request's time span and the lanes it lands, and closes the branch. Every commit is made and pushed; there is
+    nothing to stage.
 
 .EXAMPLE
     C:/Users/<you>/Workspace/<org>/<clone>.<n>-<name>.ps1
@@ -506,6 +559,60 @@ Assert-NativeSuccess 'gh api (body)'
 
 if (((gh pr view $number --json body --jq '.body') -join "`n") -notmatch '(?m)^## Time') {
     throw 'The PR body carries no ## Time section.'
+}
+
+# --- The schedule: the lanes this pull request lands, recorded as it lands (rule 13) ---
+#
+# Each row whole, as the schedule's table has it, with {pr} and {merged} filled in from GitHub, and {dash} for the
+# table's em dash, which keeps this file ASCII. It replaces the row whose first cell is its lane number, which must
+# occur exactly once. Guarded on the schedule's updatedAt as this script last saw it, and read back. Left out only when
+# the pull request lands no lane.
+
+$scheduleRepository = '<owner>/<repo>'
+$schedule = <n>
+$scheduleSeenAt = '<updatedAt>'
+$rows = @'
+| <lane> | [<owner>/<repo>#<issue>](https://github.com/<owner>/<repo>/issues/<issue>) {dash} <title> | <repo>, merged as [<owner>/<repo>#{pr}](https://github.com/<owner>/<repo>/pull/{pr}), {merged} | {dash} |
+'@ -split "`r?`n" | Where-Object { $_ }
+
+$merged = (gh pr view $number --json mergeCommit,mergedAt --jq '"\(.mergeCommit.oid[0:7]), \(.mergedAt[0:10]) UTC"') -join ''
+Assert-NativeSuccess 'gh pr view (merge commit)'
+$dash = [string][char]0x2014
+$rows = $rows | ForEach-Object { $_.Replace('{pr}', "$number").Replace('{merged}', $merged).Replace('{dash}', $dash) }
+
+$seen = (gh issue view $schedule --repo $scheduleRepository --json updatedAt --jq '.updatedAt') -join ''
+Assert-NativeSuccess 'gh issue view (schedule)'
+
+if ($seen -ne $scheduleSeenAt) {
+    throw "#$schedule changed at $seen, since this script last read it; its lanes are not recorded."
+}
+
+$lines = ((gh issue view $schedule --repo $scheduleRepository --json body --jq '.body') -join "`n") -split "`n"
+Assert-NativeSuccess 'gh issue view (schedule body)'
+
+foreach ($row in $rows) {
+    $lane = ($row -split ' \| ')[0] + ' | '
+    $at = @(0..($lines.Count - 1) | Where-Object { $lines[$_].StartsWith($lane, [StringComparison]::Ordinal) })
+
+    if ($at.Count -ne 1) {
+        throw "The row for lane '$lane' occurs $($at.Count) times on #$schedule."
+    }
+
+    $lines[$at[0]] = $row
+}
+
+$scheduleFile = Join-Path ([System.IO.Path]::GetTempPath()) 'pr-<n>-schedule.md'
+Set-Content -LiteralPath $scheduleFile -Value ($lines -join "`n") -NoNewline
+gh issue edit $schedule --repo $scheduleRepository --body-file $scheduleFile | Out-Null
+Assert-NativeSuccess 'gh issue edit (schedule)'
+
+$landedRows = ((gh issue view $schedule --repo $scheduleRepository --json body --jq '.body') -join "`n") -split "`n"
+Assert-NativeSuccess 'gh issue view (schedule, after)'
+
+foreach ($row in $rows) {
+    if ($landedRows -cnotcontains $row) {
+        throw "#$schedule does not show the row: $row"
+    }
 }
 
 # --- Clean up, from the main clone ---
