@@ -1,9 +1,9 @@
 ---
 title: "A --detach wake restarts the stopped session itself, and Start-Claude renames a session, running or stopped, with /rename"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/384
-status: draft
+status: active
 created: 2026-10-23
-updated: 2026-10-23
+updated: 2026-10-24
 ---
 
 # Plan: A --detach wake restarts the stopped session itself, and Start-Claude renames a session, running or stopped, with /rename
@@ -155,11 +155,18 @@ launch's name" becomes the prompt. #260's plan, requirement 3, says its wake now
 
 ### Requirement 5: acceptance
 
-On Danoble-MBP-A, after the merge and its deploy, the owner runs the commands the pull request's script prints:
+After the merge and its deploy, the owner runs the commands the pull request's script prints, steps 1 and 2 on
+Danoble-MBP-A, and step 3 on danoble-wd11-3 once that VM is rebuilt:
 
 1. `Start-Claude --schedule <n> --detach`, then `claude stop <id>`, then `Start-Claude --schedule <n> --detach` again.
    `claude agents` lists the session running under its own id and the launch's name, and no copy.
 2. A schedule's session renamed by hand, running: the next `Start-Claude --schedule <n> --detach` names it again.
+3. On danoble-wd11-3, once it is rebuilt from a clean image and has taken the deploy:
+   `Start-Claude.ps1 -Schedule <n> -Detach`, then `claude stop <id>`, then `Start-Claude.ps1 -Schedule <n> -Detach`
+   again. The start passes `--remote-control <name>`, which the Microsoft Defender left on the VM by its old image
+   refused (#394). `claude agents --json --all` lists the session running under its own id and the launch's name,
+   and no copy, and Remote Control lists it under that name. Added 2026-10-24 by #393. The owner: "add the Windows
+   Remote Control check into a step in requirement 5."
 
 Then #260's requirement 4, lane 5's acceptance, runs again.
 
@@ -177,7 +184,8 @@ Then #260's requirement 4, lane 5's acceptance, runs again.
   `send-keys` reaches claude's viewer only with a client attached, so the work stopped and was replanned: requirement
   2's Windows paragraph. Filed as anthropics/claude-code#104688.
 - [ ] Open question 4, checked again: a session mid-turn whose viewer is killed right after the keys, watched until
-  its turn ends. A bug is filed if it still reads `working` long after its twin finishes.
+  its turn ends. A bug is filed if it still reads `working` long after its twin finishes. Open at the merge; #388
+  holds it.
 - [x] Requirements 1 to 3: `make check`, and every test on Danoble-MBP-A, danoble-ud24-1 and danoble-wd11-3. Done
   2026-10-23: `make check` on Danoble-MBP-A, `tests/Test-StartClaude` there and on danoble-ud24-1, and
   `tests/Test-StartClaude.ps1` on danoble-wd11-3, each run directly rather than through `make test HOSTS="..."`, since
@@ -194,13 +202,16 @@ Then #260's requirement 4, lane 5's acceptance, runs again.
 
 ### Phase 4: Closure
 
-- [ ] The pull request, closing #384 and with it lane 17 of #301 once recorded. Each host takes the merge in the script
+- [x] The pull request, closing #384 and with it lane 17 of #301 once recorded. Each host takes the merge in the script
   that merges it: Danoble-MBP-A and danoble-ud24-1 there, danoble-wd11-3 over HTTPS. The plan stays `active` until
-  phase 5, which follows the deploy.
+  phase 5, which follows the deploy. Done 2026-10-23: #387 merged as `aa274de` and closed #384. Ticked late, on
+  2026-10-24 by #393, since #387's last commit left this box unticked and the plan `draft`. Each host's deployed
+  script matched the file at `aa274de` when #393 checked it that day.
 
 ### Phase 5: Acceptance
 
-- [ ] Requirement 5, after the merge and its deploy.
+- [ ] Requirement 5, after the merge and its deploy: steps 1 and 2 on Danoble-MBP-A, and step 3 on danoble-wd11-3
+  once it is rebuilt, which keeps this plan `active` until then (#394).
 
 ## Migration Path
 
@@ -227,6 +238,10 @@ noblefactor-ops, is renamed by its next launch.
 - NobleFactor/noblefactor-engprod#341, lane 16: a wake after `/clear`, the same wake
 - anthropics/claude-code#104658: a flag on `claude --bg --resume` of a stopped session starts a copy, which fails
 - anthropics/claude-code#104688: on Windows, `claude attach` in a psmux pane with no client attached takes no keys
+- NobleFactor/noblefactor-engprod#394: Microsoft Defender on danoble-wd11-3 refuses `claude --remote-control`;
+  requirement 5's step 3 waits on the VM's rebuild
+- NobleFactor/noblefactor-engprod#393: this plan merged as `draft` with phase 4 unticked, corrected by
+  [393-384-s-plan-merged-as-draft-with.md](393-384-s-plan-merged-as-draft-with.md)
 - [1. Session model](../../architecture/agent-schedule/1-session-model.md), item 3 of a start
 
 ## Open Questions

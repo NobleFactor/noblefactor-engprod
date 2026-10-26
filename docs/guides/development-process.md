@@ -5,7 +5,7 @@ type: Process
 audience: Engineers
 status: Approved
 created: 2026-09-01
-updated: 2026-10-21
+updated: 2026-10-25
 ---
 
 # Development Process
@@ -24,7 +24,7 @@ in [release-process.md](release-process.md); the two are read together.
 |---------|--------|-------|
 | The unit of work | Approved | Feature spans issues; worktree is a pull request; session is an issue |
 | Discovering issues mid-work | Approved | Log, then decide where it is resolved |
-| Blocking issues | Approved | Definition and the choice it forces |
+| Blocking issues | Approved | Definition and the choice it forces; a pull request outside the worktree that blocks it is fixed, the owner consulted first |
 | Plans | Approved | Named after the issue; committed before the work begins; every issue ends with a linked table of its plan and design documents |
 | Documents on every commit | Approved | No deviations |
 | Reference implementation | Approved | `git-open-branch`, `git-close-branch` |
@@ -171,6 +171,14 @@ A blocking issue forces a choice, and the choice is made explicitly and written 
    would cost more than it clarifies.
 
 Neither answer is the default. What is not permitted is proceeding as though the issue were not there.
+
+**A pull request outside the worktree can block it too.** When a pull request outside the current worktree's scope,
+already merged or another session's, blocks its progress, it is fixed, not worked around: a bug is filed against it,
+put on the schedule as a lane, and worked in a worktree of its own. When that work is still under way in another
+session, that session may be the one to unblock it. Either way the owner is consulted before anything is done. Ruled
+2026-10-25 (#401): "if another PR outside the scope of your current worktree is blocking your progress, you must fix
+it." Then: "if work is ongoing in another session we can consider having that session unblock you. Of course, you need
+to engage with me before acting."
 
 ---
 

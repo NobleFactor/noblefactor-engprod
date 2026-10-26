@@ -421,6 +421,34 @@ def lane_repos(scheds):
                     repos.append(repo)
     return repos
 
+_GQL_STATES = {"open": "OPEN", "closed": "CLOSED", "all": "OPEN, CLOSED"}
+
+def _type_and_parent(repo, state):
+    """Each issue's GitHub type and sub-issue parent, by number, in the shape gh issue list gives them, {"name": ...} and {"url": ...}.
+
+    Read through GraphQL, which answers from GitHub's schema whatever gh is installed, one paginated query per
+    repository over the whole state; --limit's cut is the list call's, and the extra numbers are never looked up (#395).
+
+    Args:
+      repo: the repository, owner/name.
+      state: open, closed, or all.
+    """
+    owner, name = repo.split("/")
+    query = "query($endCursor: String) { repository(owner: \"" + owner + "\", name: \"" + name + "\") { issues(first: 100, after: $endCursor, states: [" + _GQL_STATES[state] + "]) { nodes { number issueType { name } parent { url } } pageInfo { hasNextPage endCursor } } } }"
+    r = shell.exec(command = "gh api graphql --paginate -f query='" + query + "' --jq '.data.repository.issues.nodes[] | tojson'")
+    out = {}
+    for line in r.stdout.split("\n"):
+        if line.strip() == "":
+            continue
+        node = json.decode(data = line)
+        fields = {}
+        if node.get("issueType") != None:
+            fields["issueType"] = node["issueType"]
+        if node.get("parent") != None:
+            fields["parent"] = node["parent"]
+        out[int(node["number"])] = fields
+    return out
+
 def fetch_issues(state, limit, repos, multi = None):
     """Every issue of each repository via gh issue list -- authoritative and immediate, unlike search -- tagged with its repository and display ref.
 
@@ -438,11 +466,14 @@ def fetch_issues(state, limit, repos, multi = None):
         multi = len(repos) > 1
     issues = []
     for repo in repos:
-        r = shell.exec(command = "gh issue list -R " + repo + " --state " + state + " --limit " + str(limit) + " --json number,title,state,labels,body,url,issueType,parent")
+        # Only the fields every gh knows: gh 2.46.0, Ubuntu Pro's pinned build, refuses issueType and parent (#395).
+        r = shell.exec(command = "gh issue list -R " + repo + " --state " + state + " --limit " + str(limit) + " --json number,title,state,labels,body,url")
         batch = json.decode(data = r.stdout)
+        typed = _type_and_parent(repo, state)
         for it in batch:
             # encoding/json decodes numbers as floats; the scheme compares and prints issue numbers as ints.
             it["number"] = int(it["number"])
+            it.update(typed.get(it["number"], {}))
             it["repo"] = repo
             it["ref"] = (short(repo) + "#" if multi else "#") + str(it["number"])
         issues.extend(batch)
