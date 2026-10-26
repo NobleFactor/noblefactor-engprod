@@ -25,7 +25,7 @@ def _model_path():
     return shell.exec(command = 'printf %s "${XDG_DATA_HOME:-$HOME/.local/share}/devlore/star/extensions/' + _EXTENSION + '"').stdout.strip() + "/model.yaml"
 
 def _load_model():
-    """model.yaml decoded and checked: its version is known, its digest verifies, and every type has a level."""
+    """model.yaml decoded and checked: its version is known and every type has a level; a digest that does not verify is recorded in digest_fault."""
     path = _model_path()
     text = shell.exec(command = "cat " + path).stdout
     model = yaml.decode(data = text)
@@ -33,8 +33,13 @@ def _load_model():
         fail(path + ": version " + str(model.get("version") if type(model) == "dict" else None) + " is not " + str(_MODEL_VERSION) + "; this extension reads version " + str(_MODEL_VERSION))
     digest = (model.get("pulled") or {}).get("digest", "")
     computed = shell.exec(command = "sed '/^  digest: /d' " + path + " | (sha256sum 2>/dev/null || shasum -a 256) | cut -d' ' -f1").stdout.strip()
-    if digest != "sha256:" + computed:
-        fail(path + ": the digest does not verify; the file was edited since its pull. Run star gh model pull, or star gh model digest after a deliberate edit")
+
+    # A mismatch is recorded, not failed: star loads every command file when the extension loads, so a failure here
+    # would take star gh model digest and star gh model pull down with the rest, and they are how a hand-edited asset
+    # is repaired (#377). Section 6: a read-only operation runs anyway and says so.
+    model["digest_fault"] = "" if digest == "sha256:" + computed else (
+        path + ": the digest does not verify; the file was edited since its pull. Run star gh model pull, or star gh model digest after a deliberate edit"
+    )
     types = model.get("types") or []
     for t in types:
         if type(t) != "dict" or "name" not in t or "level" not in t:
@@ -45,6 +50,9 @@ def _load_model():
     return model
 
 MODEL = _load_model()
+
+# Empty when the asset's digest verifies; otherwise the one line that says it does not, for a header to print.
+MODEL_DIGEST_FAULT = MODEL["digest_fault"]
 
 # The types in the asset's order, which is also the render order within a level; the levels in order; and the
 # derived sets, each a list of label names, the type's name lower-cased, which is how an issue carries its type

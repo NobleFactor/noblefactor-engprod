@@ -52,9 +52,12 @@ Anything about `star` belongs in devlore-cli. What stays here is
 `docs/plans/feature/140-star-report-epics.md`, which designs the extension this layer ships, and
 `docs/plans/remove-go-code.md`, which charters the CI gate this repository still runs.
 
-### Infrastructure setup
+### Tools
 
-`scripts/setup-azure-swa.sh`, `scripts/setup-github-repo.sh`, and `scripts/setup-ground-zero.sh`.
+The repository's own tools, not deployed, are in `bin/`, each with its manual in `share/man/man1`, which `--help`
+shows, and its completion in `share/bash-completion/completions`: `Test-Here` and `Test-OnHosts`, which `make test`
+runs, and `Test-Here.ps1`, their Windows half. The hosting setup tools live with the site they build, in
+NobleFactor/devlore.noblefactor.com's `bin/`.
 
 ## What is not here, despite what this file used to say
 

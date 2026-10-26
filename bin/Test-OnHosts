@@ -99,7 +99,7 @@ function tree_archive {
         tar -C "${repository_root}" --no-xattrs --null -T - -czf -
 }
 
-# run_on_unix copies this working tree's Home, scripts and tests to a folder of its own on a macOS or Linux host, runs
+# run_on_unix copies this working tree's Home, bin and tests to a folder of its own on a macOS or Linux host, runs
 # its tests there, straight to its login shell, as the owner runs a test there, and removes the folder when they pass.
 #
 # Parameters:
@@ -124,13 +124,13 @@ SETUP
     fi
 
     # shellcheck disable=SC2029 # The folder is named here, in the command the host's login shell runs.
-    if ! tree_archive Home scripts tests | ssh "${ssh_options[@]}" "${host}" "tar -C '${directory}' -xzf -"; then
+    if ! tree_archive Home bin tests | ssh "${ssh_options[@]}" "${host}" "tar -C '${directory}' -xzf -"; then
         error 0 "${host}: the working tree could not be copied to ${directory} there."
         return 1
     fi
 
     # shellcheck disable=SC2029 # The folder is named here, in the command the host's login shell runs.
-    ssh "${ssh_options[@]}" "${host}" "${directory}/scripts/Test-Here" </dev/null || status=$?
+    ssh "${ssh_options[@]}" "${host}" "${directory}/bin/Test-Here" </dev/null || status=$?
 
     if ((status != 0)); then
         error 0 "${host}: tests failed; the copy is in ${directory} there."
@@ -140,7 +140,7 @@ SETUP
     ssh "${ssh_options[@]}" "${host}" bash -s -- "${directory}" <<<'rm -rf -- "$1"'
 }
 
-# run_on_windows copies what the PowerShell tests need, the Windows layer, scripts and tests, to a folder of its own on
+# run_on_windows copies what the PowerShell tests need, the Windows layer, bin and tests, to a folder of its own on
 # a Windows host, through pwsh, runs them there in the owner's pwsh, and removes the folder when they pass.
 #
 # Parameters:
@@ -166,7 +166,7 @@ Remove-Item -LiteralPath $archive
 $directory
 POWERSHELL
     )"
-    setup="${setup/@ARCHIVE@/$(tree_archive Home/common.Windows scripts tests | base64 | tr -d '\n')}"
+    setup="${setup/@ARCHIVE@/$(tree_archive Home/common.Windows bin tests | base64 | tr -d '\n')}"
     directory="$(printf '%s\n' "${setup}" |
         ssh "${ssh_options[@]}" "${host}" pwsh -NoProfile -NonInteractive -Command - | tr -d '\r' | tail -n 1)" || true
 
@@ -176,7 +176,7 @@ POWERSHELL
     fi
 
     # shellcheck disable=SC2029 # The folder is named here, in the command the owner's pwsh runs.
-    ssh "${ssh_options[@]}" "${host}" "& '${directory}\\scripts\\Test-Here.ps1'" </dev/null || status=$?
+    ssh "${ssh_options[@]}" "${host}" "& '${directory}\\bin\\Test-Here.ps1'" </dev/null || status=$?
 
     if ((status != 0)); then
         error 0 "${host}: tests failed; the copy is in ${directory} there."
@@ -195,7 +195,7 @@ declare -r synopsis="${script_name} [-h|--help] <host>...
 
 Runs every test under tests/ on each host named, in turn, and fails when any host's tests fail, naming each. A name
 that is this machine's, by its short host name or localhost, runs here. Any other host gets a copy of this working
-tree's Home, scripts and tests, what git tracks and what is new and not ignored, in a folder of its own under
+tree's Home, bin and tests, what git tracks and what is new and not ignored, in a folder of its own under
 ~/.local/state/noblefactor-engprod-tests, and runs its tests there over ssh, straight to its login shell. The folder goes
 when its tests pass, and stays, named, when they fail. Whether a host is Windows is asked of it."
 
@@ -232,7 +232,7 @@ for host in "$@"; do
     note "${host}: every test under tests/"
 
     if is_this_machine "${host}"; then
-        "${repository_root}/scripts/Test-Here" || failed_list+=("${host}")
+        "${repository_root}/bin/Test-Here" || failed_list+=("${host}")
         continue
     fi
 

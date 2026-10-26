@@ -1,106 +1,146 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2026 Noble Factor. All rights reserved.
 
-# The issue data model as GitHub holds it, pulled from the NobleFactor organization: docs/architecture/issue-data-model/
-# 6-the-asset-and-its-sync.md. Written by hand on 2026-10-22 from gh api reads, the first pull, before star gh model pull
-# exists; the digest is a SHA-256 over this file with its own line excluded. Projects need the read:project scope, which
-# the token lacked, and none exist yet. Within a level the types' order is the render order; Bug is the unplanned leaf. Labels are the hub repository's, NobleFactor/noblefactor-ops; devlore-cli's
-# Area:, Severity: and Priority: labels join when the attributes are pulled.
+# The issue data model as GitHub holds it: docs/architecture/issue-data-model/6-the-asset-and-its-sync.md. Written by
+# star gh model pull; edit it by hand only deliberately, then run star gh model digest. The digest is a SHA-256 over this
+# file with its own line excluded. A type is keyed by its id and takes its level from its description's "Level N:".
+# Within a level the types' order is the render order. Labels are in three tiers: the organization's, which every
+# participating repository carries; each team's; each repository's own.
 
 version: 1
 pulled:
-  at: 2026-10-22T19:03:08Z
+  at: 2026-10-26T20:51:21Z
   org: NobleFactor
-  digest: sha256:fbf1a2b8cb66de149b2841f876bb6eb4c47d553b6771e75765731b52f20429ff
+  digest: sha256:b66ab822632aecbb529307a1d1bc7607f612350a34d63892e2675abfbe730415
 types:
-  - name: Epic
+  - name: "Epic"
     id: 914457658
     level: 0
-    color: purple
+    color: "purple"
     description: "Level 0: a body of work with an owner, the root every other issue rolls up to; decomposes into features and chores"
-  - name: Feature
+  - name: "Feature"
     id: 344350
     level: 1
-    color: blue
+    color: "blue"
     description: "Level 1: product value, a capability the product gains; decomposes into tasks and bugs"
-  - name: Chore
+  - name: "Chore"
     id: 914457671
     level: 1
-    color: gray
+    color: "gray"
     description: "Level 1: engineering value, a body of process or tooling work the team receives; decomposes into tasks and bugs"
-  - name: Bug
+  - name: "Bug"
     id: 344348
     level: 2
     unplanned: true
-    color: red
+    color: "red"
     description: "Level 2: unplanned work, a defect found rather than planned; repairs a feature or a chore"
-  - name: Task
+  - name: "Task"
     id: 344346
     level: 2
-    color: yellow
+    color: "yellow"
     description: "Level 2: planned work, a step in delivering a feature or a chore"
 labels:
-  - name: "bug"
-    color: "d73a4a"
-    description: "Something isn't working"
-  - name: "business"
-    color: "fbca04"
-    description: "Business priority"
-  - name: "chore"
-    color: "BFD4F2"
-    description: "Maintenance work on the repo: build, CI, tooling, process"
-  - name: "documentation"
-    color: "0075ca"
-    description: "Improvements or additions to documentation"
-  - name: "duplicate"
-    color: "cfd3d7"
-    description: "This issue or pull request already exists"
-  - name: "enhancement"
-    color: "a2eeef"
-    description: "New feature or request"
-  - name: "epic"
-    color: "7057ff"
-    description: "Top-level initiative"
-  - name: "Epic:Ops:IssueTracking"
-    color: "5319e7"
-    description: "Tooling axis: how NobleFactor tracks its work in GitHub"
-  - name: "Epic:Ops:Process"
-    color: "5319e7"
-    description: "Tooling axis: process work; never closes"
-  - name: "feature"
-    color: "0e8a16"
-    description: "Deliverable unit within an epic"
-  - name: "good first issue"
-    color: "7057ff"
-    description: "Good for newcomers"
-  - name: "help wanted"
-    color: "008672"
-    description: "Extra attention is needed"
-  - name: "invalid"
-    color: "e4e669"
-    description: "This doesn't seem right"
-  - name: "question"
-    color: "d876e3"
-    description: "Further information is requested"
-  - name: "task"
-    color: "1d76db"
-    description: "Implementation work item"
-  - name: "Thread:Ops:PortableTooling"
-    color: "8a63d2"
-    description: "Tooling axis: the process commands work the same on every platform, shipped by the base layer"
-  - name: "Thread:WritDeploy"
-    color: "1D76DB"
-    description: "deploying converges the machine"
-  - name: "Thread:WritOrigin"
-    color: "0e8a16"
-    description: "Cross-cutting: writ records and verifies where a deployment came from"
-  - name: "Thread:WritRepo"
-    color: "1D76DB"
-    description: "a layer points where you say"
-  - name: "Thread:WritSelfInstall"
-    color: "1D76DB"
-    description: "a fresh machine installs writ and can use it"
-  - name: "wontfix"
-    color: "ffffff"
-    description: "This will not be worked on"
-projects: []
+  organization:
+    - name: "bug"
+      color: "d73a4a"
+      description: "Something isn't working"
+    - name: "chore"
+      color: "BFD4F2"
+      description: "Maintenance work on the repo: build, CI, tooling, process"
+    - name: "epic"
+      color: "7057ff"
+      description: "Top-level initiative"
+    - name: "feature"
+      color: "0e8a16"
+      description: "Deliverable unit within an epic"
+    - name: "task"
+      color: "1d76db"
+      description: "Implementation work item"
+    - name: "Epic:Ops:Process"
+      color: "5319e7"
+      description: "Tooling axis: process work; never closes"
+    - name: "business"
+      color: "fbca04"
+      description: "Business priority"
+    - name: "documentation"
+      color: "0075ca"
+      description: "Improvements or additions to documentation"
+    - name: "duplicate"
+      color: "cfd3d7"
+      description: "This issue or pull request already exists"
+    - name: "enhancement"
+      color: "a2eeef"
+      description: "New feature or request"
+    - name: "good first issue"
+      color: "7057ff"
+      description: "Good for newcomers"
+    - name: "help wanted"
+      color: "008672"
+      description: "Extra attention is needed"
+    - name: "invalid"
+      color: "e4e669"
+      description: "This doesn't seem right"
+    - name: "question"
+      color: "d876e3"
+      description: "Further information is requested"
+    - name: "wontfix"
+      color: "ffffff"
+      description: "This will not be worked on"
+  teams: {}
+  repositories:
+    "NobleFactor/noblefactor-engprod":
+      - name: "Epic:Ops:IssueTracking"
+        color: "5319e7"
+        description: "Tooling axis: how NobleFactor tracks its work in GitHub"
+      - name: "Thread:Ops:PortableTooling"
+        color: "8a63d2"
+        description: "Tooling axis: the process commands work the same on every platform, shipped by the base layer"
+      - name: "Thread:WritDeploy"
+        color: "1D76DB"
+        description: "deploying converges the machine"
+      - name: "Thread:WritOrigin"
+        color: "0e8a16"
+        description: "Cross-cutting: writ records and verifies where a deployment came from"
+      - name: "Thread:WritRepo"
+        color: "1D76DB"
+        description: "a layer points where you say"
+      - name: "Thread:WritSelfInstall"
+        color: "1D76DB"
+        description: "a fresh machine installs writ and can use it"
+projects:
+  - name: "Thread: the model follows a rename"
+    id: "PVT_kwDOAD1Dfc4Boeo4"
+    number: 4
+    template: false
+    fields:
+      - name: "Step"
+        id: "PVTF_lADOAD1Dfc4Boeo4zhm-lhk"
+        type: number
+      - name: "Status"
+        id: "PVTSSF_lADOAD1Dfc4Boeo4zhm-lb0"
+        type: single-select
+        options:
+          - { name: "Not run", id: "f75ad846" }
+          - { name: "Fails", id: "47fc9ee4" }
+          - { name: "Passes", id: "98236657" }
+      - name: "Passed"
+        id: "PVTF_lADOAD1Dfc4Boeo4zhnVSlw"
+        type: date
+      - name: "Failed"
+        id: "PVTF_lADOAD1Dfc4Boeo4zhnVSmg"
+        type: date
+      - name: "Check"
+        id: "PVTF_lADOAD1Dfc4Boeo4zhnVSmo"
+        type: text
+  - name: "Triage: engprod"
+    id: "PVT_kwDOAD1Dfc4Bo3Lb"
+    number: 5
+    template: false
+    fields:
+      - name: "Status"
+        id: "PVTSSF_lADOAD1Dfc4Bo3LbzhnVTqQ"
+        type: single-select
+        options:
+          - { name: "Todo", id: "f75ad846" }
+          - { name: "In Progress", id: "47fc9ee4" }
+          - { name: "Done", id: "98236657" }
