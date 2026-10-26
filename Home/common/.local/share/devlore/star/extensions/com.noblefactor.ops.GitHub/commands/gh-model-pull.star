@@ -9,6 +9,7 @@ star's --dry-run skips the reads a preview needs, so this command refuses it. Se
 
 # gh-model-pull.star
 
+load("commands/access.star", "check_access")
 load(
     "commands/model.star",
     "HUB",
@@ -42,6 +43,7 @@ def run(_command, ctx):
     org = ctx.args.get("org", "") or "NobleFactor"
     asset = ctx.args.get("asset", "") or default_asset()
     check = preview(ctx)  # --check: the workaround for devlore-cli#1170
+    check_access("star gh model pull", org = org, scopes = ["read:project"])
     path = asset if check else refuse_unless_on_a_branch(asset)
 
     old_text = read_text(path)

@@ -5,10 +5,12 @@
 
 # gh-labels-sync.star
 
+load("commands/access.star", "check_access")
 load("commands/scheme.star", "label_faults", "label_inventory", "label_sync", "resolve_repos")
 
 def run(_command, ctx):
     """Sync the label set across the repositories read: writ's layers', unless --repo or --directory names others; honors --dry-run."""
+    check_access("star gh labels sync", dry_run = ctx.dry_run)
     repos = resolve_repos(ctx.args.get("repo", ""), ctx.args.get("directory", ""))
     rows = label_faults(label_inventory(repos), repos)
     if len(rows) == 0:

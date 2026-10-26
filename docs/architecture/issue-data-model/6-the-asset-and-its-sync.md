@@ -63,7 +63,9 @@ projects:
   cache, below.
 - **`pulled.digest`** is a SHA-256 over the file with that one line excluded, written by `pull`. The extension
   recomputes it on every load. A mismatch means the file was edited by hand since its pull: a read-only operation
-  runs anyway and says so in one header line, `push` refuses, and the repository's gate fails a pull request that
+  runs anyway and says so in one header line, never failing the extension's load, since star loads every command file
+  with the extension and a failure there would take `pull` and `digest`, the commands that repair it, down too (built
+  2026-10-24, #377), `push` refuses, and the repository's gate fails a pull request that
   carries a mismatched asset. The fix is a `pull`, which rewrites file and digest together, or a deliberate edit
   followed by `star gh model digest`, which re-signs it and leaves the edit in the diff for review. A digest, not a
   signature: the owner, 2026-10-22, "I'm not so concerned with security, just clumsy edits", and git already says
@@ -171,8 +173,13 @@ split falls between the two verbs.
 | `push` | the asset | the organization's record, or the named repositories' labels; personal first ([section 4](4-storage-and-reach.md)) | never by default; see Risk | changes in GitHub, reported |
 
 - **`pull`** reads each record conditionally by its ETag, rewrites the asset where a record changed, and prints the
-  diff. Exit 0 when nothing changed, 1 when the asset was rewritten, 2 on a conflict it will not resolve. With
-  `--dry-run` it prints the diff and writes nothing. The owner, 2026-10-22, of its first use: "I made some changes to
+  diff. Exit 0 whether nothing changed or the asset was rewritten, the summary line saying which; exit 1 on a conflict
+  it will not resolve, nothing written. Ruled 2026-10-23: a star command exits only 0 or 1. With `--check` it prints
+  the diff and writes nothing: a workaround, since star's `--dry-run` skips every read a preview needs
+  ([devlore-cli#1170](https://github.com/NobleFactor/devlore-cli/issues/1170)); `pull` refuses `--dry-run` and names
+  `--check`, which retires when #1170 lands. A real pull writes only an asset in a git tree off its default branch with
+  no uncommitted change to it, so the deployed asset, a link into the layer clone on develop, is pulled into through a
+  worktree's with `--asset`. The owner, 2026-10-22, of its first use: "I made some changes to
   the data model on GitHub and want to sync back to the repo to ensure consistency. I will say that is the first thing
   I will do when the data model is complete."
 - **`push`** replaces `star gh labels sync`: it brings the organization's record, or the named repositories' labels,
@@ -181,7 +188,8 @@ split falls between the two verbs.
   wants to participate."
 - **`star gh model audit`** replaces `star gh labels audit`: drift between the asset and any repository, reported,
   nothing written.
-- `--asset` defaults to the file beside the extension and exists for tests.
+- `--asset` defaults to the file beside the extension, and names a worktree's asset for a real pull.
+- **Every command that talks to GitHub checks gh's access first,** § Access below.
 
 ## Risk
 
@@ -231,6 +239,28 @@ which project, and each row's values live only in GitHub. A backup of those is a
 issues and rows, and this design does not provide one; it is named here so that nobody mistakes the asset for it.
 Until it exists, the schedule issues' lane tables and the parent markers in issue bodies are the copies of record for
 membership and parents, which is one more reason section 5 retires them last.
+
+## Access
+
+Ruled 2026-10-26: "The extension should check for access and if the login is stale or access is denied you should
+either exit with specific instructions". Every command that reads or writes GitHub, `pull` and the issues and labels
+commands, checks gh's access before its first request, and when it cannot go on it fails with what is wrong and the one
+thing that fixes it. It never signs in or adds a scope itself: star captures a command's output, so gh's one-time code
+would never reach the user, and the sessions that run star must not change credentials. The user signs in and adds a
+scope; GitHub issues the token and refuses what it cannot do. Built 2026-10-26 in `commands/access.star` (#377).
+
+| # | Found | The command says |
+| --- | --- | --- |
+| 1 | gh is not signed in | You are not signed in to github.com with gh on this machine. Sign in: `gh auth login --hostname github.com`, then rerun |
+| 2 | GitHub refuses the token, 401 | GitHub refused gh's token for the account; it has expired or been revoked. Renew your login: `gh auth refresh --hostname github.com`, then rerun. A token from `GH_TOKEN` or `GITHUB_TOKEN`: replace it, or unset it to use the gh login |
+| 3 | the token lacks a scope the command needs | Your gh login lacks the scope the command needs, naming exactly the missing ones. Add it: `gh auth refresh --hostname github.com --scopes <missing>`, then rerun. `project` includes `read:project`, so the check never asks for both |
+| 4 | the account cannot see the organization, 403 or 404, every scope held | the account cannot see the organization; no command here fixes it: an owner of the organization must grant the account access |
+| 5 | the rate limit is spent | when it resets, in local time; rerun after that |
+
+`pull` needs `read:project`, and checks the organization it reads; the issues and labels commands need gh's own scopes.
+The refresh in rows 2 and 3 is interactive, a one-time code approved in a browser, so it runs in the user's own
+terminal, not through a session. Under star's `--dry-run` every shell call is skipped, so nothing can be checked and
+the check is skipped with it.
 
 ## Every operation reads first
 

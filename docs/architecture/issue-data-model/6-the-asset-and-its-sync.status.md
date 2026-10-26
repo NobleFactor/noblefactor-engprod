@@ -8,7 +8,9 @@ title: "6. The asset and its sync — Status"
 **Feature:** [NobleFactor/noblefactor-ops#332](https://github.com/NobleFactor/noblefactor-ops/issues/332)
 **Work:** [NobleFactor/noblefactor-ops#303](https://github.com/NobleFactor/noblefactor-ops/issues/303)
 **State:** Ruled 2026-10-22, from the owner's words of 2026-10-21 and 2026-10-22; the syntax and the file's shape are
-proposed and accepted ("That's great. Doc it"), not yet built.
+proposed and accepted ("That's great. Doc it"). `pull`, `digest`, the cache and § Access built 2026-10-24 to
+2026-10-26 in #377, `--check` standing in for `--dry-run` until devlore-cli#1170; `push`, `model audit` and the read
+before every operation not yet built.
 
 ## Completion
 

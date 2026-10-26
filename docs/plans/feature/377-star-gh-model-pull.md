@@ -3,7 +3,7 @@ title: "star gh model pull: the organization's types, labels and projects into m
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/377
 status: active
 created: 2026-10-23
-updated: 2026-10-24
+updated: 2026-10-26
 ---
 
 # Plan: star gh model pull
@@ -122,6 +122,34 @@ grant, saying its file became the asset's organization tier and its design stays
 [Section 6](../../architecture/issue-data-model/6-the-asset-and-its-sync.md) is amended where the build differs:
 `pull`'s exit codes, the worktree rule for `--asset`, and the cache's asset digest.
 
+### Requirement 8: `scripts/` is removed
+
+Ruled 2026-10-25 and 2026-10-26: "get rid of the scripts directory on the next pr. remove it entirely. do not put shit
+there." A tool that is not deployed goes to `bin/` at the repository's root, its man page and completion to `share/`
+beside it, "the xdg pattern under the repo root"; every bash tool meets the standard: Declare-BashScript, a man page, a
+completion. The six rows, approved 2026-10-26 ("Go"):
+
+| # | In `scripts/` | Fate |
+| --- | --- | --- |
+| 1 | `Test-Here`, `Test-OnHosts` | `bin/`, by `git mv`; man pages and completions in `share/`; the Makefile repointed, and Test-OnHosts copying `bin` to each host in place of `scripts` |
+| 2 | `Test-Here.ps1` | `bin/`, by `git mv`; CI's Windows job repointed |
+| 3 | `Rename-BaseRepository` and its `.ps1` | removed: they ran once on all four machines for #304 |
+| 4 | `Type-And-Link-Issues` | removed: it ran once for #380 |
+| 5 | `setup-azure-swa.sh`, `setup-github-repo.sh`, `setup-ground-zero.sh` | removed: they live in NobleFactor/devlore.noblefactor.com since its #523, merged as #526 |
+| 6 | `Confirm-GhAccess` and its `.ps1`, new and never committed | removed. Overruled 2026-10-26: "The GitHub access script is overruled. It should be rolled into the extension." The extension's check of gh's access is its own work |
+
+The README's infrastructure lines go with row 5. `.github/scripts/` is CI's, not this, and stays.
+
+### Requirement 9: access is checked first
+
+Ruled 2026-10-26: "The extension should check for access and if the login is stale or access is denied you should
+either exit with specific instructions or do it all as needed." The extension does the first: it checks and instructs,
+and never signs in itself, since star captures gh's one-time code and the sessions that run star must not change
+credentials ("It's the user not GitHub that signs in or updates the scope of a logon"). `commands/access.star`, loading
+nothing, is called first by `pull` and by the issues and labels commands; the five cases and their messages are
+section 6's § Access. `pull` now requires `read:project` instead of keeping the asset's projects without it. This takes
+the access half of #378's read before every operation; the conditional read itself stays #378's.
+
 ## Implementation Phases
 
 ### Phase 1: the plan
@@ -144,9 +172,21 @@ Run 2026-10-25, 01:30 UTC: the first real pull rewrote the asset, added the Thre
 three options, and wrote the cache; `--check` then read 304 for the types and the labels and found the asset unchanged.
 The report by epic, by schedule for #346, and the audit render byte-identical against it and against develop's.
 
-### Phase 4: the record
+### Phase 4: `scripts/` removed
 
-- [ ] Section 6 amended; #320's comment posted under a grant
+- [x] The six rows of Requirement 8 done, `scripts/` gone; `make check` passes, its tests run from `bin/`
+- [x] `--help` shows the man page of each bash tool moved or added
+
+### Phase 5: access
+
+- [x] `commands/access.star`, called first by `pull` and the issues and labels commands; the not-signed-in, bad-token,
+  missing-scope and unseen-organization cases proven 2026-10-26 by an empty gh configuration, an invalid `GH_TOKEN`
+  and a probe; the rate limit untested, since it cannot be spent on demand
+- [x] Section 6 amended: § Access, `--check`, the exit codes, the worktree rule, the digest mismatch never fatal
+
+### Phase 6: the record
+
+- [ ] #320's comment posted under a grant
 - [ ] The pull request; status `complete` in its last commit
 
 ## Files to Create/Modify
@@ -160,7 +200,14 @@ The report by epic, by schedule for #346, and the audit render byte-identical ag
 | `Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/extension.yaml` | Modify | the two commands |
 | `Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/model.yaml` | Modify | tiers; the command's first pull |
 | `docs/architecture/issue-data-model/6-the-asset-and-its-sync.md` | Modify | the build's differences |
+| `docs/architecture/issue-data-model/6-the-asset-and-its-sync.status.md` | Modify | what is built |
+| `Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/access.star` | Create | Requirement 9 |
+| the issues and labels commands, `gh-model-pull.star` | Modify | each calls the access check first |
 | `docs/plans/feature/377-star-gh-model-pull.md` | Create | this plan |
+| `scripts/` | Delete | Requirement 8 |
+| `bin/Test-Here`, `bin/Test-OnHosts`, `bin/Test-Here.ps1` | Move | Requirement 8, rows 1 and 2 |
+| `share/man/man1/`, `share/bash-completion/completions/` | Create | the moved tools' man pages and completions |
+| `Makefile`, `.github/workflows/ci.yaml`, `README.md` | Modify | the tests from `bin/`; the README's infrastructure lines gone |
 
 ## Related Documents
 

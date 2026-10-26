@@ -5,6 +5,7 @@
 
 # gh-issues-audit.star
 
+load("commands/access.star", "check_access")
 load("commands/scheme.star", "audit", "audit_lines", "exempt_numbers", "faults", "fetch_issues", "resolve_repos", "unthreaded", "unthreaded_lines")
 
 def run(_command, ctx):
@@ -14,6 +15,7 @@ def run(_command, ctx):
       _command: the command spec star passes first; unused here.
       ctx: the invocation -- ctx.args carries the flags.
     """
+    check_access("star gh issues audit", dry_run = ctx.dry_run)
     limit = ctx.args.get("limit", 500)
     directory = ctx.args.get("directory", "")
     repo_flag = ctx.args.get("repo", "")
