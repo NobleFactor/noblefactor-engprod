@@ -1,7 +1,7 @@
 ---
 title: "agent-rules rule 18: an order to message a session is not the yes; the message is proposed and the owner approves it or not"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/404
-status: approved
+status: active
 created: 2026-10-25
 updated: 2026-10-25
 ---
@@ -60,7 +60,7 @@ after the owner's yes in the turn before." Neither says what an order to send on
 
 ### Phase 2: The rule (Requirements 1 and 2)
 
-- [ ] Rule 18 clarified; `make check` finished green, read before this box is ticked
+- [x] Rule 18 clarified; `make check` finished green, read before this box is ticked: exit 0, frontmatter 104 with 0 errors
 
 ### Phase 3: Merge
 
