@@ -229,7 +229,7 @@ function remove_conversation {
 function close_viewers {
     local background="$1"
 
-    if pkill --full -- "[[:space:]]attach[[:space:]]+${background}([[:space:]]|$)"; then
+    if pkill -f -- "[[:space:]]attach[[:space:]]+${background}([[:space:]]|$)"; then
         note "Closed every viewer of background session ${background}"
     fi
 }
