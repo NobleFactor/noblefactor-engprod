@@ -1,0 +1,173 @@
+.\" SPDX-License-Identifier: Apache-2.0
+.\" Copyright (c) 2026 Noble Factor. All rights reserved.
+.TH CLEAR-CLAUDE 1 "2026-10-26" "Noble Factor" "User Commands"
+.SH NAME
+Clear-Claude \- clear the Claude Code conversation a schedule runs, removing
+every local record of it, and keeping the schedule and its work
+.SH SYNOPSIS
+.B Clear-Claude
+.RB [ \-C | \-\-directory
+.IR DIRECTORY ]
+.BR \-s | \-\-schedule
+.I SCHEDULE
+.RB [ \-\-clear " | " \-\-retire ]
+.br
+.B Clear-Claude
+.BR \-h | \-\-help
+.SH DESCRIPTION
+.B Clear-Claude
+clears the Claude Code conversation that
+.BR Start-Claude (1)
+runs for a schedule, removing from this computer every record of it:
+.IP \(bu 2
+the transcript, and the folder of tool results and subagent transcripts beside it;
+.IP \(bu 2
+the file history: copies of files as they were before the conversation edited them;
+.IP \(bu 2
+the session environment;
+.IP \(bu 2
+the conversation's temporary output under
+.IR /tmp/claude-<uid> ;
+.IP \(bu 2
+the memory files the conversation wrote, found by the
+.B originSessionId
+each carries, and their lines in the memory index;
+.IP \(bu 2
+the prompts typed in the conversation, from the prompt history.
+.PP
+It reads the schedule's background session from Start-Claude's store, and
+holds the store's lock for the schedule throughout, so that no launch resumes
+or renames the conversation while it is removed.
+.SS With \-\-clear, the default
+The background session and every connection to it go on, in a new
+conversation with nothing of the old one to read. The memories go first, since
+a new conversation reads the memory index as it starts. Then
+.B /clear
+is typed into a viewer of the script's own, a tmux session no client attaches:
+the text alone, and Enter a second after the viewer's input line shows it,
+since claude takes an Enter sent with the text as part of the command. While
+the input line still shows the command, Enter is pressed again, up to three
+times in all. Once claude lists a new conversation for the background
+session, the viewer closes, the old conversation's records go, and the
+background session's job folder is emptied of its scratch files.
+.PP
+Every viewer, tmux pane, ssh or mosh session, sbx exec and Remote Control
+stays connected throughout.
+.SS With \-\-retire
+The background session goes too. Every viewer ends first: each is a
+.B "claude attach <short id>"
+process where claude runs, and ending it ends whatever stands in front of it,
+a tmux pane, an ssh or mosh session, or sbx exec, live or dead, wherever its
+terminal is. The session is stopped and removed with
+.B "claude stop"
+and
+.BR "claude rm" ,
+its records go, and so do its job folder and the schedule's entry in the
+store, so that the next
+.B "Start-Claude \-\-schedule"
+starts a new conversation. Last, it checks that claude no longer lists the
+background session. Remote Control is the one connection it cannot end:
+disconnect it on claude.ai first.
+.PP
+Either way it keeps the schedule itself, its worktrees and branches,
+everything on GitHub, other conversations, and the directory's entry in
+.IR ~/.claude.json ,
+which keeps the directory trusted. It removes nothing Anthropic holds; see
+.BR NOTES .
+.PP
+A schedule with no entry in the store has nothing to remove, and the command
+exits 0.
+.SH OPTIONS
+.TP
+.BR \-s ", " \-\-schedule " " \fISCHEDULE\fR
+The schedule:
+.IR <owner>/<repository>#<number> ,
+or a bare
+.I <number>
+in the directory's repository. Required.
+.TP
+.BR \-C ", " \-\-directory " " \fIDIRECTORY\fR
+The root of a repository clone, or of a linked worktree, resolved to its
+physical path. It names a bare number's repository. Default: the current
+directory.
+.TP
+.B \-\-clear
+Clear the conversation, keeping the background session and every connection to
+it. The default.
+.TP
+.B \-\-retire
+Remove the background session too, ending every connection to it. Refused with
+.BR \-\-clear .
+.TP
+.BR \-h ", " \-\-help
+Show this page.
+.SH FILES
+.TP
+.I ${XDG_STATE_HOME:\-~/.local/state}/agent-schedule/<owner>/<repository>/<number>
+Start-Claude's store entry: the background session's short id, beside its lock.
+.TP
+.I ${CLAUDE_CONFIG_DIR:\-~/.claude}/projects/<project>/<session>.jsonl
+The transcript, beside its folder
+.IR <session>/ ,
+and the project's
+.IR memory/ .
+.TP
+.I ${CLAUDE_CONFIG_DIR:\-~/.claude}/file-history/<session>
+.TP
+.I ${CLAUDE_CONFIG_DIR:\-~/.claude}/session-env/<session>
+.TP
+.I ${CLAUDE_CONFIG_DIR:\-~/.claude}/jobs/<short id>
+The background session's job folder: emptied of its scratch files,
+.IR tmp/ ,
+when clearing; removed when retiring.
+.TP
+.I ${CLAUDE_CONFIG_DIR:\-~/.claude}/history.jsonl
+The prompt history, one line per prompt, each carrying its conversation's id.
+.TP
+.I /tmp/claude-<uid>/<project>/<session>
+.SH EXIT STATUS
+.TP
+.B 0
+The conversation was removed, or the store held none for the schedule.
+.TP
+.B 64
+A usage error: no
+.BR \-\-schedule ,
+one not in either form, or
+.B \-\-clear
+given with
+.BR \-\-retire .
+.TP
+.B 65
+The store's entry, or claude's list, holds no session id this script reads.
+.TP
+.B 66
+No such directory, not the root of a repository clone, no such repository on
+GitHub, or, when clearing, no background session to clear.
+.TP
+.B 69
+claude cannot list its sessions; tmux opened no viewer;
+.B /clear
+started no new conversation, and nothing else was removed; or claude did not
+remove the background session.
+.TP
+.B 75
+It was run inside the conversation it removes; another launch held the
+store's lock for 10 seconds; or, when retiring, a connection restarted the
+background session after it stopped. Disconnect Remote Control, and run it
+again from a terminal outside the conversation.
+.SH NOTES
+Records are local to the computer claude runs on: run it there.
+.PP
+When clearing, the background session's timeline,
+.IR jobs/<short\ id>/timeline.jsonl ,
+is left: the running session keeps it.
+.PP
+What a conversation sent to Anthropic stays with Anthropic. A Remote Control
+session is deleted from claude.ai/code; a report sent with
+.B /feedback
+is kept for five years; deletion of the rest is requested from
+privacy@anthropic.com.
+.SH SEE ALSO
+.BR Start-Claude (1),
+.BR claude (1)

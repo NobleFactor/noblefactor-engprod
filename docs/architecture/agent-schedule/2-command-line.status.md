@@ -33,5 +33,8 @@ NobleFactor/noblefactor-ops#321, 2026-10-20.
 - [x] Start-Claude and Start-Claude.ps1 moved to noblefactor-ops, with these documents and their test scripts: copied
   in NobleFactor/noblefactor-ops#312, where make and CI run the tests on Ubuntu, macOS and Windows, and removed from
   personal in David-Noble-at-work/personal#285.
+- [x] Clear-Claude, on macOS and Linux: `--schedule`, `--directory`, `--clear` and `--retire`, with Clear-Claude(1),
+  its bash and zsh completions, and `tests/Test-ClearClaude` (NobleFactor/noblefactor-engprod#411), 2026-10-27. No
+  Windows counterpart: the owner, 2026-10-27, "Clear-Claude.ps1 is not in this PR."
 
 [plan-259]: https://github.com/David-Noble-at-work/personal/blob/main/docs/plans/chore/259-start-claude-documents-claude.md

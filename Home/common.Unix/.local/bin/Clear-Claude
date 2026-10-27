@@ -1,0 +1,425 @@
+#!/usr/bin/env bash
+
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Noble Factor. All rights reserved.
+
+# Clear-Claude - Clears the Claude Code conversation a schedule runs, removing every local record of it: with --clear,
+# the default, it keeps the background session and every connection to it; with --retire it removes the background
+# session too.
+
+[[ -r "$(dirname "$0")/Declare-BashScript" ]] || {
+    printf '%s: cannot find Declare-BashScript in %s\n' "${0##*/}" "$(dirname "$0")" >&2
+    exit 72 # EX_OSFILE
+}
+# shellcheck source=Declare-BashScript
+source "$(dirname "$0")/Declare-BashScript" "$0" "clear,directory:,help,retire,schedule:" "C:hs:" "$@"
+require_nix
+require_command claude gh git jq tmux
+
+# tmux starts claude's viewer by its path, whatever PATH the session's shell sets.
+claude_binary="$(command -v claude)" && readonly claude_binary
+
+# The store's lock is taken with this platform's lock-store.sh, as Start-Claude takes it: lockf on macOS and flock on
+# Linux, from ../libexec/agent-schedule beside this script's directory.
+libexec_directory="$(dirname "$0")/../libexec/agent-schedule"
+readonly libexec_directory
+
+[[ -r ${libexec_directory}/lock-store.sh ]] ||
+    error $EX_UNAVAILABLE "lock-store.sh, the store's lock, is required in ${libexec_directory}."
+# shellcheck source=/dev/null
+source "${libexec_directory}/lock-store.sh"
+
+###########
+# Functions
+###########
+
+## Claude's list of sessions
+
+# conversation_of prints the id of the conversation a background session runs, as claude lists it, or nothing when
+# claude lists no background session by that short id.
+#
+# Parameters:
+#   - `$1`: the background session's short id.
+#
+# Returns:
+#   - 0; it does not return when claude cannot list its sessions: the script exits 69, EX_UNAVAILABLE.
+function conversation_of {
+    local sessions_json
+
+    sessions_json="$("$claude_binary" agents --json --all </dev/null 2>/dev/null 9>&-)" ||
+        error $EX_UNAVAILABLE "claude cannot list its sessions: claude agents --json --all failed."
+    jq --raw-output --arg id "$1" '.[] | select(.id == $id) | .sessionId // empty' <<<"$sessions_json"
+}
+
+## The viewer's keys
+
+# wait_for_input waits for the viewer in a tmux pane to draw its input line, `❯`, from which it takes keys.
+#
+# Parameters:
+#   - `$1`: the pane.
+#
+# Returns:
+#   - 0 once the line is drawn; 1 when it is not, within 30 seconds.
+function wait_for_input {
+    local pane="$1" deadline=$((SECONDS + 30)) screen
+
+    while ((SECONDS < deadline)); do
+        screen="$(tmux capture-pane -p -t "$pane" 2>/dev/null)" || screen=""
+        [[ $'\n'"$screen" != *$'\n❯'* ]] || return 0
+        sleep 0.1
+    done
+
+    return 1
+}
+
+# input_line prints the viewer's input line: the last line of the pane that begins with `❯`.
+#
+# Parameters:
+#   - `$1`: the pane.
+#
+# Returns:
+#   - 0.
+function input_line {
+    local screen line last=""
+
+    screen="$(tmux capture-pane -p -t "$1" 2>/dev/null)" || screen=""
+    while IFS= read -r line; do
+        [[ $line != ❯* ]] || last="$line"
+    done <<<"$screen"
+
+    printf '%s\n' "$last"
+}
+
+# type_command types a slash command into the viewer in a tmux pane, and presses Enter apart from it. Sent with the
+# text, the Enter reaches claude as part of the command, which then never runs, and someone has to press return. So
+# the text goes in literally; Enter follows a second after the input line shows it; and while the input line still
+# shows it, Enter is pressed again, up to three times in all.
+#
+# Parameters:
+#   - `$1`: the pane.
+#   - `$2`: the command: `/clear`, or `/rename <name>`.
+#
+# Returns:
+#   - 0 once the input line no longer shows the command; 1 when it never showed it, or still does.
+function type_command {
+    local pane="$1" command="$2" prefix="${2:0:20}" deadline attempt
+
+    tmux send-keys -t "$pane" -l -- "$command" || return 1
+
+    deadline=$((SECONDS + 5))
+    until [[ "$(input_line "$pane")" == *"$prefix"* ]]; do
+        ((SECONDS < deadline)) || return 1
+        sleep 0.1
+    done
+
+    for attempt in 1 2 3; do
+        sleep 1
+        tmux send-keys -t "$pane" Enter || return 1
+        deadline=$((SECONDS + 5))
+
+        while ((SECONDS < deadline)); do
+            [[ "$(input_line "$pane")" == *"$prefix"* ]] || return 0
+            sleep 0.2
+        done
+
+        note "${command%% *} still waits on the input line after Enter ${attempt}."
+    done
+
+    return 1
+}
+
+## Removal
+
+# remove_paths removes each path given that exists, and names it.
+#
+# Parameters:
+#   - `$@`: the paths, files or directories.
+#
+# Returns:
+#   - 0.
+function remove_paths {
+    local path
+
+    for path in "$@"; do
+        [[ -e "$path" || -L "$path" ]] || continue
+        rm --recursive --force -- "$path"
+        note "Removed ${path}"
+    done
+}
+
+# remove_memories removes the memory files a conversation wrote, by the originSessionId each carries, and their lines
+# in the index beside them, MEMORY.md. A memory directory left with no file but an empty index goes too.
+#
+# Parameters:
+#   - `$1`: the conversation's id, a UUID.
+#
+# Returns:
+#   - 0.
+function remove_memories {
+    local conversation="$1" memory_file memory_directory index
+
+    for memory_file in "${claude_home}"/projects/*/memory/*.md; do
+        [[ "${memory_file##*/}" != MEMORY.md ]] || continue
+        grep --quiet --fixed-strings "originSessionId: ${conversation}" -- "$memory_file" || continue
+
+        memory_directory="${memory_file%/*}"
+        index="${memory_directory}/MEMORY.md"
+        remove_paths "$memory_file"
+
+        if [[ -f "$index" ]]; then
+            grep --invert-match --fixed-strings "](${memory_file##*/})" -- "$index" >"${index}.new" || true
+            mv -- "${index}.new" "$index"
+        fi
+    done
+
+    for index in "${claude_home}"/projects/*/memory/MEMORY.md; do
+        memory_directory="${index%/*}"
+        [[ ! -s "$index" ]] || continue
+        [[ "$(find "$memory_directory" -mindepth 1 -not -name MEMORY.md -print -quit)" == "" ]] || continue
+        remove_paths "$memory_directory"
+    done
+}
+
+# remove_prompts removes the prompts typed in a conversation from claude's prompt history, history.jsonl, by the
+# sessionId each line carries. Every other line is kept as it is.
+#
+# Parameters:
+#   - `$1`: the conversation's id, a UUID.
+#
+# Returns:
+#   - 0.
+function remove_prompts {
+    local conversation="$1" history="${claude_home}/history.jsonl" count
+
+    [[ -f "$history" ]] || return 0
+    count="$(grep --count --fixed-strings "\"sessionId\":\"${conversation}\"" -- "$history" || true)"
+    ((count > 0)) || return 0
+
+    grep --invert-match --fixed-strings "\"sessionId\":\"${conversation}\"" -- "$history" >"${history}.new" || true
+    mv -- "${history}.new" "$history"
+    note "Removed ${count} prompts from ${history}"
+}
+
+# remove_conversation removes a conversation's records: its transcript and the folder beside it, its file history,
+# its session environment, its temporary output, and its prompts.
+#
+# Parameters:
+#   - `$1`: the conversation's id, a UUID.
+#
+# Returns:
+#   - 0.
+function remove_conversation {
+    local conversation="$1"
+
+    remove_paths "${claude_home}"/projects/*/"${conversation}.jsonl" "${claude_home}"/projects/*/"${conversation}" \
+        "${claude_home}/file-history/${conversation}" "${claude_home}/session-env/${conversation}" \
+        "/tmp/claude-$(id -u)"/*/"${conversation}"
+    remove_prompts "$conversation"
+}
+
+# close_viewers ends every viewer of a background session, wherever its connection comes from: each is a
+# `claude attach <short id>` process where claude runs, and ending it ends whatever stands in front of it, a tmux pane,
+# an ssh or mosh session, or sbx exec, live or dead. Nothing needs to know where the viewers' terminals are.
+#
+# Parameters:
+#   - `$1`: the background session's short id.
+#
+# Returns:
+#   - 0.
+function close_viewers {
+    local background="$1"
+
+    if pkill -f -- "[[:space:]]attach[[:space:]]+${background}([[:space:]]|$)"; then
+        note "Closed every viewer of background session ${background}"
+    fi
+}
+
+###########
+# Arguments
+###########
+
+declare -r synopsis="${script_name} [-C|--directory <directory>] -s|--schedule <schedule> [--clear | --retire]
+${script_name} -h|--help
+
+Clears the Claude Code conversation a schedule runs, removing every local record of it: its transcript and tool
+results, its file history, its session environment, its temporary output, the memories it wrote and the prompts typed
+in it. With --clear, the default, it types /clear into a viewer of its own, and keeps the background session and every
+connection to it: they go on in a new conversation, with nothing of the old one to read. With --retire it removes the
+background session too, its job folder and the schedule's entry in Start-Claude's store, ending every viewer. The
+schedule, its worktrees, its branches and everything on GitHub are kept. <schedule> is <owner>/<repository>#<number>,
+or a bare <number> in the directory's repository. The directory is --directory, or else the current one, the root of a
+repository clone. Run it from a terminal outside the conversation it removes. See Clear-Claude(1)."
+
+eval set -- "$script_arguments"
+
+declare clear=0
+declare directory_argument=""
+declare retire=0
+declare schedule_argument=""
+
+while :; do
+    case $1 in
+        -h | --help)
+            usage "$synopsis"
+            ;;
+        --clear)
+            clear=1
+            shift 1
+            ;;
+        -C | --directory)
+            directory_argument="$2"
+            shift 2
+            ;;
+        --retire)
+            retire=1
+            shift 1
+            ;;
+        -s | --schedule)
+            schedule_argument="$2"
+            shift 2
+            ;;
+        --)
+            shift 1
+            break
+            ;;
+        *) error $EX_USAGE "Unrecognized option: $1" ;;
+    esac
+done
+
+[[ $schedule_argument ]] || error $EX_USAGE "--schedule is required."
+((! (clear && retire))) || error $EX_USAGE "--clear keeps the background session and --retire removes it: give one."
+
+[[ $schedule_argument =~ ^(([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)#)?([0-9]+)$ ]] ||
+    error $EX_USAGE "--schedule takes <owner>/<repository>#<number> or a bare <number>: ${schedule_argument}"
+
+declare -r schedule_number="${BASH_REMATCH[3]}"
+declare -r given_slug="${BASH_REMATCH[2]}"
+readonly retire
+
+((! $#)) || error $EX_USAGE "Unexpected arguments: $*"
+
+###########
+# Main
+###########
+
+## The directory: --directory names it, or else the current one, the root of a repository clone
+
+directory="$(cd -- "${directory_argument:-.}" 2>/dev/null && pwd -P)" ||
+    error $EX_NOINPUT "No such directory: ${directory_argument:-.}"
+
+[[ "$(git -C "$directory" rev-parse --show-toplevel 2>/dev/null || true)" == "$directory" ]] ||
+    error $EX_NOINPUT "Not the root of a repository clone: ${directory}"
+
+readonly directory
+
+## The schedule's key, written as GitHub writes it, as Start-Claude writes its store
+
+if [[ $given_slug ]]; then
+    schedule_slug="$(gh repo view "$given_slug" --json nameWithOwner --jq .nameWithOwner 2>/dev/null)" ||
+        error $EX_NOINPUT "GitHub has no repository ${given_slug}."
+else
+    schedule_slug="$(cd -- "$directory" && gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null)" ||
+        error $EX_NOINPUT "GitHub names no repository for ${directory}."
+fi
+
+declare -r schedule_key="${schedule_slug}#${schedule_number}"
+declare -r store_entry="${XDG_STATE_HOME:-${HOME}/.local/state}/agent-schedule/${schedule_slug}/${schedule_number}"
+declare -r claude_home="${CLAUDE_CONFIG_DIR:-${HOME}/.claude}"
+
+shopt -s nullglob
+
+## The schedule's background session, by its short id in the store, under the store's lock
+
+if [[ ! -f "$store_entry" ]]; then
+    note "Start-Claude's store has no conversation for ${schedule_key}: ${store_entry}. Nothing to remove."
+    exit 0
+fi
+
+# The lock is held on descriptor 9 to the end: a Start-Claude of the schedule waits, and cannot resume or rename the
+# conversation while it is removed.
+exec 9>"${store_entry}.lock"
+take_store_lock || error $EX_TEMPFAIL "Another launch holds the store's lock for ${schedule_key}."
+
+short_id="$(tr -d '[:space:]' <"$store_entry")"
+[[ $short_id =~ ^[0-9a-f]+$ ]] || error $EX_DATAERR "The store's entry holds no session id: ${store_entry}"
+readonly short_id
+
+# Clearing or stopping the conversation would act on whatever runs inside it, this script included: it is refused there.
+[[ ${CLAUDE_CODE_SESSION_ID:-} != "${short_id}"* ]] ||
+    error $EX_TEMPFAIL "This runs inside conversation ${short_id}, the one it removes. Run it from a terminal outside."
+
+session_id="$(conversation_of "$short_id")"
+
+[[ -z $session_id || $session_id =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]] ||
+    error $EX_DATAERR "claude lists no conversation id this script reads: ${session_id}"
+readonly session_id
+
+if ((! retire)); then
+
+    ## Clear: the background session and every connection to it go on, in a new conversation
+
+    [[ $session_id ]] || error $EX_NOINPUT "claude lists no background session ${short_id} to clear." \
+        "--retire removes what is left of it."
+
+    # The memories go first: a new conversation reads the memory index as it starts, and /clear starts one.
+    remove_memories "$session_id"
+
+    # A viewer of the script's own, which no client attaches, takes the /clear. tmux runs without descriptor 9: a
+    # server it starts would hold the store's lock.
+    viewer="$(tmux new-session -d -P -F '#{pane_id}' -x 200 -y 50 -- "$claude_binary" attach "$short_id" 9>&-)" ||
+        error $EX_UNAVAILABLE "tmux opened no viewer of background session ${short_id} to clear it in."
+
+    cleared=""
+    if wait_for_input "$viewer" && type_command "$viewer" /clear; then
+        deadline=$((SECONDS + 30))
+
+        while ((SECONDS < deadline)); do
+            cleared="$(conversation_of "$short_id")"
+            [[ -z $cleared || $cleared == "$session_id" ]] || break
+            cleared=""
+            sleep 0.5
+        done
+    fi
+
+    tmux kill-session -t "$viewer" 2>/dev/null || true
+
+    [[ $cleared ]] || error $EX_UNAVAILABLE "/clear started no new conversation in background session ${short_id}:" \
+        "claude still lists ${session_id}. Nothing else was removed."
+
+    remove_conversation "$session_id"
+
+    # The job folder's scratch files are the session's, and the new conversation would find them: they go. The rest of
+    # the job folder is the running session's own.
+    if [[ -d "${claude_home}/jobs/${short_id}/tmp" ]]; then
+        find "${claude_home}/jobs/${short_id}/tmp" -mindepth 1 -delete
+        note "Emptied ${claude_home}/jobs/${short_id}/tmp"
+    fi
+
+    success "${schedule_key}: conversation ${session_id} removed. Background session ${short_id} and every" \
+        "connection to it go on, in conversation ${cleared}."
+    exit 0
+fi
+
+## Retire: the background session goes too, and every viewer with it
+
+close_viewers "$short_id"
+
+if [[ $session_id ]]; then
+    "$claude_binary" stop "$short_id" </dev/null >/dev/null 2>&1 9>&- || true
+    output="$("$claude_binary" rm "$short_id" </dev/null 2>&1 9>&-)" ||
+        error $EX_UNAVAILABLE "claude did not remove background session ${short_id}: ${output//$'\n'/ }"
+    note "Removed background session ${short_id}"
+
+    remove_memories "$session_id"
+    remove_conversation "$session_id"
+fi
+
+remove_paths "${claude_home}/jobs/${short_id}" "$store_entry"
+
+# A connection that reattached would have restarted the session under the same id.
+[[ -z "$(conversation_of "$short_id")" ]] ||
+    error $EX_TEMPFAIL "Background session ${short_id} is running again: a connection restarted it. Disconnect" \
+        "Remote Control, and run this again."
+
+success "${schedule_key}: background session ${short_id} and its conversation removed. The schedule and its work" \
+    "are kept."

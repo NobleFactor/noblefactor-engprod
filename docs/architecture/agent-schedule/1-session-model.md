@@ -132,6 +132,32 @@ a tree of its own and runs on in every case.
   whatever runs in its shell pane. No tmux session waits to be come back to: the next start opens a new one.
 - **A lost connection** ends the tmux session once its client goes, as the processes above show.
 
+## Typing into a viewer
+
+A command typed into a viewer, `/rename` by Start-Claude or `/clear` by Clear-Claude, goes as text alone, and its
+Enter after it. An Enter that arrives with the text, in one `send-keys`, claude takes as part of the command, which
+then waits on the input line until someone presses return (NobleFactor/noblefactor-engprod#412; the owner,
+2026-10-26: "I don't want to have to hit return myself"). So the text is typed; once the viewer's input line, `❯`,
+shows it, and a second more, Enter is pressed by itself; and while the input line still shows the command, Enter is
+pressed again, up to three times in all. Start-Claude.ps1 does the same on psmux.
+
+## Clearing and retiring a conversation
+
+Clear-Claude ([2. Command line](2-command-line.md#clear-claude)) ends a conversation in one of two ways, under the
+store's lock for the schedule, so that no start resumes or renames the conversation meanwhile:
+
+- **Cleared,** the default. The background session and every connection to it go on: each viewer, its tmux pane,
+  ssh, mosh or `sbx exec`, and Remote Control. The conversation's memories go first, since a new conversation reads
+  the memory index as it starts. Then `/clear` is typed into a viewer of Clear-Claude's own, a tmux session no client
+  attaches, as the section above types it. `/clear` keeps the background session's short id and gives the
+  conversation a new one (seen 2026-10-14), so the store stays right; once claude lists the new one, the old
+  conversation's records go.
+- **Retired,** with `--retire`. Every viewer is a `claude attach <short id>` process where claude runs, and ending it
+  ends whatever stands in front of it, a tmux pane, an ssh or mosh session, or `sbx exec`, live or dead: no viewer's
+  terminal need be known. With every viewer ended, the session is stopped and removed, and its records, its job folder
+  and the schedule's store entry go. A viewer that reattached would have restarted the session under its own id (seen
+  2026-10-14), so Clear-Claude checks last that claude no longer lists it, and says to run it again if claude does.
+
 ## Moving a foreground conversation into the background
 
 A conversation that runs in the foreground is refused with 75 (item 6). There are two ways to move it, and they
@@ -176,7 +202,8 @@ NobleFactor/noblefactor-ops#305. What this design keeps there, and what changes:
   workspace. The store gains the sandbox's identifier. The main clones are read-only there, and edits are made in
   ephemeral worktrees.
 - **Open:** trust, logins and the three kinds of claude configuration in a sandbox, among
-  [the draft's open items](3-agent-sandbox.md#open).
+  [the draft's open items](3-agent-sandbox.md#open); and how Clear-Claude, which must act where claude runs, through
+  `sbx exec`, learns which sandbox that is.
 
 ## Open
 

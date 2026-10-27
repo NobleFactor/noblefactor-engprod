@@ -10,8 +10,8 @@ title: "2. Command line — Start-Claude, today"
 > the reference for every option, file and exit status.
 >
 > **Relationship to the neighbors.** [1. Session model](1-session-model.md) owns how a conversation and its tmux
-> sessions live; this section owns the command a person types. [2.1](2.1-agent-schedule-commands.md) owns the
-> commands that are to follow it.
+> sessions live; this section owns the commands a person types, Start-Claude and Clear-Claude.
+> [2.1](2.1-agent-schedule-commands.md) owns the commands that are to follow them.
 
 ## Its forms
 
@@ -43,6 +43,26 @@ claude for the host, the repository and the branch; its tmux session is named fo
 One file per schedule, `${XDG_STATE_HOME:-~/.local/state}/agent-schedule/<owner>/<repository>/<number>`, holding the
 background session's short id, with a lock beside it; [1. Session model](1-session-model.md) says how a start reads
 it.
+
+## Clear-Claude
+
+`Clear-Claude` clears the conversation Start-Claude runs for a schedule, and removes every local record of it
+(NobleFactor/noblefactor-engprod#411). Clear-Claude(1) is the reference for every option, file and exit status.
+
+| Form | Does |
+| --- | --- |
+| `Clear-Claude --schedule <schedule> [--clear]` | Clears the conversation: the background session and every connection to it go on, in a new conversation with nothing of the old one to read. The default |
+| `Clear-Claude --schedule <schedule> --retire` | Removes the background session too, ending every connection to it, and the schedule's store entry, so that the next start begins a new conversation |
+
+- `<schedule>` is `<owner>/<repository>#<number>`, or a bare `<number>` in the repository of `--directory`, the root of
+  a clone or of a linked worktree, or else of the current directory.
+- The records are the conversation's transcript and the folder beside it, its file history, its session environment,
+  its temporary output, the memories it wrote and the prompts typed in it. `--clear` empties the job folder of its
+  scratch files; `--retire` removes the job folder.
+- It keeps the schedule, its worktrees and branches, everything on GitHub, other conversations, and the directory's
+  trust. It removes nothing Anthropic holds.
+- It runs on macOS and Linux, on the host claude runs on, from outside the conversation it clears. Windows has none:
+  the owner, 2026-10-27, "Clear-Claude.ps1 is not in this PR."
 
 ## Where it runs
 
