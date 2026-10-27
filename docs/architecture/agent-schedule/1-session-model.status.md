@@ -35,5 +35,10 @@ deploy.
   name only when it is unset, and gives the link from `NFEP_AGENT_SCHEDULE_URL` or the key (#260, requirements 1 and
   2).
 - [ ] Acceptance on the deployed scripts, #260's requirement 4, after its merge.
+- [x] A command typed into a viewer apart from its Enter, in Start-Claude and Start-Claude.ps1
+  (NobleFactor/noblefactor-engprod#412): both test scripts' stand-in viewer takes an Enter sent with the text as part
+  of it, as claude does, and the rename cases, which failed so, pass; 2026-10-27.
+- [x] A conversation cleared, or retired, by Clear-Claude (NobleFactor/noblefactor-engprod#411): its cases in
+  `tests/Test-ClearClaude`; 2026-10-27.
 
 [plan-259]: https://github.com/David-Noble-at-work/personal/blob/main/docs/plans/chore/259-start-claude-documents-claude.md

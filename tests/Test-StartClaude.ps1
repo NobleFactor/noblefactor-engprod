@@ -84,7 +84,8 @@ function Initialize-RunFolder {
     # The stand-in for claude, which lists one background session, abcd1234, named "probe session", whose conversation,
     # abcd1234-0000-4000-8000-000000000009, has no transcript, and the case can change it through the STAND_IN
     # variables: STAND_IN_STATE lists it stopped, and STAND_IN_LOG names a file where each claude --bg it is given is
-    # written, one line each, its arguments joined by the unit separator. Its viewer stays a second, then leaves. A
+    # written, one line each, its arguments joined by the unit separator. Its viewer echoes what is typed into it, takes
+    # a line only when its Enter comes after a pause, as claude does (#412), and leaves after two seconds with no key. A
     # background resume answers as claude does, its short id the conversation's first eight characters, and a new
     # conversation comes up as background session fedc4321. It writes UTF-8, as claude does. claude.cmd, on PATH, runs
     # it, since Start-Claude.ps1 runs claude as an application; the script is kept off PATH, where PowerShell would find
@@ -106,6 +107,15 @@ function Write-Utf8Line {
     $standardOutput.Write($bytes, 0, $bytes.Length)
 }
 
+function Write-Utf8Text {
+    [CmdletBinding()]
+    param([string]$Text)
+
+    $bytes = [Text.UTF8Encoding]::new($false).GetBytes($Text)
+    $standardOutput.Write($bytes, 0, $bytes.Length)
+    $standardOutput.Flush()
+}
+
 switch ($arguments[0]) {
     'agents' {
         $state = if ($env:STAND_IN_STATE) { $env:STAND_IN_STATE } else { 'running' }
@@ -124,32 +134,53 @@ switch ($arguments[0]) {
         exit 0
     }
     'attach' {
-        # It draws its input line and takes one line typed into it, two seconds at most, then leaves; a /rename it
-        # takes renames the session, as claude does, through renamed in STAND_IN_DIR (#384).
-        Write-Utf8Line ([string][char]0x276F + ' ')
-        $deadline = (Get-Date).AddSeconds(2)
+        # It draws its input line and echoes what is typed there, as claude does. It reads key by key: an Enter that
+        # comes within 50 ms of the key before it is part of the text, as claude takes an Enter sent with the text, and
+        # only an Enter after a pause submits the line (#412). A /rename it takes renames the session, as claude does,
+        # through renamed in STAND_IN_DIR (#384). It leaves once a line is submitted, or after two seconds with no key.
+        Write-Utf8Text ([string][char]0x276F + ' ')
+        $line = [Text.StringBuilder]::new()
+        $last = [DateTime]::MinValue
+        $quietUntil = (Get-Date).AddSeconds(2)
 
         try {
 
-            while ((Get-Date) -lt $deadline) {
+            while ((Get-Date) -lt $quietUntil) {
 
-                if ([Console]::KeyAvailable) {
-                    $line = [Console]::ReadLine()
-
-                    if ($line) {
-                        Add-Content -LiteralPath (Join-Path -Path $env:STAND_IN_DIR -ChildPath 'typed') -Encoding utf8 `
-                            -Value $line
-                    }
-
-                    if ($line -and $line.StartsWith('/rename ')) {
-                        Set-Content -LiteralPath (Join-Path -Path $env:STAND_IN_DIR -ChildPath 'renamed') `
-                            -Encoding utf8 -NoNewline -Value $line.Substring('/rename '.Length)
-                    }
-
-                    break
+                if (-not [Console]::KeyAvailable) {
+                    Start-Sleep -Milliseconds 20
+                    continue
                 }
 
-                Start-Sleep -Milliseconds 100
+                $key = [Console]::ReadKey($true)
+                $now = Get-Date
+                $quietUntil = $now.AddSeconds(2)
+
+                if ($key.Key -eq [ConsoleKey]::Enter) {
+
+                    if ($line.Length -gt 0 -and ($now - $last).TotalMilliseconds -ge 50) {
+                        $typed = $line.ToString()
+                        Add-Content -LiteralPath (Join-Path -Path $env:STAND_IN_DIR -ChildPath 'typed') -Encoding utf8 `
+                            -Value $typed
+
+                        if ($typed.StartsWith('/rename ')) {
+                            Set-Content -LiteralPath (Join-Path -Path $env:STAND_IN_DIR -ChildPath 'renamed') `
+                                -Encoding utf8 -NoNewline -Value $typed.Substring('/rename '.Length)
+                        }
+
+                        Write-Utf8Text ("`n" + [string][char]0x276F + ' ')
+                        break
+                    }
+
+                    $null = $line.Append("`n")
+                    Write-Utf8Text "`n"
+                }
+                elseif (-not [char]::IsControl($key.KeyChar)) {
+                    $null = $line.Append($key.KeyChar)
+                    Write-Utf8Text ([string]$key.KeyChar)
+                }
+
+                $last = $now
             }
 
         }

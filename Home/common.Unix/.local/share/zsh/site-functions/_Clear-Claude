@@ -1,0 +1,35 @@
+#compdef Clear-Claude
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Noble Factor. All rights reserved.
+
+_Clear-Claude() {
+    local -a opts schedules entries
+    local context state state_descr line store entry
+    typeset -A opt_args
+
+    opts=(
+        '(-C --directory)'{-C,--directory}'[The root of a clone, for a bare schedule number]:directory:_directories'
+        '(--clear --retire)--clear[Clear the conversation, keeping the session and its connections (default)]'
+        '(--clear --retire)--retire[Remove the background session too, ending every connection]'
+        '(-h --help)'{-h,--help}'[Show usage information and exit]'
+        '(-s --schedule)'{-s,--schedule}'[The schedule whose conversation is cleared]:schedule:->schedule'
+    )
+
+    _arguments -s -C $opts
+
+    case $state in
+        schedule)
+            # The schedules Start-Claude's store holds a conversation for, as <owner>/<repository>#<number>.
+            store="${XDG_STATE_HOME:-$HOME/.local/state}/agent-schedule"
+            entries=("$store"/*/*/*(N.))
+            for entry in $entries; do
+                [[ $entry == *.lock ]] && continue
+                entry=${entry#$store/}
+                schedules+=("${entry%/*}#${entry##*/}")
+            done
+            compadd -a schedules
+            ;;
+    esac
+}
+
+_Clear-Claude "$@"

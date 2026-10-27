@@ -1,0 +1,444 @@
+#!/usr/bin/env bash
+
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Noble Factor. All rights reserved.
+
+# Test-ClearClaude - Tests Clear-Claude against a stand-in for claude, on macOS and Linux (#411): its refusals of usage;
+# a schedule with no store entry; --clear, which removes the conversation's memories before /clear is typed, types it
+# apart from its Enter, and removes the old conversation's records once claude lists a new one, keeping the session,
+# its store entry and every other conversation; a /clear claude never takes; --retire, which ends every viewer, stops
+# and removes the session, and removes its records, its job folder and its store entry; and the refusals inside the
+# conversation, under a held store lock, and when a connection restarts the session.
+
+[[ -r "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" ]] || {
+    printf '%s: cannot find Declare-BashScript in %s\n' "${0##*/}" "$(dirname "$0")/../Home/common/.local/bin" >&2
+    exit 72 # EX_OSFILE
+}
+
+# The helper sources Set-Environment from ${XDG_DATA_HOME:-$HOME/.local/share}/shell/functions. This checkout's is the
+# file under review, so the test points XDG_DATA_HOME at it, for itself and for every Clear-Claude it runs.
+XDG_DATA_HOME="$(cd "$(dirname "$0")/../Home/common/.local/share" && pwd)" || exit 72 # EX_OSFILE
+export XDG_DATA_HOME
+
+# shellcheck source=Declare-BashScript
+source "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" "$0" "help" "h" "$@"
+require_nix
+require_command git jq mktemp pkill tmux
+
+# The startup repository is git's alone: no global or system configuration reaches it.
+export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
+
+# Clear-Claude's tmux is the run's own server, never the one a terminal running this test is in; and the test is not
+# the conversation it clears, whatever conversation runs it.
+unset TMUX CLAUDE_CODE_SESSION_ID
+
+###########
+# Functions
+###########
+
+# cleanup ends the run's own tmux server, and removes the run's directory and its temporary output, however the run
+# ends.
+#
+# Returns:
+#   - 0.
+function cleanup {
+    if [[ -n "${run_directory:-}" && -d "${run_directory}" ]]; then
+        tmux -S "${run_directory}/tmux/tmux-$(id -u)/default" kill-server 2>/dev/null || true
+        rm -rf -- "${run_directory}"
+    fi
+
+    [[ -z "${temporary_project:-}" ]] || rm -rf -- "${temporary_project}"
+}
+
+# stage lays out what a run of Clear-Claude needs that no case changes, under the run's directory: a copy of
+# Clear-Claude beside Declare-BashScript, as writ deploys them, with this platform's lock-store.sh; stand-ins for
+# claude and gh first on PATH; and the startup repository, with an origin.
+#
+# The stand-in for claude lists one background session, 0000beef, running the conversation that session under
+# STAND_IN_DIR names, until rm removes it. Its viewer draws its input line and echoes what is typed there; it takes a
+# line only when its Enter comes after a pause, as claude does (#412), writing it to typed; and it leaves once a line is
+# taken, or after STAND_IN_QUIET seconds with no key, two by default. A /clear it takes writes whether the
+# conversation's memory file was still there to memory-at-clear, and starts conversation NEW, unless
+# STAND_IN_IGNORE_CLEAR is set.
+# stop and rm are written to calls; rm removes the session, unless STAND_IN_RESTART is set, as a connection that
+# reattached would leave it. The stand-in for gh names the startup repository's origin, and nothing else.
+#
+# Parameters:
+#   - `$1`: the run's directory.
+#
+# Returns:
+#   - 0, with bin, libexec and repository under `$1`.
+function stage {
+    local directory="$1" platform_layer
+
+    case "$(uname -s)" in
+        Darwin) platform_layer=common.Darwin ;;
+        Linux) platform_layer=common.Linux ;;
+        *) error $EX_UNAVAILABLE "Clear-Claude runs on macOS and Linux." ;;
+    esac
+
+    mkdir -p -- "${directory}/bin" "${directory}/libexec/agent-schedule" "${directory}/tmux"
+    cp -- "${repository_root}/Home/common.Unix/.local/bin/Clear-Claude" "${directory}/bin/Clear-Claude"
+    cp -- "${repository_root}/Home/common/.local/bin/Declare-BashScript" "${directory}/bin/Declare-BashScript"
+    cp -- "${repository_root}/Home/${platform_layer}/.local/libexec/agent-schedule/lock-store.sh" \
+        "${directory}/libexec/agent-schedule/lock-store.sh"
+
+    cat >"${directory}/bin/claude" <<'CLAUDE'
+#!/usr/bin/env bash
+case "$1" in
+    agents)
+        if [[ -e ${STAND_IN_DIR}/removed ]]; then
+            printf '[]\n'
+        else
+            jq --null-input --compact-output --arg id "${STAND_IN_ID}" \
+                --arg session "$(cat -- "${STAND_IN_DIR}/session")" \
+                '[{id: $id, kind: "background", sessionId: $session, state: "running"}]'
+        fi
+        ;;
+    attach)
+        stty -icanon min 1 2>/dev/null || true
+        printf '❯ '
+        line="" last=0 quiet_until=$((SECONDS + ${STAND_IN_QUIET:-2}))
+        while ((SECONDS < quiet_until)); do
+            if ! IFS= read -r -N 1 -t 0.1 key; then
+                sleep 0.02
+                continue
+            fi
+            now="${EPOCHREALTIME/./}"
+            quiet_until=$((SECONDS + ${STAND_IN_QUIET:-2}))
+            if [[ ${key} == $'\n' || ${key} == $'\r' ]]; then
+                if [[ -n ${line} ]] && ((now - last >= 50000)); then
+                    printf '%s\n' "${line}" >>"${STAND_IN_DIR}/typed"
+                    if [[ ${line} == /clear ]]; then
+                        if [[ -e ${STAND_IN_MEMORY} ]]; then
+                            printf 'present\n' >"${STAND_IN_DIR}/memory-at-clear"
+                        else
+                            printf 'absent\n' >"${STAND_IN_DIR}/memory-at-clear"
+                        fi
+                        [[ -n ${STAND_IN_IGNORE_CLEAR:-} ]] ||
+                            printf '%s\n' "${STAND_IN_NEW}" >"${STAND_IN_DIR}/session"
+                    fi
+                    printf '❯ '
+                    break
+                fi
+                line+=$'\n'
+            elif [[ ${key} == [[:print:]] ]]; then
+                line+="${key}"
+            fi
+            last="${now}"
+        done
+        ;;
+    stop)
+        printf 'stop %s\n' "$2" >>"${STAND_IN_DIR}/calls"
+        ;;
+    rm)
+        printf 'rm %s\n' "$2" >>"${STAND_IN_DIR}/calls"
+        [[ -n ${STAND_IN_RESTART:-} ]] || : >"${STAND_IN_DIR}/removed"
+        ;;
+    *)
+        printf 'stand-in claude: not handled: %s\n' "$*" >&2
+        exit 1
+        ;;
+esac
+CLAUDE
+
+    cat >"${directory}/bin/gh" <<'GH'
+#!/usr/bin/env bash
+# The startup repository's origin, as Clear-Claude asks for it: by name, or for the directory it runs in.
+if [[ $1 == repo && $2 == view && ($3 == --json || $3 == example/clear-claude-test) ]]; then
+    printf 'example/clear-claude-test\n'
+    exit 0
+fi
+printf 'stand-in gh: not handled: %s\n' "$*" >&2
+exit 1
+GH
+    chmod +x -- "${directory}/bin/Clear-Claude" "${directory}/bin/claude" "${directory}/bin/gh"
+
+    git init --quiet "${directory}/repository"
+    git -C "${directory}/repository" remote add origin https://github.com/example/clear-claude-test.git
+}
+
+# seed lays out, afresh, what a case clears: schedule 7's store entry, holding the stand-in's session; the session's
+# conversation, OLD, with its transcript and folder, file history, session environment, temporary output, prompts and
+# one memory, and its job folder; and another conversation, OTHER, with its transcript, its prompt and its memory, which
+# no case may touch. The stand-in's records are cleared, and it runs OLD again.
+#
+# Returns:
+#   - 0.
+function seed {
+    local projects="${CLAUDE_CONFIG_DIR}/projects/test-project"
+
+    rm -rf -- "${CLAUDE_CONFIG_DIR}" "${XDG_STATE_HOME}" "${temporary_project}"
+    rm -f -- "${STAND_IN_DIR}/typed" "${STAND_IN_DIR}/memory-at-clear" "${STAND_IN_DIR}/calls" \
+        "${STAND_IN_DIR}/removed"
+    printf '%s\n' "${old}" >"${STAND_IN_DIR}/session"
+
+    mkdir -p -- "${store}" "${projects}/${old}" "${projects}/memory" "${CLAUDE_CONFIG_DIR}/file-history/${old}" \
+        "${CLAUDE_CONFIG_DIR}/session-env/${old}" "${CLAUDE_CONFIG_DIR}/jobs/${short}/tmp" "${temporary_project}/${old}"
+    printf '%s\n' "${short}" >"${store}/7"
+
+    printf '%s\n' '{"type":"user"}' >"${projects}/${old}.jsonl"
+    printf '%s\n' '{"type":"user"}' >"${projects}/${other}.jsonl"
+    : >"${projects}/${old}/tool-result.txt"
+    : >"${CLAUDE_CONFIG_DIR}/file-history/${old}/edit"
+    : >"${CLAUDE_CONFIG_DIR}/session-env/${old}/environment"
+    : >"${CLAUDE_CONFIG_DIR}/jobs/${short}/tmp/scratch"
+    : >"${CLAUDE_CONFIG_DIR}/jobs/${short}/state.json"
+    : >"${temporary_project}/${old}/output"
+
+    printf -- '---\nname: written\nmetadata:\n  originSessionId: %s\n---\n' "${old}" >"${projects}/memory/written.md"
+    printf -- '---\nname: kept\nmetadata:\n  originSessionId: %s\n---\n' "${other}" >"${projects}/memory/kept.md"
+    printf '%s\n' '- [Written](written.md) — by the cleared conversation' '- [Kept](kept.md) — by another' \
+        >"${projects}/memory/MEMORY.md"
+
+    jq --null-input --compact-output --arg old "${old}" --arg other "${other}" \
+        '{display: "one", sessionId: $old}, {display: "two", sessionId: $other}, {display: "three", sessionId: $old}' \
+        >"${CLAUDE_CONFIG_DIR}/history.jsonl"
+}
+
+# probe runs Clear-Claude in the startup repository with the arguments a case gives, its standard input closed, and
+# checks its exit status.
+#
+# Parameters:
+#   - `$1`: the name of the variable each problem is added to, each ending "; ".
+#   - `$2`: the exit status the case expects.
+#   - `$@` after them: Clear-Claude's arguments.
+#
+# Returns:
+#   - 0, with what the run wrote to standard error in the caller's `written`.
+# shellcheck disable=SC2034 # problem_list is a nameref: each addition is the caller's variable's.
+function probe {
+    local -n problem_list="$1"
+    local expected_status="$2" status=0
+    shift 2
+
+    Clear-Claude --directory "${repository}" "$@" </dev/null >/dev/null 2>"${run_directory}/case.err" || status=$?
+    written="$(cat "${run_directory}/case.err")"
+
+    ((status == expected_status)) || problem_list+="its status was ${status}, not ${expected_status}; "
+}
+
+# expect_gone and expect_kept add a problem for each path that is there, or is not, each ending "; ".
+#
+# Parameters:
+#   - `$1`: the name of the variable each problem is added to.
+#   - `$@` after it: the paths.
+#
+# Returns:
+#   - 0.
+# shellcheck disable=SC2034 # problem_list is a nameref: each addition is the caller's variable's.
+function expect_gone {
+    local -n problem_list="$1"
+    local path
+    shift 1
+
+    for path in "$@"; do
+        [[ ! -e ${path} ]] || problem_list+="${path#"${run_directory}"/} is still there; "
+    done
+}
+
+# shellcheck disable=SC2034 # problem_list is a nameref: each addition is the caller's variable's.
+function expect_kept {
+    local -n problem_list="$1"
+    local path
+    shift 1
+
+    for path in "$@"; do
+        [[ -e ${path} ]] || problem_list+="${path#"${run_directory}"/} is gone; "
+    done
+}
+
+# report prints a case as passed, or as failed with what went wrong and what the run wrote, counting it in `failures`.
+#
+# Parameters:
+#   - `$1`: the case's name.
+#   - `$2`: what went wrong, each problem ending "; ", or nothing.
+#   - `$3`: what the run wrote to standard error.
+#
+# Returns:
+#   - 0.
+function report {
+    local name="$1" problem="$2" written="$3"
+    case_count=$((case_count + 1))
+
+    if [[ -z "${problem}" ]]; then
+        success "${name}"
+        return 0
+    fi
+
+    error 0 "${name}: ${problem%; }:"
+    printf '    %s\n' "${written//$'\n'/$'\n'    }" >&2
+    failures=$((failures + 1))
+}
+
+# untouched adds a problem for each of the old conversation's records that is gone, and for a store entry that no
+# longer holds the session: what a refusal must leave.
+#
+# Parameters:
+#   - `$1`: the name of the variable each problem is added to.
+#
+# Returns:
+#   - 0.
+# shellcheck disable=SC2034 # problem_list is a nameref: each addition is the caller's variable's.
+function untouched {
+    local -n problem_list="$1"
+
+    expect_kept "$1" "${projects}/${old}.jsonl" "${projects}/memory/written.md" \
+        "${CLAUDE_CONFIG_DIR}/file-history/${old}" "${CLAUDE_CONFIG_DIR}/jobs/${short}/tmp/scratch"
+    [[ "$(cat -- "${store}/7" 2>/dev/null || true)" == "${short}" ]] ||
+        problem_list+="schedule 7's entry no longer holds ${short}; "
+}
+
+# the_others_kept adds a problem for each record of the other conversation that is gone.
+#
+# Parameters:
+#   - `$1`: the name of the variable each problem is added to.
+#
+# Returns:
+#   - 0.
+# shellcheck disable=SC2034 # problem_list is a nameref: each addition is the caller's variable's.
+function the_others_kept {
+    local -n problem_list="$1"
+
+    expect_kept "$1" "${projects}/${other}.jsonl" "${projects}/memory/kept.md"
+    grep --quiet --fixed-strings '](kept.md)' -- "${projects}/memory/MEMORY.md" 2>/dev/null ||
+        problem_list+="the other conversation's memory is gone from the index; "
+    [[ "$(jq --raw-output --arg other "${other}" 'select(.sessionId == $other) | .display' \
+        "${CLAUDE_CONFIG_DIR}/history.jsonl" 2>/dev/null)" == two ]] ||
+        problem_list+="the other conversation's prompt is gone from the prompt history; "
+}
+
+######
+# Main
+######
+
+case_count=0
+failures=0
+repository_root="$(cd "$(dirname "$0")/.." && pwd)"
+run_directory=""
+temporary_project=""
+
+Set-Traps cleanup
+run_directory="$(mktemp -d)"
+stage "${run_directory}"
+
+# Ids no real session has, so that pkill, and every removal, can reach only the test's own.
+short=0000beef
+old=0000beef-0000-4000-8000-0000000000a1
+new=1111cafe-0000-4000-8000-0000000000a2
+other=2222f00d-0000-4000-8000-0000000000a3
+
+repository="${run_directory}/repository"
+projects="${run_directory}/config/projects/test-project"
+store="${run_directory}/state/agent-schedule/example/clear-claude-test"
+temporary_project="/tmp/claude-$(id -u)/clear-claude-test-${run_directory##*/}"
+export PATH="${run_directory}/bin:${PATH}" XDG_STATE_HOME="${run_directory}/state" TMUX_TMPDIR="${run_directory}/tmux"
+export CLAUDE_CONFIG_DIR="${run_directory}/config" STAND_IN_DIR="${run_directory}" STAND_IN_ID="${short}"
+export STAND_IN_NEW="${new}" STAND_IN_MEMORY="${projects}/memory/written.md"
+
+# The refusals of usage.
+for arguments in "" "--schedule seven" "--schedule 7 --clear --retire"; do
+    problem="" written=""
+    seed
+    # shellcheck disable=SC2086 # each case's arguments are words.
+    probe problem 64 ${arguments}
+    untouched problem
+    report "refused as usage: Clear-Claude ${arguments:-with no --schedule}" "${problem}" "${written}"
+done
+
+# A schedule with no store entry has nothing to remove.
+problem="" written=""
+seed
+rm -f -- "${store}/7"
+probe problem 0 --schedule 8
+expect_kept problem "${projects}/${old}.jsonl" "${projects}/memory/written.md"
+report "no store entry: nothing removed" "${problem}" "${written}"
+
+# --clear, the default, and --clear given.
+for arguments in "--schedule 7" "--schedule 7 --clear" "--schedule example/clear-claude-test#7"; do
+    problem="" written=""
+    seed
+    # shellcheck disable=SC2086 # each case's arguments are words.
+    probe problem 0 ${arguments}
+    [[ "$(cat -- "${STAND_IN_DIR}/typed" 2>/dev/null || true)" == /clear ]] ||
+        problem+="'$(cat -- "${STAND_IN_DIR}/typed" 2>/dev/null || true)' was typed, not /clear, taken with no help; "
+    [[ "$(cat -- "${STAND_IN_DIR}/memory-at-clear" 2>/dev/null || true)" == absent ]] ||
+        problem+="the conversation's memory was still there when /clear was typed; "
+    expect_gone problem "${projects}/${old}.jsonl" "${projects}/${old}" "${projects}/memory/written.md" \
+        "${CLAUDE_CONFIG_DIR}/file-history/${old}" "${CLAUDE_CONFIG_DIR}/session-env/${old}" \
+        "${CLAUDE_CONFIG_DIR}/jobs/${short}/tmp/scratch" "${temporary_project}/${old}"
+    expect_kept problem "${CLAUDE_CONFIG_DIR}/jobs/${short}/tmp" "${CLAUDE_CONFIG_DIR}/jobs/${short}/state.json"
+    ! grep --quiet --fixed-strings "${old}" -- "${CLAUDE_CONFIG_DIR}/history.jsonl" ||
+        problem+="the conversation's prompts are still in the prompt history; "
+    ! grep --quiet --fixed-strings '](written.md)' -- "${projects}/memory/MEMORY.md" ||
+        problem+="the conversation's memory is still in the index; "
+    the_others_kept problem
+    [[ "$(cat -- "${store}/7" 2>/dev/null || true)" == "${short}" ]] ||
+        problem+="schedule 7's entry no longer holds ${short}; "
+    [[ ! -e ${STAND_IN_DIR}/calls ]] ||
+        problem+="the session was stopped or removed: $(tr '\n' ' ' <"${STAND_IN_DIR}/calls"); "
+    [[ -z "$(tmux list-sessions 2>/dev/null || true)" ]] || problem+="a viewer was left open; "
+    report "--clear: Clear-Claude ${arguments}" "${problem}" "${written}"
+done
+
+# A /clear claude never takes leaves the conversation's records as they are.
+problem="" written=""
+seed
+STAND_IN_IGNORE_CLEAR=1 probe problem 69 --schedule 7
+expect_kept problem "${projects}/${old}.jsonl" "${CLAUDE_CONFIG_DIR}/file-history/${old}" \
+    "${CLAUDE_CONFIG_DIR}/jobs/${short}/tmp/scratch"
+grep --quiet --fixed-strings "${old}" -- "${CLAUDE_CONFIG_DIR}/history.jsonl" ||
+    problem+="the conversation's prompts are gone from the prompt history; "
+report "--clear, /clear never taken: refused, the records kept" "${problem}" "${written}"
+
+# --retire ends every viewer, stops and removes the session, and removes its records, job folder and store entry.
+problem="" written=""
+seed
+tmux new-session -d -s viewer -e STAND_IN_QUIET=60 -- claude attach "${short}"
+probe problem 0 --schedule 7 --retire
+sleep 0.5
+! tmux has-session -t viewer 2>/dev/null || problem+="the viewer still runs; "
+[[ "$(tr '\n' ' ' 2>/dev/null <"${STAND_IN_DIR}/calls" || true)" == "stop ${short} rm ${short} " ]] ||
+    problem+="claude was told '$(tr '\n' ' ' 2>/dev/null <"${STAND_IN_DIR}/calls" || true)', not stop then rm; "
+expect_gone problem "${projects}/${old}.jsonl" "${projects}/${old}" "${projects}/memory/written.md" \
+    "${CLAUDE_CONFIG_DIR}/file-history/${old}" "${CLAUDE_CONFIG_DIR}/session-env/${old}" \
+    "${CLAUDE_CONFIG_DIR}/jobs/${short}" "${temporary_project}/${old}" "${store}/7"
+! grep --quiet --fixed-strings "${old}" -- "${CLAUDE_CONFIG_DIR}/history.jsonl" ||
+    problem+="the conversation's prompts are still in the prompt history; "
+the_others_kept problem
+report "--retire: the viewers end, the session and every record of it go" "${problem}" "${written}"
+
+# Inside the conversation it acts on, it refuses.
+problem="" written=""
+seed
+CLAUDE_CODE_SESSION_ID="${old}" probe problem 75 --schedule 7
+untouched problem
+[[ ! -e ${STAND_IN_DIR}/typed ]] || problem+="something was typed into a viewer; "
+report "inside the conversation: refused, nothing touched" "${problem}" "${written}"
+
+# Under another launch's store lock, it waits ten seconds, then refuses.
+problem="" written=""
+seed
+(
+    # shellcheck source=/dev/null
+    source "${run_directory}/libexec/agent-schedule/lock-store.sh"
+    exec 9>"${store}/7.lock"
+    take_store_lock
+    sleep 20
+) &
+holder=$!
+sleep 0.5
+probe problem 75 --schedule 7
+kill "${holder}" 2>/dev/null || true
+wait "${holder}" 2>/dev/null || true
+untouched problem
+report "the store's lock held by another launch: refused, nothing touched" "${problem}" "${written}"
+
+# A session a connection restarted during --retire is reported, so that the run is repeated.
+problem="" written=""
+seed
+STAND_IN_RESTART=1 probe problem 75 --schedule 7 --retire
+report "--retire, the session restarted: refused at the end" "${problem}" "${written}"
+
+((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
+success "every case passed"

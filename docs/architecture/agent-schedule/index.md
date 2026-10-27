@@ -19,7 +19,7 @@ it, and opens a tmux session onto it: the conversation on the left, a shell on t
 | Section | What it holds | Status |
 | --- | --- | --- |
 | [1. Session model](1-session-model.md) | Every conversation in claude's background, and a tmux session of its own for each start: the model, the processes under ssh and mosh, a start step by step, and leaving | [Built, 2026-10-15](1-session-model.status.md) |
-| [2. Command line](2-command-line.md) | Start-Claude today: its forms, its names, its store, and Windows | [Built on macOS and Linux](2-command-line.status.md) |
+| [2. Command line](2-command-line.md) | Start-Claude today: its forms, its names, its store, and Windows; and Clear-Claude | [Built on macOS and Linux](2-command-line.status.md) |
 | [2.1 The agent-schedule commands](2.1-agent-schedule-commands.md) | Get-, New-, Remove-, Set- and Start-AgentSchedule, with the owner's agent-assignment design | [Sketched](2.1-agent-schedule-commands.status.md) |
 | [3. Agent sandbox](3-agent-sandbox.md) | Docker SBX: the owner's draft, the points it does not capture, and its open items | [Draft](3-agent-sandbox.status.md) |
 

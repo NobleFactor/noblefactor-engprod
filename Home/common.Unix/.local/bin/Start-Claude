@@ -853,6 +853,60 @@ function wait_for_input {
     return 1
 }
 
+# input_line prints the viewer's input line: the last line of the pane that begins with `❯`.
+#
+# Parameters:
+#   - `$1`: the pane, or the tmux session whose pane it is.
+#
+# Returns:
+#   - 0.
+function input_line {
+    local screen line last=""
+
+    screen="$(tmux capture-pane -p -t "$1" 2>/dev/null)" || screen=""
+    while IFS= read -r line; do
+        [[ $line != ❯* ]] || last="$line"
+    done <<<"$screen"
+
+    printf '%s\n' "$last"
+}
+
+# type_command types a slash command into the viewer in a tmux pane, and presses Enter apart from it. Sent with the
+# text, the Enter reaches claude as part of the command, which then never runs, and someone has to press return (seen
+# 2026-10-26). So the text goes in literally; Enter follows a second after the input line shows it; and while the
+# input line still shows it, Enter is pressed again, up to three times in all.
+#
+# Parameters:
+#   - `$1`: the pane, or the tmux session whose pane it is.
+#   - `$2`: the command: `/rename <name>`.
+#
+# Returns:
+#   - 0 once the input line no longer shows the command; 1 when it never showed it, or still does.
+function type_command {
+    local pane="$1" command="$2" prefix="${2:0:20}" deadline presses
+
+    tmux send-keys -t "$pane" -l -- "$command" || return 1
+
+    deadline=$((SECONDS + 5))
+    until [[ "$(input_line "$pane")" == *"$prefix"* ]]; do
+        ((SECONDS < deadline)) || return 1
+        sleep 0.1
+    done
+
+    for ((presses = 0; presses < 3; presses++)); do
+        sleep 1
+        tmux send-keys -t "$pane" Enter || return 1
+        deadline=$((SECONDS + 5))
+
+        while ((SECONDS < deadline)); do
+            [[ "$(input_line "$pane")" == *"$prefix"* ]] || return 0
+            sleep 0.2
+        done
+    done
+
+    return 1
+}
+
 # rename_running renames a background session claude runs under another name than the launch's, for --detach (#384,
 # requirement 2). claude sends a running session no prompt from a command line that begins with /, and starts a copy
 # for `--bg` (the sessions guide, "Resume a running background session"; seen 2026-10-23), so the launch types
@@ -876,7 +930,7 @@ function rename_running {
     }
 
     if wait_for_input "$viewer"; then
-        tmux send-keys -t "$viewer" "$rename" Enter 2>/dev/null || true
+        type_command "$viewer" "$rename" || true
         deadline=$((SECONDS + 10))
 
         while ((SECONDS < deadline)) && [[ "$(background_name_of "$background_id")" != "$session_name" ]]; do
@@ -948,7 +1002,7 @@ function open_workspace {
     # The keys go in the background, so that the terminal attaches meanwhile, and without descriptor 9, so that the
     # store's lock ends with the attach.
     if [[ $rename ]]; then
-        { wait_for_input "$viewer_pane" && tmux send-keys -t "$viewer_pane" "$rename" Enter; } \
+        { wait_for_input "$viewer_pane" && type_command "$viewer_pane" "$rename"; } \
             </dev/null >/dev/null 2>&1 9>&- &
     fi
 

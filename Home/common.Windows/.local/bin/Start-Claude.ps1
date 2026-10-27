@@ -1283,6 +1283,75 @@ begin {
         return $false
     }
 
+    function Get-ViewerInputLine {
+        [CmdletBinding()]
+        [OutputType([string])]
+        param(
+            [Parameter(Mandatory)]
+            [string]
+            $Target
+        )
+
+        # The viewer's input line: the last line of the pane that begins with U+276F, or nothing.
+        $prompt = [string][char]0x276F
+        $screen = Invoke-Program -Name 'tmux' -Argument @('capture-pane', '-p', '-t', $Target)
+
+        if ($screen.ExitCode -ne 0) {
+            return ''
+        }
+
+        return [string](@($screen.Output | Where-Object { $_.StartsWith($prompt) }) | Select-Object -Last 1)
+    }
+
+    function Send-ViewerCommand {
+        [CmdletBinding()]
+        [OutputType([bool])]
+        param(
+            [Parameter(Mandatory)]
+            [string]
+            $Target,
+
+            [Parameter(Mandatory)]
+            [string]
+            $Command
+        )
+
+        # A slash command typed into a viewer, and Enter pressed apart from it (#412). Sent with the text, the Enter
+        # reaches claude as part of the command, which then never runs, and someone has to press return. So the text
+        # goes alone, as one argument, which psmux sends as it is; Enter follows a second after the input line shows
+        # it; and while the input line still shows it, Enter is pressed again, up to three times in all.
+        $prefix = $Command.Substring(0, [Math]::Min(20, $Command.Length))
+        $null = Invoke-Program -Name 'tmux' -Argument @('send-keys', '-t', $Target, $Command)
+        $deadline = (Get-Date).AddSeconds(5)
+
+        while (-not (Get-ViewerInputLine -Target $Target).Contains($prefix)) {
+
+            if ((Get-Date) -ge $deadline) {
+                return $false
+            }
+
+            Start-Sleep -Milliseconds 100
+        }
+
+        for ($presses = 0; $presses -lt 3; $presses++) {
+            Start-Sleep -Seconds 1
+            $null = Invoke-Program -Name 'tmux' -Argument @('send-keys', '-t', $Target, 'Enter')
+            $deadline = (Get-Date).AddSeconds(5)
+
+            while ((Get-Date) -lt $deadline) {
+
+                if (-not (Get-ViewerInputLine -Target $Target).Contains($prefix)) {
+                    return $true
+                }
+
+                Start-Sleep -Milliseconds 200
+            }
+
+        }
+
+        return $false
+    }
+
     function Rename-RunningSession {
         [CmdletBinding()]
         param(
@@ -1319,7 +1388,7 @@ begin {
         }
 
         if (Wait-ViewerInput -Target $viewer) {
-            $null = Invoke-Program -Name 'tmux' -Argument @('send-keys', '-t', $viewer, $Rename, 'Enter')
+            $null = Send-ViewerCommand -Target $viewer -Command $Rename
             $deadline = (Get-Date).AddSeconds(10)
 
             while ((Get-Date) -lt $deadline -and (Get-BackgroundName -ClaudeBinary $ClaudeBinary -Id $Id) -cne $Name) {
@@ -1357,7 +1426,7 @@ begin {
         $target = "${Session}:.$($panes.Output | Select-Object -First 1)"
 
         if ($panes.ExitCode -eq 0 -and (Wait-ViewerInput -Target $target)) {
-            $null = Invoke-Program -Name 'tmux' -Argument @('send-keys', '-t', $target, $Rename, 'Enter')
+            $null = Send-ViewerCommand -Target $target -Command $Rename
         }
 
     }
