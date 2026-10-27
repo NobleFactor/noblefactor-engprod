@@ -1,7 +1,7 @@
 ---
 title: "Clear-Claude removes nothing before the clear is confirmed, fails closed, and reaches only its conversation"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/414
-status: draft
+status: complete
 created: 2026-10-27
 updated: 2026-10-27
 ---
@@ -172,20 +172,29 @@ log it": #415, resolved by this pull request with #414.
 
 ### Phase 1: The plan
 
-- [ ] This plan committed on `fix/414-clear-claude-can-remove-a` and reviewed with the owner
+- [x] This plan committed on `fix/414-clear-claude-can-remove-a` and reviewed with the owner: its three questions ruled
+      2026-10-27, and the work approved the same day, asked "Shall I start?": "yes"
 
 ### Phase 2: The work, in one commit
 
 - [x] Issue 415's fix in both completions, checked as its section says; committed ahead of the rest, as ruled
-- [ ] Requirement 1's observation, recorded here, and the stand-in made to match it
-- [ ] Requirement 6's cases, seen to fail against `bbd6425`, where they can
-- [ ] Requirements 2 to 5 in `Clear-Claude`, and its man page where it changes: every case passes
-- [ ] `make check` passes
+- [x] Requirement 1's observations, recorded here, and the stand-in made to match them: the command menu, one Enter
+      after a pause, the command recorded as a prompt of the old conversation, the new conversation's files written
+- [x] Requirement 6's cases, 27 in all, run against `bbd6425`'s `Clear-Claude`: 14 failed, every case that could
+      fail there. The 13 that passed either refuse before anything runs, as `bbd6425` did too (usage, the directory,
+      the store entry, no store entry, the listing failing at the first lookup, two entries and a non-UUID id, which
+      its regex refused, inside the conversation, the store's lock), or found what it already did (a restarted
+      session under `--retire`)
+- [x] Requirements 2 to 5 in `Clear-Claude`, and its man page: every case passes. Two defects the new cases found
+      on the way, fixed before this commit: the restored index line was appended beside one another session had
+      written, and `--retire` left the store entry, since the containment check took it for outside claude's tree,
+      where it is Start-Claude's and removed as such
+- [x] `make check` passes
 
 ### Merge
 
-- [ ] `make check`, finished green as the PR script runs it, read before this box is ticked
-- [ ] PR script `~/Workspace/NobleFactor/noblefactor-engprod.414-clear-claude-can-remove-a.bash` written, shown, and
+- [x] `make check`, finished green as the PR script runs it, read before this box is ticked
+- [x] PR script `~/Workspace/NobleFactor/noblefactor-engprod.414-clear-claude-can-remove-a.bash` written, shown, and
       handed over; the PR resolves #414 and #415. This box's commit, the pull request's last, sets this plan
       `complete`
 

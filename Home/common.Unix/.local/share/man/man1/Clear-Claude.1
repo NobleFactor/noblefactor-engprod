@@ -40,16 +40,32 @@ holds the store's lock for the schedule throughout, so that no launch resumes
 or renames the conversation while it is removed.
 .SS With \-\-clear, the default
 The background session and every connection to it go on, in a new
-conversation with nothing of the old one to read. The memories go first, since
-a new conversation reads the memory index as it starts. Then
+conversation with nothing of the old one to read. Nothing is removed before
+the new conversation is confirmed. First the memories the conversation wrote,
+their lines in the memory index and the job folder's scratch files are moved,
+not removed, into a staging folder of the run's own under the job folder, with
+a manifest naming each entry's original path: moved, since a new conversation
+reads the memory index as it starts and would find the scratch. Then
 .B /clear
 is typed into a viewer of the script's own, a tmux session no client attaches:
 the text alone, and Enter a second after the viewer's input line shows it,
 since claude takes an Enter sent with the text as part of the command. While
 the input line still shows the command, Enter is pressed again, up to three
 times in all. Once claude lists a new conversation for the background
-session, the viewer closes, the old conversation's records go, and the
-background session's job folder is emptied of its scratch files.
+session, the viewer closes, the old conversation's records go, the staged
+entries with them, and its prompts leave the prompt history.
+.PP
+When the viewer cannot open, or
+.B /clear
+is not taken, each staged entry goes back: one whose original path exists
+again, written meanwhile by another session or the conversation itself, is
+left staged and named, never overwritten, and an index line goes back only
+where the index has no line for its memory. When
+.B /clear
+was typed and claude's list then cannot be read, the outcome is unknown:
+nothing goes back, nothing is removed, the staging folder is named, and the
+command exits 75 for the owner to settle. A staging folder an interrupted run
+left is named by the next run and not touched.
 .PP
 Every viewer, tmux pane, ssh or mosh session, sbx exec and Remote Control
 stays connected throughout.
@@ -65,9 +81,22 @@ and
 its records go, and so do its job folder and the schedule's entry in the
 store, so that the next
 .B "Start-Claude \-\-schedule"
-starts a new conversation. Last, it checks that claude no longer lists the
-background session. Remote Control is the one connection it cannot end:
+starts a new conversation. Last, it asks claude's list again, and succeeds
+only on a valid list with the session absent: a session listed again was
+restarted by a connection, and a list that fails or cannot be read is a
+failure of its own. Remote Control is the one connection it cannot end:
 disconnect it on claude.ai first.
+.PP
+Either way, a memory is matched on the
+.B originSessionId
+field of its frontmatter and the whole id, never on a mention in its body;
+only a memory folder the run itself emptied is removed; and every path it
+removes or stages is resolved first and must lie under
+.I CLAUDE_CONFIG_DIR
+or
+.IR /tmp/claude-<uid> :
+a project entry that is a symlink, or any path leading out of that tree, is
+skipped and named.
 .PP
 Either way it keeps the schedule itself, its worktrees and branches,
 everything on GitHub, other conversations, and the directory's entry in
@@ -117,12 +146,23 @@ and the project's
 .I ${CLAUDE_CONFIG_DIR:\-~/.claude}/session-env/<session>
 .TP
 .I ${CLAUDE_CONFIG_DIR:\-~/.claude}/jobs/<short id>
-The background session's job folder: emptied of its scratch files,
+The background session's job folder. When clearing, its scratch files,
 .IR tmp/ ,
-when clearing; removed when retiring.
+are staged in
+.IR clear-<time>-<pid>/ ,
+whose
+.I manifest.tsv
+names each staged entry's original path, and the staging folder goes once the
+clear is confirmed, or stays when the outcome is unknown; when retiring, the
+job folder is removed.
 .TP
 .I ${CLAUDE_CONFIG_DIR:\-~/.claude}/history.jsonl
-The prompt history, one line per prompt, each carrying its conversation's id.
+The prompt history, one line per prompt, each carrying its conversation's id;
+see
+.BR NOTES .
+Its lock,
+.IR history.jsonl.clear-claude.lock ,
+a directory, serializes Clear-Claude runs.
 .TP
 .I /tmp/claude-<uid>/<project>/<session>
 .SH EXIT STATUS
@@ -139,7 +179,9 @@ given with
 .BR \-\-retire .
 .TP
 .B 65
-The store's entry, or claude's list, holds no session id this script reads.
+The store's entry holds no session id; or claude's list is not what this
+script reads: no array, two background entries for the id, or a conversation
+id that is not a UUID.
 .TP
 .B 66
 No such directory, not the root of a repository clone, no such repository on
@@ -148,20 +190,41 @@ GitHub, or, when clearing, no background session to clear.
 .B 69
 claude cannot list its sessions; tmux opened no viewer;
 .B /clear
-started no new conversation, and nothing else was removed; or claude did not
-remove the background session.
+was not taken, or started no new conversation, and every staged entry went
+back; or claude did not remove the background session.
+.TP
+.B 74
+The prompt history could not be read or rewritten. Before the rename it is
+untouched; after it, the lines appended meanwhile are saved beside it, in
+.IR history.jsonl.clear-claude.unmerged .
+Everything else the run was to remove is gone.
 .TP
 .B 75
 It was run inside the conversation it removes; another launch held the
-store's lock for 10 seconds; or, when retiring, a connection restarted the
-background session after it stopped. Disconnect Remote Control, and run it
-again from a terminal outside the conversation.
+store's lock for 10 seconds; another Clear-Claude held the prompt history's
+lock for 30 seconds; when clearing,
+.B /clear
+was typed and claude's list then could not be read, so the outcome is
+unknown and the staged entries are kept in the folder named; or, when
+retiring, a connection restarted the background session after it stopped.
+Disconnect Remote Control, and run it again from a terminal outside the
+conversation.
 .SH NOTES
 Records are local to the computer claude runs on: run it there.
 .PP
 When clearing, the background session's timeline,
 .IR jobs/<short\ id>/timeline.jsonl ,
 is left: the running session keeps it.
+.PP
+The prompt history is shared: every claude session on the host appends to it,
+and no lock they honor covers it. The old conversation's lines are taken out
+by a rewrite that keeps the old file open, writes a copy without them beside
+it, renames the copy into place, and appends whatever reached the old file
+meanwhile, read through the kept descriptor, until it has stopped growing for
+two seconds. The rewrite is not lossless: a session that opened the old file
+before the rename and writes more than two seconds later loses that line, and
+nothing bounds that delay. In practice a session opens, appends and closes in
+one go.
 .PP
 What a conversation sent to Anthropic stays with Anthropic. A Remote Control
 session is deleted from claude.ai/code; a report sent with

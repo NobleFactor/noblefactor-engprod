@@ -139,7 +139,12 @@ Enter after it. An Enter that arrives with the text, in one `send-keys`, claude 
 then waits on the input line until someone presses return (NobleFactor/noblefactor-engprod#412; the owner,
 2026-10-26: "I don't want to have to hit return myself"). So the text is typed; once the viewer's input line, `❯`,
 shows it, and a second more, Enter is pressed by itself; and while the input line still shows the command, Enter is
-pressed again, up to three times in all. Start-Claude.ps1 does the same on psmux.
+pressed again, up to three times in all. Start-Claude.ps1 does the same on psmux. Seen 2026-10-27 on claude 2.1.311,
+on disposable background sessions (NobleFactor/noblefactor-engprod#414): a bare `/clear` opens the command menu above
+the input line, with `/clear` its one entry, and one Enter submits it, the same `id` listing a new `sessionId` 0.6 s
+later; `/rename <name>` closes the menu as its name is typed, and one Enter submits it, the new name listed 0.6 s
+later; and `claude rm` removes a session's job folder and its listing, leaving its transcripts, its `/tmp` folders and
+its prompt lines, among them the typed `/clear`, recorded as a prompt of the conversation it clears.
 
 ## Clearing and retiring a conversation
 
@@ -147,16 +152,23 @@ Clear-Claude ([2. Command line](2-command-line.md#clear-claude)) ends a conversa
 store's lock for the schedule, so that no start resumes or renames the conversation meanwhile:
 
 - **Cleared,** the default. The background session and every connection to it go on: each viewer, its tmux pane,
-  ssh, mosh or `sbx exec`, and Remote Control. The conversation's memories go first, since a new conversation reads
-  the memory index as it starts. Then `/clear` is typed into a viewer of Clear-Claude's own, a tmux session no client
-  attaches, as the section above types it. `/clear` keeps the background session's short id and gives the
-  conversation a new one (seen 2026-10-14), so the store stays right; once claude lists the new one, the old
-  conversation's records go.
+  ssh, mosh or `sbx exec`, and Remote Control. Nothing is removed before the clear is confirmed (#414): the
+  conversation's memories, their index lines and the job's scratch are moved into a staging folder with a manifest
+  first, since a new conversation reads the memory index as it starts and would find the scratch. Then `/clear` is
+  typed into a viewer of Clear-Claude's own, a tmux session no client attaches, as the section above types it.
+  `/clear` keeps the background session's short id and gives the conversation a new one (seen 2026-10-14 and
+  2026-10-27), so the store stays right; once claude's list shows the new one, the old conversation's records and the
+  staged entries go, and its prompts leave the prompt history by a rewrite that loses no line a running session
+  appends meanwhile, short of one that opened the file before the rename and writes seconds later. When `/clear` is
+  not taken, the staged entries go back, an entry another session wrote over meanwhile left staged and named; when
+  `/clear` was typed and claude's list then cannot be read, the outcome is unknown, nothing moves, and the staging
+  folder is named for the owner.
 - **Retired,** with `--retire`. Every viewer is a `claude attach <short id>` process where claude runs, and ending it
   ends whatever stands in front of it, a tmux pane, an ssh or mosh session, or `sbx exec`, live or dead: no viewer's
   terminal need be known. With every viewer ended, the session is stopped and removed, and its records, its job folder
   and the schedule's store entry go. A viewer that reattached would have restarted the session under its own id (seen
-  2026-10-14), so Clear-Claude checks last that claude no longer lists it, and says to run it again if claude does.
+  2026-10-14), so Clear-Claude asks claude's list last, and succeeds only on a valid list with the session absent:
+  listed again, it says to run again; a list that fails or cannot be read is a failure of its own, never success.
 
 ## Moving a foreground conversation into the background
 
