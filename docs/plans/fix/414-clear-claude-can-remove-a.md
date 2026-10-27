@@ -153,6 +153,21 @@ can fail there:
 | The prompt history, a second Clear-Claude run while the first rewrites it | The second waits, then finds its own lines; nothing lost |
 | The prompt history, unreadable or unwritable | Stopped, with the file as it was |
 
+## Issue 415: Start-Claude's completions list schedules from the shell's repository
+
+Found by the outside review, open question 3; ruled 2026-10-27, "fix the completion bug now", and "If you need a bug
+log it": #415, resolved by this pull request with #414.
+
+- Both completions, `completions/Start-Claude` and `_Start-Claude`, list the open schedules of the repository
+  Start-Claude will read a bare number in: the one `-C`/`--directory` names earlier on the line, or else the working
+  directory's. A directory that does not exist lists `new` alone.
+- Checked 2026-10-27 against a stand-in `gh` that answers by the directory it runs in, 7 in one scratch repository and
+  42 in another, from the first: bash completed `new 7` with no `--directory` and `new 42` with `--directory` or `-C`
+  naming the second, `new` alone for a directory that is not there; before the fix, `new 7` in every case. The zsh
+  completion passes `zsh --no-exec` and reads `--directory` from `_arguments`' `opt_args`; two headless harnesses
+  failed to drive zsh's completion, so it is untested until a terminal tries
+  `Start-Claude --directory <another clone> --schedule <Tab>`.
+
 ## Implementation Phases
 
 ### Phase 1: The plan
@@ -161,6 +176,7 @@ can fail there:
 
 ### Phase 2: The work, in one commit
 
+- [x] Issue 415's fix in both completions, checked as its section says; committed ahead of the rest, as ruled
 - [ ] Requirement 1's observation, recorded here, and the stand-in made to match it
 - [ ] Requirement 6's cases, seen to fail against `bbd6425`, where they can
 - [ ] Requirements 2 to 5 in `Clear-Claude`, and its man page where it changes: every case passes
@@ -170,7 +186,8 @@ can fail there:
 
 - [ ] `make check`, finished green as the PR script runs it, read before this box is ticked
 - [ ] PR script `~/Workspace/NobleFactor/noblefactor-engprod.414-clear-claude-can-remove-a.bash` written, shown, and
-      handed over; the PR resolves #414. This box's commit, the pull request's last, sets this plan `complete`
+      handed over; the PR resolves #414 and #415. This box's commit, the pull request's last, sets this plan
+      `complete`
 
 ## Files to Create/Modify
 
@@ -180,6 +197,8 @@ can fail there:
 | `Home/common.Unix/.local/share/man/man1/Clear-Claude.1` | Modify | What changes in its behavior and exit statuses |
 | `tests/Test-ClearClaude` | Modify | Requirements 1 and 6 |
 | `docs/architecture/agent-schedule/1-session-model.md` | Modify | What Requirement 1 observes |
+| `Home/common.Unix/.local/share/bash-completion/completions/Start-Claude` | Modify | Issue 415 |
+| `Home/common.Unix/.local/share/zsh/site-functions/_Start-Claude` | Modify | Issue 415 |
 
 ## Open Questions
 
@@ -189,6 +208,5 @@ can fail there:
       or more: "A", the rewrite goes in as Requirement 5 states it, its window stated in the man page.
 - [x] **2. The observation's cost.** Approved and run 2026-10-27: "approved. run". The second, of `/rename <name>`,
       approved and run the same day: "test your shit". Both sessions' records removed by hand afterwards.
-- [ ] **3. Start-Claude's completions** list schedules from the shell's directory, not `--directory`'s, so a bare
-      number completed for another repository may name another schedule. The outside review found it; it is
-      Start-Claude's, not this bug's, and goes to an issue of its own if the owner wants one.
+- [x] **3. Start-Claude's completions** list schedules from the shell's directory, not `--directory`'s. Ruled
+      2026-10-27, "fix the completion bug now": #415, fixed here (Issue 415 above).
