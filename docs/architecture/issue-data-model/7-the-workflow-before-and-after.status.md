@@ -12,8 +12,8 @@ the other sections rule, and changes as they do.
 
 ## Completion
 
-- [ ] `star gh issues create` files with type, parent and attributes, checks the documents table, and refuses a
+- [ ] `star github schedule create` files with type, parent and attributes, checks the documents table, and refuses a
   non-participating repository.
-- [ ] `star gh schedule add` numbers a row and writes its amendment together.
+- [ ] `star github schedule add` numbers a row and writes its amendment together.
 - [ ] The report and the audit read the type, the link and the rows first.
 - [ ] The marker form, the kind labels, the lane-table conventions and rule 15's grep retired from the guidance.

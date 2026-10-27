@@ -50,7 +50,7 @@ This model replaced claude running in the tmux session's left pane, and the tmux
     through an `env` block in `claude --bg --settings` (question 79; seen reaching a session's startup hook
     2026-10-15), since claude's background service starts a session without the environment of the command that
     starts it (seen 2026-10-14). The tmux session's shell pane gets them too; the viewer has no need of them.
-    `star-gh-assignment` reads them (#260, requirements 1 and 2): the schedule's key from `NFEP_AGENT_SCHEDULE`, and
+    `star-github-schedule-assignment` reads them (#260, requirements 1 and 2): the schedule's key from `NFEP_AGENT_SCHEDULE`, and
     from the session's name only when it is unset; its link from `NFEP_AGENT_SCHEDULE_URL`, or the link the key makes.
 11. **`MOSH_SERVER_NETWORK_TMOUT` is the user's to set,** not Start-Claude's, and Start-Claude(1) names it (question
     77).

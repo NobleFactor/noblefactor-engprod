@@ -1,7 +1,7 @@
 ---
 title: "Every star github schedule operation reads the organization's record first, and star gh becomes star github, issues becoming schedule"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/378
-status: approved
+status: complete
 created: 2026-10-27
 updated: 2026-10-27
 ---
@@ -47,9 +47,11 @@ completions."
 Before it reads issues, `star github schedule report` and `audit` make `pull`'s conditional read of the organization's
 issue types, the hub's labels and its projects, through `model.star`, with the cache's ETags. They write nothing but
 the cache, and the cache only where what was read matches the asset, so a 304 never vouches for content the asset lacks.
-When what was read differs from the asset, the output's first line says so: `The asset is behind GitHub: types, labels
-or projects changed since <pulled.at>. Run star github model pull in a worktree.` The operation goes on against the
-asset. With `--verbose`, each read's 304 or 200 is shown.
+When what was read differs from the asset's records, comments aside, the output says so: `The asset is behind GitHub:
+<what moved>, since its pull at <pulled.at>. Run star github model pull in a worktree.` It is the first line of a
+markdown document, where `--silent` cannot hide it, and a warning otherwise. The operation goes on against the asset.
+Each read's 304 or 200 is a note, shown unless `--silent`. Pull and the read share one comparison, `compare` in
+`model.star`; the read ignores comment lines, since pull's header names the command and a rename changes it.
 
 ### Requirement 2: `star github`, `schedule`
 
@@ -93,22 +95,22 @@ pull request, under its own issue, filed here.
 
 ### Phase 2: the rename
 
-- [ ] Requirement 2: the manifest, the files, the configuration key, the old names kept; `make check` passes
-- [ ] Requirement 3: the skills renamed and rewritten
-- [ ] Requirement 4: the documents
-- [ ] `star github schedule report --by schedule` renders byte-identical to `star gh issues report` before the rename,
+- [x] Requirement 2: the manifest, the files, the configuration key, the old names kept; `make check` passes
+- [x] Requirement 3: the skills renamed and rewritten
+- [x] Requirement 4: the documents
+- [x] `star github schedule report --by schedule` renders byte-identical to `star gh issues report` before the rename,
   and the old name still runs; star's completion offers `github`
 
 ### Phase 3: the read first
 
-- [ ] Requirement 1 built; a report run twice shows the second's reads as 304 with `--verbose`
-- [ ] A label added in GitHub between two runs makes the second's first line say the asset is behind, and the report
-  still renders; the label removed after
+- [x] Requirement 1 built; an audit run twice shows the second's reads as 304, its notes shown without `--silent`
+- [x] A label added in GitHub between two runs makes the second's first line say the asset is behind, and the report
+  still renders; the label removed after. Proven 2026-10-27 with `Probe:378-asset-behind`, created and deleted
 
 ### Phase 4: the pull request
 
-- [ ] devlore-cli's issue for its star reference filed
-- [ ] The pull request; status `complete` in its last commit
+- [x] devlore-cli's issue for its star reference filed: devlore-cli#1185
+- [x] The pull request; status `complete` in its last commit
 
 ## Files to Create/Modify
 

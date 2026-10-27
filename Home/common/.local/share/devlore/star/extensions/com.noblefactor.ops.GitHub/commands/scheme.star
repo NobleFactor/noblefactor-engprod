@@ -35,10 +35,10 @@ def _load_model():
     computed = shell.exec(command = "sed '/^  digest: /d' " + path + " | (sha256sum 2>/dev/null || shasum -a 256) | cut -d' ' -f1").stdout.strip()
 
     # A mismatch is recorded, not failed: star loads every command file when the extension loads, so a failure here
-    # would take star gh model digest and star gh model pull down with the rest, and they are how a hand-edited asset
+    # would take star github model digest and star github model pull down with the rest, and they are how a hand-edited asset
     # is repaired (#377). Section 6: a read-only operation runs anyway and says so.
     model["digest_fault"] = "" if digest == "sha256:" + computed else (
-        path + ": the digest does not verify; the file was edited since its pull. Run star gh model pull, or star gh model digest after a deliberate edit"
+        path + ": the digest does not verify; the file was edited since its pull. Run star github model pull, or star github model digest after a deliberate edit"
     )
     types = model.get("types") or []
     for t in types:
@@ -494,12 +494,12 @@ def label_space(repos):
     return out
 
 def exempt_numbers():
-    # gh.exempt in star/config.yaml. Flat, not gh.issues.exempt: the extension spec accepts a nested:
+    # github.exempt in star/config.yaml (gh.exempt until #378). Flat, not github.schedule.exempt: the extension spec accepts a nested:
     # block but the runtime does not build it into the config struct (noblefactor-ops#140, Phase 1).
     cfg = config.get
-    if not hasattr(cfg, "gh") or not hasattr(getattr(cfg, "gh"), "exempt"):
+    if not hasattr(cfg, "github") or not hasattr(getattr(cfg, "github"), "exempt"):
         return []
-    return [int(n) for n in getattr(getattr(cfg, "gh"), "exempt")]
+    return [int(n) for n in getattr(getattr(cfg, "github"), "exempt")]
 
 # ── the audit ───────────────────────────────────────────────────────────────
 

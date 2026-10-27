@@ -186,7 +186,7 @@ gh pr merge "${pr_number}" --squash --admin \
 #
 # Three markers from GitHub's own timestamps, elapsed hours to one decimal, appended to the PR body and
 # verified. AFTER the merge, not before: mergedAt does not exist until the merge lands. Carried verbatim
-# here until `star gh pr span` exists (noblefactor-ops#188); then this block is one call to it.
+# here until `star github pr span` exists (noblefactor-ops#188); then this block is one call to it.
 span=$(gh pr view "${pr_number}" --json createdAt,mergedAt,commits --jq '
   (.commits[0].committedDate) as $opened | .createdAt as $submitted | .mergedAt as $merged |
   def hrs(a; b): (((b | fromdate) - (a | fromdate)) / 3600 * 10 | round) / 10;
@@ -281,7 +281,7 @@ git status --short
 # When the owner asks for it, scope it to what the pull request served: --epic <Name>, --by feature
 # --epic <Name>, --by thread --thread <Name>, or --by schedule. --markdown -o value because a string
 # result renders quoted under the default json (devlore-cli#826); --silent, not 2>/dev/null.
-# star gh issues report --epic <Name> --view table --state all --markdown -o value --silent
+# star github schedule report --epic <Name> --view table --state all --markdown -o value --silent
 ```
 
 ---

@@ -7,7 +7,7 @@ status: Approved
 # Issue Standards
 
 Every issue in a NobleFactor repository carries a **kind**, and the kinds form a hierarchy. The
-scheme is enforced: `star gh issues audit` names every issue it cannot place, because an issue the
+scheme is enforced: `star github schedule audit` names every issue it cannot place, because an issue the
 scheme cannot place is invisible in every other view.
 
 This document is to issues what [documentation-standards.md](documentation-standards.md) is to
@@ -208,7 +208,7 @@ rows whose first cell is a number are read.
 whether a story is fully told is a judgment, not a label property. One agreement rule, once the
 tooling implements it: every issue carrying `Thread:<Name>` appears in that thread's beat table, and
 every issue in the table carries the label. Both directions are faults. Today nothing checks either —
-`star gh issues report --by thread` reads them and reports the agreement faults under each
+`star github schedule report --by thread` reads them and reports the agreement faults under each
 thread's table; `--audit --unthreaded` lists open work in no thread as a question rather than a fault.
 
 **One namespace.** A thread name must not collide with an epic name. Both families render as sections
@@ -268,7 +268,7 @@ so, and replan together. That is the moment a schedule is allowed to change, and
 ### What the audit checks
 
 Nothing yet. A schedule carries no label, so the audit cannot find its members the way it finds an epic's;
-`star gh issues report --by schedule` reads the table and renders each lane's state. Two agreements worth
+`star github schedule report --by schedule` reads the table and renders each lane's state. Two agreements worth
 enforcing when the tooling is there: every lane row names a leaf, and no lane appears on two live schedules.
 
 ## The Ops axis
@@ -340,7 +340,7 @@ each thread with members there, and the triage attributes it uses. `Epic:Ops:Pro
 everywhere rather than per-epic, because chores arise in every repository; a thread label is required
 wherever the thread reaches, because a thread crosses repositories by design.
 
-`star gh labels audit` checks this across the configured repositories and `star gh labels sync`
+`star github labels audit` checks this across the configured repositories and `star github labels sync`
 creates what is missing and aligns color and description to the first configured repository that
 carries the label. Thread labels are **set-wide**: a thread crosses repositories by design, so a
 `Thread:<Name>` present in one configured repository is expected in all of them, or nothing there can
@@ -355,7 +355,7 @@ new work and is invisible to the scheme.
 
 ## What the audit is for
 
-`star gh issues audit` is the classification audit, and `star gh issues report --view tree` opens
+`star github schedule audit` is the classification audit, and `star github schedule report --view tree` opens
 with it before any section. That order
 is the point: a report that renders a tidy hierarchy while silently omitting the issues it could not
 place is worse than no report, because it looks complete.

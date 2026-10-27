@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright Noble Factor. All rights reserved.
 
-"""star gh model digest: re-sign a deliberately hand-edited model.yaml, leaving the edit in the diff; --check previews.
+"""star github model digest: re-sign a deliberately hand-edited model.yaml, leaving the edit in the diff; --check previews.
 
 --check is a workaround for NobleFactor/devlore-cli#1170 (https://github.com/NobleFactor/devlore-cli/issues/1170):
 star's --dry-run skips the reads a preview needs, so this command refuses it. See model.star § the preview.

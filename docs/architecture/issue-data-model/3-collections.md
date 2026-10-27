@@ -77,7 +77,7 @@ A schedule's issue holds three things today: its deliverable, its lane table and
 becomes the rows. The deliverable, the rulings and the status need a home that keeps them, and it is **row 0, the
 collection's own issue**: its body keeps the deliverable, the amendments and the owner's full status with GitHub's
 edit history; its assignee is the collection's owner; the work is the rows from 1 on; and a session stays keyed by
-it, which is how Start-Claude's store and star-gh-assignment find a schedule today. The project's README was the
+it, which is how Start-Claude's store and star-github-schedule-assignment find a schedule today. The project's README was the
 other candidate, and sessions would have had to be keyed by the project instead.
 
 **Row 0 is an Epic.** Three types were weighed:

@@ -31,7 +31,7 @@ deploy.
   NobleFactor/noblefactor-engprod#384: a `--detach` wake passes no flag and gives the launch's name as its first
   prompt, and a running session is renamed in a viewer, on Windows only with a console attached; cases in both test
   scripts prove it.
-- [x] The schedule's variables read: `star-gh-assignment` answers with `NFEP_AGENT_SCHEDULE`, and with the session's
+- [x] The schedule's variables read: `star-github-schedule-assignment` answers with `NFEP_AGENT_SCHEDULE`, and with the session's
   name only when it is unset, and gives the link from `NFEP_AGENT_SCHEDULE_URL` or the key (#260, requirements 1 and
   2).
 - [ ] Acceptance on the deployed scripts, #260's requirement 4, after its merge.

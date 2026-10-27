@@ -27,7 +27,7 @@ HEADER = """# SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2026 Noble Factor. All rights reserved.
 
 # The issue data model as GitHub holds it: docs/architecture/issue-data-model/6-the-asset-and-its-sync.md. Written by
-# star gh model pull; edit it by hand only deliberately, then run star gh model digest. The digest is a SHA-256 over this
+# star github model pull; edit it by hand only deliberately, then run star github model digest. The digest is a SHA-256 over this
 # file with its own line excluded. A type is keyed by its id and takes its level from its description's "Level N:".
 # Within a level the types' order is the render order. Labels are in three tiers: the organization's, which every
 # participating repository carries; each team's; each repository's own.
@@ -374,7 +374,7 @@ def read_cache(org):
 def write_cache(org, asset_digest, types_etag, hub_repo, labels_etag, projects_read, read_at):
     """The cache, keyed to the digest of the asset that holds what the ETags vouch for."""
     lines = [
-        "# star gh model pull's cache: docs/architecture/issue-data-model/6-the-asset-and-its-sync.md § The cache.",
+        "# star github model pull's cache: docs/architecture/issue-data-model/6-the-asset-and-its-sync.md § The cache.",
         "asset: " + s(asset_digest),
         "issue-types: { etag: " + s(types_etag) + ", read: " + s(read_at) + " }",
         "labels:",
@@ -404,3 +404,102 @@ def refuse_unless_on_a_branch(path, clean = True):
     if dirty != "":
         fail(real + " has uncommitted changes; commit or revert them first: a pull's diff must be its own")
     return real
+
+# ── reading GitHub's record against the asset ───────────────────────────────
+
+def without_comments(text):
+    """text without its comment lines and its at and digest lines: the records alone, what read_first compares."""
+    return "\n".join([line for line in without_stamp(text).split("\n") if not line.startswith("#")])
+
+def compare(org, old_text):
+    """Read the organization's record conditionally and merge it into the asset's: what pull and read_first share.
+
+    Args:
+      org: the organization.
+      old_text: the asset's text.
+
+    Returns:
+      A dict: reads, one line per record read; notes, what moved; conflicts, what a pull will not resolve; new_text, the
+      asset as a pull would write it; recorded, the asset's digest; and the ETags and time a cache write needs.
+    """
+    old = yaml.decode(data = old_text)
+    if type(old) != "dict" or old.get("version") != MODEL_VERSION:
+        fail("the asset is not a version " + str(MODEL_VERSION) + " asset")
+    pulled = old.get("pulled") or {}
+    if pulled.get("org", org) != org:
+        fail("the asset holds " + pulled["org"] + "'s model; this reads " + org)
+
+    recorded = recorded_digest(old_text)
+    verified = recorded == digest_of(old_text)
+    cache = read_cache(org)
+    use_cache = verified and cache.get("asset") == recorded
+    hub_repo = org + "/" + HUB
+    tiers = labels_of(old)
+    reads = []
+    if not verified:
+        reads.append("the asset's digest does not verify: edited since its pull; every record is read in full")
+
+    # The organization's issue types, by ETag; a 304 means the asset's types are GitHub's.
+    etag = (cache.get("issue-types") or {}).get("etag", "") if use_cache else ""
+    got = conditional_get("orgs/" + org + "/issue-types", etag)
+    github_types = (old.get("types") or []) if got["status"] == 304 else got["body"]
+    types_etag = got["etag"]
+    reads.append("issue-types  " + ("unchanged (304)" if got["status"] == 304 else "read (200)"))
+
+    # The hub's labels, by ETag.
+    etag = ((cache.get("labels") or {}).get(hub_repo) or {}).get("etag", "") if use_cache else ""
+    got = conditional_get("repos/" + hub_repo + "/labels?per_page=100", etag)
+    hub = hub_labels_from(tiers, hub_repo) if got["status"] == 304 else got["body"]
+    labels_etag = got["etag"]
+    reads.append("labels       " + ("unchanged (304)" if got["status"] == 304 else "read (200)") + ", " + hub_repo)
+
+    # The projects: GraphQL takes no ETag, so this read is always made.
+    projects = read_projects(org)
+    old_projects = old.get("projects") or []
+    if projects == None:
+        projects = old_projects
+        reads.append("projects     not read: the token lacks read:project; the asset's are kept")
+    else:
+        reads.append("projects     read, " + str(len(projects)))
+
+    notes = []
+    conflicts = []
+    types = merge_types(old.get("types") or [], github_types, notes, conflicts)
+    labels = merge_labels(tiers, hub_repo, hub, notes)
+    note_project_renames(old_projects, projects, notes)
+    read_at = now()
+    new_text = sign(render({"pulled": {"at": read_at, "org": org}, "types": types, "labels": labels, "projects": projects}))
+    return {
+        "reads": reads,
+        "notes": notes,
+        "conflicts": conflicts,
+        "new_text": new_text,
+        "recorded": recorded,
+        "hub_repo": hub_repo,
+        "types_etag": types_etag,
+        "labels_etag": labels_etag,
+        "read_at": read_at,
+    }
+
+def read_first(dry_run = False):
+    """Read GitHub's record against the deployed asset before an operation: the line to show when the asset is behind, or "".
+
+    Writes nothing but the cache, and the cache only when what was read is what the asset holds, so that a 304 never
+    vouches for content the asset lacks (section 6, § Every operation reads first). Each read is a note, shown unless
+    --silent; the returned line is the caller's to put where --silent cannot hide it.
+    """
+    if dry_run:
+        return ""
+    path = default_asset()
+    old_text = read_text(path)
+    pulled = (yaml.decode(data = old_text) or {}).get("pulled") or {}
+    org = pulled.get("org", "NobleFactor")
+    c = compare(org, old_text)
+    for line in c["reads"]:
+        note("model " + line)
+    if not c["conflicts"] and without_comments(c["new_text"]) == without_comments(old_text):
+        write_cache(org, c["recorded"], c["types_etag"], c["hub_repo"], c["labels_etag"], True, c["read_at"])
+        return ""
+    moved = c["notes"] + c["conflicts"]
+    return ("The asset is behind GitHub: " + (moved[0] if len(moved) == 1 else str(len(moved)) + " changes, " + moved[0] + " among them") +
+            ", since its pull at " + recorded_at(old_text) + ". Run star github model pull in a worktree.")
