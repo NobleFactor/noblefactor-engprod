@@ -50,32 +50,57 @@ twelve cases check none of the failures above.
 
 ### Requirement 1: What a real session does, observed first
 
-On a disposable background session, started with `claude --bg` in a scratch directory and removed with `claude rm`
-afterwards: `/clear` typed as `type_command` types it, the screen captured after each key and each Enter, and
-`claude agents --json --all` captured before and after. Recorded in this plan with claude's version: whether the menu
-needs one Enter or two, what the input line shows meanwhile, and whether the same `id` reports a new `sessionId`, and
-how soon. The stand-in viewer is made to behave as observed. If the real session does not report a new `sessionId`,
-the script's success criterion is put to the owner before anything else changes.
+Observed 2026-10-27, claude 2.1.311, on a disposable background session, `3e246d40`, started with
+`claude --bg --name disposable-414` in the devlore-cli clone, with the owner's "approved. run"; its records were removed
+by hand afterwards, its two prompt lines by Requirement 5's rewrite, that rewrite's first real use:
+
+- The viewer drew its input line within a second of `claude attach`. `/clear`, sent with `send-keys -l`, showed on the
+  input line 0.3 s later with claude's command menu open above it, `/clear` its one entry, highlighted; the same at
+  1.3 s.
+- One Enter, sent alone 1.3 s after the text, submitted it: the screen then showed `❯ /clear` as a turn and an empty
+  input line, and `claude agents --json --all` listed the same `id` with a new `sessionId` 0.6 s after the Enter,
+  `state` `done`.
+- `claude stop`, then `claude rm`, removed the job folder and the listing and nothing else: both conversations'
+  transcripts, the new one's folder, both `/tmp/claude-<uid>` folders and two prompt lines, filed under the old
+  conversation, remained. So `--retire` removes those itself, and `/clear` typed into a viewer is recorded as a prompt
+  of the conversation it clears.
+
+The stand-in viewer is made to behave so: a menu line above the input line once `/` is typed, one Enter after a pause
+submitting, `/clear` written to the prompt history under the old conversation, and the new conversation's transcript
+and folder written. Not observed: `/rename <name>`, which Start-Claude types with the same helper and whose argument
+may keep the menu open; open question 2.
 
 ### Requirement 2: Nothing removed before the clear is confirmed
 
-- The memories are moved aside, with the index lines they own, before `/clear` is typed, since a new conversation
-  reads the index as it starts; they are put back if the viewer cannot open, `/clear` is not taken, or the new
-  conversation is not confirmed. Only once it is confirmed are they removed.
-- The job's `tmp/` is emptied before `/clear`, not after, so that nothing the new conversation writes there goes.
+- Before `/clear` is typed, the memories, the index lines they own and the job's `tmp/` entries are moved, not
+  removed, into a staging folder of this run's own, `jobs/<short id>/clear-<time>/`, with a manifest naming each
+  entry's original path. Moved, since a new conversation reads the index as it starts and would find the scratch.
+- Once the new conversation is confirmed, the staging folder goes.
+- When the viewer cannot open, or `/clear` is not taken, each staged entry goes back: an entry whose original path
+  exists again, written meanwhile by another session or the conversation itself, is left staged and named, never
+  overwritten; an index line is put back only where the index no longer has it.
+- When `/clear` may have run but the listing then fails, the outcome is unknown: nothing goes back, nothing is removed,
+  the staging folder and its manifest are named, and the script exits 75. The owner decides from there.
+- The exit trap does this on every failure and on a signal. A staging folder an interrupted run left is named by the
+  next run, which does not touch it.
 
 ### Requirement 3: Every check fails closed
 
-- `conversation_of` validates what `claude agents` answers: JSON, a single background entry for the short id, and a
-  `sessionId` that is a UUID. Malformed answers exit 65; a `claude agents` that fails exits 69.
-- `--retire`'s last check assigns first and judges both outcomes: a failure to ask exits 69, a listed session 75.
-- The script's own viewer is closed by an exit trap, on every path.
+- `conversation_of` tells four outcomes of `claude agents --json --all` apart: the command failing, 69; output that is
+  not JSON, or holds two background entries for the short id, or one whose `sessionId` is missing or not a UUID, 65;
+  a valid list with no background entry for the short id, absent; one entry with a UUID, present, with that id.
+- `--retire`'s last check assigns first and succeeds on absent alone: present is 75, and the other two outcomes keep
+  their statuses.
 - The new conversation's id must be a UUID other than the old one.
+- The script's own viewer is closed by the exit trap, on every path.
 
-### Requirement 4: Reach only this conversation
+### Requirement 4: Reach only this conversation, inside claude's own tree
 
-- A memory is matched on its `originSessionId` metadata field and the whole id, not a substring.
+- A memory is matched on its `originSessionId` metadata field, in the frontmatter, and the whole id, not a substring.
 - Only memory folders this run emptied are removed.
+- Every path removed or staged is resolved first, and must lie under the resolved `CLAUDE_CONFIG_DIR` or
+  `/tmp/claude-<uid>`: a project entry or job folder that is a symlink out of that tree is skipped and named, never
+  followed.
 
 ### Requirement 5: The prompt history
 
@@ -85,9 +110,14 @@ claude session on the host appends to `~/.claude/history.jsonl`, and no lock the
 it open between prompts (`lsof`, 2026-10-27), so each prompt is an open, an append and a close. The rewrite keeps the
 old file open, writes a copy without the conversation's lines to a temporary file of its own beside it, renames the
 copy into place, and appends whatever reached the old file meanwhile, read through the kept descriptor, until the old
-file stops growing. Read and write failures stop it. Lines are matched on their parsed `sessionId`, not their text.
-What remains is a window of microseconds: a writer that opened the old path just before the rename, and writes after
-the last read.
+file stops growing, for two seconds. Read and write failures stop it: before the rename, the file is untouched; after
+it, the caught-up lines are saved beside it and named. Lines are matched on their parsed `sessionId`, not their text.
+Two Clear-Claude runs are serialized by a lock of Clear-Claude's own beside the file.
+
+What remains, corrected from the first draft's "a window of microseconds": a writer that opened the old path before
+the rename and writes after the last read loses its line, and nothing bounds that delay, since nothing synchronizes
+claude's writers. In practice a claude session opens, appends and closes in one go, and the catch-up outlasts that by
+seconds; but the rewrite is not lossless, and the man page says so. Open question 1 is reopened on it.
 
 ### Requirement 6: The tests, fortified
 
@@ -96,17 +126,23 @@ can fail there:
 
 | Case | Expected |
 | --- | --- |
-| `--clear`, the viewer cannot open | Exit 69; the memories and every record kept |
-| `--clear`, `/clear` never taken | Exit 69; the memories, with their index lines, and every record kept |
-| `--clear`, `claude agents` failing at the first lookup, while polling, or answering malformed JSON or a non-UUID id | Exit 69 or 65 as the man page names; nothing removed; no viewer left |
-| `--clear` | As before, and the new conversation's files kept: the stand-in writes them |
+| `--clear`, the viewer cannot open | Exit 69; the memories, their index lines, the scratch and every record back |
+| `--clear`, `/clear` never taken | Exit 69; the same, back |
+| `--clear`, `claude agents` failing at the first lookup, or answering malformed JSON, two entries for the id, or a non-UUID id | Exit 69 or 65 as the man page names; nothing removed; no viewer left |
+| `--clear`, `/clear` taken, then `claude agents` failing while polling | Exit 75; nothing removed, nothing back; the staging folder named |
+| `--clear`, a staged memory's path written again, or its index line changed, by another session meanwhile, and `/clear` not taken | The new file and the changed index kept; the staged entry left staged and named |
+| `--clear`, the run killed while polling | The trap puts every staged entry back |
+| `--clear` | As before, with the new conversation's transcript and folder kept, and `/clear`'s own prompt line, under the old conversation, gone |
 | `--clear`, the stand-in's command menu as observed | `/clear` submitted with no help |
 | A memory that only mentions the id in its body | Kept |
 | An unrelated empty memory folder | Kept |
+| A project entry that is a symlink to a folder outside `CLAUDE_CONFIG_DIR` | Skipped and named; the outside folder untouched |
 | `--retire`, `claude agents` failing at the last check | Exit 69, not 0 |
+| `--retire`, the session absent from a valid list at the last check | Exit 0 |
 | No such directory; not a repository root | Exit 66 |
 | A store entry that holds no session id | Exit 65 |
-| The prompt history, a line appended while it is rewritten | The old conversation's lines gone, its JSON spaced or compact; the appended line kept; every other line kept byte for byte |
+| The prompt history, lines appended by two other sessions while it is rewritten, one by a writer that opened the old file before the rename and appends during the catch-up | The old conversation's lines gone, its JSON spaced or compact; every appended line kept; every other line kept byte for byte |
+| The prompt history, a second Clear-Claude run while the first rewrites it | The second waits, then finds its own lines; nothing lost |
 | The prompt history, unreadable or unwritable | Stopped, with the file as it was |
 
 ## Implementation Phases
@@ -139,6 +175,13 @@ can fail there:
 
 ## Open Questions
 
-- [x] **1. The prompt history.** Ruled 2026-10-27: the old conversation's prompts go in both modes, by the rewrite
-      Requirement 5 describes, with a case that appends while it runs.
-- [ ] **2. The observation's cost.** Requirement 1 starts one disposable claude conversation and removes it.
+- [ ] **1. The prompt history, reopened.** Ruled 2026-10-27 on the first draft, which called the remaining window
+      "microseconds"; the outside review of `d836aaf` showed that nothing bounds it (Requirement 5). Either the rewrite
+      goes in as Requirement 5 now states it, its window documented, or `Clear-Claude` leaves the prompt history alone.
+      Recommended: the first; the owner wants the prompts gone, and the window takes a claude session stalled between
+      its open and its write for two seconds or more.
+- [x] **2. The observation's cost.** Approved and run 2026-10-27: "approved. run". A second observation, of
+      `/rename <name>`, costs the same again; not run.
+- [ ] **3. Start-Claude's completions** list schedules from the shell's directory, not `--directory`'s, so a bare
+      number completed for another repository may name another schedule. The outside review found it; it is
+      Start-Claude's, not this bug's, and goes to an issue of its own if the owner wants one.
