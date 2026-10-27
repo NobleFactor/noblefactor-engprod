@@ -1,7 +1,7 @@
 ---
 title: "Clear-Claude clears a schedule's conversation and every local record of it, and Start-Claude types a command apart from its Enter"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/411
-status: draft
+status: active
 created: 2026-10-27
 updated: 2026-10-27
 ---
@@ -146,14 +146,15 @@ One phase, and then the merge: the owner, 2026-10-27, "There is no phase 2."
       once. With the functions' names changed, all 12 passed. Its man page and completions with it
 - [x] Requirement 3: `2-command-line.md`, `1-session-model.md` and `index.md`, with both status companions; and
       Start-Claude(1), which says how a command is typed into a viewer
-- [ ] Reviewed with the owner, the plan and the work together
+- [x] Reviewed with the owner, the plan and the work together, as committed in `ba2d28e`: approved 2026-10-27, "1 is
+      done."
 
 ### Merge
 
-- [ ] `make check`, finished green as the PR script runs it, read before this box is ticked
-- [ ] PR script `~/Workspace/NobleFactor/noblefactor-engprod.411-clear-claude-clear-a-schedule-s.bash` written, shown,
-      and handed over; the PR resolves #411 and #412. This box's commit, the pull request's last, sets this plan
-      `complete`
+- [x] `make check`, finished green as the PR script runs it, read before this box is ticked
+- [x] PR script `~/Workspace/NobleFactor/noblefactor-engprod.411-clear-claude-clear-a-schedule-s.bash` written, shown,
+      and handed over; the PR resolves #411 and #412. This box's commit is the pull request's last, and sets this
+      plan `active`: it stays so after the merge while the Windows box above is open
 
 ## Files to Create/Modify
 
