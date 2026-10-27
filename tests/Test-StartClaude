@@ -82,8 +82,9 @@ function record_titles {
 # abcd1234-0000-4000-8000-000000000009, has no transcript, and the case can change it through the STAND_IN variables:
 # STAND_IN_STATE lists it stopped, STAND_IN_NAME names it, and STAND_IN_LOG names a file where each claude --bg it is
 # given is written, one line each, its arguments joined by the unit separator.
-# Its viewer draws its input line, takes one line typed into it, writing it to typed under STAND_IN_DIR, and leaves
-# after two seconds at most; a `/rename <name>` it takes renames the session, as claude does, through renamed there. A
+# Its viewer draws its input line and echoes what is typed there; it takes a line only when its Enter comes after a
+# pause, as claude does (#412), writing it to typed under STAND_IN_DIR, and leaves after two seconds with no key; a
+# `/rename <name>` it takes renames the session, as claude does, through renamed there. A
 # background resume answers as claude does, its short id the conversation's first eight characters; one of the listed
 # session that carries a flag starts a copy, cccc0000, as claude does (anthropics/claude-code#104658); and a new
 # conversation comes up as background session fedc4321. The stand-in for gh answers for schedule 7 of the startup
@@ -126,17 +127,32 @@ case "$1" in
                state: $state}]'
         ;;
     attach)
-        # It reads on past an empty line: script(1), given no input, hands its terminal an end of input, which
-        # reaches an attached viewer as one.
-        printf '❯ \n'
-        deadline=$((SECONDS + 2))
-        while ((SECONDS < deadline)); do
-            if IFS= read -r -t 1 line && [[ -n ${line} ]]; then
-                printf '%s\n' "${line}" >>"${STAND_IN_DIR}/typed"
-                [[ ${line} != "/rename "* ]] || printf '%s' "${line#/rename }" >"${STAND_IN_DIR}/renamed"
-                break
+        # It draws its input line and echoes what is typed there, as claude does. It reads key by key: an Enter that
+        # comes within 50 ms of the key before it is part of the text, as claude takes an Enter sent with the text, and
+        # only an Enter after a pause submits the line (#412). It reads on past an end of input, which script(1), given
+        # no input, hands its terminal, and leaves once a line is submitted, or after two seconds with no key.
+        stty -icanon min 1 2>/dev/null || true
+        printf '❯ '
+        line="" last=0 quiet_until=$((SECONDS + 2))
+        while ((SECONDS < quiet_until)); do
+            if ! IFS= read -r -N 1 -t 0.1 key; then
+                sleep 0.02
+                continue
             fi
-            sleep 0.1
+            now="${EPOCHREALTIME/./}"
+            quiet_until=$((SECONDS + 2))
+            if [[ ${key} == $'\n' || ${key} == $'\r' ]]; then
+                if [[ -n ${line} ]] && ((now - last >= 50000)); then
+                    printf '%s\n' "${line}" >>"${STAND_IN_DIR}/typed"
+                    [[ ${line} != "/rename "* ]] || printf '%s' "${line#/rename }" >"${STAND_IN_DIR}/renamed"
+                    printf '❯ '
+                    break
+                fi
+                line+=$'\n'
+            elif [[ ${key} == [[:print:]] ]]; then
+                line+="${key}"
+            fi
+            last="${now}"
         done
         ;;
     --bg)
