@@ -25,6 +25,8 @@ fixes the script so that those cases pass.
 ## Rulings
 
 - 2026-10-27, the owner, of the fix's scope: "you should plan on fortifying the tests as well in this bug fix."
+- 2026-10-27, of the prompt history: the old conversation's prompts go in both modes, through a rewrite that loses no
+  line appended while it runs, with a test case that appends during it. Asked so, the owner: "yes."
 
 ## Current State
 
@@ -77,8 +79,15 @@ the script's success criterion is put to the owner before anything else changes.
 
 ### Requirement 5: The prompt history
 
-Every claude session on the host appends to `~/.claude/history.jsonl`, and no lock they honor covers it, so no
-rewrite is safe while any claude runs. Open question 1 asks the owner which of two behaviors to build.
+The old conversation's prompts go, in both modes: after `/clear`, up-arrow in the same directory still offers them,
+after the new conversation's (Claude Code's documented recall scopes, as the outside review reported them). Every
+claude session on the host appends to `~/.claude/history.jsonl`, and no lock they honor covers it; but no process holds
+it open between prompts (`lsof`, 2026-10-27), so each prompt is an open, an append and a close. The rewrite keeps the
+old file open, writes a copy without the conversation's lines to a temporary file of its own beside it, renames the
+copy into place, and appends whatever reached the old file meanwhile, read through the kept descriptor, until the old
+file stops growing. Read and write failures stop it. Lines are matched on their parsed `sessionId`, not their text.
+What remains is a window of microseconds: a writer that opened the old path just before the rename, and writes after
+the last read.
 
 ### Requirement 6: The tests, fortified
 
@@ -97,7 +106,8 @@ can fail there:
 | `--retire`, `claude agents` failing at the last check | Exit 69, not 0 |
 | No such directory; not a repository root | Exit 66 |
 | A store entry that holds no session id | Exit 65 |
-| The prompt history | As open question 1 rules |
+| The prompt history, a line appended while it is rewritten | The old conversation's lines gone, its JSON spaced or compact; the appended line kept; every other line kept byte for byte |
+| The prompt history, unreadable or unwritable | Stopped, with the file as it was |
 
 ## Implementation Phases
 
@@ -129,8 +139,6 @@ can fail there:
 
 ## Open Questions
 
-- [ ] **1. The prompt history.** Either `Clear-Claude` leaves `history.jsonl` alone, and says so; or it rewrites it
-      only when no claude process runs on the host, and otherwise leaves it and says so. Recommended: the second.
-      Under `--clear` the target session itself runs, so it would leave the history every time; under `--retire` it
-      would rewrite it when no other session runs.
+- [x] **1. The prompt history.** Ruled 2026-10-27: the old conversation's prompts go in both modes, by the rewrite
+      Requirement 5 describes, with a case that appends while it runs.
 - [ ] **2. The observation's cost.** Requirement 1 starts one disposable claude conversation and removes it.
