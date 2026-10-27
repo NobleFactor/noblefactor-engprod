@@ -65,10 +65,18 @@ by hand afterwards, its two prompt lines by Requirement 5's rewrite, that rewrit
   conversation, remained. So `--retire` removes those itself, and `/clear` typed into a viewer is recorded as a prompt
   of the conversation it clears.
 
-The stand-in viewer is made to behave so: a menu line above the input line once `/` is typed, one Enter after a pause
-submitting, `/clear` written to the prompt history under the old conversation, and the new conversation's transcript
-and folder written. Not observed: `/rename <name>`, which Start-Claude types with the same helper and whose argument
-may keep the menu open; open question 2.
+`/rename <name>`, which Start-Claude types with the same helper, observed the same day on a second disposable
+session, `42497548`, with the owner's "test your shit": sent as one argument, `/rename probe-414 renamed` showed on
+the input line at 0.3 s with no menu, the argument having closed it; one Enter, alone, submitted it, the screen then
+showing "Session renamed to: probe-414 renamed", and `claude agents` listing the new `name` 0.6 s after the Enter, the
+`sessionId` unchanged. A first attempt sent the text as three `send-keys -l` arguments, which tmux joins with no
+spaces: claude answered "Unknown command: /renameprobe-414renamed". The helpers pass one argument, so they are not
+affected; the stand-in and the tests keep it so.
+
+The stand-in viewer is made to behave as observed: a menu line above the input line while a bare `/clear` is typed,
+none once a command has an argument, one Enter after a pause submitting, the command written to the prompt history
+under the conversation it was typed into, `/rename` changing the listed name and `/clear` the `sessionId`, and the
+new conversation's transcript and folder written.
 
 ### Requirement 2: Nothing removed before the clear is confirmed
 
@@ -175,13 +183,12 @@ can fail there:
 
 ## Open Questions
 
-- [ ] **1. The prompt history, reopened.** Ruled 2026-10-27 on the first draft, which called the remaining window
-      "microseconds"; the outside review of `d836aaf` showed that nothing bounds it (Requirement 5). Either the rewrite
-      goes in as Requirement 5 now states it, its window documented, or `Clear-Claude` leaves the prompt history alone.
-      Recommended: the first; the owner wants the prompts gone, and the window takes a claude session stalled between
-      its open and its write for two seconds or more.
-- [x] **2. The observation's cost.** Approved and run 2026-10-27: "approved. run". A second observation, of
-      `/rename <name>`, costs the same again; not run.
+- [x] **1. The prompt history, reopened.** Ruled 2026-10-27 on the first draft, which called the remaining window
+      "microseconds"; the outside review of `d836aaf` showed that nothing bounds it (Requirement 5). Ruled again
+      2026-10-27, told that the window takes a claude session stalled between its open and its write for two seconds
+      or more: "A", the rewrite goes in as Requirement 5 states it, its window stated in the man page.
+- [x] **2. The observation's cost.** Approved and run 2026-10-27: "approved. run". The second, of `/rename <name>`,
+      approved and run the same day: "test your shit". Both sessions' records removed by hand afterwards.
 - [ ] **3. Start-Claude's completions** list schedules from the shell's directory, not `--directory`'s, so a bare
       number completed for another repository may name another schedule. The outside review found it; it is
       Start-Claude's, not this bug's, and goes to an issue of its own if the owner wants one.
