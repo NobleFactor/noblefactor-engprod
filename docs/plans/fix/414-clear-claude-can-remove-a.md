@@ -1,15 +1,21 @@
 ---
-title: "Clear-Claude removes nothing before the clear is confirmed, fails closed, and reaches only its conversation"
+title: "Clear-Claude leaves nothing of a cleared conversation"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/414
 status: active
 created: 2026-10-27
 updated: 2026-10-27
 ---
 
-# Plan: Clear-Claude removes nothing before the clear is confirmed, fails closed, and reaches only its conversation
+# Plan: Clear-Claude leaves nothing of a cleared conversation
 
-One pull request, from `fix/414-clear-claude-can-remove-a`, resolving #414, a bug in #413 (`bbd6425`, for #411). Not
-on a schedule.
+Clear-Claude's clear leaves records of the conversation behind, the job's timeline and the paste cache among them,
+and its first version removed memories before the clear was confirmed, could lose other sessions' prompts, and
+reported a failed retire as success. After this work, nothing of a cleared conversation remains anywhere claude
+writes; nothing is removed until claude confirms the new conversation; and a check that cannot be made stops the run
+with nothing removed.
+
+One pull request, from `fix/414-clear-claude-can-remove-a`, resolving #414, a bug in #413 (`bbd6425`, for #411), and
+#415 with it. Lanes 65 and 66 of the schedule NobleFactor/devlore-cli#949.
 
 ## Summary
 
