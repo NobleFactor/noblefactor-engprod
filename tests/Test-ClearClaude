@@ -66,7 +66,7 @@ function cleanup {
 # while a bare slash command is typed and none once the command has an argument, takes a line only when its Enter
 # comes after a pause, as claude does (#412), writes the line to the prompt history under the conversation it was typed
 # into, as claude does, and writes it to typed; it leaves once a line is taken, or after STAND_IN_QUIET seconds with no
-# key, two by default. A /clear it takes starts conversation NEW, with its transcript and folder, unless
+# key, ten by default. A /clear it takes starts conversation NEW, with its transcript and folder, unless
 # STAND_IN_IGNORE_CLEAR is set, and runs STAND_IN_ON_CLEAR, a command, when one is given. `agents`, the first time it
 # lists NEW with STAND_IN_WRITERS set, starts two writers that append to the prompt history as other sessions would:
 # one at once, and one that opens the file first and appends a second later, through the file it opened. stop and rm
@@ -129,13 +129,13 @@ case "$1" in
         # An Enter already waiting behind the key before it came in the same burst, as one sent with the text does,
         # and is part of the text; one that was not waiting is a press of its own, and submits. Judged by the input
         # buffer, not by the clock, so a busy host does not make a press of its own look like part of the text.
-        line="" pending=0 quiet_until=$((SECONDS + ${STAND_IN_QUIET:-2}))
+        line="" pending=0 quiet_until=$((SECONDS + ${STAND_IN_QUIET:-10}))
         while ((SECONDS < quiet_until)); do
             if ! IFS= read -r -N 1 -t 0.1 key; then
                 sleep 0.02
                 continue
             fi
-            quiet_until=$((SECONDS + ${STAND_IN_QUIET:-2}))
+            quiet_until=$((SECONDS + ${STAND_IN_QUIET:-10}))
             if [[ ${key} == $'\n' || ${key} == $'\r' ]]; then
                 if [[ -n ${line} ]] && ((pending == 0)); then
                     printf '%s\n' "${line}" >>"${STAND_IN_DIR}/typed"

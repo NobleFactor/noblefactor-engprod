@@ -185,11 +185,13 @@ log it": #415, resolved by this pull request with #414.
       was started with `setsid`, which macOS lacks, so its line was never written; started without it, in a second
       commit. The same commit makes the stand-in viewer judge an Enter by the input buffer, whether it was already
       waiting behind the key before it, rather than by the clock, after the "written again by another session" case
-      failed once under `make check` with the hook not run, and passed three runs in a row with the buffer rule. The
-      13 that passed either refuse before anything runs, as `bbd6425` did too (usage, the directory,
-      the store entry, no store entry, the listing failing at the first lookup, two entries and a non-UUID id, which
-      its regex refused, inside the conversation, the store's lock), or found what it already did (a restarted
-      session under `--retire`)
+      failed once under `make check` with the hook not run, and passed three runs in a row with the buffer rule. A
+      slower macOS runner then failed the prompt-history case and `Test-StartClaude`'s two typing cases alike, each
+      viewer gone before its keys were read: both stand-ins waited two seconds for a key; they wait ten, and
+      `Test-StartClaude`'s judges an Enter by the buffer too. The 13 that passed either refuse before anything
+      runs, as `bbd6425` did too (usage, the directory, the store entry, no store entry, the listing failing at the
+      first lookup, two entries and a non-UUID id, which its regex refused, inside the conversation, the store's
+      lock), or found what it already did (a restarted session under `--retire`)
 - [x] Requirements 2 to 5 in `Clear-Claude`, and its man page: every case passes. Two defects the new cases found
       on the way, fixed before this commit: the restored index line was appended beside one another session had
       written, and `--retire` left the store entry, since the containment check took it for outside claude's tree,
