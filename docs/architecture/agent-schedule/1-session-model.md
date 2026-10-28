@@ -205,12 +205,15 @@ of a prompt typed in it.
   one, the background session and every other viewer going on, the old conversation's records go: the transcript and
   its folder, the file history, the session environment and the temporary output; the staged memories and scratch;
   the pastes its transcript referenced that no other transcript does; the job timeline's lines from before the
-  confirmation, in place, since the daemon appends to it; and its prompts, by a rewrite of the shared prompt history
-  that keeps the old file open, renames a copy without them into place, and then waits until no process holds the old
-  file before reading it once more, so that a writer that opened it before the rename is not lost. The `/clear` line
-  itself, recorded as a prompt of the old conversation, goes with them. When `/clear` is not taken, the staged entries
-  go back, an entry another session wrote over meanwhile left staged and named; when `/clear` was typed and claude's
-  list then cannot be read, the outcome is unknown, nothing moves, and the staging folder is named for the owner.
+  confirmation; and its prompts. The timeline and the shared prompt history are rewritten the same way: the old file
+  is given a recovery name, a copy without the lines is renamed into place, and the old file is read once more when
+  no process holds it, so that a writer that opened it before the rename loses nothing. The `/clear` line itself,
+  recorded as a prompt of the old conversation, goes with them. Every run writes a recovery record beside the
+  schedule's store entry before it moves anything: the conversation's id, every record and its state, and the staged
+  and recovery files; the next run finishes from a record it finds, or reports it. When `/clear` is not taken before
+  its Enter is sent, the staged entries go back, an entry another session wrote over meanwhile left staged and named;
+  from the Enter until claude's list shows the new id, a failure or a signal keeps everything staged, since `/clear`
+  may have run, and the record is named for the owner.
 - **Retired,** with `--retire`. Every viewer is a `claude attach <short id>` process where claude runs, and ending it
   ends whatever stands in front of it, a tmux pane, an ssh or mosh session, or `sbx exec`, live or dead: no viewer's
   terminal need be known. With every viewer ended, the session is stopped and removed, and the same records, the job

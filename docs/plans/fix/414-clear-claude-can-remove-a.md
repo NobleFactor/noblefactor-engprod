@@ -11,8 +11,9 @@ updated: 2026-10-27
 Clear-Claude's clear leaves records of the conversation behind, the job's timeline and the paste cache among them,
 and its first version removed memories before the clear was confirmed, could lose other sessions' prompts, and
 reported a failed retire as success. After this work, nothing of a cleared conversation remains anywhere claude
-writes; nothing is removed until claude confirms the new conversation; and a check that cannot be made stops the run
-with nothing removed.
+writes; nothing irreversible happens until claude confirms the new conversation; and a failure after that reports what
+was done, what remains and where the record to finish from is, since every run writes that record before it moves
+anything and the next run reads it.
 
 One pull request, from `fix/414-clear-claude-can-remove-a`, resolving #414, a bug in #413 (`bbd6425`, for #411), and
 #415 with it. Lanes 65 and 66 of the schedule NobleFactor/devlore-cli#949.
@@ -260,13 +261,15 @@ Three outcomes, each said in full:
 | --- | --- | --- |
 | No entry for the schedule | Error, 66 | `No schedule NobleFactor/devlore-cli#950 under /home/david-noble/.local/state/agent-schedule. Nothing removed.` |
 | An entry, no background session listed for its id, and no record of a conversation of it anywhere R4 looks | Information, 0 | `NobleFactor/devlore-cli#949: no background session is listed and no record of a conversation remains. Nothing to remove.` |
-| Anything else that stops the run | Its own status, from the man page's table | Which check stopped it, what was already done, and what was not |
+| Anything else that stops the run | Its own status, from the man page's table | Which check stopped it, what was already done, what was not, and, after the confirmation, the recovery record to finish from (D8) |
 
 Information, not a warning: Clear-Claude promises a state, nothing of the conversation left, and finding that state
 already true is success, as `rm -f` treats a missing file. A warning would make the retry after a failed run noisy,
 and a retry is how a failed run is finished. The second message is said only after every location in R4 was checked.
-When claude lists no session, the conversation to look for is the one `jobs/<short id>/state.json` names in
-`resumeSessionId` (D7), which the short id alone cannot give after a `/clear`.
+When claude lists no session, the conversation to look for is the one a recovery record left by an earlier run names,
+or else `jobs/<short id>/state.json` in `resumeSessionId` (D7), which the short id alone cannot give after a `/clear`.
+With neither, the identity is unknown: the run refuses with 65 and names what it can find by the short id alone. A
+missing identity is never "nothing remains".
 
 ### R3. `/clear` clears what it clears
 
@@ -278,10 +281,16 @@ old conversation and leaves with R5. What `/clear` leaves on disk is R4 and R5, 
 ### R4. Every other record of the conversation goes
 
 Every place claude writes under its home and under `/tmp/claude-<uid>` that `/clear` leaves. The inventory is
-measured on a disposable session (Phase 4), not assumed, and the proof is a sweep: after the run, nothing under
-`CLAUDE_CONFIG_DIR` or `/tmp/claude-<uid>` names the old conversation's id or holds the text of any prompt typed in
-it. The test seeds every row and expects it gone; the live check sweeps, and a file the sweep finds that no row
-covers fails it, so a location the harness adds later is caught rather than missed.
+measured on a disposable session (Phase 4), not assumed. What is removed is decided by ownership and reference, one
+row at a time: a record keyed by the conversation's id, a memory whose frontmatter names it, a paste its transcript
+references, a line tagged with it. The sweep that ends the run is a report, not a second deleter: it searches
+`CLAUDE_CONFIG_DIR` and `/tmp/claude-<uid>` for the old id and for the text of each prompt typed in the conversation,
+and classifies every match. A match inside another conversation's own records, a transcript that quoted the id or
+the prompt, a memory that mentions the id in its body (which the existing tests keep on purpose), a paste another
+transcript references too, is kept and named with its owner. A match that no row and no owner explains fails the run
+and is named, so a location the harness adds later is caught rather than missed. Removing the conversation's records
+removes no independent copy another conversation owns. The test seeds every row for the old conversation and for
+another, and expects the first gone, the second kept and the sweep passing.
 
 | Record | Identified by | f0211f4 | Now |
 | --- | --- | --- | --- |
@@ -314,23 +323,48 @@ the old file for two quiet seconds, which bounds nothing, as the outside review 
   checked, what the run had done and what it had not; the man page's status table gains the rows.
 - **D3. The inventory is a table in the script and in Clear-Claude(1),** one function per row, and the sweep is a
   function of its own that both the test and the live run call. "All trace" is then a check, not a hope.
-- **D4. The timeline is cut at the confirmation.** Its lines carry a time and no conversation id; every line dated
-  before the moment claude's listing showed the new id goes, the rest stays. A status line the new conversation wrote
-  in the half-second between the id's publication and the read is lost with them: a `working` line, nothing typed.
-  Cut in place, the file's inode kept, since the daemon appends to it.
-- **D5. Pastes by reference.** A transcript names each paste it holds as `paste-cache/<hash>` (seen 2026-10-27, four
-  in this conversation's). The old transcript is read for its references before it is removed; a referenced file goes
-  unless a transcript that remains references the same hash.
-- **D6. The prompt history, lossless by holders.** No claude process holds `history.jsonl` open between prompts
-  (`/proc/*/fd`, 2026-10-27, and the first plan's `lsof`): each append is an open, a write and a close. So after the
-  copy is renamed into place no new opener reaches the old file, and a writer that opened it before the rename holds
-  it until its write and close. The catch-up therefore waits until no process on the host holds the old inode open,
-  by `/proc/*/fd` on Linux and `lsof` on macOS, then reads the old file to its end once more and appends what it
-  finds, filtered. That is every line a pre-rename opener could write. A holder that does not let go in 30 seconds is
-  named, the lines read so far are saved beside the file as today, and the run exits 75.
-- **D7. The current conversation's id when claude lists nothing** is `resumeSessionId` in `jobs/<short id>/state.json`,
-  which claude rewrites at every `/clear`; `--retire` and R2's second outcome read it, where f0211f4 looked for
-  transcripts named with the short id, which only the first conversation of a session has.
+- **D4. The timeline is cut at the confirmation, by D6's rewrite.** Its lines carry a time and no conversation id;
+  every line dated before the moment claude's listing showed the new id goes, the rest stays. No process holds the
+  file open between appends (`/proc/*/fd`, 2026-10-28), so the rewrite is D6's: the old inode linked to a recovery
+  name, a copy without the cut lines renamed into place, the old file read once more when no holder remains and its
+  tail merged. Nothing is copied over or truncated in place. A status line the new conversation wrote between the
+  id's publication and the read goes with the old lines: Phase 4 records what, if anything, falls in that
+  half-second, and the loss is accepted only if it is status alone (open question 7).
+- **D5. Pastes by reference, recorded first.** A transcript names each paste it holds as `paste-cache/<hash>` (seen
+  2026-10-27, four in this conversation's). The old transcript's references are written into the recovery record
+  (D8) before the transcript goes, so a run that stops after it can be finished. A referenced file is removed only
+  after a second look immediately before: a reference written meanwhile by any remaining transcript, or a changed
+  modification time, keeps it. The window between that look and the unlink remains, is stated in the man page, and
+  errs toward keeping.
+- **D6. The prompt history, lossless by holders, the old file kept until it is.** No claude process holds
+  `history.jsonl` open between prompts (`/proc/*/fd`, 2026-10-27 and 2026-10-28, and the first plan's `lsof`): each
+  append is an open, a write and a close. Before the copy is renamed into place the old inode is given a second name,
+  `history.jsonl.clear-claude.<time>.old`, so it never loses its pathname. After the rename no new opener reaches it,
+  and a writer that opened it before the rename holds it until its write and close. The catch-up waits until no
+  process holds the old inode, reads it to its end once more, appends what it finds, filtered, and only then unlinks
+  the recovery name. Holders are found by `/proc/*/fd` on Linux and `lsof` on macOS, the run's own descriptor
+  excluded; a process whose descriptors cannot be read, or an `lsof` that fails, is an unknown, and unknown fails
+  closed: the recovery name stays, is written into the record, and the run exits 75. A holder that does not let go
+  in 30 seconds is treated the same, named. The next run merges a recovery file it finds before anything else.
+- **D7. The identity is written down before anything moves.** The conversation's UUID, with the short id, goes into
+  the recovery record (D8) first; `--retire` keeps the store entry and the job folder until the records are gone and
+  the sweep has passed, where f0211f4 removes them before the prompts and the last check (`Clear-Claude:775-789`),
+  destroying the identity a retry needs. When claude lists nothing, the id comes from a record an earlier run left,
+  or from `resumeSessionId` in `jobs/<short id>/state.json`, which claude rewrites at every `/clear`: a `state.json`
+  that is unreadable is 74, one that is malformed is 65, and one that is missing with no listing and no record is
+  R2's unknown identity, 65.
+- **D8. One recovery record for the whole run.** Every run writes, before it moves anything, a record at
+  `${XDG_STATE_HOME:-$HOME/.local/state}/agent-schedule/<owner>/<repository>/<number>.clear-<time>/`, beside the
+  store entry and outside `jobs/<short id>`, which `--retire` removes: the identity (D7); the inventory, each path
+  with its action and its state; the staged entries' manifest, as Requirement 2 has it; the paste references (D5);
+  the recovery names of the history and the timeline (D4, D6); and the run's state, one of `staged`,
+  `maybe-submitted`, `confirmed`, `cleaning`, `done` and `unknown`. The state is set to `maybe-submitted` before
+  the Enter that submits `/clear` is sent, not after a listing fails: from that moment until `confirmed`, a failure or
+  a handled signal keeps the staging and the record and exits 75, since `/clear` may have run and putting the memories
+  back would hand them to the new conversation; only a failure before the Enter restores the staged entries. SIGKILL
+  runs no trap, so the next run reads the record it finds, finishes a `confirmed` or `cleaning` run, reports a
+  `maybe-submitted` or `unknown` one for the owner to settle, and never starts a new clear over an unsettled record.
+  The record goes when the sweep passes. This supersedes Requirement 2's "goes back" for the window after the Enter.
 
 ### Phases, continued
 
@@ -361,7 +395,16 @@ Each case added to `tests/Test-ClearClaude`, seen to fail against f0211f4 where 
 | A paste referenced by the old transcript alone; one referenced by another transcript too | The first gone, the second kept |
 | The history: a writer that opens before the rename and writes after the old two-second drain would have ended | Its line kept, nothing of the old conversation left |
 | The history: a holder that never closes | 75 after 30 seconds, the holder named, the lines saved beside the file |
-| `--retire` after a `/clear`, claude listing nothing | The current conversation found through `state.json` and removed |
+| `--retire` after a `/clear`, claude listing nothing | The current conversation found through the record or `state.json` and removed |
+| Another conversation's transcript quoting the old id and one of its prompts; a memory mentioning the id in its body | Both kept; the sweep names each with its owner and passes |
+| The timeline: a line appended during the copy, and one just before the rename | Both kept, after the cut |
+| The history: a holder that outlives 30 seconds, or a process whose descriptors cannot be read | 75; the old file kept under its recovery name and written into the record; the next run merges it first |
+| A paste the old transcript references, referenced by another transcript between the scan and the unlink | Kept |
+| A handled signal after the Enter is sent and before the confirmation | Staging and record kept, state `maybe-submitted`, 75; nothing restored |
+| A handled signal before the Enter is sent | Every staged entry restored, the record removed |
+| The run stopped after the transcript is removed and before the pastes | The next run finishes from the record; the sweep passes |
+| `state.json` missing, malformed or unreadable, claude listing nothing, no record | 65, 65 or 74, naming what the short id alone finds; never "nothing to remove" |
+| `--retire` stopped after the records go and before the store entry | The entry and the job folder still there; the next run finishes and removes them |
 
 #### Phase 6: The work
 
@@ -400,3 +443,5 @@ Each case added to `tests/Test-ClearClaude`, seen to fail against f0211f4 where 
 - [ ] **5. D6's bound.** A holder of the old history file that does not close within 30 seconds: named, lines saved,
       exit 75. Or wait without bound?
 - [ ] **6. D4.** The timeline cut at the confirmation, the new conversation's lines kept. Or the file emptied?
+- [ ] **7. D4's accepted loss.** A status line the new conversation writes in the half-second before the confirmation
+      is read goes with the old lines. Accepted, if Phase 4 shows nothing but status falls there?
