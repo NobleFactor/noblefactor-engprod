@@ -1,15 +1,22 @@
 ---
-title: "Clear-Claude removes nothing before the clear is confirmed, fails closed, and reaches only its conversation"
+title: "Clear-Claude leaves nothing of a cleared conversation"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/414
-status: complete
+status: draft
 created: 2026-10-27
-updated: 2026-10-27
+updated: 2026-10-28
 ---
 
-# Plan: Clear-Claude removes nothing before the clear is confirmed, fails closed, and reaches only its conversation
+# Plan: Clear-Claude leaves nothing of a cleared conversation
 
-One pull request, from `fix/414-clear-claude-can-remove-a`, resolving #414, a bug in #413 (`bbd6425`, for #411). Not
-on a schedule.
+Clear-Claude's clear leaves records of the conversation behind, the job's timeline and the paste cache among them,
+and its first version removed memories before the clear was confirmed, could lose other sessions' prompts, and
+reported a failed retire as success. After this work, nothing of a cleared conversation remains anywhere claude
+writes; nothing irreversible happens until claude confirms the new conversation; and a failure after that reports what
+was done, what remains and where the record to finish from is, since every run writes that record before it moves
+anything and the next run reads it.
+
+One pull request, from `fix/414-clear-claude-can-remove-a`, resolving #414, a bug in #413 (`bbd6425`, for #411), and
+#415 with it. Lanes 65 and 66 of the schedule NobleFactor/devlore-cli#949.
 
 ## Summary
 
@@ -226,3 +233,243 @@ log it": #415, resolved by this pull request with #414.
       approved and run the same day: "test your shit". Both sessions' records removed by hand afterwards.
 - [x] **3. Start-Claude's completions** list schedules from the shell's directory, not `--directory`'s. Ruled
       2026-10-27, "fix the completion bug now": #415, fixed here (Issue 415 above).
+
+## Reopened 2026-10-27: nothing of a cleared conversation remains
+
+The first real run, 2026-10-27, against the NobleFactor/devlore-cli#949 session, short id `66865b81`: `/clear` was
+taken, the new id published, and the transcript, its folder, the file history, the session environment and the
+prompts removed. Left behind: the job's timeline, `jobs/66865b81/timeline.jsonl`, 1,686 lines since 2026-10-19 whose
+`detail` field quotes every prompt of every conversation the session has held, kept on purpose (Clear-Claude(1),
+NOTES: "the running session keeps it"); and the paste cache, which no version has looked at. Ruled, the owner:
+"Clear-Claude is supposed to remove ALL trace of the session's transcript. EVERYTHING. `/clear` is insufficient."
+#414 and #415 reopened at the owner's direction; the timeline's lines from before the clear removed by hand the same
+day. The requirements below are the owner's, 2026-10-27, numbered as given, each confirmed in turn.
+
+### R1. The store is the authority
+
+The data is the agent-schedule tree under the state directory:
+`${XDG_STATE_HOME:-$HOME/.local/state}/agent-schedule/<owner>/<repository>/<number>`, each entry holding the
+background session's short id, with `<number>.lock` beside it, the lock Start-Claude shares. `--schedule` names one
+entry: `<owner>/<repository>#<number>` names it directly; a bare `<number>` names the entry under the repository of
+`--directory`, or of the working directory, read from the clone's `origin` remote. GitHub is asked nothing (D1).
+
+### R2. A missing schedule is refused; nothing to remove is information
+
+Three outcomes, each said in full:
+
+| Found | Outcome | Message |
+| --- | --- | --- |
+| No entry for the schedule | Error, 66 | `No schedule NobleFactor/devlore-cli#950 under /home/david-noble/.local/state/agent-schedule. Nothing removed.` |
+| An entry, no background session listed for its id, and no record of a conversation of it anywhere R4 looks | Information, 0 | `NobleFactor/devlore-cli#949: no background session is listed and no record of a conversation remains. Nothing to remove.` |
+| Anything else that stops the run | Its own status, from the man page's table | Which check stopped it, what was already done, what was not, and, after the confirmation, the recovery record to finish from (D8) |
+
+Information, not a warning: Clear-Claude promises a state, nothing of the conversation left, and finding that state
+already true is success, as `rm -f` treats a missing file. A warning would make the retry after a failed run noisy,
+and a retry is how a failed run is finished. The second message is said only after every location in R4 was checked.
+When claude lists no session, the conversation to look for is the one a recovery record left by an earlier run names,
+or else `jobs/<short id>/state.json` in `resumeSessionId` (D7), which the short id alone cannot give after a `/clear`.
+With neither, the identity is unknown: the run refuses with 65 and names what it can find by the short id alone. A
+missing identity is never "nothing remains".
+
+### R3. `/clear` clears what it clears
+
+Unchanged from Requirement 2 above: a viewer of Clear-Claude's own, `/clear` typed as Requirement 1 observed, the
+new conversation confirmed by claude's listing showing a new UUID for the same short id, the viewer closed by the
+trap. The background session and every other viewer go on. The `/clear` line itself is recorded as a prompt of the
+old conversation and leaves with R5. What `/clear` leaves on disk is R4 and R5, touched only after the confirmation.
+
+### R4. Every other record of the conversation goes
+
+Every place claude writes under its home and under `/tmp/claude-<uid>` that `/clear` leaves. The inventory is
+measured on a disposable session (Phase 4), not assumed. What is removed is decided by ownership and reference, one
+row at a time: a record keyed by the conversation's id, a memory whose frontmatter names it, a paste its transcript
+references, a line tagged with it. The sweep that ends the run is a report, not a second deleter: it searches
+`CLAUDE_CONFIG_DIR` and `/tmp/claude-<uid>` for the old id and for the text of each prompt typed in the conversation,
+and classifies every match. A match inside another conversation's own records, a transcript that quoted the id or
+the prompt, a memory that mentions the id in its body (which the existing tests keep on purpose), a paste another
+transcript references too, is kept and named with its owner. A match that no row and no owner explains fails the run
+and is named, so a location the harness adds later is caught rather than missed. Removing the conversation's records
+removes no independent copy another conversation owns. The test seeds every row for the old conversation and for
+another, and expects the first gone, the second kept and the sweep passing.
+
+| Record | Identified by | f0211f4 | Now |
+| --- | --- | --- | --- |
+| `projects/<project>/<id>.jsonl` and `<id>/` | the conversation id | removed | removed |
+| `file-history/<id>`, `session-env/<id>`, `/tmp/claude-<uid>/<project>/<id>` | the id | removed | removed |
+| `projects/<project>/memory/*.md` whose frontmatter `originSessionId` is the id, and their index lines | the id | staged, removed on confirmation | the same |
+| `history.jsonl` | `sessionId` on each line; a line also carries the prompt's `pastedContents` inline | rewritten, not lossless | R5, the paste text going with the line |
+| `jobs/<short id>/timeline.jsonl` | a time on each line, no id, prompts quoted in `detail` | kept | every line dated before the confirmation goes (D4) |
+| `jobs/<short id>/state.json` | `resumeSessionId`, `detail` | kept | kept: claude writes the new id and the new conversation's state into it; read for the current id when claude lists nothing (D7) |
+| `jobs/<short id>/tmp/` | nothing | staged, removed on confirmation | the same |
+| `paste-cache/<hash>.txt` | the old transcript's references, `paste-cache/<hash>` | kept | removed when no remaining transcript references the hash (D5) |
+| `daemon/attach-journal/*.json` | an attach gesture: pid, surface, times; no id, no text | kept | measured in Phase 4; removed if one names the id |
+| `backups/.claude.json.backup.*` | copies of the global config | kept | measured; its lines removed if one holds the id or a prompt |
+| `debug/`, `shell-snapshots/`, `todos/`, `plans/` | measured | kept | measured |
+
+### R5. The prompts go, nobody else's, and none appended meanwhile is lost
+
+`history.jsonl` holds every session's prompts on the host, each line tagged with its conversation id, and up-arrow
+and Ctrl+R read it, so until the lines go the cleared prompts are one keystroke away. After the confirmation every
+line tagged with the old conversation goes, every other line stays byte for byte, and no line any session appends
+during the rewrite is lost. The last clause is met by construction (D6), not by a timer: Requirement 5 above drained
+the old file for two quiet seconds, which bounds nothing, as the outside review said and the man page admits.
+
+### Design
+
+- **D1. The store is read, not GitHub.** `Clear-Claude:612-622` asks `gh` for the repository of `--directory` and
+  refuses with "GitHub has no repository". The repository is the `origin` remote's, read with git, and the only
+  refusal is R2's: no entry. One fewer network call and one fewer way to fail for a schedule that is right there.
+- **D2. Three outcomes, three messages,** as R2 tables them. Every refusal names the schedule, the path or command it
+  checked, what the run had done and what it had not; the man page's status table gains the rows.
+- **D3. The inventory is a table in the script and in Clear-Claude(1),** one function per row, and the sweep is a
+  function of its own that both the test and the live run call. "All trace" is then a check, not a hope.
+- **D4. The timeline is cut by D6's rewrite; where, Phase 4 decides.** Its lines carry a time and no conversation id.
+  No process holds the file open between appends (`/proc/*/fd`, 2026-10-28), so the rewrite is D6's: the old inode
+  linked to a recovery name, a copy without the cut lines renamed into place, the old file read once more when no
+  holder remains and its tail merged. Nothing is copied over or truncated in place. The cut itself is not chosen
+  here: a confirmation read is later than the transition, and a cut at it can take the new conversation's first
+  lines. Phase 4 records the timestamp format and precision, the lines written between `/clear` and the first
+  listing of the new id, and what claude writes at the transition; the policy is written from that record, and
+  open question 7 closes on it. Until then no line of the timeline is removed by the script.
+- **D5. Pastes by reference, recorded first, one race accepted.** A transcript names each paste it holds as
+  `paste-cache/<hash>` (seen 2026-10-27, four in this conversation's). The old transcript's references are written
+  into the recovery record (D8) before the transcript goes, so a run that stops after it can be finished. A
+  referenced file is removed only after a second look immediately before: a reference written meanwhile by any
+  remaining transcript, or a changed modification time, keeps it. What remains is accepted and stated in the man
+  page: a transcript that adds a reference between that look and the unlink loses the paste, since nothing
+  coordinates claude's writers. The test checks the second look, not a guarantee the algorithm cannot make.
+- **D6. The prompt history, lossless by holders, the old file kept until it is merged.** No claude process holds
+  `history.jsonl` open between prompts (`/proc/*/fd`, 2026-10-27 and 2026-10-28, and the first plan's `lsof`): each
+  append is an open, a write and a close. Before the copy is renamed into place the old inode is given a second name,
+  `history.jsonl.clear-claude.<time>.old`, so it never loses its pathname. After the rename no new opener reaches it,
+  and a writer that opened it before the rename holds it until its write and close. The catch-up waits until no
+  process holds the old inode, reads it to its end once more, appends what it finds, filtered, and only then unlinks
+  the recovery name and records the merge done.
+  - *The writers.* The file is mode 0600 in this user's home, so only this user's processes can hold it. Holders are
+    found among processes of this uid, by `/proc/<pid>/fd` on Linux and `lsof -p` on macOS, neither needing root,
+    the run's own descriptor excluded. A same-uid process whose descriptors cannot be read, or an `lsof` that fails,
+    is an unknown, and unknown fails closed: the recovery name stays, is written into the record, and the run exits
+    75. A holder that does not let go in 30 seconds is treated the same, named. Phase 4 demonstrates detection on
+    both platforms as the ordinary user.
+  - *The merge is idempotent by a stated identity.* A history line carries its millisecond timestamp, its
+    conversation id and its text, and the merge takes those three as a line's identity: a recovered line is appended
+    only if the new file holds no line of that identity. Two legitimate lines of one identity, the same prompt in the
+    same conversation in the same millisecond, collapse to one; accepted, since recall shows one, and stated in the
+    man page. A run that dies after appending and before recording can then be retried without a duplicate, and one
+    that dies before appending loses nothing, since the old file is still there.
+  - *A torn line is reported, not repaired.* Each recovered line is appended by one write of the whole line. If a
+    retry finds the new file ending in a partial line, an append cut short, it does not complete, remove or write
+    past it, since other sessions append to the same file: it stops, keeps both files, names the offset, and reports
+    uncertain, 75. The next run merges a recovery file it finds before anything else; one it cannot merge, the old
+    file unreadable, the new one unwritable or torn, it keeps and reports. It never merges blindly.
+- **D7. The identity is written down before anything moves.** The conversation's UUID, with the short id, goes into
+  the recovery record (D8) first; `--retire` keeps the store entry and the job folder until the records are gone and
+  the sweep has passed, where f0211f4 removes them before the prompts and the last check (`Clear-Claude:775-789`),
+  destroying the identity a retry needs. When claude lists nothing, the id comes from a record an earlier run left,
+  or from `resumeSessionId` in `jobs/<short id>/state.json`, which claude rewrites at every `/clear`: a `state.json`
+  that is unreadable is 74, one that is malformed is 65, and one that is missing with no listing and no record is
+  R2's unknown identity, 65.
+- **D8. One recovery record for the whole run, written before each move.** Every run writes, before it moves
+  anything, a record at `${XDG_STATE_HOME:-$HOME/.local/state}/agent-schedule/<owner>/<repository>/<number>.clear-<time>/`,
+  beside the store entry and outside `jobs/<short id>`, which `--retire` removes: the identity (D7); the inventory,
+  each path with its action and its state; the staged entries' manifest; the paste references (D5); the recovery
+  names of the history and the timeline (D4, D6); and the run's state, one of `staged`, `maybe-submitted`,
+  `confirmed`, `cleaning`, `done` and `unknown`.
+  - *Write before move.* An entry's source and destination are written into the record before the entry moves, and
+    its state after, so an interruption between the two leaves a record that names both places; recovery looks in
+    both. f0211f4's `stage_entry` moves first and records after (`Clear-Claude:268-269`), which strands an
+    unrecorded entry. Every update of the record is a write to a temporary file and a rename, never an edit in place.
+  - *The states.* `maybe-submitted` is set before the Enter that submits `/clear` is sent, not after a listing fails:
+    from that moment until `confirmed`, a failure or a handled signal keeps the staging and the record and exits 75,
+    since `/clear` may have run and putting the memories back would hand them to the new conversation; only a
+    failure before the Enter restores the staged entries. SIGKILL runs no trap, so the next run reads the record it
+    finds, finishes a `confirmed` or `cleaning` run, reports a `maybe-submitted` or `unknown` one for the owner to
+    settle, and never starts a new clear over an unsettled record. The record goes when the sweep passes. This
+    supersedes Requirement 2's "goes back" for the window after the Enter.
+
+### Phases, continued
+
+#### Phase 3: The plan, reopened
+
+- [ ] This section committed on `fix/414-clear-claude-can-remove-a` and reviewed with the owner; the open questions
+      ruled
+
+#### Phase 4: The inventory, measured
+
+- [ ] With the owner's approval, on a disposable background session: a prompt carrying a paste, a memory written,
+      then Clear-Claude at f0211f4; the sweep run before and after; R4's table corrected to what it finds, each
+      `measured` row settled, and the record of it written here
+- [ ] The timeline at the transition: the timestamp format and precision, every line written between `/clear` and
+      the first listing of the new id, and what claude writes as the conversation changes; D4's cut written from it,
+      and open question 7 ruled
+- [ ] Holder detection shown on Linux and macOS as the ordinary user: a process of this uid holding the history
+      file is found; D6's unknown is reached by a process that cannot be inspected
+
+#### Phase 5: The tests
+
+Each case added to `tests/Test-ClearClaude`, seen to fail against f0211f4 where it can:
+
+| Case | Expected |
+| --- | --- |
+| `--schedule` with no entry in the tree; a bare number in a directory whose `origin` has no entry | 66, R2's first message, nothing typed |
+| An entry, no session listed, no record anywhere | 0, R2's second message |
+| An entry, no session listed, one record left in any R4 row | That record removed, 0 |
+| Each failure the run can meet | Its status and a message naming the check, what was done, what was not |
+| Every R4 row seeded for the old conversation and for another | The old conversation's gone, the other's kept; the sweep clean |
+| A seeded file the inventory does not cover | The sweep fails and names it |
+| The timeline: lines before and after the cut Phase 4 settles | The earlier gone, the later kept; a line appended during the copy and one just before the rename both kept, after the cut |
+| A paste referenced by the old transcript alone; one referenced by another transcript too | The first gone, the second kept |
+| The history: a writer that opens before the rename and writes after the old two-second drain would have ended | Its line kept, nothing of the old conversation left |
+| The history: a holder that never closes | 75 after 30 seconds, the holder named, the lines saved beside the file |
+| `--retire` after a `/clear`, claude listing nothing | The current conversation found through the record or `state.json` and removed |
+| Another conversation's transcript quoting the old id and one of its prompts; a memory mentioning the id in its body | Both kept; the sweep names each with its owner and passes |
+| The history: a holder that outlives 30 seconds, or a process whose descriptors cannot be read | 75; the old file kept under its recovery name and written into the record; the next run merges it first |
+| A paste the old transcript references, referenced by another transcript before the second look | Kept; the window after the look is D5's accepted race, stated and untested |
+| A handled signal after the Enter is sent and before the confirmation | Staging and record kept, state `maybe-submitted`, 75; nothing restored |
+| A handled signal before the Enter is sent | Every staged entry restored, the record removed |
+| The run stopped after the transcript is removed and before the pastes | The next run finishes from the record; the sweep passes |
+| The run stopped between a record update and its file action, at each such pair | Recovery finds the entry in one of the two places the record names; nothing stranded |
+| The history merge stopped after appending and before recording done; then retried | No line duplicated, none lost, the old file then unlinked |
+| The history merge unable to read the old file or write the new, or finding the new file torn | Both kept and named; the run reports uncertain, 75 |
+| `state.json` missing, malformed or unreadable, claude listing nothing, no record | 65, 65 or 74, naming what the short id alone finds; never "nothing to remove" |
+| `--retire` stopped after the records go and before the store entry | The entry and the job folder still there; the next run finishes and removes them |
+
+#### Phase 6: The work
+
+- [ ] `Clear-Claude`: R1 to R5 as the design says; Clear-Claude(1): the inventory, the messages, the statuses, the
+      NOTES on the timeline and the history replaced
+- [ ] `docs/architecture/agent-schedule/1-session-model.md`: the parts drawn, and "Clearing and retiring a
+      conversation" rewritten; `2-command-line.md`: the records named in full
+- [ ] Issue 415's last item: the zsh completion tried in a terminal, `Start-Claude --directory <another clone>
+      --schedule <Tab>`, and recorded
+- [ ] `make check` passes
+
+#### Phase 7: The live run
+
+- [ ] With the owner's approval: a disposable session, then the #949 session; the sweep clean after each; recorded
+      here
+
+#### Merge
+
+- [ ] `make check`, finished green as the PR script runs it, read before this box is ticked
+- [ ] PR script `~/Workspace/NobleFactor/noblefactor-engprod.414-clear-claude-can-remove-a.bash` written, shown and
+      handed over; the PR resolves #414 and #415 again; its last commit sets this plan `complete`
+
+### Files, continued
+
+| File | Action | Purpose |
+| --- | --- | --- |
+| `Home/common.Unix/.local/bin/Clear-Claude` | Modify | R1 to R5 |
+| `Home/common.Unix/.local/share/man/man1/Clear-Claude.1` | Modify | The inventory, the messages, the statuses, the NOTES |
+| `tests/Test-ClearClaude` | Modify | Phase 5 |
+| `docs/architecture/agent-schedule/1-session-model.md` | Modify | The diagram; the clearing section |
+| `docs/architecture/agent-schedule/2-command-line.md` | Modify | The records, in full |
+
+### Open questions, continued
+
+- [ ] **4. D1.** The GitHub lookup of `--directory`'s repository goes, the `origin` remote read instead. Yes?
+- [ ] **5. D6's bound.** A holder of the old history file that does not close within 30 seconds: named, lines saved,
+      exit 75. Or wait without bound?
+- [ ] **6. D4.** The timeline cut at the confirmation, the new conversation's lines kept. Or the file emptied?
+- [ ] **7. D4's accepted loss.** A status line the new conversation writes in the half-second before the confirmation
+      is read goes with the old lines. Accepted, if Phase 4 shows nothing but status falls there?

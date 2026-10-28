@@ -56,9 +56,12 @@ it.
 
 - `<schedule>` is `<owner>/<repository>#<number>`, or a bare `<number>` in the repository of `--directory`, the root of
   a clone or of a linked worktree, or else of the current directory.
-- The records are the conversation's transcript and the folder beside it, its file history, its session environment,
-  its temporary output, the memories it wrote and the prompts typed in it. `--clear` empties the job folder of its
-  scratch files; `--retire` removes the job folder.
+- The records it removes, at `f0211f4`: the conversation's transcript and the folder beside it, its file history,
+  its session environment, its temporary output, the memories it wrote and the prompts typed in it. `--clear` empties
+  the job folder of its scratch files; `--retire` removes the job folder. It leaves the job timeline's lines and the
+  paste cache, and its prompt-history rewrite is not lossless; the owner ruled 2026-10-27 that every trace goes, and
+  the plan for that, a draft set aside 2026-10-28, is
+  [`414-clear-claude-can-remove-a.md`](../../plans/fix/414-clear-claude-can-remove-a.md).
 - It keeps the schedule, its worktrees and branches, everything on GitHub, other conversations, and the directory's
   trust. It removes nothing Anthropic holds.
 - It runs on macOS and Linux, on the host claude runs on, from outside the conversation it clears. Windows has none:
