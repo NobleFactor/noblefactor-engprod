@@ -12,6 +12,10 @@ Windows with psmux, David-Noble-at-work/personal#273, 2026-10-19. Both moved to 
 NobleFactor/noblefactor-ops#312; the store and Start-Claude's helpers took the name `agent-schedule` in
 NobleFactor/noblefactor-ops#321, 2026-10-20.
 
+**Amended 2026-10-28** (plan [`414-clear-claude-can-remove-a.md`](../../plans/fix/414-clear-claude-can-remove-a.md)):
+§ Clear-Claude's records say what `f0211f4` removes and what it leaves, the job timeline and the paste cache, and name
+the plan, a draft set aside, for the rest.
+
 ## Completion
 
 - [x] Start-Claude: `--schedule`, `--resume`, `--continue`, `--detach`, `--no-remote-control`, `--directory` and

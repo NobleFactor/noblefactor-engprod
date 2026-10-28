@@ -189,38 +189,36 @@ its prompt lines, among them the typed `/clear`, recorded as a prompt of the con
 ## Clearing and retiring a conversation
 
 Clear-Claude ([2. Command line](2-command-line.md#clear-claude)) ends a conversation in one of two ways, under the
-store's lock for the schedule, so that no start resumes or renames the conversation meanwhile. The promise, ruled
-2026-10-27 on #414's reopening: "Clear-Claude is supposed to remove ALL trace of the session's transcript.
-EVERYTHING." Everything is the inventory the diagram above draws, measured on a real session and proven by a sweep
-after every run: nothing under claude's home or `/tmp/claude-<uid>` names the old conversation's id or holds the text
-of a prompt typed in it.
+store's lock for the schedule, so that no start resumes or renames the conversation meanwhile. What follows is the
+script as built, `f0211f4` (#417). The promise the owner set on 2026-10-27, "Clear-Claude is supposed to remove ALL
+trace of the session's transcript. EVERYTHING.", is not yet met: the plan for meeting it is
+[`414-clear-claude-can-remove-a.md`](../../plans/fix/414-clear-claude-can-remove-a.md), a draft set aside on
+2026-10-28, and the diagram above is its inventory. Where the two differ, the paragraph says so.
 
-- **Cleared,** the default. The schedule's entry is found in the store, or the run refuses with 66; a schedule whose
-  session claude does not list and of which no record remains is reported and the run exits 0, nothing to remove.
-  Nothing is removed before the clear is confirmed: the conversation's memories, their index lines and the job's
-  scratch are moved into a staging folder with a manifest first, since a new conversation reads the memory index as it
-  starts and would find the scratch. Then `/clear` is typed into a viewer of Clear-Claude's own, a tmux session no
-  client attaches, as the section above types it. `/clear` keeps the background session's short id and gives the
-  conversation a new one (seen 2026-10-14 and 2026-10-27), so the store stays right. Once claude's list shows the new
-  one, the background session and every other viewer going on, the old conversation's records go: the transcript and
-  its folder, the file history, the session environment and the temporary output; the staged memories and scratch;
-  the pastes its transcript referenced that no other transcript does; the job timeline's lines from before the
-  confirmation; and its prompts. The timeline and the shared prompt history are rewritten the same way: the old file
-  is given a recovery name, a copy without the lines is renamed into place, and the old file is read once more when
-  no process holds it, so that a writer that opened it before the rename loses nothing. The `/clear` line itself,
-  recorded as a prompt of the old conversation, goes with them. Every run writes a recovery record beside the
-  schedule's store entry before it moves anything: the conversation's id, every record and its state, and the staged
-  and recovery files; the next run finishes from a record it finds, or reports it. When `/clear` is not taken before
-  its Enter is sent, the staged entries go back, an entry another session wrote over meanwhile left staged and named;
-  from the Enter until claude's list shows the new id, a failure or a signal keeps everything staged, since `/clear`
-  may have run, and the record is named for the owner.
+- **Cleared,** the default. The background session and every connection to it go on: each viewer, its tmux pane,
+  ssh, mosh or `sbx exec`, and Remote Control. Nothing is removed before the clear is confirmed (#414): the
+  conversation's memories, their index lines and the job's scratch are moved into a staging folder with a manifest
+  first, since a new conversation reads the memory index as it starts and would find the scratch. Then `/clear` is
+  typed into a viewer of Clear-Claude's own, a tmux session no client attaches, as the section above types it.
+  `/clear` keeps the background session's short id and gives the conversation a new one (seen 2026-10-14 and
+  2026-10-27), so the store stays right. Once claude's list shows the new one, the old conversation's transcript and
+  its folder, file history, session environment and temporary output go, with the staged entries, and its prompts
+  leave the shared prompt history by a rewrite that keeps the old file open, renames a copy without them into place
+  and drains the old file for two quiet seconds; a session that opened the file before the rename and writes later
+  than that loses its line. Left behind, as measured on the first real run, 2026-10-27: the job's timeline,
+  `jobs/<short id>/timeline.jsonl`, whose lines quote every prompt, and the paste cache. When `/clear` is not taken,
+  the staged entries go back, an entry another session wrote over meanwhile left staged and named; when `/clear` was
+  typed and claude's list then cannot be read, the outcome is unknown, nothing moves, and the staging folder is named
+  for the owner. A signal after the Enter and before that listing restores the staging, though `/clear` may have run.
+  The plan replaces the drain with a wait on the file's holders, cuts the timeline and removes the pastes, keeps the
+  staging from the Enter on, and writes one recovery record before anything moves.
 - **Retired,** with `--retire`. Every viewer is a `claude attach <short id>` process where claude runs, and ending it
   ends whatever stands in front of it, a tmux pane, an ssh or mosh session, or `sbx exec`, live or dead: no viewer's
-  terminal need be known. With every viewer ended, the session is stopped and removed, and the same records, the job
-  folder and the schedule's store entry go; the conversation to remove is the one the job's `state.json` names when
-  claude lists nothing. A viewer that reattached would have restarted the session under its own id (seen 2026-10-14),
-  so Clear-Claude asks claude's list last, and succeeds only on a valid list with the session absent: listed again, it
-  says to run again; a list that fails or cannot be read is a failure of its own, never success.
+  terminal need be known. With every viewer ended, the session is stopped and removed, and its records, its job folder
+  and the schedule's store entry go, before the prompts and the last check; the plan moves them after. A viewer that
+  reattached would have restarted the session under its own id (seen 2026-10-14), so Clear-Claude asks claude's list
+  last, and succeeds only on a valid list with the session absent: listed again, it says to run again; a list that
+  fails or cannot be read is a failure of its own, never success.
 
 ## Moving a foreground conversation into the background
 
