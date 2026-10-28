@@ -8,7 +8,8 @@ title: "1. Session model — every conversation in claude's background, a tmux s
 > as 07413ae2, and accepted on the deployed scripts the same day, in phase 34; on Windows, on psmux, in
 > David-Noble-at-work/personal#273, 2026-10-19; the variables read and the title held on a wake in
 > NobleFactor/noblefactor-ops#260, 2026-10-22; the wake with no flag, and the name by `/rename`, in
-> NobleFactor/noblefactor-engprod#384, 2026-10-23. Companion: [`1-session-model.status.md`](1-session-model.status.md).
+> NobleFactor/noblefactor-engprod#384, 2026-10-23; the clear leaving no trace in
+> NobleFactor/noblefactor-engprod#414, reopened 2026-10-27, planned. Companion: [`1-session-model.status.md`](1-session-model.status.md).
 > Feature:
 > [NobleFactor/noblefactor-ops#151](https://github.com/NobleFactor/noblefactor-ops/issues/151).
 >
@@ -54,6 +55,45 @@ This model replaced claude running in the tmux session's left pane, and the tmux
     from the session's name only when it is unset; its link from `NFEP_AGENT_SCHEDULE_URL`, or the link the key makes.
 11. **`MOSH_SERVER_NETWORK_TMOUT` is the user's to set,** not Start-Claude's, and Start-Claude(1) names it (question
     77).
+
+## The parts, drawn
+
+The clear's view of the model: one background session, zero or more viewers on it, one conversation at a time, and
+the records each leaves. Every box under records is one row of Clear-Claude(1)'s inventory.
+
+```mermaid
+flowchart LR
+    subgraph store["the store: ~/.local/state/agent-schedule"]
+        entry["owner/repository/number<br/>holds the short id"]
+        lock["number.lock"]
+    end
+    subgraph service["claude's background service"]
+        bg["background session<br/>short id, kept across /clear"]
+        conv["conversation<br/>a UUID; a new one at every /clear"]
+        bg --> conv
+    end
+    subgraph viewers["viewers: zero or more, each a claude attach"]
+        pane["a tmux pane, with a terminal, ssh, mosh<br/>or sbx exec in front of it"]
+        remote["Remote Control, the Claude app"]
+        own["Clear-Claude's own, a tmux session<br/>no client attaches, for /clear"]
+    end
+    pane & remote & own --> bg
+    subgraph records["records: ~/.claude and /tmp/claude-uid"]
+        transcript["projects/project/id.jsonl and id/"]
+        memory["projects/project/memory/*.md<br/>originSessionId"]
+        history["history.jsonl<br/>sessionId on every line"]
+        pastes["paste-cache/hash.txt<br/>referenced from the transcript"]
+        side["file-history/id, session-env/id,<br/>/tmp/claude-uid/project/id"]
+        job["jobs/short/timeline.jsonl, state.json, tmp/"]
+    end
+    conv --> transcript & memory & history & pastes & side
+    bg --> job
+    start["Start-Claude"] --> entry
+    start --> pane
+    clear["Clear-Claude"] --> lock
+    clear --> own
+    clear -- "after the new id is confirmed" --> records
+```
 
 ## The processes under ssh and under mosh
 
@@ -149,26 +189,35 @@ its prompt lines, among them the typed `/clear`, recorded as a prompt of the con
 ## Clearing and retiring a conversation
 
 Clear-Claude ([2. Command line](2-command-line.md#clear-claude)) ends a conversation in one of two ways, under the
-store's lock for the schedule, so that no start resumes or renames the conversation meanwhile:
+store's lock for the schedule, so that no start resumes or renames the conversation meanwhile. The promise, ruled
+2026-10-27 on #414's reopening: "Clear-Claude is supposed to remove ALL trace of the session's transcript.
+EVERYTHING." Everything is the inventory the diagram above draws, measured on a real session and proven by a sweep
+after every run: nothing under claude's home or `/tmp/claude-<uid>` names the old conversation's id or holds the text
+of a prompt typed in it.
 
-- **Cleared,** the default. The background session and every connection to it go on: each viewer, its tmux pane,
-  ssh, mosh or `sbx exec`, and Remote Control. Nothing is removed before the clear is confirmed (#414): the
-  conversation's memories, their index lines and the job's scratch are moved into a staging folder with a manifest
-  first, since a new conversation reads the memory index as it starts and would find the scratch. Then `/clear` is
-  typed into a viewer of Clear-Claude's own, a tmux session no client attaches, as the section above types it.
-  `/clear` keeps the background session's short id and gives the conversation a new one (seen 2026-10-14 and
-  2026-10-27), so the store stays right; once claude's list shows the new one, the old conversation's records and the
-  staged entries go, and its prompts leave the prompt history by a rewrite that loses no line a running session
-  appends meanwhile, short of one that opened the file before the rename and writes seconds later. When `/clear` is
-  not taken, the staged entries go back, an entry another session wrote over meanwhile left staged and named; when
-  `/clear` was typed and claude's list then cannot be read, the outcome is unknown, nothing moves, and the staging
-  folder is named for the owner.
+- **Cleared,** the default. The schedule's entry is found in the store, or the run refuses with 66; a schedule whose
+  session claude does not list and of which no record remains is reported and the run exits 0, nothing to remove.
+  Nothing is removed before the clear is confirmed: the conversation's memories, their index lines and the job's
+  scratch are moved into a staging folder with a manifest first, since a new conversation reads the memory index as it
+  starts and would find the scratch. Then `/clear` is typed into a viewer of Clear-Claude's own, a tmux session no
+  client attaches, as the section above types it. `/clear` keeps the background session's short id and gives the
+  conversation a new one (seen 2026-10-14 and 2026-10-27), so the store stays right. Once claude's list shows the new
+  one, the background session and every other viewer going on, the old conversation's records go: the transcript and
+  its folder, the file history, the session environment and the temporary output; the staged memories and scratch;
+  the pastes its transcript referenced that no other transcript does; the job timeline's lines from before the
+  confirmation, in place, since the daemon appends to it; and its prompts, by a rewrite of the shared prompt history
+  that keeps the old file open, renames a copy without them into place, and then waits until no process holds the old
+  file before reading it once more, so that a writer that opened it before the rename is not lost. The `/clear` line
+  itself, recorded as a prompt of the old conversation, goes with them. When `/clear` is not taken, the staged entries
+  go back, an entry another session wrote over meanwhile left staged and named; when `/clear` was typed and claude's
+  list then cannot be read, the outcome is unknown, nothing moves, and the staging folder is named for the owner.
 - **Retired,** with `--retire`. Every viewer is a `claude attach <short id>` process where claude runs, and ending it
   ends whatever stands in front of it, a tmux pane, an ssh or mosh session, or `sbx exec`, live or dead: no viewer's
-  terminal need be known. With every viewer ended, the session is stopped and removed, and its records, its job folder
-  and the schedule's store entry go. A viewer that reattached would have restarted the session under its own id (seen
-  2026-10-14), so Clear-Claude asks claude's list last, and succeeds only on a valid list with the session absent:
-  listed again, it says to run again; a list that fails or cannot be read is a failure of its own, never success.
+  terminal need be known. With every viewer ended, the session is stopped and removed, and the same records, the job
+  folder and the schedule's store entry go; the conversation to remove is the one the job's `state.json` names when
+  claude lists nothing. A viewer that reattached would have restarted the session under its own id (seen 2026-10-14),
+  so Clear-Claude asks claude's list last, and succeeds only on a valid list with the session absent: listed again, it
+  says to run again; a list that fails or cannot be read is a failure of its own, never success.
 
 ## Moving a foreground conversation into the background
 
