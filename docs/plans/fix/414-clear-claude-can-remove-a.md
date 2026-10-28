@@ -1,9 +1,9 @@
 ---
 title: "Clear-Claude leaves nothing of a cleared conversation"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/414
-status: active
+status: draft
 created: 2026-10-27
-updated: 2026-10-27
+updated: 2026-10-28
 ---
 
 # Plan: Clear-Claude leaves nothing of a cleared conversation
@@ -351,12 +351,17 @@ the old file for two quiet seconds, which bounds nothing, as the outside review 
     is an unknown, and unknown fails closed: the recovery name stays, is written into the record, and the run exits
     75. A holder that does not let go in 30 seconds is treated the same, named. Phase 4 demonstrates detection on
     both platforms as the ordinary user.
-  - *The merge is idempotent.* A history line carries its millisecond timestamp, its conversation id and its text,
-    so a line is appended only if the new file does not already hold it, byte for byte. A run that dies after
-    appending and before recording can be retried without duplicating a line, and one that dies before appending
-    loses nothing, since the old file is still there. The next run merges a recovery file it finds before anything
-    else; one it cannot merge, the old file unreadable or the new one unwritable, it keeps, both files named, and
-    reports as uncertain. It never merges blindly.
+  - *The merge is idempotent by a stated identity.* A history line carries its millisecond timestamp, its
+    conversation id and its text, and the merge takes those three as a line's identity: a recovered line is appended
+    only if the new file holds no line of that identity. Two legitimate lines of one identity, the same prompt in the
+    same conversation in the same millisecond, collapse to one; accepted, since recall shows one, and stated in the
+    man page. A run that dies after appending and before recording can then be retried without a duplicate, and one
+    that dies before appending loses nothing, since the old file is still there.
+  - *A torn line is reported, not repaired.* Each recovered line is appended by one write of the whole line. If a
+    retry finds the new file ending in a partial line, an append cut short, it does not complete, remove or write
+    past it, since other sessions append to the same file: it stops, keeps both files, names the offset, and reports
+    uncertain, 75. The next run merges a recovery file it finds before anything else; one it cannot merge, the old
+    file unreadable, the new one unwritable or torn, it keeps and reports. It never merges blindly.
 - **D7. The identity is written down before anything moves.** The conversation's UUID, with the short id, goes into
   the recovery record (D8) first; `--retire` keeps the store entry and the job folder until the records are gone and
   the sweep has passed, where f0211f4 removes them before the prompts and the last check (`Clear-Claude:775-789`),
@@ -419,13 +424,13 @@ Each case added to `tests/Test-ClearClaude`, seen to fail against f0211f4 where 
 | `--retire` after a `/clear`, claude listing nothing | The current conversation found through the record or `state.json` and removed |
 | Another conversation's transcript quoting the old id and one of its prompts; a memory mentioning the id in its body | Both kept; the sweep names each with its owner and passes |
 | The history: a holder that outlives 30 seconds, or a process whose descriptors cannot be read | 75; the old file kept under its recovery name and written into the record; the next run merges it first |
-| A paste the old transcript references, referenced by another transcript between the scan and the unlink | Kept |
+| A paste the old transcript references, referenced by another transcript before the second look | Kept; the window after the look is D5's accepted race, stated and untested |
 | A handled signal after the Enter is sent and before the confirmation | Staging and record kept, state `maybe-submitted`, 75; nothing restored |
 | A handled signal before the Enter is sent | Every staged entry restored, the record removed |
 | The run stopped after the transcript is removed and before the pastes | The next run finishes from the record; the sweep passes |
 | The run stopped between a record update and its file action, at each such pair | Recovery finds the entry in one of the two places the record names; nothing stranded |
 | The history merge stopped after appending and before recording done; then retried | No line duplicated, none lost, the old file then unlinked |
-| The history merge unable to read the old file or write the new | Both kept and named; the run reports uncertain, 75 |
+| The history merge unable to read the old file or write the new, or finding the new file torn | Both kept and named; the run reports uncertain, 75 |
 | `state.json` missing, malformed or unreadable, claude listing nothing, no record | 65, 65 or 74, naming what the short id alone finds; never "nothing to remove" |
 | `--retire` stopped after the records go and before the store entry | The entry and the job folder still there; the next run finishes and removes them |
 
