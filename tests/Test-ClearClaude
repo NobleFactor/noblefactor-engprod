@@ -113,8 +113,10 @@ case "$1" in
         if [[ -n ${STAND_IN_WRITERS:-} && ${session} == "${STAND_IN_NEW}" && ! -e ${STAND_IN_DIR}/writers ]]; then
             : >"${STAND_IN_DIR}/writers"
             history="${CLAUDE_CONFIG_DIR}/history.jsonl"
-            setsid bash -c 'exec 3>>"$1"; sleep 1; printf "{\"display\":\"late\",\"sessionId\":\"%s\"}\n" "$2" >&3' \
-                _ "${history}" "${STAND_IN_OTHER}" </dev/null >/dev/null 2>&1 &
+            # Every descriptor closed or sent to /dev/null, so that Clear-Claude's read of this listing ends when
+            # this process does, not when the writer does; no setsid, which macOS lacks.
+            bash -c 'exec 3>>"$1"; sleep 1; printf "{\"display\":\"late\",\"sessionId\":\"%s\"}\n" "$2" >&3' \
+                _ "${history}" "${STAND_IN_OTHER}" </dev/null >/dev/null 2>&1 9>&- &
             printf '{"display":"early","sessionId":"%s"}\n' "${STAND_IN_OTHER}" >>"${history}"
         fi
         entries='[{"id": $id, "kind": "background", "sessionId": $session, "state": "running"}]'
@@ -124,21 +126,26 @@ case "$1" in
     attach)
         stty -icanon min 1 2>/dev/null || true
         printf '❯ '
-        line="" last=0 quiet_until=$((SECONDS + ${STAND_IN_QUIET:-2}))
+        # An Enter already waiting behind the key before it came in the same burst, as one sent with the text does,
+        # and is part of the text; one that was not waiting is a press of its own, and submits. Judged by the input
+        # buffer, not by the clock, so a busy host does not make a press of its own look like part of the text.
+        line="" pending=0 quiet_until=$((SECONDS + ${STAND_IN_QUIET:-2}))
         while ((SECONDS < quiet_until)); do
             if ! IFS= read -r -N 1 -t 0.1 key; then
                 sleep 0.02
                 continue
             fi
-            now="${EPOCHREALTIME/./}"
             quiet_until=$((SECONDS + ${STAND_IN_QUIET:-2}))
             if [[ ${key} == $'\n' || ${key} == $'\r' ]]; then
-                if [[ -n ${line} ]] && ((now - last >= 50000)); then
+                if [[ -n ${line} ]] && ((pending == 0)); then
                     printf '%s\n' "${line}" >>"${STAND_IN_DIR}/typed"
                     printf '{"display":"%s","sessionId":"%s"}\n' "${line}" "$(cat -- "${STAND_IN_DIR}/session")" \
                         >>"${CLAUDE_CONFIG_DIR}/history.jsonl"
                     if [[ ${line} == /clear ]]; then
-                        [[ -z ${STAND_IN_ON_CLEAR:-} ]] || bash -c "${STAND_IN_ON_CLEAR}"
+                        if [[ -n ${STAND_IN_ON_CLEAR:-} ]]; then
+                            bash -c "${STAND_IN_ON_CLEAR}" && printf 'hook ran\n' >>"${STAND_IN_DIR}/typed" ||
+                                printf 'hook failed: %s\n' "$?" >>"${STAND_IN_DIR}/typed"
+                        fi
                         if [[ -z ${STAND_IN_IGNORE_CLEAR:-} ]]; then
                             printf '%s\n' "${STAND_IN_NEW}" >"${STAND_IN_DIR}/session"
                             printf '%s\n' '{"type":"user"}' >"${STAND_IN_PROJECT}/${STAND_IN_NEW}.jsonl"
@@ -148,6 +155,7 @@ case "$1" in
                     printf '\n❯ '
                     break
                 fi
+                printf 'enter in the burst: %s\n' "${line//$'\n'/|}" >>"${STAND_IN_DIR}/typed"
                 line+=$'\n'
             elif [[ ${key} == [[:print:]] ]]; then
                 line+="${key}"
@@ -156,7 +164,8 @@ case "$1" in
                     printf '\n  ❯ %s   Start a new session with empty context\n❯ %s' "${line}" "${line}"
                 fi
             fi
-            last="${now}"
+            # Whether the next key is already waiting, which says of an Enter whether it came with this key.
+            if IFS= read -r -t 0; then pending=1; else pending=0; fi
         done
         ;;
     stop)
@@ -256,7 +265,11 @@ function probe {
         *) Clear-Claude --directory "${repository}" "$@" </dev/null >/dev/null 2>"${run_directory}/case.err" ||
             status=$? ;;
     esac
+    # What the run wrote, and what the stand-in saw: the lines typed into its viewer and the claude calls it took,
+    # for a failed case's report.
     written="$(cat "${run_directory}/case.err")"
+    written+=$'\n'"stand-in typed: $(tr '\n' '|' <"${STAND_IN_DIR}/typed" 2>/dev/null || true)"
+    written+=$'\n'"stand-in calls: $(tr '\n' '|' <"${STAND_IN_DIR}/calls" 2>/dev/null || true)"
 
     ((status == expected_status)) || problem_list+="its status was ${status}, not ${expected_status}; "
 }

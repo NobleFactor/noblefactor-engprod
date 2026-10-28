@@ -181,7 +181,12 @@ log it": #415, resolved by this pull request with #414.
 - [x] Requirement 1's observations, recorded here, and the stand-in made to match them: the command menu, one Enter
       after a pause, the command recorded as a prompt of the old conversation, the new conversation's files written
 - [x] Requirement 6's cases, 27 in all, run against `bbd6425`'s `Clear-Claude`: 14 failed, every case that could
-      fail there. The 13 that passed either refuse before anything runs, as `bbd6425` did too (usage, the directory,
+      fail there. CI's macOS leg then failed the prompt-history case on pull request #417: the test's late writer
+      was started with `setsid`, which macOS lacks, so its line was never written; started without it, in a second
+      commit. The same commit makes the stand-in viewer judge an Enter by the input buffer, whether it was already
+      waiting behind the key before it, rather than by the clock, after the "written again by another session" case
+      failed once under `make check` with the hook not run, and passed three runs in a row with the buffer rule. The
+      13 that passed either refuse before anything runs, as `bbd6425` did too (usage, the directory,
       the store entry, no store entry, the listing failing at the first lookup, two entries and a non-UUID id, which
       its regex refused, inside the conversation, the store's lock), or found what it already did (a restarted
       session under `--retire`)
