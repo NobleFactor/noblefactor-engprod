@@ -14,7 +14,7 @@
 # shellcheck source=Declare-BashScript
 source "$(dirname "$0")/Declare-BashScript" "$0" "clear,directory:,help,retire,schedule:" "C:hs:" "$@"
 require_nix
-require_command claude gh git jq tmux
+require_command claude gh git jq realpath tmux
 
 # tmux starts claude's viewer by its path, whatever PATH the session's shell sets.
 claude_binary="$(command -v claude)" && readonly claude_binary
@@ -35,20 +35,64 @@ source "${libexec_directory}/lock-store.sh"
 
 ## Claude's list of sessions
 
-# conversation_of prints the id of the conversation a background session runs, as claude lists it, or nothing when
-# claude lists no background session by that short id.
+# list_session asks claude for the background session with a short id, and tells four outcomes apart (#414): the
+# command failing; its answer not being what this script reads, no array, two background entries for the id, or one
+# whose sessionId is not a UUID; a valid list with no background entry for the id; and one entry, with its conversation.
 #
 # Parameters:
 #   - `$1`: the background session's short id.
 #
 # Returns:
-#   - 0; it does not return when claude cannot list its sessions: the script exits 69, EX_UNAVAILABLE.
-function conversation_of {
-    local sessions_json
+#   - 0, with `listing_outcome` one of failed, invalid, absent and present, and `listing_conversation` the
+#     conversation's id when present, empty otherwise.
+function list_session {
+    local output parsed
 
-    sessions_json="$("$claude_binary" agents --json --all </dev/null 2>/dev/null 9>&-)" ||
-        error $EX_UNAVAILABLE "claude cannot list its sessions: claude agents --json --all failed."
-    jq --raw-output --arg id "$1" '.[] | select(.id == $id) | .sessionId // empty' <<<"$sessions_json"
+    listing_outcome=failed
+    listing_conversation=""
+    output="$("$claude_binary" agents --json --all </dev/null 2>/dev/null 9>&-)" || return 0
+
+    parsed="$(jq --raw-output --arg id "$1" '
+        if type != "array" then "invalid"
+        else ([.[] | select(type == "object" and .kind == "background" and .id == $id)]) as $matched
+            | if ($matched | length) == 0 then "absent"
+              elif ($matched | length) > 1 then "invalid"
+              elif ($matched[0].sessionId | type) != "string" then "invalid"
+              else "present " + $matched[0].sessionId
+              end
+        end' <<<"$output" 2>/dev/null)" || {
+        listing_outcome=invalid
+        return 0
+    }
+
+    case $parsed in
+        "present "*)
+            listing_conversation="${parsed#present }"
+            if [[ $listing_conversation =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]]; then
+                listing_outcome=present
+            else
+                listing_outcome=invalid
+                listing_conversation=""
+            fi
+            ;;
+        absent) listing_outcome=absent ;;
+        *) listing_outcome=invalid ;;
+    esac
+}
+
+# refuse_listing ends the script for a listing that failed or could not be read, with the status the man page names.
+#
+# Parameters:
+#   - `$1`: what the listing was for, named in the message.
+#
+# Returns:
+#   - it does not return: 69 for a failed listing, 65 for one this script cannot read.
+function refuse_listing {
+    case $listing_outcome in
+        failed) error $EX_UNAVAILABLE "claude cannot list its sessions, $1: claude agents --json --all failed." ;;
+        *) error $EX_DATAERR "claude's list of sessions is not what this script reads, $1: no array, two" \
+            "background entries for the id, or a conversation id that is not a UUID." ;;
+    esac
 }
 
 ## The viewer's keys
@@ -93,7 +137,8 @@ function input_line {
 # type_command types a slash command into the viewer in a tmux pane, and presses Enter apart from it. Sent with the
 # text, the Enter reaches claude as part of the command, which then never runs, and someone has to press return. So
 # the text goes in literally; Enter follows a second after the input line shows it; and while the input line still
-# shows it, Enter is pressed again, up to three times in all.
+# shows it, Enter is pressed again, up to three times in all. Seen 2026-10-27 on claude 2.1.311: a bare /clear opens
+# the command menu above the input line and one Enter submits it; /rename with its name closes the menu as it is typed.
 #
 # Parameters:
 #   - `$1`: the pane.
@@ -102,7 +147,7 @@ function input_line {
 # Returns:
 #   - 0 once the input line no longer shows the command; 1 when it never showed it, or still does.
 function type_command {
-    local pane="$1" command="$2" prefix="${2:0:20}" deadline attempt
+    local pane="$1" command="$2" prefix="${2:0:20}" deadline presses
 
     tmux send-keys -t "$pane" -l -- "$command" || return 1
 
@@ -112,7 +157,7 @@ function type_command {
         sleep 0.1
     done
 
-    for attempt in 1 2 3; do
+    for ((presses = 0; presses < 3; presses++)); do
         sleep 1
         tmux send-keys -t "$pane" Enter || return 1
         deadline=$((SECONDS + 5))
@@ -122,15 +167,52 @@ function type_command {
             sleep 0.2
         done
 
-        note "${command%% *} still waits on the input line after Enter ${attempt}."
+        note "${command%% *} still waits on the input line after Enter $((presses + 1))."
     done
 
     return 1
 }
 
+## Containment
+
+# contained reports whether a path, every symlink in it followed, lies inside claude's own tree: under the resolved
+# CLAUDE_CONFIG_DIR, or under /tmp/claude-<uid>. Nothing outside it is removed or staged (#414).
+#
+# Parameters:
+#   - `$1`: the path.
+#
+# Returns:
+#   - 0 when it is contained; 1 when it is not, or cannot be resolved.
+function contained {
+    local resolved
+
+    resolved="$(realpath -m -- "$1" 2>/dev/null)" || return 1
+    [[ $resolved == "${claude_home_resolved}/"* || $resolved == "${temporary_root_resolved}/"* ]]
+}
+
+# project_folders prints each project folder under claude's configuration that this script may reach into: a folder,
+# not a symlink, and contained. A symlink, which could lead out of the tree, is named and skipped.
+#
+# Returns:
+#   - stdout: the folders, one per line; 0.
+function project_folders {
+    local entry
+
+    for entry in "${claude_home}"/projects/*/; do
+        entry="${entry%/}"
+        [[ -e $entry ]] || continue
+        if [[ -L $entry ]] || ! contained "$entry"; then
+            note "Skipped ${entry}: a symlink, or outside claude's own tree."
+            continue
+        fi
+        printf '%s\n' "$entry"
+    done
+}
+
 ## Removal
 
-# remove_paths removes each path given that exists, and names it.
+# remove_paths removes each path given that exists, is contained and is not itself a symlink out of the tree, and
+# names it.
 #
 # Parameters:
 #   - `$@`: the paths, files or directories.
@@ -142,66 +224,185 @@ function remove_paths {
 
     for path in "$@"; do
         [[ -e "$path" || -L "$path" ]] || continue
+        if ! contained "$path"; then
+            note "Skipped ${path}: outside claude's own tree."
+            continue
+        fi
         rm --recursive --force -- "$path"
         note "Removed ${path}"
     done
 }
 
-# remove_memories removes the memory files a conversation wrote, by the originSessionId each carries, and their lines
-# in the index beside them, MEMORY.md. A memory directory left with no file but an empty index goes too.
+# memory_belongs_to reports whether a memory file's frontmatter names a conversation as its originSessionId: the field,
+# the whole id, in the frontmatter and nowhere else (#414).
 #
 # Parameters:
-#   - `$1`: the conversation's id, a UUID.
+#   - `$1`: the memory file.
+#   - `$2`: the conversation's id.
+#
+# Returns:
+#   - 0 when it does; 1 when it does not.
+function memory_belongs_to {
+    awk -v id="$2" '
+        NR == 1 && $0 != "---" { exit 1 }
+        NR > 1 && $0 == "---" { exit (found ? 0 : 1) }
+        NR > 1 && $0 ~ ("^[[:space:]]*originSessionId:[[:space:]]*" id "[[:space:]]*$") { found = 1 }
+        END { exit (found ? 0 : 1) }' "$1"
+}
+
+## Staging: nothing is removed before the clear is confirmed (#414)
+
+# stage_entry moves a file or folder into this run's staging folder and records where it came from in the manifest,
+# so that it can go back.
+#
+# Parameters:
+#   - `$1`: the kind, memory or scratch.
+#   - `$2`: the path.
 #
 # Returns:
 #   - 0.
-function remove_memories {
-    local conversation="$1" memory_file memory_directory index
+function stage_entry {
+    local kind="$1" original="$2" slot
 
-    for memory_file in "${claude_home}"/projects/*/memory/*.md; do
-        [[ "${memory_file##*/}" != MEMORY.md ]] || continue
-        grep --quiet --fixed-strings "originSessionId: ${conversation}" -- "$memory_file" || continue
-
-        memory_directory="${memory_file%/*}"
-        index="${memory_directory}/MEMORY.md"
-        remove_paths "$memory_file"
-
-        if [[ -f "$index" ]]; then
-            grep --invert-match --fixed-strings "](${memory_file##*/})" -- "$index" >"${index}.new" || true
-            mv -- "${index}.new" "$index"
-        fi
-    done
-
-    for index in "${claude_home}"/projects/*/memory/MEMORY.md; do
-        memory_directory="${index%/*}"
-        [[ ! -s "$index" ]] || continue
-        [[ "$(find "$memory_directory" -mindepth 1 -not -name MEMORY.md -print -quit)" == "" ]] || continue
-        remove_paths "$memory_directory"
-    done
+    slot="${stage_root}/$(printf '%04d' "$staged_count")"
+    mv -- "$original" "$slot"
+    printf '%s\t%s\t%s\n' "$kind" "$original" "$slot" >>"${stage_root}/manifest.tsv"
+    staged_count=$((staged_count + 1))
+    note "Staged ${original}"
 }
 
-# remove_prompts removes the prompts typed in a conversation from claude's prompt history, history.jsonl, by the
-# sessionId each line carries. Every other line is kept as it is.
+# stage_index_lines takes a memory's lines out of the index beside it, MEMORY.md, written whole through a temporary
+# file, and records each line in the manifest, so that it can go back.
 #
 # Parameters:
-#   - `$1`: the conversation's id, a UUID.
+#   - `$1`: the index.
+#   - `$2`: the memory file's name, which the index links as `](<name>)`.
 #
 # Returns:
 #   - 0.
-function remove_prompts {
-    local conversation="$1" history="${claude_home}/history.jsonl" count
+function stage_index_lines {
+    local index="$1" name="$2" removed kept line
 
-    [[ -f "$history" ]] || return 0
-    count="$(grep --count --fixed-strings "\"sessionId\":\"${conversation}\"" -- "$history" || true)"
-    ((count > 0)) || return 0
+    [[ -f $index ]] || return 0
+    removed="$(grep --fixed-strings "](${name})" -- "$index" || true)"
+    [[ -n $removed ]] || return 0
 
-    grep --invert-match --fixed-strings "\"sessionId\":\"${conversation}\"" -- "$history" >"${history}.new" || true
-    mv -- "${history}.new" "$history"
-    note "Removed ${count} prompts from ${history}"
+    kept="$(grep --invert-match --fixed-strings "](${name})" -- "$index" || true)"
+    if [[ -n $kept ]]; then
+        printf '%s\n' "$kept" >"${index}.clear-claude.new"
+    else
+        : >"${index}.clear-claude.new"
+    fi
+    mv -- "${index}.clear-claude.new" "$index"
+
+    while IFS= read -r line; do
+        printf 'index\t%s\t%s\n' "$index" "$line" >>"${stage_root}/manifest.tsv"
+    done <<<"$removed"
 }
 
-# remove_conversation removes a conversation's records: its transcript and the folder beside it, its file history,
-# its session environment, its temporary output, and its prompts.
+# stage_memories moves the memories a conversation wrote, in every project folder, into the staging folder, with their
+# index lines, and remembers each memory folder touched for the cleanup that follows a confirmed clear.
+#
+# Parameters:
+#   - `$1`: the conversation's id.
+#
+# Returns:
+#   - 0.
+function stage_memories {
+    local conversation="$1" project memory_file memory_folder
+
+    while IFS= read -r project; do
+        memory_folder="${project}/memory"
+        [[ -d $memory_folder && ! -L $memory_folder ]] || continue
+        for memory_file in "${memory_folder}"/*.md; do
+            [[ -f $memory_file && ! -L $memory_file ]] || continue
+            [[ "${memory_file##*/}" != MEMORY.md ]] || continue
+            memory_belongs_to "$memory_file" "$conversation" || continue
+            stage_index_lines "${memory_folder}/MEMORY.md" "${memory_file##*/}"
+            stage_entry memory "$memory_file"
+            touched_memory_folder_list+=("$memory_folder")
+        done
+    done < <(project_folders)
+}
+
+# stage_scratch moves the job folder's scratch files, everything under jobs/<short id>/tmp, into the staging folder.
+#
+# Parameters:
+#   - `$1`: the background session's short id.
+#
+# Returns:
+#   - 0.
+function stage_scratch {
+    local scratch="${claude_home}/jobs/$1/tmp" entry
+
+    [[ -d $scratch && ! -L $scratch ]] || return 0
+    contained "$scratch" || return 0
+    for entry in "${scratch}"/* "${scratch}"/.[!.]*; do
+        [[ -e $entry || -L $entry ]] || continue
+        stage_entry scratch "$entry"
+    done
+}
+
+# restore_staged puts every staged entry back: a file or folder whose original path exists again, written meanwhile by
+# another session or the conversation itself, is left staged and named, never overwritten; an index line goes back only
+# where the index no longer has it.
+#
+# Returns:
+#   - 0.
+function restore_staged {
+    local kind original slot left=0 index_link='\]\(([^)]+)\)'
+
+    [[ -f ${stage_root}/manifest.tsv ]] || return 0
+    while IFS=$'\t' read -r kind original slot; do
+        case $kind in
+            memory | scratch)
+                if [[ -e $original || -L $original ]]; then
+                    note "Left staged, its path written again meanwhile: ${original}, staged as ${slot}"
+                    left=$((left + 1))
+                else
+                    mv -- "$slot" "$original" && note "Put back ${original}"
+                fi
+                ;;
+            index)
+                # Here `slot` is the line itself, and it goes back only where the index has no line for its memory:
+                # one another session wrote meanwhile is left as it is.
+                if [[ -f $original && $slot =~ $index_link ]] &&
+                    ! grep --quiet --fixed-strings -- "](${BASH_REMATCH[1]})" "$original"; then
+                    printf '%s\n' "$slot" >>"$original"
+                    note "Put back a line of ${original}"
+                fi
+                ;;
+        esac
+    done <"${stage_root}/manifest.tsv"
+
+    if ((left == 0)); then
+        rm --recursive --force -- "$stage_root"
+    else
+        note "${left} staged entries kept in ${stage_root}; its manifest.tsv names each."
+    fi
+}
+
+# discard_staged removes the staging folder once the clear is confirmed, and with it each memory folder this run
+# emptied: one with no file left but an index with nothing in it.
+#
+# Returns:
+#   - 0.
+function discard_staged {
+    local memory_folder
+
+    rm --recursive --force -- "$stage_root"
+    note "Removed the staged entries"
+
+    for memory_folder in "${touched_memory_folder_list[@]}"; do
+        [[ -d $memory_folder ]] || continue
+        [[ "$(find "$memory_folder" -mindepth 1 -not -name MEMORY.md -print -quit)" == "" ]] || continue
+        [[ ! -f ${memory_folder}/MEMORY.md ]] || ! grep --quiet '[^[:space:]]' "${memory_folder}/MEMORY.md" || continue
+        remove_paths "$memory_folder"
+    done
+}
+
+# remove_conversation removes a conversation's records: its transcript and the folder beside it, in every project
+# folder this script may reach into; its file history; its session environment; and its temporary output.
 #
 # Parameters:
 #   - `$1`: the conversation's id, a UUID.
@@ -209,12 +410,84 @@ function remove_prompts {
 # Returns:
 #   - 0.
 function remove_conversation {
-    local conversation="$1"
+    local conversation="$1" project
 
-    remove_paths "${claude_home}"/projects/*/"${conversation}.jsonl" "${claude_home}"/projects/*/"${conversation}" \
-        "${claude_home}/file-history/${conversation}" "${claude_home}/session-env/${conversation}" \
-        "/tmp/claude-$(id -u)"/*/"${conversation}"
-    remove_prompts "$conversation"
+    while IFS= read -r project; do
+        remove_paths "${project}/${conversation}.jsonl" "${project}/${conversation}"
+    done < <(project_folders)
+    remove_paths "${claude_home}/file-history/${conversation}" "${claude_home}/session-env/${conversation}" \
+        "${temporary_root}"/*/"${conversation}"
+}
+
+# remove_prompts removes the prompts typed in a conversation from claude's prompt history, history.jsonl, by the
+# sessionId each line carries, parsed, while every claude session on the host goes on appending to it (#414). It keeps
+# the old file open, writes a copy without the conversation's lines to a temporary file beside it, renames the copy
+# into place, and appends whatever reached the old file meanwhile, read through the kept descriptor, until the old file
+# has stopped growing for two seconds. What remains is a writer that opened the old path before the rename and writes
+# after the last read: nothing bounds that delay, so the rewrite is not lossless, and the man page says so. Two
+# Clear-Claude runs are serialized by a lock of this script's own beside the file, a directory, which mkdir makes
+# atomically on every platform.
+#
+# Parameters:
+#   - `$1`: the conversation's id, a UUID.
+#
+# Returns:
+#   - 0; it does not return on a read or write failure: 74, EX_IOERR, the file untouched before the rename, and the
+#     caught-up lines saved beside it after.
+function remove_prompts {
+    local conversation="$1" history="${claude_home}/history.jsonl" temporary waited=0 old tail quiet=0 caught=0 removed
+    # shellcheck disable=SC2016 # the jq program's names are jq's, not the shell's
+    local filter='. as $line | (try (fromjson | .sessionId) catch null) as $id
+        | if $id == $conversation then empty else $line end'
+
+    [[ -f $history ]] || return 0
+    [[ -r $history && -w $history ]] || error $EX_IOERR "The prompt history cannot be read and written: ${history}"
+
+    history_lock="${history}.clear-claude.lock"
+    until mkdir -- "$history_lock" 2>/dev/null; do
+        ((waited < 300)) || {
+            history_lock=""
+            error $EX_TEMPFAIL "Another Clear-Claude holds the prompt history's lock, ${history}.clear-claude.lock," \
+                "for 30 seconds."
+        }
+        sleep 0.1
+        waited=$((waited + 1))
+    done
+
+    exec {old}<"$history"
+    removed="$(jq --raw-input --raw-output --arg conversation "$conversation" \
+        'select((try (fromjson | .sessionId) catch null) == $conversation) | 1' <"$history" | wc -l)"
+    temporary="$(mktemp -- "${history}.clear-claude.XXXXXX")" ||
+        error $EX_IOERR "No temporary file could be made beside ${history}; it is untouched."
+    if ! jq --raw-input --raw-output --arg conversation "$conversation" "$filter" <&"$old" >"$temporary"; then
+        rm --force -- "$temporary"
+        error $EX_IOERR "The prompt history could not be read or copied; it is untouched: ${history}"
+    fi
+    mv -- "$temporary" "$history" ||
+        error $EX_IOERR "The copy could not take the prompt history's place: ${history} is untouched."
+
+    # The catch-up: what reached the old file since it was read, through the kept descriptor.
+    while ((quiet < 20)); do
+        tail="$(cat <&"$old")"
+        if [[ -n $tail ]]; then
+            if ! printf '%s\n' "$tail" | jq --raw-input --raw-output --arg conversation "$conversation" "$filter" \
+                >>"$history"; then
+                printf '%s\n' "$tail" >>"${history}.clear-claude.unmerged"
+                error $EX_IOERR "Lines appended during the rewrite could not be added to ${history}; they are in" \
+                    "${history}.clear-claude.unmerged"
+            fi
+            caught=$((caught + $(printf '%s\n' "$tail" | wc -l)))
+            quiet=0
+        else
+            quiet=$((quiet + 1))
+            sleep 0.1
+        fi
+    done
+    exec {old}<&-
+
+    rmdir -- "$history_lock" 2>/dev/null || true
+    history_lock=""
+    note "Removed ${removed} prompts from ${history}; ${caught} lines appended meanwhile kept"
 }
 
 # close_viewers ends every viewer of a background session, wherever its connection comes from: each is a
@@ -234,6 +507,31 @@ function close_viewers {
     fi
 }
 
+## The end of the run, on every path
+
+# finish runs as the EXIT trap: it closes the script's own viewer, releases the prompt history's lock, and settles the
+# staging folder by the run's state: discarded once the clear is confirmed, kept and named when the outcome is unknown,
+# and put back otherwise, on a failure or a signal.
+#
+# Returns:
+#   - the status the script was ending with.
+function finish {
+    local status=$?
+
+    [[ -z ${viewer:-} ]] || tmux kill-session -t "$viewer" 2>/dev/null || true
+    [[ -z ${history_lock:-} ]] || rmdir -- "$history_lock" 2>/dev/null || true
+
+    if [[ -n ${stage_root:-} && -d $stage_root ]]; then
+        case ${stage_state:-} in
+            confirmed) discard_staged ;;
+            unknown) note "The staged entries are kept in ${stage_root}; its manifest.tsv names each." ;;
+            *) restore_staged ;;
+        esac
+    fi
+
+    exit "$status"
+}
+
 ###########
 # Arguments
 ###########
@@ -244,11 +542,12 @@ ${script_name} -h|--help
 Clears the Claude Code conversation a schedule runs, removing every local record of it: its transcript and tool
 results, its file history, its session environment, its temporary output, the memories it wrote and the prompts typed
 in it. With --clear, the default, it types /clear into a viewer of its own, and keeps the background session and every
-connection to it: they go on in a new conversation, with nothing of the old one to read. With --retire it removes the
-background session too, its job folder and the schedule's entry in Start-Claude's store, ending every viewer. The
-schedule, its worktrees, its branches and everything on GitHub are kept. <schedule> is <owner>/<repository>#<number>,
-or a bare <number> in the directory's repository. The directory is --directory, or else the current one, the root of a
-repository clone. Run it from a terminal outside the conversation it removes. See Clear-Claude(1)."
+connection to it: they go on in a new conversation, with nothing of the old one to read; nothing is removed before the
+new conversation is confirmed. With --retire it removes the background session too, its job folder and the schedule's
+entry in Start-Claude's store, ending every viewer. The schedule, its worktrees, its branches and everything on GitHub
+are kept. <schedule> is <owner>/<repository>#<number>, or a bare <number> in the directory's repository. The directory
+is --directory, or else the current one, the root of a repository clone. Run it from a terminal outside the
+conversation it removes. See Clear-Claude(1)."
 
 eval set -- "$script_arguments"
 
@@ -325,6 +624,9 @@ fi
 declare -r schedule_key="${schedule_slug}#${schedule_number}"
 declare -r store_entry="${XDG_STATE_HOME:-${HOME}/.local/state}/agent-schedule/${schedule_slug}/${schedule_number}"
 declare -r claude_home="${CLAUDE_CONFIG_DIR:-${HOME}/.claude}"
+temporary_root="/tmp/claude-$(id -u)" && readonly temporary_root
+claude_home_resolved="$(realpath -m -- "$claude_home")" && readonly claude_home_resolved
+temporary_root_resolved="$(realpath -m -- "$temporary_root")" && readonly temporary_root_resolved
 
 shopt -s nullglob
 
@@ -348,11 +650,27 @@ readonly short_id
 [[ ${CLAUDE_CODE_SESSION_ID:-} != "${short_id}"* ]] ||
     error $EX_TEMPFAIL "This runs inside conversation ${short_id}, the one it removes. Run it from a terminal outside."
 
-session_id="$(conversation_of "$short_id")"
+# From here the EXIT trap settles whatever the run leaves: the viewer, the lock and the staged entries, on a failure
+# and on a signal alike.
+declare viewer="" history_lock="" stage_root="" stage_state="" staged_count=0
+declare -a touched_memory_folder_list=()
+trap finish EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM HUP
 
-[[ -z $session_id || $session_id =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]] ||
-    error $EX_DATAERR "claude lists no conversation id this script reads: ${session_id}"
+declare listing_outcome="" listing_conversation=""
+list_session "$short_id"
+case $listing_outcome in
+    present) session_id="$listing_conversation" ;;
+    absent) session_id="" ;;
+    *) refuse_listing "looking up background session ${short_id}" ;;
+esac
 readonly session_id
+
+# A staging folder another run left, interrupted before it settled, is named and not touched.
+for left_behind in "${claude_home}/jobs/${short_id}"/clear-*/; do
+    note "A staging folder is left from an earlier run, not touched: ${left_behind%/}"
+done
 
 if ((! retire)); then
 
@@ -361,39 +679,61 @@ if ((! retire)); then
     [[ $session_id ]] || error $EX_NOINPUT "claude lists no background session ${short_id} to clear." \
         "--retire removes what is left of it."
 
-    # The memories go first: a new conversation reads the memory index as it starts, and /clear starts one.
-    remove_memories "$session_id"
+    # Nothing is removed before the clear is confirmed: the memories, their index lines and the scratch are staged,
+    # moved into a folder of this run's own, since a new conversation reads the memory index as it starts and would
+    # find the scratch. On a failure they go back; once the new conversation is confirmed they go.
+    stage_root="${claude_home}/jobs/${short_id}/clear-$(date +%Y%m%dT%H%M%S)-$$"
+    mkdir --parents -- "$stage_root"
+    : >"${stage_root}/manifest.tsv"
+    stage_state=staged
+    stage_memories "$session_id"
+    stage_scratch "$short_id"
 
     # A viewer of the script's own, which no client attaches, takes the /clear. tmux runs without descriptor 9: a
     # server it starts would hold the store's lock.
     viewer="$(tmux new-session -d -P -F '#{pane_id}' -x 200 -y 50 -- "$claude_binary" attach "$short_id" 9>&-)" ||
         error $EX_UNAVAILABLE "tmux opened no viewer of background session ${short_id} to clear it in."
 
-    cleared=""
-    if wait_for_input "$viewer" && type_command "$viewer" /clear; then
-        deadline=$((SECONDS + 30))
-
-        while ((SECONDS < deadline)); do
-            cleared="$(conversation_of "$short_id")"
-            [[ -z $cleared || $cleared == "$session_id" ]] || break
-            cleared=""
-            sleep 0.5
-        done
+    if ! { wait_for_input "$viewer" && type_command "$viewer" /clear; }; then
+        error $EX_UNAVAILABLE "/clear was not taken in a viewer of background session ${short_id}; nothing removed."
     fi
 
-    tmux kill-session -t "$viewer" 2>/dev/null || true
+    # The new conversation, confirmed by claude's listing: a listing that fails or cannot be read here leaves the
+    # outcome unknown, since /clear may have run, and the staged entries are kept for the owner to settle.
+    cleared=""
+    deadline=$((SECONDS + 30))
+    while ((SECONDS < deadline)); do
+        list_session "$short_id"
+        case $listing_outcome in
+            present)
+                [[ $listing_conversation == "$session_id" ]] || {
+                    cleared="$listing_conversation"
+                    break
+                }
+                ;;
+            absent) ;;
+            *)
+                stage_state=unknown
+                error $EX_TEMPFAIL "/clear was typed into background session ${short_id}, and claude cannot say" \
+                    "whether it ran: the listing ${listing_outcome}. Nothing removed, nothing put back; the staged" \
+                    "entries are in ${stage_root}."
+                ;;
+        esac
+        sleep 0.5
+    done
 
     [[ $cleared ]] || error $EX_UNAVAILABLE "/clear started no new conversation in background session ${short_id}:" \
-        "claude still lists ${session_id}. Nothing else was removed."
+        "claude still lists ${session_id}. Nothing removed."
 
+    tmux kill-session -t "$viewer" 2>/dev/null || true
+    viewer=""
+
+    # Confirmed: the old conversation's records go, the staged entries with them, and its prompts last.
+    stage_state=confirmed
     remove_conversation "$session_id"
-
-    # The job folder's scratch files are the session's, and the new conversation would find them: they go. The rest of
-    # the job folder is the running session's own.
-    if [[ -d "${claude_home}/jobs/${short_id}/tmp" ]]; then
-        find "${claude_home}/jobs/${short_id}/tmp" -mindepth 1 -delete
-        note "Emptied ${claude_home}/jobs/${short_id}/tmp"
-    fi
+    discard_staged
+    stage_root=""
+    remove_prompts "$session_id"
 
     success "${schedule_key}: conversation ${session_id} removed. Background session ${short_id} and every" \
         "connection to it go on, in conversation ${cleared}."
@@ -402,24 +742,51 @@ fi
 
 ## Retire: the background session goes too, and every viewer with it
 
+if [[ -z $session_id ]]; then
+    # claude no longer lists the session: its records, if any remain, are found by the transcripts named for it.
+    for transcript in "${claude_home}"/projects/*/"${short_id}"-*.jsonl; do
+        session_id="${transcript##*/}"
+        session_id="${session_id%.jsonl}"
+        break
+    done
+fi
+
 close_viewers "$short_id"
 
-if [[ $session_id ]]; then
+if [[ $listing_outcome == present ]]; then
     "$claude_binary" stop "$short_id" </dev/null >/dev/null 2>&1 9>&- || true
     output="$("$claude_binary" rm "$short_id" </dev/null 2>&1 9>&-)" ||
         error $EX_UNAVAILABLE "claude did not remove background session ${short_id}: ${output//$'\n'/ }"
     note "Removed background session ${short_id}"
-
-    remove_memories "$session_id"
-    remove_conversation "$session_id"
 fi
 
-remove_paths "${claude_home}/jobs/${short_id}" "$store_entry"
+if [[ $session_id ]]; then
+    # The memories go through the same staging, discarded at once: the same matching, containment and cleanup.
+    stage_root="${claude_home}/jobs/${short_id}/clear-$(date +%Y%m%dT%H%M%S)-$$"
+    mkdir --parents -- "$stage_root"
+    : >"${stage_root}/manifest.tsv"
+    stage_state=confirmed
+    stage_memories "$session_id"
+    remove_conversation "$session_id"
+    discard_staged
+    stage_root=""
+fi
 
-# A connection that reattached would have restarted the session under the same id.
-[[ -z "$(conversation_of "$short_id")" ]] ||
-    error $EX_TEMPFAIL "Background session ${short_id} is running again: a connection restarted it. Disconnect" \
-        "Remote Control, and run this again."
+remove_paths "${claude_home}/jobs/${short_id}"
+# The store's entry is Start-Claude's, outside claude's tree: removed as such, so that the next start begins anew.
+rm --force -- "$store_entry"
+note "Removed ${store_entry}"
+[[ -z $session_id ]] || remove_prompts "$session_id"
+
+# A connection that reattached would have restarted the session under the same id: the last check succeeds on a valid
+# list with the session absent, and on nothing else.
+list_session "$short_id"
+case $listing_outcome in
+    absent) ;;
+    present) error $EX_TEMPFAIL "Background session ${short_id} is running again: a connection restarted it." \
+        "Disconnect Remote Control, and run this again." ;;
+    *) refuse_listing "checking that background session ${short_id} is gone" ;;
+esac
 
 success "${schedule_key}: background session ${short_id} and its conversation removed. The schedule and its work" \
     "are kept."
