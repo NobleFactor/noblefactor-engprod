@@ -13,6 +13,10 @@ David-Noble-at-work/personal#273, 2026-10-19. The schedule's variables read and 
 NobleFactor/noblefactor-ops#260: built in be16108, tested on all three hosts 2026-10-22; its acceptance follows its
 deploy.
 
+**Amended 2026-10-28** (plan [`414-clear-claude-can-remove-a.md`](../../plans/fix/414-clear-claude-can-remove-a.md)):
+§ Open names where the clear should live, the operation graph once it can observe an outcome before deciding, and a
+`star` command meanwhile; nothing decided.
+
 ## Completion
 
 - [x] Every conversation in claude's background, the store keeping its background session's short id.

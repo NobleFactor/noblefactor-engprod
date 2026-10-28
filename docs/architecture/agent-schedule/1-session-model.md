@@ -271,8 +271,24 @@ NobleFactor/noblefactor-ops#305. What this design keeps there, and what changes:
 
 ## Open
 
-None. The last item, Remote Control on a background session, closed 2026-10-15: the owner saw `24b62a42`, which
-the new code had started with `--remote-control`, listed in the Claude app.
+One, 2026-10-28: **where the clear should live.** Clear-Claude keeps a staging manifest, a recovery record, state
+names and a cleanup inventory in bash, which is a workflow engine written by hand. The operation graph in devlore-cli
+(`pkg/op`) has the pieces already: compensable actions unwound as a saga, receipts and recovery stacks that persist as
+a trace and resume, and providers that observe a resource against its record, which is `writ reconcile` and would be
+the clear's sweep. What it lacks is one thing the clear needs: a result whose outcome is learned later. Sending the
+Enter that submits `/clear` is neither success nor failure until claude's listing is read, and the engine today would
+unwind the staging on a listing failure and resubmit `/clear` on resume. The owner's thought, 2026-10-28: the result
+is a thing that answers questions, is the effect in place, can it be reversed, is it as recorded, whether the resource
+or its provider answers; "cannot tell" is an answer that stops the run, and a unit that cannot be reversed and is in
+place makes the run forward-only from there. Recorded as open design work in devlore-cli's
+[2.6-execution-policies.md](https://github.com/NobleFactor/devlore-cli/blob/develop/docs/architecture/2.6-execution-policies.md).
+Until that exists, the clear's home is a question of language, not engine: a `star` extension command in Starlark,
+over the runtime's file, shell, json and platform modules, with devlore-test for its cases, is the candidate, as the
+owner's `star gh` commands already are. Start-Claude holds little that needs undoing and stays where it is. Nothing
+decided; the owner, 2026-10-28: "do nothing on that. it is food for thought."
+
+Closed before it: Remote Control on a background session, 2026-10-15, when the owner saw `24b62a42`, which the new
+code had started with `--remote-control`, listed in the Claude app.
 
 
 [plan-259]: https://github.com/David-Noble-at-work/personal/blob/main/docs/plans/chore/259-start-claude-documents-claude.md
