@@ -77,7 +77,7 @@ kept cheap is [section 6](6-the-asset-and-its-sync.md) § Participation.
 
 A label belongs to one repository; GitHub has no organization label. The labels file, `labels.yaml` in the issue-labels
 design (NobleFactor/noblefactor-ops#320, approved 2026-10-19, still on its branch), defines each label once, and
-`star gh labels sync` puts it in every repository the scheme covers. The owner, 2026-10-21: "My thinking is that our
+`star github labels sync` puts it in every repository the scheme covers. The owner, 2026-10-21: "My thinking is that our
 labels are defined and stored as yaml assets in noblefactor-ops."
 
 ## The choice it turns on
@@ -87,7 +87,7 @@ organization features. Neither reaches personal, and for personal the owner rule
 directed syncs. Person[al] will need to sync if it wants to participate." So:
 
 - **GitHub's own types and links in the organization's repositories, labels in personal.** The organization's record
-  is the truth; `star gh` syncs it one way into personal's labels, as `star gh labels sync` already syncs the label
+  is the truth; `star github` syncs it one way into personal's labels, as `star github labels sync` already syncs the label
   set. The audit reads personal's labels as it reads the organization's types, and reports where the sync has not
   run.
 - Not taken: moving personal's tracked work into an organization repository.

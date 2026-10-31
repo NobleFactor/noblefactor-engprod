@@ -13,7 +13,7 @@ change your workflow?" The plan, the branch, the pull request and the sign-off d
 
 | | Before | After |
 | --- | --- | --- |
-| The kind | a label the session picks and types | the issue type, one argument to `star gh issues create`, set by GitHub |
+| The kind | a label the session picks and types | the issue type, one argument to `star github schedule create`, set by GitHub |
 | The parent | a `**Feature:** #N` or `**Chore:** #N` marker written into the body, the last one in the body winning | the sub-issue link, one argument, set by GitHub, refused unless the parent is one level up |
 | The epic | an `Epic:<Name>` label the session must know and type | the parent's parent, read, never written |
 | The attributes | labels typed by name | arguments, checked against the asset |
@@ -29,7 +29,7 @@ or under a grant.
 | | Before | After |
 | --- | --- | --- |
 | The schedule | a markdown table in an issue body, edited by hand lane by lane | a project; the schedule's own issue is row 0 and keeps its number, so a session's assignment is read as it is today |
-| Adding a lane | an edit to the table, and an amendment above it the session must remember to write | `star gh schedule add`, which numbers the row and writes the amendment with it in one act |
+| Adding a lane | an edit to the table, and an amendment above it the session must remember to write | `star github schedule add`, which numbers the row and writes the amendment with it in one act |
 | A lane in progress | "in progress in `<worktree>`" typed into the Next cell | the row's Next field set |
 | Waits on | a cell of lane numbers | GitHub's blocked-by link between the issues |
 | What enforces "no lane without an amendment" | memory | the command |
@@ -38,7 +38,7 @@ or under a grant.
 
 | | Before | After |
 | --- | --- | --- |
-| The commands | `star gh issues report`, `star gh issues audit` | the same |
+| The commands | `star github schedule report`, `star github schedule audit` | the same |
 | What they read | kind labels, epic labels, the markers in bodies, the lane tables | the type, the sub-issue link, the project's rows; labels and markers second while both exist, then not at all |
 | What the audit catches | a missing or doubled label, a missing epic, a marker naming the wrong kind | the same, and every refusal above: a session that filed around the command shows up in the next report |
 | What the report rests on | our text inside GitHub's issues | GitHub's own record of them |
