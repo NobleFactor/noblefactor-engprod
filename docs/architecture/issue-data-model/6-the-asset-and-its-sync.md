@@ -21,7 +21,31 @@ audit each work on one account at a time; the cache, a file per organization, ke
 model, NobleFactor's, beside the extension. Where each account's file lives is open, in the plan's question 17: beside
 the extension, a file per account, or in a repository the account owns.
 
+## Reference models, read on demand
+
+Ruled 2026-11-02, settling where each account's model lives: nowhere it has to be kept. Two reference models live beside
+the extension, one for an organization's account and one for an individual's. They hold what the model needs and
+nothing of any one account: the types or type labels with their levels, the label tiers, and the fields of the
+Schedule, Thread and Triage projects, with no ids and no account names (noblefactor-engprod#425).
+
+- **Adopting the model is a deliberate act.** The owner pushes what they have, a reference or a change to it, when
+  they choose and never otherwise; the code assumes nothing about an account that has not been pushed to.
+- **From then on, GitHub's record is the account's model.** A change the owner makes in GitHub is picked up on the
+  next read: star reads each account's record on demand, by ETag, into a cache of its own,
+  `${XDG_CACHE_HOME:-~/.cache}/devlore/star/gh/model/<account>.yaml`, and no account has a committed model file
+  (noblefactor-engprod#426).
+- **The audit compares an account with its reference:** a piece it lacks is a fault, a piece it adds is the account's
+  own.
+- **Restoring an account** is pushing its reference again. What the account changed in GitHub since lives only in
+  GitHub.
+
+How an account is known to participate, and how a change made in GitHub is known not to break the model, is the plan's
+question 18, proposed and not ruled.
+
 ## The asset
+
+Superseded 2026-11-02 by § Reference models, read on demand: the committed asset this section describes is replaced
+by the two reference models and each account's cache. It records the design it replaces.
 
 `model.yaml`, beside `extension.yaml` in `com.noblefactor.ops.GitHub`, so that writ deploys it with the extension and
 the extension finds it by its own path. It holds four things:
@@ -228,6 +252,9 @@ extension runs, the standard and the plans. Those are the consumers that do not 
 the list of them to fix.
 
 ## Recovery
+
+Superseded in part 2026-11-02: restoring an account is pushing its reference again (§ Reference models, read on
+demand). The backup this section describes, the asset's history in git, no longer exists per account.
 
 The owner, 2026-10-22: "our copy of the model exists as a backup which can be used for disaster recovery. I'm thinking
 about the mistakes we might make along the way." The asset in git is that backup: every state the model has been in

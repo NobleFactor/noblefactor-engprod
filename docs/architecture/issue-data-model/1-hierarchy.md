@@ -41,7 +41,8 @@ reach, is [section 4](4-storage-and-reach.md)'s remaining question.
 
 **Per account,** ruled 2026-11-02. Type belongs to an account: each organization defines its own issue types, and its
 model gives each its level. An individual account has no issue types, so its issues carry a label of the type's name,
-the level coming from that account's own model ([section 4](4-storage-and-reach.md) § Accounts).
+the level coming from that account's own model ([section 4](4-storage-and-reach.md) § Accounts). GitHub holds an
+organization's issue to one type; for an individual's, the audit does.
 
 ## Parents
 

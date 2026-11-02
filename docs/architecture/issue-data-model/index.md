@@ -61,5 +61,7 @@ the order they are worked.
   projects, labels and model, and no project spans two (ruled 2026-11-02).
 - **personal:** David-Noble-at-work/personal, a repository of an individual's account, which keeps its own model and
   collections.
-- **The asset:** an account's `model.yaml`, one per GitHub account, NobleFactor's beside the star extension today: the model as the tooling reads it, pulled from GitHub and
+- **The asset:** the model as star reads it: two reference models beside the star extension, one for an organization's
+  account and one for an individual's, and each account's own model read from GitHub on demand into a cache of its own.
+  Before 2026-11-02, a committed `model.yaml` beside the extension: the model as the tooling reads it, pulled from GitHub and
   pushed to repositories ([section 6](6-the-asset-and-its-sync.md)).

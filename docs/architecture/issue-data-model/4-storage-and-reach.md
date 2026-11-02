@@ -24,14 +24,24 @@ An individual account lacks part of what an organization has, so the same model 
 | Ownership | teams, each owning its collections and triaging its repositories | the account itself, which has no teams |
 | Collections | projects the organization owns, copied from its Schedule and Thread templates | projects the account owns, built field by field, since only an organization's project can be a template |
 | Triage | a triage epic and a Triage project for each team | one triage epic and one Triage project for the account |
-| Parents and waits-on | sub-issue and blocked-by links between its own repositories | the same, between its own repositories |
+| Parents and waits-on | sub-issue and blocked-by links between its own repositories only | the same, between its own repositories only |
 
 What an individual account lacks was read from GitHub on 2026-10-21 (§ What reaches personal, below); that only an
 organization's project can be a template is GitHub's own description of `markProjectV2AsTemplate`.
 
-Three points are open, in the plan's question 17: whether sub-issue and blocked-by links stay within an account as
-projects do, proposed yes; how work that touches two accounts is tracked, proposed an issue in each naming the other by
-URL, as the owner ruled for teams on 2026-10-22; and where each account's model file lives.
+The rest of the ruling, the same day, settles the plan's question 17:
+
+- **No link crosses accounts.** An issue blocked by another account's issue says so in its own text; where the block
+  needs following, an issue in its own account tracks the other by URL.
+- **personal's lanes leave NobleFactor's schedules** for schedules personal owns, one for each NobleFactor schedule they
+  came from, each with its own row 0; a NobleFactor lane that depends on one gets a tracking issue in NobleFactor
+  (noblefactor-engprod#428, David-Noble-at-work/personal#309).
+- **The model is the same in both kinds of account,** with four deviations, all from what an individual account lacks:
+  type is a label, so the audit, not GitHub, holds an issue to one; there are no teams, so the account owns and triages
+  everything; there are no templates, so the tooling builds each project with the same fields; and the model's data
+  holds type labels whose descriptions begin `Level N:`, as an organization's types do, in place of issue types.
+- **star tells the two kinds apart** by the repository's owner, wherever GitHub's API differs: reading types, finding
+  projects, reading teams, writing a type, and holding an issue to one type (noblefactor-engprod#426).
 
 ## What reaches personal
 
