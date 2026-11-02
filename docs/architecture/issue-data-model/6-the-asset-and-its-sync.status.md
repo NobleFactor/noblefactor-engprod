@@ -9,15 +9,15 @@ title: "6. The asset and its sync — Status"
 **Work:** [NobleFactor/noblefactor-ops#303](https://github.com/NobleFactor/noblefactor-ops/issues/303)
 **State:** Ruled 2026-10-22, from the owner's words of 2026-10-21 and 2026-10-22; the syntax and the file's shape are
 proposed and accepted ("That's great. Doc it"). `pull`, `digest`, the cache and § Access built 2026-10-24 to
-2026-10-26 in #377, `--check` standing in for `--dry-run` until devlore-cli#1170; `push`, `model audit` and the read
-before every operation not yet built.
+2026-10-26 in #377, `--check` standing in for `--dry-run` until devlore-cli#1170; `push` and `model audit` not yet built; the read
+before every operation built in #378.
 
 ## Completion
 
 - [ ] `model.yaml` beside the extension, with `version`, `pulled` and its digest, `types`, `labels` and `projects`
   with their ids; #320's labels file moved into it.
-- [ ] The ETag cache under `$XDG_CACHE_HOME/devlore/star/gh/model/`, and `star gh model digest`; the gate checks the
+- [ ] The ETag cache under `$XDG_CACHE_HOME/devlore/star/gh/model/`, and `star github model digest`; the gate checks the
   digest.
-- [ ] `star gh model pull`, `push` and `audit`; `labels sync` and `labels audit` retired into them.
+- [ ] `star github model pull`, `push` and `audit`; `labels sync` and `labels audit` retired into them.
 - [ ] The extension derives the hierarchy from `types` and names no type itself.
-- [ ] Every `star gh issues` operation reads GitHub's record conditionally first and reports when the asset is behind.
+- [x] Every `star github schedule` operation reads GitHub's record conditionally first and reports when the asset is behind. Built in #378.

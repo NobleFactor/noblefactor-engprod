@@ -25,14 +25,14 @@ must be managed carefully."
 | A "Schedule: #N, lane N" footer on a lane's issue | Nothing: the row says it |
 | `Severity:`, `Priority:` and `Area:` labels in devlore-cli only | Every repository, from the labels file; Severity on bugs only ([section 2](2-attributes.md)) |
 | GitHub's default labels, `documentation` to `wontfix`, in every repository | Removed; `duplicate`, `invalid` and `wontfix` become close reasons |
-| The report and the audit read labels, markers and body tables | They read the model: the second part, the star gh extension |
+| The report and the audit read labels, markers and body tables | They read the model: the second part, the star github extension |
 | [issue-standards.md](../../issue-standards.md) states the old scheme | It states the model |
 
 ## What must keep running
 
 Underway on 2026-10-21, and in use by sessions that cannot stop for this work:
 
-- `star gh issues report` and `star gh issues audit`, and the star-gh-progress and star-gh-assignment skills that run
+- `star github schedule report` and `star github schedule audit`, and the star-github-schedule-progress and star-github-schedule-assignment skills that run
   them;
 - the lane tables of the schedules being worked, NobleFactor/noblefactor-ops#301 and NobleFactor/devlore-cli#916;
 - the labels in use, every `Epic:` and `Thread:` label among them;
@@ -43,13 +43,13 @@ Underway on 2026-10-21, and in use by sessions that cannot stop for this work:
 Each step is its own pull request or set of them, and none takes away what a running session reads:
 
 1. **Documents.** This design, its plan, and issue-standards.md once the model is ruled. Nothing that runs reads them.
-2. **Tooling that reads both.** star gh reads the old scheme and the new one, the old by default; the audit reports
+2. **Tooling that reads both.** star github reads the old scheme and the new one, the old by default; the audit reports
    where they disagree.
 3. **New data beside the old.** New labels from the labels file; the sync adds and never deletes. Projects made for
    the schedules and threads beside their tables, which stay authoritative.
 4. **Migration, one repository at a time.** Each issue given its Type and parent, each schedule's lanes made rows, and
    the audit confirming each repository before the next.
-5. **The switch.** star gh reads the new scheme by default; the old is still there to fall back on.
+5. **The switch.** star github reads the new scheme by default; the old is still there to fall back on.
 6. **The old scheme retired,** last, once no running session reads it: the `Epic:` and `Thread:` labels, the markers,
    the tables and the footers.
 

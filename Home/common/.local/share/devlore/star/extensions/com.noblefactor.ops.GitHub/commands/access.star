@@ -44,7 +44,7 @@ def check_access(command, org = "", scopes = [], dry_run = False):
     """Fail with the one fix when gh cannot do what command needs: signed in, a live token, the scopes, the organization, and rate.
 
     Args:
-      command: the command as the user typed it, star gh <...>, named in every message.
+      command: the command as the user typed it, star github <...>, named in every message.
       org: the organization the command reads, checked when given.
       scopes: the token scopes the command needs beyond gh's own.
       dry_run: under star's --dry-run every shell.exec is skipped, so nothing can be checked and nothing is.

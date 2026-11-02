@@ -59,8 +59,8 @@ that will catch the documents up is devlore-cli#849.
 
 ## 3. A question about issues is answered by the report
 
-**The rule.** What exists, what is open, what covers a symptom, what a feature holds: `star gh issues
-report` and `star gh issues audit`, never an ad-hoc `gh issue list --search`. `gh issue view` is for
+**The rule.** What exists, what is open, what covers a symptom, what a feature holds: `star github schedule
+report` and `star github schedule audit`, never an ad-hoc `gh issue list --search`. `gh issue view` is for
 reading one body once the report has named it.
 
 **The breakage.** 2026-09-07: ten searches to answer "which bugs cover this command line", against a
@@ -72,9 +72,9 @@ run found three of the agent's own filings missing their parent feature.
 also reads every repository its lanes name (#253):
 
 ```bash
-star gh issues report --epic <Name> --view table --state open --markdown -o value --silent
-star gh issues report --by feature --epic <Name>     # or --by thread --thread <Name>, --by schedule
-star gh issues audit                                 # and --unthreaded
+star github schedule report --epic <Name> --view table --state open --markdown -o value --silent
+star github schedule report --by feature --epic <Name>     # or --by thread --thread <Name>, --by schedule
+star github schedule audit                                 # and --unthreaded
 ```
 
 `star` is a tool we build: rule 1 applies to it.

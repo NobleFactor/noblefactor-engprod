@@ -1,12 +1,12 @@
 ---
-name: star-gh-assignment
-title: "star gh assignment"
-description: Answer "What schedule are you working on?" with the schedule issue's key, `<owner>/<repository>#<number>`, from `$NFEP_AGENT_SCHEDULE`, or from this session's name when it is unset; and "What is your schedule's link?" with `$NFEP_AGENT_SCHEDULE_URL`, or the link the key makes. Triggers on "what are you working on", "what schedule are you working", "what is your assignment", "what is your schedule's link", "link to your schedule", and on `/star-gh-assignment` as a session's first prompt. Never reads the conversation, memory or the branch.
+name: star-github-schedule-assignment
+title: "star github schedule assignment"
+description: Answer "What schedule are you working on?" with the schedule issue's key, `<owner>/<repository>#<number>`, from `$NFEP_AGENT_SCHEDULE`, or from this session's name when it is unset; and "What is your schedule's link?" with `$NFEP_AGENT_SCHEDULE_URL`, or the link the key makes. Triggers on "what are you working on", "what schedule are you working", "what is your assignment", "what is your schedule's link", "link to your schedule", and on `/star-github-schedule-assignment` as a session's first prompt. Never reads the conversation, memory or the branch.
 ---
 
 # What schedule this session works, and its link
 
-The owner, 2026-10-05: *"star-gh-assignment reports the schedule issue number. that is all."* And:
+The owner, 2026-10-05: *"star-gh-assignment reports the schedule issue number. that is all."* (the skill was star-gh-assignment until #378, 2026-10-27) And:
 *"your assignment is always a schedule. always."* On 2026-10-21, of the link (NobleFactor/noblefactor-ops#260):
 *"I agree. Give the schedule's link too as you describe."* And, asked whether a link is made from the key when the
 variable is absent: *"Yes"*.

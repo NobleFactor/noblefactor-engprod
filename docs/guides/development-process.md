@@ -51,7 +51,7 @@ assumes a well-classified issue and describes how the work around it is organize
 **A feature groups the issues that serve it.** Many features may be in flight at once. The feature is
 what makes a set of otherwise unrelated issues legible as one intent.
 
-**The report is `star gh issues report`.** By epic, by feature, by thread, or by schedule — the
+**The report is `star github schedule report`.** By epic, by feature, by thread, or by schedule — the
 same issues read four ways. A pull request ends with it when one is asked for, scoped to what the pull
 request served; it is not automatic. Ruled 2026-09-12, retiring the standing rule that every pull request
 print one.
