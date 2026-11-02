@@ -38,12 +38,20 @@ _Start_Claude() {
             return 0
             ;;
         -s | --schedule)
-            # new, and the open schedules of the repository holding the working directory. Silent when gh is
-            # missing or unauthenticated: an empty completion is better than an error over the prompt.
-            local schedules="new"
+            # new, and the open schedules of the repository Start-Claude will read a bare number in: the one
+            # --directory names earlier on the line, or else the one holding the working directory (#415). Silent
+            # when gh is missing or unauthenticated, or the directory does not exist: an empty completion is better
+            # than an error over the prompt.
+            local schedules="new" directory="." index
+            for ((index = 1; index < COMP_CWORD - 1; index++)); do
+                case "${COMP_WORDS[index]}" in
+                    -C | --directory) directory="${COMP_WORDS[index + 1]}" ;;
+                esac
+            done
             if command -v gh >/dev/null 2>&1; then
-                schedules+=" $(gh issue list --state open --label chore --limit 50 --json number,title \
-                    --jq '.[] | select(.title | startswith("Schedule:")) | .number' 2>/dev/null | tr '\n' ' ')"
+                schedules+=" $(cd -- "${directory/#\~/${HOME}}" 2>/dev/null &&
+                    gh issue list --state open --label chore --limit 50 --json number,title \
+                        --jq '.[] | select(.title | startswith("Schedule:")) | .number' 2>/dev/null | tr '\n' ' ')"
             fi
             COMPREPLY=($(compgen -W "${schedules}" -- "${cur}"))
             return 0
