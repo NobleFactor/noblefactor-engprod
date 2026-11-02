@@ -211,11 +211,11 @@ rows and lanes read by the report; Start-Claude keyed as before.
 
 - [ ] Questions 5 to 9 ruled; section 3 revised
 - [x] The templates and the prototype made, on the owner's word for each organization write -- 2026-11-01, on the
-      owner's "I want it [done] end[-]to-end right now": the Schedule and Thread templates, projects 7 and 8, GitHub's
+      owner's order to build the whole entity model at once: the Schedule and Thread templates, projects 7 and 8, GitHub's
       default workflows removed; every open schedule and thread a project copied from its template, projects 9 to 22,
       its own issue as row 0 and its lanes or beats as rows, from any repository, owned by the team of the repository
       its issue lives in; 75 waits-on made blocked-by links; schedule #346's lanes 3 and 14 to 18 recorded. Schedule
-      #171, the four lanes, left out on the owner's "drop it": stale, its lanes epics
+      #171, the four lanes, left out on the owner's word: stale, its lanes epics
 - [ ] `star gh schedule add` and the report's row reading built as tasks under #332
 
 Built 2026-11-01 for questions 6, 7, 9 and 10, none of them ruled: a Lane field numbering each schedule's rows, row 0
@@ -223,18 +223,15 @@ at 0; Status's options Open, In progress and Closed, set from the issue's state 
 setting them; six issues lanes of two schedules; and a thread's rows its beats as its table had them, of any type, a
 member with no beat unnumbered.
 
-The owner's words of 2026-11-01 and 2026-11-02, in order:
+The rulings of 2026-11-01 and 2026-11-02:
 
-- 2026-11-01: "I need the entire entity model done [immediately]. this is just a bunch of github commands. you write
-  them or give me the list and I'll complete the work." Then: "I want it [done] end[-]to-end right now."
-- 2026-11-01: "we have two teams: devlore and engprod. we have a triage project for each. schedules span projects."
-  Then: "schedules span repos, I should say".
-- 2026-11-01: "schedules are being redone. the tool does not report on schedule projects yet, but your data model MUST
-  now represent each schedule that we have as a schedule project, not a schedule issue."
-- 2026-11-02: "no corporation is going to let me create issues from my personal repository in their [projects]. NONE.
-  We need to do better than that." Question 17.
-- 2026-11-02: "It's time to do this right. we are working toward a stable release of the product that does what it
-  does today well."
+- 2026-11-01: the entity model is built now, end to end, by commands the owner runs.
+- 2026-11-01: there are two teams, devlore and engprod, each with its own Triage project; a schedule's lanes come from
+  any repository.
+- 2026-11-01: every schedule is a Schedule project, its issue the project's row 0 and no longer the schedule itself; the
+  tooling does not read projects yet.
+- 2026-11-02: an organization's projects hold no issue from a person's repository: question 17.
+- 2026-11-02: the work aims at a stable release of the product as it does today, done right.
 
 ### Iteration 4: attributes
 
@@ -373,8 +370,8 @@ scheme retired last.
     [Section 6](../../architecture/issue-data-model/6-the-asset-and-its-sync.md).
 14. **GitHub's issue fields NobleFactor already has:** Priority, Effort, Start date and Target date. None reaches
     personal. Proposed: Priority as labels, one record of it; the other three outside the model until a need appears.
-17. **A person's repository and an organization's records**, added 2026-11-02. The owner: "no corporation is going to
-    let me create issues from my personal repository in their [projects]. NONE. We need to do better than that." On
+17. **A person's repository and an organization's records**, added 2026-11-02. No organization would let a person put
+    issues from a personal repository in its projects, and the model must not need it. On
     2026-11-02, 26 personal issues were sub-issues of NobleFactor issues, 12 of them open; 58 were rows of NobleFactor
     projects, 36 in Triage: engprod and 22 lanes of five schedules; and two blocked-by links crossed between them.
     Proposed: nothing in an organization's records points at a personal repository, no project row, sub-issue link or
