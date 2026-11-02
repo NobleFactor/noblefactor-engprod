@@ -165,9 +165,9 @@ read before every operation; the report and the audit reading type and link firs
 - [x] The write test, first half: a sub-issue link across repositories and across owners -- 2026-10-22, it crosses both
 - [x] The write test, second half: a single-select option updated by id -- 2026-10-26, under #377, on project 4, the
       thread built for it: its options renamed by id, every row keeping its value
-- [ ] #304, noblefactor-ops renamed noblefactor-engprod, done early: the owner, 2026-10-22, "bump up the priority of
+- [x] #304, noblefactor-ops renamed noblefactor-engprod, done early: the owner, 2026-10-22, "bump up the priority of
       the issue for renaming noblefactor-ops as noblefactor-engprod. we might do that before we go much further. it
-      will be one less thing to worry about at the end." Its own plan and pull request, before the rollout below
+      will be one less thing to worry about at the end." Its own plan and pull request, before the rollout below -- complete 2026-11-02
 - [x] Section 5's deltas and order rewritten to the rulings so far, each delta with its state; the status companions of
       sections 1, 3, 4 and 5 set -- 2026-10-22
 - [x] The tasks filed under #332 and #333 -- 2026-10-22, approved that day, nine in the order of their pull requests,

@@ -1,9 +1,9 @@
 ---
 title: "noblefactor-ops becomes noblefactor-engprod: GitHub once, then every machine, then the text"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/304
-status: active
+status: complete
 created: 2026-10-22
-updated: 2026-10-22
+updated: 2026-11-02
 ---
 
 # Plan: noblefactor-ops becomes noblefactor-engprod
@@ -100,11 +100,14 @@ written. One pull request per repository, the base layer first.
 
 ### Phase 2: personal
 
-- [ ] The four layer directories renamed and the CI reference changed, pull request 2 in personal, merged
+- [x] The four layer directories renamed and the CI reference changed, pull request 2 in personal, merged -- the
+      directories in personal#302, 2026-10-22; the CI reference, which could not change before the rename existed, in
+      personal#310, 2026-11-02
 
 ### Phase 3: GitHub, once
 
-- [ ] `gh repo rename`, by the owner or under one grant; the redirect shown to hold
+- [x] `gh repo rename`, by the owner or under one grant; the redirect shown to hold -- 2026-10-22; on 2026-11-02 the old
+      name still answers as NobleFactor/noblefactor-engprod
 
 ### Phase 4: each machine
 
@@ -137,9 +140,11 @@ danoble-ud24-1, named for #367's order.
       extension gains `canonical_repo`: the old name reads as the new wherever an owner/repo is parsed, markers,
       lane and beat tables, `--repo` and `--schedule`, so the sessions named by the old key keep working; proven
       against the live repositories through a private copy of the extension
-- [ ] devlore-cli's live references, pull request 4
-- [ ] personal's live references and the owner's CLAUDE.md, pull request 5
-- [ ] Status `complete`; #304 closed
+- [x] devlore-cli's live references, pull request 4 -- devlore-cli#1189, 2026-11-02, closing devlore-cli#1141; the
+      comments beside them name the new repository too
+- [x] personal's live references and the owner's CLAUDE.md, pull request 5 -- personal#310, 2026-11-02, closing
+      personal#303, with personal#301, whose directories landed in personal#302
+- [x] Status `complete`; #304 closed -- 2026-11-02, by this plan's closing pull request
 
 ## Migration Path
 
