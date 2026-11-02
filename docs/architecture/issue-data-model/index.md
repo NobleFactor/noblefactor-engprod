@@ -4,7 +4,7 @@ title: "Issue data model — one hierarchy, its attributes, and the collections 
 
 # Issue data model — one hierarchy, its attributes, and the collections that order it
 
-> **Status:** draft, 2026-10-21, for the owner's review; nothing in it is ruled. The work:
+> **Status:** ruled in part, 2026-10-22 to 2026-11-02; what is open is in the plan's questions. The work:
 > [NobleFactor/noblefactor-ops#303](https://github.com/NobleFactor/noblefactor-ops/issues/303), a chore under issue
 > standards, [NobleFactor/noblefactor-ops#156](https://github.com/NobleFactor/noblefactor-ops/issues/156). The
 > [plan](../../plans/chore/303-issue-data-model.md) holds the owner's words, each quoted with its date, and the open
@@ -34,18 +34,18 @@ the order they are worked.
 
 | Section | What it holds | Status |
 | --- | --- | --- |
-| [1. The hierarchy](1-hierarchy.md) | Type and its five values, the three levels, parents, triage, and how long a level lives | [Draft](1-hierarchy.status.md) |
+| [1. The hierarchy](1-hierarchy.md) | Type and its five values, the three levels, parents, triage, and how long a level lives | [Ruled in part](1-hierarchy.status.md) |
 | [2. Attributes](2-attributes.md) | Severity, Priority and Area: what an issue has on its own, outside any collection | [Draft](2-attributes.status.md) |
-| [3. Collections](3-collections.md) | Threads, schedules and the Triage project as GitHub projects: who joins which, rows and lanes, the collection's own record, ownership | [Draft](3-collections.status.md) |
-| [4. Storage and reach](4-storage-and-reach.md) | Where each part lives in GitHub, what enforces it, and which repositories it reaches | [Draft](4-storage-and-reach.status.md) |
-| [5. From today's scheme](5-from-todays-scheme.md) | The deltas the task list is drawn from, and the order that keeps running work running | [Draft](5-from-todays-scheme.status.md) |
+| [3. Collections](3-collections.md) | Threads, schedules and the Triage project as GitHub projects: who joins which, rows and lanes, the collection's own record, ownership | [Ruled in part](3-collections.status.md) |
+| [4. Storage and reach](4-storage-and-reach.md) | Where each part lives in GitHub, what enforces it, and which repositories it reaches | [Ruled](4-storage-and-reach.status.md) |
+| [5. From today's scheme](5-from-todays-scheme.md) | The deltas the task list is drawn from, and the order that keeps running work running | [Revised](5-from-todays-scheme.status.md) |
 | [6. The asset and its sync](6-the-asset-and-its-sync.md) | `model.yaml` beside the extension, `star github model pull` and `push`, the ETag read before every operation | [Ruled](6-the-asset-and-its-sync.status.md) |
 | [7. The workflow, before and after](7-the-workflow-before-and-after.md) | Why this epic: filing an issue, writing a schedule and reporting progress, as a session does them today and once the model is in | [Written](7-the-workflow-before-and-after.status.md) |
 
 ## Terms
 
 - **Type:** the hierarchy's classifier. Its values are Epic, Feature, Chore, Task and Bug, and a triaged issue has
-  exactly one. Whether it is GitHub's own issue type or a label family is open (the plan's question 1).
+  exactly one. It is GitHub's own issue type, ruled 2026-10-22; personal, which types do not reach, carries it as a label.
 - **Level:** an issue's depth in the hierarchy: 0 for an epic, 1 for a feature or a chore, 2 for a task or a bug.
 - **Parent:** the issue one level up. An epic has none.
 - **Untriaged:** an issue with no Type or no parent: not fully classified. The queries find them; the Triage project
