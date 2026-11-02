@@ -10,7 +10,8 @@ title: "4. Storage and reach — Status"
 **State:** Ruled 2026-10-22: Type and the parent are GitHub's; personal keeps labels synced one way; the sub-issue link
 crosses repositories and owners, proven by the write test of that day. The write test's second half, an option updated
 by id, passed 2026-10-26 under #377, and blocked-by links cross repositories and owners, 2026-11-01. The
-plan's question 17, added 2026-11-02, asks whether an organization's records may point at a personal repository at all.
+plan's question 17, added 2026-11-02, asks whether an organization's records may point at a personal repository at all. Ruled 2026-11-02: organizations and individual accounts are separate, each with its own model
+(§ Accounts in section 4).
 
 ## Completion
 
