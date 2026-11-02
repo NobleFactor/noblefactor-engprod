@@ -22,11 +22,11 @@ pulled:
   org: NobleFactor
   digest: sha256:9b1e…
 types:
-  - { name: Epic,    id: IT_kwDO…a1, level: 0 }
-  - { name: Feature, id: IT_kwDO…b2, level: 1 }
-  - { name: Chore,   id: IT_kwDO…c3, level: 1 }
-  - { name: Task,    id: IT_kwDO…d4, level: 2 }
-  - { name: Bug,     id: IT_kwDO…e5, level: 2 }
+  - { name: Epic,    id: 914457658, level: 0 }
+  - { name: Feature, id: 344350,    level: 1 }
+  - { name: Chore,   id: 914457671, level: 1 }
+  - { name: Bug,     id: 344348,    level: 2, unplanned: true }
+  - { name: Task,    id: 344346,    level: 2 }
 teams:
   - { name: engprod, slug: engprod, id: T_kwDO…, role: triage }
 labels:
@@ -63,15 +63,20 @@ projects:
   cache, below.
 - **`pulled.digest`** is a SHA-256 over the file with that one line excluded, written by `pull`. The extension
   recomputes it on every load. A mismatch means the file was edited by hand since its pull: a read-only operation
-  runs anyway and says so in one header line, `push` refuses, and the repository's gate fails a pull request that
+  runs anyway and says so in one header line, never failing the extension's load, since star loads every command file
+  with the extension and a failure there would take `pull` and `digest`, the commands that repair it, down too (built
+  2026-10-24, #377), `push` refuses, and the repository's gate fails a pull request that
   carries a mismatched asset. The fix is a `pull`, which rewrites file and digest together, or a deliberate edit
-  followed by `star gh model digest`, which re-signs it and leaves the edit in the diff for review. A digest, not a
+  followed by `star github model digest`, which re-signs it and leaves the edit in the diff for review. A digest, not a
   signature: the owner, 2026-10-22, "I'm not so concerned with security, just clumsy edits", and git already says
   who. What it does not catch, an edit followed by a re-digest, is the pull request's to catch.
 - **`types`** is the hierarchy as data: each type's name and its level. The extension derives the rest: level 0 has
   no parent, the last level is the lanes, a parent is one level up, and the types of one level are mutually exclusive.
   The owner, 2026-10-21: "We've got a hierarchy and a level number might be sufficient. we assume mutual exclusion at
-  each level in the hierarchy." Nothing in the extension names a type.
+  each level in the hierarchy." Nothing in the extension names a type (noblefactor-engprod#376, 2026-10-22). Two
+  things the levels do not say, so the asset does: the order of the types within a level is the order the report
+  renders them in, features before chores; and `unplanned: true` marks the leaf type that is found rather than
+  planned, which is what triage waits on and what Severity attaches to.
 - **A type is keyed by its id, never its name,** so that the owner can rename one. The owner, 2026-10-22: "i should be
   able to rename issue types. Will I be able to do that?" GitHub's issue type has a name, a description, a color and
   an enabled flag, and nothing about hierarchy; an issue holds its type by id, so a rename made in GitHub reaches every
@@ -148,8 +153,8 @@ where it does not, which is labels.
 ## Two verbs, one hub
 
 ```
-star gh model pull [--org <organization>] [--asset <path>]
-star gh model push [--org <organization>] [--repo <owner/repo>[,...]] [--delete] [--force] [--asset <path>]
+star github model pull [--org <organization>] [--asset <path>]
+star github model push [--org <organization>] [--repo <owner/repo>[,...]] [--delete] [--force] [--asset <path>]
 ```
 
 Both target an organization, NobleFactor by default: the owner, 2026-10-22, "We need pull and push to target an
@@ -168,17 +173,23 @@ split falls between the two verbs.
 | `push` | the asset | the organization's record, or the named repositories' labels; personal first ([section 4](4-storage-and-reach.md)) | never by default; see Risk | changes in GitHub, reported |
 
 - **`pull`** reads each record conditionally by its ETag, rewrites the asset where a record changed, and prints the
-  diff. Exit 0 when nothing changed, 1 when the asset was rewritten, 2 on a conflict it will not resolve. With
-  `--dry-run` it prints the diff and writes nothing. The owner, 2026-10-22, of its first use: "I made some changes to
+  diff. Exit 0 whether nothing changed or the asset was rewritten, the summary line saying which; exit 1 on a conflict
+  it will not resolve, nothing written. Ruled 2026-10-23: a star command exits only 0 or 1. With `--check` it prints
+  the diff and writes nothing: a workaround, since star's `--dry-run` skips every read a preview needs
+  ([devlore-cli#1170](https://github.com/NobleFactor/devlore-cli/issues/1170)); `pull` refuses `--dry-run` and names
+  `--check`, which retires when #1170 lands. A real pull writes only an asset in a git tree off its default branch with
+  no uncommitted change to it, so the deployed asset, a link into the layer clone on develop, is pulled into through a
+  worktree's with `--asset`. The owner, 2026-10-22, of its first use: "I made some changes to
   the data model on GitHub and want to sync back to the repo to ensure consistency. I will say that is the first thing
   I will do when the data model is complete."
-- **`push`** replaces `star gh labels sync`: it brings the organization's record, or the named repositories' labels,
+- **`push`** replaces `star github labels sync`: it brings the organization's record, or the named repositories' labels,
   to the asset, adding and correcting, never deleting unless told to, and `--dry-run` shows the changes. This is how
   personal participates: the owner, 2026-10-22, "Star gh offers directed syncs. Person[al] will need to sync if it
   wants to participate."
-- **`star gh model audit`** replaces `star gh labels audit`: drift between the asset and any repository, reported,
+- **`star github model audit`** replaces `star github labels audit`: drift between the asset and any repository, reported,
   nothing written.
-- `--asset` defaults to the file beside the extension and exists for tests.
+- `--asset` defaults to the file beside the extension, and names a worktree's asset for a real pull.
+- **Every command that talks to GitHub checks gh's access first,** § Access below.
 
 ## Risk
 
@@ -191,9 +202,9 @@ destroy, and what stands in the way:
 | `push` of a label | a label removed strips it from every issue carrying it | deletion is off: `push` never deletes without `--delete`, which prints what each deletion strips and how many issues carry it, and `--dry-run` shows it all first. Ruled 2026-10-22: "I think we need to use a flag like --delete." The name is rsync's and rclone's for the same switch; `--force` is kept for the stale-push override below, as in git, so the two risks have two switches and neither implies the other |
 | `push` of an issue type | a type removed changes every issue of that type | the same `--delete` gate |
 | `push` of a project field | a field removed loses every row's value | the same gate; a field removal names the rows that hold a value |
-| a single-select option changed through the API | GitHub's GraphQL updates a single-select field by taking the whole option list, and an option sent without its existing id is a new option: the old one is deleted and every row that held it goes blank. Believed from the API's shape, not yet run: the write test proves it | `push` sends every option with the id the asset holds, and refuses an option whose id it does not have, so a rename is never sent as a replacement by accident; the test runs before `push` touches a field at all |
+| a single-select option changed through the API | GitHub's GraphQL updates a single-select field by taking the whole option list, and an option sent without its existing id is a new option: the old one is deleted and every row that held it goes blank. Run 2026-10-26 (#377): `ProjectV2SingleSelectFieldOptionInput` takes the option's `id`, and an update sending each option with its id renamed Todo to Not run, In Progress to Fails and Done to Passes in place, all six of project 4's rows keeping their value | `push` sends every option with the id the asset holds, and refuses an option whose id it does not have, so a rename is never sent as a replacement by accident; the test runs before `push` touches a field at all |
 | a rename of a type, a label or a field | from the asset's side a rename is indistinguishable from a removal and a creation, so a push would strip the old name from everything and create an empty new one; and every consumer that names the thing by text, the markers in issue bodies, the `Epic:<Name>` labels, the extension's queries, the documents, keeps the old name | `push` refuses a rename. The rename is made in GitHub, which carries it to the issues and rows that hold the thing by id, then `pull` shows the diff so every text consumer is corrected in the same pull request. Ruled 2026-10-22: "We do not want to be surprised by blocks resulting from name changes that did not propagate." |
-| a hand edit of the asset | a clumsy edit pushed into GitHub as if it were the pulled record | `pulled.digest`: `push` refuses a mismatched asset, every read says so, and CI fails the pull request; `pull` or `star gh model digest` clears it |
+| a hand edit of the asset | a clumsy edit pushed into GitHub as if it were the pulled record | `pulled.digest`: `push` refuses a mismatched asset, every read says so, and CI fails the pull request; `pull` or `star github model digest` clears it |
 | a stale `push` | the asset was pulled, GitHub moved, the push writes over the move | `push` works the way `git push` works: it re-reads each record and refuses when GitHub has moved since `pulled.at`, by `updated_at` on issue types and `updatedAt` on projects, and by content for labels, as git refuses a push that is not a fast-forward of the remote; `pull` first, then `push`. `--force` overrides it, as `git push --force` does, and prints what it is overwriting. Ruled 2026-10-22: "Cite the git case and ensure that we doc that it works the way git push works." |
 | the wrong organization | a push meant for one organization lands on another | the organization is one per invocation, printed in the first line, and `--dry-run` shows it |
 | an agent running it | a session pushes on its own judgment | the owner runs `push`, as the owner runs every script that writes to GitHub; a session writes the command and hands it over |
@@ -229,22 +240,46 @@ issues and rows, and this design does not provide one; it is named here so that 
 Until it exists, the schedule issues' lane tables and the parent markers in issue bodies are the copies of record for
 membership and parents, which is one more reason section 5 retires them last.
 
+## Access
+
+Ruled 2026-10-26: "The extension should check for access and if the login is stale or access is denied you should
+either exit with specific instructions". Every command that reads or writes GitHub, `pull` and the issues and labels
+commands, checks gh's access before its first request, and when it cannot go on it fails with what is wrong and the one
+thing that fixes it. It never signs in or adds a scope itself: star captures a command's output, so gh's one-time code
+would never reach the user, and the sessions that run star must not change credentials. The user signs in and adds a
+scope; GitHub issues the token and refuses what it cannot do. Built 2026-10-26 in `commands/access.star` (#377).
+
+| # | Found | The command says |
+| --- | --- | --- |
+| 1 | gh is not signed in | You are not signed in to github.com with gh on this machine. Sign in: `gh auth login --hostname github.com`, then rerun |
+| 2 | GitHub refuses the token, 401 | GitHub refused gh's token for the account; it has expired or been revoked. Renew your login: `gh auth refresh --hostname github.com`, then rerun. A token from `GH_TOKEN` or `GITHUB_TOKEN`: replace it, or unset it to use the gh login |
+| 3 | the token lacks a scope the command needs | Your gh login lacks the scope the command needs, naming exactly the missing ones. Add it: `gh auth refresh --hostname github.com --scopes <missing>`, then rerun. `project` includes `read:project`, so the check never asks for both |
+| 4 | the account cannot see the organization, 403 or 404, every scope held | the account cannot see the organization; no command here fixes it: an owner of the organization must grant the account access |
+| 5 | the rate limit is spent | when it resets, in local time; rerun after that |
+
+`pull` needs `read:project`, and checks the organization it reads; the issues and labels commands need gh's own scopes.
+The refresh in rows 2 and 3 is interactive, a one-time code approved in a browser, so it runs in the user's own
+terminal, not through a session. Under star's `--dry-run` every shell call is skipped, so nothing can be checked and
+the check is skipped with it.
+
 ## Every operation reads first
 
 The owner, 2026-10-22: "I argue that we pull before every star gh issues operation. We might optimize around some form
-of change detection." So every `star gh issues` operation begins with the conditional read `pull` makes, three or four
+of change detection." So every `star github schedule` operation begins with the conditional read `pull` makes, three or four
 requests sent with the cache's ETags and answered 304 when nothing moved, and runs against GitHub's record. It writes
 nothing but the cache: the deployed asset is a link into the layer clone, and a read-only command must not dirty a
 tracked file there. When a record is not 304 and
 the asset is behind, the operation says so in one line of its header and goes on, the way the audit opens the tree
-report today.
+report today. Built 2026-10-27 (#378): `star github schedule report` and `audit` make `pull`'s read, sharing its
+comparison; the line is the first of a markdown document, where `--silent` cannot hide it, and a warning otherwise; the
+comparison ignores comment lines, since `pull`'s header names the command and a rename changes it.
 
 ## Examples
 
 Scenario 2, the owner adds a Priority field to the Schedule template in GitHub:
 
 ```
-$ star gh model pull
+$ star github model pull
 [star] issue-types  W/"3f9c…"  unchanged (304)
 [star] labels       W/"66b6…"  unchanged (304)
 [star] projects     W/"a1d0…"  changed
@@ -261,7 +296,7 @@ $ star gh model pull
 Scenario 1, personal joining:
 
 ```
-$ star gh model push --repo David-Noble-at-work/personal --dry-run
+$ star github model push --repo David-Noble-at-work/personal --dry-run
 [star] David-Noble-at-work/personal: 3 labels to create, 1 to align, 0 to delete (push never deletes)
   create  Epic:Ops:IssueTracking  5319e7
   create  Severity:Low            e4e669
@@ -296,7 +331,7 @@ the two moments it matters, filing an issue there and adding one of its issues a
    teams' and its own, and keeps a digest of the matching list in the cache beside the ETag, written only when the
    comparison passed, by a `push` or an audit.
 3. A 304 against a cached digest is proof at no cost. A changed list is compared again. A list that lacks a label the
-   asset requires is a refusal: "NobleFactor/foo is not participating: 3 labels missing; run star gh model push
+   asset requires is a refusal: "NobleFactor/foo is not participating: 3 labels missing; run star github model push
    --repo NobleFactor/foo", and nothing is filed and no row is added.
 
 The cache's entry for a repository therefore holds its ETag, the digest of its labels as last proven, and when:
@@ -313,8 +348,8 @@ and nothing else there either.
 **Joining**, in order:
 
 1. The repository is named where the tooling reads repositories: for a writ layer, its clone is already one of the
-   layers' repositories, and `star gh` reads it; for any other, `--repo` names it.
-2. `star gh model push --repo <owner/repo>`, after `--dry-run`, gives it the labels the asset defines: the type labels,
+   layers' repositories, and `star github` reads it; for any other, `--repo` names it.
+2. `star github model push --repo <owner/repo>`, after `--dry-run`, gives it the labels the asset defines: the type labels,
    the attributes, and the epic labels of the epics its issues serve. Nothing is deleted.
 3. Its issues are filed as the standard says: one type label, the parent marker, the attributes it needs. The audit
    reports what is missing, and the Triage project takes what is unplaced ([section 1](1-hierarchy.md) § Triage).

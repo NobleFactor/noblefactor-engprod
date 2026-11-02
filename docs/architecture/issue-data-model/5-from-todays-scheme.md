@@ -13,7 +13,7 @@ which deltas are already closed.
 
 ## The line that protects the running sessions
 
-What the sessions read: `star gh issues report` and `audit`, through the kind labels, the `**Feature:**` and
+What the sessions read: `star github schedule report` and `audit`, through the kind labels, the `**Feature:**` and
 `**Chore:**` markers and the lane tables; Start-Claude, keyed by a schedule's issue number; and the label set.
 Anything added beside those breaks nothing: issue types, sub-issue links, projects, the asset, `pull`, tooling that
 reads the new form before the old. What breaks a session is removing a label or a marker, replacing a lane table with
@@ -38,7 +38,7 @@ the switch, taken when the affected sessions are between lanes.
 | `Severity:`, `Priority:` and `Area:` labels in devlore-cli only | Every participating repository, from the asset's tiers; Severity on bugs only ([section 2](2-attributes.md)) | iteration 4, questions 11 and 14 |
 | GitHub's default labels, `documentation` to `wontfix`, in every repository | Removed; `duplicate`, `invalid` and `wontfix` become close reasons, GitHub's three being completed, not planned and duplicate | iteration 4 |
 | The labels file on #320's branch, under `docs/architecture/issue-labels/` | **`model.yaml` beside the star extension**: types with levels and ids, labels in three tiers, projects with fields and option ids, a digest; the ETag cache under `XDG_CACHE_HOME` ([section 6](6-the-asset-and-its-sync.md)) | **The first pull exists**, by hand, 2026-10-22: the five types and the hub's 21 labels; no projects, no tiers, no attributes yet |
-| `star gh labels sync` and `labels audit`, from the labels file | `star gh model pull` from the organization's record, `push` to the organization and to named repositories, `audit`; every `star gh issues` operation reads the record first, by ETag | iteration 1 and 2 tooling, under #332 |
+| `star github labels sync` and `labels audit`, from the labels file | `star github model pull` from the organization's record, `push` to the organization and to named repositories, `audit`; every `star github schedule` operation reads the record first, by ETag | iteration 1 and 2 tooling, under #332 |
 | Participation: writ's layer list says which repositories the report reads | A repository is in when a schedule, a thread, a filing or `--repo` names it, and participation is proven at filing and at adding a row, by its labels against the asset | ruled 2026-10-22 |
 | One organization repository and one user repository, personal, treated alike | The organization defines, a team owns, a repository carries; personal keeps labels synced one way from the organization's record, and its parents are real sub-issue links | ruled 2026-10-22 |
 | The report and the audit read labels, markers and body tables | They read the type, the link and the rows first; the labels, markers and tables second until the switch, then not at all | iteration 1 tooling, under #332 |
@@ -48,8 +48,8 @@ the switch, taken when the affected sessions are between lanes.
 
 Underway on 2026-10-22, and in use by sessions that cannot stop for this work:
 
-- `star gh issues report` and `star gh issues audit`, and the star-gh-progress and star-gh-assignment skills that run
-  them, from the five schedule sessions on four machines;
+- `star github schedule report` and `star github schedule audit`, and the star-github-schedule-progress and
+  star-github-schedule-assignment skills that run them, from the five schedule sessions on four machines;
 - the lane tables of the schedules being worked, noblefactor-engprod#346, noblefactor-engprod#301, devlore-cli#916,
   devlore-cli#949 and devlore-cli#1127;
 - the labels in use, every `Epic:` and `Thread:` label among them;

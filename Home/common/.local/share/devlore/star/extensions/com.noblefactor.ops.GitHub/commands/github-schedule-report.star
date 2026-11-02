@@ -9,10 +9,12 @@
 # devlore-cli's scripts/Get-EpicReport. The result is the rows; --markdown returns the document the
 # script prints instead, for the reader and for the parity diff.
 
-load("commands/scheme.star", "audit", "audit_lines", "axis", "by_axis", "by_number", "canonical_repo", "children_of", "epic_name", "epic_rows", "epic_tag", "exempt_numbers", "feature_rows", "feature_table_lines", "fetch_issues", "is_bug", "is_child", "key", "kind_of", "label_space", "lane_repos", "line", "parent", "parents_of", "resolve_repos", "schedule_issues", "schedule_rows", "schedule_table_lines", "short", "table_lines", "tagged", "task_row", "thread_names", "thread_rows", "thread_table_lines")
+load("commands/access.star", "check_access")
+load("commands/model.star", "read_first")
+load("commands/scheme.star", "LEAF_KINDS", "PARENT_KINDS", "audit", "audit_lines", "axis", "by_axis", "by_number", "canonical_repo", "children_of", "epic_name", "epic_rows", "epic_tag", "exempt_numbers", "feature_rows", "feature_table_lines", "fetch_issues", "is_child", "is_root", "key", "kind_of", "label_space", "lane_repos", "line", "parent", "parents_of", "resolve_all", "resolve_repos", "schedule_issues", "schedule_rows", "schedule_table_lines", "short", "table_lines", "task_row", "thread_names", "thread_rows", "thread_table_lines")
 
 def _epics(all, epic_filter):
-    return by_axis(by_number([i for i in all if tagged(i, "epic") and (epic_filter == "" or epic_tag(i) == "Epic:" + epic_filter)]), epic_name)
+    return by_axis(by_number([i for i in all if is_root(i) and (epic_filter == "" or epic_tag(i) == "Epic:" + epic_filter)]), epic_name)
 
 # Between the last product section and the first tooling section, when both are present.
 def _divider(items, name_of, idx):
@@ -51,7 +53,7 @@ def _tree_document(all, epics, state, repos, a):
         tasks = [i for i in all if is_child(i) and epic_tag(i) == tag]
         parent_keys = [key(f) for f in parents]
         out.append("\n## " + line(e))
-        out.append("\n_" + str(len([f for f in parents if kind_of(f) == "feature"])) + " feature(s), " + str(len([f for f in parents if kind_of(f) == "chore"])) + " chore(s), " + str(len([t for t in tasks if not is_bug(t)])) + " task(s), " + str(len([t for t in tasks if is_bug(t)])) + " bug(s)._")
+        out.append("\n_" + ", ".join([str(len([f for f in parents if kind_of(f) == k])) + " " + k + "(s)" for k in PARENT_KINDS] + [str(len([x for x in tasks if kind_of(x) == k])) + " " + k + "(s)" for k in LEAF_KINDS]) + "._")
         if len(parents) == 0:
             out.append("\n_Awaiting plan and design: no features or chores filed._")
         for f in parents:
@@ -124,7 +126,7 @@ def _with_lane_repos(scheds, all, repos, state, limit):
     note("repositories the lanes name: " + ", ".join(extra))
     for it in all:
         it["ref"] = short(it["repo"]) + "#" + str(it["number"])
-    return all + fetch_issues(state, limit, extra, True), repos + extra
+    return resolve_all(all + fetch_issues(state, limit, extra, True)), repos + extra
 
 def _names_schedule(spec, sched):
     """Whether spec, <owner>/<repository>#<number> or a bare <number>, names the schedule issue sched."""
@@ -133,11 +135,10 @@ def _names_schedule(spec, sched):
         return canonical_repo(owner_repo) + "#" + number == key(sched)
     return spec == str(sched["number"])
 
-def run(_command, ctx):
+def _run(ctx):
     """Render the tree by epic; rows by default, the script's markdown document with --markdown.
 
     Args:
-      _command: the command spec star passes first; unused here.
       ctx: the invocation -- ctx.args carries the flags.
     """
     by = ctx.args.get("by", "epic")
@@ -223,3 +224,18 @@ def run(_command, ctx):
     for e in epics:
         rows.extend(epic_rows(e, all))
     return rows
+
+def run(_command, ctx):
+    """Check gh's access, read GitHub's record against the asset, then run; say when the asset is behind (#378).
+
+    The line goes first in a markdown document, where --silent cannot hide it, and to a warning otherwise.
+    """
+    check_access("star github schedule report", dry_run = ctx.dry_run)
+    behind = read_first(dry_run = ctx.dry_run)
+    result = _run(ctx)
+    if behind == "":
+        return result
+    if type(result) == "string":
+        return "> " + behind + "\n\n" + result
+    warn(behind)
+    return result

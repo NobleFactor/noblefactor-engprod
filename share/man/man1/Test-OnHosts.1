@@ -1,0 +1,63 @@
+.\" SPDX-License-Identifier: Apache-2.0
+.\" Copyright (c) 2026 Noble Factor. All rights reserved.
+.TH TEST-ONHOSTS 1 "October 2026" "Noble Factor" "User Commands"
+.SH NAME
+Test-OnHosts \- run every test under tests/ on each host named
+.SH SYNOPSIS
+.B Test-OnHosts
+.RB [ \-h | \-\-help ]
+.IR host ...
+.SH DESCRIPTION
+.B Test-OnHosts
+runs every test under
+.I tests/
+on each host named, in turn, and fails when any host's tests fail, naming each.
+A name that is this machine's, by its short host name or localhost, runs here, through
+.BR Test-Here (1).
+Any other host gets a copy of this working tree's
+.IR Home ,
+.I bin
+and
+.IR tests ,
+what git tracks and what is new and not ignored, in a folder of its own under
+.IR ~/.local/state/noblefactor-engprod-tests ,
+and runs its tests there over ssh: through
+.B Test-Here
+on macOS and Linux, and
+.B Test-Here.ps1
+on Windows, which is asked of the host.
+The folder goes when its tests pass, and stays, named, when they fail.
+.B make test HOSTS=\(dq\fIhost\fR ...\(dq
+runs it.
+.SH OPTIONS
+.TP
+.BR \-h ", " \-\-help
+Show this manual page and exit.
+.SH EXIT STATUS
+.TP
+.B 0
+Every host's tests passed.
+.TP
+.B 1
+A host's tests failed; each is named.
+.TP
+.B 64
+Usage error \- no host named.
+.TP
+.B 72
+Critical file missing \- \fBDeclare-BashScript\fR is not in the repository's \fIHome/common/.local/bin\fR, or the repository's root cannot be entered.
+.SH EXAMPLES
+.nf
+bin/Test-OnHosts danoble-mbp-a danoble-ud24-1 danoble-wd11-3
+make test HOSTS=\(dqdanoble-mbp-a danoble-ud24-1\(dq
+.fi
+.SH SEE ALSO
+.BR Test-Here (1),
+.BR ssh (1),
+.BR make (1)
+.SH AUTHOR
+Noble Factor
+.SH COPYRIGHT
+Copyright \(co 2026 Noble Factor.
+.br
+Licensed under the Apache License, Version 2.0.

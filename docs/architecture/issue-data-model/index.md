@@ -12,14 +12,14 @@ title: "Issue data model — one hierarchy, its attributes, and the collections 
 
 The owner, 2026-10-21: "the data model goes into the epic around issue tracking. there are two technical sides: the
 GitHub data model and the tooling (star gh). and migration must be managed carefully." This design is the first
-technical side, the data model. The second, the star gh extension that reads and enforces it, gets a design of its own
+technical side, the data model. The second, the star github extension that reads and enforces it, gets a design of its own
 once this one is ruled. The migration between today's scheme and the model is [section 5](5-from-todays-scheme.md). The
 epic, filed 2026-10-21, is [Epic: Issue tracking, #330](https://github.com/NobleFactor/noblefactor-ops/issues/330): this
 design is its feature [#331](https://github.com/NobleFactor/noblefactor-ops/issues/331), the tooling is
 [#332](https://github.com/NobleFactor/noblefactor-ops/issues/332), and the rollout, which carries the migration and the
 rename of noblefactor-ops to noblefactor-engprod, is [#333](https://github.com/NobleFactor/noblefactor-ops/issues/333).
 
-What every NobleFactor issue is, what it carries, and how it is ordered: the model `star gh` will read, the audit will
+What every NobleFactor issue is, what it carries, and how it is ordered: the model `star github` will read, the audit will
 enforce, and [issue-standards.md](../../issue-standards.md) will state once it is ruled. It replaces the scheme that
 document states today, where an issue's place is a kind label, an `Epic:<Name>` label and a `**Feature:**` marker, and
 threads and schedules are tables in issue bodies.
@@ -39,7 +39,7 @@ the order they are worked.
 | [3. Collections](3-collections.md) | Threads, schedules and the Triage project as GitHub projects: who joins which, rows and lanes, the collection's own record, ownership | [Draft](3-collections.status.md) |
 | [4. Storage and reach](4-storage-and-reach.md) | Where each part lives in GitHub, what enforces it, and which repositories it reaches | [Draft](4-storage-and-reach.status.md) |
 | [5. From today's scheme](5-from-todays-scheme.md) | The deltas the task list is drawn from, and the order that keeps running work running | [Draft](5-from-todays-scheme.status.md) |
-| [6. The asset and its sync](6-the-asset-and-its-sync.md) | `model.yaml` beside the extension, `star gh model pull` and `push`, the ETag read before every operation | [Ruled](6-the-asset-and-its-sync.status.md) |
+| [6. The asset and its sync](6-the-asset-and-its-sync.md) | `model.yaml` beside the extension, `star github model pull` and `push`, the ETag read before every operation | [Ruled](6-the-asset-and-its-sync.status.md) |
 | [7. The workflow, before and after](7-the-workflow-before-and-after.md) | Why this epic: filing an issue, writing a schedule and reporting progress, as a session does them today and once the model is in | [Written](7-the-workflow-before-and-after.status.md) |
 
 ## Terms

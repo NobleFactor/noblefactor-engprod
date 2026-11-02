@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC2207,SC2034 # COMPREPLY and standard completion variables
+
+# bash completion for Clear-Claude
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Noble Factor. All rights reserved.
+
+# _Clear_Claude completes Clear-Claude's options and their values for bash.
+#
+# Parameters:
+#   - none: bash's COMP_WORDS and COMP_CWORD say what is being completed.
+#
+# Returns:
+#   - 0, with the candidates in COMPREPLY.
+_Clear_Claude() {
+    local cur prev opts word
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD - 1]}"
+
+    opts="-C --directory -h --help -s --schedule"
+
+    # --clear and --retire exclude each other: neither is offered once one is given.
+    local mode_given=0
+    for word in "${COMP_WORDS[@]:1:COMP_CWORD-1}"; do
+        [[ "${word}" == --clear || "${word}" == --retire ]] && mode_given=1
+    done
+    ((mode_given)) || opts+=" --clear --retire"
+
+    case "${prev}" in
+        -C | --directory)
+            # Any directory completes; the script accepts only the root of a repository clone.
+            COMPREPLY=($(compgen -d -- "${cur}"))
+            return 0
+            ;;
+        -s | --schedule)
+            # The schedules Start-Claude's store holds a conversation for, as <owner>/<repository>#<number>.
+            local store="${XDG_STATE_HOME:-${HOME}/.local/state}/agent-schedule" entry schedules=""
+            for entry in "${store}"/*/*/*; do
+                [[ -f "${entry}" && "${entry}" != *.lock ]] || continue
+                entry="${entry#"${store}"/}"
+                schedules+=" ${entry%/*}#${entry##*/}"
+            done
+            COMPREPLY=($(compgen -W "${schedules}" -- "${cur}"))
+            return 0
+            ;;
+    esac
+
+    if [[ ${cur} == -* ]]; then
+        COMPREPLY=($(compgen -W "${opts}" -- "${cur}"))
+        return 0
+    fi
+
+    return 0
+}
+
+complete -F _Clear_Claude Clear-Claude

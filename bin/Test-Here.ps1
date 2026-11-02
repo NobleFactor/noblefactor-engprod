@@ -12,7 +12,7 @@
     Test-OnHosts on each Windows host it is handed and CI's Windows job.
 
 .EXAMPLE
-    pwsh -NoProfile -File scripts\Test-Here.ps1
+    pwsh -NoProfile -File bin\Test-Here.ps1
 #>
 
 #Requires -Version 7.3

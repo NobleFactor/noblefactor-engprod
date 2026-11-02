@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC2207,SC2034 # COMPREPLY and standard completion variables
+
+# bash completion for Test-OnHosts
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Noble Factor. All rights reserved.
+
+_test_onhosts() {
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD - 1]}"
+
+    opts="-h --help"
+
+    if [[ ${cur} == -* ]]; then
+        COMPREPLY=($(compgen -W "${opts}" -- "${cur}"))
+        return 0
+    fi
+
+    # The hosts: every name bash knows, from /etc/hosts and the ssh configuration's Host lines
+    local hosts
+    hosts=$(awk 'tolower($1) == "host" { for (i = 2; i <= NF; i++) if ($i !~ /[*?]/) print $i }' ~/.ssh/config 2>/dev/null)
+    COMPREPLY=($(compgen -A hostname -W "${hosts}" -- "${cur}"))
+
+    return 0
+}
+
+complete -F _test_onhosts Test-OnHosts

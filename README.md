@@ -30,8 +30,8 @@ one repository is valid in all of them.
 ### The layer content
 
 `Home/` is what `writ` deploys, laid out as the home directory it lands in. Today it holds the
-`com.noblefactor.ops.GitHub` star extension — `star gh issues report|audit` and
-`star gh labels audit|sync` — under `Home/common/.local/share/devlore/star/extensions/`, where star
+`com.noblefactor.ops.GitHub` star extension — `star github schedule report|audit` and
+`star github labels audit|sync` — under `Home/common/.local/share/devlore/star/extensions/`, where star
 looks for a user-scoped extension since devlore-cli#918. `Declare-BashScript` and the `git-*` process
 commands arrive with #147 and #146.
 
@@ -52,9 +52,12 @@ Anything about `star` belongs in devlore-cli. What stays here is
 `docs/plans/feature/140-star-report-epics.md`, which designs the extension this layer ships, and
 `docs/plans/remove-go-code.md`, which charters the CI gate this repository still runs.
 
-### Infrastructure setup
+### Tools
 
-`scripts/setup-azure-swa.sh`, `scripts/setup-github-repo.sh`, and `scripts/setup-ground-zero.sh`.
+The repository's own tools, not deployed, are in `bin/`, each with its manual in `share/man/man1`, which `--help`
+shows, and its completion in `share/bash-completion/completions`: `Test-Here` and `Test-OnHosts`, which `make test`
+runs, and `Test-Here.ps1`, their Windows half. The hosting setup tools live with the site they build, in
+NobleFactor/devlore.noblefactor.com's `bin/`.
 
 ## What is not here, despite what this file used to say
 

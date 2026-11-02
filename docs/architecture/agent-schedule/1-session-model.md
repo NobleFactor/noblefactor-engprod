@@ -6,7 +6,10 @@ title: "1. Session model — every conversation in claude's background, a tmux s
 
 > **Status:** built 2026-10-15, in phase 33 of the [plan][plan-259],
 > as 07413ae2, and accepted on the deployed scripts the same day, in phase 34; on Windows, on psmux, in
-> David-Noble-at-work/personal#273, 2026-10-19. Companion: [`1-session-model.status.md`](1-session-model.status.md).
+> David-Noble-at-work/personal#273, 2026-10-19; the variables read and the title held on a wake in
+> NobleFactor/noblefactor-ops#260, 2026-10-22; the wake with no flag, and the name by `/rename`, in
+> NobleFactor/noblefactor-engprod#384, 2026-10-23; the clear leaving no trace in
+> NobleFactor/noblefactor-engprod#414, reopened 2026-10-27, planned. Companion: [`1-session-model.status.md`](1-session-model.status.md).
 > Feature:
 > [NobleFactor/noblefactor-ops#151](https://github.com/NobleFactor/noblefactor-ops/issues/151).
 >
@@ -48,8 +51,49 @@ This model replaced claude running in the tmux session's left pane, and the tmux
     through an `env` block in `claude --bg --settings` (question 79; seen reaching a session's startup hook
     2026-10-15), since claude's background service starts a session without the environment of the command that
     starts it (seen 2026-10-14). The tmux session's shell pane gets them too; the viewer has no need of them.
+    `star-github-schedule-assignment` reads them (#260, requirements 1 and 2): the schedule's key from `NFEP_AGENT_SCHEDULE`, and
+    from the session's name only when it is unset; its link from `NFEP_AGENT_SCHEDULE_URL`, or the link the key makes.
 11. **`MOSH_SERVER_NETWORK_TMOUT` is the user's to set,** not Start-Claude's, and Start-Claude(1) names it (question
     77).
+
+## The parts, drawn
+
+The clear's view of the model: one background session, zero or more viewers on it, one conversation at a time, and
+the records each leaves. Every box under records is one row of Clear-Claude(1)'s inventory.
+
+```mermaid
+flowchart LR
+    subgraph store["the store: ~/.local/state/agent-schedule"]
+        entry["owner/repository/number<br/>holds the short id"]
+        lock["number.lock"]
+    end
+    subgraph service["claude's background service"]
+        bg["background session<br/>short id, kept across /clear"]
+        conv["conversation<br/>a UUID; a new one at every /clear"]
+        bg --> conv
+    end
+    subgraph viewers["viewers: zero or more, each a claude attach"]
+        pane["a tmux pane, with a terminal, ssh, mosh<br/>or sbx exec in front of it"]
+        remote["Remote Control, the Claude app"]
+        own["Clear-Claude's own, a tmux session<br/>no client attaches, for /clear"]
+    end
+    pane & remote & own --> bg
+    subgraph records["records: ~/.claude and /tmp/claude-uid"]
+        transcript["projects/project/id.jsonl and id/"]
+        memory["projects/project/memory/*.md<br/>originSessionId"]
+        history["history.jsonl<br/>sessionId on every line"]
+        pastes["paste-cache/hash.txt<br/>referenced from the transcript"]
+        side["file-history/id, session-env/id,<br/>/tmp/claude-uid/project/id"]
+        job["jobs/short/timeline.jsonl, state.json, tmp/"]
+    end
+    conv --> transcript & memory & history & pastes & side
+    bg --> job
+    start["Start-Claude"] --> entry
+    start --> pane
+    clear["Clear-Claude"] --> lock
+    clear --> own
+    clear -- "after the new id is confirmed" --> records
+```
 
 ## The processes under ssh and under mosh
 
@@ -98,7 +142,14 @@ a tree of its own and runs on in every case.
    keychain that stays locked. Each refusal says what to do instead.
 3. **The background session.** The entry's id is looked up in claude's list, `claude agents --json --all`:
    - a background session of that id, running or stopped, is the schedule's, and `claude attach` restarts a stopped
-     one under the same id (seen 2026-10-14);
+     one under the same id (seen 2026-10-14); with `--detach`, `claude --bg --resume` of its conversation wakes it
+     instead, with no flag: given one, `--name` included, claude starts a copy under a new id, which fails
+     (NobleFactor/noblefactor-engprod#384; anthropics/claude-code#104658);
+   - one claude lists under another name than the launch's takes the launch's with `/rename`, so that its title holds
+     (#260, requirement 3): stopped, as the wake's first prompt; running, typed into a viewer, the one the terminal
+     attaches to, or with `--detach` one of the launch's own, closed once claude lists the name. On Windows a running
+     one is renamed only when a console attaches, since claude there takes no keys in a viewer no client attaches
+     (anthropics/claude-code#104688), unless `NFEP_AGENT_SCHEDULE_DETACHED_RENAME` is set;
    - a conversation's id is met where claude lists it, as item 6 of the model says;
    - with no entry, `claude --bg` starts a new conversation in the startup directory, named for the schedule, with
      Remote Control unless `--no-remote-control` is given, the schedule's variables, and the arguments after `--`,
@@ -120,6 +171,54 @@ a tree of its own and runs on in every case.
 - **Detaching,** with the tmux prefix and then d, leaves the tmux session with no client, so tmux ends it too, and
   whatever runs in its shell pane. No tmux session waits to be come back to: the next start opens a new one.
 - **A lost connection** ends the tmux session once its client goes, as the processes above show.
+
+## Typing into a viewer
+
+A command typed into a viewer, `/rename` by Start-Claude or `/clear` by Clear-Claude, goes as text alone, and its
+Enter after it. An Enter that arrives with the text, in one `send-keys`, claude takes as part of the command, which
+then waits on the input line until someone presses return (NobleFactor/noblefactor-engprod#412; the owner,
+2026-10-26: "I don't want to have to hit return myself"). So the text is typed; once the viewer's input line, `❯`,
+shows it, and a second more, Enter is pressed by itself; and while the input line still shows the command, Enter is
+pressed again, up to three times in all. Start-Claude.ps1 does the same on psmux. Seen 2026-10-27 on claude 2.1.311,
+on disposable background sessions (NobleFactor/noblefactor-engprod#414): a bare `/clear` opens the command menu above
+the input line, with `/clear` its one entry, and one Enter submits it, the same `id` listing a new `sessionId` 0.6 s
+later; `/rename <name>` closes the menu as its name is typed, and one Enter submits it, the new name listed 0.6 s
+later; and `claude rm` removes a session's job folder and its listing, leaving its transcripts, its `/tmp` folders and
+its prompt lines, among them the typed `/clear`, recorded as a prompt of the conversation it clears.
+
+## Clearing and retiring a conversation
+
+Clear-Claude ([2. Command line](2-command-line.md#clear-claude)) ends a conversation in one of two ways, under the
+store's lock for the schedule, so that no start resumes or renames the conversation meanwhile. What follows is the
+script as built, `f0211f4` (#417). The promise the owner set on 2026-10-27, "Clear-Claude is supposed to remove ALL
+trace of the session's transcript. EVERYTHING.", is not yet met: the plan for meeting it is
+[`414-clear-claude-can-remove-a.md`](../../plans/fix/414-clear-claude-can-remove-a.md), a draft set aside on
+2026-10-28, and the diagram above is its inventory. Where the two differ, the paragraph says so.
+
+- **Cleared,** the default. The background session and every connection to it go on: each viewer, its tmux pane,
+  ssh, mosh or `sbx exec`, and Remote Control. Nothing is removed before the clear is confirmed (#414): the
+  conversation's memories, their index lines and the job's scratch are moved into a staging folder with a manifest
+  first, since a new conversation reads the memory index as it starts and would find the scratch. Then `/clear` is
+  typed into a viewer of Clear-Claude's own, a tmux session no client attaches, as the section above types it.
+  `/clear` keeps the background session's short id and gives the conversation a new one (seen 2026-10-14 and
+  2026-10-27), so the store stays right. Once claude's list shows the new one, the old conversation's transcript and
+  its folder, file history, session environment and temporary output go, with the staged entries, and its prompts
+  leave the shared prompt history by a rewrite that keeps the old file open, renames a copy without them into place
+  and drains the old file for two quiet seconds; a session that opened the file before the rename and writes later
+  than that loses its line. Left behind, as measured on the first real run, 2026-10-27: the job's timeline,
+  `jobs/<short id>/timeline.jsonl`, whose lines quote every prompt, and the paste cache. When `/clear` is not taken,
+  the staged entries go back, an entry another session wrote over meanwhile left staged and named; when `/clear` was
+  typed and claude's list then cannot be read, the outcome is unknown, nothing moves, and the staging folder is named
+  for the owner. A signal after the Enter and before that listing restores the staging, though `/clear` may have run.
+  The plan replaces the drain with a wait on the file's holders, cuts the timeline and removes the pastes, keeps the
+  staging from the Enter on, and writes one recovery record before anything moves.
+- **Retired,** with `--retire`. Every viewer is a `claude attach <short id>` process where claude runs, and ending it
+  ends whatever stands in front of it, a tmux pane, an ssh or mosh session, or `sbx exec`, live or dead: no viewer's
+  terminal need be known. With every viewer ended, the session is stopped and removed, and its records, its job folder
+  and the schedule's store entry go, before the prompts and the last check; the plan moves them after. A viewer that
+  reattached would have restarted the session under its own id (seen 2026-10-14), so Clear-Claude asks claude's list
+  last, and succeeds only on a valid list with the session absent: listed again, it says to run again; a list that
+  fails or cannot be read is a failure of its own, never success.
 
 ## Moving a foreground conversation into the background
 
@@ -165,12 +264,29 @@ NobleFactor/noblefactor-ops#305. What this design keeps there, and what changes:
   workspace. The store gains the sandbox's identifier. The main clones are read-only there, and edits are made in
   ephemeral worktrees.
 - **Open:** trust, logins and the three kinds of claude configuration in a sandbox, among
-  [the draft's open items](3-agent-sandbox.md#open).
+  [the draft's open items](3-agent-sandbox.md#open); and how Clear-Claude, which must act where claude runs, through
+  `sbx exec`, learns which sandbox that is.
 
 ## Open
 
-None. The last item, Remote Control on a background session, closed 2026-10-15: the owner saw `24b62a42`, which
-the new code had started with `--remote-control`, listed in the Claude app.
+One, 2026-10-28: **where the clear should live.** Clear-Claude keeps a staging manifest, a recovery record, state
+names and a cleanup inventory in bash, which is a workflow engine written by hand. The operation graph in devlore-cli
+(`pkg/op`) has the pieces already: compensable actions unwound as a saga, receipts and recovery stacks that persist as
+a trace and resume, and providers that observe a resource against its record, which is `writ reconcile` and would be
+the clear's sweep. What it lacks is one thing the clear needs: a result whose outcome is learned later. Sending the
+Enter that submits `/clear` is neither success nor failure until claude's listing is read, and the engine today would
+unwind the staging on a listing failure and resubmit `/clear` on resume. The owner's thought, 2026-10-28: the result
+is a thing that answers questions, is the effect in place, can it be reversed, is it as recorded, whether the resource
+or its provider answers; "cannot tell" is an answer that stops the run, and a unit that cannot be reversed and is in
+place makes the run forward-only from there. Recorded as open design work in devlore-cli's
+[2.6-execution-policies.md](https://github.com/NobleFactor/devlore-cli/blob/develop/docs/architecture/2.6-execution-policies.md).
+Until that exists, the clear's home is a question of language, not engine: a `star` extension command in Starlark,
+over the runtime's file, shell, json and platform modules, with devlore-test for its cases, is the candidate, as the
+owner's `star gh` commands already are. Start-Claude holds little that needs undoing and stays where it is. Nothing
+decided; the owner, 2026-10-28: "do nothing on that. it is food for thought."
+
+Closed before it: Remote Control on a background session, 2026-10-15, when the owner saw `24b62a42`, which the new
+code had started with `--remote-control`, listed in the Claude app.
 
 
 [plan-259]: https://github.com/David-Noble-at-work/personal/blob/main/docs/plans/chore/259-start-claude-documents-claude.md
