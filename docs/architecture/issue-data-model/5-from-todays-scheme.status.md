@@ -7,7 +7,7 @@ title: "5. From today's scheme — Status"
 **Document:** [5-from-todays-scheme.md](5-from-todays-scheme.md)
 **Feature:** [NobleFactor/noblefactor-ops#331](https://github.com/NobleFactor/noblefactor-ops/issues/331)
 **Work:** [NobleFactor/noblefactor-ops#303](https://github.com/NobleFactor/noblefactor-ops/issues/303)
-**State:** Draft, 2026-10-21; the deltas as of that day, for the owner's review.
+**State:** Revised 2026-10-22 to the rulings of the two days, with each delta's state; the order is the sweep's iterations.
 
 ## Completion
 

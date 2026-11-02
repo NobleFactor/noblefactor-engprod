@@ -32,7 +32,7 @@ NobleFactor project held personal#259 as a row, with a custom field set on it, o
 | Severity, Priority | GitHub's issue fields, or labels | issue field: its type, and one value | issue field: no. Labels: yes |
 | Area, `good first issue` | labels | nothing | yes |
 | A thread's or a schedule's rows, lanes and status | a project's rows and fields | the field's type | yes, seen 2026-10-20 |
-| Waits on | GitHub's blocked-by link | the link | across repositories: unverified |
+| Waits on | GitHub's blocked-by link | the link | within a repository: yes, nine links made 2026-10-22 through `POST .../issues/{n}/dependencies/blocked_by` and read back; across repositories and owners: yes, 75 links made 2026-11-01, personal#289 blocked by devlore-cli#527 among them |
 | A collection's deliverable and rulings | its own issue's body, or the project's README | nothing | not applicable |
 
 ## Where each part is defined

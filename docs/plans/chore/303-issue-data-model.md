@@ -3,7 +3,7 @@ title: "The GitHub issue data model: one hierarchy, its attributes, and the coll
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/303
 status: active
 created: 2026-10-21
-updated: 2026-10-22
+updated: 2026-11-02
 ---
 
 # Plan: The GitHub issue data model: one hierarchy, its attributes, and the collections that order it
@@ -163,13 +163,27 @@ read before every operation; the report and the audit reading type and link firs
       question 5 closed by the same ruling, row 0 an Epic; the team ruled the same day, teams triage their own --
       2026-10-22
 - [x] The write test, first half: a sub-issue link across repositories and across owners -- 2026-10-22, it crosses both
-- [ ] The write test, second half: a single-select option updated by id, once a project exists, iteration 3
+- [x] The write test, second half: a single-select option updated by id -- 2026-10-26, under #377, on project 4, the
+      thread built for it: its options renamed by id, every row keeping its value
 - [ ] #304, noblefactor-ops renamed noblefactor-engprod, done early: the owner, 2026-10-22, "bump up the priority of
       the issue for renaming noblefactor-ops as noblefactor-engprod. we might do that before we go much further. it
       will be one less thing to worry about at the end." Its own plan and pull request, before the rollout below
-- [ ] Section 5's deltas and order rewritten to the rulings so far; the status companions of sections 1, 4 and 6 set
-- [ ] The tasks filed under #332 and #333: the asset read by the extension, `pull`, the read before every operation,
-      the report and audit reading type and link first; the reclassification, #363, as the rollout
+- [x] Section 5's deltas and order rewritten to the rulings so far, each delta with its state; the status companions of
+      sections 1, 3, 4 and 5 set -- 2026-10-22
+- [x] The tasks filed under #332 and #333 -- 2026-10-22, approved that day, nine in the order of their pull requests,
+      the waits-on recorded as GitHub blocked-by links and in the lane table:
+
+      | # | Task | Issue | Waits on |
+      | --- | --- | --- | --- |
+      | 1 | the extension reads the hierarchy from `model.yaml`, nothing in its code naming a type | #376 | — |
+      | 2 | `star gh model pull`, the ETag cache, the digest; #320's labels file becomes the asset | #377 | 1 |
+      | 3 | every `star gh issues` operation reads the record first and says when the asset is behind | #378 | 2 |
+      | 4 | the report and the audit place an issue by type and sub-issue parent first, label and marker second | #379 | 1 |
+      | 5 | the audit names the model's faults | #361 | 4 |
+      | 6 | every open noblefactor-engprod issue typed and linked from its label and marker, both kept | #380 | 4 |
+      | 7 | the reclassification by the owner's rule, from the inventory | #363 | 6 |
+      | 8 | `star gh issues create` files with type, parent and attributes, and refuses a non-participating repository | #338 | 4 |
+      | 9 | deployed and proved: every open leaf under its parent by link | #365 | 5, 7 |
 - [ ] Rolled out: every open noblefactor-ops issue typed and linked, the report placing it by type and link, and the
       sessions running throughout
 
@@ -178,11 +192,17 @@ read before every operation; the report and the audit reading type and link firs
 The first collection, purely additive. `push` for personal; the Triage project's rows read by the report.
 
 - [ ] Section 3's Triage rows and section 6's `push` built as tasks under #332
-- [ ] The `engprod` team created, with Admin on its Triage project and Triage on its repositories; the devlore
-      triage epic filed in devlore-cli; both organization writes on the owner's word
-- [ ] The two Triage projects made in the organization, Triage: engprod with #142 as row 0 and Triage: devlore with
-      the new epic, on the owner's word; #142's 90 issues drained to the epics they serve or left in the queue
-- [ ] personal pushed and proven participating
+- [x] The `engprod` team created, with Admin on its Triage project and Triage on its repositories; the devlore
+      triage epic filed in devlore-cli; both organization writes on the owner's word -- 2026-11-01: engprod, made
+      2026-10-24, holds Admin on Triage: engprod and Maintain, which includes Triage, on noblefactor-engprod; devlore
+      holds Admin on Triage: devlore; devlore's triage epic is NobleFactor/devlore-cli#1188
+- [x] The two Triage projects made in the organization, Triage: engprod with #142 as row 0 and Triage: devlore with
+      the new epic, on the owner's word; #142's 90 issues drained to the epics they serve or left in the queue --
+      Triage: engprod, NobleFactor project 5, made 2026-10-26, #142 retitled Epic: engprod triage on 2026-11-01;
+      Triage: devlore, project 6, made 2026-11-01, devlore-cli#1188 its row 0, and the 12 open issues of devlore's
+      repositories in engprod's queue moved to it; #142's issues left in the queue
+- [ ] personal pushed and proven participating; held 2026-11-02 for question 17, a person's repository and an
+      organization's records
 
 ### Iteration 3: schedules and threads as projects
 
@@ -190,8 +210,28 @@ The Schedule and Thread templates, #301 as the prototype, lane tables kept as th
 rows and lanes read by the report; Start-Claude keyed as before.
 
 - [ ] Questions 5 to 9 ruled; section 3 revised
-- [ ] The templates and the prototype made, on the owner's word for each organization write
+- [x] The templates and the prototype made, on the owner's word for each organization write -- 2026-11-01, on the
+      owner's order to build the whole entity model at once: the Schedule and Thread templates, projects 7 and 8, GitHub's
+      default workflows removed; every open schedule and thread a project copied from its template, projects 9 to 22,
+      its own issue as row 0 and its lanes or beats as rows, from any repository, owned by the team of the repository
+      its issue lives in; 75 waits-on made blocked-by links; schedule #346's lanes 3 and 14 to 18 recorded. Schedule
+      #171, the four lanes, left out on the owner's word: stale, its lanes epics
 - [ ] `star gh schedule add` and the report's row reading built as tasks under #332
+
+Built 2026-11-01 for questions 6, 7, 9 and 10, none of them ruled: a Lane field numbering each schedule's rows, row 0
+at 0; Status's options Open, In progress and Closed, set from the issue's state and its Next, no GitHub workflow
+setting them; six issues lanes of two schedules; and a thread's rows its beats as its table had them, of any type, a
+member with no beat unnumbered.
+
+The rulings of 2026-11-01 and 2026-11-02:
+
+- 2026-11-01: the entity model is built now, end to end, by commands the owner runs.
+- 2026-11-01: there are two teams, devlore and engprod, each with its own Triage project; a schedule's lanes come from
+  any repository.
+- 2026-11-01: every schedule is a Schedule project, its issue the project's row 0 and no longer the schedule itself; the
+  tooling does not read projects yet.
+- 2026-11-02: an organization's projects hold no issue from a person's repository: question 17.
+- 2026-11-02: the work aims at a stable release of the product as it does today, done right.
 
 ### Iteration 4: attributes
 
@@ -330,3 +370,12 @@ scheme retired last.
     [Section 6](../../architecture/issue-data-model/6-the-asset-and-its-sync.md).
 14. **GitHub's issue fields NobleFactor already has:** Priority, Effort, Start date and Target date. None reaches
     personal. Proposed: Priority as labels, one record of it; the other three outside the model until a need appears.
+17. **A person's repository and an organization's records**, added 2026-11-02. No organization would let a person put
+    issues from a personal repository in its projects, and the model must not need it. On
+    2026-11-02, 26 personal issues were sub-issues of NobleFactor issues, 12 of them open; 58 were rows of NobleFactor
+    projects, 36 in Triage: engprod and 22 lanes of five schedules; and two blocked-by links crossed between them.
+    Proposed: nothing in an organization's records points at a personal repository, no project row, sub-issue link or
+    blocked-by link; personal keeps its own hierarchy, its types as labels, its own triage epic, and its collections in
+    projects its owner's account owns; work that crosses is a tracking issue on each side, naming the other by URL, as
+    the owner ruled for teams on 2026-10-22 (question 4). Open: personal's lanes on the organization's schedules, each
+    a tracking issue in an organization repository or its work moved into one.

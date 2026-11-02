@@ -10,7 +10,8 @@ title: "6. The asset and its sync — Status"
 **State:** Ruled 2026-10-22, from the owner's words of 2026-10-21 and 2026-10-22; the syntax and the file's shape are
 proposed and accepted ("That's great. Doc it"). `pull`, `digest`, the cache and § Access built 2026-10-24 to
 2026-10-26 in #377, `--check` standing in for `--dry-run` until devlore-cli#1170; `push` and `model audit` not yet built; the read
-before every operation built in #378.
+before every operation built in #378. Not built: the asset's `teams` record, which `pull` neither reads nor writes,
+though GitHub has devlore and engprod; and the projects of 2026-11-01 are not yet pulled into the asset.
 
 ## Completion
 

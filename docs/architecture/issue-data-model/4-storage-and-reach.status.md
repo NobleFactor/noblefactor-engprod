@@ -7,8 +7,10 @@ title: "4. Storage and reach — Status"
 **Document:** [4-storage-and-reach.md](4-storage-and-reach.md)
 **Feature:** [NobleFactor/noblefactor-ops#331](https://github.com/NobleFactor/noblefactor-ops/issues/331)
 **Work:** [NobleFactor/noblefactor-ops#303](https://github.com/NobleFactor/noblefactor-ops/issues/303)
-**State:** Draft, 2026-10-21; for the owner's review, not ruled. What reaches personal was read with `gh api graphql`
-that day; the write tests were not run.
+**State:** Ruled 2026-10-22: Type and the parent are GitHub's; personal keeps labels synced one way; the sub-issue link
+crosses repositories and owners, proven by the write test of that day. The write test's second half, an option updated
+by id, passed 2026-10-26 under #377, and blocked-by links cross repositories and owners, 2026-11-01. The
+plan's question 17, added 2026-11-02, asks whether an organization's records may point at a personal repository at all.
 
 ## Completion
 
