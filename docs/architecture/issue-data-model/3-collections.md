@@ -30,7 +30,7 @@ first and the team second, as schedule and thread issues are titled today:
 
 | Team | In GitHub on 2026-10-22 | Triage project | Row 0, the triage epic | Repositories whose issues fill it |
 | --- | --- | --- | --- | --- |
-| engprod | not yet: the organization's teams are `devlore` and `owners` | Triage: engprod | #142, Epic: Process, retitled as engprod's triage epic | noblefactor-ops, becoming noblefactor-engprod (#304); and personal, which belongs to no team and no organization, so its issues are triaged here |
+| engprod | not yet: the organization's teams are `devlore` and `owners` | Triage: engprod | #142, Epic: Process, retitled as engprod's triage epic | noblefactor-ops, becoming noblefactor-engprod (#304); personal's issues were triaged here until 2026-11-02, when § Collections belong to one account ruled them out |
 | devlore | `devlore`, DevLore | Triage: devlore | none yet: one epic to file in devlore-cli | devlore-cli, devlore-registry, devlore.noblefactor.com |
 
 **engprod's row 0 is the triage epic, #142.** The owner, 2026-10-22: "We need a triage epic. it is the place to put all new logged issue, pending assignment to a place in our issue hierarchy. It should be added as row zero in the schedule that represents the triage project. We can use this to guide the work and--maybe--facilitate handoffs." So a newly
@@ -116,6 +116,14 @@ hold one part, ruled 2026-10-22 for a team's Triage project and holding for ever
   parent and label without write access to code.
 
 The owner is on every team and the maintainer of each today.
+
+## Collections belong to one account
+
+Ruled 2026-11-02 ([section 4](4-storage-and-reach.md) § Accounts). A collection is a project of one account, and its rows
+are issues of that account's repositories only. An organization's Triage, Schedule and Thread projects hold no issue
+from an individual's repository, and an individual account keeps its own triage epic, Triage project, schedules and
+threads, as projects it owns. Built 2026-11-01, before the ruling, NobleFactor's projects hold personal's issues as rows;
+taking them out is the plan's work.
 
 ## A committed schedule
 

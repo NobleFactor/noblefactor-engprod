@@ -8,7 +8,35 @@ Where each part of the model lives in GitHub, what enforces it, and which reposi
 deciding question, because the organization's features stop at the organization's repositories and personal is not
 one of them.
 
+## Accounts: organizations and individuals
+
+Ruled 2026-11-02. A GitHub account is an organization's, such as NobleFactor, or an individual's, such as
+David-Noble-at-work. Accounts are separate: each has its own issues, projects, labels and data model, and no project
+spans two of them. There may be many of each, and every one has a model of its own, in a `model.yaml` of its own
+([section 6](6-the-asset-and-its-sync.md) § One model per account).
+
+An individual account lacks part of what an organization has, so the same model is held differently in each:
+
+| Part of the model | In an organization's account | In an individual's account |
+| --- | --- | --- |
+| Type | the organization's issue types, defined once for all its repositories | a label of the type's name, its level from the account's model |
+| Attributes | labels from the organization's model; its issue fields unused | labels from the account's model; it has no issue fields |
+| Ownership | teams, each owning its collections and triaging its repositories | the account itself, which has no teams |
+| Collections | projects the organization owns, copied from its Schedule and Thread templates | projects the account owns, built field by field, since only an organization's project can be a template |
+| Triage | a triage epic and a Triage project for each team | one triage epic and one Triage project for the account |
+| Parents and waits-on | sub-issue and blocked-by links between its own repositories | the same, between its own repositories |
+
+What an individual account lacks was read from GitHub on 2026-10-21 (§ What reaches personal, below); that only an
+organization's project can be a template is GitHub's own description of `markProjectV2AsTemplate`.
+
+Three points are open, in the plan's question 17: whether sub-issue and blocked-by links stay within an account as
+projects do, proposed yes; how work that touches two accounts is tracked, proposed an issue in each naming the other by
+URL, as the owner ruled for teams on 2026-10-22; and where each account's model file lives.
+
 ## What reaches personal
+
+This section records what GitHub lets an organization's records reach in an individual's repository. Since 2026-11-02 the
+model uses none of it: § Accounts, above.
 
 Read with `gh api graphql` on 2026-10-21, read-only:
 

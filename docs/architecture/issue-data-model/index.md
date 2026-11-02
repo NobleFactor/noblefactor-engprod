@@ -57,6 +57,9 @@ the order they are worked.
 - **Schedule:** a collection of tasks and bugs in the order they are worked.
 - **Row, lane:** an issue's place in a collection. A lane is a schedule's row, numbered in the order it is worked.
 - **The organization's repositories:** NobleFactor's, which GitHub's organization features reach.
-- **personal:** David-Noble-at-work/personal, a user's repository, which they do not reach.
-- **The asset:** `model.yaml` beside the star extension: the model as the tooling reads it, pulled from GitHub and
+- **Account:** a GitHub organization's account or an individual's. Accounts are separate: each has its own issues,
+  projects, labels and model, and no project spans two (ruled 2026-11-02).
+- **personal:** David-Noble-at-work/personal, a repository of an individual's account, which keeps its own model and
+  collections.
+- **The asset:** an account's `model.yaml`, one per GitHub account, NobleFactor's beside the star extension today: the model as the tooling reads it, pulled from GitHub and
   pushed to repositories ([section 6](6-the-asset-and-its-sync.md)).

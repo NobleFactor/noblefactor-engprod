@@ -39,6 +39,10 @@ enabled; Epic and Chore are added to it as types of the organization's own. The 
 scaffolding on the way there ([section 5](5-from-todays-scheme.md)). What personal does, which GitHub's types do not
 reach, is [section 4](4-storage-and-reach.md)'s remaining question.
 
+**Per account,** ruled 2026-11-02. Type belongs to an account: each organization defines its own issue types, and its
+model gives each its level. An individual account has no issue types, so its issues carry a label of the type's name,
+the level coming from that account's own model ([section 4](4-storage-and-reach.md) § Accounts).
+
 ## Parents
 
 - Every issue but an epic has exactly one parent, one level up: a feature or a chore under an epic, a task or a bug

@@ -10,6 +10,17 @@ GitHub's record before it runs. The owner, 2026-10-21: "The yaml should travel w
 behavior because that, I will argue, is the definitive configuration." And 2026-10-22: "Use the etag. Offer pull and
 push as star gh commands."
 
+## One model per account
+
+Ruled 2026-11-02. Every GitHub account has a model of its own, one `model.yaml` per account, an organization's or an
+individual's, however many there are ([section 4](4-storage-and-reach.md) § Accounts). An organization's model holds its
+issue types, teams, labels, projects and templates; an individual's holds its type labels with their levels, its labels
+and its projects. Nothing is shared between models: two accounts may give a type or a label the same name, and neither
+model reads the other. The tooling picks the model by the repository's owner, and `pull`, `push`, the report and the
+audit each work on one account at a time; the cache, a file per organization, keeps one per account. Today there is one
+model, NobleFactor's, beside the extension. Where each account's file lives is open, in the plan's question 17: beside
+the extension, a file per account, or in a repository the account owns.
+
 ## The asset
 
 `model.yaml`, beside `extension.yaml` in `com.noblefactor.ops.GitHub`, so that writ deploys it with the extension and
@@ -305,6 +316,9 @@ $ star github model push --repo David-Noble-at-work/personal --dry-run
 ```
 
 ## Participation: a repository outside the organization
+
+Superseded 2026-11-02: an individual's repository takes part in its own account's model, not in an organization's (§ One
+model per account). This section records the design it replaces.
 
 The owner, 2026-10-22: "I wish to participate." A repository participates when the report places its issues, the audit
 checks them, and its issues can be rows of the collections. The organization's repositories participate by being

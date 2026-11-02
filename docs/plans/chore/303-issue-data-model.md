@@ -233,6 +233,17 @@ The rulings of 2026-11-01 and 2026-11-02:
 - 2026-11-02: an organization's projects hold no issue from a person's repository: question 17.
 - 2026-11-02: the work aims at a stable release of the product as it does today, done right.
 
+### Accounts, from 2026-11-02
+
+Organizations and individual accounts are separate, each with its own model (question 17).
+
+- [x] Sections 1, 3, 4 and 6 and the index state the ruling -- 2026-11-02
+- [ ] Question 17's open points ruled: links within an account, work across two, personal's lanes, where each model lives
+- [ ] The crossings removed: 26 sub-issue links, 58 project rows and 2 blocked-by links between personal and NobleFactor
+- [ ] personal's own triage epic and Triage project, and its schedules and threads as projects it owns
+- [ ] The tooling reads one model per account, picked by the repository's owner, and personal's model is written
+- [ ] The tasks filed under #332 and #333
+
 ### Iteration 4: attributes
 
 Severity, Priority and Area in the asset and pushed everywhere; the audit's attribute rules.
@@ -378,4 +389,10 @@ scheme retired last.
     blocked-by link; personal keeps its own hierarchy, its types as labels, its own triage epic, and its collections in
     projects its owner's account owns; work that crosses is a tracking issue on each side, naming the other by URL, as
     the owner ruled for teams on 2026-10-22 (question 4). Open: personal's lanes on the organization's schedules, each
-    a tracking issue in an organization repository or its work moved into one.
+    a tracking issue in an organization repository or its work moved into one. **Ruled 2026-11-02:** organizations and
+    individual accounts are separate; each has its own projects, labels and data model, no project spans two, and every
+    account, of however many, has its own `model.yaml`
+    ([section 4](../../architecture/issue-data-model/4-storage-and-reach.md) § Accounts). Open: whether sub-issue and
+    blocked-by links stay within an account too, proposed yes; how work that touches two accounts is tracked, proposed
+    an issue in each naming the other by URL; personal's lanes on NobleFactor's schedules; and where each account's
+    model file lives.
