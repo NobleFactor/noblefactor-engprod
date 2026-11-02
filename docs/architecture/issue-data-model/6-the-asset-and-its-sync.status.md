@@ -12,7 +12,8 @@ proposed and accepted ("That's great. Doc it"). `pull`, `digest`, the cache and 
 2026-10-26 in #377, `--check` standing in for `--dry-run` until devlore-cli#1170; `push` and `model audit` not yet built; the read
 before every operation built in #378. Not built: the asset's `teams` record, which `pull` neither reads nor writes,
 though GitHub has devlore and engprod; and the projects of 2026-11-01 are not yet pulled into the asset. Ruled 2026-11-02: organizations and individual accounts are separate, each with its own model
-(§ Accounts in section 4).
+(§ Accounts in section 4); question 17 settled the same day, and the model read on demand from two reference
+models (§ Reference models, read on demand, in section 6).
 
 ## Completion
 

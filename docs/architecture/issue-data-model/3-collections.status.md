@@ -13,7 +13,8 @@ NobleFactor project holds personal's issues as rows and can be marked as a templ
 and Triage: devlore, NobleFactor projects 5 and 6, each its team's, its triage epic row 0; the Schedule and Thread
 templates, projects 7 and 8; and every open schedule and thread a project, 9 to 22, its own issue row 0. Question 17 of
 the plan, added 2026-11-02, puts personal's rows in them in question. Ruled 2026-11-02: organizations and individual accounts are separate, each with its own model
-(§ Accounts in section 4).
+(§ Accounts in section 4); question 17 settled the same day, and the model read on demand from two reference
+models (§ Reference models, read on demand, in section 6).
 
 ## Completion
 

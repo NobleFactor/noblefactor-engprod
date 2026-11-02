@@ -123,7 +123,9 @@ Ruled 2026-11-02 ([section 4](4-storage-and-reach.md) § Accounts). A collection
 are issues of that account's repositories only. An organization's Triage, Schedule and Thread projects hold no issue
 from an individual's repository, and an individual account keeps its own triage epic, Triage project, schedules and
 threads, as projects it owns. Built 2026-11-01, before the ruling, NobleFactor's projects hold personal's issues as rows;
-taking them out is the plan's work.
+taking them out is the plan's work. personal's lanes move to schedules personal owns, one for each NobleFactor schedule
+they came from (David-Noble-at-work/personal#309), and NobleFactor's records keep nothing of personal's
+(noblefactor-engprod#428).
 
 ## A committed schedule
 

@@ -238,11 +238,16 @@ The rulings of 2026-11-01 and 2026-11-02:
 Organizations and individual accounts are separate, each with its own model (question 17).
 
 - [x] Sections 1, 3, 4 and 6 and the index state the ruling -- 2026-11-02
-- [ ] Question 17's open points ruled: links within an account, work across two, personal's lanes, where each model lives
-- [ ] The crossings removed: 26 sub-issue links, 58 project rows and 2 blocked-by links between personal and NobleFactor
-- [ ] personal's own triage epic and Triage project, and its schedules and threads as projects it owns
-- [ ] The tooling reads one model per account, picked by the repository's owner, and personal's model is written
-- [ ] The tasks filed under #332 and #333
+- [x] Question 17's open points ruled: links within an account, work across two, personal's lanes, where each model lives
+      -- 2026-11-02
+- [x] The tasks filed -- 2026-11-02: #425, the reference models; #426, each account's model read on demand; #427, the
+      report and audit reading schedules and threads from their projects; #428, NobleFactor's records holding nothing of
+      personal's; and David-Noble-at-work/personal#309, personal's own records
+- [ ] Question 18 ruled: how an account takes part in the model, and keeps to it
+- [ ] The crossings removed, #428: 26 sub-issue links, 58 project rows and 2 blocked-by links
+- [ ] personal's own triage epic and Triage project, and a schedule of its own for each NobleFactor schedule its lanes
+      came from, personal#309
+- [ ] The reference models and the adoption of an account, #425; each account's model read on demand, #426
 
 ### Iteration 4: attributes
 
@@ -395,4 +400,21 @@ scheme retired last.
     ([section 4](../../architecture/issue-data-model/4-storage-and-reach.md) § Accounts). Open: whether sub-issue and
     blocked-by links stay within an account too, proposed yes; how work that touches two accounts is tracked, proposed
     an issue in each naming the other by URL; personal's lanes on NobleFactor's schedules; and where each account's
-    model file lives.
+    model file lives. **Settled 2026-11-02:** no link crosses accounts, and an issue blocked by another account's says
+    so in its text, an issue in its own account tracking the other by URL where the block needs following; personal's
+    lanes move to schedules personal owns, one per NobleFactor schedule they came from; the model is the same in both
+    kinds of account, with four deviations from what an individual account lacks, and star tells the two apart by the
+    repository's owner; and no account's model is kept in a file: two reference models live beside the extension, and
+    each account's model is GitHub's record, read on demand. [Section 4](../../architecture/issue-data-model/4-storage-and-reach.md)
+    § Accounts and [section 6](../../architecture/issue-data-model/6-the-asset-and-its-sync.md) § Reference models,
+    read on demand. Closed.
+18. **How an account takes part in the model, and keeps to it**, added 2026-11-02. Adopting the model is a deliberate
+    push by the owner, made when they choose or never; the code assumes nothing about an account not pushed to; and a
+    change made in GitHub is picked up on the next read. That leaves two questions: whether a participating account's
+    change broke something, and whether an account that does not participate complies. Proposed: the model splits
+    into rules, which hold for every account, such as levels, row 0 and the required fields, and defaults, the
+    reference's content, used only for a first push; every read checks a participating account against the rules and
+    reports, in its output's first line, a broken rule and what changed since the last read; the same check, run on
+    demand, tells a non-participating account whether it complies and what a first push would change; and an account
+    participates when the first push's marks are in GitHub, `Level N:` on its types or type labels, with no list
+    kept. Not ruled.
