@@ -9,9 +9,9 @@
 
 version: 1
 pulled:
-  at: 2026-11-03T01:13:18Z
+  at: 2026-11-03T03:25:02Z
   org: NobleFactor
-  digest: sha256:010872932406ad645b36c0d0ddac770be5072d1ecf3859119c94d501e088f3b0
+  digest: sha256:86bb8f97b398bf4e5cb99e9283022e7ab83612edf9f15a8facac31ad4fcbec76
 types:
   - name: "Epic"
     id: 914457658
@@ -163,7 +163,7 @@ projects:
           - { name: "Open", id: "ba4e0e54" }
           - { name: "In progress", id: "fd5cef35" }
           - { name: "Closed", id: "470096a0" }
-      - name: "Lane"
+      - name: "Step"
         id: "PVTF_lADOAD1Dfc4BpxN-zhoLRj8"
         type: number
       - name: "Next"
@@ -196,7 +196,7 @@ projects:
           - { name: "Open", id: "ba4e0e54" }
           - { name: "In progress", id: "fd5cef35" }
           - { name: "Closed", id: "470096a0" }
-      - name: "Lane"
+      - name: "Step"
         id: "PVTF_lADOAD1Dfc4BpxOFzhoLRq0"
         type: number
       - name: "Next"
@@ -214,7 +214,7 @@ projects:
           - { name: "Open", id: "ba4e0e54" }
           - { name: "In progress", id: "fd5cef35" }
           - { name: "Closed", id: "470096a0" }
-      - name: "Lane"
+      - name: "Step"
         id: "PVTF_lADOAD1Dfc4BpxObzhoLR-8"
         type: number
       - name: "Next"
@@ -232,7 +232,7 @@ projects:
           - { name: "Open", id: "ba4e0e54" }
           - { name: "In progress", id: "fd5cef35" }
           - { name: "Closed", id: "470096a0" }
-      - name: "Lane"
+      - name: "Step"
         id: "PVTF_lADOAD1Dfc4BpxO6zhoLSd4"
         type: number
       - name: "Next"
@@ -250,7 +250,7 @@ projects:
           - { name: "Open", id: "ba4e0e54" }
           - { name: "In progress", id: "fd5cef35" }
           - { name: "Closed", id: "470096a0" }
-      - name: "Lane"
+      - name: "Step"
         id: "PVTF_lADOAD1Dfc4BpxPjzhoLTEY"
         type: number
       - name: "Next"
@@ -268,7 +268,7 @@ projects:
           - { name: "Open", id: "ba4e0e54" }
           - { name: "In progress", id: "fd5cef35" }
           - { name: "Closed", id: "470096a0" }
-      - name: "Lane"
+      - name: "Step"
         id: "PVTF_lADOAD1Dfc4BpxQAzhoLTfE"
         type: number
       - name: "Next"
@@ -286,7 +286,7 @@ projects:
           - { name: "Open", id: "ba4e0e54" }
           - { name: "In progress", id: "fd5cef35" }
           - { name: "Closed", id: "470096a0" }
-      - name: "Lane"
+      - name: "Step"
         id: "PVTF_lADOAD1Dfc4BpxQYzhoLT1g"
         type: number
       - name: "Next"
@@ -304,7 +304,7 @@ projects:
           - { name: "Open", id: "ba4e0e54" }
           - { name: "In progress", id: "fd5cef35" }
           - { name: "Closed", id: "470096a0" }
-      - name: "Lane"
+      - name: "Step"
         id: "PVTF_lADOAD1Dfc4BpxQ8zhoLUYM"
         type: number
       - name: "Next"
@@ -322,7 +322,7 @@ projects:
           - { name: "Open", id: "ba4e0e54" }
           - { name: "In progress", id: "fd5cef35" }
           - { name: "Closed", id: "470096a0" }
-      - name: "Lane"
+      - name: "Step"
         id: "PVTF_lADOAD1Dfc4BpxRxzhoLVIo"
         type: number
       - name: "Next"
@@ -340,7 +340,7 @@ projects:
           - { name: "Open", id: "ba4e0e54" }
           - { name: "In progress", id: "fd5cef35" }
           - { name: "Closed", id: "470096a0" }
-      - name: "Lane"
+      - name: "Step"
         id: "PVTF_lADOAD1Dfc4BpxTAzhoLWQ0"
         type: number
       - name: "Next"

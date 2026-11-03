@@ -217,6 +217,9 @@ rows and lanes read by the report; Start-Claude keyed as before.
       its issue lives in; 75 waits-on made blocked-by links; schedule #346's lanes 3 and 14 to 18 recorded. Schedule
       #171, the four lanes, left out on the owner's word: stale, its lanes epics
 - [ ] `star gh schedule add` and the report's row reading built as tasks under #332
+- [x] Lane renamed Step on the Schedule template and the nine schedules, and each schedule's first row left without a
+      step -- 2026-11-02, in GitHub; the model pulled again, and the reference models and section 3 brought to them,
+      on this branch
 
 Built 2026-11-01 for questions 6, 7, 9 and 10, none of them ruled: a Lane field numbering each schedule's rows, row 0
 at 0; Status's options Open, In progress and Closed, set from the issue's state and its Next, no GitHub workflow
@@ -232,6 +235,8 @@ The rulings of 2026-11-01 and 2026-11-02:
   tooling does not read projects yet.
 - 2026-11-02: an organization's projects hold no issue from a person's repository: question 17.
 - 2026-11-02: the work aims at a stable release of the product as it does today, done right.
+- 2026-11-02: a schedule's rows are numbered by Step, not Lane, and the first row, the schedule's own issue, has no
+  step. GitHub numbers the rows of a view by their place in it, so no stored number can match every view.
 
 ### Accounts, from 2026-11-02
 
@@ -373,9 +378,11 @@ scheme retired last.
    needs no exemption because level 0 has no parent; the owner: "If you accept that a schedule is just a sequentially-numbered list of bugs and tasks that must be closed, a good question to ask is where do we keep status on the schedule? I might like to fully report my status on the issue at row 0. We work issues in the list starting at row 1. We keep our head straight and provide some insight to casual observers/owners/participants/reviewers by way of row zero. The question becomes: what is the issue type for row 0." Then, of the recommendation that row 0 be
    an epic, a collection epic told from a hierarchy epic by its being row 0: "I approve your recommendation."
    [Section 3](../../architecture/issue-data-model/3-collections.md) § The collection's own record. Closed.
-6. **Lane numbers.** Proposed: row 0 is the collection's own issue (question 5), and lanes 1..N follow it, so that
+6. **Lane numbers, now step numbers.** Proposed: row 0 is the collection's own issue (question 5), and lanes 1..N follow it, so that
    today's lane numbers carry over. The tool that adds a row numbers it. GitHub projects have no number that counts by
-   itself, so a row added in GitHub's interface has none, and the audit reports it.
+   itself, so a row added in GitHub's interface has none, and the audit reports it. **Ruled in part 2026-11-02:** the
+   number is Step, steps 1 to N, and the first row, the collection's own issue, has none. Open: who numbers a row
+   added in GitHub's interface.
 7. **A row's status.** GitHub's built-in workflow can mark a row Done when its issue closes, and closed is not done:
    lane 13 of #301 was closed on 2026-10-20 with two hosts not migrated. Proposed: star derives the status, and no
    GitHub workflow sets it.

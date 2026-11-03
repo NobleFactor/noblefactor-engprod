@@ -45,7 +45,7 @@ projects:
     template: true
     workflows: []
     fields:
-      - { name: "Lane", type: number }
+      - { name: "Step", type: number }
       - { name: "Next", type: text }
       - name: "Status"
         type: single-select
