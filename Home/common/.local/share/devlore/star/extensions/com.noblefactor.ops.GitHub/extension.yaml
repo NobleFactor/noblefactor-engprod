@@ -6,13 +6,13 @@ description: GitHub under the NobleFactor classification scheme -- the issue rep
 
 commands:
   - name: github.schedule.report
-    help: Render the epic, feature-or-chore, lane tree from GitHub issues, by epic, across the repositories of writ's layers
+    help: Render the epic, feature, lane tree from GitHub issues, by epic, across the repositories of writ's layers
     implementation: commands/github-schedule-report.star
     flags:
       - name: by
         type: string
         default: "epic"
-        help: Section the report by epic, by feature (one row per feature or chore with its counts and state), by thread, or by schedule (lanes in declared order, progress derived)
+        help: Section the report by epic, by feature (one row per feature with its counts and state), by thread, or by schedule (lanes in declared order, progress derived)
       - name: view
         type: string
         default: "table"
@@ -143,13 +143,13 @@ commands:
   # its help names the new command. A later task removes them once no skill, document or session names them.
 
   - name: gh.issues.report
-    help: "Renamed: star github schedule report. Render the epic, feature-or-chore, lane tree from GitHub issues, by epic, across the repositories of writ's layers"
+    help: "Renamed: star github schedule report. Render the epic, feature, lane tree from GitHub issues, by epic, across the repositories of writ's layers"
     implementation: commands/github-schedule-report.star
     flags:
       - name: by
         type: string
         default: "epic"
-        help: Section the report by epic, by feature (one row per feature or chore with its counts and state), by thread, or by schedule (lanes in declared order, progress derived)
+        help: Section the report by epic, by feature (one row per feature with its counts and state), by thread, or by schedule (lanes in declared order, progress derived)
       - name: view
         type: string
         default: "table"

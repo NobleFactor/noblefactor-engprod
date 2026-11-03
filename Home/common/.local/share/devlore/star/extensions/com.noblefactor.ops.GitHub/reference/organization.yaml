@@ -1,0 +1,76 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Noble Factor. All rights reserved.
+
+# The reference model for an organization's account: the initial desired state of the issue data model, applied to an
+# organization that adopts it (docs/architecture/issue-data-model/6-the-asset-and-its-sync.md § Reference models, read on
+# demand). It names no account and holds no ids: an account's own ids come from GitHub, read on demand. After adoption the
+# organization's GitHub record is its model, and the audit compares it with this file: what it lacks is a fault, what it
+# adds is its own. The hierarchy is Epic, then Feature, then Task or Bug, ruled 2026-10-29 (NobleFactor/noblefactor-engprod
+# #419, #420); product and engineering work are told apart by epic or area, not by type.
+
+version: 1
+account: organization
+
+# Issue types, the organization's own. A type's level is the "Level N:" its description begins with; within a level, the
+# order here is the render order; the leaf type marked unplanned is the one found rather than planned.
+types:
+  - name: "Epic"
+    level: 0
+    color: "purple"
+    description: "Level 0: a body of work with an owner, the root every other issue rolls up to; decomposes into features"
+  - name: "Feature"
+    level: 1
+    color: "blue"
+    description: "Level 1: a capability, for the product or for engineering, its epic or area saying which; decomposes into tasks and bugs"
+  - name: "Bug"
+    level: 2
+    unplanned: true
+    color: "red"
+    description: "Level 2: unplanned work, a defect found rather than planned; repairs a feature"
+  - name: "Task"
+    level: 2
+    color: "yellow"
+    description: "Level 2: planned work, a step in delivering a feature"
+
+# Labels every participating repository carries. Type is an issue type here, so no label carries it. Severity, Priority
+# and Area join when the plan's iteration 4 rules them.
+labels:
+  organization: []
+
+# Projects, the organization's own: the Schedule and Thread templates, and one Triage project per team, its row 0 the
+# team's triage epic. A project's Status is set by star, never by a GitHub workflow, except that a Triage project keeps
+# GitHub's auto-add of sub-issues, so its triage epic's sub-issues fill its queue.
+projects:
+  - name: "Schedule"
+    template: true
+    workflows: []
+    fields:
+      - { name: "Lane", type: number }
+      - { name: "Next", type: text }
+      - name: "Status"
+        type: single-select
+        options:
+          - { name: "Open", color: "GRAY", description: "The issue is open" }
+          - { name: "In progress", color: "YELLOW", description: "Next names the worktree the work is in" }
+          - { name: "Closed", color: "PURPLE", description: "The issue is closed; closed is not done until the record says so" }
+  - name: "Thread"
+    template: true
+    workflows: []
+    fields:
+      - { name: "Beat", type: number }
+      - name: "Status"
+        type: single-select
+        options:
+          - { name: "Open", color: "GRAY", description: "The issue is open" }
+          - { name: "In progress", color: "YELLOW", description: "Next names the worktree the work is in" }
+          - { name: "Closed", color: "PURPLE", description: "The issue is closed; closed is not done until the record says so" }
+  - name: "Triage: <team>"
+    per_team: true
+    workflows: ["Auto-add sub-issues to project"]
+    fields:
+      - name: "Status"
+        type: single-select
+        options:
+          - { name: "Todo", color: "GREEN", description: "" }
+          - { name: "In Progress", color: "YELLOW", description: "" }
+          - { name: "Done", color: "PURPLE", description: "" }

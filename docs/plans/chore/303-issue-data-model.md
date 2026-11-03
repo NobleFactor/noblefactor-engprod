@@ -243,11 +243,36 @@ Organizations and individual accounts are separate, each with its own model (que
 - [x] The tasks filed -- 2026-11-02: #425, the reference models; #426, each account's model read on demand; #427, the
       report and audit reading schedules and threads from their projects; #428, NobleFactor's records holding nothing of
       personal's; and David-Noble-at-work/personal#309, personal's own records
+- [x] Each participating account keeps its model, made from its reference, in its own public `.github` repository, and
+      the reference pair ships with the extension -- 2026-11-02, revising question 17's settlement the same day; filed
+      as #431 and David-Noble-at-work/personal#311, and #426 brought to it
+- [x] The two reference models written beside the extension, `reference/organization.yaml` and `reference/user.yaml`
+      -- 2026-11-02, on this branch
 - [ ] Question 18 ruled: how an account takes part in the model, and keeps to it
 - [ ] The crossings removed, #428: 26 sub-issue links, 58 project rows and 2 blocked-by links
 - [ ] personal's own triage epic and Triage project, and a schedule of its own for each NobleFactor schedule its lanes
       came from, personal#309
 - [ ] The reference models and the adoption of an account, #425; each account's model read on demand, #426
+
+### Chore retired, from 2026-11-02
+
+The hierarchy is Epic, then Feature, then Task or Bug: Chore is dropped, as the rewrite of the engineering documents
+states (#419, #420). The organization's types, the record and the tooling follow it.
+
+- [x] The organization's types: Chore disabled, and Epic, Feature, Task and Bug described with their levels; personal's
+      four kind labels likewise -- 2026-11-02
+- [x] noblefactor-engprod's 53 open chores typed Task; personal's 14 open chores labeled task, and #287 a feature with
+      #289 to #295 naming it -- 2026-11-02
+- [x] `model.yaml` pulled again: the four types and the 19 projects -- 2026-11-02, on this branch
+- [x] The report and the audit find a schedule or a thread by its title, whatever its kind, and ask neither for a kind
+      label; the words they print for tier two come from the asset -- 2026-11-02, on this branch, verified through a
+      private copy of the extension before the record was relabeled: every schedule found, and #346's report unchanged
+- [x] The record agrees with the model: every issue labeled chore that is not a schedule labeled task instead, 208 when
+      counted, open and closed, in the three repositories; #347 and #348, chores with lanes, labeled feature, and their
+      lanes #350 to #354 naming them with Feature markers -- 2026-11-02, by this branch's script before its merge
+- [ ] The schedule issues' kind ruled; then the Chore type deleted and the chore label retired, with Start-Claude's use
+      of it
+- [ ] This design and issue-standards.md stated without Chore, after #420
 
 ### Iteration 4: attributes
 
@@ -279,6 +304,9 @@ scheme retired last.
 | `docs/plans/chore/303-issue-data-model.md` | Create | this plan |
 | `docs/architecture/issue-data-model/` | Create | the design: its index, six sections and their status companions; section 6, the asset and its sync, added 2026-10-22 on the owner's "Doc it" |
 | `docs/issue-standards.md` | Modify | states the model, once ruled |
+| `Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/model.yaml` | Modify | the asset, pulled again 2026-11-02 with Chore retired |
+| `.../com.noblefactor.ops.GitHub/reference/organization.yaml`, `reference/user.yaml` | Create | the two reference models (#425) |
+| `.../com.noblefactor.ops.GitHub/commands/scheme.star`, `github-schedule-report.star`, `extension.yaml` | Modify | schedules and threads found by title; tier two worded from the asset |
 
 ## Related Documents
 
@@ -407,7 +435,9 @@ scheme retired last.
     repository's owner; and no account's model is kept in a file: two reference models live beside the extension, and
     each account's model is GitHub's record, read on demand. [Section 4](../../architecture/issue-data-model/4-storage-and-reach.md)
     § Accounts and [section 6](../../architecture/issue-data-model/6-the-asset-and-its-sync.md) § Reference models,
-    read on demand. Closed.
+    read on demand. **Revised the same day:** each participating account keeps its model, made from its reference, in
+    its own public `.github` repository (#431, David-Noble-at-work/personal#311); GitHub's record is still read on
+    demand, and section 6 is brought to the revision with #431. Closed.
 18. **How an account takes part in the model, and keeps to it**, added 2026-11-02. Adopting the model is a deliberate
     push by the owner, made when they choose or never; the code assumes nothing about an account not pushed to; and a
     change made in GitHub is picked up on the next read. That leaves two questions: whether a participating account's
