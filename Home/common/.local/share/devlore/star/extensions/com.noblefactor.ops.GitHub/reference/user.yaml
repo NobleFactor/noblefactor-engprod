@@ -1,0 +1,76 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Noble Factor. All rights reserved.
+
+# The reference model for a user's account: the initial desired state of the issue data model, applied to an individual's
+# account that adopts it (docs/architecture/issue-data-model/6-the-asset-and-its-sync.md § Reference models, read on
+# demand). It names no account and holds no ids. The model is the organization's, with four deviations, all from what a
+# user's account lacks (section 4, Accounts): type is a label, so the audit, not GitHub, holds an issue to one; there are
+# no teams, so the account owns and triages everything; there are no templates, so star builds each project field by
+# field; and the types below are labels whose descriptions begin "Level N:". The hierarchy is Epic, then Feature, then Task
+# or Bug, ruled 2026-10-29 (NobleFactor/noblefactor-engprod#419, #420).
+
+version: 1
+account: user
+
+# Type labels, carried by every repository of the account. A type's level is the "Level N:" its label's description begins
+# with; within a level, the order here is the render order; the leaf marked unplanned is the one found rather than planned.
+types:
+  - name: "Epic"
+    label: "epic"
+    level: 0
+    color: "7057ff"
+    description: "Level 0: a body of work with an owner, the root of the hierarchy; decomposes into features"
+  - name: "Feature"
+    label: "feature"
+    level: 1
+    color: "0e8a16"
+    description: "Level 1: a capability, its epic or area saying what kind; decomposes into tasks and bugs"
+  - name: "Bug"
+    label: "bug"
+    level: 2
+    unplanned: true
+    color: "d73a4a"
+    description: "Level 2: unplanned work, a defect found rather than planned; repairs a feature"
+  - name: "Task"
+    label: "task"
+    level: 2
+    color: "1d76db"
+    description: "Level 2: planned work, a step in delivering a feature"
+
+# Labels beyond the type labels. Severity, Priority and Area join when the plan's iteration 4 rules them.
+labels:
+  repositories: []
+
+# Projects the account owns, each built field by field: a user's project cannot be a template. One triage epic and one
+# Triage project for the account, its row 0 that epic; schedules and threads made as the account needs them.
+projects:
+  - name: "Schedule: <name>"
+    workflows: []
+    fields:
+      - { name: "Lane", type: number }
+      - { name: "Next", type: text }
+      - name: "Status"
+        type: single-select
+        options:
+          - { name: "Open", color: "GRAY", description: "The issue is open" }
+          - { name: "In progress", color: "YELLOW", description: "Next names the worktree the work is in" }
+          - { name: "Closed", color: "PURPLE", description: "The issue is closed; closed is not done until the record says so" }
+  - name: "Thread: <name>"
+    workflows: []
+    fields:
+      - { name: "Beat", type: number }
+      - name: "Status"
+        type: single-select
+        options:
+          - { name: "Open", color: "GRAY", description: "The issue is open" }
+          - { name: "In progress", color: "YELLOW", description: "Next names the worktree the work is in" }
+          - { name: "Closed", color: "PURPLE", description: "The issue is closed; closed is not done until the record says so" }
+  - name: "Triage"
+    workflows: ["Auto-add sub-issues to project"]
+    fields:
+      - name: "Status"
+        type: single-select
+        options:
+          - { name: "Todo", color: "GREEN", description: "" }
+          - { name: "In Progress", color: "YELLOW", description: "" }
+          - { name: "Done", color: "PURPLE", description: "" }

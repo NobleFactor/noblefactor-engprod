@@ -11,9 +11,10 @@ title: "6. The asset and its sync — Status"
 proposed and accepted ("That's great. Doc it"). `pull`, `digest`, the cache and § Access built 2026-10-24 to
 2026-10-26 in #377, `--check` standing in for `--dry-run` until devlore-cli#1170; `push` and `model audit` not yet built; the read
 before every operation built in #378. Not built: the asset's `teams` record, which `pull` neither reads nor writes,
-though GitHub has devlore and engprod; and the projects of 2026-11-01 are not yet pulled into the asset. Ruled 2026-11-02: organizations and individual accounts are separate, each with its own model
+though GitHub has devlore and engprod. Pulled again 2026-11-02, Chore retired: the four types and the 19 projects, those of 2026-11-01 among them; the two reference models beside the extension the same day. Ruled 2026-11-02: organizations and individual accounts are separate, each with its own model
 (§ Accounts in section 4); question 17 settled the same day, and the model read on demand from two reference
-models (§ Reference models, read on demand, in section 6).
+models (§ Reference models, read on demand, in section 6). Revised the same day: each participating account keeps its
+model in its own `.github` repository (#431, David-Noble-at-work/personal#311), which section 6 states with #431.
 
 ## Completion
 
