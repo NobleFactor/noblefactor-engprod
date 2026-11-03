@@ -16,10 +16,12 @@ the plan, added 2026-11-02, puts personal's rows in them in question. Ruled 2026
 (§ Accounts in section 4); question 17 settled the same day, and the model read on demand from two reference
 models (§ Reference models, read on demand, in section 6). Revised the same day: each participating account keeps its
 model in its own `.github` repository (#431, David-Noble-at-work/personal#311), which section 6 states with #431.
+Ruled 2026-11-02: a schedule's rows are numbered by Step, not Lane, and the first row, its own issue, has none; Lane
+renamed Step in GitHub the same day, on the template and the nine schedules (§ Rows and steps).
 
 ## Completion
 
-- [ ] The plan's questions 5 to 10 ruled: the collection's own record, lane numbers, status, a committed schedule, one
+- [ ] The plan's questions 5 to 10 ruled: the collection's own record, step numbers, status, a committed schedule, one
   issue in two collections, who joins which.
 - [ ] The prototype: a Schedule template in NobleFactor, and NobleFactor/noblefactor-ops#301 as a project made from
   it, its lanes as rows.
