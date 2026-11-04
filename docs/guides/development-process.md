@@ -5,7 +5,7 @@ type: Process
 audience: Engineers
 status: Approved
 created: 2026-09-01
-updated: 2026-10-25
+updated: 2026-11-03
 ---
 
 # Development Process
@@ -36,9 +36,25 @@ in [release-process.md](release-process.md); the two are read together.
 **A branch requires an issue.** A branch names work; work is tracked. A branch attached to nothing is a
 claim nobody can find later, and the issue is what makes it findable from the outside.
 
-What that issue must carry — its kind, its place in the hierarchy, and the markers that put it there
-— is [issue-standards.md](../issue-standards.md). This document begins where that one ends: it
-assumes a well-classified issue and describes how the work around it is organized.
+What that issue must carry — its type (an issue type in an organization, a type label in a user account)
+and a sub-issue link to its parent one level up — is [issue-standards.md](../issue-standards.md). The
+hierarchy is Epic (level 0), then Feature (level 1), then Task or Bug (level 2); Chore is retired. Ruled
+2026-11-02 and 2026-11-03: the chore label is gone from every repository in both accounts, and the Epic: and
+Thread: labels are removed, replaced by sub-issue parent links and project rows. Ruled 2026-11-03: threads are
+renamed scenarios, so the issue type Thread is now Scenario, and the label thread is now scenario in a user account.
+
+Ruled 2026-11-03: the old scheme's last three pieces are retired, and the retirement is done in GitHub. The parent
+markers such as **Feature:** and the schedule footers came out of 725 issue bodies, 47 issues got the sub-issue parent
+their marker named, and where a marker and a sub-issue link disagreed, the link stands. The step and beat tables in 14
+Schedule and Scenario issues gave way to a line naming the issue's project and its option in that project. The kind
+labels epic, feature, task and bug left NobleFactor's 12 repositories, after 672 issues got the issue type their label
+named. David-Noble-at-work keeps its type labels, because in a user account they are its types.
+
+Ruled 2026-11-03: a Schedule or Scenario issue has no parent. Epic is at the top of the hierarchy, and Schedule and
+Scenario are its two peers there.
+
+This document begins where that one ends: it assumes a well-classified issue and describes how the work
+around it is organized.
 
 **Three things nest, and they are not the same size.**
 
@@ -51,7 +67,7 @@ assumes a well-classified issue and describes how the work around it is organize
 **A feature groups the issues that serve it.** Many features may be in flight at once. The feature is
 what makes a set of otherwise unrelated issues legible as one intent.
 
-**The report is `star github schedule report`.** By epic, by feature, by thread, or by schedule — the
+**The report is `star github schedule report`.** By epic, by feature, by scenario, or by schedule — the
 same issues read four ways. A pull request ends with it when one is asked for, scoped to what the pull
 request served; it is not automatic. Ruled 2026-09-12, retiring the standing rule that every pull request
 print one.
@@ -62,16 +78,37 @@ for every pull request, so the numbers can be read as a series (rule 11). It is 
 not how long it took to do; effort, where anyone estimates it, is said elsewhere and labeled an estimate. The
 report and the span are what a merged pull request leaves behind.
 
-**A schedule is how the work is ordered, not another size of it.** A feature, a worktree and a session are
-nested; a schedule cuts across them. It is a sequence of **lanes** — leaf issues, tasks and bugs,
-drawn from any feature and any epic — in the order someone has committed to working them, and it is what an
-agent actually executes: one lane after the next, in the declared order, until the last one closes. Its
-shape, its commitment and its deliverable are [issue-standards.md](../issue-standards.md) §Schedules.
+**Each team works from four projects.** Ruled 2026-11-03: each team, and each user account, has a Triage
+project, a Backlog project, one Schedule project and one Scenario project. They are named `<Kind>: <team>` in an
+organization, such as `Triage: engprod` or `Scenario: devlore`, and `<Kind>: David-Noble-at-work` in the user
+account. The team that owns a project is accountable for it, and GitHub's link between the project and its team is
+the record; a user account's projects are its owner's. Every issue is reviewed in its team's Triage project, and a
+triage decision is made there: the work is declined, and the issue closed as completed with Resolution Declined in
+NobleFactor or the label resolution:declined in a user account, or the issue moves to the team's Backlog, Schedule or
+Scenario project. The Backlog project holds accepted work not yet scheduled, ordered by priority. The projects, their
+fields and their templates are [issue-standards.md](../issue-standards.md).
 
-**A thread is not a fourth row.** It is a narrative — a use case or scenario — whose beats land in
-several features, usually across epics and often across repositories. A session serves a feature; a
-thread is what several sessions add up to. It is a view across units of work, not a unit itself, and
-it is defined in [issue-standards.md](../issue-standards.md#threads).
+Open, to be ruled on #303: how a triage decision is carried out, and how an issue is kept in one project at a time.
+
+**A schedule is how the work is ordered, not another size of it.** A feature, a worktree and a session are
+nested; a schedule cuts across them. Its rows are **steps** — tasks and bugs, drawn from any feature and any epic
+of its own account — in the order someone has committed to working them, and it is what an agent actually
+executes: the steps in step order, until the last one closes. Ruled 2026-11-03: there is no longer a project per
+schedule. The team's Schedule project holds its committed tasks and bugs, and its single-select Schedule field
+names the schedule each row belongs to, with one option per schedule, named for its Schedule issue. That issue, of
+type Schedule (the label schedule in a user account), holds the schedule's deliverable and exit criteria, and its
+own row has no step; every other row gets its step number and its dependencies, GitHub blocked-by links, when it
+is added. GitHub's Iteration field gives each row its sprint, for scrums and sprint review. Ruled 2026-11-02:
+"lane" is now "step", and no project, sub-issue link or blocked-by link crosses accounts. A schedule's shape, its
+commitment and its deliverable are [issue-standards.md](../issue-standards.md) §Schedules.
+
+**A scenario is not a fourth row.** It is a narrative, a use case, told by its Scenario issue, and its rows are
+features of its own account, usually across epics and often across that account's repositories. Ruled 2026-11-03:
+there is no longer a project per scenario. The team's Scenario project holds its features, and its single-select
+Scenario field names the scenario each row belongs to, with one option per scenario, named for its Scenario issue;
+Beat orders the rows within a scenario. Work in another account joins it only through a stand-in issue in the
+scenario's own account. A session serves a feature; a scenario is what several sessions add up to. It is a view
+across units of work, not a unit itself, and it is defined in [issue-standards.md](../issue-standards.md#scenarios).
 
 **A worktree is a pull request.** It branches from the default branch and resolves one or more of its
 feature's issues. As many worktrees may be open as there are pull requests in flight; they do not
@@ -135,6 +172,33 @@ Work uncovers work. That is normal and is not a reason to stop.
 context that made it visible is at its sharpest in the moment it appeared, and a defect described a week
 late is a worse description.
 
+Ruled 2026-11-03: an issue we file ourselves goes through `star github issue`, the one path that classifies an issue
+as it is made. A new issue reaches its team's Triage project through a GitHub Actions workflow in its repository,
+run when an issue is opened or transferred, using `actions/add-to-project`; GitHub's built-in auto-add workflow is
+not used. Each repository's `TRIAGE_PROJECT_URL` variable names its team's Triage project, taken from the team
+mapping: the team with the maintain role on a repository owns it. A Triage workflow template in each account's
+`.github` repository offers the workflow. GitHub's documentation describes workflow templates kept in an
+organization's `.github` repository and says nothing about a user account's; whether GitHub offers
+David-Noble-at-work/.github's template to personal has not been checked, and either way the task that adds
+personal's Triage workflow, David-Noble-at-work/personal#315, copies personal's `triage.yml` from it.
+
+Ruled 2026-11-03: an account's file templates, which are its issue forms, its Triage workflow template and its pull
+request template, are stored in its `.github` repository, and every document that talks about one of them refers to it
+there ([section 6](../architecture/issue-data-model/6-the-asset-and-its-sync.md#one-model-per-account) of the issue data
+model design).
+
+How the Triage workflow signs in, with a token from the noblefactor-automation GitHub App in NobleFactor and a classic
+personal access token in a user account, is [section 4](../architecture/issue-data-model/4-storage-and-reach.md#triage)
+of the design. Read from GitHub on 2026-11-03, the app's installation on NobleFactor has organization projects read and
+write, issue fields read, and issues read and write, beside contents write, metadata read and pull requests write, on
+all of NobleFactor's repositories. GitHub's
+[list of GitHub App permissions](https://docs.github.com/en/rest/authentication/permissions-required-for-github-apps)
+puts an organization's projects under the organization permission Projects, its issue fields under the organization
+permission Issue Fields, and an issue's field values under the repository permission Issues. Nothing has used the
+projects, issue fields and issues permissions yet: the first Triage workflow run in a NobleFactor repository proves
+them. NobleFactor's five repositories with `TRIAGE_PROJECT_URL` set, NobleFactor/.github included since 2026-11-03,
+now wait only on their own `.github/workflows/triage.yml`.
+
 **Then decide, immediately, where it will be resolved.** There are exactly two answers, and deferring the
 choice is not one of them:
 
@@ -174,7 +238,9 @@ Neither answer is the default. What is not permitted is proceeding as though the
 
 **A pull request outside the worktree can block it too.** When a pull request outside the current worktree's scope,
 already merged or another session's, blocks its progress, it is fixed, not worked around: a bug is filed against it,
-put on the schedule as a lane, and worked in a worktree of its own. When that work is still under way in another
+put on the schedule as a step, given its step number when it is added, set as blocking the step it holds up, and
+worked in a worktree of its own. When the blocking pull request is in another account, the bug is filed there, and a
+stand-in issue in the schedule's account is the step. When that work is still under way in another
 session, that session may be the one to unblock it. Either way the owner is consulted before anything is done. Ruled
 2026-10-25 (#401): "if another PR outside the scope of your current worktree is blocking your progress, you must fix
 it." Then: "if work is ongoing in another session we can consider having that session unblock you. Of course, you need
@@ -190,10 +256,17 @@ to engage with me before acting."
 docs/plans/<type>/<issue>-<name>.md
 ```
 
-where `<type>` is drawn from the alternation the organization ruleset enforces on every ref — `chore`,
-`doc`, `feature`, `fix`, `hotfix`, `refactor`, `release` — and `<issue>-<name>` is what the branch
+where `<type>` is drawn from the alternation the organization ruleset enforces on every ref — `doc`,
+`feature`, `fix`, `hotfix`, `refactor`, `release` — and `<issue>-<name>` is what the branch
 carries. The plan's path below `docs/plans/` is therefore its branch's name exactly, so neither can be
 searched for without finding the other, and the issue number is visible in both.
+
+Ruled 2026-11-03: the `chore/` branch type is removed from the branch ruleset and from `git open-branch`. The plans
+already filed under `docs/plans/chore/` stay where they are. The ruleset changed on 2026-11-03, when the script of
+the issue data model design's worktree (#303) ran, so no branch named `chore/...` can be pushed. `git open-branch`
+still accepts `chore`, in the script, its man page and its bash and zsh completions; the ruling removes it from all
+of them, and that change has not been made
+([github-branch-protection.md](../github-branch-protection.md#12515090--restrict-branch-names)).
 
 A plan named for its subject rather than its issue — `reconciliation.md`, `cli-output-conventions.md` —
 is reachable only by someone who already knows what it is called.
@@ -343,7 +416,7 @@ or in a consumer's CI a checkout of this repository at a pinned ref (`DECLARE_BA
 
 - [release-process.md](release-process.md) — branching strategy, releases, rollback, tagging
 - [docs/plans/TEMPLATE.md](../plans/TEMPLATE.md) — the plan every task begins with
-- [docs/issue-standards.md](../issue-standards.md) — issue kinds, the hierarchy, and triage attributes
+- [docs/issue-standards.md](../issue-standards.md) — issue types, the hierarchy, and triage attributes
 - [docs/documentation-standards.md](../documentation-standards.md) — frontmatter families
 - [docs/github-branch-protection.md](../github-branch-protection.md) — protected branches and required checks
 - [pr-script-template.md](pr-script-template.md) — the PR script format
