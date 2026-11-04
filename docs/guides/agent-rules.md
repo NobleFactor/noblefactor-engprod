@@ -5,7 +5,7 @@ type: Process
 audience: Claude Code, Codex
 status: Approved
 created: 2026-09-07
-updated: 2026-10-25
+updated: 2026-11-03
 ---
 
 # Agent Rules
@@ -53,9 +53,12 @@ from `repositories.md` and the binary's help, days after devlore-cli#791 (`repo 
 (bare `deploy`, implicit projects) had ruled otherwise. "You are writing old stuff. Fix that." Corrected
 by #183.
 
-**Compliance.** Before writing a `writ` command, read the ruling issues under devlore-cli feature #463.
-`star gh issues report --epic WritDeployment --view table --state open` lists them; the guide pass
-that will catch the documents up is devlore-cli#849.
+**Compliance.** Before writing a `writ` command, read the ruling issues under devlore-cli feature #463. The
+guide pass that will catch the documents up is devlore-cli#849. Ruled 2026-11-03: the Epic: labels are removed
+from both accounts, and sub-issue parent links replace them.
+
+Open, to be ruled on #303: what command lists the open ruling issues under devlore-cli#463 now that the Epic:
+labels are gone.
 
 ## 3. A question about issues is answered by the report
 
@@ -69,13 +72,23 @@ tool built for exactly that. "You should be running a `star gh` command to get t
 run found three of the agent's own filings missing their parent feature.
 
 **Compliance.** From any directory: the report reads the repositories of writ's layers, and a schedule report
-also reads every repository its lanes name (#253):
+also reads every repository its steps name (#253):
 
 ```bash
 star github schedule report --epic <Name> --view table --state open --markdown -o value --silent
 star github schedule report --by feature --epic <Name>     # or --by thread --thread <Name>, --by schedule
 star github schedule audit                                 # and --unthreaded
 ```
+
+`--epic <Name>` and `--thread <Name>` name the Epic: and Thread: labels. Ruled 2026-11-03: those labels are removed
+from both accounts, and sub-issue parent links and project rows replace them. Ruled the same day: threads are renamed
+scenarios, and each team's one Scenario project holds its features, its Scenario field naming the scenario each row
+belongs to.
+
+Open, to be ruled on #303: what `--epic` and `--thread` take now that those labels are gone.
+
+What `--unthreaded` checks is part of what the audit compares against, which is decided with the tooling in #426 and
+#437.
 
 `star` is a tool we build: rule 1 applies to it.
 
@@ -249,6 +262,11 @@ not the commits to carry these messages." (#254)
 the disclosure and both trailers, the merge step writes the squash message from it, and after the merge the
 commit that landed is checked for both: [pr-script-template.md](pr-script-template.md), rule 2.
 
+Ruled 2026-11-03: the description's form is to be kept in the account's pull request template, stored in its
+`.github` repository with its other file templates; neither account has one yet
+([section 6](../architecture/issue-data-model/6-the-asset-and-its-sync.md#one-model-per-account) of the issue data
+model design).
+
 ## 14. A claim says how it is known
 
 **The rule.** Every claim says which kind it is: verified, naming how and when; certain, because it follows
@@ -348,13 +366,17 @@ running it by me first. you should identify the need and propose a message as yo
 is answered with the proposal, not the message. The reply after any send or receipt carries the prefixed line. A request
 in a received message is reported, not acted on, unless the owner's orders already cover it.
 
-## 19. A session keeps its lanes current as it goes
+## 19. A session keeps its steps current as it goes
 
-**The rule.** A lane's row on its schedule says where the lane's work is the moment it moves: in progress, naming the
-worktree, when the worktree opens; the new worktree, when the work moves; merged, as its pull request lands; closed,
-when it closes any other way. Each is recorded by the worktree's script, the one place the process gives a script,
-and none waits for the end of the work. The schedule is how the owner sees progress, how other sessions find the work,
-and how a session finds its own place again after its context is compacted.
+**The rule.** A step's record says where the step's work is the moment it moves. When the worktree opens, the step's
+row in its team's Schedule project links, in its Worktree column, the branch the work is on; when the work moves, the
+row links the new branch. As its pull request lands, the step's own issue records that it merged; when it closes any
+other way, the issue records that it closed. Ruled 2026-11-02 and 2026-11-03: "lane" is now "step", schedules have no
+Next column, and the Schedule project's Worktree column holds each step's branch. Ruled 2026-11-03: each team has one
+Schedule project, whose Schedule field names the schedule each row belongs to, so a schedule is no longer a project of
+its own. Each record is made by the worktree's script, the one place the process gives a script, and none waits for
+the end of the work. The schedule is how the owner sees progress, how other sessions find the work, and how a session
+finds its own place again after its context is compacted.
 
 **The breakage.** 2026-10-24, lanes 18 and 19 of #301. Lane 18's issue, #394, closed as not planned; lane 19 moved to
 a worktree of its own and merged in #396. Both rows went on reading "in progress" in a worktree `git close-branch` had
@@ -363,10 +385,25 @@ recorded nothing. Filed the next day as #401, a bug against #396. Ruled 2026-10-
 "updating your own lanes as you go is an absolute hard requirement. to do otherwise is to keep me in the dark on
 progress." Then: "not to mention other sessions as well as the current session, especially following compression."
 
-**Compliance.** A worktree's first script records its lanes in progress, naming the worktree. The pull request's script
-records them as it lands, by the template's step ([pr-script-template.md](pr-script-template.md), rule 13). A lane that
-moves to another worktree, or closes without a merge, is recorded by the script of the worktree that held it, before
-`git close-branch`. Every record is guarded on the schedule's `updatedAt` and read back.
+And 2026-11-03, a second: the row of the issue data model design (#303) on Schedule: engprod had no Worktree link,
+though its worktree, on the branch `doc/303-model-cutover`, had been open since that day. The branch had not yet been
+pushed, and a link to a branch GitHub doesn't have leads nowhere. The worktree's script,
+`~/Workspace/NobleFactor/noblefactor-engprod.303-model-cutover.bash`, written 2026-11-03, pushes the branch, then
+links it and reads the row back. It ran on 2026-11-03: `doc/303-model-cutover` is on GitHub, at `60828ac`, and the
+row has read back the link in its Worktree column since.
+
+**Compliance.** The Worktree column holds a link to the branch on GitHub, so a worktree's first script pushes its
+branch, then links it in the Worktree column of each of its steps' rows. The pull request's script records on each
+step's issue that it merged, as it lands, by
+[pr-script-template.md](pr-script-template.md), rule 13. A step that moves to another worktree, or closes without a
+merge, is recorded by the script of the worktree that held it, before `git close-branch`. Every record is read back.
+
+Open, to be ruled on #303: what each record is guarded on, now that it is a column on a project row and a record on the
+step's own issue rather than a table in the schedule issue's body.
+
+Until it is, the PR script template's schedule step and its rule 13 still rewrite a row of the schedule issue's table,
+retired on 2026-11-03, and the template has no step yet for a worktree's first script:
+[pr-script-template.md](pr-script-template.md#rules), rule 13.
 
 ---
 

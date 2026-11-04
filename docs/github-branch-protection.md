@@ -18,6 +18,15 @@ what is actually enforced today.
 | noblefactor | main |
 | noblefactor-engprod | develop |
 
+NobleFactor/.github, the organization's `.github` repository, is where the organization's model file is stored (ruled
+2026-11-02), and where its file templates are stored: its issue forms, its pull request template, and its Triage
+workflow template, which offers each repository the workflow that adds a new issue to its team's Triage project (ruled
+2026-11-03). GitHub serves its default community health files and issue templates to every repository of the account.
+Ruled 2026-11-03: it gets a `quality-gate` check of its own, so it follows the organization's ruleset like every other
+repository. What it held on 2026-11-03 is in
+[section 6](architecture/issue-data-model/6-the-asset-and-its-sync.md#one-model-per-account) of the issue data model
+design.
+
 ## Protected Branches
 
 - `~DEFAULT_BRANCH`
@@ -84,10 +93,31 @@ advances.
 Every ref, every repository, **no bypass actors at all** — organization admins included.
 
 ```
-^(chore|doc|feature|fix|hotfix|refactor|release)/.+$
+^(doc|feature|fix|hotfix|refactor|release)/.+$
 ```
 
-A branch outside that set cannot be pushed by anyone. Worth knowing before naming one.
+A branch outside that set cannot be pushed by anyone. Worth knowing before naming one. Ruled 2026-11-03: the `chore/`
+branch type is removed from this pattern and from `git open-branch`.
+
+The pattern above is the one ruled 2026-11-03, and GitHub has it: the script that changes it ran on 2026-11-03 and read
+the ruleset back (Managing rulesets, below). Before then, 12515090's pattern was
+`^(chore|doc|feature|fix|hotfix|refactor|release)/.+$`, last updated 2026-08-26. With no bypass actors, nobody can push
+a branch named `chore/...` now.
+
+Read from GitHub the same day: 10 `chore/` branches are in 8 NobleFactor repositories, and eight of them are left over
+from merged pull requests. Import-AudioCdMetadata's `chore/add-codeowners` has a pull request,
+Import-AudioCdMetadata#1, open since 2026-02-03, and noblefactor-engprod's `chore/320-labels-file` has no pull request
+and was last committed on 2026-10-20. The 10 branches are as they were, and new commits to them would very likely be
+refused now. On the owner's machine, the worktree for dependency updates (#403) is on `chore/403-dependency-update`,
+which has never been pushed.
+
+Read from the files on 2026-11-03, `git open-branch` still accepts `chore`: in the script,
+`Home/common/.local/bin/git-open-branch`, its comment on line 100, its label map on line 110, its check of the type
+on line 168 and that check's error message on line 169; in its man page,
+`Home/common/.local/share/man/man1/git-open-branch.1`, on lines 81, 93 and 136; and in
+its bash and zsh completions, `Home/common/.local/share/bash-completion/completions/git-open-branch`, on line 15, and
+`Home/common/.local/share/zsh/site-functions/_git-open-branch`, on line 10. The ruling removes `chore` from all of
+them, and that change has not been made.
 
 ### 12427647 — "Signed commits for main"
 
@@ -99,10 +129,11 @@ A branch outside that set cannot be pushed by anyone. Worth knowing before namin
 information only. The sole exception is a bypass actor — an organization admin or a repository
 admin — who may override at merge, having looked at the results.
 
-`quality-gate` is the **minimum**, and the only check an *organization* ruleset can require, because
-it is the only one every repository produces. That is a statement about where a requirement can be
-declared, not about how much is required: a repository carrying a tier-2 ruleset requires everything
-in it, and a red leg blocks the merge for anyone who is not a bypass actor.
+`quality-gate` is the **minimum**, and the only check an *organization* ruleset can require, because it is the only one
+every repository produces, NobleFactor/.github included: on 2026-11-03 it held its own
+`.github/workflows/quality-gate.yml`. That is a statement about where a requirement can be declared, not about how much
+is required: a repository carrying a tier-2 ruleset requires everything in it, and a red leg blocks the merge for anyone
+who is not a bypass actor.
 
 Cross-platform repositories require more. Building for a platform proves the code compiles there;
 it does not prove it runs. Every supported platform must therefore report **both**:
@@ -204,6 +235,10 @@ gh api orgs/NobleFactor/rulesets/<id> --method PUT --input ruleset.json
 gh api repos/NobleFactor/<repo>/rulesets --method POST --input repo-ruleset.json
 ```
 
+The 2026-11-03 change to 12515090, taking `chore` out of its pattern, is in the script of the issue data model
+design's worktree (#303), `~/Workspace/NobleFactor/noblefactor-engprod.303-model-cutover.bash`. It sends only the
+ruleset's rules and reads the ruleset back. It ran on 2026-11-03, and the ruleset read back with the new pattern.
+
 ## Rationale
 
 1. **Squash-only merges** — clean, linear history on protected branches.
@@ -231,3 +266,8 @@ gh api repos/NobleFactor/<repo>/rulesets --method POST --input repo-ruleset.json
   `deletion`, `non_fast_forward`, `required_linear_history`, the `~DEFAULT_BRANCH` condition, the
   org-wide branch-name pattern, and the signed-commits requirement on `main`. Added the two-tier
   required-check policy and the context-naming rule.
+- 2026-11-03: Ruled that `chore` leaves ruleset 12515090's branch-name pattern, and that NobleFactor/.github gets a
+  `quality-gate` check of its own so it follows ruleset 12426847 like every other repository. The same day, the script
+  of the issue data model design's worktree (#303) took `chore` out of 12515090's pattern and read it back. Recorded
+  that GitHub holds 10 `chore/` branches, as it did before the change, and that `git open-branch` still accepts
+  `chore`.
