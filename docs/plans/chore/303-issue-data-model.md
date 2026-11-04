@@ -612,7 +612,7 @@ cutover above; NobleFactor's kind labels are gone, and David-Noble-at-work keeps
 The owner, 2026-11-04: the data model has no gap that keeps it from going live, and #303 is to be wrapped up now, with
 #446 and then #447 after it. Going live is rollout work under #333. Closing takes four steps, in this order.
 
-- [ ] **The rulings.** Six questions, all ruled by the owner on 2026-11-04 as proposed here, with Severity N/A added to
+- [x] **The rulings.** Six questions, all ruled by the owner on 2026-11-04 as proposed here, with Severity N/A added to
   the second, the fifth narrowed to tasks and bugs, and the sweep chosen for the sixth:
   1. How an issue moves between its team's projects, and who moves it: questions 4 and 9, which the owner widened on
      2026-11-04 to who may move an issue and how work in the Backlog reaches a schedule. Any member of a team can see
@@ -648,29 +648,39 @@ The owner, 2026-11-04: the data model has no gap that keeps it from going live, 
      blank, or an issue of another type whose Severity isn't N/A; a Resolution on an open issue; two labels of one
      attribute, such as two `priority:` labels, in David-Noble-at-work, where labels stand in for fields; and
      `good first issue` on an issue that isn't a task or a bug. Nothing blocks a filing and nothing corrects itself:
-     triage fixes the issue by hand. Wherever the design says that the audit reports a fault, the sweep returns the
-     issue to Triage instead. #361 closes, since the faults it names belong to the scheme retired on 2026-11-02 and
-     2026-11-03. The attribute fields and labels were made in GitHub on 2026-11-03, N/A and personal's
+     triage fixes the issue by hand. The sweep runs every day, as a scheduled GitHub Actions workflow in each account's
+     `.github` repository with the credentials the Triage workflow uses, and it comments on each issue it returns,
+     naming the rule the issue broke (ruled 2026-11-04). Wherever the design says that the audit reports a fault, the
+     sweep returns the issue to Triage instead. #361 closes. The two faults it first named belong to the scheme
+     retired on 2026-11-02 and 2026-11-03. Of the four its comment of 2026-10-23 added, the sweep takes a parent not
+     one level up, two went with the collection and triage epics, and a hierarchy type whose description names no
+     level belongs to pull and push (#426 and #437), as question 18 has it. The attribute fields and labels were made
+     in GitHub on 2026-11-03, N/A and personal's
      `good first issue` come with the script below, and keeping them in step belongs to `star github model pull`
      (#426) and `push` (#437).
-- [ ] **The issues,** filed and read back before the pull request opens:
+- [x] **The issues,** filed and read back before the pull request opens -- 2026-11-04, each read back:
   - on issue tracking, iteration 1 (#346), under the rollout feature (#333):
-    - step 33, the Triage workflow in noblefactor-engprod, .github, devlore-cli, devlore-registry and
-      devlore.noblefactor.com, waiting on #447, with both accounts' Triage workflow templates and personal's workflow
+    - step 33, #448, the Triage workflow in noblefactor-engprod, .github, devlore-cli, devlore-registry and
+      devlore.noblefactor.com, blocked by #447, with both accounts' Triage workflow templates and personal's workflow
       setting Severity N/A on an issue that isn't a bug and Medium on a bug filed from the bug form;
-    - step 34, `chore` out of `git open-branch`, its man page and its bash and zsh completions;
-    - step 35, the PR script template recording a pull request's steps in the Schedule project, the first script's
-      Worktree link among them, which carries the question rule 19 of agent-rules.md leaves open;
-  - in Backlog: engprod with Priority Low, under #333: the credentials and permissions issue tracking runs on, listed
-    in one place with when and how each is renewed: the noblefactor-automation app's private key, personal's
-    `ADD_TO_PROJECT_PAT`, the token David-Noble-at-work/.github will need, and each team's roles;
-  - David-Noble-at-work/personal#311 takes David-Noble-at-work/.github's Triage workflow and its token, with #441
-    tracking it in NobleFactor; David-Noble-at-work/personal#309's body is brought to the model of 2026-11-03; the
-    bodies of #426 and #437 gain the account's issue fields, which the model holds; #436 gets a comment naming the
-    attribute rules and the blank Area it now checks, and #338 one naming what it sets and refuses at filing; and
-    #361 is closed as completed with Resolution Declined.
+    - step 34, #449, `chore` out of `git open-branch`, its man page, its bash and zsh completions and its test, and
+      the branch type taken from the issue's type, or its type label in a user account (approved 2026-11-04);
+    - step 35, #450, the PR script template recording a pull request's steps in the Schedule project, the first
+      script's Worktree link among them, which carries the question rule 19 of agent-rules.md leaves open;
+  - in Backlog: engprod with Priority Low, under #333: #451, the credentials and permissions issue tracking runs on,
+    listed in one place with when and how each is renewed: the noblefactor-automation app's private key, personal's
+    `ADD_TO_PROJECT_PAT`, the token David-Noble-at-work/.github will need, each team's roles, and the scopes star
+    needs;
+  - David-Noble-at-work/personal#311 took David-Noble-at-work/.github's Triage workflow and its token, with #441
+    tracking it in NobleFactor, and its two sentences that predated the model were corrected;
+    David-Noble-at-work/personal#309 was retitled and its body brought to the model; #426 and #437 gained the
+    account's issue fields in their titles and bodies; #338, #436, #303 and #439 got their comments, #303's recording
+    the rulings and #439's taking the two questions agent-rules.md left open on #303 (approved 2026-11-04); and #361
+    was closed as completed with Resolution Declined, its row on Schedule: engprod Closed.
 - [ ] **The pull request,** on `doc/303-data-model-closing`: the rulings recorded in sections 1, 2, 3, 4 and 7, their
-  status files, the index and issue-standards.md, in place of the sentences left open to be ruled on #303;
+  status files, the index and issue-standards.md, in place of the sentences left open to be ruled on #303, rule 19 of
+  agent-rules.md and rule 13's note in the PR script template pointing at #450, and agent-rules.md's two questions
+  at lines 60 and 88 pointing at #439;
   issue-standards.md without "It is not a chore." and read against the design for anything it lacks; every unchecked
   item of this plan ticked, as done or naming the issue it moved to (below); and this plan's status `complete`. It
   also carries the two items below, which the owner asked for on 2026-11-04 so that #303 closes knowing every
@@ -691,9 +701,10 @@ The owner, 2026-11-04: the data model has no gap that keeps it from going live, 
     project but cannot read one, so the script checks that each call succeeded;
   - adds a view named By priority, sorted by Priority, to Backlog: engprod, Backlog: devlore and the Backlog template
     (projects 25, 28 and 24), since GitHub's API sets a view's sort only when it makes the view;
-  - gives NobleFactor's Severity field its N/A option, after a test on a scratch field shows that changing a field's
-    options keeps the values it holds, since the call takes no option ids, and reads back that every Severity value
-    is still held;
+  - gives NobleFactor's Severity field its N/A option through GitHub's REST call,
+    `PATCH /orgs/NobleFactor/issue-fields/{issue_field_id}`, sending each existing option with its ID. The GraphQL
+    call takes no option IDs, and GitHub's REST documentation warns that options sent without one may be deleted and
+    recreated. The script reads back that every Severity value is still held;
   - makes the label `severity:n/a` in personal and David-Noble-at-work/.github, and the label `good first issue` in
     personal with the color and description David-Noble-at-work/.github's has;
   - sets N/A on every open issue whose type is not Bug, read on 2026-11-04: 412 in NobleFactor and 36 in
@@ -719,9 +730,9 @@ Where the 25 unchecked items go:
 | The Area reader of NobleFactor/.github's Triage workflow template | #447 |
 | A pull request template in NobleFactor/.github | #431 |
 | A pull request template and the Triage workflow in David-Noble-at-work/.github | David-Noble-at-work/personal#311, tracked by #441 |
-| The forms' Area reaching the Area field, and the Triage workflow in five NobleFactor repositories | step 33, new |
-| `chore` out of `git open-branch` | step 34, new |
-| The PR script template's schedule step and rule 13, and its first-script record | step 35, new |
+| The forms' Area reaching the Area field, and the Triage workflow in five NobleFactor repositories | #448, step 33 |
+| `chore` out of `git open-branch` | #449, step 34 |
+| The PR script template's schedule step and rule 13, and its first-script record | #450, step 35 |
 
 ## Migration Path
 
