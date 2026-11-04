@@ -78,11 +78,11 @@ into pull requests that take nothing in use down.
 
 ## Schedule
 
-Lane 3 of Schedule: issue tracking, iteration 1, NobleFactor/noblefactor-ops#346, since 2026-10-21; it waited on lane
-1, #358, which merged in #370 that day. From 2026-10-22 the lane is the sweep below, whose iterations file their own
-lanes; the schedule's amendment for lanes 3 to 6 is the owner's, proposed in this plan's first sweep commit. Before
-that, not on a schedule: this plan's session wrote the design and the owner said another session would do the work
-(2026-10-20, above).
+Step 3 of issue tracking, iteration 1 (#346), In progress on Schedule: engprod (NobleFactor project 26). It was lane 3
+of that schedule, then NobleFactor/noblefactor-ops#346, from 2026-10-21; it waited on lane 1, #358, which merged in
+#370 that day. From 2026-10-22 the lane is the sweep below, whose iterations file their own lanes; the schedule's
+amendment for lanes 3 to 6 is the owner's, proposed in this plan's first sweep commit. Before that, not on a schedule:
+this plan's session wrote the design and the owner said another session would do the work (2026-10-20, above).
 
 ## Goals
 
@@ -606,6 +606,122 @@ cutover above; NobleFactor's kind labels are gone, and David-Noble-at-work keeps
       The GitHub issue data model: its design, for organization and user accounts, and rescoped to the design
 - [x] The old scheme retired in GitHub -- 2026-11-03, as recorded under the cutover above
 - [ ] Status `complete`
+
+### Closing, from 2026-11-04
+
+The owner, 2026-11-04: the data model has no gap that keeps it from going live, and #303 is to be wrapped up now, with
+#446 and then #447 after it. Going live is rollout work under #333. Closing takes four steps, in this order.
+
+- [ ] **The rulings.** Six questions, all ruled by the owner on 2026-11-04 as proposed here, with Severity N/A added to
+  the second, the fifth narrowed to tasks and bugs, and the sweep chosen for the sixth:
+  1. How an issue moves between its team's projects, and who moves it: questions 4 and 9, which the owner widened on
+     2026-11-04 to who may move an issue and how work in the Backlog reaches a schedule. Any member of a team can see
+     all of the team's issues and do all of its work in its four projects: triage, the backlog, scheduling and
+     scenarios. So the one grant a new participant needs is membership in the team, whose roles carry the rest: the
+     maintain role on each repository the team owns, which engprod and devlore have, and the write role on each of its
+     four projects, which the script below sets. A user account has no teams; there, a new participant is a
+     collaborator on the repository and a writer on each of the account's four projects. An issue is a row of at most
+     one of its team's Triage, Backlog and Schedule projects and is on at most one schedule; a feature can also be a
+     row of the Scenario project, in any number of scenarios; the sweep returns an issue that breaks this to its
+     team's Triage project (ruling 6). Every move is one act: the issue gets its row in the project it goes to, with
+     that project's fields set, and loses its row in the project it leaves. Out of Triage, declined work is closed as
+     completed with Resolution Declined, and accepted work goes to the Backlog with its Priority, onto a schedule, or,
+     for a feature, to the Scenario project. From the Backlog, work goes onto a schedule highest Priority first, with
+     the schedule's option, the next step or the step the schedule's owner gives it, Status Open and its blocked-by
+     links. A committed schedule takes it only by its owner's amendment, recorded in the Schedule issue.
+     `star github schedule add` (#438) will make this move in one command.
+  2. A task has no severity; it has a priority (question 11). Severity applies to bugs only, and every issue of another
+     type has Severity N/A: in NobleFactor, a new option N/A of the Severity issue field, and in David-Noble-at-work a
+     new label, `severity:n/a`. A bug has Critical, High, Medium or Low, never N/A. An issue with no type yet waits for
+     triage. At filing, `star github issue` sets N/A (#338), and the Triage workflow sets it on an issue filed from a
+     form. The Triage workflow also gives a bug filed from the bug form, which asks no severity, Severity Medium: the
+     owner's default, which GitHub's field can't hold. Triage changes it when the bug's harm is greater or less.
+  3. A scenario changes no issue's priority; triage sets each issue's Priority (question 12).
+  4. An issue states its evidence of completion in its Evidence of completion section, which every issue form has. At
+     filing, the form checks it, and `star github issue` will (#338).
+  5. `good first issue` goes on tasks and bugs only. The label tells a newcomer that they can pick the issue up, and
+     only a task or a bug is a single piece of work; an epic or a feature is a body of work. This replaces section
+     2's Epic, Feature, Task and Bug, with Schedule and Scenario open. personal gets the label, so that both accounts
+     hold it; read on 2026-11-04, no issue in a participating repository carries it.
+  6. The sweep checks the attribute rules (#436). It returns to its team's Triage project any open issue that breaks
+     one, as it returns an issue that isn't fully classified: an issue with no Area; a bug whose Severity is N/A or
+     blank, or an issue of another type whose Severity isn't N/A; a Resolution on an open issue; two labels of one
+     attribute, such as two `priority:` labels, in David-Noble-at-work, where labels stand in for fields; and
+     `good first issue` on an issue that isn't a task or a bug. Nothing blocks a filing and nothing corrects itself:
+     triage fixes the issue by hand. Wherever the design says that the audit reports a fault, the sweep returns the
+     issue to Triage instead. #361 closes, since the faults it names belong to the scheme retired on 2026-11-02 and
+     2026-11-03. The attribute fields and labels were made in GitHub on 2026-11-03, N/A and personal's
+     `good first issue` come with the script below, and keeping them in step belongs to `star github model pull`
+     (#426) and `push` (#437).
+- [ ] **The issues,** filed and read back before the pull request opens:
+  - on issue tracking, iteration 1 (#346), under the rollout feature (#333):
+    - step 33, the Triage workflow in noblefactor-engprod, .github, devlore-cli, devlore-registry and
+      devlore.noblefactor.com, waiting on #447, with both accounts' Triage workflow templates and personal's workflow
+      setting Severity N/A on an issue that isn't a bug and Medium on a bug filed from the bug form;
+    - step 34, `chore` out of `git open-branch`, its man page and its bash and zsh completions;
+    - step 35, the PR script template recording a pull request's steps in the Schedule project, the first script's
+      Worktree link among them, which carries the question rule 19 of agent-rules.md leaves open;
+  - in Backlog: engprod with Priority Low, under #333: the credentials and permissions issue tracking runs on, listed
+    in one place with when and how each is renewed: the noblefactor-automation app's private key, personal's
+    `ADD_TO_PROJECT_PAT`, the token David-Noble-at-work/.github will need, and each team's roles;
+  - David-Noble-at-work/personal#311 takes David-Noble-at-work/.github's Triage workflow and its token, with #441
+    tracking it in NobleFactor; David-Noble-at-work/personal#309's body is brought to the model of 2026-11-03; the
+    bodies of #426 and #437 gain the account's issue fields, which the model holds; #436 gets a comment naming the
+    attribute rules and the blank Area it now checks, and #338 one naming what it sets and refuses at filing; and
+    #361 is closed as completed with Resolution Declined.
+- [ ] **The pull request,** on `doc/303-data-model-closing`: the rulings recorded in sections 1, 2, 3, 4 and 7, their
+  status files, the index and issue-standards.md, in place of the sentences left open to be ruled on #303;
+  issue-standards.md without "It is not a chore." and read against the design for anything it lacks; every unchecked
+  item of this plan ticked, as done or naming the issue it moved to (below); and this plan's status `complete`. It
+  also carries the two items below, which the owner asked for on 2026-11-04 so that #303 closes knowing every
+  workflow is supported and what to grant should someone else take part in triage and scheduling.
+- [ ] **Who can do what,** a table in issue-standards.md, which the design links to: each workflow, filing, triage,
+  the backlog, scheduling and scenarios; what it changes in GitHub, such as an issue's type, parent, fields and
+  blocked-by links, and a project's rows and fields; the least role GitHub's documentation gives for each change, with
+  the page that says so; and what to grant a new participant in each kind of account.
+- [ ] **Every workflow checked,** a table in section 3's status file: the five workflows, what each needs in GitHub,
+  its projects, fields, views and roles, and whether GitHub has it, read back on the day. Anything missing is made by
+  the script or named with the issue that makes it. Read on 2026-11-04: the Backlog projects have one view and no
+  sort, so nothing shows the Backlog ordered by priority, and David-Noble-at-work's Backlog has no Priority field to
+  sort by; no NobleFactor repository runs the Triage workflow yet, which waits on #447 and step 33; and 83 open bugs
+  have no severity, 77 in NobleFactor and 6 in personal, which is triage's work.
+- [ ] **The pull request's script,** run by the owner:
+  - gives engprod the write role on Triage: engprod, Backlog: engprod, Schedule: engprod and Scenario: engprod
+    (projects 5, 25, 26 and 27), and devlore on its four (6, 28, 29 and 30). GitHub's API sets a team's role on a
+    project but cannot read one, so the script checks that each call succeeded;
+  - adds a view named By priority, sorted by Priority, to Backlog: engprod, Backlog: devlore and the Backlog template
+    (projects 25, 28 and 24), since GitHub's API sets a view's sort only when it makes the view;
+  - gives NobleFactor's Severity field its N/A option, after a test on a scratch field shows that changing a field's
+    options keeps the values it holds, since the call takes no option ids, and reads back that every Severity value
+    is still held;
+  - makes the label `severity:n/a` in personal and David-Noble-at-work/.github, and the label `good first issue` in
+    personal with the color and description David-Noble-at-work/.github's has;
+  - sets N/A on every open issue whose type is not Bug, read on 2026-11-04: 412 in NobleFactor and 36 in
+    David-Noble-at-work, among them the 5 tasks and 2 features in devlore-cli that carry a severity from its old
+    labels;
+  - deletes the Triage rows of the 28 open issues that are also rows of their team's Schedule project, read on
+    2026-11-04: 19 of engprod's, #303 among them, and 9 of devlore's;
+  - merges the pull request and closes #303, its row on Schedule: engprod set to Closed.
+
+Where the 25 unchecked items go:
+
+| Items | Where |
+| --- | --- |
+| Question 18 ruled | done: ruled 2026-11-03, and what is left is #426's and #437's |
+| Questions 5 to 9 ruled; questions 11, 14, 2 and 12 ruled | the rulings above; 9, 11 and 12 were the ones left |
+| This design and issue-standards.md stated without Chore; issue-standards.md states the model in full; status `complete` | the pull request |
+| Rolled out: every open issue typed and linked, the report placing it by type and link | #365 |
+| The crossings removed | #428 |
+| personal's own Triage project and schedules | David-Noble-at-work/personal#309 |
+| The reference models; each account's model read on demand | #425 and #426 |
+| `star github issue` refuses an issue without an Area | #338 |
+| A scheduled sweep returns an issue without an Area to Triage | #436, which also checks the attribute rules (ruling 6) |
+| The Area reader of NobleFactor/.github's Triage workflow template | #447 |
+| A pull request template in NobleFactor/.github | #431 |
+| A pull request template and the Triage workflow in David-Noble-at-work/.github | David-Noble-at-work/personal#311, tracked by #441 |
+| The forms' Area reaching the Area field, and the Triage workflow in five NobleFactor repositories | step 33, new |
+| `chore` out of `git open-branch` | step 34, new |
+| The PR script template's schedule step and rule 13, and its first-script record | step 35, new |
 
 ## Migration Path
 
