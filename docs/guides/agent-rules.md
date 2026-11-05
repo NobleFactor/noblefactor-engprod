@@ -5,7 +5,7 @@ type: Process
 audience: Claude Code, Codex
 status: Approved
 created: 2026-09-07
-updated: 2026-11-03
+updated: 2026-11-04
 ---
 
 # Agent Rules
@@ -57,8 +57,9 @@ by #183.
 guide pass that will catch the documents up is devlore-cli#849. Ruled 2026-11-03: the Epic: labels are removed
 from both accounts, and sub-issue parent links replace them.
 
-Open, to be ruled on #303: what command lists the open ruling issues under devlore-cli#463 now that the Epic:
-labels are gone.
+Open in #439, the design of the `star github schedule` commands: what command lists the open ruling issues under
+devlore-cli#463 now that the Epic: labels are gone. The question was left open on #303 and went to #439 on 2026-11-04,
+because it is about star's options, which that design will decide.
 
 ## 3. A question about issues is answered by the report
 
@@ -80,15 +81,17 @@ star github schedule report --by feature --epic <Name>     # or --by thread --th
 star github schedule audit                                 # and --unthreaded
 ```
 
-`--epic <Name>` and `--thread <Name>` name the Epic: and Thread: labels. Ruled 2026-11-03: those labels are removed
-from both accounts, and sub-issue parent links and project rows replace them. Ruled the same day: threads are renamed
+`--epic <Name>` and `--thread <Name>` name the Epic: and Thread: labels. Ruled 2026-11-03: those labels are removed from
+both accounts, and sub-issue parent links and project rows replace them. Ruled the same day: threads are renamed
 scenarios, and each team's one Scenario project holds its features, its Scenario field naming the scenario each row
-belongs to.
+belongs to. Ruled 2026-11-04: a scenario's rows are no longer features but its Scenario issue and the tasks and bugs
+found while walking it ([issue-standards.md § Scenarios](../issue-standards.md#scenarios)).
 
-Open, to be ruled on #303: what `--epic` and `--thread` take now that those labels are gone.
+Open in #439, the design of the `star github schedule` commands: what `--epic` and `--thread` take now that those labels
+are gone. Like rule 2's question, it was left open on #303 and went to #439 on 2026-11-04, because it is about star's
+options, which that design will decide.
 
-What `--unthreaded` checks is part of what the audit compares against, which is decided with the tooling in #426 and
-#437.
+What `--unthreaded` checks is part of what the audit compares against, which #426 and #437 will decide with the tooling.
 
 `star` is a tool we build: rule 1 applies to it.
 
@@ -398,11 +401,13 @@ step's issue that it merged, as it lands, by
 [pr-script-template.md](pr-script-template.md), rule 13. A step that moves to another worktree, or closes without a
 merge, is recorded by the script of the worktree that held it, before `git close-branch`. Every record is read back.
 
-Open, to be ruled on #303: what each record is guarded on, now that it is a column on a project row and a record on the
-step's own issue rather than a table in the schedule issue's body.
+Open in #450, which will bring the PR script template in line with this rule: what each record is guarded on, now that
+it is a column on a project row and a record on the step's own issue rather than a table in the schedule issue's body.
+The question was left open on #303 and went to #450 on 2026-11-04, because #450 will write the template's steps that
+make these records; the old step was guarded on the schedule issue's `updatedAt`.
 
-Until it is, the PR script template's schedule step and its rule 13 still rewrite a row of the schedule issue's table,
-retired on 2026-11-03, and the template has no step yet for a worktree's first script:
+Until #450 is done, the PR script template's schedule step and its rule 13 still rewrite a row of the schedule issue's
+table, retired on 2026-11-03, and the template has no step yet for a worktree's first script:
 [pr-script-template.md](pr-script-template.md#rules), rule 13.
 
 ---

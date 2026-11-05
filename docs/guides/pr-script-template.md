@@ -5,7 +5,7 @@ type: Process
 audience: Engineers, Claude Code
 status: Approved
 created: 2026-03-16
-updated: 2026-11-03
+updated: 2026-11-04
 ---
 
 # PR Script Template
@@ -212,7 +212,8 @@ printf '%s\n' "${span}"
 # --- The schedule: the lanes this pull request lands, recorded as it lands (rule 13) ---
 #
 # Out of date since 2026-11-03 (rule 13): the tables this step rewrites were retired that day, so it would find no
-# row and stop the script. It waits on what agent-rules.md, rule 19, leaves open: what each record is guarded on.
+# row and stop the script. It waits on #450, which carries what agent-rules.md, rule 19, leaves open: what each record
+# is guarded on.
 #
 # A lane's row says where its work is (agent-rules.md, rule 19), and once the merge lands, that is the merge. AFTER
 # the merge, since a row names the squash commit. Each row is written with the script, whole, as the schedule's table
@@ -354,12 +355,14 @@ git status --short
     ([agent-rules.md](agent-rules.md), rule 19). #396 merged that way: its lanes on #301 kept reading "in progress"
     in a worktree `git close-branch` had removed.
 
-    This rule and the schedule step, in both forms, are out of date. They record a lane by rewriting its row in a
-    table in the schedule issue's body. Those tables were retired on 2026-11-03, when a line naming the issue's
-    project replaced them, so the step would find no row and stop the script. How a pull request's script records
-    its steps now waits on the question [agent-rules.md](agent-rules.md), rule 19, leaves open: what each record is
-    guarded on. The template has no step yet for the record a worktree's first script makes: pushing the branch,
-    then linking it in the Worktree column of each of its steps' rows ([agent-rules.md](agent-rules.md), rule 19).
+    This rule and the schedule step, in both forms, are out of date. They record a lane by rewriting its row in a table
+    in the schedule issue's body. Those tables were retired on 2026-11-03, when a line naming the issue's project
+    replaced them, so the step would find no row and stop the script. #450 will bring this rule and the step, in both
+    forms, in line with [agent-rules.md](agent-rules.md), rule 19, which says how a pull request's script records its
+    steps now. It carries the question rule 19 leaves open, what each record is guarded on, which moved from #303 to
+    #450 on 2026-11-04. The template has no step yet for the record a worktree's first script makes: pushing the branch,
+    then linking it in the Worktree column of each of its steps' rows ([agent-rules.md](agent-rules.md), rule 19). #450
+    will add that step too, in both forms.
 
 ---
 
@@ -583,7 +586,8 @@ if (((gh pr view $number --json body --jq '.body') -join "`n") -notmatch '(?m)^#
 # --- The schedule: the lanes this pull request lands, recorded as it lands (rule 13) ---
 #
 # Out of date since 2026-11-03 (rule 13): the tables this step rewrites were retired that day, so it would find no
-# row and stop the script. It waits on what agent-rules.md, rule 19, leaves open: what each record is guarded on.
+# row and stop the script. It waits on #450, which carries what agent-rules.md, rule 19, leaves open: what each record
+# is guarded on.
 #
 # Each row whole, as the schedule's table has it, with {pr} and {merged} filled in from GitHub, and {dash} for the
 # table's em dash, which keeps this file ASCII. It replaces the row whose first cell is its lane number, which must

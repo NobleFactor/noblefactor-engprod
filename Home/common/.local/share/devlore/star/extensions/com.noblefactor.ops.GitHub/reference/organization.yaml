@@ -10,9 +10,11 @@
 # the account's data model. What the audit compares an account against is decided with noblefactor-engprod#426 and #437.
 # The hierarchy is Epic (level 0), then Feature (level 1), then Task or Bug (level 2), ruled 2026-11-02, when Chore was
 # retired. Issues are classified by issue type in that hierarchy; enforcement is lax, and there are no compliance checks
-# (ruled 2026-11-03). Issues we file ourselves go through star github issue, the one path that classifies an issue as
-# it is made (ruled 2026-11-03). The Area issue field, not the hierarchy, tells engineering work from product work
-# (ruled 2026-11-03; see fields, below).
+# (ruled 2026-11-03), a ruling superseded in part on 2026-11-04: the sweep, noblefactor-engprod#436, will be the one
+# check, returning an issue that breaks a rule to its team's Triage project every day, and it will block no filing and
+# correct nothing by itself. Once star github issue is built (noblefactor-engprod#338), issues we file ourselves will go
+# through it, the one path that will classify an issue as it is made (ruled 2026-11-03). The Area issue field, not the
+# hierarchy, tells engineering work from product work (ruled 2026-11-03; see fields, below).
 # The old scheme's last three pieces retired on 2026-11-03, in GitHub. The parent markers and schedule footers came out
 # of 725 issue bodies, and 47 issues got the sub-issue parent their marker named; where the two disagreed, the link
 # stands. The step and beat tables in 14 Schedule and Scenario issues gave way to a line naming the issue's board and
@@ -29,6 +31,10 @@ account: organization
 # (ruled 2026-11-03). Scenario was named Thread until 2026-11-03. Each is the namesake of an option of its project's
 # Schedule or Scenario field, and each has an issue form in the account's .github repository, which is not part of the
 # model.
+# Ruled 2026-11-04: a Scenario issue summarizes an end-user goal instead (see projects, below). Read from GitHub on
+# 2026-11-04, NobleFactor's Scenario type is still described "Collection: describes a scenario, the story its features
+# tell". The record below gives the ruling, and noblefactor-engprod#453 will bring GitHub's description to it, with both
+# accounts' Scenario forms.
 # Ruled 2026-11-03: a Schedule or Scenario issue has no parent. Epic is at the top of the hierarchy, and Schedule and
 # Scenario are its two peers there.
 types:
@@ -52,7 +58,7 @@ types:
   - name: "Schedule"
     description: "Collection: the issue that describes a schedule, its deliverable and exit criteria"
   - name: "Scenario"
-    description: "Collection: the issue that describes a scenario, the story it tells"
+    description: "Collection: the issue that describes a scenario, the end-user goal it summarizes"
 
 # Issue fields, the organization's own. The model holds an account's issue fields as it holds its issue types and
 # labels (ruled 2026-11-03). NobleFactor's are Priority, Effort, Target date, Resolution, Area and Severity, listed here
@@ -73,15 +79,32 @@ types:
 # product value within an epic. A bug isn't filed against the architecture; an architecture task is logged to address a
 # bug in a feature (ruled 2026-11-03).
 #
-# A blank Area is an error, caught at three points (ruled 2026-11-03). At filing, star github issue refuses an issue
-# without an Area, and the issue forms in the account's .github repository have a required Area dropdown whose answer
-# the triage workflow copies into the Area field when the issue is opened. At triage, each Triage project shows the
-# Area column and has a "Missing Area" view, both made 2026-11-03, and nothing leaves Triage without an Area.
-# Afterwards, a scheduled sweep returns any open issue without an Area to its team's Triage project.
+# A blank Area is an error, caught at three points (ruled 2026-11-03). At filing, star github issue will refuse an issue
+# without an Area (noblefactor-engprod#338), and the issue forms in the account's .github repository have a required
+# Area dropdown. The Triage workflow copies its answer into the Area field when the issue is opened; in NobleFactor's
+# repositories it will once noblefactor-engprod#447 and #448 land. GitHub enforces a form's required fields only in a
+# public repository (GitHub's form schema documentation, read 2026-11-04), and each of NobleFactor's five participating
+# repositories is public, NobleFactor/devlore.noblefactor.com since 2026-11-04. At triage, each Triage project has the
+# Area field and a "Missing Area" view, both made 2026-11-03, and nothing leaves Triage without an Area; read
+# 2026-11-04, no view shows the Area column, and the script of noblefactor-engprod#303's closing pull request shows it
+# in every view of the Triage projects. Afterward, a scheduled sweep will return any open issue without an Area to its
+# team's Triage project, once noblefactor-engprod#452 has given every open issue an Area.
 #
 # Ruled 2026-11-03: Severity is an issue field of the organization, in NobleFactor, with the values Critical, High,
 # Medium and Low. It was made on 2026-11-03. Section 2 (docs/architecture/issue-data-model/2-attributes.md) says which
 # issues carry a severity.
+#
+# Ruled 2026-11-04: Severity applies to bugs only, and every issue of another type has Severity N/A, a new option that
+# the script of noblefactor-engprod#303's closing pull request adds. A bug has Critical, High, Medium or Low, never N/A.
+# An issue with no type yet gets no Severity and waits for triage, which sets N/A when it gives the issue a type other
+# than Bug; the sweep, noblefactor-engprod#436, will catch a miss. An issue field can't have a default, so the Triage
+# workflow will set N/A on an issue of another type filed from a form, and will give a bug filed from the bug form,
+# which asks no severity, Severity Medium, the owner's default (noblefactor-engprod#448); triage changes it when the
+# bug's harm is greater or less. star github issue will set N/A at filing (noblefactor-engprod#338). GitHub's GraphQL
+# call updateIssueField takes no option ids, but its REST call, PATCH /orgs/{org}/issue-fields/{issue_field_id}, does,
+# and GitHub's REST documentation warns that options sent without an id may be deleted and recreated. So the script adds
+# N/A through the REST call, sending each existing option with its id, and push will send every option with the id its
+# account's model holds (noblefactor-engprod#437).
 fields:
   - name: "Priority"
     type: single-select
@@ -122,6 +145,7 @@ fields:
       - { name: "High", color: "ORANGE", description: "A supported path is broken with no workaround" }
       - { name: "Medium", color: "YELLOW", description: "Broken with a workaround, or a narrow path" }
       - { name: "Low", color: "GREEN", description: "Cosmetic, or a defect nobody is hitting" }
+      - { name: "N/A", color: "GRAY", description: "Not applicable: the issue is not a bug" }
 
 # Labels, held per repository: the model holds the labels of each repository the account owns, and an organization's
 # default labels are not part of it (ruled 2026-11-03). Type is an issue type here, so no label carries it, and no label
@@ -131,9 +155,11 @@ fields:
 # 2026-11-03). Why a closed issue was not done is an issue field too, Resolution, a single-select field with the options
 # Declined, Duplicate and Invalid; an organization has no resolution: labels, and no duplicate or invalid labels. An
 # issue that was not done is closed as completed, with its Resolution saying why; a Resolution goes only on a closed
-# issue, the model records the field among the organization's issue fields, and the audit reports one on an open issue
-# (ruled 2026-11-03). The model holds the account's issue fields, above, as it holds its issue types and labels (ruled
-# 2026-11-03).
+# issue, and the model records the field among the organization's issue fields (ruled 2026-11-03). The sweep,
+# noblefactor-engprod#436, will return an open issue that has one to its team's Triage project (ruled 2026-11-04). The
+# model holds the account's issue fields, above, as it holds its issue types and labels (ruled 2026-11-03).
+# good first issue goes on tasks and bugs only: it tells a newcomer they can pick the issue up, and only a task or a bug
+# is a single piece of work (ruled 2026-11-04).
 # Whether a reference model holds a repository's labels, other than the type labels and stand-ins user.yaml lists, is
 # decided with noblefactor-engprod#426 and #437.
 labels:
@@ -142,6 +168,18 @@ labels:
 # Teams, an organization's own, so a reference lists none. The team with the maintain role on a repository owns it,
 # and that team mapping gives each repository its team's Triage project. The team that owns a project is accountable
 # for it, and GitHub's link between the project and its team is the record (ruled 2026-11-03).
+# Ruled 2026-11-04: any member of a team can see all of the team's issues and do all of its work in its four projects,
+# so the one grant a new participant needs is membership in the team, whose roles carry the rest: the maintain role on
+# each repository the team owns, and the write role on each of its four projects, which the script of
+# noblefactor-engprod#303's closing pull request sets for engprod and devlore, in place of the Admin role ruled for each
+# team's Triage project on 2026-10-22. The write role lets a member edit a project, its fields and views included; what
+# stays with an organization owner is a project's settings and access, and keeping every project of a kind configured
+# the same way rests on push (noblefactor-engprod#437), not on the role. Adding a person to NobleFactor needs a seat
+# first: its Team plan has one seat, filled. Setting a parent across two teams' repositories needs the triage role on
+# both. Read from GitHub on 2026-11-04, devlore holds the write role on noblefactor-engprod, so a devlore member can
+# link a devlore issue to a noblefactor-engprod parent and back; engprod holds no role on devlore's repositories, so an
+# engprod member can't. An organization owner, who holds the admin role on each of the organization's repositories, can
+# set a parent between any two.
 teams: []
 
 # Projects: the organization's four templates, Triage, Backlog, Schedule and Scenario, the Scenario template being the
@@ -156,12 +194,32 @@ teams: []
 # issues reach their team's Triage project through a GitHub Actions workflow in each repository, run when an issue is
 # opened or transferred, using actions/add-to-project; GitHub's built-in auto-add workflow is not used. Each
 # repository's TRIAGE_PROJECT_URL variable names its team's Triage project, and a Triage workflow template in the
-# account's .github repository offers the workflow (ruled 2026-11-03). Open, to be ruled on #303: how a triage decision
-# is carried out, and how an issue is kept in one project at a time.
+# account's .github repository offers the workflow (ruled 2026-11-03).
+# Ruled 2026-11-04: accepted tasks and bugs go out of Triage to the Backlog with their Priority or onto a schedule.
+# Epics and features are never rows of a Backlog, Schedule or Scenario project: once classified, one leaves Triage for
+# no project, since the hierarchy holds it and its tasks and bugs are what reach the Backlog and the schedules. Every
+# move is one act: the issue gets its row in the project it goes to, with that project's fields set, and loses its row
+# in the project it leaves. Triage removes an issue's Triage row as part of its decision, and the sweep,
+# noblefactor-engprod#436, will remove none: an issue someone closes outside triage stays in its Triage project until
+# triage decides its disposition. An issue is a row of at most one of the account's Triage, Backlog, Schedule and
+# Scenario projects, whichever team owns them, and is on at most one schedule or scenario, and the sweep will return an
+# issue that breaks this to its team's Triage project. Ruled the same day, superseding in part the ruling of 2026-10-22
+# that work for another team gets a tracking issue: an issue on another team's project is assigned to an accountable
+# member of that team, and the person whose name is on an issue moves it to another team the way any move is made, in
+# one act, between its team's Triage project or schedule and the other team's: triage to triage, triage to schedule,
+# schedule to triage, or schedule to schedule. GitHub allows up to 10 assignees on an issue, any organization member who
+# can read the repository among them (GitHub's documentation, Assigning issues and pull requests to other GitHub users).
 #
 # Backlog holds accepted work not yet scheduled, ordered by priority (ruled 2026-11-03). No field of the Backlog
 # template has been ruled. Read from GitHub on 2026-11-03, NobleFactor's Backlog template has its Triage template's
 # Status field and the Priority issue field.
+# Ruled 2026-11-04: from the Backlog, work goes onto a schedule highest Priority first, with the schedule's option, the
+# next step or the step the schedule's owner gives it, Status Open and its blocked-by links, and a committed schedule
+# takes it only by its owner's amendment, recorded in the Schedule issue. A scenario changes no issue's priority: triage
+# sets each issue's Priority. The Backlog shows its order in a view named "By priority", sorted by Priority, which the
+# script of noblefactor-engprod#303's closing pull request makes in the Backlog template and in each team's Backlog
+# project, since GitHub's API sets a view's sort only when it makes the view. Read 2026-11-04, no Backlog view shows the
+# Priority field, and the same script shows it in each one, By priority among them.
 #
 # Schedule holds the team's committed tasks and bugs. Its single-select Schedule field names the schedule each row
 # belongs to, with one option per schedule, named for its Schedule issue; a reference names no schedule, so it lists no
@@ -183,11 +241,27 @@ teams: []
 # GitHub on 2026-11-04). GitHub's REST API made it; it sets a view's grouping and sort only when it makes the view,
 # and GitHub's GraphQL API sets neither.
 #
-# Scenario holds the team's features. Its single-select Scenario field names the scenario each row belongs to, with one
-# option per scenario, named for its Scenario issue, which tells the story; a reference names no scenario, so it lists
-# no option. Likewise, a Scenario field is made with its first option and comes with a project's first scenario. The
-# Scenario template (project 8) got its Scenario field the same way, from a placeholder scenario,
-# NobleFactor/noblefactor-engprod#442. Beat orders the rows within a scenario (ruled 2026-11-03).
+# Scenario holds the team's scenarios. Ruled 2026-11-04: a scenario is a high-level description of a feature, a workflow
+# or a real-life situation that needs to be tested. Its Scenario issue, its own row in the team's Scenario project,
+# summarizes an end-user goal. It drives planning, coverage and team alignment, includes an example for demos and ad-hoc
+# testing that helps find gaps and defects no other kind of testing finds, and names in its body the features it
+# exercises. A scenario is structurally like a schedule that starts with no tasks or bugs: they are found with time.
+# Someone opens the scenario and walks it, logging work items as they go, each a task or a bug and a row of the team's
+# Scenario project under the scenario's option, its Beat the point in the walk where it turned up. A logged item names
+# its scenario in its body, as "Found while walking #N", and the Triage workflow will add it to the scenario instead of
+# to the team's Triage project (noblefactor-engprod#448). Each item later moves to its team's Triage project or straight
+# onto a schedule, and leaves the scenario; the item's body and a comment on the Scenario issue record the move. The
+# sweep will leave a scenario's rows alone but for two structural rules: it will return an epic or a feature that is a
+# row of the Scenario project, as it will one on a Backlog or Schedule project, and an issue that is a row of a scenario
+# and of another of the account's projects, whichever team owns them. Every other rule waits until an item moves out: it
+# gets its type and parent then, and moving straight onto a schedule means classifying it first. A scenario never ends:
+# it is kept, updated or removed as the product changes, since it has value before, during and after a release. Both
+# accounts' Scenario forms will be brought to this in noblefactor-engprod#453.
+# Its single-select Scenario field names the scenario each row belongs to, with one option per scenario, named for its
+# Scenario issue; a reference names no scenario, so it lists no option. Likewise, a Scenario field is made with its
+# first option and comes with a project's first scenario. The Scenario template (project 8) got its Scenario field the
+# same way, from a placeholder scenario, NobleFactor/noblefactor-engprod#442. Beat orders the rows within a scenario
+# (ruled 2026-11-03).
 # A Scenario project's rows are kept in order the same way: under each option of the Scenario field, the Scenario
 # issue's own row first, then its rows by Beat, then any with no beat, and rows with no option last. The Scenario
 # template, like each team's Scenario project, has a second view, "By scenario", made on 2026-11-03 beside its view 1,

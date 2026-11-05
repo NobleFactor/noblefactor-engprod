@@ -112,12 +112,15 @@ refused now. On the owner's machine, the worktree for dependency updates (#403) 
 which has never been pushed.
 
 Read from the files on 2026-11-03, `git open-branch` still accepts `chore`: in the script,
-`Home/common/.local/bin/git-open-branch`, its comment on line 100, its label map on line 110, its check of the type
-on line 168 and that check's error message on line 169; in its man page,
-`Home/common/.local/share/man/man1/git-open-branch.1`, on lines 81, 93 and 136; and in
-its bash and zsh completions, `Home/common/.local/share/bash-completion/completions/git-open-branch`, on line 15, and
-`Home/common/.local/share/zsh/site-functions/_git-open-branch`, on line 10. The ruling removes `chore` from all of
-them, and that change has not been made.
+`Home/common/.local/bin/git-open-branch`, its comment on line 100, its label map on line 110, its check of the type on
+line 168 and that check's error message on line 169; in its man page,
+`Home/common/.local/share/man/man1/git-open-branch.1`, on lines 81, 93 and 136; and in its bash and zsh completions,
+`Home/common/.local/share/bash-completion/completions/git-open-branch`, on line 15, and
+`Home/common/.local/share/zsh/site-functions/_git-open-branch`, on line 10. The ruling removes `chore` from all of them.
+That change is #449, and it has not been made yet. #449 will also take `chore` out of the script's test,
+`tests/Test-GitOpenBranch`, whose fake issue is labeled `chore` and expects the branch `chore/12-add-the-thing`, and,
+approved 2026-11-04, will have `git open-branch` take the branch type from the issue's type, or, in a user account, from
+its type label.
 
 ### 12427647 — "Signed commits for main"
 
@@ -271,3 +274,5 @@ ruleset's rules and reads the ruleset back. It ran on 2026-11-03, and the rulese
   of the issue data model design's worktree (#303) took `chore` out of 12515090's pattern and read it back. Recorded
   that GitHub holds 10 `chore/` branches, as it did before the change, and that `git open-branch` still accepts
   `chore`.
+- 2026-11-04: Named #449 as the issue that will take `chore` out of `git open-branch`, its man page, its completions and
+  its test, and will have it take the branch type from the issue's type, approved the same day.

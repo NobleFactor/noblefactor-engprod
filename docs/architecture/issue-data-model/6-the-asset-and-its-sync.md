@@ -56,8 +56,9 @@ own and serves its default community health files and issue templates to every r
 forms for Schedule and Scenario issues are kept there too, and so is the Triage workflow template (ruled 2026-11-03).
 Each repository's Triage workflow, which adds its new issues to its team's Triage project, is made from it. Ruled
 2026-11-03: the issue forms in each account's `.github` repository have a required Area dropdown, and the Triage
-workflow copies its answer into the Area issue field, or in a user account the `area:` label, when the issue is opened.
-Both repositories exist. NobleFactor's `model.yaml` beside the extension predates the ruling and moves with #431;
+workflow copies its answer into the Area issue field, or in a user account the `area:` label, when the issue is opened:
+personal's adds the `area:` label today, and NobleFactor's will set the Area field once #447 and #448 land. Both
+repositories exist. NobleFactor's `model.yaml` beside the extension predates the ruling and moves with #431;
 David-Noble-at-work's model file lands with David-Noble-at-work/personal#311.
 
 Ruled 2026-11-03: an account's file templates, which are its issue forms, its Triage workflow template and its pull
@@ -156,7 +157,7 @@ fields:                               # the account's issue fields; a user accou
     options:
       - { name: Product, id: … }
       - { name: Engineering, id: … }
-  - name: Severity                    # a bug's only
+  - name: Severity                    # a bug's harm; every issue of another type has N/A
     id: …
     type: single-select
     options:
@@ -164,13 +165,16 @@ fields:                               # the account's issue fields; a user accou
       - { name: High, id: … }
       - { name: Medium, id: … }
       - { name: Low, id: … }
+      - { name: N/A, id: … }          # made by the script of #303's closing pull request
 teams:
   - { name: devlore, slug: devlore, id: T_kwDO… }
   - { name: engprod, slug: engprod, id: T_kwDO… }
 labels:                               # held per repository, every repository the account owns
   NobleFactor/noblefactor-engprod:
+    - { name: good first issue, color: "7057ff", description: "Good for newcomers" }   # on tasks and bugs only
     - { name: …, color: "…", description: "…" }
   NobleFactor/devlore-cli:
+    - { name: good first issue, color: "7057ff", description: "Good for newcomers" }
     - { name: …, color: "…", description: "…" }
 projects:                             # the account's four project templates
   - name: Triage
@@ -232,19 +236,23 @@ projects:                             # the account's four project templates
   followed by `star github model digest`, which re-signs it and leaves the edit in the diff for review. A digest, not a
   signature: on 2026-10-22 the owner ruled that the concern is clumsy edits, not security, and git already says who.
   What it does not catch, an edit followed by a re-digest, is the pull request's to catch.
-- **`types`** is the account's issue types, or its type labels in a user account. Those of the hierarchy, Epic,
-  Feature, Task and Bug, carry their levels. Schedule and Scenario have no level: their descriptions begin
-  `Collection:` (ruled 2026-11-03). Ruled 2026-11-03: a Schedule issue holds a schedule's deliverable and exit
-  criteria, and the Schedule field of its team's Schedule project has an option named for it; a Scenario issue tells a
-  scenario's story, and the Scenario field of its team's Scenario project has an option named for it. Issues are
+- **`types`** is the account's issue types, or its type labels in a user account. Those of the hierarchy, Epic, Feature,
+  Task and Bug, carry their levels. Schedule and Scenario have no level: their descriptions begin `Collection:` (ruled
+  2026-11-03). Ruled 2026-11-03: a Schedule issue holds a schedule's deliverable and exit criteria, and the Schedule
+  field of its team's Schedule project has an option named for it; a Scenario issue tells a scenario's story, and the
+  Scenario field of its team's Scenario project has an option named for it. Ruled 2026-11-04: a Scenario issue
+  summarizes an end-user goal instead (below, under `projects`). Read that day, the Scenario type's description is still
+  "Collection: describes a scenario, the story its features tell", as are the `scenario` labels' in personal and
+  David-Noble-at-work/.github, and #453 will bring all three to the ruling, with the Scenario forms. Issues are
   classified by issue type, in the hierarchy epic, feature, then task or bug; enforcement is lax and there are no
-  compliance checks. From the levels the extension derives the rest of the hierarchy: level 0 has no parent, the last
-  level is the one a schedule's steps are drawn from, a parent is one level up, and the types of one level are mutually
-  exclusive. Ruled 2026-10-21: a level number is enough to state the hierarchy, and the types of each level are
-  mutually exclusive. Nothing in the extension names a type (noblefactor-engprod#376, 2026-10-22). Two things the levels
-  do not say, so the asset does: the order of the types within a level is the order the report renders them in, Bug
-  before Task as the asset lists them; and `unplanned: true` marks the leaf type that is found rather than planned, the
-  one Severity attaches to.
+  compliance checks, a ruling superseded in part on 2026-11-04: the sweep (#436) will be the one check, and it will
+  block no filing and correct nothing by itself. From the levels the extension will derive the rest of the hierarchy
+  (#376): level 0 has no parent, the last level is the one a schedule's steps are drawn from, a parent is one level up,
+  and the types of one level are mutually exclusive. Ruled 2026-10-21: a level number is enough to state the hierarchy,
+  and the types of each level are mutually exclusive. Nothing in the extension will name a type (#376, filed
+  2026-10-22). Two things the levels do not say, so the asset does: the order of the types within a level is the order
+  the report renders them in, Bug before Task as the asset lists them; and `unplanned: true` marks the leaf type that is
+  found rather than planned, the one Severity attaches to.
 - **A type is keyed by its id, never its name,** so that the owner can rename one, as the owner asked on 2026-10-22.
   GitHub's issue type has a name, a description, a color and an enabled flag, and nothing about hierarchy; an issue
   holds its type by id, so a rename made in GitHub reaches every issue at once. `pull` matches the same id under a new
@@ -254,13 +262,14 @@ projects:                             # the account's four project templates
   needs the rule. **The description is the convention, ruled 2026-10-22:** the description of every type of the
   hierarchy begins `Level N:`, so that GitHub's own settings page states the hierarchy and a person has one place to
   look. The owner ruled to rely on the convention: it may be followed wrongly, but there is one place to look to see
-  that it was, and pulling the model is the simplest way to look. `pull` reads the level from the description, the
-  asset records it, and the audit reports a hierarchy type whose description names no level or a level the asset
-  disagrees with. What `pull` does with an account whose type descriptions lack `Level N:` is decided with #426 and
-  #437. As built (#377), `pull` records a conflict for every type whose description does not begin `Level N:`, then
-  exits 1 and writes nothing, so it stops on NobleFactor's Schedule and Scenario types, whose descriptions begin
-  `Collection:`. The parent markers in issue bodies named types as text, their words being type names, until they were
-  removed on 2026-11-03.
+  that it was, and pulling the model is the simplest way to look. `pull` reads the level from the description, the asset
+  records it, and the audit still reports a type whose description names a level the asset disagrees with. Ruled
+  2026-11-04: a hierarchy type whose description names no level is a fault of the model, not of an issue, and `pull` and
+  `push` will check it (#426 and #437), as the plan's question 18 has it. What `pull` does with an account whose type
+  descriptions lack `Level N:` is decided with #426 and #437. As built (#377), `pull` records a conflict for every type
+  whose description does not begin `Level N:`, then exits 1 and writes nothing, so it stops on NobleFactor's Schedule
+  and Scenario types, whose descriptions begin `Collection:`. The parent markers in issue bodies named types as text,
+  their words being type names, until they were removed on 2026-11-03.
 
   Ruled 2026-11-03: a Schedule or Scenario issue has no parent. Epic is at the top of the hierarchy, and Schedule and
   Scenario are its two peers there.
@@ -273,11 +282,14 @@ projects:                             # the account's four project templates
   because they are its types.
 - **`fields`** is the account's issue fields, held as the model holds its issue types and labels (ruled 2026-11-03).
   NobleFactor's are Priority, Effort, Target date, Resolution, Area and Severity; its Start date field stays unused.
-  Ruled 2026-11-03: Severity is an issue field of the organization ([section 2](2-attributes.md#the-attributes)). A
-  user account has no issue fields, so its model holds none and the account uses labels instead, one for each option
-  of a single-select field ([section 4](4-storage-and-reach.md#a-user-account)). Area tells engineering work from
-  product work and has two values only: the options Product and Engineering of NobleFactor's Area field, made
-  2026-11-03, and in a user account the labels `area:product` and `area:engineering` (ruled 2026-11-03).
+  Ruled 2026-11-03: Severity is an issue field of the organization ([section 2](2-attributes.md#the-attributes)). Ruled
+  2026-11-04: Severity applies to bugs only, and every issue of another type has Severity N/A: in NobleFactor, a new
+  option N/A of the Severity field, and in a user account a new label, `severity:n/a`, both made by the script of #303's
+  closing pull request. A bug has Critical, High, Medium or Low, never N/A. A user account has no issue fields, so its
+  model holds none and the account uses labels instead, one for each option of a single-select field
+  ([section 4](4-storage-and-reach.md#a-user-account)). Area tells engineering work from product work and has two values
+  only: the options Product and Engineering of NobleFactor's Area field, made 2026-11-03, and in a user account the
+  labels `area:product` and `area:engineering` (ruled 2026-11-03).
 - **`teams`** is the account's teams ([section 4](4-storage-and-reach.md) § Where each part is defined). A user account
   has none. Ruled 2026-11-03: each team, and each user account, has four projects, Triage, Backlog, Schedule and
   Scenario, named `<Kind>: <team>` in an organization, as in `Triage: engprod` and `Scenario: devlore`, and
@@ -290,8 +302,8 @@ projects:                             # the account's four project templates
   schedule, a scenario, a filing or `--repo` named it.
 - **`labels`** is the labels of each repository the account owns, read from GitHub in the API's own fields and held per
   repository, with no organization or team tier; an organization's default labels are not in the model (ruled
-  2026-11-03). The labels that remain are lowercase, among them a user account's `severity:`, `priority:`, `effort:`
-  and `area:`, as in `severity:critical`, `priority:urgent` and `area:engineering`. Issue fields are used wherever an
+  2026-11-03). The labels that remain are lowercase, among them a user account's `severity:`, `priority:`, `effort:` and
+  `area:`, as in `severity:critical`, `priority:urgent` and `area:engineering`. Issue fields are used wherever an
   account has them: in NobleFactor, its Priority, Effort, Target date, Resolution, Area and Severity fields are used,
   but not Start date; David-Noble-at-work, which has no issue fields, uses the labels (ruled 2026-11-03). devlore-cli's
   seven finer Area labels, architecture, CLI, code quality, error handling, git, meta and testing, were deleted on
@@ -301,33 +313,79 @@ projects:                             # the account's four project templates
   `resolution:<name>`: `resolution:declined`, `resolution:duplicate` and `resolution:invalid`, which replaced the
   `duplicate` and `invalid` labels there. There is no `wontfix` or `declined` label. A resolution goes only on a closed
   issue; the model records the Resolution field among an organization's issue fields and the `resolution:` labels among
-  a user account's labels, and the audit reports one on an open issue. An issue that was not done is closed as completed
-  with its Resolution, or in a user account its `resolution:` label, saying why, never with GitHub's not-planned reason
-  (ruled 2026-11-03).
+  a user account's labels, and the sweep (#436) will return an open issue that has one to its team's Triage project. An
+  issue that was not done is closed as completed with its Resolution, or in a user account its `resolution:` label,
+  saying why, never with GitHub's not-planned reason (ruled 2026-11-03). Ruled 2026-11-04: `good first issue` goes on
+  tasks and bugs only, and personal gets the label, made by the script of #303's closing pull request, so that both
+  accounts hold it.
 - **`projects`** is the account's project templates with their custom fields, options and views
   ([section 3](3-collections.md)). Ruled 2026-11-03: NobleFactor's are Triage (project 23), Schedule (project 7),
   Scenario (project 8, the former Thread template) and Backlog (project 24). David-Noble-at-work cannot mark a project
-  as a template, so it keeps copies of them to copy new projects from. A team's projects are copied from these, and
-  are not in the model, nor are any project's built-in workflows. Ruled 2026-11-02 and 2026-11-03: a template's
-  description says nothing about star, Status is a field on a project row that anyone may set, and a Schedule project
-  has no Next column. Ruled 2026-11-03: a team's Schedule project holds its committed tasks and bugs; its
-  single-select Schedule field names the schedule each row belongs to, one option per schedule, named for its Schedule
-  issue; Step orders the rows within a schedule, and a Schedule issue's own row has no step; GitHub's Iteration field
-  gives each row its sprint, for scrums and sprint review; and its Worktree column holds, in each step's row, a link
-  to the branch its work is on. A team's Scenario project holds its features; its single-select Scenario field names
-  the scenario each row belongs to, named for its Scenario issue, and Beat orders the rows within a scenario. Each
-  template's and each copy's Schedule or Scenario field has one option, placeholder, which names a placeholder issue, so
-  every Schedule and Scenario project and template in both accounts has its field
+  as a template, so it keeps copies of them to copy new projects from. A team's projects are copied from these, and are
+  not in the model, nor are any project's built-in workflows. Ruled 2026-11-02 and 2026-11-03: a template's description
+  says nothing about star, Status is a field on a project row that anyone may set, and a Schedule project has no Next
+  column. Ruled 2026-11-03: a team's Schedule project holds its committed tasks and bugs; its single-select Schedule
+  field names the schedule each row belongs to, one option per schedule, named for its Schedule issue; Step orders the
+  rows within a schedule, and a Schedule issue's own row has no step; GitHub's Iteration field gives each row its
+  sprint, for scrums and sprint review; and its Worktree column holds, in each step's row, a link to the branch its work
+  is on. A team's Scenario project held its features until the ruling of 2026-11-04 below; its single-select Scenario
+  field names the scenario each row belongs to, named for its Scenario issue, and Beat orders the rows within a
+  scenario. Each template's and each copy's Schedule or Scenario field has one option, placeholder, which names a
+  placeholder issue, so every Schedule and Scenario project and template in both accounts has its field
   ([section 3](3-collections.md#the-schedule-and-scenario-fields)). There is no longer a project per schedule or per
-  scenario. A team's Backlog project holds accepted work not yet scheduled,
-  ordered by priority, and its Triage project is where every issue is reviewed and a triage decision made. Either the
-  work is declined, and the issue is closed as completed with Resolution Declined, or in a user account the
-  `resolution:declined` label; or the issue is moved to the team's Backlog, Schedule or Scenario project. Ruled
-  2026-11-03: a blank Area is an error. Each Triage project shows the Area column (in a user account, the `area:`
-  labels in its Labels column) and has a view named Missing Area, both made 2026-11-03, and nothing leaves Triage
-  without an Area; a scheduled sweep returns any open issue without an Area to its team's Triage project.
+  scenario. A team's Backlog project holds accepted work not yet scheduled, ordered by priority, and its Triage project
+  is where every issue is reviewed and a triage decision made. Either the work is declined, and the issue is closed as
+  completed with Resolution Declined, or in a user account the `resolution:declined` label; or the issue is moved to the
+  team's Backlog, Schedule or Scenario project. Ruled 2026-11-03: a blank Area is an error. Each Triage project has the
+  Area field (in a user account, the `area:` labels, in its Labels column) and a view named Missing Area, both made
+  2026-11-03, and nothing leaves Triage without an Area; a scheduled sweep will return any open issue without an Area to
+  its team's Triage project. Read 2026-11-04, no view shows the Area or Labels column, and the script of #303's closing
+  pull request shows it (below).
 
-  Open, to be ruled on #303: how a triage decision is carried out, and how an issue is kept in one project at a time.
+  Ruled 2026-11-04: a scenario is a high-level description of a feature, a workflow or a real-life situation that needs
+  to be tested. Its Scenario issue, its own row in the team's Scenario project, summarizes an end-user goal. It drives
+  planning, coverage and team alignment, includes an example for demos and ad-hoc testing that helps find gaps and
+  defects no other kind of testing finds, and names in its body the features it exercises. A scenario is structurally
+  like a schedule that starts with no tasks or bugs: they are found with time. Someone opens the scenario and walks it,
+  logging work items as they go, each a task or a bug and a row of the team's Scenario project under the scenario's
+  option, its Beat the point in the walk where it turned up. A logged item names its scenario in its body, as "Found
+  while walking #N", and the Triage workflow will add it to the scenario instead of to the team's Triage project (#448).
+  Each item later moves to its team's Triage project or straight onto a schedule, and leaves the scenario; the item's
+  body and a comment on the Scenario issue record the move. The sweep (#436) will leave a scenario's rows alone but for
+  two structural rules: it will return an epic or a feature that is a row of the Scenario project, as it will one on a
+  Backlog or Schedule project, and an issue that is a row of a scenario and of another of its account's projects,
+  whichever team owns them. Every other rule waits until an item moves out: it gets its type and parent then, and moving
+  straight onto a schedule means classifying it first. A scenario never ends: it is kept, updated or removed as the
+  product changes, since it has value before, during and after a release. Both accounts' Scenario forms will be brought
+  to this in #453.
+
+  Ruled 2026-11-04: accepted tasks and bugs go out of Triage to the Backlog with their Priority or onto a schedule, and
+  from the Backlog onto a schedule highest Priority first; a committed schedule takes one only by its owner's amendment,
+  recorded in the Schedule issue. Epics and features are never rows of a Backlog, Schedule or Scenario project: once
+  classified, one leaves Triage for no project, since the hierarchy holds it. Every move is one act: the issue gets its
+  row in the project it goes to, with that project's fields set, and loses its row in the project it leaves. Triage
+  removes an issue's Triage row as part of its decision, and the sweep (#436) will remove none: an issue someone closes
+  outside triage stays in its Triage project until triage decides its disposition. An issue is a row of at most one of
+  its account's Triage, Backlog, Schedule and Scenario projects, whichever team owns them, and is on at most one
+  schedule or scenario, and the sweep will return an issue that breaks this to its team's Triage project. Ruled the same
+  day, superseding in part the ruling of 2026-10-22 that work for another team gets a tracking issue: an issue on
+  another team's project is assigned to an accountable member of that team, and the person whose name is on an issue
+  moves it to another team the way any move is made, in one act, between its team's Triage project or schedule and the
+  other team's: triage to triage, triage to schedule, schedule to triage, or schedule to schedule. Any member of a team
+  can see all of the team's issues and do all of its work in its four projects, so the one grant a new participant needs
+  is membership in the team, whose roles carry the rest: the maintain role on each repository the team owns, and the
+  write role on each of its four projects, which the script of #303's closing pull request sets in place of the Admin
+  role ruled for each team's Triage project on 2026-10-22. The write role lets a member edit a project, its fields and
+  views included; what stays with an organization owner is a project's settings and access, and keeping every project of
+  a kind configured the same way rests on `push` (#437), not on the role. A user account has no teams; there, a new
+  participant is a collaborator on each participating repository, personal and David-Noble-at-work/.github, and a writer
+  on each of the account's four projects
+  ([issue-standards.md § Who can do what](../../issue-standards.md#who-can-do-what)). The same script makes a view named
+  By priority, sorted by Priority, in the Backlog template, which the model describes, and in Backlog: engprod and
+  Backlog: devlore, since GitHub's API sets a view's sort only when it makes the view; David-Noble-at-work's Backlog has
+  no Priority field to sort by. It also sets the views' visible fields, since read 2026-11-04 they show none of these:
+  Area in every view of the Triage projects, Priority in the Backlog projects' views and their By priority view, and
+  Labels in David-Noble-at-work's Triage and Backlog views.
 - **Ids beside names,** for every project, field and single-select option. GitHub holds a row's single-select value
   as the option's id, not its text, as it holds a label and an issue type on an issue by id: rename the option and
   every row shows the new name; delete it and every row holding it goes blank. With the ids in the asset, `pull` can
@@ -335,6 +393,12 @@ projects:                             # the account's four project templates
   fix; without them it can only print a deletion and an addition, which is the ambiguity that makes `push` refuse a
   rename. Whether `push` may one day carry a rename itself, id in hand, is left until the write test has run. Added
   2026-10-22 at the owner's direction.
+
+  An issue field's options have ids too. Settled 2026-11-04: GitHub's GraphQL call `updateIssueField` takes no option
+  ids, but its REST call, `PATCH /orgs/{org}/issue-fields/{issue_field_id}`, does, and GitHub's REST documentation warns
+  that options sent without an id may be deleted and recreated. The model holds each option's id, so `push` will send
+  every option with its id (#437), and the script of #303's closing pull request adds Severity's N/A option through the
+  REST call, sending each existing option with its id.
 
 ## The cache
 
@@ -432,7 +496,7 @@ destroy, and what stands in the way:
 | `push` of a label | a label removed strips it from every issue carrying it | deletion is off: `push` never deletes without `--delete`, which prints what each deletion strips and how many issues carry it, and `--dry-run` shows it all first. Ruled 2026-10-22: "I think we need to use a flag like --delete." The name is rsync's and rclone's for the same switch; `--force` is kept for the stale-push override below, as in git, so the two risks have two switches and neither implies the other |
 | `push` of an issue type | a type removed changes every issue of that type | the same `--delete` gate |
 | `push` of a project field | a field removed loses every row's value | the same gate; a field removal names the rows that hold a value. A push changes a template only, since the projects made from it are not in the model; whether those projects follow later changes to their template is decided with #426 and #437. Next's deletion and Lane's rename to Step were made by hand in GitHub, on the Schedule template and on every schedule project that then existed |
-| a single-select option changed through the API | GitHub's GraphQL updates a single-select field by taking the whole option list, and an option sent without its existing id is a new option: the old one is deleted and every row that held it goes blank. Run 2026-10-26 (#377): `ProjectV2SingleSelectFieldOptionInput` takes the option's `id`, and an update sending each option with its id renamed Todo to Not run, In Progress to Fails and Done to Passes in place, all six of project 4's rows keeping their value | `push` sends every option with the id the asset holds, and refuses an option whose id it does not have, so a rename is never sent as a replacement by accident; the test runs before `push` touches a field at all |
+| a single-select option changed through the API | GitHub's GraphQL updates a single-select field by taking the whole option list, and an option sent without its existing id is a new option: the old one is deleted and every row that held it goes blank. Run 2026-10-26 (#377): `ProjectV2SingleSelectFieldOptionInput` takes the option's `id`, and an update sending each option with its id renamed Todo to Not run, In Progress to Fails and Done to Passes in place, all six of project 4's rows keeping their value. An issue field's options carry the same risk, settled 2026-11-04: GitHub's GraphQL call `updateIssueField` takes no option ids, and GitHub's REST documentation warns that options sent to its REST call, `PATCH /orgs/{org}/issue-fields/{issue_field_id}`, without an id may be deleted and recreated | `push` will send every option with the id the asset holds, an issue field's through the REST call (#437), and will refuse an option whose id it does not have, so a rename is never sent as a replacement by accident; the test runs before `push` touches a field at all |
 | a rename of a type, a label or a field | from the asset's side a rename is indistinguishable from a removal and a creation, so a push would strip the old name from everything and create an empty new one; and every consumer that names the thing by text, the extension's queries and the documents, keeps the old name | `push` refuses a rename. The rename is made in GitHub, which carries it to the issues and rows that hold the thing by id, then `pull` shows the diff so every text consumer is corrected in the same pull request. Ruled 2026-10-22: no one is to be surprised by blocks that come from name changes that did not propagate. |
 | a hand edit of the asset | a clumsy edit pushed into GitHub as if it were the pulled record | `pulled.digest`: `push` refuses a mismatched asset, every read says so, and CI fails the pull request; `pull` or `star github model digest` clears it |
 | a stale `push` | the asset was pulled, GitHub moved, the push writes over the move | `push` works the way `git push` works: it re-reads each record and refuses when GitHub has moved since `pulled.at`, by `updated_at` on issue types and `updatedAt` on projects, and by content for labels, as git refuses a push that is not a fast-forward of the remote; `pull` first, then `push`. `--force` overrides it, as `git push --force` does, and prints what it is overwriting. Ruled 2026-10-22: "Cite the git case and ensure that we doc that it works the way git push works." |
@@ -556,15 +620,15 @@ or when it has the topic issue-model, in a user account.
 | Parent | the sub-issue link, within the account | the sub-issue link, within the account |
 | Epic | the parent's parent | the same |
 | Priority, Effort, Area, Resolution | the organization's issue fields, in NobleFactor | the `priority:`, `effort:`, `area:` and `resolution:` labels, since the account has no issue fields |
-| Severity, a bug's | the organization's issue field Severity, in NobleFactor (ruled 2026-11-03; [section 2](2-attributes.md#the-attributes)) | the `severity:` labels |
+| Severity, every type's: a bug's Critical, High, Medium or Low, and N/A on every issue of another type (ruled 2026-11-04) | the organization's issue field Severity, in NobleFactor (ruled 2026-11-03; [section 2](2-attributes.md#the-attributes)), whose option N/A the script of #303's closing pull request adds | the `severity:` labels, among them `severity:n/a`, which the script of #303's closing pull request makes |
 | A row in a Triage, Backlog, Schedule or Scenario project | the team's project, `<Kind>: <team>`, owned by the organization, made from its template and linked to its team | the account's project, `<Kind>: David-Noble-at-work`, copied from the account's own copy of the template |
-| What enforces the rules | GitHub, for one type and one parent; enforcement is otherwise lax, with no compliance checks | nothing; enforcement is lax, with no compliance checks |
+| What enforces the rules | GitHub, for one type and one parent; enforcement is otherwise lax, with no compliance checks (ruled 2026-11-03), but for the sweep (#436), which will return an issue that breaks a rule to its team's Triage project every day, and will block no filing and correct nothing by itself (ruled 2026-11-04) | nothing in GitHub; enforcement is lax, with no compliance checks (ruled 2026-11-03), but for the sweep (#436), which will return an issue that breaks a rule, such as one with two type labels, to the account's Triage project every day, and will block no filing and correct nothing by itself (ruled 2026-11-04) |
 
 Ruled 2026-11-03: Priority and Area apply to issues of every type, Schedule and Scenario included, and issue fields are
 used wherever an account has them. Area describes the issue's own work, so an epic, a feature and the tasks and bugs
 under them can each differ: a CI bug fixed during a product feature is engineering (ruled 2026-11-03). Also ruled
-2026-11-03: the issues we file ourselves go through `star github issue`, the one path that classifies an issue as it
-is made, and it refuses an issue without an Area.
+2026-11-03: the issues we file ourselves will go through `star github issue` once it is built (#338), the one path that
+will classify an issue as it is made, and it will refuse an issue without an Area.
 
 **What a user account's model does not give it**: GitHub's own enforcement of one type per issue and the type picker
 in GitHub's interface. Those come only with an organization's issue types; on 2026-10-22 the owner ruled against moving

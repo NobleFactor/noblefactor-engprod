@@ -5,7 +5,7 @@ type: Process
 audience: Engineers
 status: Approved
 created: 2026-09-01
-updated: 2026-11-03
+updated: 2026-11-04
 ---
 
 # Development Process
@@ -78,17 +78,42 @@ for every pull request, so the numbers can be read as a series (rule 11). It is 
 not how long it took to do; effort, where anyone estimates it, is said elsewhere and labeled an estimate. The
 report and the span are what a merged pull request leaves behind.
 
-**Each team works from four projects.** Ruled 2026-11-03: each team, and each user account, has a Triage
-project, a Backlog project, one Schedule project and one Scenario project. They are named `<Kind>: <team>` in an
-organization, such as `Triage: engprod` or `Scenario: devlore`, and `<Kind>: David-Noble-at-work` in the user
-account. The team that owns a project is accountable for it, and GitHub's link between the project and its team is
-the record; a user account's projects are its owner's. Every issue is reviewed in its team's Triage project, and a
-triage decision is made there: the work is declined, and the issue closed as completed with Resolution Declined in
-NobleFactor or the label resolution:declined in a user account, or the issue moves to the team's Backlog, Schedule or
-Scenario project. The Backlog project holds accepted work not yet scheduled, ordered by priority. The projects, their
-fields and their templates are [issue-standards.md](../issue-standards.md).
+**Each team works from four projects.** Ruled 2026-11-03: each team, and each user account, has a Triage project, a
+Backlog project, one Schedule project and one Scenario project. They are named `<Kind>: <team>` in an organization, such
+as `Triage: engprod` or `Scenario: devlore`, and `<Kind>: David-Noble-at-work` in the user account. The team that owns a
+project is accountable for it, and GitHub's link between the project and its team is the record; a user account's
+projects are its owner's. Every issue is reviewed in its team's Triage project, and a triage decision is made there: the
+work is declined, and the issue closed as completed with Resolution Declined in NobleFactor or the label
+resolution:declined in a user account, or the issue moves on. Ruled 2026-11-04: an item found while walking a scenario
+and moved straight onto a schedule, classified first, skips Triage (below). The Backlog project holds accepted work not
+yet scheduled, ordered by priority. The projects, their fields and their templates are
+[issue-standards.md](../issue-standards.md).
 
-Open, to be ruled on #303: how a triage decision is carried out, and how an issue is kept in one project at a time.
+**Who moves an issue, and how.** Ruled 2026-11-04: any member of a team can see all of the team's issues and do all of
+its work in its four projects: triage, the backlog, scheduling and scenarios. So the one grant a new participant needs
+is membership in the team, whose roles carry the rest: the maintain role on each repository the team owns, and the write
+role on each of its four projects, which the script of #303's closing pull request sets. A user account has no teams;
+there, a new participant is a collaborator on each participating repository, personal and David-Noble-at-work/.github,
+and a writer on each of the account's four projects
+([issue-standards.md § Who can do what](../issue-standards.md#who-can-do-what)). An issue is a row of at most one of its
+account's Triage, Backlog, Schedule and Scenario projects, whichever team owns them, and is on at most one schedule or
+scenario. Epics and features are never rows of a Backlog, Schedule or Scenario project: once classified, one leaves
+Triage for no project, and its tasks and bugs are what reach the Backlog and the schedules. Every move is one act: the
+issue gets its row in the project it goes to, with that project's fields set, and loses its row in the project it
+leaves. Out of Triage, accepted tasks and bugs go to the Backlog with their Priority or onto a schedule. Triage removes
+an issue's Triage row as part of its decision, and the sweep (#436) removes none: an issue someone closes outside triage
+stays in its Triage project until triage decides its disposition. Work goes from the Backlog onto a schedule highest
+Priority first, and a committed schedule takes it only by its owner's amendment, recorded in the Schedule issue;
+`star github schedule add` (#438) will make that move in one command. A task or a bug found while walking a scenario
+waits in the scenario until it moves to Triage or straight onto a schedule (below). The sweep will return an issue that
+is a row of more than one of its account's projects, Scenario included, or is on more than one schedule or scenario, to
+its team's Triage project.
+
+**Moving an issue to another team.** Ruled 2026-11-04, superseding in part the ruling of 2026-10-22 that work for
+another team gets a tracking issue: an issue on another team's project is assigned to an accountable member of that
+team, and the person whose name is on an issue moves it to another team the way any move is made, in one act, between
+its team's Triage project or schedule and the other team's: triage to triage, triage to schedule, schedule to triage, or
+schedule to schedule.
 
 **A schedule is how the work is ordered, not another size of it.** A feature, a worktree and a session are
 nested; a schedule cuts across them. Its rows are **steps** — tasks and bugs, drawn from any feature and any epic
@@ -102,13 +127,17 @@ is added. GitHub's Iteration field gives each row its sprint, for scrums and spr
 "lane" is now "step", and no project, sub-issue link or blocked-by link crosses accounts. A schedule's shape, its
 commitment and its deliverable are [issue-standards.md](../issue-standards.md) §Schedules.
 
-**A scenario is not a fourth row.** It is a narrative, a use case, told by its Scenario issue, and its rows are
-features of its own account, usually across epics and often across that account's repositories. Ruled 2026-11-03:
-there is no longer a project per scenario. The team's Scenario project holds its features, and its single-select
-Scenario field names the scenario each row belongs to, with one option per scenario, named for its Scenario issue;
-Beat orders the rows within a scenario. Work in another account joins it only through a stand-in issue in the
-scenario's own account. A session serves a feature; a scenario is what several sessions add up to. It is a view
-across units of work, not a unit itself, and it is defined in [issue-standards.md](../issue-standards.md#scenarios).
+**A scenario is not a fourth row.** Ruled 2026-11-04, replacing the 2026-11-03 ruling that a scenario's rows are
+features: a scenario is a high-level description of a feature, a workflow or a real-life situation that needs to be
+tested. Its Scenario issue, its own row in the team's Scenario project, summarizes an end-user goal and names the
+features the scenario exercises. It is structurally like a schedule that starts with no tasks or bugs, which are found
+with time: someone walks it and logs each work item found, a task or a bug, as a row of the team's Scenario project
+under the scenario's option, its Beat the point in the walk where it turned up, until the item moves to its team's
+Triage project or straight onto a schedule. A scenario never ends: it is kept, updated or removed as the product
+changes. Ruled 2026-11-03: there is no longer a project per scenario, and the team's single-select Scenario field names
+the scenario each row belongs to, with one option per scenario, named for its Scenario issue. Work in another account
+joins it only through a stand-in issue in the scenario's own account. It is a view across units of work, not a unit
+itself, and it is defined in [issue-standards.md](../issue-standards.md#scenarios).
 
 **A worktree is a pull request.** It branches from the default branch and resolves one or more of its
 feature's issues. As many worktrees may be open as there are pull requests in flight; they do not
@@ -172,15 +201,15 @@ Work uncovers work. That is normal and is not a reason to stop.
 context that made it visible is at its sharpest in the moment it appeared, and a defect described a week
 late is a worse description.
 
-Ruled 2026-11-03: an issue we file ourselves goes through `star github issue`, the one path that classifies an issue
-as it is made. A new issue reaches its team's Triage project through a GitHub Actions workflow in its repository,
-run when an issue is opened or transferred, using `actions/add-to-project`; GitHub's built-in auto-add workflow is
-not used. Each repository's `TRIAGE_PROJECT_URL` variable names its team's Triage project, taken from the team
-mapping: the team with the maintain role on a repository owns it. A Triage workflow template in each account's
-`.github` repository offers the workflow. GitHub's documentation describes workflow templates kept in an
+Ruled 2026-11-03: an issue we file ourselves will go through `star github issue` once it is built (#338), the one path
+that will classify an issue as it is made. A new issue reaches its team's Triage project through a GitHub Actions
+workflow in its repository, run when an issue is opened or transferred, using `actions/add-to-project`; GitHub's
+built-in auto-add workflow is not used. Each repository's `TRIAGE_PROJECT_URL` variable names its team's Triage project,
+taken from the team mapping: the team with the maintain role on a repository owns it. A Triage workflow template in each
+account's `.github` repository offers the workflow. GitHub's documentation describes workflow templates kept in an
 organization's `.github` repository and says nothing about a user account's; whether GitHub offers
-David-Noble-at-work/.github's template to personal has not been checked, and either way the task that adds
-personal's Triage workflow, David-Noble-at-work/personal#315, copies personal's `triage.yml` from it.
+David-Noble-at-work/.github's template to personal has not been checked, and either way the task that added personal's
+Triage workflow on 2026-11-04, David-Noble-at-work/personal#315, copied personal's `triage.yml` from it.
 
 Ruled 2026-11-03: an account's file templates, which are its issue forms, its Triage workflow template and its pull
 request template, are stored in its `.github` repository, and every document that talks about one of them refers to it
@@ -195,9 +224,9 @@ all of NobleFactor's repositories. GitHub's
 [list of GitHub App permissions](https://docs.github.com/en/rest/authentication/permissions-required-for-github-apps)
 puts an organization's projects under the organization permission Projects, its issue fields under the organization
 permission Issue Fields, and an issue's field values under the repository permission Issues. Nothing has used the
-projects, issue fields and issues permissions yet: the first Triage workflow run in a NobleFactor repository proves
-them. NobleFactor's five repositories with `TRIAGE_PROJECT_URL` set, NobleFactor/.github included since 2026-11-03,
-now wait only on their own `.github/workflows/triage.yml`.
+projects, issue fields and issues permissions yet: the first Triage workflow run in a NobleFactor repository will prove
+them. NobleFactor's five repositories with `TRIAGE_PROJECT_URL` set, NobleFactor/.github included since 2026-11-03, now
+wait only on their own `.github/workflows/triage.yml`, which #448 will add once #447 lands.
 
 **Then decide, immediately, where it will be resolved.** There are exactly two answers, and deferring the
 choice is not one of them:
@@ -262,10 +291,11 @@ carries. The plan's path below `docs/plans/` is therefore its branch's name exac
 searched for without finding the other, and the issue number is visible in both.
 
 Ruled 2026-11-03: the `chore/` branch type is removed from the branch ruleset and from `git open-branch`. The plans
-already filed under `docs/plans/chore/` stay where they are. The ruleset changed on 2026-11-03, when the script of
-the issue data model design's worktree (#303) ran, so no branch named `chore/...` can be pushed. `git open-branch`
-still accepts `chore`, in the script, its man page and its bash and zsh completions; the ruling removes it from all
-of them, and that change has not been made
+already filed under `docs/plans/chore/` stay where they are. The ruleset changed on 2026-11-03, when the script of the
+issue data model design's worktree (#303) ran, so no branch named `chore/...` can be pushed. `git open-branch` still
+accepts `chore`, in the script, its man page and its bash and zsh completions; the ruling removes it from all of them.
+That change is #449, and it has not been made yet. Approved 2026-11-04, #449 will also have `git open-branch` take the
+branch type from the issue's type, or from its type label in a user account
 ([github-branch-protection.md](../github-branch-protection.md#12515090--restrict-branch-names)).
 
 A plan named for its subject rather than its issue — `reconciliation.md`, `cli-output-conventions.md` —
@@ -361,11 +391,11 @@ and is retired, and so is `chartered`.
 
 ## Reference implementation
 
-`git-open-branch` and `git-close-branch` implement the worktree rules above. `git-open-branch` refuses to
-create a branch without an issue, derives the branch name from that issue's labels and title so the name
-is a consequence of the work rather than of the typist, and creates the worktree. `git-close-branch`
-verifies a pull request is merged before it deletes anything, removes the worktree, and deletes the
-branch locally and on the remote.
+`git-open-branch` and `git-close-branch` implement the worktree rules above. `git-open-branch` refuses to create a
+branch without an issue, derives the branch name from that issue's labels and title so the name is a consequence of the
+work rather than of the typist, and creates the worktree. Approved 2026-11-04, #449 will have it take the branch type
+from the issue's type instead, or from its type label in a user account. `git-close-branch` verifies a pull request is
+merged before it deletes anything, removes the worktree, and deletes the branch locally and on the remote.
 
 All three — `git-reset-branch` travels with them — ship from this repository's `Home/common/.local/bin`,
 beside the `Declare-BashScript` they source, each with its man page and bash and zsh completions. They
