@@ -3,7 +3,7 @@ title: "The GitHub issue data model: one hierarchy, its attributes, and the coll
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/303
 status: complete
 created: 2026-10-21
-updated: 2026-11-04
+updated: 2026-11-05
 ---
 
 # Plan: The GitHub issue data model: one hierarchy, its attributes, and the collections that order it
@@ -760,7 +760,7 @@ The owner, 2026-11-04: the data model has no gap that keeps it from going live, 
   sort by; no NobleFactor repository runs the Triage workflow yet, which waits on #447 and step 33; and 83 open bugs
   have no severity, 77 in NobleFactor and 6 in personal, which is triage's work.
   -- 2026-11-04: section 3's status file, § Every workflow, checked on 2026-11-04
-- [ ] **The pull request's script,** run by the owner:
+- [x] **The pull request's script,** run by the owner, makes and checks these changes in GitHub -- 2026-11-05:
   - gives engprod the write role on Triage: engprod, Backlog: engprod, Schedule: engprod and Scenario: engprod (projects
     5, 25, 26 and 27), and devlore on its four (6, 28, 29 and 30), in place of the Admin role ruled for each team's
     Triage project on 2026-10-22. GitHub's API sets a team's role on a project but cannot read one, so the script checks
@@ -768,15 +768,20 @@ The owner, 2026-11-04: the data model has no gap that keeps it from going live, 
   - adds a view named By priority, sorted by Priority, to Backlog: engprod, Backlog: devlore and the Backlog template
     (projects 25, 28 and 24), since GitHub's API sets a view's sort only when it makes the view; and sets the views'
     visible fields, since today they show none of these: Area in every view of the Triage projects, Priority in the
-    Backlog projects' views, and Labels in David-Noble-at-work's Triage and Backlog views;
+    Backlog projects' views, and Labels in David-Noble-at-work's Triage and Backlog views. Each view keeps its other
+    columns, its filter and its layout, and the script reads back each view it makes or changes;
   - gives NobleFactor's Severity field its N/A option, gray and described "Not applicable: the issue is not a bug",
     through GitHub's REST call, `PATCH /orgs/NobleFactor/issue-fields/{issue_field_id}`, sending each existing option
     with its ID. The GraphQL call takes no option IDs, and GitHub's REST documentation warns that options sent without
-    one may be deleted and recreated. The script reads back that every Severity value is still held;
+    one may be deleted and recreated. The script keeps a copy of every Severity value with the worktree's git data
+    before the call, then reads back the five options and that every value is still held, comparing again on a rerun;
   - makes the label `severity:n/a` in personal and David-Noble-at-work/.github, and the label `good first issue` in
-    personal with the color and description David-Noble-at-work/.github's has;
+    personal with the color and description David-Noble-at-work/.github's has, and reads each back;
   - sets N/A on every open issue of a type other than Bug, read on 2026-11-04: 414 in NobleFactor's five
-    participating repositories and 33 in personal. An issue with no type gets none and waits for triage;
+    participating repositories and 33 in personal, and reads them back. An issue with no type gets none and waits for
+    triage. Seven of the 414 hold a Severity carried over from the old severity labels, which N/A replaces, as ruling
+    2 has it: devlore-cli#677, a feature, Critical; #694, a feature, High; #706, a task, Medium; and #679, #685, #689
+    and #691, tasks, Low. Each issue's history keeps its old value;
   - removes the five feature rows that ruling 1 rules out, read on 2026-11-04: noblefactor-engprod#140 and #151 from
     Scenario: engprod, devlore-cli#762 and #847 from Scenario: devlore, and devlore-cli#1023 from Schedule: devlore,
     first commenting on each scenario's Scenario issue naming the features it exercised;
@@ -787,8 +792,13 @@ The owner, 2026-11-04: the data model has no gap that keeps it from going live, 
     project, their own team's or another's, read on 2026-11-04: 19 of engprod's, #303 among them, 9 of devlore's, and
     noblefactor-engprod#250 and David-Noble-at-work/personal#263, rows of Triage: engprod and Schedule: devlore.
     David-Noble-at-work/personal#268 and #275, rows of Triage: David-Noble-at-work and of Schedule: devlore, keep their
-    Triage rows: their Schedule: devlore rows are crossings that #428 removes;
-  - merges the pull request and closes #303, its row on Schedule: engprod set to Closed.
+    Triage rows: their Schedule: devlore rows are crossings that #428 removes.
+
+  The script checks every row it removes and every Severity value it replaces against those read and approved on
+  2026-11-04, and one that isn't stops it before any change. It then merges the pull request, records the merge on
+  #303, closes #303 and sets its row on Schedule: engprod to Closed, leaving the row's Worktree link as it is. Those
+  follow the merge, so #303 records them, as rule 19 of agent-rules.md has it, and this item doesn't wait on them
+  (rule 12).
 
 Where the 25 unchecked items go:
 
