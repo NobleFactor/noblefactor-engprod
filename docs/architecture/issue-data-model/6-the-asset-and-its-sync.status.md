@@ -67,6 +67,35 @@ whether a reference model holds a repository's other labels (§ Reference models
 Schedule and Scenario template and copy has its field, whose one option names a placeholder issue (§ The asset, under
 `projects`, in section 6).
 
+Brought on 2026-11-04 to that day's rulings, which settle the questions #303 had left open, and to the owner's rewrite
+of the first later that day and the decisions that followed it. Severity applies to bugs only, and every issue of a type
+other than Bug has Severity N/A: the asset's sketch shows the option N/A beside Critical, High, Medium and Low, and
+`good first issue`, which goes on tasks and bugs only, among the labels (§ The asset). Severity's N/A option, the
+`severity:n/a` label, personal's `good first issue` label, the teams' write role on their four projects, in place of the
+Admin role ruled for each team's Triage project on 2026-10-22, the By priority view of the Backlog template and of the
+teams' Backlog projects, and the fields the views show are made by the script of #303's closing pull request. The write
+role lets a member edit a project, its fields and views included, and keeping every project of a kind configured the
+same way rests on `push` (#437), not on the role. Ruled under `projects`: how an issue moves between projects, to
+another team's among them, by the person whose name is on it, and how it is kept in one of its account's projects at a
+time, whichever team owns them, with triage removing an issue's Triage row as part of its decision; epics and features,
+which are rows of no project once classified; and a scenario, a high-level description of a feature, a workflow or a
+real-life situation that needs to be tested, whose rows are its Scenario issue and the tasks and bugs found by walking
+it, rows the sweep will leave alone but for two structural rules, on an epic or a feature in a scenario and on an issue
+in a scenario and in another of its account's projects. Under `types`, the ruling of 2026-11-03 that a Scenario issue
+tells a scenario's story is followed by that of 2026-11-04, that it summarizes an end-user goal, and #453 will bring the
+Scenario type's description and the `scenario` labels' in personal and David-Noble-at-work/.github to that ruling. A
+hierarchy type whose description names no level is a fault of the model, which `pull` and `push` will check (#426 and
+#437), and the audit still reports a type whose level the asset disagrees with (§ The asset, under `types`). The sweep
+(#436) will return an open issue with a resolution to its team's Triage project, and the ruling of 2026-11-03 that there
+are no compliance checks is superseded in part by the sweep, which will be the one check (§ The asset, under `types` and
+`labels`, and § Participation: a user account's repositories). § Participation also says that `star github issue`, which
+will be the one path for the issues we file ourselves once it is built, will refuse an issue without an Area (#338).
+Under `projects`, a user account's new participant is a collaborator on each participating repository, personal and
+David-Noble-at-work/.github; § One model per account says that personal's Triage workflow copies a form's Area into an
+`area:` label today, and that NobleFactor's will set the Area field once #447 and #448 land. Settled the same day:
+GitHub's REST call for an issue field takes each option's id and its GraphQL call takes none, so `push` will send every
+option with its id (#437; § The asset, under Ids beside names, and § Risk).
+
 ## Completion
 
 - [ ] Section 6 states what the model holds, the issue fields among it, and what it leaves out, that it is a cache,
@@ -83,6 +112,6 @@ Schedule and Scenario template and copy has its field, whose one option names a 
   each account's model is read, #426; the gate checks the digest, which no issue names yet.
 - [ ] `star github model pull`, built in #377; `push`, #437; and `audit`, which no issue names yet; `labels sync` and
   `labels audit` retired into them.
-- [ ] The extension derives the hierarchy from `types` and names no type itself, #376.
+- [ ] The hierarchy derived by the extension from `types`, with no type named in the extension itself: #376.
 - [x] Every `star github schedule` operation reads GitHub's record conditionally first and reports when the asset is
   behind. Built in #378.

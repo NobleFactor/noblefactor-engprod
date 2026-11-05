@@ -66,7 +66,7 @@ Ruled 2026-11-03, and revised into section 4 the same day. Section 4 now states 
   A user account's projects are its owner's.
 - Issues are classified by issue type, enforcement is lax, and there are no compliance checks. § What the audit does
   is now § What GitHub does not enforce.
-- Issues we file ourselves go through `star github issue`.
+- Issues we file ourselves will go through `star github issue` once it is built (#338).
 - NobleFactor keeps the Triage, Backlog, Schedule and Scenario templates, and David-Noble-at-work keeps copies of them.
 - GitHub Actions cannot run a workflow when a project row changes: `projects_v2_item` is a webhook event for
   organization webhooks and GitHub Apps only.
@@ -78,10 +78,10 @@ triage decision is carried out and how an issue is kept in one project at a time
   Area issue field in NobleFactor, made 2026-11-03, and the labels area:product and area:engineering in a user
   account. It goes on issues of every type and describes the issue's own work.
 - devlore-cli's seven finer Area labels were deleted on 2026-11-03, and the hierarchy carries those distinctions.
-- A blank Area is an error, caught at filing by `star github issue` and the required Area dropdown of each issue form in
-  the account's `.github` repository, at triage by the Area column of NobleFactor's Triage projects and the Missing
-  Area view of each Triage project, and afterwards by a scheduled sweep that returns an open issue without an Area to
-  its Triage project.
+- A blank Area is an error, caught at filing by the required Area dropdown of each issue form in the account's `.github`
+  repository and, once it is built, by `star github issue` (#338), at triage by the Area field of NobleFactor's Triage
+  projects and the Missing Area view of each Triage project, and afterwards by a scheduled sweep that will return an
+  open issue without an Area to its Triage project.
 - An account's model holds its issue fields, as it holds its issue types and labels. NobleFactor's are Priority,
   Effort, Target date, Resolution, Area and Severity, and Start date stays unused. A user account has none.
 - The old scheme's last three pieces retired on 2026-11-03, and the retirement was done in GitHub: the parent markers
@@ -100,16 +100,16 @@ document that talks about one of them refers to it there. Both account diagrams 
 - The Triage workflow adds no new issue to a Triage project yet. `TRIAGE_PROJECT_URL` is set in seven repositories. It
   names [Triage: engprod](https://github.com/orgs/NobleFactor/projects/5) in NobleFactor/noblefactor-engprod and
   NobleFactor/.github; [Triage: devlore](https://github.com/orgs/NobleFactor/projects/6) in NobleFactor/devlore-cli,
-  NobleFactor/devlore-registry and NobleFactor/devlore.noblefactor.com; and
-  [Triage: David-Noble-at-work](https://github.com/users/David-Noble-at-work/projects/3) in David-Noble-at-work/personal
-  and David-Noble-at-work/.github. Both `.github` repositories take part in triage from 2026-11-03, and both accept
-  issues: the engprod team was given the maintain role on NobleFactor/.github that day, and David-Noble-at-work/.github
-  has the topic issue-model. personal has had `.github/workflows/triage.yml` since 2026-11-04, merged in
-  David-Noble-at-work/personal#320 for David-Noble-at-work/personal#315, step 1 of David-Noble-at-work's schedule
-  issue tracking, iteration 1 (David-Noble-at-work/personal#314); the other six don't have it yet. NobleFactor's five
+  NobleFactor/devlore-registry and NobleFactor/devlore.noblefactor.com; and [Triage:
+  David-Noble-at-work](https://github.com/users/David-Noble-at-work/projects/3) in David-Noble-at-work/personal and
+  David-Noble-at-work/.github. Both `.github` repositories take part in triage from 2026-11-03, and both accept issues:
+  the engprod team was given the maintain role on NobleFactor/.github that day, and David-Noble-at-work/.github has the
+  topic issue-model. personal has had `.github/workflows/triage.yml` since 2026-11-04, merged in
+  David-Noble-at-work/personal#320 for David-Noble-at-work/personal#315, step 1 of David-Noble-at-work's schedule issue
+  tracking, iteration 1 (David-Noble-at-work/personal#314); the other six don't have it yet. NobleFactor's five
   repositories now wait only on their own `.github/workflows/triage.yml`: the noblefactor-automation app's installation
   on NobleFactor has organization projects read and write, issue fields read, and issues read and write, and nothing has
-  used them yet. The first Triage workflow run in a NobleFactor repository proves them (§ Triage in section 4).
+  used them yet. The first Triage workflow run in a NobleFactor repository will prove them (§ Triage in section 4).
 - GitHub's built-in "Auto-add sub-issues to project" workflow was on in Triage: devlore. Whether the ruling on the
   Triage workflow leaves it unused was settled later that day: every project of a kind is configured the same way (ruled
   2026-11-03), and since GitHub's API can't make a built-in workflow or turn one on, every built-in workflow of the
@@ -169,6 +169,87 @@ On 2026-11-04, of the Triage workflow (§ Triage in section 4):
   issue body ending at the Area heading. NobleFactor/.github's Triage workflow template, already merged, has the same
   reader, and its fix goes through a NobleFactor/.github pull request.
 
+Brought on 2026-11-04 to that day's rulings on #303. Section 4 now states each of these:
+
+- How an issue moves between its team's projects, and who moves it, which settles the question section 4 had left open,
+  how a triage decision is carried out and how an issue is kept in one project at a time. Any member of a team can see
+  all of the team's issues and do all of its work in its four projects, so membership in the team is the one grant a new
+  participant needs: its roles are the maintain role on each repository the team owns and the write role on each of its
+  four projects, which the script of #303's closing pull request sets. Adding a person to NobleFactor needs a seat
+  first, and its Team plan's one seat is filled. In a user account, a new participant is a collaborator on each
+  participating repository, personal and David-Noble-at-work/.github, and a writer on each of the account's four
+  projects. An issue is a row of at most one of its account's Triage, Backlog, Schedule and Scenario projects, whichever
+  team owns them, and is on at most one schedule or scenario, no epic or feature is a row of a Backlog, Schedule or
+  Scenario project, and every move is one act. The Backlog's view By priority, sorted by Priority, is made by the script
+  of #303's closing pull request in Backlog: engprod, Backlog: devlore and the Backlog template (§ Triage, § A user
+  account and § Where each part lives in section 4).
+- A scenario's rows are the tasks and bugs logged while walking it, beside its Scenario issue's own, each with its Beat,
+  the point in the walk where it turned up, in place of the ruling of 2026-11-03 that they are features. The Triage
+  workflow will add an item that names its scenario in its body to that scenario instead of to Triage (#448), and the
+  Scenario issue summarizes an end-user goal and names the features its scenario exercises (§ An organization's account,
+  § Triage and § Where each part lives in section 4).
+- A task has no severity; it has a priority. Severity applies to bugs only: a bug has Critical, High, Medium or Low,
+  never N/A, and an issue of every other type has N/A, a new option of NobleFactor's Severity field and the label
+  severity:n/a in a user account, colored `cfd3d7`, both made by the script of #303's closing pull request (§ A user
+  account and § Where each part lives in section 4).
+- `good first issue` goes on tasks and bugs only. personal gets the label from the script of #303's closing pull
+  request, so both accounts hold it; read on 2026-11-04, the five participating NobleFactor repositories and
+  David-Noble-at-work/.github have it (§ Where each part lives in section 4).
+- A form's required Area dropdown and Evidence of completion section hold only in a public repository (GitHub's form
+  schema documentation, read 2026-11-04). personal is the one private participating repository since the owner made
+  devlore.noblefactor.com public that day, and nothing checks either there at filing until `star github issue` does
+  (#338). No view of a Triage project showed the Area field, or in a user account its Labels column, when read that day,
+  and the script of #303's closing pull request shows them; and #452 will give every open issue an Area before the sweep
+  runs (§ Triage and § Where each part lives in section 4).
+- The sweep (#436) will check the attribute rules, and that an issue is in at most one of its account's Triage, Backlog,
+  Schedule and Scenario projects, whichever team owns them, and on at most one schedule or scenario, and will return an
+  open issue that breaks one to its team's Triage project, with a comment naming the rule. It will also return an epic
+  or feature that is a row of a Backlog, Schedule or Scenario project, an issue whose row on a schedule has no step,
+  other than a Schedule issue's own, an issue with a sub-issue or blocked-by link into another account, and an issue
+  other than a Scenario issue with no Evidence of completion section. It will leave a scenario's rows alone but for two
+  of those rules, an epic or a feature that is a row of a Scenario project and an issue that is a row of a scenario and
+  of another of the account's projects, whichever team owns it, and every other rule will wait until an item logged
+  while walking a scenario moves out. How it will handle an issue that is in a scenario and in another project, without
+  taking a scheduled item off its schedule, is #436's to design. It will run every day as a scheduled GitHub Actions
+  workflow in each account's `.github` repository. The sweep will block no filing and correct nothing by itself, and
+  triage fixes each issue it returns by hand. This supersedes in part the statement of 2026-11-03 that there are no
+  compliance checks (§ What GitHub does not enforce in section 4).
+
+Brought on the evening of 2026-11-04 to the owner's last decisions of that day. Section 4 now states each of these:
+
+- A Scenario issue states no evidence of completion: a scenario never ends, so its issue never closes. Every other issue
+  states its own, and the sweep's rule on a missing Evidence of completion section will skip Scenario issues. #453 will
+  put how to walk it, the example the Scenario issue gives, in place of each Scenario form's Evidence of completion
+  section (§ An organization's account, § Where each part lives and § What GitHub does not enforce in section 4).
+- The words of the scenario of 2026-11-03, whose Scenario issue told its features' story, give way to the rewritten
+  ruling's: its Scenario issue summarizes an end-user goal to test (§ An organization's account in section 4).
+- How the sweep (#436) will handle an issue that is in a scenario and in another project, without taking a scheduled
+  item off its schedule, is #436's to design, and § What GitHub does not enforce now lists the attribute rules the sweep
+  will check apart from the model's other rules (§ Triage and § What GitHub does not enforce in section 4).
+- In a user account, a new participant is a collaborator on each participating repository, personal and
+  David-Noble-at-work/.github (§ A user account and § Triage in section 4).
+- `star github issue` is not built, so issues we file ourselves will go through it once it is (#338). personal's Triage
+  workflow adds the Area label today, and NobleFactor's will set the Area field once #447 and #448 land; the counts of
+  open issues with an Area were read before #452 and #453 were filed (§ Triage in section 4).
+
+Brought last of all on 2026-11-04 to the owner's two last rulings of that day. Section 4 now states each of these:
+
+- One project at a time holds across the whole account, not only within a team's four projects: an issue is a row of at
+  most one of its account's Triage, Backlog, Schedule and Scenario projects, whichever team owns them, and is on at most
+  one schedule or scenario, and the sweep (#436) will check the rule across all of the account's projects, with its two
+  exceptions for a scenario's rows. An issue on another team's project is assigned to an accountable member of that
+  team, and the person whose name is on an issue moves it to another team in one act, between its team's Triage project
+  or schedule and the other team's: triage to triage, triage to schedule, schedule to triage, or schedule to schedule.
+  This supersedes in part the ruling of 2026-10-22 that work for another team gets a tracking issue (§ Triage and § What
+  GitHub does not enforce in section 4).
+- Triage removes an issue's row from its Triage project as part of its decision, and an issue someone closes outside
+  triage stays there until triage decides its disposition. The sweep will remove no Triage row, as #436's comment of
+  2026-11-04 records (§ Triage in section 4).
+- Work not yet done is stated as work to come: what the sweep (#436), the Triage workflow (#448), #452 and #453 will do;
+  the first Triage workflow run in a NobleFactor repository, which will prove the noblefactor-automation app's
+  permissions; and what pull and push (#426 and #437) will check and decide (§ An organization's account, § Triage, §
+  Where each part lives, § Where each part is defined and § What GitHub does not enforce in section 4).
+
 ## Completion
 
 - [x] The plan's questions 1 and 13 ruled: where Type lives and where the parent link lives -- 2026-10-22
@@ -186,7 +267,12 @@ On 2026-11-04, of the Triage workflow (§ Triage in section 4):
       day, and to the file templates each `.github` repository stores, the pull request template among them
 - [x] Section 4 names every rule GitHub does not enforce, and says nothing corrects an issue by itself -- 2026-11-03,
       the day it was ruled that there are no compliance checks
-- [ ] Ruled on #303: how a triage decision is carried out, and how an issue is kept in one project at a time
+- [x] Ruled on #303: how a triage decision is carried out, and how an issue is kept in one project at a time --
+      2026-11-04: every move is one act, an issue is a row of at most one of its account's Triage, Backlog, Schedule and
+      Scenario projects, whichever team owns them, and on at most one schedule or scenario, triage removes an issue's
+      Triage row as part of its decision, and the sweep (#436) will return to its team's Triage project an issue that
+      breaks the rule, the Scenario projects included; how it will handle one in a scenario and in another project,
+      without taking a scheduled item off its schedule, is #436's to design
 - [x] Ruled on #303: where a new personal issue's step goes while David-Noble-at-work has no schedule -- 2026-11-03:
       on David-Noble-at-work's own schedules; personal#315 is step 1 of personal#314, read back
 - [x] Ruled on #303: where severity lives in NobleFactor -- 2026-11-03: in the organization's issue field Severity,
