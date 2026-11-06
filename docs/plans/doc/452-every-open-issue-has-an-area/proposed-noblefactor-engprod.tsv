@@ -1,0 +1,126 @@
+317	Product	unsure	records agent judgment errors that feed the released agent rules, process material
+60	Product	unsure	writes the certificate procurement process and release-process.md guide, process material
+140	Product	sure	turns the epic report into a star extension shipped by the base layer
+144	Product	sure	rewrites pr-script-template.md, a released process guide
+145	Product	sure	builds star gh pr, a released star extension command
+151	Product	sure	builds star session start, a released command replacing Start-Claude
+152	Engineering	sure	a Scenario issue
+156	Product	sure	issue-standards.md and the scheme it states, released standards
+157	Product	sure	turns the PR process into a released command and its guide
+158	Product	sure	relocates the released process commands into the base layer
+171	Product	sure	schedules devlore-cli product features: output convention, resource model, writ lifecycle, configuration
+176	Product	sure	moves the issue scheme and star gh report onto GitHub's native hierarchy
+178	Product	sure	changes star gh issues audit and issue-standards.md, released tooling and standard
+190	Product	sure	changes the columns star gh issues report returns, a released extension
+200	Product	sure	fixes git-open-branch, a released layer command
+205	Engineering	sure	moves plan documents into docs/plans/, planning records
+206	Product	sure	delivers the released process commands, star gh issues and agent rules
+212	Product	sure	fixes fetch_issues in star gh issues report, a released extension
+231	Engineering	sure	removes a CI frontmatter script and its Makefile gate
+232	Product	unsure	delivers star's lint checks, released in star, plus a design document
+246	Product	sure	makes pr-script-template.md idempotent, a released process guide
+248	Product	sure	removes dead git-crypt code from git-open-branch, a released layer command
+250	Product	sure	adds retain/* branches to development-process.md and git-close-branch, released process
+251	Product	sure	go-style-guidelines.md omits a rule, a bug in a released standard
+252	Engineering	unsure	corrects stale plan boxes and a README sentence that do not release
+256	Product	sure	updates session naming in development-process.md, a released process guide
+260	Product	sure	changes the star-gh-assignment skill and Start-Claude, released layer tooling
+261	Product	sure	adds a question-handling rule to development-process.md, a released process guide
+263	Product	sure	builds a base-layer skill for reporting agent process violations
+264	Engineering	unsure	changes the CI PowerShell gate in .github/scripts/, with a style guide note
+265	Product	sure	one CONTRIBUTING.md in every repository, a released policy
+266	Product	sure	scripting standards for released layer scripts, a released standard
+267	Product	sure	writes bash-style-guidelines.md, a released standard
+269	Product	sure	settles the guard layout in the bash guide and released scripts
+270	Product	sure	settles the source-line form in the bash guide and released scripts
+271	Product	sure	settles the copyright line in the bash guide and released scripts
+272	Product	sure	adds a missing name line to git-new-workspace, a released layer script
+273	Product	sure	settles the documentation pointer line in the bash guide and released scripts
+274	Product	sure	settles section banners in the bash guide and released scripts
+275	Product	sure	settles section names and order in the bash guide and released scripts
+276	Product	sure	settles subheadings in the bash guide and released scripts
+277	Product	sure	settles where require_* goes in the bash guide and released scripts
+278	Product	sure	gives released layer scripts --help, per the bash guide
+279	Product	sure	adds man pages for released layer scripts, documentation that ships
+280	Product	sure	settles the synopsis declaration in the bash guide and released scripts
+281	Product	sure	settles how the help arm calls usage in released scripts
+282	Product	sure	settles the option loop form in the bash guide and released scripts
+283	Product	sure	settles the -- arm form in the bash guide and released scripts
+284	Product	sure	settles the default arm form in the bash guide and released scripts
+285	Product	sure	settles function definition form in the bash guide and released scripts
+286	Product	sure	completes Declare-BashScript's man page, documentation that ships with it
+287	Product	sure	states which scripts source Declare-BashScript in development-process.md, a released guide
+292	Product	sure	documents every function in released scripts per the bash guide
+295	Engineering	sure	a test harness for virtual-machine test runs
+296	Engineering	sure	the test harness creates and checks a test account on VMs
+298	Product	sure	a SessionStart hook shipped from the base layer by writ
+299	Product	sure	fixes Declare-BashScript's parse error output, a released layer helper
+300	Product	sure	adds a libexec rule to development-process.md, a released process guide
+301	Product	sure	delivers Start-Claude and Start-Claude.ps1, released layer commands
+302	Engineering	sure	records a design document under docs/architecture/, design work
+305	Product	sure	runs Start-Claude's agent sessions in Docker SBX sandboxes, a released command's behavior
+308	Product	sure	fixes the star-gh-assignment skill, released layer tooling
+310	Product	unsure	brings a released layer command and the CI gate to the style guide
+315	Product	sure	changes the star gh extension's --repo flag, released tooling
+316	Product	sure	agent conduct record and agent-rules.md, a released process guide
+319	Product	sure	bug in star gh issues report, a released star extension
+320	Product	sure	labels file read by star gh labels sync, released tooling
+324	Product	unsure	documents released layer scripts per the style guide; some are tests
+329	Engineering	unsure	moves PowerShell test suites to Pester; the style guide names it too
+330	Product	sure	issue tracking standard and star tooling, released engineering materials
+331	Product	unsure	issue data model stated in issue-standards.md, a released standard
+332	Product	sure	star gh issue tooling, a released star extension
+333	Product	sure	rollout of the released issue model and tooling; holds product children
+334	Product	sure	adds rule 16 to agent-rules.md, a released process guide
+336	Product	sure	session notices and a PR script template check, released process tooling
+337	Product	sure	CONTRIBUTING.md, development-process.md and a skill, released process materials
+338	Product	sure	star gh issues file command and a skill, released tooling
+340	Product	unsure	records an agent's process breaches against the released process rules
+341	Product	sure	bug in Start-Claude waking a session, a released layer command
+346	Product	sure	delivers the issue data model and star tooling in use
+364	Engineering	sure	planning: decomposes devlore-cli epics and writes a schedule
+365	Product	unsure	deploys and proves the released star report extension
+374	Engineering	sure	ssh hang on one host, internal infrastructure
+376	Product	sure	star extension reads the hierarchy from model.yaml, released tooling
+379	Product	sure	star report and audit placement, released tooling
+385	Engineering	sure	design specification for an agent driver model
+388	Engineering	sure	reruns Start-Claude test cases and checks, testing work
+389	Product	sure	bug in the star-gh-progress skill, released in the base layer
+390	Product	sure	bug in Start-Claude's viewer exit, a released layer command
+391	Product	sure	brings Start-Claude.ps1, a released command, in line with style guide
+392	Engineering	sure	removes stray worktrees, files and test sessions on hosts
+398	Product	sure	markdown wrapping rule in a docs/guides guide, a released standard
+399	Product	sure	extends documentation-standards.md, a released standard
+403	Product	unsure	dependency update rule in the development process; repositories then follow it
+406	Product	sure	bug in Start-Claude's /rename typing, a released layer command
+408	Engineering	sure	designs star gh schedule and thread commands, design work
+409	Engineering	sure	designs star gh triage commands, design work
+414	Product	sure	bugs in Clear-Claude, a released layer command
+415	Product	sure	bug in Start-Claude's shell completions, released with the command
+419	Product	sure	shared engineering process documentation, released process materials
+420	Product	sure	consolidates the released engineering process documentation
+421	Engineering	sure	a bounded measurement trial, research that does not ship
+422	Product	unsure	updates github-branch-protection.md, a released policy document, for devlore-cli CI
+425	Product	sure	reference models shipped with the star extension, and a star command
+426	Product	sure	star model pull for both account kinds, released tooling
+427	Product	sure	star report and audit read projects, released tooling
+428	Engineering	unsure	removes cross-account links and rows from GitHub records, data cleanup
+431	Product	unsure	NobleFactor/.github's shared health files and issue model, released to every repository
+433	Engineering	sure	a test in tests/ prints spurious errors
+434	Product	sure	Start-Claude and the assignment skill hand the wrong link, released tooling
+436	Product	sure	star keeps Triage projects current, released tooling
+437	Product	sure	star github model push command, released tooling
+438	Product	sure	star github schedule add command, released tooling
+439	Engineering	sure	designs the star github schedule commands, design work
+440	Product	sure	bug in Start-Claude's schedule check, a released layer command
+441	Engineering	unsure	tracks setting up a user account's .github model repository
+442	Engineering	sure	a Scenario issue, a template placeholder
+443	Engineering	sure	placeholder schedule for the template; delivers nothing
+445	Engineering	sure	a test in tests/ prints spurious errors
+447	Product	unsure	was Engineering: bug in .github's Triage workflow template, shared issue-tracking tooling
+448	Product	unsure	was Engineering: rolls out and extends the Triage workflow, shared issue-tracking tooling
+449	Product	sure	was Engineering: changes git open-branch, a released layer command
+450	Product	sure	was Engineering: changes the PR script template, a released process guide
+451	Engineering	unsure	lists internal credentials and how each is renewed, infrastructure upkeep
+452	Engineering	unsure	assigns Areas to existing issue records, data cleanup that does not ship
+453	Product	unsure	was Engineering: changes both accounts' Scenario issue forms, shared process templates
