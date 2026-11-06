@@ -5,8 +5,10 @@
 
 # shell-lint.sh - Lint shell scripts with shfmt and shellcheck
 #
-# Finds all files with shell shebangs or shellcheck directives,
-# then runs shfmt and shellcheck on each file.
+# Finds the files git tracks that have shell shebangs or shellcheck directives,
+# then runs shfmt and shellcheck on each file. Only tracked files: a local run then
+# checks what CI checks, and nothing git ignores, such as a worktree's scratch folder
+# (ruled 2026-11-06).
 #
 # A consumer's `source=Declare-BashScript` directive resolves through -P. Here the file is in-tree;
 # a consumer repository points DECLARE_BASHSCRIPT_DIR at a checkout of this one, or at its own
@@ -14,11 +16,11 @@
 
 failed=0
 files=$(
-    find . -path ./.git -prune -o -type f -print 2>/dev/null |
+    git ls-files |
         while read -r file; do
-            head -n1 "$file" 2>/dev/null |
+            head -n1 "./$file" 2>/dev/null |
                 grep -qE "^#!/(usr/bin/env[[:space:]]+)?(sh|bash)\b|^# shellcheck shell=" &&
-                echo "$file"
+                echo "./$file"
         done |
         sort
 )

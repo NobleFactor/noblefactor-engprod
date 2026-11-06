@@ -1,7 +1,7 @@
 ---
 title: "Every open issue has an Area before the sweep runs"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/452
-status: draft
+status: approved
 created: 2026-11-06
 updated: 2026-11-06
 ---
@@ -53,6 +53,10 @@ sweep, #436, step 14.
   NobleFactor/noblefactor-engprod#456 and its features #457 to #461, filed 2026-11-06, hold the method and what it runs
   on.
 - New tasks split from a feature go to Backlog: devlore with Priority Medium, unless the owner says otherwise.
+- Nothing goes in a temporary directory, ever; a worktree keeps its working files in its own `scratch/` folder, which
+  git ignores. The gate checks only what git tracks, so a worktree's scratch is never checked: `spelling` and
+  `starlark` in the Makefile, and `.github/scripts/shell-lint.sh`, take their files from `git ls-files`, as the
+  frontmatter and PowerShell checks already did.
 
 ## Current State
 
@@ -108,7 +112,7 @@ zero, read the day it closes.
 
 ### Phase 1: the plan and the review's record
 
-- [ ] This plan, the rulings so far and the proposals committed and pushed on `doc/452-every-open-issue-has-an-area`
+- [x] This plan, the rulings so far and the proposals committed and pushed on `doc/452-every-open-issue-has-an-area`
       by the worktree's first script, which also links the branch in #452's Worktree column on Schedule: engprod, sets
       that row In progress, and links this plan in #452's Plan row, each read back; then reviewed with the owner and
       its status `approved`
@@ -135,6 +139,8 @@ zero, read the day it closes.
 | `docs/plans/doc/452-every-open-issue-has-an-area.md` | Create | This plan |
 | `docs/plans/doc/452-every-open-issue-has-an-area/rulings.tsv` | Create | The owner's rulings, one per issue |
 | `docs/plans/doc/452-every-open-issue-has-an-area/proposed-<repository>.tsv` | Create | The proposals, per repository |
+| `Makefile` | Modify | `spelling` and `starlark` check only what git tracks, so the worktree's scratch is never checked |
+| `.github/scripts/shell-lint.sh` | Modify | The shell gate checks only what git tracks, for the same reason |
 
 ## Open Questions
 

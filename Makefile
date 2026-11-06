@@ -38,18 +38,20 @@ shell-lint: ## Format-check and lint every shell script
 # word per line. --builtin carries codespell's own default, clear and rare, plus en-GB_to_en-US (#234): naming the
 # locale dictionary alone would drop the other two. The one skipped document is #234's own plan. Its subject is the
 # difference between the two spellings, so it has to contain both, and a sweep over it turns its rename table into a
-# tautology. That is one file named here, not a word exempted repository-wide.
+# tautology. That is one file named here, not a word exempted repository-wide. The files are what git tracks, as the
+# frontmatter and shell gates' are, so a local run checks what CI checks and nothing git ignores, such as a worktree's
+# scratch folder (ruled 2026-11-06); codespell walking the tree reads .gitignore not at all.
 spelling: ## Check the prose
-	codespell --builtin clear,rare,en-GB_to_en-US --ignore-words .github/codespell-ignore \
-		--skip './.git,*.svg,*.wasm,*.lock,./docs/plans/fix/234-prose-is-not-checked-for.md'
+	git ls-files -z -- . ':!:*.svg' ':!:*.wasm' ':!:*.lock' ':!:docs/plans/fix/234-prose-is-not-checked-for.md' |
+		xargs --null --no-run-if-empty codespell --builtin clear,rare,en-GB_to_en-US --ignore-words .github/codespell-ignore
 
 # buildifier is Bazel's formatter and linter for the language and knows nothing of devlore's provider surface; it
 # catches formatting, unused variables, confusing names and missing docstrings, and passes a well-formed call to a
 # method that does not exist. The resolution checker that would catch that is a Go built-in (devlore-cli#721); this is
 # the interim, ruled 2026-09-05. The two disabled warnings are buildifier's Google-docstring completeness rules;
-# one-line docstrings are the house style.
+# one-line docstrings are the house style. The files are the Starlark files git tracks, for the reason spelling gives.
 starlark: ## Format-check and lint every Starlark file
-	find . \( -path ./.git -o -path ./build \) -prune -o -name '*.star' -print0 |
+	git ls-files -z -- '*.star' |
 		xargs --null --no-run-if-empty buildifier -mode=check -lint=warn \
 			-warnings=-function-docstring-args,-function-docstring-return
 
