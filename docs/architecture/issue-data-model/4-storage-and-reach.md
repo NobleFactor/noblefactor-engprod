@@ -542,10 +542,10 @@ still open, and so is David-Noble-at-work/personal#309, which gives personal its
 
 Ruled 2026-11-03: Area tells engineering work from product work, and it has two values only, product and engineering.
 Area goes on issues of every type and describes the issue's own work, so an epic, a feature and the tasks and bugs
-under them can each have a different Area: a CI bug fixed during a product feature is engineering. Engineering covers
-build orchestration, Makefile changes, CI pipelines, internal agent-workspace scripts and tools, and governance and
-process work. Release notes come from the closed product issues in a release, not from the hierarchy, and product
-readiness and release management epics hold both kinds of work.
+under them can each have a different Area: a CI bug fixed during a product feature is engineering. What product work
+and engineering work each cover, tests among engineering's, and what each may hold, is in
+[issue-standards.md § Product and engineering](../../issue-standards.md#product-and-engineering). Release notes come
+from the closed product issues in a release, not from the hierarchy.
 
 ## Where each part is defined
 

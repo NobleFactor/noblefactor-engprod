@@ -59,6 +59,10 @@ attributes, and the collections that order it. Its Area is Engineering. It is st
   features work the same way. A bug or a task logged on a schedule to deal with an engineering problem is recorded
   under the feature it supports, not under the epic. This replaces the record of question 7 as "an epic never contains
   both kinds", which was read as saying everything under an epic has its Area.
+- 2026-11-05, on Phase 3's question, whether a product epic may contain an engineering feature: it may, and no
+  engineering epic contains a product feature. Features work the same way: a product feature may contain an engineering
+  task or bug, and no engineering feature contains a product task or bug. Engineering epics are permitted, though few
+  if any are wanted.
 
 ## Current State
 
@@ -164,7 +168,7 @@ the answers to the open questions:
 - **An issue's Area describes its own work, not its parent's:** an epic is a product epic or an engineering epic,
   never both, and so is a feature; a bug or a task logged on a schedule to deal with an engineering problem, a CI bug
   fixed during a product feature for example, is recorded under the feature it supports, not under the epic, and is
-  engineering (Open Question 7).
+  engineering. Product work may hold engineering work, and engineering work never holds product work (Open Question 7).
 - **A bug in a test is an engineering issue, not a product issue,** ruled 2026-11-04, as the Test-ClearClaude bug
   (#445) is.
 - **Scenarios, schedules and epics:** a scenario represents demo and test artifacts, so every scenario is engineering.
@@ -185,7 +189,7 @@ engineering; that paragraph points to the new section in the document's own form
 Each replaces its list sentence with one sentence that points to the new section, and keeps the rest of its paragraph
 but for the sentence that epics for product readiness and for release management hold both kinds, which goes (Open
 Question 7):
-what product work and engineering work each cover, tests among engineering's, is in
+what product work and engineering work each cover, tests among engineering's, and what each may hold, is in
 `[issue-standards.md § Product and engineering](../../issue-standards.md#product-and-engineering)`. Section 7's table
 row at line 36 then sends the reader there. The status files of the six sections that change, 1, 2, 3, 4, 5 and 7,
 each record the change with its date; section 2's, where Area's rulings are recorded, also records the ruling of
@@ -226,8 +230,9 @@ labels in personal and David-Noble-at-work/.github (Open Question 10).
 
 ### Phase 3: The other places (Requirements 2 and 3), one commit
 
-- [ ] The seven places in the issue data model and section 7's table row, the six sections' status files, the pointer
-      at 1-hierarchy.md:62, and the two reference models' comments; `make check` green
+- [x] The seven places in the issue data model and section 7's table row, the six sections' status files, the pointer
+      at 1-hierarchy.md:62, the two reference models' comments and Area descriptions, and the new section's paragraph
+      on what an epic and a feature may hold, for the ruling of 2026-11-05 on Phase 3's question; `make check` green
 
 ### Phase 4: Merge
 
@@ -282,7 +287,10 @@ All twelve questions are ruled.
       engineering is the nature of its deliverables; most will be product deliverables, and some engineering. An epic
       is a product epic or an engineering epic, never both; one that is both is poorly constructed. Clarified the same
       day: features work the same way, and a bug or a task logged on a schedule to deal with an engineering problem is
-      recorded under the feature it supports, not under the epic.
+      recorded under the feature it supports, not under the epic. Ruled later the same day: a product epic may contain
+      an engineering feature, and no engineering epic contains a product feature; a product feature may contain an
+      engineering task or bug, and no engineering feature contains a product task or bug; and engineering epics are
+      permitted, though few if any are wanted.
 - [x] 8. **The reference models.** Approved 2026-11-05: their comments point to the new section in place of the list.
 - [x] 9. **The stale pointer at 1-hierarchy.md:62,** to the retired § The Ops axis. Approved 2026-11-05: fixed in this
       pull request, pointing to the new section.

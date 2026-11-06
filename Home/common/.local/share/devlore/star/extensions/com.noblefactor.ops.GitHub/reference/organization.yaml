@@ -70,9 +70,10 @@ types:
 # Area tells engineering work from product work. It has two options only, Product and Engineering, made 2026-11-03. It
 # applies to issues of every type and describes the issue's own work, so an epic, a feature and the tasks and bugs
 # under them can each differ: a CI bug fixed during a product feature is engineering. Release notes come from the
-# closed product issues in a release, not from the hierarchy, and product readiness and release management epics hold
-# both kinds. Engineering covers build orchestration, Makefile changes, CI pipelines, internal agent-workspace scripts
-# and tools, and governance and process work (ruled 2026-11-03).
+# closed product issues in a release, not from the hierarchy (ruled 2026-11-03). What product work and engineering work
+# each cover, tests among engineering's, and what each may hold, is stated in one place (docs/issue-standards.md,
+# § Product and engineering). Each option's description is its definition of 2026-11-05, cut to GitHub's limit of 100
+# characters for a label's description, the same text as its area: label in user.yaml.
 #
 # devlore-cli's seven finer area labels, architecture, CLI, code quality, error handling, git, meta and testing, were
 # deleted on 2026-11-03. The hierarchy carries those distinctions: architecture work is a task or a feature with
@@ -135,8 +136,8 @@ fields:
     type: single-select
     description: "Whether an issue's own work is product or engineering"
     options:
-      - { name: "Product", color: "BLUE", description: "Work that ships to users" }
-      - { name: "Engineering", color: "GREEN", description: "Build, CI, tooling and other internal work" }
+      - { name: "Product", color: "BLUE", description: "User-facing features, capabilities, or functional components released from this repository" }
+      - { name: "Engineering", color: "GREEN", description: "Design artifacts, technical specs, internal infrastructure, testing, and executing development plans" }
   - name: "Severity"
     type: single-select
     description: "What the impact is if this fires"

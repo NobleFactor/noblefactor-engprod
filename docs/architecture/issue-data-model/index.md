@@ -252,10 +252,10 @@ design.
 - **Area:** whether an issue's own work is product work or engineering work, ruled 2026-11-03. It has two values: in
   NobleFactor, the options Product and Engineering of the Area issue field, made 2026-11-03; in a user account, the
   labels `area:product` and `area:engineering`. Area applies to issues of every type, so an epic, a feature and the
-  tasks and bugs under them can each differ: a CI bug fixed during a product feature is engineering. Engineering
-  covers build orchestration, Makefile changes, CI pipelines, internal agent-workspace scripts and tools, and
-  governance and process work. Release notes come from the closed product issues in a release, not from the
-  hierarchy, and product readiness and release management epics hold both kinds. NobleFactor/devlore-cli's seven
+  tasks and bugs under them can each differ: a CI bug fixed during a product feature is engineering. What product work
+  and engineering work each cover, tests among engineering's, and what each may hold, is in
+  [issue-standards.md § Product and engineering](../../issue-standards.md#product-and-engineering). Release notes come
+  from the closed product issues in a release, not from the hierarchy. NobleFactor/devlore-cli's seven
   finer Area labels, architecture, CLI, code quality, error handling, git, meta and testing, were deleted on
   2026-11-03, and the hierarchy carries those distinctions ([section 1](1-hierarchy.md) § Type). A blank Area is an
   error, caught at three points (ruled 2026-11-03). At filing, `star github issue` will refuse an issue without an Area

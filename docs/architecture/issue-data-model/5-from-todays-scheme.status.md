@@ -67,7 +67,12 @@ David-Noble-at-work/.github, which #453 will bring to the ruling with the forms.
 what is not built yet: #376, the extension reading the hierarchy from `model.yaml`; #379, the report and the audit
 placing an issue by its type and parent first; `star github issue` (#338); and, in NobleFactor, the Triage workflow's
 copy of the form's Area, which waits on #447 and #448, while personal's makes it today. A user account's new participant
-is a collaborator on each participating repository, personal and David-Noble-at-work/.github.
+is a collaborator on each participating repository, personal and David-Noble-at-work/.github. Revised 2026-11-05 for
+#446: the row on the `Ops:` prefix in § The deltas points to
+[issue-standards.md § Product and engineering](../../issue-standards.md#product-and-engineering), which says what
+product work and engineering work each cover, tests among engineering's, and what each may hold, in place of the list
+of what engineering covers, and the sentence that the product readiness and release management epics hold both kinds
+is gone, superseded on 2026-11-05.
 
 ## Completion
 

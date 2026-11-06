@@ -17,10 +17,11 @@ Ruled 2026-11-03: an issue's Area tells engineering work from product work. Area
 engineering: in NobleFactor, the options Product and Engineering of the Area issue field, made 2026-11-03; in a user
 account, the labels area:product and area:engineering. Area applies to issues of every type and describes the issue's
 own work, so an epic, a feature and the tasks and bugs under them can each have a different Area: a CI bug fixed
-during a product feature is engineering. Engineering covers build orchestration, Makefile changes, CI pipelines,
-internal agent-workspace scripts and tools, and governance and process work. Release notes come from the closed
-product issues in a release, not from the hierarchy, and the epics for product readiness and release management hold
-both kinds. A blank Area is an error, caught at filing, at triage and afterwards (§ Triage and the Backlog).
+during a product feature is engineering. What product work and engineering work each cover, tests among engineering's,
+and what each may hold, is in
+[issue-standards.md § Product and engineering](../../issue-standards.md#product-and-engineering). Release notes come
+from the closed product issues in a release, not from the hierarchy. A blank Area is an error, caught at filing, at
+triage and afterwards (§ Triage and the Backlog).
 
 Ruled 2026-11-03: devlore-cli's seven finer Area labels, architecture, CLI, code quality, error handling, git, meta and
 testing, were deleted that day, and the hierarchy carries the distinctions they drew. Architecture work is a task or a

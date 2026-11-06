@@ -51,7 +51,12 @@ Read the same day: GitHub enforces a form's required fields only in a public rep
 repository that takes part, nothing checks the Area at filing until `star github issue` does (#338), and personal's
 Triage workflow copies a form's Area into its `area:` label, while NobleFactor's will set the Area field once #447 and
 #448 land. The document was brought to these rulings on 2026-11-04 (§ The attributes, § Labels carry no values, § Not
-attributes, § Why an issue was closed).
+attributes, § Why an issue was closed). Ruled 2026-11-04: a bug in a test is an engineering issue, not a product issue.
+Ruled 2026-11-05, on #446's plan: what a product is and what engineering work covers; the two values' definitions; and
+that an epic or a feature is product or engineering, never both, that product work may hold engineering work, and that
+engineering work never holds product work, superseding the ruling of 2026-11-03 that product readiness and release
+management epics hold both kinds. [issue-standards.md § Product and engineering](../../issue-standards.md#product-and-engineering)
+states them, and § The attributes points there in place of the list of what engineering covers, revised 2026-11-05.
 
 ## Completion
 

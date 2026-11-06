@@ -130,10 +130,13 @@ product, design work, planning work, and documentation that doesn't release with
 a test is an engineering issue, not a product issue, as the Test-ClearClaude bug (#445) is.
 
 **An issue's Area describes its own work, not its parent's.** Ruled 2026-11-05: an epic is a product epic or an
-engineering epic, never both, and a feature is the same. A bug or a task logged on a schedule to deal with an
-engineering problem, a CI bug fixed during a product feature for example, is recorded under the feature it supports,
-not under the epic, and its Area is engineering. This supersedes the ruling of 2026-11-03 that epics for product
-readiness and for release management hold both kinds.
+engineering epic, never both, and a feature is the same. Product work may hold engineering work, and engineering work
+never holds product work: a product epic may contain an engineering feature, and an engineering epic contains no
+product feature; a product feature may contain an engineering task or bug, and an engineering feature contains no
+product task or bug. Engineering epics are permitted, though few if any are wanted. A bug or a task logged on a
+schedule to deal with an engineering problem, a CI bug fixed during a product feature for example, is recorded under
+the feature it supports, not under the epic, and its Area is engineering. This supersedes the ruling of 2026-11-03
+that epics for product readiness and for release management hold both kinds.
 
 **A scenario is engineering, and a schedule is what it delivers.** Ruled 2026-11-05: a scenario represents demo and
 test artifacts, so every scenario is engineering. A schedule describes deliverables with exit criteria, and its Area is

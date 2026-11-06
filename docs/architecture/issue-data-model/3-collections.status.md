@@ -231,6 +231,12 @@ on its four projects, in place of the Admin role ruled for each team's Triage pr
 Backlog, § Ownership). Every workflow was checked against GitHub that afternoon (§ Every workflow, checked on
 2026-11-04, below).
 
+Revised 2026-11-05 for #446: the opening's paragraph on Area points to
+[issue-standards.md § Product and engineering](../../issue-standards.md#product-and-engineering), which says what
+product work and engineering work each cover, tests among engineering's, and what each may hold, in place of the list
+of what engineering covers, and the sentence that the epics for product readiness and release management hold both
+kinds is gone, superseded on 2026-11-05.
+
 ## Every workflow, checked on 2026-11-04
 
 Read from GitHub on 2026-11-04, the five workflows, filing, triage, the backlog, scheduling and scenarios, have in
