@@ -44,7 +44,12 @@ superseding in part the ruling of 2026-11-03 that there are no compliance checks
 projects, in place of the Admin role ruled for each team's Triage project on 2026-10-22, and a user account's new
 participant a collaborator on each participating repository; the Scenario rows of 15 tasks and bugs that had already
 moved on, which the script of #303's closing pull request removes with the five feature rows; and, read that day, no
-view showing the Area, Labels or Priority column, which the same script shows.
+view showing the Area, Labels or Priority column, which the same script shows. Revised 2026-11-05 for #446: § Product
+and engineering points to [issue-standards.md § Product and engineering](../../issue-standards.md#product-and-engineering),
+which says what product work and engineering work each cover, tests among engineering's, and what each may hold, in
+place of the list of what engineering covers; the sentence that the product readiness and release management epics
+hold both kinds is gone, superseded on 2026-11-05; and the table row on the area sends the reader there to learn what
+each value means.
 
 ## Completion
 

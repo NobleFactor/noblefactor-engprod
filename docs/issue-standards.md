@@ -86,23 +86,8 @@ Ruled 2026-11-03: a Schedule or Scenario issue has no parent. Epic is at the top
 Scenario are its two peers there.
 
 **Level 1 is the feature.** A feature is the body of work an epic decomposes into, for the product or for
-engineering, with its tasks and bugs under it. A body of process or tooling work is a feature like any
-other: it sits under the epic it serves, with its tasks and bugs under it.
-
-**Area tells engineering work from product work.** Ruled 2026-11-03: Area has two values only, product and
-engineering. In NobleFactor they are the options Product and Engineering of the Area issue field, made
-2026-11-03; in a user account they are the labels `area:product` and `area:engineering`. Area applies to
-issues of every type and describes the issue's own work, so an epic, a feature and the tasks and bugs
-under them can each have a different Area: a CI bug fixed during a product feature is engineering.
-Engineering covers build orchestration, Makefile changes, CI pipelines, the scripts and tools of the
-internal agent workspace, and governance and process work. Epics for product readiness and for release
-management hold both kinds. Release notes come from the closed product issues in a release, not from the
-hierarchy.
-
-Ruled 2026-11-03: devlore-cli's seven finer Area labels (architecture, CLI, code quality, error handling,
-git, meta and testing) are gone, deleted that day. The hierarchy carries those distinctions. Architecture
-work is a task, or a feature with product value, within an epic. A bug is not filed against the
-architecture; an architecture task is filed to address a bug in a feature.
+engineering (§ Product and engineering), with its tasks and bugs under it. A body of process or tooling work is a
+feature like any other: it sits under the epic it serves, with its tasks and bugs under it.
 
 **Level 2 is the leaf**, a Task or a Bug: what a pull request closes, and what a schedule's steps are. "Step" names a
 schedule's row (§ Schedules), so a leaf on no schedule is not a step. An epic or a feature is never a step. Ruled
@@ -118,6 +103,53 @@ or size: does this build something the feature did not have, or restore somethin
 Tidying code the product ships is a task under the feature that owns that code, or a bug if the tidying
 repairs something. The scheme has no *story*. Where scrum-based writing says story, this scheme says
 task.
+
+## Product and engineering
+
+**Area says whether an issue's own work is product or engineering.** Ruled 2026-11-03: Area has two values only,
+product and engineering. In NobleFactor they are the options Product and Engineering of the Area issue field, made
+2026-11-03; in a user account they are the labels `area:product` and `area:engineering`. Every issue has one, whatever
+its type, Schedule and Scenario included, and an issue without one is an error (§ What has no parent). Ruled
+2026-11-05, the two values mean:
+
+| Value | Meaning |
+| --- | --- |
+| Product, `area:product` | Tags issues representing user-facing features, capabilities, or functional components that are packaged and released from this repository. |
+| Engineering, `area:engineering` | Tags issues representing durable design artifacts, technical specs, internal infrastructure, testing, and the iterative execution of development plans. |
+
+**A product is any deliverable released from a repository,** typically an open-source product or an internal tool.
+Ruled 2026-11-05. Two sets of products release today. DevLore, open source, releases from devlore-cli,
+devlore-registry and devlore.noblefactor.com. Engineering materials (policies, process, tooling and standards) and
+tooling (star extensions and more) release from noblefactor-engprod, and are internal. Governance and process issues
+are products of the engineering productivity team, and documentation that releases with a product is product. A
+personal repository exists only for personal productivity, and no `area:product` label is expected in one.
+
+**Engineering is work on things outside the deliverables a repository releases,** the work that doesn't ship. Ruled
+2026-11-05. It covers build orchestration, Makefile changes, CI pipelines, tests, tools that don't release with a
+product, design work, planning work, and documentation that doesn't release with a product. Ruled 2026-11-04: a bug in
+a test is an engineering issue, not a product issue, as the Test-ClearClaude bug (#445) is.
+
+**An issue's Area describes its own work, not its parent's.** Ruled 2026-11-05: an epic is a product epic or an
+engineering epic, never both, and a feature is the same. Product work may hold engineering work, and engineering work
+never holds product work: a product epic may contain an engineering feature, and an engineering epic contains no
+product feature; a product feature may contain an engineering task or bug, and an engineering feature contains no
+product task or bug. Engineering epics are permitted, though few if any are wanted. A bug or a task logged on a
+schedule to deal with an engineering problem, a CI bug fixed during a product feature for example, is recorded under
+the feature it supports, not under the epic, and its Area is engineering. This supersedes the ruling of 2026-11-03
+that epics for product readiness and for release management hold both kinds.
+
+**A scenario is engineering, and a schedule is what it delivers.** Ruled 2026-11-05: a scenario represents demo and
+test artifacts, so every scenario is engineering. A schedule describes deliverables with exit criteria, and its Area is
+the nature of its deliverables: most schedules are product, and some are engineering.
+
+**Release notes come from the closed product issues in a release,** not from the hierarchy. Ruled 2026-11-03. Ruled
+2026-11-05: release notes are themselves a product output, though the release manager's work on them is largely
+engineering, so a bug in the release notes is a product bug.
+
+Ruled 2026-11-03: devlore-cli's seven finer Area labels (architecture, CLI, code quality, error handling,
+git, meta and testing) are gone, deleted that day. The hierarchy carries those distinctions. Architecture
+work is a task, or a feature with product value, within an epic. A bug is not filed against the
+architecture; an architecture task is filed to address a bug in a feature.
 
 ## Placement
 
@@ -604,7 +636,7 @@ and area are issue fields, and its Priority, Effort, Target date, Resolution, Ar
 are used; its Start date field is not, because when work really started is in each issue's history.
 David-Noble-at-work has no issue fields, so it uses the `priority:`, `severity:`, `effort:` and `area:`
 labels, which are lowercase (below). Priority and Area apply to issues of every type, Schedule and
-Scenario included. Area has two values only, product and engineering (§ The types), and an issue without
+Scenario included. Area has two values only, product and engineering (§ Product and engineering), and an issue without
 one is an error (§ What has no parent).
 
 Ruled 2026-11-03: Severity is an issue field of the organization, in NobleFactor, with the values Critical, High, Medium
@@ -745,7 +777,7 @@ David-Noble-at-work keeps its type labels, which are its types.
 No repository carries `chore`, `Epic:Ops:Process`, an `Epic:<Name>` label, a `Thread:<Name>` label or a
 `ClaudeJudgmentError:` label; all were removed. No NobleFactor repository carries a kind label, a
 severity label or a priority label, and devlore-cli's seven finer Area labels were deleted on 2026-11-03
-(§ The types). A repository in David-Noble-at-work carries the `priority:`, `severity:`, `effort:` and
+(§ Product and engineering). A repository in David-Noble-at-work carries the `priority:`, `severity:`, `effort:` and
 `area:` labels it uses, `area:product` and `area:engineering` among them; NobleFactor uses issue fields
 instead (§ Triage classifies, and adds attributes).
 

@@ -75,7 +75,11 @@ the Area at filing until `star github issue` does (#338); personal's Triage work
 filled; and setting a parent across two teams' repositories needs the triage role on both, which a devlore member has
 between devlore's repositories and noblefactor-engprod and an engprod member lacks, while an organization owner has it
 on every repository. The document was brought to these rulings on 2026-11-04 (the opening, § Type, § Triage and § How
-long a level lives).
+long a level lives). Revised 2026-11-05 for #446: § Type's paragraph on engineering and product points to
+[issue-standards.md § Product and engineering](../../issue-standards.md#product-and-engineering), which says what
+product work and engineering work each cover, tests among engineering's, and what each may hold, in place of the list
+of what engineering covers; the sentence that product readiness and release management epics hold both kinds is gone,
+superseded on 2026-11-05; and the pointer to the retired § The Ops axis points to the new section.
 
 ## Completion
 

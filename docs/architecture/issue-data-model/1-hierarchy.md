@@ -58,16 +58,16 @@ Chore was retired, not moved up a level, so the enabler features, NobleFactor/no
 and #156 (issue standards) among them, stay features. The `Epic:Ops:Process` label went with the other `Epic:` labels
 on 2026-11-03.
 
-**The `Ops:` segment** marked the tooling axis inside the `Epic:` and `Thread:` labels
-([issue-standards.md](../../issue-standards.md) § The Ops axis). Those labels were removed from both accounts on
-2026-11-03, and Chore is retired, so neither marks the axis now.
+**The `Ops:` segment** marked the tooling axis inside the `Epic:` and `Thread:` labels. Those labels were removed from
+both accounts on 2026-11-03, and Chore is retired, so neither marks the axis now; Area does
+([issue-standards.md § Product and engineering](../../issue-standards.md#product-and-engineering)).
 
 **Engineering and product,** ruled 2026-11-03. The attribute Area tells engineering work from product work. It has
 two values, product and engineering, and applies to issues of every type. It describes the issue's own work, so an
 epic, a feature and the tasks and bugs under them can each differ: a CI bug fixed during a product feature is
-engineering. Engineering covers build orchestration, Makefile changes, CI pipelines, internal agent-workspace scripts
-and tools, and governance and process work. Release notes come from the closed product issues in a release, not from
-the hierarchy, and product readiness and release management epics hold both kinds ([section 2](2-attributes.md)).
+engineering. What product work and engineering work each cover, tests among engineering's, and what each may hold, is
+in [issue-standards.md § Product and engineering](../../issue-standards.md#product-and-engineering). Release notes come
+from the closed product issues in a release, not from the hierarchy ([section 2](2-attributes.md)).
 
 On 2026-11-03 NobleFactor/devlore-cli's seven finer Area labels, architecture, CLI, code quality, error handling, git,
 meta and testing, were deleted, and the hierarchy carries those distinctions. Architecture work is a task or a feature

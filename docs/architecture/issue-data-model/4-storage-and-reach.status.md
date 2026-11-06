@@ -250,6 +250,12 @@ Brought last of all on 2026-11-04 to the owner's two last rulings of that day. S
   permissions; and what pull and push (#426 and #437) will check and decide (§ An organization's account, § Triage, §
   Where each part lives, § Where each part is defined and § What GitHub does not enforce in section 4).
 
+Revised 2026-11-05 for #446: the paragraph on Area in § Where each part lives points to
+[issue-standards.md § Product and engineering](../../issue-standards.md#product-and-engineering), which says what
+product work and engineering work each cover, tests among engineering's, and what each may hold, in place of the list
+of what engineering covers, and the sentence that product readiness and release management epics hold both kinds of
+work is gone, superseded on 2026-11-05.
+
 ## Completion
 
 - [x] The plan's questions 1 and 13 ruled: where Type lives and where the parent link lives -- 2026-10-22
