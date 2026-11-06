@@ -1,7 +1,7 @@
 ---
 title: "docs/issue-standards.md gets a section that defines product and engineering issues and puts test bugs in engineering"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/446
-status: active
+status: complete
 created: 2026-11-05
 updated: 2026-11-05
 ---
@@ -236,7 +236,7 @@ labels in personal and David-Noble-at-work/.github (Open Question 10).
 
 ### Phase 4: Merge
 
-- [ ] PR script `~/Workspace/NobleFactor/noblefactor-engprod.446-product-and-engineering.bash` written, shown, and
+- [x] PR script `~/Workspace/NobleFactor/noblefactor-engprod.446-product-and-engineering.bash` written, shown, and
       handed over; the pull request's description names this task (#446) with no closing keyword, so that GitHub
       doesn't close it before its evidence is posted. This box's commit, the pull request's last, sets this plan
       `complete`
