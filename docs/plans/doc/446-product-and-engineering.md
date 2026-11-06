@@ -1,7 +1,7 @@
 ---
 title: "docs/issue-standards.md gets a section that defines product and engineering issues and puts test bugs in engineering"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/446
-status: approved
+status: active
 created: 2026-11-05
 updated: 2026-11-05
 ---
@@ -52,9 +52,13 @@ attributes, and the collections that order it. Its Area is Engineering. It is st
   from the closed product issues in a release.
 - 2026-11-05, on this plan's open questions 1 to 12: what a product is, what engineering work is, governance and process
   issues, release notes, personal repositories, documentation, tests, collections and epics, the reference models, the
-  stale pointer and the two values' definitions, each recorded under Open Questions below. An epic never holds both
-  kinds, superseding the ruling of 2026-11-03 that a product epic can hold an engineering feature and that epics for
-  product readiness and for release management hold both kinds.
+  stale pointer and the two values' definitions, each recorded under Open Questions below. An epic is a product epic
+  or an engineering epic, never both, superseding the ruling of 2026-11-03 that epics for product readiness and for
+  release management hold both kinds.
+- 2026-11-05, later the same day, on question 7: an epic is a product epic or an engineering epic, not both, and
+  features work the same way. A bug or a task logged on a schedule to deal with an engineering problem is recorded
+  under the feature it supports, not under the epic. This replaces the record of question 7 as "an epic never contains
+  both kinds", which was read as saying everything under an epic has its Area.
 
 ## Current State
 
@@ -157,13 +161,15 @@ the answers to the open questions:
 - **What engineering work covers:** work on things outside the deliverables a repository releases, the work that
   doesn't ship: build orchestration, Makefile changes, CI pipelines, tests, tools that don't release with a product,
   design work, planning work, and documentation that doesn't release with a product (Open Questions 2, 5 and 6).
-- **An issue's Area describes its own work, not its parent's:** an epic, a feature and the tasks and bugs under them
-  can each differ, and a CI bug fixed during a product feature is engineering.
+- **An issue's Area describes its own work, not its parent's:** an epic is a product epic or an engineering epic,
+  never both, and so is a feature; a bug or a task logged on a schedule to deal with an engineering problem, a CI bug
+  fixed during a product feature for example, is recorded under the feature it supports, not under the epic, and is
+  engineering (Open Question 7).
 - **A bug in a test is an engineering issue, not a product issue,** ruled 2026-11-04, as the Test-ClearClaude bug
   (#445) is.
 - **Scenarios, schedules and epics:** a scenario represents demo and test artifacts, so every scenario is engineering.
   A schedule describes deliverables with exit criteria, and its Area is the nature of its deliverables: most are
-  product, some engineering. An epic never holds both kinds, and one that does is poorly built (Open Question 7).
+  product, some engineering (Open Question 7).
 - **Release notes** come from the closed product issues in a release, not from the hierarchy. They are themselves a
   product output, though the release manager's work on them is largely engineering, so a bug in the release notes is a
   product bug (Open Question 3).
@@ -214,7 +220,7 @@ labels in personal and David-Noble-at-work/.github (Open Question 10).
 
 ### Phase 2: The section (Requirement 1)
 
-- [ ] `## Product and engineering` in docs/issue-standards.md, with the Area paragraphs moved into it from § The types,
+- [x] `## Product and engineering` in docs/issue-standards.md, with the Area paragraphs moved into it from § The types,
       and the paragraph on features and lines 607 and 748 pointing to it; this plan's status `active`; `make check`
       green
 
@@ -274,7 +280,9 @@ All twelve questions are ruled.
 - [x] 7. **Scenarios, schedules and epics.** Ruled 2026-11-05: a scenario represents demo and test artifacts, so every
       scenario is `area:engineering`. A schedule describes deliverables with exit criteria, and whether it is product or
       engineering is the nature of its deliverables; most will be product deliverables, and some engineering. An epic
-      never contains both kinds; one that does is poorly constructed.
+      is a product epic or an engineering epic, never both; one that is both is poorly constructed. Clarified the same
+      day: features work the same way, and a bug or a task logged on a schedule to deal with an engineering problem is
+      recorded under the feature it supports, not under the epic.
 - [x] 8. **The reference models.** Approved 2026-11-05: their comments point to the new section in place of the list.
 - [x] 9. **The stale pointer at 1-hierarchy.md:62,** to the retired § The Ops axis. Approved 2026-11-05: fixed in this
       pull request, pointing to the new section.
