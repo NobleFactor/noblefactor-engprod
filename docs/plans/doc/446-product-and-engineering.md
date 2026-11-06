@@ -1,7 +1,7 @@
 ---
 title: "docs/issue-standards.md gets a section that defines product and engineering issues and puts test bugs in engineering"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/446
-status: draft
+status: approved
 created: 2026-11-05
 updated: 2026-11-05
 ---
@@ -48,13 +48,13 @@ attributes, and the collections that order it. Its Area is Engineering. It is st
 - 2026-11-04: a bug in a test is an engineering issue, not a product issue. The ruling is recorded in this task's own
   body, and the Test-ClearClaude bug (#445) was filed with Area Engineering on it.
 
-Two items the documents state are in no recorded ruling: governance and process work as engineering, and that release
-notes come from the closed product issues in a release. Both are recorded as rulings of 2026-11-03 only in a ticked
-box of the plan of the issue data model's design (#303), at `docs/plans/chore/303-issue-data-model.md:380-386`, and in
-the design itself. The first ruling's comment, as first posted, said that governance and process tracking get no
-Area, since that work doesn't touch the code, and that a feature's Area says whether it belongs in customer release
-notes; the edit made at 2026-11-04T03:25:48Z removed both (read on 2026-11-05 with GitHub's GraphQL `userContentEdits`
-for the comment). Open Question 3 asks for them.
+- 2026-11-03, in conversation rather than on #303: governance and process issues take an Area, and release notes come
+  from the closed product issues in a release.
+- 2026-11-05, on this plan's open questions 1 to 12: what a product is, what engineering work is, governance and process
+  issues, release notes, personal repositories, documentation, tests, collections and epics, the reference models, the
+  stale pointer and the two values' definitions, each recorded under Open Questions below. An epic never holds both
+  kinds, superseding the ruling of 2026-11-03 that a product epic can hold an engineering feature and that epics for
+  product readiness and for release management hold both kinds.
 
 ## Current State
 
@@ -141,19 +141,32 @@ that file from GitHub, and the model-pull task (#426) replaces it, so this plan 
 A section of its own, right after `## The types`, which takes from that section what it says of Area today, and states
 the answers to the open questions:
 
+- **The definitions of the two values,** ruled 2026-11-05 and stated in full: `area:product`, "Tags issues representing
+  user-facing features, capabilities, or functional components that are packaged and released from this repository.";
+  and `area:engineering`, "Tags issues representing durable design artifacts, technical specs, internal infrastructure,
+  testing, and the iterative execution of development plans." (Open Question 10).
 - **Area and its two values,** ruled 2026-11-03: the options Product and Engineering of the Area issue field in
   NobleFactor, and the labels `area:product` and `area:engineering` in a user account. Every issue has one, and a blank
   Area is an error (§ What has no parent).
-- **What product work covers:** work that ships to users (Open Questions 1, 4 and 5).
-- **What engineering work covers:** build orchestration, Makefile changes, CI pipelines, tests, the scripts and tools
-  of the internal agent workspace, and governance and process work (Open Questions 2, 3 and 6).
+- **What a product is:** any deliverable released from a repository, typically an open-source product or an internal
+  tool. DevLore, open source, releases from devlore-cli, devlore-registry and devlore.noblefactor.com; the engineering
+  materials, policies, process, tooling and standards, and the tooling, star extensions and more, release from
+  noblefactor-engprod, and are internal. Both are products. Governance and process issues are products of the
+  engineering productivity team, documentation that releases with a product is product, and no `area:product` is
+  expected in a personal repository, which exists only for personal productivity (Open Questions 1, 3, 4 and 5).
+- **What engineering work covers:** work on things outside the deliverables a repository releases, the work that
+  doesn't ship: build orchestration, Makefile changes, CI pipelines, tests, tools that don't release with a product,
+  design work, planning work, and documentation that doesn't release with a product (Open Questions 2, 5 and 6).
 - **An issue's Area describes its own work, not its parent's:** an epic, a feature and the tasks and bugs under them
   can each differ, and a CI bug fixed during a product feature is engineering.
 - **A bug in a test is an engineering issue, not a product issue,** ruled 2026-11-04, as the Test-ClearClaude bug
   (#445) is.
-- **Collections and the epics that hold both kinds** take the Area of the deliverable they name (Open Question 7).
-- **Epics for product readiness and for release management hold both kinds,** and release notes come from the closed
-  product issues in a release, not from the hierarchy (Open Question 3).
+- **Scenarios, schedules and epics:** a scenario represents demo and test artifacts, so every scenario is engineering.
+  A schedule describes deliverables with exit criteria, and its Area is the nature of its deliverables: most are
+  product, some engineering. An epic never holds both kinds, and one that does is poorly built (Open Question 7).
+- **Release notes** come from the closed product issues in a release, not from the hierarchy. They are themselves a
+  product output, though the release manager's work on them is largely engineering, so a bug in the release notes is a
+  product bug (Open Question 3).
 - **devlore-cli's seven finer Area labels** were deleted on 2026-11-03, and the hierarchy carries their distinctions:
   the paragraph at lines 102-105, moved here (Open Question 11).
 
@@ -163,7 +176,9 @@ engineering; that paragraph points to the new section in the document's own form
 
 ### Requirement 2: The seven places in the issue data model
 
-Each replaces its list sentence with one sentence that points to the new section, and keeps the rest of its paragraph:
+Each replaces its list sentence with one sentence that points to the new section, and keeps the rest of its paragraph
+but for the sentence that epics for product readiness and for release management hold both kinds, which goes (Open
+Question 7):
 what product work and engineering work each cover, tests among engineering's, is in
 `[issue-standards.md § Product and engineering](../../issue-standards.md#product-and-engineering)`. Section 7's table
 row at line 36 then sends the reader there. The status files of the six sections that change, 1, 2, 3, 4, 5 and 7,
@@ -174,7 +189,15 @@ each record the change with its date; section 2's, where Area's rulings are reco
 
 The comments at organization.yaml:74-75 and user.yaml:86-87 replace the list with a pointer in the models' own form, a
 bare path in parentheses, with the section's name added: "(docs/issue-standards.md, § Product and engineering)" (Open
-Question 8). The Area option's and the labels' descriptions stay as they are (Open Question 10).
+Question 8).
+
+The Area options' and the `area:` labels' descriptions become the two definitions, cut to fit GitHub's limit of 100
+characters for a label's description. The options take the same text, since the model describes each label as its option
+is: Product and `area:product`, "User-facing features, capabilities, or functional components released from this
+repository" (90 characters); Engineering and `area:engineering`, "Design artifacts, technical specs, internal
+infrastructure, testing, and executing development plans" (100). They change in both reference models, and in GitHub by
+this pull request's script, read back: NobleFactor's Area field through REST, sending each option with its ID, and the
+labels in personal and David-Noble-at-work/.github (Open Question 10).
 
 ### Requirement 4: The gate
 
@@ -184,7 +207,7 @@ Question 8). The Area option's and the labels' descriptions stay as they are (Op
 
 ### Phase 1: The plan
 
-- [ ] This plan committed and pushed on `doc/446-product-and-engineering` by the worktree's first script,
+- [x] This plan committed and pushed on `doc/446-product-and-engineering` by the worktree's first script,
       `~/Workspace/NobleFactor/noblefactor-engprod.446-product-and-engineering.bash`, which also links the branch in
       #446's Worktree column on Schedule: engprod, sets that row In progress, and links this plan in #446's Plan row,
       each read back; then reviewed with the owner, its open questions ruled, and its status `approved`
@@ -227,40 +250,41 @@ of agent-rules.md). The script leaves out the PR script template's schedule step
 
 ## Open Questions
 
-Each has a proposal, to be ruled one at a time.
+All twelve questions are ruled.
 
-- [ ] 1. **Product work.** Is it the work on what NobleFactor ships to users, today the DevLore product: star, writ and
-      lore in devlore-cli, lore's packages and knowledge in devlore-registry, and the DevLore site? The team devlore is
-      described as the devlore product, lore reads the registry's content from GitHub, and the site serves DevLore's
-      installers as well as marketing it. The ruling's first version spoke of shipping DevLore and other products to
-      users. Proposed: yes, its users being the people who install and use DevLore.
-- [ ] 2. **Engineering by repository.** Is all the work of noblefactor-engprod and of each account's `.github`
-      repository engineering? The team engprod is described as engineering productivity, process and tooling, and the
-      every-open-issue-gets-an-Area task (#452) plans the same. Proposed: yes.
-- [ ] 3. **The two items in no recorded ruling.** Is governance and process work engineering, and do release notes
-      come from the closed product issues in a release? Proposed: yes to both. This task, process work itself, carries
-      Area Engineering.
-- [ ] 4. **A user account.** What is product work in David-Noble-at-work? Proposed: nothing there ships to users
-      today, since personal is its owner's own development environment and the account's `.github` repository holds
-      its issue model, so its issues take `area:engineering`, and `area:product` waits for the first thing it ships.
-- [ ] 5. **Documentation.** Does a change to documentation take the Area of what it documents? Proposed: yes, so the
-      product's user documentation is product work, and this repository's process documents are engineering.
-- [ ] 6. **How far tests reach.** Is every issue whose own work is tests engineering, a task that adds tests to a
-      product feature as well as a bug in a test? Proposed: yes, since an issue's Area follows its own work; the
-      product feature it serves stays product.
-- [ ] 7. **Collections and the epics that hold both kinds.** Which Area does a Schedule or Scenario issue take, and an
-      epic for product readiness or release management? Proposed: the Area of the deliverable it names, product when
-      that ships to users and engineering otherwise, so issue tracking, iteration 1 (#346) is engineering.
-- [ ] 8. **The reference models.** Do their comments point to the new section in place of the list, though this task
-      does not name them? Proposed: yes, so that the list is written once.
-- [ ] 9. **The stale pointer at 1-hierarchy.md:62,** to the retired § The Ops axis. Is it fixed in this pull request,
-      pointing to the new section, which says what that axis was for? Proposed: yes, since it sits two lines from a
-      place this plan edits (development-process.md § Discovering issues mid-work).
-- [ ] 10. **The descriptions.** Do the Area option's and labels' descriptions change, to name tests, for example?
-      Proposed: no. Each is one phrase, "other internal work" covers tests, and the section is the definition. A link
-      to the section from the issue forms' Area dropdown would change the two `.github` repositories, and would be an
-      issue of its own.
-- [ ] 11. **Moving.** Do the Area paragraphs move out of § The types into the new section, rather than stay with the
-      section added beside them? Proposed: they move, so that issue-standards.md says it once.
-- [ ] 12. **The every-open-issue-gets-an-Area task (#452).** Is it blocked by this task, since it applies these
-      rulings to every open issue? Proposed: yes, the link added by the next script and read back.
+- [x] 1. **What a product is.** Ruled 2026-11-05: any deliverable released from a repository, typically an
+      open-source product or an internal tool. Two sets release today, and both are products: DevLore, open source,
+      from devlore-cli, devlore-registry and devlore.noblefactor.com; and the engineering materials, policies, process,
+      tooling and standards, and the tooling, star extensions and more, that release from noblefactor-engprod, which
+      are internal.
+- [x] 2. **Is all the work of a repository such as noblefactor-engprod engineering?** No. Ruled 2026-11-05:
+      engineering is work on things outside the deliverables a repository releases, the work that doesn't ship;
+      noblefactor-engprod's deliverables are products (question 1).
+- [x] 3. **Governance and process issues, and release notes.** Ruled 2026-11-05: governance and process issues are
+      deliverables of noblefactor-engprod, products of the engineering productivity team. Release notes are product
+      outputs, though the release manager's work on them is largely engineering, so a bug in the release notes is a
+      product bug.
+- [x] 4. **A personal repository.** Ruled 2026-11-05: a personal repository exists only for personal productivity, and
+      no `area:product` label is expected in one.
+- [x] 5. **Documentation.** Ruled 2026-11-05: documentation that releases with a product is product, and all other
+      documentation is engineering. Design work and planning work are engineering, and so is work on the build or on
+      tools that don't release with a product.
+- [x] 6. **Tests.** Ruled 2026-11-04: test bugs are engineering issues, not product issues, and the section approved
+      that day names tests in engineering's list.
+- [x] 7. **Scenarios, schedules and epics.** Ruled 2026-11-05: a scenario represents demo and test artifacts, so every
+      scenario is `area:engineering`. A schedule describes deliverables with exit criteria, and whether it is product or
+      engineering is the nature of its deliverables; most will be product deliverables, and some engineering. An epic
+      never contains both kinds; one that does is poorly constructed.
+- [x] 8. **The reference models.** Approved 2026-11-05: their comments point to the new section in place of the list.
+- [x] 9. **The stale pointer at 1-hierarchy.md:62,** to the retired § The Ops axis. Approved 2026-11-05: fixed in this
+      pull request, pointing to the new section.
+- [x] 10. **The descriptions.** Ruled 2026-11-05, as GitHub's conventions have it: `area:product` is "Tags issues
+      representing user-facing features, capabilities, or functional components that are packaged and released from this
+      repository."; `area:engineering` is "Tags issues representing durable design artifacts, technical specs, internal
+      infrastructure, testing, and the iterative execution of development plans." A label's description must be 100
+      characters or fewer (GitHub's REST reference for labels), so the labels and the Area options carry each cut to fit
+      (Requirement 3), and the new section states them in full (Requirement 1).
+- [x] 11. **Moving.** Approved 2026-11-05: the Area paragraphs move out of § The types into the new section, a section
+      of its own, and the repeated paragraphs link to it instead of restating it.
+- [x] 12. **The every-open-issue-gets-an-Area task (#452).** Approved 2026-11-05: it is blocked by this task, and the
+      link is added by this worktree's next script and read back.
