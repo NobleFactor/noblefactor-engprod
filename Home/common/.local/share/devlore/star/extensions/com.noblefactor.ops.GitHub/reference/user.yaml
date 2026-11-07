@@ -1,0 +1,349 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Noble Factor. All rights reserved.
+
+# The reference model for a user's account: the initial desired state of the issue data model, applied to an
+# individual's account that adopts it (docs/architecture/issue-data-model/6-the-asset-and-its-sync.md). Its records name
+# no account and hold no ids; its comments record what was read from NobleFactor and David-Noble-at-work.
+# An account's own model names the account, is written by pull, and is stored in the account's .github repository; it is
+# a cache that star queries, and builds its queries and updates from, instead of asking GitHub the same questions again.
+# Ruled 2026-11-03: a user account and an organization have exactly the same data model, apart from what GitHub offers
+# organizations only. So this file is the organization's reference with five deviations, all from what a user's account
+# lacks (section 4, Accounts): type is a label, so the sweep, noblefactor-engprod#436, not GitHub, will hold an issue to
+# one, returning an issue with two type labels to the account's Triage project; there are no teams, so the account's
+# four projects are its owner's and it triages everything; a user's project cannot be marked a template, so the account
+# holds copies named Triage, Backlog, Schedule and Scenario to copy new projects from; there are no issue fields, so
+# priority, severity, effort, area and resolution are labels, named for the options of NobleFactor's fields
+# (priority:urgent, not priority:p0); and the types below are labels whose descriptions begin "Level N:", except
+# schedule's and scenario's, which begin "Collection:". The hierarchy is Epic (level 0), then Feature (level 1), then
+# Task or Bug (level 2), ruled 2026-11-02, when Chore was retired. Issues are classified by type in that hierarchy;
+# enforcement is lax, and there are no compliance checks (ruled 2026-11-03), a ruling superseded in part on 2026-11-04:
+# the sweep will be the one check, returning an issue that breaks a rule to the account's Triage project every day, and
+# it will block no filing and correct nothing by itself. Once star github issue is built (noblefactor-engprod#338),
+# issues we file ourselves will go through it, the one path that will classify an issue as it is made (ruled
+# 2026-11-03). The area labels, not the hierarchy, tell engineering work from product work (ruled 2026-11-03; see areas,
+# below). The old scheme's parent markers, schedule footers and step and beat tables retired on 2026-11-03: sub-issue
+# parent links and the fields of project rows hold what they held. A user's account keeps its type labels, which are its
+# types (ruled 2026-11-03).
+
+version: 1
+account: user
+
+# Type labels, carried by every repository of the account; type names are capitalized and labels lowercase. A type's
+# level is the "Level N:" its label's description begins with; within a level, the order here is the render order; the
+# leaf marked unplanned is the one found rather than planned. A label whose description begins "Collection:" has no
+# level: schedule marks the issue that describes a schedule, its deliverable and exit criteria, and scenario the issue
+# that describes a scenario, the story it tells (ruled 2026-11-03). The scenario label was named thread until
+# 2026-11-03. Each is the namesake of an option of its project's Schedule or Scenario field, and each has an issue form
+# in the account's .github repository, which is not part of the model.
+# Ruled 2026-11-04: a scenario issue summarizes an end-user goal instead (see projects, below). Read from GitHub on
+# 2026-11-04, the scenario label in David-Noble-at-work/personal and David-Noble-at-work/.github is still described
+# "Collection: describes a scenario, the story its features tell". The record below gives the ruling;
+# noblefactor-engprod#453 will bring both labels' descriptions to it, with the Scenario forms.
+# Ruled 2026-11-03: a schedule or scenario issue has no parent. Epic is at the top of the hierarchy, and schedule and
+# scenario are its two peers there.
+types:
+  - name: "Epic"
+    label: "epic"
+    level: 0
+    color: "7057ff"
+    description: "Level 0: a body of work with an owner, the root of the hierarchy; decomposes into features"
+  - name: "Feature"
+    label: "feature"
+    level: 1
+    color: "0e8a16"
+    description: "Level 1: a capability; decomposes into tasks and bugs"
+  - name: "Bug"
+    label: "bug"
+    level: 2
+    unplanned: true
+    color: "d73a4a"
+    description: "Level 2: unplanned work, a defect found rather than planned; repairs a feature"
+  - name: "Task"
+    label: "task"
+    level: 2
+    color: "1d76db"
+    description: "Level 2: planned work, a step in delivering a feature"
+  - name: "Schedule"
+    label: "schedule"
+    description: "Collection: the issue that describes a schedule, its deliverable and exit criteria"
+  - name: "Scenario"
+    label: "scenario"
+    description: "Collection: the issue that describes a scenario, the end-user goal it summarizes"
+
+# Labels that stand in for issue fields. A user's account has no issue fields: GitHub's GraphQL schema says
+# createIssueField makes a field in an organization, and its User type has no issue fields. So a label stands in for
+# each single-select issue field of the organization's reference, one label per option, named <field>:<option> in
+# lowercase. They are listed below: areas, priorities, severities, efforts and resolutions. A date field has no
+# stand-in, since a label can't hold a date: Target date has no counterpart in a user's account, and Start date is
+# unused. A project field is no stand-in: its value is on the project's row, not on the issue, so it doesn't go with the
+# issue from project to project.
+#
+# Area labels, carried by every repository of the account, since a user's account has no issue fields. Area tells
+# engineering work from product work, and has two values only, area:product and area:engineering (ruled 2026-11-03).
+# It applies to issues of every type and describes the issue's own work, so an epic, a feature and the tasks and bugs
+# under them can each differ: a CI bug fixed during a product feature is engineering. Release notes come from the
+# closed product issues in a release, not from the hierarchy (ruled 2026-11-03). What product work and engineering work
+# each cover, tests among engineering's, and what each may hold, is stated in one place (docs/issue-standards.md,
+# § Product and engineering). Each label's description is its definition of 2026-11-05, cut to GitHub's limit of 100
+# characters for a label's description, the same text as its option in organization.yaml.
+#
+# A blank area is an error, caught at three points (ruled 2026-11-03). At filing, star github issue will refuse an issue
+# without an area (noblefactor-engprod#338), and the issue forms in the account's .github repository have a required
+# Area dropdown whose answer the triage workflow copies into the area label when the issue is opened. GitHub enforces a
+# form's required fields only in a public repository (GitHub's form schema documentation, read 2026-11-04), and
+# David-Noble-at-work/personal is private, so there nothing checks the area at filing until star github issue does. At
+# triage, the Triage project holds the area labels in its Labels column, where an organization's has the Area field;
+# read 2026-11-04, no view shows the Labels column, and the script of noblefactor-engprod#303's closing pull request
+# shows it. It has a "Missing Area" view, and nothing leaves Triage without an area. Afterward, a scheduled sweep will
+# return any open issue without an area to the account's Triage project, once noblefactor-engprod#452 has given every
+# open issue an area.
+areas:
+  - name: "Product"
+    label: "area:product"
+    color: "1d76db"
+    description: "User-facing features, capabilities, or functional components released from this repository"
+  - name: "Engineering"
+    label: "area:engineering"
+    color: "0e8a16"
+    description: "Design artifacts, technical specs, internal infrastructure, testing, and executing development plans"
+
+# Priority labels, one for each option of the organization's Priority field.
+priorities:
+  - name: "Urgent"
+    label: "priority:urgent"
+    color: "e99695"
+    description: "Priority: urgent"
+  - name: "High"
+    label: "priority:high"
+    color: "b60205"
+    description: "Priority: high"
+  - name: "Medium"
+    label: "priority:medium"
+    color: "fbca04"
+    description: "Priority: medium"
+  - name: "Low"
+    label: "priority:low"
+    color: "0e8a16"
+    description: "Priority: low"
+
+# Severity labels, one for each option of the organization's Severity field. Section 2
+# (docs/architecture/issue-data-model/2-attributes.md) says which issues carry a severity.
+# Ruled 2026-11-04: severity applies to bugs only, and every issue of another type has severity:n/a, a new label that
+# the script of noblefactor-engprod#303's closing pull request makes in personal and David-Noble-at-work/.github. A bug
+# has severity:critical, severity:high, severity:medium or severity:low, never severity:n/a. An issue with no type label
+# yet gets no severity label and waits for triage, which adds severity:n/a when it gives the issue a type label other
+# than bug; the sweep, noblefactor-engprod#436, will catch a miss. The bug form asks no severity, so the Triage workflow
+# will give a bug filed from it severity:medium, the owner's default, and an issue of another type filed from a form
+# severity:n/a (noblefactor-engprod#448); triage changes a bug's severity when its harm is greater or less. star github
+# issue will add severity:n/a at filing (noblefactor-engprod#338).
+severities:
+  - name: "Critical"
+    label: "severity:critical"
+    color: "b60205"
+    description: "Severity: data loss, corruption, or a security failure"
+  - name: "High"
+    label: "severity:high"
+    color: "d93f0b"
+    description: "Severity: a supported path is broken with no workaround"
+  - name: "Medium"
+    label: "severity:medium"
+    color: "fbca04"
+    description: "Severity: broken with a workaround, or a narrow path"
+  - name: "Low"
+    label: "severity:low"
+    color: "0e8a16"
+    description: "Severity: cosmetic, or a defect nobody is hitting"
+  - name: "N/A"
+    label: "severity:n/a"
+    color: "cfd3d7"
+    description: "Severity: not applicable, the issue is not a bug"
+
+# Effort labels, one for each option of the organization's Effort field.
+efforts:
+  - name: "High"
+    label: "effort:high"
+    color: "b60205"
+    description: "Effort: high"
+  - name: "Medium"
+    label: "effort:medium"
+    color: "fbca04"
+    description: "Effort: medium"
+  - name: "Low"
+    label: "effort:low"
+    color: "0e8a16"
+    description: "Effort: low"
+
+# Resolution labels, one for each option of the organization's Resolution field: why a closed issue was not done. The
+# comment on labels, below, says how they are used.
+resolutions:
+  - name: "Declined"
+    label: "resolution:declined"
+    color: "cfd3d7"
+    description: "Closed: the work was declined"
+  - name: "Duplicate"
+    label: "resolution:duplicate"
+    color: "cfd3d7"
+    description: "Closed: another issue covers it"
+  - name: "Invalid"
+    label: "resolution:invalid"
+    color: "cfd3d7"
+    description: "Closed: not a real problem, or filed in the wrong place"
+
+# Labels beyond the type labels and the labels that stand in for issue fields, held per repository: the model holds the
+# labels of each repository the account owns (ruled 2026-11-03). No label names an epic, a schedule or a scenario:
+# sub-issue parent links and the Schedule and Scenario fields of project rows do. A user's account has no issue fields,
+# so priority, severity, effort, area and resolution are lowercase labels, such as priority:urgent, severity:critical,
+# effort:low, area:product and resolution:duplicate (ruled 2026-11-03), listed above. Priority and area apply to issues
+# of every type, schedule and scenario included (ruled 2026-11-03). Having no issue fields, a user's account says why a
+# closed issue was not done with a label named resolution:<name>, where an organization uses its Resolution field:
+# resolution:declined, resolution:duplicate and resolution:invalid, which replace the duplicate and invalid labels. An
+# issue that was not done is closed as completed, with its resolution: label saying why; the label goes only on a closed
+# issue, and the model records the resolution: labels among the account's labels (ruled 2026-11-03). The sweep,
+# noblefactor-engprod#436, will return to the account's Triage project an open issue that carries one, or that carries
+# two labels of one attribute, such as two priority: labels (ruled 2026-11-04).
+# good first issue goes on tasks and bugs only: it tells a newcomer they can pick the issue up, and only a task or a bug
+# is a single piece of work (ruled 2026-11-04). Read from GitHub on 2026-11-04, David-Noble-at-work/.github has it and
+# personal doesn't; the script of noblefactor-engprod#303's closing pull request makes it in personal, with the color
+# and description .github's has, so both accounts hold it.
+# Whether a reference model holds a repository's other labels is decided with noblefactor-engprod#426 and #437.
+labels:
+  repositories: []
+
+# Projects: the account's four copies, Triage, Backlog, Schedule and Scenario, which new projects are copied from, since
+# a user's project cannot be marked a template; the Scenario copy is the former Thread copy (ruled 2026-11-03). The
+# projects copied from them are not part of the model: the account has four, named for their kind and the account,
+# such as "Triage: <account>" and "Schedule: <account>", and they are its owner's. There is no longer a project for each
+# schedule or each scenario (ruled 2026-11-03).
+# Ruled 2026-11-03: every project of a kind is configured the same way, and that day David-Noble-at-work's copies and
+# projects were brought to match NobleFactor's templates, except for the Area and Priority issue fields, which a user's
+# account can't have (docs/architecture/issue-data-model/3-collections.md).
+#
+# Triage is where every issue is reviewed and a triage decision made: the work is declined, and the issue closed as
+# completed with the resolution:declined label, or the issue moves to the account's Backlog, Schedule or Scenario
+# project. New issues reach the account's Triage project through a GitHub Actions workflow in each repository, run
+# when an issue is opened or transferred, using actions/add-to-project; GitHub's built-in auto-add workflow is not
+# used. Each repository's TRIAGE_PROJECT_URL variable names the account's Triage project, and a Triage workflow
+# template in the account's .github repository offers the workflow (ruled 2026-11-03). GitHub's documentation describes
+# workflow templates kept in an organization's .github repository and says nothing about those in a user's account;
+# whether GitHub offers this one to the account's repositories has not been checked, and each repository's triage.yml
+# is copied from it either way.
+# Ruled 2026-11-04: accepted tasks and bugs go out of Triage to the Backlog with their priority label or onto a
+# schedule. Epics and features are never rows of a Backlog, Schedule or Scenario project: once classified, one leaves
+# Triage for no project, since the hierarchy holds it and its tasks and bugs are what reach the Backlog and the
+# schedules. Every move is one act: the issue gets its row in the project it goes to, with that project's fields set,
+# and loses its row in the project it leaves. Triage removes an issue's Triage row as part of its decision, and the
+# sweep, noblefactor-engprod#436, will remove none: an issue someone closes outside triage stays in the Triage project
+# until triage decides its disposition. An issue is a row of at most one of the account's four projects and is on at
+# most one schedule or scenario, and the sweep will return an issue that breaks this to the account's Triage project. A
+# user's account has no teams, so a new participant is a collaborator on each participating repository, personal and
+# .github in David-Noble-at-work, and a writer on each of the account's four projects.
+#
+# Backlog holds accepted work not yet scheduled, ordered by priority (ruled 2026-11-03). It holds the priority labels in
+# its Labels column, where an organization's Backlog has the Priority issue field, and it has no Priority project field:
+# a project field is no stand-in (see the labels that stand in for issue fields, above). No field of the Backlog copy
+# has been ruled. Read 2026-11-04, no view of the account's Triage or Backlog project shows the Labels column, and the
+# script of noblefactor-engprod#303's closing pull request shows it.
+# Ruled 2026-11-04: from the Backlog, work goes onto a schedule highest priority first, with the schedule's option, the
+# next step or the step the schedule's owner gives it, Status Open and its blocked-by links, and a committed schedule
+# takes it only by its owner's amendment, recorded in the schedule issue. A scenario changes no issue's priority:
+# triage sets each issue's priority label. An organization's Backlog shows its order in a view named "By priority",
+# sorted by its Priority field, which the script of noblefactor-engprod#303's closing pull request makes; this one has
+# no Priority field to sort by.
+#
+# Schedule holds the account's committed tasks and bugs. Its single-select Schedule field names the schedule each row
+# belongs to, with one option per schedule, named for its schedule issue; a reference names no schedule, so it lists
+# no option. GitHub won't make a single-select project field without at least one option (GitHub's GraphQL schema,
+# CreateProjectV2FieldInput), so a Schedule field is made with its first option and comes with a project's first
+# schedule. David-Noble-at-work's Schedule copy (its project 1) got its Schedule field from a placeholder schedule,
+# David-Noble-at-work/personal#319, made on the owner's order on 2026-11-03: the field's one option, placeholder, names
+# that issue in its description (read from GitHub on 2026-11-03).
+# Step orders the rows within a schedule, and a schedule issue's own row has no step; every other row gets its
+# step number and its blocked-by links when it is added, and steps are worked in step order (ruled 2026-11-02). GitHub's
+# Iteration field gives each row its sprint, for scrums and sprint review (ruled 2026-11-03). Worktree holds a link to
+# the branch a step's work is on, and the step's own issue records that it merged or closed (ruled 2026-11-03).
+# A Schedule project's rows are kept in order: under each option of the Schedule field, in the field's own order, the
+# schedule issue's own row first, then its rows by Step, then any with no step, and rows with no option last. A view
+# with no sort shows rows in that order, which GitHub's API sets with updateProjectV2ItemPosition; a row added later
+# has to be placed in order when it is added. David-Noble-at-work's Schedule copy (its project 1) and Schedule:
+# David-Noble-at-work (its project 7) each have a second view, "By schedule", made on 2026-11-03 beside view 1,
+# "Default", as NobleFactor's Schedule template has: a table grouped by the Schedule field, with no sort, showing
+# Title, Assignees, Status, Linked pull requests, Sub-issues progress, Step and Worktree (read from GitHub on
+# 2026-11-04). GitHub's REST API made them; it sets a view's grouping and sort only when it makes the view, and
+# GitHub's GraphQL API sets neither.
+#
+# Scenario holds the account's scenarios. Ruled 2026-11-04: a scenario is a high-level description of a feature, a
+# workflow or a real-life situation that needs to be tested. Its scenario issue, its own row in the account's Scenario
+# project, summarizes an end-user goal. It drives planning, coverage and team alignment, includes an example for demos
+# and ad-hoc testing that helps find gaps and defects no other kind of testing finds, and names in its body the features
+# it exercises. A scenario is structurally like a schedule that starts with no tasks or bugs: they are found with time.
+# Someone opens the scenario and walks it, logging work items as they go, each a task or a bug and a row of the
+# account's Scenario project under the scenario's option, its Beat the point in the walk where it turned up. A logged
+# item names its scenario in its body, as "Found while walking #N", and the Triage workflow will add it to the scenario
+# instead of to the account's Triage project (noblefactor-engprod#448). Each item later moves to the account's Triage
+# project or straight onto a schedule, and leaves the scenario; the item's body and a comment on the scenario issue
+# record the move. The sweep will leave a scenario's rows alone but for two structural rules: it will return an epic or
+# a feature that is a row of the Scenario project, as it will one on the Backlog or Schedule project, and an issue that
+# is a row of a scenario and of another of the account's projects. Every other rule waits until an item moves out: it
+# gets its type label and parent then, and moving straight onto a schedule means classifying it first. A scenario never
+# ends: it is kept, updated or removed as the product changes, since it has value before, during and after a release.
+# Both accounts' Scenario forms will be brought to this in noblefactor-engprod#453.
+# Its single-select Scenario field names the scenario each row belongs to, with one option per scenario, named for its
+# scenario issue; a reference names no scenario, so it lists no option. Likewise, a Scenario field is made with its
+# first option and comes with a project's first scenario. David-Noble-at-work's Scenario copy (its project 2) got its
+# Scenario field the same way, from a placeholder scenario, David-Noble-at-work/personal#316. Beat orders the rows
+# within a scenario (ruled 2026-11-03).
+# A Scenario project's rows are kept in order the same way: under each option of the Scenario field, the scenario
+# issue's own row first, then its rows by Beat, then any with no beat, and rows with no option last.
+# David-Noble-at-work's Scenario copy (its project 2) and Scenario: David-Noble-at-work (its project 8) each have a
+# second view, "By scenario", made on 2026-11-03 beside view 1, "View 1", as NobleFactor's Scenario template has: a
+# table grouped by the Scenario field, with no sort, showing Title, Assignees, Status, Linked pull requests, Sub-issues
+# progress and Beat (read from GitHub on 2026-11-04).
+#
+# Status is a field on a project row, and anyone may set it. Read from GitHub on 2026-11-03, the Status options below
+# are those of NobleFactor's four templates, and David-Noble-at-work's copies and projects have the same ones and no
+# built-in workflow. GitHub's GraphQL schema has a call that deletes a built-in workflow, deleteProjectV2Workflow, and
+# none that makes one or turns one on, so the only state every project of a kind can share is none. GitHub Actions
+# cannot run a workflow when a project row changes: projects_v2_item is a webhook event for organization webhooks and
+# GitHub Apps only. Each copy's views are part of the model and are not yet listed here; whether push writes them is
+# decided with noblefactor-engprod#426 and #437.
+projects:
+  - name: "Triage"
+    fields:
+      - name: "Status"
+        type: single-select
+        options:
+          - { name: "Open", color: "GRAY", description: "The issue is open" }
+          - { name: "In progress", color: "YELLOW", description: "Someone is working on the issue" }
+          - { name: "Closed", color: "PURPLE", description: "The issue is closed. Closed does not always mean done" }
+  - name: "Backlog"
+    fields:
+      - name: "Status"
+        type: single-select
+        options:
+          - { name: "Open", color: "GRAY", description: "The issue is open" }
+          - { name: "In progress", color: "YELLOW", description: "Someone is working on the issue" }
+          - { name: "Closed", color: "PURPLE", description: "The issue is closed. Closed does not always mean done" }
+  - name: "Schedule"
+    fields:
+      - { name: "Schedule", type: single-select, options: [] }
+      - { name: "Step", type: number }
+      - { name: "Iteration", type: iteration }
+      - name: "Status"
+        type: single-select
+        options:
+          - { name: "Open", color: "GRAY", description: "The issue is open" }
+          - { name: "In progress", color: "YELLOW", description: "Someone is working on the issue" }
+          - { name: "Closed", color: "PURPLE",
+              description: "The issue is closed; closed is not done until the record says so" }
+      - { name: "Worktree", type: text }
+  - name: "Scenario"
+    fields:
+      - { name: "Scenario", type: single-select, options: [] }
+      - { name: "Beat", type: number }
+      - name: "Status"
+        type: single-select
+        options:
+          - { name: "Open", color: "GRAY", description: "The issue is open" }
+          - { name: "In progress", color: "YELLOW", description: "Someone is working on the issue" }
+          - { name: "Closed", color: "PURPLE",
+              description: "The issue is closed; closed is not done until the record says so" }
