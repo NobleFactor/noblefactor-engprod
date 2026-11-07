@@ -19,4 +19,27 @@ NobleFactor/devlore-cli	1147	Product	2026-11-06: star finding tool configuration
 NobleFactor/devlore-cli	381	Product	2026-11-06: files that release are product; LICENSE, NOTICE, README and SPDX headers on released files
 NobleFactor/devlore-cli	485	Product	2026-11-06: files that release are product; SPDX headers on released files
 NobleFactor/devlore-cli	999	Product	2026-11-06: files that release are product; MIT declared in released files, among them the embedded LintStarlark/extension.yaml
+NobleFactor/devlore-cli	571	Engineering	2026-11-06: a design ruling on star's session-root anchor; design is engineering (the ruling on #287)
+NobleFactor/devlore-cli	597	Engineering	2026-11-06: the design of named roots in the RuntimeEnvironment; design is engineering
+NobleFactor/devlore-cli	849	Engineering	2026-11-06: writ's design record for the layer model; design is engineering
+NobleFactor/devlore-cli	872	Engineering	2026-11-06: a design ruling on package version identity and global against local installs; design is engineering
+NobleFactor/devlore-cli	873	Engineering	2026-11-06: the design of what writ's lifecycle commands report; design is engineering
+NobleFactor/devlore-cli	1058	Engineering	2026-11-06: an owed design ruling on how phases run; design is engineering
+NobleFactor/devlore-cli	674	Product	2026-11-06: the published knowledge base; documentation that releases is product (ruled 2026-11-05)
+NobleFactor/devlore-cli	675	Product	2026-11-06: a generated Starlark reference for package authors, published; documentation that releases is product
+NobleFactor/devlore-cli	1167	Product	2026-11-06: a user guide on configuring the broker's account to elevate; documentation that releases is product
+NobleFactor/devlore-cli	1185	Product	2026-11-06: the published star reference, regenerated for the star github rename; documentation that releases is product
+NobleFactor/devlore-cli	691	Engineering	2026-11-06: split as #91 was; #691 keeps the design, what evidence an idempotent claim needs; the product half, annotating the methods that meet it, filed as NobleFactor/devlore-cli#1199 (Product, under #677, blocked by #691, Backlog: devlore)
+NobleFactor/devlore-cli	435	Product	2026-11-06: split as #91 was; #435 keeps the observability half, IsRestricted and Observe.restricted, shipped API; the guard, a make check that fails on a direct os.* write, filed as NobleFactor/devlore-cli#1200 (Engineering, under #405, Backlog: devlore)
+NobleFactor/devlore-cli	538	Product	2026-11-06: split as #91 was; #538 keeps the two function-value conversions, product code in the Starlark bridge; the home-of-record decision filed as NobleFactor/devlore-cli#1201 (Engineering, under #148, Backlog: devlore)
+NobleFactor/devlore-cli	694	Product	2026-11-06: a product feature, retitled "Configuration reaches a planning run as an input: the application supplies it, the framework reads none", with four sub-issues in Backlog: devlore: NobleFactor/devlore-cli#1202 the ruling (Engineering), #1203 gitignore and #1204 SOPS as inputs (Product, blocked by #1202), #1205 the loadPatterns bug (Product)
+NobleFactor/devlore-cli	677	Product	2026-11-06: method claims carried by the shipped provider methods; the remainder is its sub-issues #685 and #691
+NobleFactor/devlore-cli	689	Product	2026-11-06: router.go stops using the deprecated h2c, product code in pkg/op/server
+NobleFactor/devlore-cli	803	Engineering	2026-11-06: a design, the divergent-action signature, directive and gate; it unblocks #802's execve action
 NobleFactor/noblefactor-engprod	451	Product	2026-11-06: a product issue of the engineering productivity team (ruled in passing on NobleFactor/devlore-cli#334); it reads Engineering today
+NobleFactor/devlore-cli	477	Product	2026-11-06: a product task or a bug fix, not a feature; what it calls its deliverable is evidence of completion, what will be true when the task is done or the bug is fixed. Made a bug, Severity Medium, Priority Medium, in Backlog: devlore; the heading renamed Evidence of completion
+NobleFactor/devlore-cli	599	Engineering	2026-11-06: a scenario, not a feature, and scenarios are engineering; it will collect many tasks, and more scenarios like it will follow, at least one per set of discovery and deployment patterns. Made a Scenario, out of the epic #539, with its own option and row in Scenario: devlore
+NobleFactor/devlore-cli	695	Engineering	2026-11-06: an engineering bug; the failing validate.star is in star/extensions, engineering tooling that does not release
+NobleFactor/devlore-cli	818	Engineering	2026-11-06: an engineering bug, the team layer's own manifest
+NobleFactor/devlore-cli	955	Engineering	2026-11-06: an engineering feature; devlore-docs, devlore-index and devlore-inventory do not ship
+NobleFactor/devlore-cli	672	Engineering	2026-11-06: split; it held four star defects and one devlore-cli chore. It keeps the chore, the pre-commit hook running make shell-lint and shell-lint.sh deleted, blocked by #1206. The defects filed as Product bugs under the Star epic NobleFactor/devlore-cli#1065, in Backlog: devlore, Priority Medium: #1206 discovery by extension only (Medium, blocked by #1208) and #1208 passing on no scripts (Medium) under star lint shell #1077; #1207 the hook failing at its first check (High) and #1209 the hook passing when a tool is missing (Medium, blocked by #1207) under star hook pre-commit #1070
