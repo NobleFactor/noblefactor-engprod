@@ -1,0 +1,93 @@
+[
+  {
+    "name": "development-process",
+    "source": "/home/david-noble/Workspace/NobleFactor/noblefactor-engprod/docs/guides/development-process.md",
+    "resolved_source": "/home/david-noble/.local/share/devlore/writ/repos/noblefactor-engprod/docs/guides/development-process.md",
+    "snapshot": "docs/engineering/review/sources/development-process.txt",
+    "sha256": "ccfab94823019f4812e1443afeafc748c910feaaed29a0e68c9a2382cff40cc8"
+  },
+  {
+    "name": "issue-standards",
+    "source": "/home/david-noble/Workspace/NobleFactor/noblefactor-engprod/docs/issue-standards.md",
+    "resolved_source": "/home/david-noble/.local/share/devlore/writ/repos/noblefactor-engprod/docs/issue-standards.md",
+    "snapshot": "docs/engineering/review/sources/issue-standards.txt",
+    "sha256": "4a02c5df5ab09974aaf5a25d41faff0f7381afb93a416694e31c0df812d6a447"
+  },
+  {
+    "name": "agent-rules",
+    "source": "/home/david-noble/Workspace/NobleFactor/noblefactor-engprod/docs/guides/agent-rules.md",
+    "resolved_source": "/home/david-noble/.local/share/devlore/writ/repos/noblefactor-engprod/docs/guides/agent-rules.md",
+    "snapshot": "docs/engineering/review/sources/agent-rules.txt",
+    "sha256": "58fc534a01cfe681a3ba9c5da05ce801a6ce28234c997b9401bfddfde52dd03f"
+  },
+  {
+    "name": "pr-script-template",
+    "source": "/home/david-noble/Workspace/NobleFactor/noblefactor-engprod/docs/guides/pr-script-template.md",
+    "resolved_source": "/home/david-noble/.local/share/devlore/writ/repos/noblefactor-engprod/docs/guides/pr-script-template.md",
+    "snapshot": "docs/engineering/review/sources/pr-script-template.txt",
+    "sha256": "eed108c84cb63e1b3ef9de67f67e16589039f3b5101b69bedd8b21301aaf70cf"
+  },
+  {
+    "name": "plan-template",
+    "source": "/home/david-noble/Workspace/NobleFactor/noblefactor-engprod/docs/plans/TEMPLATE.md",
+    "resolved_source": "/home/david-noble/.local/share/devlore/writ/repos/noblefactor-engprod/docs/plans/TEMPLATE.md",
+    "snapshot": "docs/engineering/review/sources/plan-template.txt",
+    "sha256": "920205ceb08f524c4e20c593bde0b612296693c703762485af8f773b5eda5067"
+  },
+  {
+    "name": "documentation-standards",
+    "source": "/home/david-noble/Workspace/NobleFactor/noblefactor-engprod/docs/documentation-standards.md",
+    "resolved_source": "/home/david-noble/.local/share/devlore/writ/repos/noblefactor-engprod/docs/documentation-standards.md",
+    "snapshot": "docs/engineering/review/sources/documentation-standards.txt",
+    "sha256": "e15d0f77b946d7923078552c254c844b4c76b118741aa0a6386e360093942413"
+  },
+  {
+    "name": "release-process",
+    "source": "/home/david-noble/Workspace/NobleFactor/noblefactor-engprod/docs/guides/release-process.md",
+    "resolved_source": "/home/david-noble/.local/share/devlore/writ/repos/noblefactor-engprod/docs/guides/release-process.md",
+    "snapshot": "docs/engineering/review/sources/release-process.txt",
+    "sha256": "d0bae05f31461d39594201ecd636c5344f3ff18acc5270f7432a04ad039a1495"
+  },
+  {
+    "name": "branch-protection",
+    "source": "/home/david-noble/Workspace/NobleFactor/noblefactor-engprod/docs/github-branch-protection.md",
+    "resolved_source": "/home/david-noble/.local/share/devlore/writ/repos/noblefactor-engprod/docs/github-branch-protection.md",
+    "snapshot": "docs/engineering/review/sources/branch-protection.txt",
+    "sha256": "b91dcfa3ed024900c04233800fd52f81a4e623ccab6ffb65aa7b8600f56b42c9"
+  },
+  {
+    "name": "go-style",
+    "source": "/home/david-noble/Workspace/NobleFactor/noblefactor-engprod/docs/guides/go-style-guidelines.md",
+    "resolved_source": "/home/david-noble/.local/share/devlore/writ/repos/noblefactor-engprod/docs/guides/go-style-guidelines.md",
+    "snapshot": "docs/engineering/review/sources/go-style.txt",
+    "sha256": "45004056b3724b0c35fea58ff8ca44b423044c42db06e6292b91c205ae583025"
+  },
+  {
+    "name": "powershell-style",
+    "source": "/home/david-noble/Workspace/NobleFactor/noblefactor-engprod/docs/guides/powershell-style-guidelines.md",
+    "resolved_source": "/home/david-noble/.local/share/devlore/writ/repos/noblefactor-engprod/docs/guides/powershell-style-guidelines.md",
+    "snapshot": "docs/engineering/review/sources/powershell-style.txt",
+    "sha256": "22bc4df2847b5691806763d600c1437f903c6ec6541ec56dec4f94c2ea8b8940"
+  },
+  {
+    "name": "personal-instructions",
+    "source": "/home/david-noble/.claude/CLAUDE.md",
+    "resolved_source": "/home/david-noble/.local/share/devlore/writ/repos/personal/Home/common/.claude/CLAUDE.md",
+    "snapshot": "docs/engineering/review/sources/personal-instructions.txt",
+    "sha256": "3a1f21aafc2f81caa9d37a59dcd5f8b8bec5006d7e9fd7212a7001a832a2cd59"
+  },
+  {
+    "name": "cli-instructions",
+    "source": "/home/david-noble/Workspace/NobleFactor/devlore-cli.1161-install-ps1-has-no-exit-code-the/CLAUDE.md",
+    "resolved_source": "/home/david-noble/Workspace/NobleFactor/devlore-cli.1161-install-ps1-has-no-exit-code-the/CLAUDE.md",
+    "snapshot": "docs/engineering/review/sources/cli-instructions.txt",
+    "sha256": "9b533a305794da548dc59ee797f94d697a74d71e754b29c2d56956cadf406325"
+  },
+  {
+    "name": "prior-inventory",
+    "source": "/tmp/noblefactor-process-inventory/inventory.md",
+    "resolved_source": "/tmp/noblefactor-process-inventory/inventory.md",
+    "snapshot": "docs/engineering/review/sources/prior-inventory.txt",
+    "sha256": "5ccdf7647984abde458c827f190dff564a731297058f169a91c304d2358ed88c"
+  }
+]

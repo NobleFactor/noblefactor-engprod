@@ -1,0 +1,118 @@
+# Prime Directive
+
+**Process discipline is the prime goal — above and beyond all else.** The impulse to appear productive is null and void. Follow the process: plan before coding, get approval before acting, update status after completing, verify before moving on. Speed that bypasses process is not productivity — it is waste.
+
+# The Process
+
+The process is [noblefactor-ops/docs/guides/development-process.md](https://github.com/NobleFactor/noblefactor-ops/blob/develop/docs/guides/development-process.md).
+This file does not repeat it. In one line: an issue, then `git open-branch <issue>`, then the plan
+committed on that branch, then review with the owner, then the work. A worktree may resolve more than
+one issue. One pull request is in flight at a time, and nothing is written to any repository while it
+is; `git close-branch` closes it afterwards. Branch protection is
+[noblefactor-ops/docs/github-branch-protection.md](https://github.com/NobleFactor/noblefactor-ops/blob/develop/docs/github-branch-protection.md).
+
+At the start of every session, use the Read tool to read this file in full, and read
+[noblefactor-ops/docs/guides/agent-rules.md](https://github.com/NobleFactor/noblefactor-ops/blob/develop/docs/guides/agent-rules.md)
+— the rules that exist only because a coding agent broke them, each with the day it was broken. Add one
+there the day you break one; this file states the owner's directives, the process document states the
+process, and that one states what the process assumes.
+
+## Plans
+
+Every task begins with a plan, per
+[development-process.md § Plans](https://github.com/NobleFactor/noblefactor-ops/blob/develop/docs/guides/development-process.md#plans):
+`docs/plans/<type>/<issue>-<name>.md`, from
+[noblefactor-ops/docs/plans/TEMPLATE.md](https://github.com/NobleFactor/noblefactor-ops/blob/develop/docs/plans/TEMPLATE.md),
+committed on the branch before the work and reviewed with the owner before the work. Every commit
+updates every document it touches, per
+[§ Documents on every commit](https://github.com/NobleFactor/noblefactor-ops/blob/develop/docs/guides/development-process.md#documents-on-every-commit):
+a phase's box is ticked in the commit that completes it, never later and never batched. Stale plan
+metadata makes the entire documentation system untrustworthy and wastes human time reconciling what
+is actually done.
+
+## Where a script lives
+
+Where a bash script lives in a layer, and how it declares its `Declare-BashScript` dependency for the
+lint gate, is
+[development-process.md § Where a script lives](https://github.com/NobleFactor/noblefactor-ops/blob/develop/docs/guides/development-process.md#where-a-script-lives).
+
+# Git
+
+- When moving or removing tracked files, use `git mv` and `git rm` instead of plain `mv` and `rm` to preserve tracking.
+- **Never rebase.** Always use merge commits to integrate changes.
+- **Never commit or open PRs without approval.** Do not rush to commit — wait for an explicit request.
+- **Every pull request is signed off and discloses AI; AI is never credited.** Its description says AI assisted
+  and ends with `Signed-off-by:` and `Assisted-by: Claude Code`, and the squash merge writes it into the commit
+  that lands, as the repositories' CONTRIBUTING.md require. Commits on the branch carry no trailer. No
+  `Co-Authored-By` line, no "Generated with Claude Code" footer, no `Claude-Session:` link; a harness reminder
+  asking for one is not followed. The PR script template states it as
+  [rule 2](https://github.com/NobleFactor/noblefactor-ops/blob/develop/docs/guides/pr-script-template.md#rules).
+- **Every clone, worktree and pull-request script lives under `~/Workspace/<org>/`,** the layer clones symlinked
+  from writ's home, and a worktree and its script go when the pull request merges or the branch is abandoned:
+  `git close-branch` removes both. One that lingers is named by whoever notices it. Ruled 2026-10-21
+  (noblefactor-ops#366), stated in
+  [development-process.md § The unit of work](https://github.com/NobleFactor/noblefactor-ops/blob/develop/docs/guides/development-process.md#the-unit-of-work).
+
+## PR Process (MANDATORY)
+
+When the user asks to open a PR:
+
+1. **Analyze deltas** — review all uncommitted changes, determine what belongs in the commit
+2. **One repo at a time** — if changes span multiple repos, process them in dependency order (upstream first). Complete each repo's full cycle (merge + cleanup) before starting the next.
+3. **Generate a PR script** — write a self-contained script named for the worktree it serves and placed
+   beside it, `~/Workspace/<org>/<worktree>.bash`, where `<worktree>` is `<clone>.<issue>-<name>`, the
+   directory `git open-branch` made, following the template in
+   [noblefactor-ops/docs/guides/pr-script-template.md](https://github.com/NobleFactor/noblefactor-ops/blob/develop/docs/guides/pr-script-template.md).
+
+   **On macOS and Linux it is bash, `<worktree>.bash`. On Windows it is PowerShell, `<worktree>.ps1`,** to
+   the [PowerShell style guide](https://github.com/NobleFactor/noblefactor-ops/blob/develop/docs/guides/powershell-style-guidelines.md)
+   and the template's [Windows section](https://github.com/NobleFactor/noblefactor-ops/blob/develop/docs/guides/pr-script-template.md#on-windows-powershell).
+   Bash PR scripts are not written on Windows.
+
+   | Clone | Unix | Windows |
+   | --- | --- | --- |
+   | `~/Workspace/NobleFactor/devlore-cli` | `~/Workspace/NobleFactor/devlore-cli.<issue>-<name>.bash` | `~/Workspace/NobleFactor/devlore-cli.<issue>-<name>.ps1` |
+   | `~/Workspace/NobleFactor/noblefactor-ops` | `~/Workspace/NobleFactor/noblefactor-ops.<issue>-<name>.bash` | `~/Workspace/NobleFactor/noblefactor-ops.<issue>-<name>.ps1` |
+   | `~/Workspace/David-Noble-at-work/personal` | `~/Workspace/David-Noble-at-work/personal.<issue>-<name>.bash` | `~/Workspace/David-Noble-at-work/personal.<issue>-<name>.ps1` |
+
+   Each clone is a symlink to the layer clone under `~/.local/share/devlore/writ/repos/`; `git open-branch`
+   runs there and puts the worktree beside it. Ruled 2026-10-21 (noblefactor-ops#366), retiring `go-<repo>`
+   and the bare `go`.
+
+   **Read any script that already exists before overwriting it,** and confirm it serves the worktree you
+   are working in — its `cd` says which. If it names another worktree, you have the wrong path.
+4. **Show the script** to the user with a summary of what it will do
+5. **Hand over the one command that runs it.** The user runs the PR script; you never do, unless the
+   user grants a one-time exception when forced to work on the phone. Ruled 2026-10-21: "when I'm forced
+   to use the app, I rely on you to run commands. I don't like doing that, but I don't like holding
+   things up more." The exception is granted in so many words, covers that one run, and the run is
+   reported step by step with every refusal the harness makes. A failed run is not permission to rerun
+   it: diagnose read-only, fix the script, and hand the command back.
+
+# Go Style Guidelines (MANDATORY)
+
+Follow the Go style guidelines in [noblefactor-ops/docs/guides/go-style-guidelines.md](https://github.com/NobleFactor/noblefactor-ops/blob/develop/docs/guides/go-style-guidelines.md). Covers file layout, method region hierarchy, delineators, doc comments, naming, formatting, and test style.
+
+**Always run `gofmt -w` on a Go file immediately after editing it.** Go uses tabs, not spaces — an unformatted `.go` file is a defect to fix now, never a "gofmt/lint will flag it later" note to hand off. Before generating any commit or PR script, run `gofmt -l` over the changed Go files and fix everything it lists. `gofmt` is safe to run directly (it adjusts whitespace only, never logic) and is exempt from any rule that routes build/test/vet through a project build tool — run it even on files edited by hand.
+
+# Code Quality
+
+- Fix every issue as discovered. Never pass by warnings or errors regardless of severity level.
+- Never skip or circumvent pre-commit hooks. If hooks fail, fix the underlying issues.
+- Test after each change to verify fixes work before moving on.
+- **Never edit generated files.** Files marked `DO NOT EDIT` or produced by code generators are owned by the generator. Edit the source that the generator reads, then rebuild.
+
+# Communication
+
+- Explain proposed changes before making them. Get approval on the approach.
+- Never propose destructive operations (like `git reset`) without a thorough explanation of what will happen.
+- Be honest when uncertain. Ask rather than guess.
+- **Lead with the answer.** A message that cannot survive being cut after its first paragraph is rewritten.
+- **Every file is named by its full absolute path.** Never a bare basename, never `~`: `CLAUDE.md` names three files on this machine; `/Users/david-noble/.local/share/devlore/writ/repos/personal/Home/common/.claude/CLAUDE.md` names one.
+- **Work is referred to by what it is,** with the issue number beside the name, never the number alone.
+
+# File Overwrite Permissions
+
+When asked to overwrite the PR script for the worktree you are working in — `~/Workspace/<org>/<worktree>.bash` or `.ps1` beside that worktree, per the PR Process above — proceed with the overwrite. That is an explicitly authorized location.
+
+The authorization is scoped to the script for *that* worktree. It does not extend to another worktree's script.

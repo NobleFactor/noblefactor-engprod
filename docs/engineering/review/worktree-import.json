@@ -1,0 +1,220 @@
+{
+  "source": "/tmp/noblefactor-docs-review-2026-10-28",
+  "worktree": "/home/david-noble/Workspace/NobleFactor/noblefactor-engprod.420-consolidate-engineering",
+  "branch": "doc/420-consolidate-engineering",
+  "base": "origin/develop",
+  "base_commit": "59740c91f0183f2165a70f6aa3b352d1e5d42515",
+  "backup": "/home/david-noble/Workspace/NobleFactor/.documentation-backups/20261029T155015097035Z/noblefactor-docs-review-2026-10-28",
+  "files": [
+    {
+      "source": "README.md",
+      "destination": "ENGINEERING-DOCUMENTATION-REVIEW.md",
+      "sha256": "bd6f73d0bc5b3f9cad3f850e2f961a9ae4e5d4c4409be2cb22de733d1180d26b"
+    },
+    {
+      "source": "docs/engineering/agent-operation.md",
+      "destination": "docs/engineering/agent-operation.md",
+      "sha256": "a95cd7a4dafd35e364a4143e01ec7ffa4659a3c12c5c7427052ec65cc410d778"
+    },
+    {
+      "source": "docs/engineering/index.md",
+      "destination": "docs/engineering/index.md",
+      "sha256": "463bc9b4a2b47cd341e085023018f722151e5bdfbc44298b450d8b27a1b160d5"
+    },
+    {
+      "source": "docs/engineering/procedures/index.md",
+      "destination": "docs/engineering/procedures/index.md",
+      "sha256": "cf748d2c5d3c049e36018da75694b0a2a3966a2eeb8738c2e0bab4224a3fc89e"
+    },
+    {
+      "source": "docs/engineering/procedures/pull-request.md",
+      "destination": "docs/engineering/procedures/pull-request.md",
+      "sha256": "5baa8ace6d1a06676db7df12f112c61d18eaca92e324c1936710a06c97170ea7"
+    },
+    {
+      "source": "docs/engineering/process.md",
+      "destination": "docs/engineering/process.md",
+      "sha256": "050bc72a6504b66e1b648d8e26866c608bb5725c0d9d16bce1c7b36ed4c5ce0a"
+    },
+    {
+      "source": "docs/engineering/release-and-recovery.md",
+      "destination": "docs/engineering/release-and-recovery.md",
+      "sha256": "cac5d277c876839e988a5799c6dc241db792699f5a72ba9fbe985112d30bbf87"
+    },
+    {
+      "source": "docs/engineering/review/decisions.md",
+      "destination": "docs/engineering/review/decisions.md",
+      "sha256": "c90d95e4e4572b37ac1388700fcc9d9e36e273a781ae4e54d0fb7436661062ae"
+    },
+    {
+      "source": "docs/engineering/review/documentation-detail.md",
+      "destination": "docs/engineering/review/documentation-detail.md",
+      "sha256": "cbdb1a71bdce575fe7f4a57422b00cf1e1e4abe8bff7b082d4fa00ce4da6ff33"
+    },
+    {
+      "source": "docs/engineering/review/github-tracking.json",
+      "destination": "docs/engineering/review/github-tracking.json",
+      "sha256": "7a0f17a503de4136bc5a603f47173be9e82471a5866b9dd771d4de373ec285d2"
+    },
+    {
+      "source": "docs/engineering/review/issue-classification.md",
+      "destination": "docs/engineering/review/issue-classification.md",
+      "sha256": "0fc4916879e1024a37311c27cac6e64eb0d187ba85e285df09531cd36cdedbbb"
+    },
+    {
+      "source": "docs/engineering/review/open-decisions.md",
+      "destination": "docs/engineering/review/open-decisions.md",
+      "sha256": "793d057b29f0926d074d6bbcbf0a4b7cd3ff05cc0e99ecbfc58c940993876736"
+    },
+    {
+      "source": "docs/engineering/review/repository-requirements.md",
+      "destination": "docs/engineering/review/repository-requirements.md",
+      "sha256": "c00239c3f620dbc3f193b73e46fb97dde6151fea7feab948968d904d15f3ff8b"
+    },
+    {
+      "source": "docs/engineering/review/requirement-migration.md",
+      "destination": "docs/engineering/review/requirement-migration.md",
+      "sha256": "72fbd1572b86d0b5c36ed57d05872df2660dd5c47fec5dc3de50a29864970922"
+    },
+    {
+      "source": "docs/engineering/review/source-manifest.json",
+      "destination": "docs/engineering/review/source-manifest.json",
+      "sha256": "5da40f471d6533e77d13af1543e58198c9ee2f43bb83d040d2a22a71da17c4cc"
+    },
+    {
+      "source": "docs/engineering/review/sources/agent-rules.txt",
+      "destination": "docs/engineering/review/sources/agent-rules.txt",
+      "sha256": "58fc534a01cfe681a3ba9c5da05ce801a6ce28234c997b9401bfddfde52dd03f"
+    },
+    {
+      "source": "docs/engineering/review/sources/branch-protection.txt",
+      "destination": "docs/engineering/review/sources/branch-protection.txt",
+      "sha256": "b91dcfa3ed024900c04233800fd52f81a4e623ccab6ffb65aa7b8600f56b42c9"
+    },
+    {
+      "source": "docs/engineering/review/sources/cli-instructions.txt",
+      "destination": "docs/engineering/review/sources/cli-instructions.txt",
+      "sha256": "9b533a305794da548dc59ee797f94d697a74d71e754b29c2d56956cadf406325"
+    },
+    {
+      "source": "docs/engineering/review/sources/development-process.txt",
+      "destination": "docs/engineering/review/sources/development-process.txt",
+      "sha256": "ccfab94823019f4812e1443afeafc748c910feaaed29a0e68c9a2382cff40cc8"
+    },
+    {
+      "source": "docs/engineering/review/sources/documentation-standards.txt",
+      "destination": "docs/engineering/review/sources/documentation-standards.txt",
+      "sha256": "e15d0f77b946d7923078552c254c844b4c76b118741aa0a6386e360093942413"
+    },
+    {
+      "source": "docs/engineering/review/sources/go-style.txt",
+      "destination": "docs/engineering/review/sources/go-style.txt",
+      "sha256": "45004056b3724b0c35fea58ff8ca44b423044c42db06e6292b91c205ae583025"
+    },
+    {
+      "source": "docs/engineering/review/sources/issue-standards.txt",
+      "destination": "docs/engineering/review/sources/issue-standards.txt",
+      "sha256": "4a02c5df5ab09974aaf5a25d41faff0f7381afb93a416694e31c0df812d6a447"
+    },
+    {
+      "source": "docs/engineering/review/sources/personal-instructions.txt",
+      "destination": "docs/engineering/review/sources/personal-instructions.txt",
+      "sha256": "3a1f21aafc2f81caa9d37a59dcd5f8b8bec5006d7e9fd7212a7001a832a2cd59"
+    },
+    {
+      "source": "docs/engineering/review/sources/plan-template.txt",
+      "destination": "docs/engineering/review/sources/plan-template.txt",
+      "sha256": "920205ceb08f524c4e20c593bde0b612296693c703762485af8f773b5eda5067"
+    },
+    {
+      "source": "docs/engineering/review/sources/powershell-style.txt",
+      "destination": "docs/engineering/review/sources/powershell-style.txt",
+      "sha256": "22bc4df2847b5691806763d600c1437f903c6ec6541ec56dec4f94c2ea8b8940"
+    },
+    {
+      "source": "docs/engineering/review/sources/pr-script-template.txt",
+      "destination": "docs/engineering/review/sources/pr-script-template.txt",
+      "sha256": "eed108c84cb63e1b3ef9de67f67e16589039f3b5101b69bedd8b21301aaf70cf"
+    },
+    {
+      "source": "docs/engineering/review/sources/prior-inventory.txt",
+      "destination": "docs/engineering/review/sources/prior-inventory.txt",
+      "sha256": "5ccdf7647984abde458c827f190dff564a731297058f169a91c304d2358ed88c"
+    },
+    {
+      "source": "docs/engineering/review/sources/release-process.txt",
+      "destination": "docs/engineering/review/sources/release-process.txt",
+      "sha256": "d0bae05f31461d39594201ecd636c5344f3ff18acc5270f7432a04ad039a1495"
+    },
+    {
+      "source": "docs/engineering/work-assets.md",
+      "destination": "docs/engineering/work-assets.md",
+      "sha256": "c57afd108dbb6e9ee163375b2e4ef9fc70f5e060156bdc458725646730aa0bc8"
+    },
+    {
+      "source": "docs/engineering/work-organization.md",
+      "destination": "docs/engineering/work-organization.md",
+      "sha256": "3c471ddd90495d3f7da907f144a6c248125a180b780e0463872a0bee678fc8fe"
+    },
+    {
+      "source": "docs/standards/coding/bash.md",
+      "destination": "docs/standards/coding/bash.md",
+      "sha256": "d8d7e2cd6551ba71396a44405bc268e1ee93d6434a4ddb60611b42f676f8375a"
+    },
+    {
+      "source": "docs/standards/coding/go.md",
+      "destination": "docs/standards/coding/go.md",
+      "sha256": "4887ee4ea3597010625b0407ab2193e062c270941a71637c65ad141e8769c790"
+    },
+    {
+      "source": "docs/standards/coding/index.md",
+      "destination": "docs/standards/coding/index.md",
+      "sha256": "ea6a9eeedeb315ba9092906647f2f143de015ecdee05623a2cd70e342131fa65"
+    },
+    {
+      "source": "docs/standards/coding/powershell.md",
+      "destination": "docs/standards/coding/powershell.md",
+      "sha256": "6613428cc3af0eb61197dd9ee3e5775d39b5641cfd273262a4ae2c3b0f695188"
+    },
+    {
+      "source": "docs/standards/coding/starlark.md",
+      "destination": "docs/standards/coding/starlark.md",
+      "sha256": "ef3aa4b90352dfd8c7851192aca9551d5cf063e587050ff13b17f03305d25008"
+    },
+    {
+      "source": "docs/standards/documentation.md",
+      "destination": "docs/standards/documentation.md",
+      "sha256": "f9b90643d866d61c14f865729fe0257c339519de9905a1df441c95c42cba4a96"
+    },
+    {
+      "source": "docs/templates/completion-review.md",
+      "destination": "docs/templates/completion-review.md",
+      "sha256": "31b795c5dbd0f6cad0387e8c50be2215a214c6eae0154228755c37f8a8ced43e"
+    },
+    {
+      "source": "docs/templates/design.md",
+      "destination": "docs/templates/design.md",
+      "sha256": "aad50ab3c6d4269e94841ba0e6872f9ace0faeeae1e821cdc882d1763f504880"
+    },
+    {
+      "source": "docs/templates/index.md",
+      "destination": "docs/templates/index.md",
+      "sha256": "94d81b5d9bd895eb044a802325da3b5b0ac29f1f1c1a1929d434a80a9166d3c8"
+    },
+    {
+      "source": "docs/templates/issue.md",
+      "destination": "docs/templates/issue.md",
+      "sha256": "377c93bdb03aa609fc9ee5f9414ae41013a0c7e003ed5fb45f20be9c5159f798"
+    },
+    {
+      "source": "docs/templates/plan.md",
+      "destination": "docs/templates/plan.md",
+      "sha256": "002139febaa32d13ffb7e2828def3e7c5f30f8f5e379b71a893f9cdba72d20b3"
+    },
+    {
+      "source": "docs/templates/schedule.md",
+      "destination": "docs/templates/schedule.md",
+      "sha256": "fd8e55648a3398a1359a7dd30372f4fdd060190a633891fd5e0b4d3ad986d293"
+    }
+  ]
+}
