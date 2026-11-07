@@ -25,6 +25,15 @@ task under the rollout feature (NobleFactor/noblefactor-engprod#333) of issue tr
 issue tracking, iteration 1 (NobleFactor/noblefactor-engprod#346) since the renumbering of 2026-11-06, and it blocks the
 sweep, #436, step 14.
 
+## Issue 445
+
+[Test-ClearClaude prints "No such file or directory" in passing
+cases](https://github.com/NobleFactor/noblefactor-engprod/issues/445), a bug under NobleFactor/noblefactor-engprod#151,
+is fixed in this worktree too, by the owner's word of 2026-11-06, after this worktree's gate run that day printed 40 of
+those lines. Its lines 271 and 272 put `2>/dev/null` after the
+input redirection that fails, so bash reports the missing file before the error output is sent away. Both now put it
+first, as its line 411 already did.
+
 ## Rulings
 
 **Scope, ruled 2026-11-06:**
@@ -128,7 +137,12 @@ zero, read the day it closes.
 - [ ] The approved Areas written to every open issue of the seven repositories and read back, with the survey that
       shows none left without one
 
-### Phase 4: merge
+### Phase 4: NobleFactor/noblefactor-engprod#445
+
+- [x] `tests/Test-ClearClaude`'s two reads of the stand-in's files put `2>/dev/null` first, and a run of the test
+      prints no `No such file or directory`: run 2026-11-06, its 27 cases passed and printed none
+
+### Phase 5: merge
 
 - [ ] The pull request script written, shown and handed over; the closing comment carries Requirement 3's counts
 
@@ -141,6 +155,7 @@ zero, read the day it closes.
 | `docs/plans/doc/452-every-open-issue-has-an-area/proposed-<repository>.tsv` | Create | The proposals, per repository |
 | `Makefile` | Modify | `spelling` and `starlark` check only what git tracks, so the worktree's scratch is never checked |
 | `.github/scripts/shell-lint.sh` | Modify | The shell gate checks only what git tracks, for the same reason |
+| `tests/Test-ClearClaude` | Modify | #445: a passing case prints no error for a stand-in file it never wrote |
 
 ## Open Questions
 
@@ -151,7 +166,9 @@ zero, read the day it closes.
       its last step, making the cross-platform test checks required, is not done.
 - [ ] **NobleFactor/devlore-cli#83,** the `self` command: possibly done, since `self install` and `self upgrade`
       exist; not yet checked.
-- [ ] **NobleFactor/noblefactor-engprod#433 and #445** appear to be the same Test-ClearClaude bug.
+- [ ] **NobleFactor/noblefactor-engprod#433 and #445** are the same Test-ClearClaude bug. #445, with its Area, its
+      parent and its row on Schedule: engprod, is fixed here (Phase 4); #433, filed two days earlier with none of
+      them, is the one to close as its duplicate.
 - [ ] **NobleFactor/devlore-cli#285** was closed with no Area.
 - [ ] **The engineering documentation draft** NobleFactor/noblefactor-engprod#420 describes was on danoble-ud24-1
       alone. Read on 2026-11-06, its review package was no longer in `/tmp/noblefactor-docs-review-2026-10-28`, and its

@@ -268,8 +268,8 @@ function probe {
     # What the run wrote, and what the stand-in saw: the lines typed into its viewer and the claude calls it took,
     # for a failed case's report.
     written="$(cat "${run_directory}/case.err")"
-    written+=$'\n'"stand-in typed: $(tr '\n' '|' <"${STAND_IN_DIR}/typed" 2>/dev/null || true)"
-    written+=$'\n'"stand-in calls: $(tr '\n' '|' <"${STAND_IN_DIR}/calls" 2>/dev/null || true)"
+    written+=$'\n'"stand-in typed: $(tr '\n' '|' 2>/dev/null <"${STAND_IN_DIR}/typed" || true)"
+    written+=$'\n'"stand-in calls: $(tr '\n' '|' 2>/dev/null <"${STAND_IN_DIR}/calls" || true)"
 
     ((status == expected_status)) || problem_list+="its status was ${status}, not ${expected_status}; "
 }
