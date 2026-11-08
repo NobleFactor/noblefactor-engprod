@@ -1,9 +1,9 @@
 ---
 title: "Every open issue has an Area before the sweep runs"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/452
-status: approved
+status: complete
 created: 2026-11-06
-updated: 2026-11-06
+updated: 2026-11-08
 ---
 
 # Plan: every open issue has an Area before the sweep runs
@@ -62,10 +62,11 @@ first, as its line 411 already did.
   NobleFactor/noblefactor-engprod#456 and its features #457 to #461, filed 2026-11-06, hold the method and what it runs
   on.
 - New tasks split from a feature go to Backlog: devlore with Priority Medium, unless the owner says otherwise.
-- Nothing goes in a temporary directory, ever; a worktree keeps its working files in its own `scratch/` folder, which
-  git ignores. The gate checks only what git tracks, so a worktree's scratch is never checked: `spelling` and
-  `starlark` in the Makefile, and `.github/scripts/shell-lint.sh`, take their files from `git ls-files`, as the
-  frontmatter and PowerShell checks already did.
+- Nothing goes in a temporary directory, ever. Working files go in `~/Workspace/<org>/scratch/<worktree>/`, outside
+  every repository and the main clone (ruled 2026-11-08, replacing the ruling of 2026-11-06 that put them in a
+  worktree's own `scratch/`, which git ignores and `git close-branch` deletes). The gate checks only what git tracks:
+  `spelling` and `starlark` in the Makefile, and `.github/scripts/shell-lint.sh`, take their files from `git ls-files`,
+  as the frontmatter and PowerShell checks already did.
 
 ## Current State
 
@@ -136,8 +137,9 @@ zero, read the day it closes.
 
 ### Phase 3: the write
 
-- [ ] The approved Areas written to every open issue of the seven repositories and read back, with the survey that
-      shows none left without one
+- [x] The approved Areas written to every open issue of the seven repositories and read back, with the survey that
+      shows none left without one: 461 written by the worktree's seventh script, and on 2026-11-08 at 06:47 UTC all
+      589 open issues read back with their decided Area, none without one
 
 ### Phase 4: NobleFactor/noblefactor-engprod#445
 
@@ -146,7 +148,9 @@ zero, read the day it closes.
 
 ### Phase 5: merge
 
-- [ ] The pull request script written, shown and handed over; the closing comment carries Requirement 3's counts
+- [x] The pull request script written, shown and handed over; it reads every open issue's Area again before it opens
+      the pull request, and its closing comment on #452 carries Requirement 3's counts. Its one commit sets this plan
+      `complete`
 
 ## Files to Create/Modify
 
@@ -174,7 +178,8 @@ zero, read the day it closes.
       parent and its row on Schedule: engprod, is fixed here (Phase 4), and its Severity is Low. #433, filed two days
       earlier with none of them, was closed on 2026-11-06 as completed, with Resolution Duplicate, by the owner's word.
 - [ ] **NobleFactor/devlore-cli#285** was closed with no Area.
-- [ ] **The engineering documentation draft** NobleFactor/noblefactor-engprod#420 describes was on danoble-ud24-1
+- [x] **The engineering documentation draft** NobleFactor/noblefactor-engprod#420 describes was on danoble-ud24-1
       alone. Read on 2026-11-06, its review package was no longer in `/tmp/noblefactor-docs-review-2026-10-28`, and its
-      backups, 531 files in `/home/david-noble/Workspace/NobleFactor/.documentation-backups`, are the one copy left;
-      they go into #420's own worktree, archived whole, before anything else is done with them.
+      backups, 531 files in `/home/david-noble/Workspace/NobleFactor/.documentation-backups`, were the one copy left.
+      Saved on 2026-11-07: the drafts, the backups and the snapshot are on GitHub, on #420's one branch,
+      `doc/420-consolidate-engineering`, unmerged by the owner's word until #420's work is done.
