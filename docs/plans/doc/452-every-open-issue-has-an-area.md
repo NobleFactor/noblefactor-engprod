@@ -128,9 +128,11 @@ zero, read the day it closes.
 
 ### Phase 2: the review
 
-- [ ] noblefactor-engprod's 21 unsure proposals ruled
-- [ ] devlore-cli's 52 unsure proposals and its parent conflicts ruled
-- [ ] devlore-registry, devlore.noblefactor.com and personal approved
+- [x] noblefactor-engprod's 21 unsure proposals ruled, on 2026-11-07, recorded in rulings.tsv
+- [x] devlore-cli's 52 unsure proposals and its parent conflicts ruled, on 2026-11-06 and 2026-11-07, recorded in
+      rulings.tsv
+- [x] devlore-registry, devlore.noblefactor.com and personal approved: signed off by the owner on 2026-11-07, all nine
+      of devlore-registry's and devlore.noblefactor.com's Product and all 42 of personal's Engineering
 
 ### Phase 3: the write
 
@@ -159,16 +161,18 @@ zero, read the day it closes.
 
 ## Open Questions
 
-- [ ] **The parent conflicts left in devlore-cli.** NobleFactor/devlore-cli#340, product work under the engineering
-      epic #452, reopened; #376 under #373; #465 under #454; #467, #472 and #847 under #466; #485 under #483; and
-      #1152, whose parent #892 is a Scenario issue.
-- [ ] **NobleFactor/devlore-cli#373,** obsolete by the owner's word, since CI runs on every platform, but still open;
-      its last step, making the cross-platform test checks required, is not done.
+- [x] **The parent conflicts left in devlore-cli,** all resolved. On 2026-11-06: #467, #472 and #847 moved from #466
+      to the writ deployment epic #447; #477 moved from #475 to #798, and #485 from #483 to #381; and Feature #340
+      became Engineering once its star work moved to Epic #1065's features. On 2026-11-07: #376 moved from #373 to
+      Feature #1097, and #439 and #724 to Feature #340; #465 moved from Epic #454 to Epic #453; and #1152 moved from
+      Scenario #892, which takes no children, to Feature #463.
+- [x] **NobleFactor/devlore-cli#373,** closed as completed on 2026-11-07: CI runs on every platform, and the ruleset
+      has required the test legs on all five since 2026-11-01, so its work was done. Its children moved first.
 - [ ] **NobleFactor/devlore-cli#83,** the `self` command: possibly done, since `self install` and `self upgrade`
       exist; not yet checked.
-- [ ] **NobleFactor/noblefactor-engprod#433 and #445** are the same Test-ClearClaude bug. #445, with its Area, its
-      parent and its row on Schedule: engprod, is fixed here (Phase 4); #433, filed two days earlier with none of
-      them, is the one to close as its duplicate.
+- [x] **NobleFactor/noblefactor-engprod#433 and #445** are the same Test-ClearClaude bug. #445, with its Area, its
+      parent and its row on Schedule: engprod, is fixed here (Phase 4), and its Severity is Low. #433, filed two days
+      earlier with none of them, was closed on 2026-11-06 as completed, with Resolution Duplicate, by the owner's word.
 - [ ] **NobleFactor/devlore-cli#285** was closed with no Area.
 - [ ] **The engineering documentation draft** NobleFactor/noblefactor-engprod#420 describes was on danoble-ud24-1
       alone. Read on 2026-11-06, its review package was no longer in `/tmp/noblefactor-docs-review-2026-10-28`, and its
