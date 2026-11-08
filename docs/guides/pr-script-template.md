@@ -5,7 +5,7 @@ type: Process
 audience: Engineers, Claude Code
 status: Approved
 created: 2026-03-16
-updated: 2026-10-25
+updated: 2026-11-04
 ---
 
 # PR Script Template
@@ -108,6 +108,8 @@ git push -u origin <branch>
 
 # The description says AI assisted and ends with the two trailers (rule 2). The sign-off comes from git's
 # configuration, never typed. The merge step below writes everything above ## Time into the squash commit.
+# The description's form is to be kept in the account's pull request template, in its .github repository;
+# neither account has one yet (rule 2).
 description="$(cat <<'EOF'
 ## Summary
 
@@ -186,7 +188,7 @@ gh pr merge "${pr_number}" --squash --admin \
 #
 # Three markers from GitHub's own timestamps, elapsed hours to one decimal, appended to the PR body and
 # verified. AFTER the merge, not before: mergedAt does not exist until the merge lands. Carried verbatim
-# here until `star gh pr span` exists (noblefactor-ops#188); then this block is one call to it.
+# here until `star github pr span` exists (noblefactor-ops#188); then this block is one call to it.
 span=$(gh pr view "${pr_number}" --json createdAt,mergedAt,commits --jq '
   (.commits[0].committedDate) as $opened | .createdAt as $submitted | .mergedAt as $merged |
   def hrs(a; b): (((b | fromdate) - (a | fromdate)) / 3600 * 10 | round) / 10;
@@ -208,6 +210,10 @@ gh pr view "${pr_number}" --json body --jq .body | grep -q '^## Time' || {
 printf '%s\n' "${span}"
 
 # --- The schedule: the lanes this pull request lands, recorded as it lands (rule 13) ---
+#
+# Out of date since 2026-11-03 (rule 13): the tables this step rewrites were retired that day, so it would find no
+# row and stop the script. It waits on #450, which carries what agent-rules.md, rule 19, leaves open: what each record
+# is guarded on.
 #
 # A lane's row says where its work is (agent-rules.md, rule 19), and once the merge lands, that is the merge. AFTER
 # the merge, since a row names the squash commit. Each row is written with the script, whole, as the schedule's table
@@ -281,7 +287,7 @@ git status --short
 # When the owner asks for it, scope it to what the pull request served: --epic <Name>, --by feature
 # --epic <Name>, --by thread --thread <Name>, or --by schedule. --markdown -o value because a string
 # result renders quoted under the default json (devlore-cli#826); --silent, not 2>/dev/null.
-# star gh issues report --epic <Name> --view table --state all --markdown -o value --silent
+# star github schedule report --epic <Name> --view table --state all --markdown -o value --silent
 ```
 
 ---
@@ -295,6 +301,11 @@ git status --short
    writes the description, up to `## Time`, into the squash commit, and the script checks that the commit that
    landed carries both. Commits on the branch carry no trailer. No `Co-Authored-By` line, no Generated-by footer,
    no `Claude-Session:` link. Ruled 2026-10-03 (#254): "I want the prs, not the commits to carry these messages."
+   Ruled 2026-11-03: the description's form is to be kept in the account's pull request template, stored in its
+   `.github` repository with the account's other file templates
+   ([section 6](../architecture/issue-data-model/6-the-asset-and-its-sync.md#one-model-per-account) of the issue data
+   model design). Neither account has one yet; it is part of #431 for NobleFactor/.github and
+   David-Noble-at-work/personal#311 for David-Noble-at-work/.github.
 3. **HEREDOC for messages.** Both commit messages and PR bodies use `cat <<'EOF'` for safe formatting.
 4. **CI gate is tolerant.** Repos with no required checks proceed; real failures abort.
 5. **Merge gate before merge.** Check `mergeStateStatus` to catch conflicts, blocks, or staleness before attempting
@@ -343,6 +354,15 @@ git status --short
     every session that reads the schedule with them, this one too once its context is compacted
     ([agent-rules.md](agent-rules.md), rule 19). #396 merged that way: its lanes on #301 kept reading "in progress"
     in a worktree `git close-branch` had removed.
+
+    This rule and the schedule step, in both forms, are out of date. They record a lane by rewriting its row in a table
+    in the schedule issue's body. Those tables were retired on 2026-11-03, when a line naming the issue's project
+    replaced them, so the step would find no row and stop the script. #450 will bring this rule and the step, in both
+    forms, in line with [agent-rules.md](agent-rules.md), rule 19, which says how a pull request's script records its
+    steps now. It carries the question rule 19 leaves open, what each record is guarded on, which moved from #303 to
+    #450 on 2026-11-04. The template has no step yet for the record a worktree's first script makes: pushing the branch,
+    then linking it in the Worktree column of each of its steps' rows ([agent-rules.md](agent-rules.md), rule 19). #450
+    will add that step too, in both forms.
 
 ---
 
@@ -443,6 +463,8 @@ Written with AI assistance.
 '@
 
     # The description ends with the two trailers (rule 2); the sign-off comes from git's configuration.
+    # The description's form is to be kept in the account's pull request template, in its .github repository;
+    # neither account has one yet (rule 2).
     $trailers = "Signed-off-by: $name <$email>`nAssisted-by: Claude Code"
     return "$description`n`n$trailers`n`n## Time`n`n_Filled by the merge step below._"
 }
@@ -562,6 +584,10 @@ if (((gh pr view $number --json body --jq '.body') -join "`n") -notmatch '(?m)^#
 }
 
 # --- The schedule: the lanes this pull request lands, recorded as it lands (rule 13) ---
+#
+# Out of date since 2026-11-03 (rule 13): the tables this step rewrites were retired that day, so it would find no
+# row and stop the script. It waits on #450, which carries what agent-rules.md, rule 19, leaves open: what each record
+# is guarded on.
 #
 # Each row whole, as the schedule's table has it, with {pr} and {merged} filled in from GitHub, and {dash} for the
 # table's em dash, which keeps this file ASCII. It replaces the row whose first cell is its lane number, which must

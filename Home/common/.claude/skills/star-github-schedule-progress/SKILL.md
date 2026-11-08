@@ -1,14 +1,15 @@
 ---
-name: star-gh-progress
-title: "star gh progress"
-description: Answer "What is the status of your scheduled work?" and ANY other question about issues, epics, features, threads or schedules by running `star gh issues report` — never by ad-hoc `gh issue list`, `gh search`, or prose assembled from `gh issue view`. Triggers on "status", "what's the status", "status on the current issue", "lane status", "what is next", "show the schedule", "where do we stand", "what is open", "what covers this", "which bugs", and any request to see a schedule, epic, feature or thread. Use `star gh issues audit` for classification faults.
+name: star-github-schedule-progress
+title: "star github schedule progress"
+description: Answer "What is the status of your scheduled work?" and ANY other question about issues, epics, features, threads or schedules by running `star github schedule report` — never by ad-hoc `gh issue list`, `gh search`, or prose assembled from `gh issue view`. Triggers on "status", "what's the status", "status on the current issue", "lane status", "what is next", "show the schedule", "where do we stand", "what is open", "what covers this", "which bugs", and any request to see a schedule, epic, feature or thread. Use `star github schedule audit` for classification faults.
 ---
 
 # Answering a question about issues
 
 Ruled 2026-09-07, [agent-rules](../../../../../docs/guides/agent-rules.md) rule 3: *"What exists, what
 is open, what covers a symptom, what a feature holds: `star gh issues report` and `star gh issues
-audit`, never an ad-hoc `gh issue list --search`."* The breakage entry ends: *"it is our tool and we
+audit`, never an ad-hoc `gh issue list --search`."* Those are `star github schedule report` and `star github schedule audit`
+since #378. The breakage entry ends: *"it is our tool and we
 spent significant resources to write that command. USE IT."*
 
 `gh issue view <n>` is for reading one body **after** the report has named it.
@@ -19,11 +20,11 @@ The owner, 2026-10-05: *"when i ask for status, you should use the skill you've 
 your assignment is and then report progress"*, and *"when i ask for status, i get full status. if i ask
 for status on the current issue, i get status on the lane you're working."*
 
-1. **The assignment.** When no schedule is named, take it from `star-gh-assignment`: the schedule this
+1. **The assignment.** When no schedule is named, take it from `star-github-schedule-assignment`: the schedule this
    session works, `<owner>/<repository>#<number>`, and hand it to `--schedule` as it is.
 2. **Status** is that schedule's lane table exactly as the first invocation below prints it. Nothing
    more: no lookups, no prose. *"the star gh issue report command ought to produce exactly what you
-   need. no more. no less."*
+   need. no more. no less."* That command is `star github schedule report` since #378.
 3. **Status on the current issue**, or lane status, is the lanes being worked: the rows whose Next says
    "in progress", and the rows whose Next names the same pull request, printed as the report prints
    them. Next names each one's worktree. The owner: *"the pr that you do is the record of that work."*
@@ -52,11 +53,11 @@ back answers the same question.
 ## The invocations
 
 ```bash
-star gh issues report --by schedule --schedule <owner>/<repository>#<number> --markdown -o value --silent
-star gh issues report --by feature --epic <Name>
-star gh issues report --by thread --thread <Name>
-star gh issues report --epic <Name> --view table --state open --markdown -o value --silent
-star gh issues audit                       # and --unthreaded
+star github schedule report --by schedule --schedule <owner>/<repository>#<number> --markdown -o value --silent
+star github schedule report --by feature --epic <Name>
+star github schedule report --by thread --thread <Name>
+star github schedule report --epic <Name> --view table --state open --markdown -o value --silent
+star github schedule audit                       # and --unthreaded
 ```
 
 **Always `--markdown -o value --silent`.** Without it the command returns raw JSON rows — every

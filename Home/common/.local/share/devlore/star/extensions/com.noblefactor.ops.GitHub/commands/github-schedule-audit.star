@@ -6,16 +6,15 @@
 # gh-issues-audit.star
 
 load("commands/access.star", "check_access")
+load("commands/model.star", "read_first")
 load("commands/scheme.star", "audit", "audit_lines", "exempt_numbers", "faults", "fetch_issues", "resolve_repos", "unthreaded", "unthreaded_lines")
 
-def run(_command, ctx):
+def _run(ctx):
     """The classification audit as rows; the script's audit section with --markdown.
 
     Args:
-      _command: the command spec star passes first; unused here.
       ctx: the invocation -- ctx.args carries the flags.
     """
-    check_access("star gh issues audit", dry_run = ctx.dry_run)
     limit = ctx.args.get("limit", 500)
     directory = ctx.args.get("directory", "")
     repo_flag = ctx.args.get("repo", "")
@@ -39,3 +38,18 @@ def run(_command, ctx):
         return "\n".join(["## Classification audit\n"] + audit_lines(a))
 
     return [{"issue": i["number"], "repo": i["repo"], "ref": i["ref"], "url": i["url"], "title": i["title"], "faults": faults(i)} for i in a["bad"]]
+
+def run(_command, ctx):
+    """Check gh's access, read GitHub's record against the asset, then run; say when the asset is behind (#378).
+
+    The line goes first in a markdown document, where --silent cannot hide it, and to a warning otherwise.
+    """
+    check_access("star github schedule audit", dry_run = ctx.dry_run)
+    behind = read_first(dry_run = ctx.dry_run)
+    result = _run(ctx)
+    if behind == "":
+        return result
+    if type(result) == "string":
+        return "> " + behind + "\n\n" + result
+    warn(behind)
+    return result
