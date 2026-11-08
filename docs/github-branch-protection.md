@@ -145,9 +145,13 @@ it does not prove it runs. Every supported platform must therefore report **both
 | --- | --- | --- |
 | 1 — baseline | every repository, org ruleset 12426847 | `quality-gate` |
 | 2 — cross-platform | repositories that ship platform-specific binaries, repository ruleset | `test (<goos>-<goarch>)` and `scenario (<goos>-<goarch>)` for **each** supported platform |
+| 2 — installers | repositories that publish an installer, the same repository ruleset | every context of the Installers workflow: the stand-in release it builds and each installer suite on each platform the installer serves |
 
 **`test (…)`** is the functional suite — unit tests, the whole package set.
 **`scenario (…)`** is end-to-end — the real binaries driven in a sandbox as an operator would.
+**`install.sh (…)`** and **`install.ps1 (…)`** are the installer suites — the installer in the pull request
+installing the build in the pull request, on the platform the installer serves, from a stand-in release the
+**`faux channel (build)`** job publishes for the run.
 
 Neither substitutes for the other, and neither substitutes for a cross-compile. A green
 cross-compile says the target builds. A green `test` says its units behave. Only `scenario` says
@@ -203,10 +207,23 @@ gh api "repos/NobleFactor/<repo>/commits/$sha/check-runs" --jq '.check_runs[] | 
 In a **repository** ruleset, not the organization one.
 
 The first instance is **21539972 — "Cross-platform required checks"** on devlore-cli, created
-2026-08-26. It requires all eleven contexts — `quality-gate` plus the ten platform legs, so a
-repository's full requirement is legible in one place rather than split across two rulesets — over
-the same refs as the organization ruleset, with `strict` false and both bypass actors at
-`pull_request`.
+2026-08-26. It requires nineteen contexts — `quality-gate`, the ten platform legs, and since
+2026-11-01 the eight Installers contexts — so a repository's full requirement is legible in one
+place rather than split across two rulesets — over the same refs as the organization ruleset, with
+`strict` false and both bypass actors at `pull_request`. The Installers contexts, confirmed against
+the check runs on develop at `fd217da6` before they were written in:
+
+```
+faux channel (build)
+install.ps1 (windows-amd64)      install.sh (darwin-amd64)       install.sh (linux-amd64)
+install.ps1 (windows-arm64)      install.sh (darwin-arm64)       install.sh (linux-arm64)
+                                 install.sh (darwin-arm64, MacPorts)
+```
+
+They had run on every pull request since devlore-cli#1031 without being able to block one;
+devlore-cli#1103 merged with both `install.ps1` legs red. Ruled 2026-10-29, devlore-cli#1052: "yes.
+require all eight." Adding a platform to the Installers matrix adds a context here too, or the new
+leg runs for information only.
  `test (darwin-arm64)` exists only in
 devlore-cli; requiring it org-wide would leave devlore-registry and noblefactor-engprod waiting forever
 for a check that never arrives, blocking every merge in both.
@@ -256,6 +273,9 @@ ruleset's rules and reads the ruleset back. It ran on 2026-11-03, and the rulese
 
 ## Changelog
 
+- 2026-11-01: The eight Installers contexts added to ruleset 21539972 on devlore-cli, nineteen required
+  contexts in all; the installer row added to the two-tier table (noblefactor-engprod#422, ruled on
+  devlore-cli#1052).
 - 2026-01-27: Initial policy created and applied to all 5 NobleFactor repositories
 - 2026-08-26: Both bypass actors on ruleset 12426847 narrowed from `always` to `pull_request`, so
   direct pushes to protected branches are refused for everyone including organization admins and the
