@@ -1,0 +1,32 @@
+{
+  "captured_at": "2026-11-01T03:26:17.581148+00:00",
+  "status": "execution_boundary",
+  "stage": "live_meter_before_any_evaluator",
+  "cli_evaluator_invocations": 0,
+  "initial_meter": {
+    "captured_at": "2026-11-01T03:26:17.581112+00:00",
+    "snapshot": {
+      "rateLimits": {
+        "primary": {
+          "usedPercent": 5,
+          "windowDurationMins": 10080,
+          "resetsAt": 1793805961
+        },
+        "credits": {
+          "hasCredits": false,
+          "unlimited": false,
+          "balance": "0"
+        }
+      },
+      "ordinaryUsageAllowed": true
+    },
+    "weekly_window": {
+      "usedPercent": 5,
+      "windowDurationMins": 10080,
+      "resetsAt": 1793805961
+    }
+  },
+  "error": "weekly window changed, became ambiguous, or reached the 4% stop point",
+  "stderr": null,
+  "observed_seconds": 0.0010711670038290322
+}

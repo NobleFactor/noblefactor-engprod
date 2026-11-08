@@ -1,0 +1,25 @@
+{
+  "status": "provisional_not_independently_approved",
+  "source_issue": "https://github.com/NobleFactor/noblefactor-engprod/issues/317",
+  "source_sha256": "48d3120ea7a31d674a1c65a99733376d67bb131709a689b0dfb96b00648c489c",
+  "ordering": "Source row order; same-day temporal order not independently verified.",
+  "cases": [
+    {
+      "case_id": "C01",
+      "source_row": 9,
+      "expected_pattern_ids": [
+        "P003"
+      ],
+      "basis": "Both rows cite the same label-certainty requirement."
+    },
+    {
+      "case_id": "C02",
+      "source_row": 10,
+      "expected_pattern_ids": [
+        "P006",
+        "P003"
+      ],
+      "basis": "Source row cites long-option and certainty rules; both are acceptable matches."
+    }
+  ]
+}

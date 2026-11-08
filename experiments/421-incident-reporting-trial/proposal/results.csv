@@ -1,0 +1,1 @@
+run_id,case_id,agent,model,arm,disposition,pattern_id,evidence,reference_result,retrieval_match_present,latency_ms,manual_review_seconds

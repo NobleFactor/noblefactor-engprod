@@ -1,0 +1,11 @@
+# Behavioral pilot stopped at weekly budget boundary
+
+The Owner-authorized runner was started on 2026-11-01 UTC. At 02:44:28 UTC it stopped at its initial live-meter check, before either evaluator invocation. The [execution receipt](execution-attempts/2026-11-01T024428.533198+0000.json) records zero evaluator invocations and says the weekly window had changed, become ambiguous, or reached the stop point. The runner did not retain the initial meter snapshot, so the receipt alone does not distinguish those reasons.
+
+A subsequent read-only meter check returned **5% used**, a 10,080-minute window and reset timestamp **1793805961**. It reported `ordinaryUsageAllowed: true`, `hasCredits: false`, `unlimited: false` and credit balance `0`. The reset matches the approved window, but 5% exceeds its 4% stop point, based on the original 3% baseline. The subsequent reading is evidence of the current boundary; it is not a saved copy of the runner's exact initial reading. Other activity, meter rounding and update delay prevent attributing the increase to this trial.
+
+No `run-output` directory was created, and there are no behavioral traces or task results from this attempt. The earlier 2026-10-30 attempt also stopped before any evaluator invocation because the meter process failed to start. Neither attempt is evidence for or against the historical lesson. The frozen input files and the planned two-invocation limit remain unchanged.
+
+The Owner supplied one explicit instruction in this continuation to execute the approved pilot; any active attention time is unknown. The earlier Owner-mediated session handoff and authorization are described in `execution-status.md`; a complete retrospective intervention count and active duration are not established. This attempt also required a read-only follow-up meter check and local reporting, which are operating overhead rather than behavioral results.
+
+To run the pilot, the Owner must decide an authorized budget boundary, either by changing the current allowance or explicitly setting a baseline for a later window. Do not silently reset the 3% baseline or proceed at 5%. After a valid boundary is established, the frozen runner can start from the beginning because neither evaluator was invoked. Do not infer that a future window by itself authorizes a new baseline.

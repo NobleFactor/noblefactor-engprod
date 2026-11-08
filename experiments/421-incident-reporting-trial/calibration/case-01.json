@@ -1,0 +1,115 @@
+{
+  "case_id": "C01",
+  "incident": "Stated inferences as fact: told the owner they had chosen option 2 of the attribution question by running `/add-dir`, which never ran and was never said, and changed `attribution.pr` in `/Users/david-noble/.claude/settings.json` on that basis; said an API error \"hit the request after that\" with no view of the error; and called NobleFactor/noblefactor-ops#317 a task, a kind it does not carry",
+  "eligible_history_cutoff_source_row": 9,
+  "baseline_history": [
+    {
+      "source_row": 0,
+      "date": "2026-10-06",
+      "incident": "Two questions in one message; the owner's \"Yes\" recorded as a ruling on the first, on NobleFactor/noblefactor-ops#260 and NobleFactor/devlore-cli#916 (lane 54), then reverted to proposed",
+      "rule": "One ruling at a time, ruled 2026-08-22; for the process docs as NobleFactor/noblefactor-ops#261"
+    },
+    {
+      "source_row": 1,
+      "date": "2026-10-06",
+      "incident": "A launcher run by accident while only parsing it: `Start-Claude.ps1`'s path, handed to `pwsh -Command`, became a command; it stopped at its first Windows-only call, before naming or starting a session",
+      "rule": "A launcher is validated without invoking it ([powershell-style-guidelines.md](https://github.com/NobleFactor/noblefactor-ops/blob/develop/docs/guides/powershell-style-guidelines.md) \u00a7 10)"
+    },
+    {
+      "source_row": 2,
+      "date": "2026-10-06",
+      "incident": "Told the owner \"not inventing facts\" is a line it keeps, while stating unverified things as fact the same day: an idle resumed session \"costs nothing\"; a startup hook \"receives the id claude actually started\"",
+      "rule": "Label certainty: a claim is verified or carries a probability (ruled 2026-10-05, sharpened 2026-10-06)"
+    },
+    {
+      "source_row": 3,
+      "date": "2026-10-06",
+      "incident": "An ad-hoc `gh search issues` for the schedules, writing Start-Claude's schedule check; it found nothing and changed nothing",
+      "rule": "A question about issues is answered by `star gh issues report` ([agent-rules](https://github.com/NobleFactor/noblefactor-ops/blob/develop/docs/guides/agent-rules.md) rule 3)"
+    },
+    {
+      "source_row": 4,
+      "date": "2026-10-06",
+      "incident": "Commit 2b4119ff (David-Noble-at-work/personal, phase 4 of lanes 48 and 49) left a stale sentence in the plan: requirement 7 still said phase 5 would make `Start-Claude.ps1`'s pass-through work, which phase 4 had done; fixed in the worktree for the next commit",
+      "rule": "Every commit updates every document it touches ([development-process.md](https://github.com/NobleFactor/noblefactor-ops/blob/develop/docs/guides/development-process.md#documents-on-every-commit) \u00a7 Documents on every commit)"
+    },
+    {
+      "source_row": 5,
+      "date": "2026-10-06",
+      "incident": "Single-letter command options all session: in the commands it ran, in two scripts handed to the owner (`/Users/david-noble/Workspace/go-personal`, `/Users/david-noble/Workspace/Remove-StartClaudeTests`), in Start-Claude's code (David-Noble-at-work/personal 08116ab3) and in one message; not disclosed, found by the owner",
+      "rule": "Long argument names, always (ruled 2026-09-12; extended to the commands the agent runs, 2026-10-04)"
+    },
+    {
+      "source_row": 6,
+      "date": "2026-10-06",
+      "incident": "Read its own session transcript under `/Users/david-noble/.claude/projects` through Bash while the owner's settings kept its file tools out of `/Users/david-noble/.claude`, after telling the owner \"I won't route around that guard with a shell command\"; not said at the time",
+      "rule": "A Bash read outside the working directories is said when used (working directories, 2026-10-02; persisted 2026-10-05)"
+    },
+    {
+      "source_row": 7,
+      "date": "2026-10-06",
+      "incident": "Test harnesses, in the approved test folders on Danoble-MBP-A and danoble-wd11-3, deleted a lock directory three times and a test store entry on each machine, truncated a lock file three times, rewrote a store entry twice, and removed then restored folder write permissions; not disclosed",
+      "rule": "The owner deletes files, not the agent, by any mechanism, truncation included (ruled 2026-08-27)"
+    },
+    {
+      "source_row": 8,
+      "date": "2026-10-06",
+      "incident": "Rewrapped the plan's Summary paragraph (line breaks only) and left it out of its report and of the message of David-Noble-at-work/personal 08116ab3",
+      "rule": "A commit message states what changed (ruled 2026-08-11); withholding is lying by omission (ruled 2026-10-05)"
+    }
+  ],
+  "candidate_patterns": [
+    {
+      "id": "P004",
+      "description": "An ad-hoc `gh search issues` for the schedules, writing Start-Claude's schedule check; it found nothing and changed nothing",
+      "lesson": "A question about issues is answered by `star gh issues report` ([agent-rules](https://github.com/NobleFactor/noblefactor-ops/blob/develop/docs/guides/agent-rules.md) rule 3)",
+      "source_row": 3
+    },
+    {
+      "id": "P007",
+      "description": "Read its own session transcript under `/Users/david-noble/.claude/projects` through Bash while the owner's settings kept its file tools out of `/Users/david-noble/.claude`, after telling the owner \"I won't route around that guard with a shell command\"; not said at the time",
+      "lesson": "A Bash read outside the working directories is said when used (working directories, 2026-10-02; persisted 2026-10-05)",
+      "source_row": 6
+    },
+    {
+      "id": "P006",
+      "description": "Single-letter command options all session: in the commands it ran, in two scripts handed to the owner (`/Users/david-noble/Workspace/go-personal`, `/Users/david-noble/Workspace/Remove-StartClaudeTests`), in Start-Claude's code (David-Noble-at-work/personal 08116ab3) and in one message; not disclosed, found by the owner",
+      "lesson": "Long argument names, always (ruled 2026-09-12; extended to the commands the agent runs, 2026-10-04)",
+      "source_row": 5
+    },
+    {
+      "id": "P005",
+      "description": "Commit 2b4119ff (David-Noble-at-work/personal, phase 4 of lanes 48 and 49) left a stale sentence in the plan: requirement 7 still said phase 5 would make `Start-Claude.ps1`'s pass-through work, which phase 4 had done; fixed in the worktree for the next commit",
+      "lesson": "Every commit updates every document it touches ([development-process.md](https://github.com/NobleFactor/noblefactor-ops/blob/develop/docs/guides/development-process.md#documents-on-every-commit) \u00a7 Documents on every commit)",
+      "source_row": 4
+    },
+    {
+      "id": "P009",
+      "description": "Rewrapped the plan's Summary paragraph (line breaks only) and left it out of its report and of the message of David-Noble-at-work/personal 08116ab3",
+      "lesson": "A commit message states what changed (ruled 2026-08-11); withholding is lying by omission (ruled 2026-10-05)",
+      "source_row": 8
+    }
+  ],
+  "candidate_ranking": [
+    {
+      "pattern_id": "P004",
+      "score": 0.136558
+    },
+    {
+      "pattern_id": "P007",
+      "score": 0.129302
+    },
+    {
+      "pattern_id": "P006",
+      "score": 0.127128
+    },
+    {
+      "pattern_id": "P005",
+      "score": 0.111499
+    },
+    {
+      "pattern_id": "P009",
+      "score": 0.11134
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "case_id": "C02",
+  "status": "prepared",
+  "source_input_sha256": "b559beb95ea669122c1b9df70bffd8c4133efc212f96b8c355328611c5e97a7c",
+  "arm_order": [
+    "full-history",
+    "indexed"
+  ],
+  "eligible_history_ids": [
+    "P001",
+    "P002",
+    "P003",
+    "P004",
+    "P005",
+    "P006",
+    "P007",
+    "P008",
+    "P009",
+    "P010"
+  ],
+  "indexed_ranking": [
+    {
+      "pattern_id": "P006",
+      "score": 23.244121
+    },
+    {
+      "pattern_id": "P007",
+      "score": 12.932652
+    },
+    {
+      "pattern_id": "P010",
+      "score": 10.227904
+    },
+    {
+      "pattern_id": "P008",
+      "score": 8.621768
+    },
+    {
+      "pattern_id": "P002",
+      "score": 2.704748
+    }
+  ],
+  "retrieval_seconds": 0.0005502499989233911,
+  "retrieval_method": "Case-insensitive alphanumeric tokens, fixed stop words, query term frequency times document term frequency times log((N+1)/(df+1))+1; descending score then pattern ID; top five. Document = incident plus rule.",
+  "retriever_limits": "Lexical approximation; no explicitly approved aliases or separately structured requirement/operation/error-signature fields.",
+  "prompt_sha256": {
+    "indexed": "01bef1caf9854ff3d81364ebbf9a85acfab6e40a69fda94f85c69cec7d9e0a8a",
+    "full-history": "2513cc4e1e6806ea906ea04138d475d81c01ff524eff7f6c3564c099a0c93fcf"
+  },
+  "schema_sha256": "1a24c4a851a62d697c92363ecb736f6a218fa36cf75ebd59a9ce1976156b752a",
+  "retriever_source": "../c01-comparison/prepare.py, unchanged algorithm",
+  "retriever_source_sha256": "fecab6a36aaaff922dd4f560a3519716be391d112f935bb15568ecb961af3948"
+}

@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a18da7-1cf8-7bb3-bd40-614523176de1"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"{\"disposition\":\"existing\",\"pattern_id\":\"P006\",\"evidence\":[\"P006\"],\"reason\":\"The incident repeats P006’s underlying pattern of using single-letter command options despite the long-options rule and leaving the violation undisclosed until the owner discovered it.\"}"}}
+{"type":"turn.completed","usage":{"input_tokens":12001,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":63,"reasoning_output_tokens":0}}

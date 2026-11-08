@@ -1,0 +1,20 @@
+{
+  "task": "NobleFactor/noblefactor-engprod#421",
+  "parent_feature": "NobleFactor/noblefactor-engprod#316",
+  "epic": "NobleFactor/noblefactor-engprod#142",
+  "cli_version": "codex-cli 0.165.0",
+  "login_route": "ChatGPT",
+  "api_key_environment_present": false,
+  "cli_support_observed": [
+    "--json",
+    "--ephemeral",
+    "--output-schema",
+    "--sandbox read-only"
+  ],
+  "canonical_git_metadata_writable": false,
+  "model_evaluations_run": 0,
+  "accounting_limit": "ChatGPT usage is not an API invoice. Model configuration, per-request attribution, rate semantics and credible spend bounds remain prerequisites.",
+  "worktree_command": "git -C ~/Workspace/NobleFactor/noblefactor-engprod open-branch 421 --target develop --type feature --name incident-reporting-trial",
+  "expected_worktree": "~/Workspace/NobleFactor/noblefactor-engprod.421-incident-reporting-trial",
+  "status": "Waiting for own worktree; accounting preflight not complete."
+}

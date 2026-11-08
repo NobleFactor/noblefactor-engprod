@@ -1,0 +1,8 @@
+{
+  "disposition": "existing",
+  "pattern_id": "P006",
+  "evidence": [
+    "P006"
+  ],
+  "reason": "The incident repeats P006\u2019s use of single-letter command options despite the long-option rule, without disclosure before the owner objected."
+}

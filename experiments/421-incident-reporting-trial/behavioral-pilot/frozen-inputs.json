@@ -1,0 +1,49 @@
+{
+  "frozen_at": "2026-10-30T19:42:29.688547+00:00",
+  "authorization": "Owner approved a bounded two-invocation behavioral pilot within the existing weekly stop point; original investigation remains open",
+  "model_requested": "gpt-6.1-sol",
+  "reasoning_effort": "low",
+  "settings": [
+    "model_provider=\"incident_trial\"",
+    "model_providers.incident_trial.name=\"OpenAI\"",
+    "model_providers.incident_trial.requires_openai_auth=true",
+    "model_providers.incident_trial.request_max_retries=0",
+    "model_providers.incident_trial.stream_max_retries=0",
+    "model_providers.incident_trial.supports_websockets=false",
+    "web_search=\"disabled\"",
+    "model_reasoning_effort=\"low\"",
+    "features.shell_tool=true",
+    "features.unified_exec=true"
+  ],
+  "sandbox": "workspace-write",
+  "approval_policy": "never",
+  "timeout_seconds_per_invocation": 120,
+  "arm_order": [
+    "usual",
+    "lesson-assisted"
+  ],
+  "fixture_initial_sha256": "dd96d319100bde9547e9d7ba7f963cd4184cda50424e59e72c50abea3cca7d5c",
+  "files": {
+    "task.md": "8e7b3305492d82465862fa1dcd59d5442930f3595a7d3f38e6e81ff44f757947",
+    "lesson.md": "1c3f0ff7091b57f5cc11faede16ed6c9e7c4c1395577b184ff459d0e1447283f",
+    "fixture/install.ps1": "dd96d319100bde9547e9d7ba7f963cd4184cda50424e59e72c50abea3cca7d5c",
+    "check-syntax.ps1": "e0eba7658c24802e3950fb29fc0741deef5eca2b73a5f3ce4c69d3bc97979cda",
+    "behavior-checklist.md": "bbb35f0f06a4f8113af287efd82c25ad37cb16e02b0cbb4215ac7bf04b5eabed",
+    "run.py": "0832e5b6ae63d9cc9ce5759efe550392cf28e7a53cb6f76a44099d5b1a74e9b9",
+    "export.py": "73e6d122a110b2221959f2cece1685612d024f1b7c6d551a0990eaa878dde613",
+    "../calibration/c02-comparison/run.py": "f291fe571cfbd7397336b0b1f491f0cc44df803b8cf851b9fc8824a35c6be3e5",
+    "../calibration/read_usage.py": "96afa5037315d4635ef98d6286cc06be9972de5300f8459af793c585d4c806ef"
+  },
+  "ordinary_prompt_sha256": "8e7b3305492d82465862fa1dcd59d5442930f3595a7d3f38e6e81ff44f757947",
+  "assisted_prompt_sha256": "e96fbbcade910092834fbc13ea4ab19325a24f1e7ab72e2918de7fac8a910b55",
+  "weekly_baseline": 3,
+  "weekly_stop_percent": 4,
+  "window_reset": 1793805961,
+  "instrumentation_amendments": [
+    {
+      "at": "2026-11-01T03:26:03.107326+00:00",
+      "reason": "Retain the initial meter snapshot when validation rejects it; no behavioral inputs, settings, budget or evaluator invocation changed",
+      "previous_manifest_sha256": "07bb9fed03008d81c63cf4e44b3c5f1a06a89031251b28ce0e517da47aff34d4"
+    }
+  ]
+}

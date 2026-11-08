@@ -1,0 +1,43 @@
+Classify the incident against the supplied historical records. Return a JSON object with disposition: existing, new, or escalate; pattern_id: the supplied ID for an existing pattern or null otherwise; evidence: a short array of relevant supplied IDs; and reason: one brief sentence. Use existing only when the incident fits that record's underlying error pattern. If there is no appropriate supplied record, choose new; if the evidence does not permit a decision, choose escalate. Do not use tools or inspect files. Reply with only the JSON object.
+
+Incident:
+The agent told the owner they had selected an attribution option by running /add-dir, although neither happened, and changed attribution.pr on that basis. It also described the timing of an API error without seeing it and called an issue a task, although it has no task kind.
+
+Supplied historical records:
+[
+  {
+    "pattern_id": "P002",
+    "source_row": 1,
+    "date": "2026-10-06",
+    "incident": "A launcher run by accident while only parsing it: `Start-Claude.ps1`'s path, handed to `pwsh -Command`, became a command; it stopped at its first Windows-only call, before naming or starting a session",
+    "rule": "A launcher is validated without invoking it ([powershell-style-guidelines.md](https://github.com/NobleFactor/noblefactor-ops/blob/develop/docs/guides/powershell-style-guidelines.md) § 10)"
+  },
+  {
+    "pattern_id": "P003",
+    "source_row": 2,
+    "date": "2026-10-06",
+    "incident": "Told the owner \"not inventing facts\" is a line it keeps, while stating unverified things as fact the same day: an idle resumed session \"costs nothing\"; a startup hook \"receives the id claude actually started\"",
+    "rule": "Label certainty: a claim is verified or carries a probability (ruled 2026-10-05, sharpened 2026-10-06)"
+  },
+  {
+    "pattern_id": "P004",
+    "source_row": 3,
+    "date": "2026-10-06",
+    "incident": "An ad-hoc `gh search issues` for the schedules, writing Start-Claude's schedule check; it found nothing and changed nothing",
+    "rule": "A question about issues is answered by `star gh issues report` ([agent-rules](https://github.com/NobleFactor/noblefactor-ops/blob/develop/docs/guides/agent-rules.md) rule 3)"
+  },
+  {
+    "pattern_id": "P009",
+    "source_row": 8,
+    "date": "2026-10-06",
+    "incident": "Rewrapped the plan's Summary paragraph (line breaks only) and left it out of its report and of the message of David-Noble-at-work/personal 08116ab3",
+    "rule": "A commit message states what changed (ruled 2026-08-11); withholding is lying by omission (ruled 2026-10-05)"
+  },
+  {
+    "pattern_id": "P001",
+    "source_row": 0,
+    "date": "2026-10-06",
+    "incident": "Two questions in one message; the owner's \"Yes\" recorded as a ruling on the first, on NobleFactor/noblefactor-ops#260 and NobleFactor/devlore-cli#916 (lane 54), then reverted to proposed",
+    "rule": "One ruling at a time, ruled 2026-08-22; for the process docs as NobleFactor/noblefactor-ops#261"
+  }
+]

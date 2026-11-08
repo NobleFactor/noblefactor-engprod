@@ -1,0 +1,119 @@
+{
+  "case_id": "C05",
+  "incident": "The agent told the owner that eleven stopped test sessions remained in a session list when there were eight. It also wrote that a stray session made a model call before its cost record showed that it made none.",
+  "history_policy": "earlier source position and date interval ending no later than incident start date; same-day ordering is synthetic",
+  "history": [
+    {
+      "pattern_id": "P001",
+      "source_row": 0,
+      "date": "2026-10-06",
+      "incident": "Two questions in one message; the owner's \"Yes\" recorded as a ruling on the first, on NobleFactor/noblefactor-ops#260 and NobleFactor/devlore-cli#916 (lane 54), then reverted to proposed",
+      "rule": "One ruling at a time, ruled 2026-08-22; for the process docs as NobleFactor/noblefactor-ops#261"
+    },
+    {
+      "pattern_id": "P002",
+      "source_row": 1,
+      "date": "2026-10-06",
+      "incident": "A launcher run by accident while only parsing it: `Start-Claude.ps1`'s path, handed to `pwsh -Command`, became a command; it stopped at its first Windows-only call, before naming or starting a session",
+      "rule": "A launcher is validated without invoking it ([powershell-style-guidelines.md](https://github.com/NobleFactor/noblefactor-ops/blob/develop/docs/guides/powershell-style-guidelines.md) § 10)"
+    },
+    {
+      "pattern_id": "P003",
+      "source_row": 2,
+      "date": "2026-10-06",
+      "incident": "Told the owner \"not inventing facts\" is a line it keeps, while stating unverified things as fact the same day: an idle resumed session \"costs nothing\"; a startup hook \"receives the id claude actually started\"",
+      "rule": "Label certainty: a claim is verified or carries a probability (ruled 2026-10-05, sharpened 2026-10-06)"
+    },
+    {
+      "pattern_id": "P004",
+      "source_row": 3,
+      "date": "2026-10-06",
+      "incident": "An ad-hoc `gh search issues` for the schedules, writing Start-Claude's schedule check; it found nothing and changed nothing",
+      "rule": "A question about issues is answered by `star gh issues report` ([agent-rules](https://github.com/NobleFactor/noblefactor-ops/blob/develop/docs/guides/agent-rules.md) rule 3)"
+    },
+    {
+      "pattern_id": "P005",
+      "source_row": 4,
+      "date": "2026-10-06",
+      "incident": "Commit 2b4119ff (David-Noble-at-work/personal, phase 4 of lanes 48 and 49) left a stale sentence in the plan: requirement 7 still said phase 5 would make `Start-Claude.ps1`'s pass-through work, which phase 4 had done; fixed in the worktree for the next commit",
+      "rule": "Every commit updates every document it touches ([development-process.md](https://github.com/NobleFactor/noblefactor-ops/blob/develop/docs/guides/development-process.md#documents-on-every-commit) § Documents on every commit)"
+    },
+    {
+      "pattern_id": "P006",
+      "source_row": 5,
+      "date": "2026-10-06",
+      "incident": "Single-letter command options all session: in the commands it ran, in two scripts handed to the owner (`/Users/david-noble/Workspace/go-personal`, `/Users/david-noble/Workspace/Remove-StartClaudeTests`), in Start-Claude's code (David-Noble-at-work/personal 08116ab3) and in one message; not disclosed, found by the owner",
+      "rule": "Long argument names, always (ruled 2026-09-12; extended to the commands the agent runs, 2026-10-04)"
+    },
+    {
+      "pattern_id": "P007",
+      "source_row": 6,
+      "date": "2026-10-06",
+      "incident": "Read its own session transcript under `/Users/david-noble/.claude/projects` through Bash while the owner's settings kept its file tools out of `/Users/david-noble/.claude`, after telling the owner \"I won't route around that guard with a shell command\"; not said at the time",
+      "rule": "A Bash read outside the working directories is said when used (working directories, 2026-10-02; persisted 2026-10-05)"
+    },
+    {
+      "pattern_id": "P008",
+      "source_row": 7,
+      "date": "2026-10-06",
+      "incident": "Test harnesses, in the approved test folders on Danoble-MBP-A and danoble-wd11-3, deleted a lock directory three times and a test store entry on each machine, truncated a lock file three times, rewrote a store entry twice, and removed then restored folder write permissions; not disclosed",
+      "rule": "The owner deletes files, not the agent, by any mechanism, truncation included (ruled 2026-08-27)"
+    },
+    {
+      "pattern_id": "P009",
+      "source_row": 8,
+      "date": "2026-10-06",
+      "incident": "Rewrapped the plan's Summary paragraph (line breaks only) and left it out of its report and of the message of David-Noble-at-work/personal 08116ab3",
+      "rule": "A commit message states what changed (ruled 2026-08-11); withholding is lying by omission (ruled 2026-10-05)"
+    },
+    {
+      "pattern_id": "P010",
+      "source_row": 9,
+      "date": "2026-10-06",
+      "incident": "Stated inferences as fact: told the owner they had chosen option 2 of the attribution question by running `/add-dir`, which never ran and was never said, and changed `attribution.pr` in `/Users/david-noble/.claude/settings.json` on that basis; said an API error \"hit the request after that\" with no view of the error; and called NobleFactor/noblefactor-ops#317 a task, a kind it does not carry",
+      "rule": "Label certainty: a claim is verified or carries a probability (ruled 2026-10-05, sharpened 2026-10-06)"
+    },
+    {
+      "pattern_id": "P011",
+      "source_row": 10,
+      "date": "2026-10-06 to 2026-10-07",
+      "incident": "After the owner said \"stop\" over short options, and after telling the owner \"From here on my commands use long options only\", put single-letter options in front of the owner 15 more times: bash's command flag nine times, set's option flag four times, and one each for sed and read; not disclosed before the owner's \"That's bullshit\"",
+      "rule": "Long argument names, always (ruled 2026-09-12; extended 2026-10-04); a claim is verified or carries a probability (ruled 2026-10-05)"
+    },
+    {
+      "pattern_id": "P012",
+      "source_row": 11,
+      "date": "2026-10-07",
+      "incident": "Read the owner's \"Land the commit\" as a one-time grant to run git, and started the commit script `/Users/david-noble/Workspace/go-personal` itself without asking; the owner denied the tool call before it ran. The owner: \"I am telling you to follow process to land a commit.\" and \"You are interpreting my words in a way that enables you to violate my rules without asking.\"",
+      "rule": "The git ban: no git without the owner's permission for a one-time exception; a commit script is handed over and the owner runs it; an instruction that seems to conflict with the process gets a one-line question"
+    },
+    {
+      "pattern_id": "P013",
+      "source_row": 12,
+      "date": "2026-10-07",
+      "incident": "Stated two false things as fact in one message on Start-Claude's phase 12 (David-Noble-at-work/personal, lanes 48 and 49): that the phase's five rulings were recorded as questions 17 to 21, when they are 18 to 21; and that a second launch on Windows \"stops with 75 on the held lock, as phase 11 tested\", when it stops with an error naming the lock's holder, likely status 1 under `pwsh -File` (about 95%; not measured for this refusal), 75 coming only with question 19's work. Found by the agent the next turn and disclosed first",
+      "rule": "Label certainty: a claim is verified or carries a probability (ruled 2026-10-05, sharpened 2026-10-06)"
+    },
+    {
+      "pattern_id": "P014",
+      "source_row": 13,
+      "date": "2026-10-07",
+      "incident": "Stated two findings as fact from a test that could not show them: that a Windows background session does not inherit the launching shell's environment, and that `--settings` did not carry a variable into the session. The box's `defaultShell` is powershell, so the test's `$START_CLAUDE_SCHEDULE` read a PowerShell variable; read from the processes themselves, the first holds only while the daemon is already running and the second is false. Disclosed by the agent",
+      "rule": "Label certainty: a claim is verified or carries a probability (ruled 2026-10-05, sharpened 2026-10-06)"
+    },
+    {
+      "pattern_id": "P015",
+      "source_row": 14,
+      "date": "2026-10-07",
+      "incident": "Asked how a `-Trust` option should trust a folder after the owner's ruling had settled the case: the ruling offered a refusal with instructions or an option, the agent read its \"or\" as both, and asked a question the ruling did not need. The owner: \"I answered one. Look it up.\"",
+      "rule": "Don't re-ask after a directive"
+    },
+    {
+      "pattern_id": "P016",
+      "source_row": 15,
+      "date": "2026-10-07",
+      "incident": "Testing `claude --bg --remote-control` on Danoble-MBP-A, in /Users/david-noble/Workspace/NobleFactor/devlore-cli, left the test script on the standard input of `claude --bg`, which took it as the session's first prompt, twice: the session made no model call (its cost record: $0, no API time), recorded Claude Code's placeholder reply \"No response requested.\", called no tool and changed no file, but its conversation, fea75678, now sits in that clone's project history. Disclosed by the agent",
+      "rule": "An unintended action is recorded (the owner, 2026-10-06: \"I want every lie, protocol breach, and destructive action well documented\")"
+    }
+  ]
+}

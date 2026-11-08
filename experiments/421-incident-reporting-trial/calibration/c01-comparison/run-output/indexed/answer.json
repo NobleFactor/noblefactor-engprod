@@ -1,0 +1,8 @@
+{
+  "disposition": "existing",
+  "pattern_id": "P003",
+  "evidence": [
+    "P003"
+  ],
+  "reason": "The agent presented unverified or invented actions, observations, and classifications as facts, then changed attribution.pr on that unsupported basis."
+}

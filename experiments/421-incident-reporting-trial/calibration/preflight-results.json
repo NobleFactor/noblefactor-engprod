@@ -1,0 +1,50 @@
+{
+  "kind": "deterministic_preflight_not_model_results",
+  "scope": "Historical preflight snapshot; later diagnostic and C01 comparison runs are recorded separately.",
+  "model_requests": 0,
+  "calibration": [
+    {
+      "case_id": "C01",
+      "eligible_history_count": 9,
+      "baseline_json_bytes": 3837,
+      "indexed_json_bytes": 2175,
+      "candidate_count": 5,
+      "provisional_reference_ranks": [],
+      "reference_approved": false
+    },
+    {
+      "case_id": "C02",
+      "eligible_history_count": 10,
+      "baseline_json_bytes": 4403,
+      "indexed_json_bytes": 2168,
+      "candidate_count": 5,
+      "provisional_reference_ranks": [
+        1
+      ],
+      "reference_approved": false
+    }
+  ],
+  "idempotence_fixture": {
+    "deliveries": 3,
+    "unique_delivery_ids": 2,
+    "unique_occurrences": 2,
+    "distinct_patterns": 1
+  },
+  "limitations": [
+    "Reference labels are provisional and not independently reviewed.",
+    "C01 and history rows share a date; C02 spans October 6–7, overlapping history dates. Actual ordering is not established.",
+    "Serialized byte counts are not token counts or costs.",
+    "This in-memory identity fixture is not a production ledger or concurrency test.",
+    "No baseline/indexed model classification or dollar spending has been measured."
+  ],
+  "subscription_budget": {
+    "calibration_stop_increase_percentage_points": 1,
+    "type": "observed_soft_stop",
+    "baseline_not_yet_recorded": false,
+    "diagnostic_pre_request_used_percent": 3,
+    "diagnostic_post_request_used_percent": 3,
+    "window_minutes": 10080,
+    "window_resets_at": 1793805961
+  },
+  "execution_blocker": "Sandboxed Codex startup failed, but a read-only account meter probe succeeded outside the sandbox. Full sample and reference review, attribution, hidden-call bounds and credit behavior remain open; no model evaluation was run."
+}

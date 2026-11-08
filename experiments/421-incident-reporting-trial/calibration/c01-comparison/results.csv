@@ -1,0 +1,3 @@
+case_id,arm,thread_id,disposition,pattern_id,evidence,reason,matches_owner_accepted_grouping,cli_elapsed_seconds,retrieval_computation_seconds,validation_seconds_rounded,recording_seconds,manual_review_seconds
+C01,indexed,01a18aeb-f9cf-71e3-90a6-ebdb09020f34,existing,P003,P003,"The agent presented unverified or invented actions, observations, and classifications as facts, then changed attribution.pr on that unsupported basis.",True,6.905,0.00023424997925758362,0.0,,
+C01,full-history,01a18aec-18c7-72d1-9fb9-bb3d3b97ebc0,existing,P003,P003,"The agent presented invented owner actions and unobserved API-error details as facts, matching the pattern of stating unverified claims as established.",True,4.334,,0.0,,

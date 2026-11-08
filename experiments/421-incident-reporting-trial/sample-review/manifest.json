@@ -1,0 +1,108 @@
+{
+  "status": "provisional_not_approved",
+  "source_sha256": "48d3120ea7a31d674a1c65a99733376d67bb131709a689b0dfb96b00648c489c",
+  "source_issue": "https://github.com/NobleFactor/noblefactor-engprod/issues/317",
+  "history_rule": "Earlier source position; source date range ends no later than case start date. Equal-date positions are synthetic and not proven historical order.",
+  "pattern_id_rule": "P plus one-based source row: each is a historical anchor, not a deduplicated equivalence class.",
+  "distinct_cases": 16,
+  "retransmissions": 4,
+  "model_evaluations": 0,
+  "inputs": [
+    {
+      "case_id": "C01",
+      "file": "inputs/C01.json",
+      "sha256": "d1952aed1a793fe6da7dc5d0fbbaf89facf6d4fb182d988ce74f0ba15bda4887",
+      "history_count": 9
+    },
+    {
+      "case_id": "C02",
+      "file": "inputs/C02.json",
+      "sha256": "b559beb95ea669122c1b9df70bffd8c4133efc212f96b8c355328611c5e97a7c",
+      "history_count": 10
+    },
+    {
+      "case_id": "C03",
+      "file": "inputs/C03.json",
+      "sha256": "cbf65e77ba3dd761ae6c4d74bfccbc5c53df48ec0238f42652f33aaaf941f15d",
+      "history_count": 12
+    },
+    {
+      "case_id": "C04",
+      "file": "inputs/C04.json",
+      "sha256": "073084ec17627746a92c1ce66c35c749d33a664b7080a12398198096a4d2b350",
+      "history_count": 13
+    },
+    {
+      "case_id": "C05",
+      "file": "inputs/C05.json",
+      "sha256": "3ac0025f5db984c8319d545c726ddb35da0885e1f7993b9ce075265d06d762ab",
+      "history_count": 16
+    },
+    {
+      "case_id": "C06",
+      "file": "inputs/C06.json",
+      "sha256": "0ea3bf859481c5a46a792f04dc3fb83b800d1fe92e2cd52c78cbc827e89f5146",
+      "history_count": 22
+    },
+    {
+      "case_id": "C07",
+      "file": "inputs/C07.json",
+      "sha256": "786f8d91c07ff7699be2f8b76392edf8ce651ce34e66e357bd5ebf8e84eb5730",
+      "history_count": 35
+    },
+    {
+      "case_id": "C08",
+      "file": "inputs/C08.json",
+      "sha256": "20939456485c60680f851b92106dae15fd0c8cd6e49de48fdf61ade777d0d3a7",
+      "history_count": 36
+    },
+    {
+      "case_id": "C09",
+      "file": "inputs/C09.json",
+      "sha256": "ad256268b8875dacff46923f0ec98e6a65bdfd64eb0f6f3f86f2a841be07aa16",
+      "history_count": 14
+    },
+    {
+      "case_id": "C10",
+      "file": "inputs/C10.json",
+      "sha256": "26ff28c5cf2cee4cd8336f926d9ff7bd4f1b7ef8e9e72f0be21e9292e7c36570",
+      "history_count": 20
+    },
+    {
+      "case_id": "C11",
+      "file": "inputs/C11.json",
+      "sha256": "a2a2edfb4342e1fee61349636adf06d14988fdcd138bf5d51dfbfea7ffb0be4a",
+      "history_count": 24
+    },
+    {
+      "case_id": "C12",
+      "file": "inputs/C12.json",
+      "sha256": "0ac79d024f8850b164bda351e2097fd6c2a7cc3b3b3478c88a8f2bdde939d688",
+      "history_count": 25
+    },
+    {
+      "case_id": "C13",
+      "file": "inputs/C13.json",
+      "sha256": "71892b70b02bcb79a2292f30c16f3cb4ee68e4b618e604e6150224692326fb33",
+      "history_count": 27
+    },
+    {
+      "case_id": "C14",
+      "file": "inputs/C14.json",
+      "sha256": "5228187b4e7c4b7a953d28f40560fd9f8901567a0ef55f5566308e7ebeda44bc",
+      "history_count": 28
+    },
+    {
+      "case_id": "C15",
+      "file": "inputs/C15.json",
+      "sha256": "12440f9f4168ec81e22c9f18aa9872e92a48950d37e9e2813135b0ef7d72786f",
+      "history_count": 19
+    },
+    {
+      "case_id": "C16",
+      "file": "inputs/C16.json",
+      "sha256": "80edfd7bb99a5f8b7d94bc84f6249df185462e4e20f25aa19aed3a5f7beada3b",
+      "history_count": 41
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "captured_at": "2026-11-01T02:44:28.533193+00:00",
+  "status": "execution_boundary",
+  "stage": "live_meter_before_any_evaluator",
+  "cli_evaluator_invocations": 0,
+  "error": "weekly window changed, became ambiguous, or reached the 4% stop point",
+  "stderr": null,
+  "observed_seconds": 1.8013623760198243
+}

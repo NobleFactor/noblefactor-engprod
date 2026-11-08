@@ -1,0 +1,21 @@
+case_id,event_id,occurrence_id,source_row,source_date,history_count,input_path,retransmission_of
+C01,E01,O01,9,2026-10-06,9,inputs/C01.json,
+C02,E02,O02,10,2026-10-06 to 2026-10-07,10,inputs/C02.json,
+C03,E03,O03,12,2026-10-07,12,inputs/C03.json,
+C04,E04,O04,13,2026-10-07,13,inputs/C04.json,
+C05,E05,O05,16,2026-10-07,16,inputs/C05.json,
+C06,E06,O06,22,2026-10-08,22,inputs/C06.json,
+C07,E07,O07,35,2026-10-09,35,inputs/C07.json,
+C08,E08,O08,36,2026-10-09,36,inputs/C08.json,
+C09,E09,O09,14,2026-10-07,14,inputs/C09.json,
+C10,E10,O10,20,2026-10-08,20,inputs/C10.json,
+C11,E11,O11,24,2026-10-08,24,inputs/C11.json,
+C12,E12,O12,25,2026-10-08,25,inputs/C12.json,
+C13,E13,O13,27,2026-10-08,27,inputs/C13.json,
+C14,E14,O14,28,2026-10-09,28,inputs/C14.json,
+C15,E15,O15,19,2026-10-07,19,inputs/C15.json,
+C16,E16,O16,44,2026-10-09,41,inputs/C16.json,
+C01,R01,O01,9,2026-10-06,9,inputs/C01.json,E01
+C02,R02,O02,10,2026-10-06 to 2026-10-07,10,inputs/C02.json,E02
+C07,R03,O07,35,2026-10-09,35,inputs/C07.json,E07
+C14,R04,O14,28,2026-10-09,28,inputs/C14.json,E14

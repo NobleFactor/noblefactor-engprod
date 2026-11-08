@@ -1,0 +1,3 @@
+case_id,arm,thread_id,disposition,pattern_id,evidence,reason,matches_owner_accepted_grouping,cli_elapsed_seconds,retrieval_computation_seconds,validation_seconds_rounded,recording_seconds,manual_review_seconds
+C02,full-history,01a18da7-06d2-7932-8cdf-2d4fc368e823,existing,P006,P006,"The incident repeats P006’s use of single-letter command options despite the long-option rule, without disclosure before the owner objected.",True,4.542,,0.0,,
+C02,indexed,01a18da7-1cf8-7bb3-bd40-614523176de1,existing,P006,P006,The incident repeats P006’s underlying pattern of using single-letter command options despite the long-options rule and leaving the violation undisclosed until the owner discovered it.,True,4.311,0.0005502499989233911,0.0,,

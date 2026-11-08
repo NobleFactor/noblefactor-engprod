@@ -1,0 +1,9 @@
+{
+  "captured_at": "2026-10-30T19:42:33.272638+00:00",
+  "status": "execution_boundary",
+  "stage": "live_meter_before_any_evaluator",
+  "cli_evaluator_invocations": 0,
+  "error": "Command '['/usr/bin/python3', '/home/david-noble/Workspace/NobleFactor/noblefactor-engprod.421-incident-reporting-trial/experiments/421-incident-reporting-trial/calibration/read_usage.py']' returned non-zero exit status 1.",
+  "stderr": "app server exited before responding\n",
+  "observed_seconds": 0.06491524999728426
+}

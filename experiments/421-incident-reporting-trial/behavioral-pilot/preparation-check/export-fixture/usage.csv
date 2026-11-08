@@ -1,0 +1,3 @@
+arm,completed_event_index,usage_status,provider_requests,provider_request_reason,input_tokens,cached_input_tokens,output_tokens,reasoning_output_tokens
+usual,0,reported_event_not_independently_reconciled,,CLI events do not establish provider-level counts,100,20,10,3
+lesson-assisted,,unavailable,,CLI events do not establish provider-level counts,,,,

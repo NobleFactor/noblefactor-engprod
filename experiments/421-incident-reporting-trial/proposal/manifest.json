@@ -1,0 +1,27 @@
+{
+  "status": "c01_c02_comparisons_complete_remaining_prerequisites_open",
+  "source_sha256": "48d3120ea7a31d674a1c65a99733376d67bb131709a689b0dfb96b00648c489c",
+  "source_url": "https://github.com/NobleFactor/noblefactor-engprod/issues/317",
+  "dated_incident_rows_observed": 159,
+  "comments_included": false,
+  "sample_selected": false,
+  "sample_selection_note": "A full 16-case sample and four retransmissions are proposed in ../sample-review but are not reviewed or frozen.",
+  "reference_approved": false,
+  "evaluations_run": 4,
+  "evaluations_run_note": "Four observed C01/C02 CLI comparison turns; provider request count is not established.",
+  "unscored_diagnostic_cli_turns": 1,
+  "project_created": false,
+  "github_task_created": true,
+  "telemetry_observation": {
+    "codex": "Current session log has token_count events and per-event/cumulative fields; billing semantics and per-trial request attribution not yet validated.",
+    "claude_code": "Not established."
+  },
+  "schema_files": [
+    "cases.csv",
+    "reference.csv",
+    "results.csv",
+    "usage.csv",
+    "cost-summary.csv"
+  ],
+  "github_task": "NobleFactor/noblefactor-engprod#421"
+}

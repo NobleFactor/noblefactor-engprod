@@ -1,0 +1,11 @@
+{
+  "kind": "synthetic_export_check_not_model_results",
+  "checks": [
+    "rebuild stable",
+    "subset counters kept separate",
+    "missing usage not zero-filled",
+    "unknown attention and dollars blank",
+    "no inferred trace verdict"
+  ],
+  "model_calls": 0
+}

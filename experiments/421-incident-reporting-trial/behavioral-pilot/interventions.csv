@@ -1,0 +1,2 @@
+event_id,run_id,case_id,category,reason,requested_at,resolved_at,active_seconds,evidence,duration_basis
+I001,pilot-startup-2026-11-01,behavioral-pair,owner_instruction,Owner directed execution of the previously approved pilot,,,,"Current conversation: read next-trial-step.md and execute the approved pilot",Unknown; active attention time was not measured

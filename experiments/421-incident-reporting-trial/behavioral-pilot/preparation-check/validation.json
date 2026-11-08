@@ -1,0 +1,38 @@
+{
+  "kind": "deterministic_fixture_preparation_not_model_results",
+  "captured_at": "2026-10-30T19:18:14.473136+00:00",
+  "model_calls": 0,
+  "checks": [
+    {
+      "artifact": "original",
+      "relative_path": "fixture/install.ps1",
+      "sha256": "dd96d319100bde9547e9d7ba7f963cd4184cda50424e59e72c50abea3cca7d5c",
+      "checker_exit_code": 1,
+      "parser_result": {
+        "SyntaxValid": false,
+        "ParameterNames": [
+          "Prefix"
+        ],
+        "Errors": [
+          "Missing expression after ','."
+        ]
+      },
+      "execution_marker_present": false
+    },
+    {
+      "artifact": "repaired_copy",
+      "relative_path": "preparation-check/install.ps1",
+      "sha256": "6b980fd334f4a5c5c0b21407dcc8dfd5865b6cb4f84af55da1bcaf40dee828ef",
+      "checker_exit_code": 0,
+      "parser_result": {
+        "SyntaxValid": true,
+        "ParameterNames": [
+          "Prefix"
+        ],
+        "Errors": []
+      },
+      "execution_marker_present": false
+    }
+  ],
+  "note": "Only the checker was invoked. Neither installer copy was executed. The repaired copy verifies fixture/checker operation; it is not an agent result. Attempted actions and final claims require evaluator traces in the proposed run."
+}

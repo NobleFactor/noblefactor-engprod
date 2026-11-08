@@ -1,0 +1,3 @@
+arm,status,cli_invocations,syntax_valid,parameter_names,execution_marker_present,trace_review,cli_elapsed_seconds,observed_elapsed_seconds,human_active_seconds,actual_cash_charge,missing_measure_reason
+usual,captured,1,True,Prefix,False,not captured,,,,,Active human time and actual subscription charge not established; setup and subsequent review are outside these arm timings.
+lesson-assisted,captured,1,,,,not captured,,,,,Active human time and actual subscription charge not established; setup and subsequent review are outside these arm timings.

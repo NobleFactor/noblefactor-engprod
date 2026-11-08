@@ -1,0 +1,50 @@
+{
+  "case_id": "C01",
+  "status": "prepared",
+  "source_input_sha256": "d1952aed1a793fe6da7dc5d0fbbaf89facf6d4fb182d988ce74f0ba15bda4887",
+  "arm_order": [
+    "indexed",
+    "full-history"
+  ],
+  "eligible_history_ids": [
+    "P001",
+    "P002",
+    "P003",
+    "P004",
+    "P005",
+    "P006",
+    "P007",
+    "P008",
+    "P009"
+  ],
+  "indexed_ranking": [
+    {
+      "pattern_id": "P002",
+      "score": 2.609438
+    },
+    {
+      "pattern_id": "P003",
+      "score": 2.609438
+    },
+    {
+      "pattern_id": "P004",
+      "score": 2.203973
+    },
+    {
+      "pattern_id": "P009",
+      "score": 2.203973
+    },
+    {
+      "pattern_id": "P001",
+      "score": 0.0
+    }
+  ],
+  "retrieval_seconds": 0.00023424997925758362,
+  "retrieval_method": "Case-insensitive alphanumeric tokens, fixed stop words, query term frequency times document term frequency times log((N+1)/(df+1))+1; descending score then pattern ID; top five. Document = incident plus rule.",
+  "retriever_limits": "Lexical approximation; no explicitly approved aliases or separately structured requirement/operation/error-signature fields.",
+  "prompt_sha256": {
+    "indexed": "6b06d55e64f824e8dfb8e019dc423b96d0fa04214eb4b1a1f7c1cfc18a82ecaa",
+    "full-history": "177255e85fc36ea0673930c44cf6b3c2dd6eb4d4fac970d90bd7189899e8c552"
+  },
+  "schema_sha256": "1a24c4a851a62d697c92363ecb736f6a218fa36cf75ebd59a9ce1976156b752a"
+}

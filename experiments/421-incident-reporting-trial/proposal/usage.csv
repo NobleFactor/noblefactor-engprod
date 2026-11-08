@@ -1,0 +1,1 @@
+request_id,run_id,event_id,usage_source,input_tokens,cached_input_tokens,cache_write_input_tokens,output_tokens,reasoning_output_tokens,counter_semantics,rate_card_id,calculated_usd,actual_incremental_usd,cost_status
