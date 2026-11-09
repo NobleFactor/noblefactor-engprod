@@ -149,9 +149,11 @@ The documents do not settle these. Each is a proposal for the owner to change at
 
 ### Phase 8: proved on GitHub
 
-- [ ] `star github schedule report David-Noble-at-work/personal` and `star github triage sweep` read the account's
+- [x] `star github schedule report David-Noble-at-work/personal` and `star github triage sweep` read the account's
       model from David-Noble-at-work/.github; personal's new-issue page offers the six forms with the table and links
-      `CONTRIBUTING.md`; a comment on #441 and on personal#311 shows both
+      `CONTRIBUTING.md`; a comment on #441 and on personal#311 shows both: the forms
+      seen by the owner on personal's chooser page, 2026-11-09;
+      https://github.com/NobleFactor/noblefactor-engprod/issues/441#issuecomment-6752288742
 
 ### Phase 9: merge
 
