@@ -5,7 +5,8 @@
 
 # Test-StarGitHub - Tests the com.noblefactor.ops.GitHub star extension against a stand-in gh: the model's load and pull
 # (#376, and the part of #426 they need), the report's records and selection (#379), and the triage sweep (#436), as
-# docs/plans/feature/436-triage-sweep.md's test plan lists them
+# docs/plans/feature/436-triage-sweep.md's test plan lists them; and the organization's model read from its .github
+# repository by ETag, with a copy kept (#431), as docs/plans/feature/431-dot-github.md's test plan lists them
 
 [[ -r "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" ]] || {
     printf '%s: cannot find Declare-BashScript in %s\n' "${0##*/}" "$(dirname "$0")/../Home/common/.local/bin" >&2
@@ -62,24 +63,29 @@ function sign_model {
 }
 
 # make_extension lays out an extension directory as writ deploys one: this checkout's manifest, commands and reference
-# models, linked, and the two fixture models, copied and signed, so that a case may change a model.
+# models, linked, and the user account's fixture model beside them, copied and signed, so that a case may change a
+# model. The organization's model is not beside them: it is NobleFactor/.github's model.yaml (#431), which the stand-in
+# serves from `$1`/remote/NobleFactor/.github/model.yaml, a GitHub of the data directory's own.
 #
 # Parameters:
 #   - `$1`: the data directory to make, which star is given as XDG_DATA_HOME.
-#   - `$2`: the organization's model, a file; optional, the fixture's by default.
+#   - `$2`: the organization's model, a file; optional, the fixture's by default; `none` for NobleFactor/.github to
+#     hold none.
 #   - `$3`: the user account's model, a file; optional, the fixture's by default; `none` for the account to have none.
 #
 # Returns:
 #   - 0, with `$1`/devlore/star/extensions/com.noblefactor.ops.GitHub laid out.
 function make_extension {
-    local directory="$1/devlore/star/extensions/${extension_name}"
+    local directory="$1/devlore/star/extensions/${extension_name}" remote="$1/remote/NobleFactor/.github"
 
-    mkdir -p -- "${directory}"
+    mkdir -p -- "${directory}" "${remote}"
     ln -s -- "${extension_source}/extension.yaml" "${directory}/extension.yaml"
     ln -s -- "${extension_source}/commands" "${directory}/commands"
     ln -s -- "${extension_source}/reference" "${directory}/reference"
-    cp -- "${2:-${run_directory}/models/model.yaml}" "${directory}/model.yaml"
-    sign_model "${directory}/model.yaml"
+    if [[ "${2:-}" != none ]]; then
+        cp -- "${2:-${run_directory}/models/model.yaml}" "${remote}/model.yaml"
+        sign_model "${remote}/model.yaml"
+    fi
     if [[ "${3:-}" != none ]]; then
         cp -- "${3:-${run_directory}/models/model.test-user.yaml}" "${directory}/model.test-user.yaml"
         sign_model "${directory}/model.test-user.yaml"
@@ -90,7 +96,8 @@ function make_extension {
 # project-local extension or configuration reaches it.
 #
 # Sets `output`, `errors` and `status`, and empties the calls the stand-in recorded before it runs. star runs with
-# --silent unless `quiet` is set empty: an extension that fails to load says why only in star's narration.
+# --silent unless `quiet` is set empty: an extension that fails to load says why only in star's narration. Its cache is
+# `cache_home`, which a case may point elsewhere to start from none.
 #
 # Parameters:
 #   - `$1`: the data directory make_extension made.
@@ -107,7 +114,7 @@ function run_star {
     status=0
     output="$(
         cd "${run_directory}/work" &&
-            PATH="${run_directory}/bin:${PATH}" XDG_DATA_HOME="${data}" XDG_CACHE_HOME="${run_directory}/cache" \
+            PATH="${run_directory}/bin:${PATH}" XDG_DATA_HOME="${data}" XDG_CACHE_HOME="${cache_home}" \
                 XDG_CONFIG_HOME="${run_directory}/config" XDG_STATE_HOME="${run_directory}/state-home" \
                 GH_FIXTURES="${run_directory}/fixtures" GH_CALLS="${run_directory}/calls.jsonl" \
                 GH_STATE="${run_directory}/state" star "$@" ${quiet} 2>"${run_directory}/errors"
@@ -157,6 +164,29 @@ function expect {
     failures=$((failures + 1))
 }
 
+# check counts a case decided by a command rather than by star's output: a file the run left, or what the stand-in
+# answered, as ${run_directory}/state records it.
+#
+# Parameters:
+#   - `$1`: the case's name.
+#   - `${@:2}`: the command, which must succeed.
+#
+# Returns:
+#   - 0, the case counted as passed or failed.
+function check {
+    local name="$1"
+    shift 1
+
+    case_count=$((case_count + 1))
+    if "$@"; then
+        success "${name}"
+        return 0
+    fi
+    error 0 "${name}: this did not hold: $*"
+    printf '    errors: %s\n' "${errors:0:2000}" >&2
+    failures=$((failures + 1))
+}
+
 # write_stand_in writes the stand-in for gh to the run's bin directory.
 #
 # It records each call as a JSON array of its arguments, one per line of ${GH_CALLS}, and answers from ${GH_FIXTURES}:
@@ -164,6 +194,12 @@ function expect {
 # JSON array of responses, one per page; --paginate answers every page and a request without it the first, and --jq
 # is applied to each, as gh does. An addition to a project is remembered in ${GH_STATE}, so that reading the row back
 # finds it.
+#
+# An account's model, repos/<account>/.github/contents/model.yaml, is answered as GitHub answered it on 2026-11-09:
+# from ${XDG_DATA_HOME}/remote/<account>/.github/model.yaml, raw when asked for the raw media type, with an ETag of its
+# content; 304 Not Modified, exiting 1, when If-None-Match names that ETag; 404 when there is no file. With
+# ${XDG_DATA_HOME}/unreachable present, it is the read gh makes with no connection: a message, exit 1, and no answer.
+# Each answer's status is recorded in ${GH_STATE} as `contents <account> <status>`.
 #
 # Returns:
 #   - 0, the stand-in written and executable.
@@ -204,6 +240,7 @@ case "${1:-} ${2:-}" in
 esac
 
 declare -A vars=()
+declare -a headers=()
 paginate=0 jq_program="" rest_path="" include=0
 shift 1
 while (($#)); do
@@ -219,7 +256,10 @@ while (($#)); do
             shift 1
             ;;
         -i) include=1 ;;
-        -H) shift 1 ;;
+        -H)
+            headers+=("$2")
+            shift 1
+            ;;
         *) rest_path="$1" ;;
     esac
     shift 1
@@ -227,6 +267,40 @@ done
 
 if [[ "${rest_path}" != graphql ]]; then
     ((include)) || { printf 'stand-in gh: a REST call without -i: %s\n' "${rest_path}" >&2; exit 1; }
+    if [[ "${rest_path}" =~ ^repos/([^/]+)/\.github/contents/model\.yaml$ ]]; then
+        account="${BASH_REMATCH[1]}" accept="" if_none_match=""
+        remote="${XDG_DATA_HOME}/remote/${account}/.github/model.yaml"
+        for header in "${headers[@]}"; do
+            case ${header} in
+                [Aa]ccept:*) accept="${header#*: }" ;;
+                [Ii]f-[Nn]one-[Mm]atch:*) if_none_match="${header#*: }" ;;
+            esac
+        done
+        if [[ -e "${XDG_DATA_HOME}/unreachable" ]]; then
+            printf 'contents %s unreachable\n' "${account}" >>"${GH_STATE}"
+            printf 'error connecting to api.github.com\ncheck your internet connection or https://githubstatus.com\n' >&2
+            exit 1
+        fi
+        if [[ ! -r "${remote}" ]]; then
+            printf 'contents %s 404\n' "${account}" >>"${GH_STATE}"
+            printf 'HTTP/2.0 404 Not Found\n\n{"message":"Not Found","status":"404"}\n'
+            exit 1
+        fi
+        etag="\"$({ sha256sum 2>/dev/null || shasum -a 256; } <"${remote}" | cut -c1-40)\""
+        if [[ "${if_none_match}" == "${etag}" ]]; then
+            printf 'contents %s 304\n' "${account}" >>"${GH_STATE}"
+            printf 'HTTP/2.0 304 Not Modified\nEtag: %s\n\n' "${etag}"
+            exit 1
+        fi
+        [[ "${accept}" == application/vnd.github.raw* ]] || {
+            printf 'stand-in gh: %s read without the raw media type\n' "${rest_path}" >&2
+            exit 1
+        }
+        printf 'contents %s 200\n' "${account}" >>"${GH_STATE}"
+        printf 'HTTP/2.0 200 OK\nContent-Type: application/vnd.github.raw+json; charset=utf-8\nEtag: %s\n\n' "${etag}"
+        cat -- "${remote}"
+        exit 0
+    fi
     file="${GH_FIXTURES}/rest/${rest_path//[?=&]/_}.json"
     if [[ "${rest_path}" =~ ^orgs/[^/]+$ ]]; then
         printf 'HTTP/2.0 200 OK\n\n{}\n'
@@ -633,6 +707,7 @@ output="" errors="" status=0 quiet="--silent"
 Set-Traps cleanup
 run_directory="$(mktemp -d)"
 mkdir -p -- "${run_directory}"/{work,cache,config,state-home}
+cache_home="${run_directory}/cache"
 write_stand_in
 write_models
 write_fixtures
@@ -788,6 +863,70 @@ expect "4: --filter action=added and CSV give what the run sent to Triage, one r
 # can read nothing then, and what this case holds it to is that it writes nothing.
 run_star "${data}" github triage sweep NobleFactor --dry-run
 expect "7: --dry-run adds nothing" any '(any($calls[]; any(.[]; type == "string" and test("mutation"))) | not)'
+
+# 9. NobleFactor's model is NobleFactor/.github's model.yaml, read by ETag with a copy kept; test-user's is still read
+# from beside the extension (#431). Each case starts from a cache of its own. A model.yaml beside the extension is not
+# read: the one this case puts there, the chore model of case 1, would refuse to load.
+make_extension "${run_directory}/data-431"
+cp -- "${run_directory}/models/model.chore.yaml" "${run_directory}/data-431/devlore/star/extensions/${extension_name}/model.yaml"
+cache_home="${run_directory}/cache-431"
+declare -r model_copy="${cache_home}/devlore/star/gh/model/NobleFactor.model.yaml"
+declare -r model_read='[$calls[] | select(index("repos/NobleFactor/.github/contents/model.yaml") != null)]'
+
+run_star "${run_directory}/data-431" github schedule report NobleFactor/alpha
+expect "9.1: a first read takes NobleFactor's model from NobleFactor/.github, raw, with no ETag to send" ok '
+    length == 11 and ('"${model_read}"' | length == 1
+        and (.[0] | index("Accept: application/vnd.github.raw+json") != null)
+        and (.[0] | map(select(type == "string" and startswith("If-None-Match"))) | length == 0))
+    and ([$calls[] | select(index("repos/test-user/.github/contents/model.yaml") != null)] | length == 0)'
+check "9.1: GitHub answered 200, and star kept a copy of the model it read" \
+    grep --quiet --line-regexp 'contents NobleFactor 200' "${run_directory}/state"
+check "9.1: the copy is NobleFactor/.github's model.yaml" \
+    cmp -s "${run_directory}/data-431/remote/NobleFactor/.github/model.yaml" "${model_copy}"
+
+run_star "${run_directory}/data-431" github schedule report NobleFactor/alpha
+expect "9.2: a second read sends the copy's ETag" ok '
+    length == 11 and ('"${model_read}"' | length == 1
+        and (.[0] | map(select(type == "string" and startswith("If-None-Match: \""))) | length == 1))'
+check "9.2: GitHub answered 304, and the model came from the copy" \
+    grep --quiet --line-regexp 'contents NobleFactor 304' "${run_directory}/state"
+
+touch -- "${run_directory}/data-431/unreachable"
+quiet=""
+run_star "${run_directory}/data-431" github schedule report NobleFactor/alpha
+quiet="--silent"
+expect "9.3: with GitHub out of reach, the model comes from the copy, and star says so" ok 'length == 11' \
+    'NobleFactor/\.github.*copy'
+
+cache_home="${run_directory}/cache-431-none"
+quiet=""
+run_star "${run_directory}/data-431" github schedule report NobleFactor/alpha
+quiet="--silent"
+expect "9.4: with GitHub out of reach and no copy, star fails, naming NobleFactor/.github" error "" 'NobleFactor/\.github'
+rm -f -- "${run_directory}/data-431/unreachable"
+
+# NobleFactor/.github without a model.yaml fails, though a copy is kept: the file was taken away, not left behind.
+make_extension "${run_directory}/data-431-gone" none
+cache_home="${run_directory}/cache-431"
+quiet=""
+run_star "${run_directory}/data-431-gone" github schedule report NobleFactor/alpha
+quiet="--silent"
+expect "9.4: NobleFactor/.github without model.yaml fails, naming it, though a copy is kept" error "" \
+    'NobleFactor/\.github.*model\.yaml'
+
+quiet=""
+run_star "${run_directory}/data-431" github model pull --account NobleFactor
+expect "9.5: pull without --asset refuses for an account whose model is in its .github repository, naming the file" \
+    error "" '(--asset.*NobleFactor/\.github|NobleFactor/\.github.*--asset)'
+run_star "${run_directory}/data-431" github model digest --check
+expect "9.5: digest without --asset refuses the same way" error "" '(--asset.*NobleFactor/\.github|NobleFactor/\.github.*--asset)'
+quiet="--silent"
+
+run_star "${run_directory}/data-431" github schedule report test-user/personal
+expect "9.6: test-user's model is still read from beside the extension" ok '
+    length > 0 and all(.[]; .issue | startswith("test-user/personal#"))
+    and ([$calls[] | select(index("repos/test-user/.github/contents/model.yaml") != null)] | length == 0)'
+cache_home="${run_directory}/cache"
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"

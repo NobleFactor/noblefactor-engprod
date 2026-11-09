@@ -122,7 +122,7 @@ The documents do not settle these. Each is a proposal for the owner to change at
 
 ### Phase 3: the test, first
 
-- [ ] Test-StarGitHub's new cases written, failing against the extension as it is
+- [x] Test-StarGitHub's new cases written, failing against the extension as it is: 31 of the 46 cases fail, the 11 new ones among them, and the 20 that need NobleFactor's model, now served only as NobleFactor/.github's
 
 ### Phase 4: star reads the model from NobleFactor/.github
 
