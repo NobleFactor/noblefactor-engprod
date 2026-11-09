@@ -126,7 +126,10 @@ The documents do not settle these. Each is a proposal for the owner to change at
 
 ### Phase 3: the token and the test issue
 
-- [ ] The owner stores `ADD_TO_PROJECT_PAT`; a test issue becomes a Triage row with its labels, then closes
+- [x] The owner stores `ADD_TO_PROJECT_PAT`; a test issue becomes a Triage row with its labels, then closes: stored 2026-11-09
+      through Key Vault `kv-david-noble-at-work`, in `rg-david-noble-at-work`, as `dot-github--ADD-TO-PROJECT-PAT`;
+      David-Noble-at-work/.github#2 became a row of Triage: David-Noble-at-work with `area:engineering` and `severity:n/a`,
+      its run 42691891250 succeeding, and closed as not planned
 
 ### Phase 4: personal's workflow
 
