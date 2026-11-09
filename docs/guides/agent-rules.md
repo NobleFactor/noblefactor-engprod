@@ -267,8 +267,8 @@ commit that landed is checked for both: [pr-script-template.md](pr-script-templa
 Ruled 2026-11-03: the description's form is to be kept in the account's pull request template, stored in its
 `.github` repository with its other file templates
 ([section 6](../architecture/issue-data-model/6-the-asset-and-its-sync.md#one-model-per-account) of the issue data
-model design). NobleFactor's is NobleFactor/.github's `.github/pull_request_template.md`, since 2026-11-09 (#431);
-David-Noble-at-work's comes with #441.
+model design). Each account's is its `.github` repository's `.github/pull_request_template.md`, since 2026-11-09:
+NobleFactor's with #431 and David-Noble-at-work's with #441.
 
 ## 14. A claim says how it is known
 

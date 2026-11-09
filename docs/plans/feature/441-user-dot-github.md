@@ -145,7 +145,7 @@ The documents do not settle these. Each is a proposal for the owner to change at
 
 ### Phase 7: the documents
 
-- [ ] Requirement 5
+- [x] Requirement 5: sections 4 and 6 of the issue data model, section 6's status, both items now ticked, section 3's status table and the index; agent-rules.md rule 13; the PR script template's three notes
 
 ### Phase 8: proved on GitHub
 
