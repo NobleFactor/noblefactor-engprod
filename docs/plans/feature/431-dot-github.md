@@ -134,8 +134,9 @@ The documents do not settle these. Each is a proposal for the owner to change at
 
 ### Phase 6: proved on GitHub
 
-- [ ] A new issue in noblefactor-engprod offers the six forms, each starting with the table, and links
-      `CONTRIBUTING.md`; a new pull request there starts from the template
+- [x] A new issue in noblefactor-engprod offers the six forms, each starting with the table, and links
+      `CONTRIBUTING.md`; a new pull request there starts from the template: the forms and the CONTRIBUTING link seen by the
+      owner on the chooser page, 2026-11-09; the rest read from GitHub's API, in the comment on #431
 - [x] `star github schedule report` reads NobleFactor's model from NobleFactor/.github, with no `model.yaml` in the
       deployed extension; a comment on #431 shows both: run on the branch's extension, which holds none, the deployed one following the merge and writ deploy;
       https://github.com/NobleFactor/noblefactor-engprod/issues/431#issuecomment-6746789179
