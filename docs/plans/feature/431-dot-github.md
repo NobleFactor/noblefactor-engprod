@@ -126,7 +126,7 @@ The documents do not settle these. Each is a proposal for the owner to change at
 
 ### Phase 4: star reads the model from NobleFactor/.github
 
-- [ ] Requirement 2; every case passes; `make check` passes
+- [x] Requirement 2; every case passes; `make check` passes: all 46 cases. star runs scheme.star once for each command file that loads it, so GitHub is asked once a process, recorded beside the copy, not once a load
 
 ### Phase 5: the documents
 

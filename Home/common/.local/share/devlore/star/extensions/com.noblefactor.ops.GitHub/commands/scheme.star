@@ -5,10 +5,14 @@
 
 # scheme.star
 #
-# docs/architecture/issue-data-model/6-the-asset-and-its-sync.md. One model per account: NobleFactor's is model.yaml
-# beside extension.yaml, and any other account's is model.<account>.yaml beside it, until #431 moves each to its
-# account's .github repository. Every model is loaded and checked when the module loads, and a bad one stops every
-# command with its fault named. Nothing below names a type or a field: the hierarchy, the collection types and each
+# docs/architecture/issue-data-model/6-the-asset-and-its-sync.md. One model per account. The default account's,
+# NobleFactor's, is model.yaml in its .github repository (#431): read from GitHub by ETag, raw, with a copy kept in
+# star's cache, the copy answering a 304 and standing in when GitHub cannot be reached. Any other account's is
+# model.<account>.yaml beside extension.yaml until its own .github repository holds it (#441). Every model is loaded and
+# checked when the module loads, and a bad one stops every command with its fault named; a model that cannot be read is
+# recorded instead, so that pull and digest, which make and mend a model, still run, and a command that needs that
+# account's model fails with the reason (model_of). Nothing below names a type or a field: the hierarchy, the collection
+# types and each
 # record's keys are derived from the models (noblefactor-engprod#376, and the part of #426 the report and the sweep
 # need, #436). star hands a command no path to its extension, so the deployed path is resolved as writ's layers are,
 # through the shell.
@@ -109,12 +113,75 @@ def _user_attributes():
 USER_ATTRIBUTES = _user_attributes()
 
 def _model_paths(directory):
-    """Every model file beside the extension: model.yaml and model.<account>.yaml."""
-    out = _sh("cd " + _quote(directory) + " && for f in model.yaml model.*.yaml; do if [ -f \"$f\" ]; then printf '%s\\n' \"$f\"; fi; done; true")
+    """Every model file beside the extension: model.<account>.yaml.
+
+    A model.yaml there is not read: the default account's model is its .github repository's (#431), and writ may leave
+    the link it once deployed.
+    """
+    out = _sh("cd " + _quote(directory) + " && for f in model.*.yaml; do if [ -f \"$f\" ]; then printf '%s\\n' \"$f\"; fi; done; true")
     return [directory + "/" + n.strip() for n in out.split("\n") if n.strip() != ""]
 
-def _digest_fault(path):
-    """Empty when the model's digest verifies; otherwise the one line that says it does not.
+# ── the models GitHub holds ─────────────────────────────────────────────────
+
+# An account's model in its .github repository, and the media type that has GitHub answer with the file itself.
+_MODEL_FILE = "model.yaml"
+_RAW = "application/vnd.github.raw+json"
+
+def model_source(account):
+    """Where the account's model is kept on GitHub: <account>/.github/model.yaml."""
+    return account + "/.github/" + _MODEL_FILE
+
+def model_copy(account):
+    """star's copy of the account's model as GitHub last gave it: ${XDG_CACHE_HOME:-$HOME/.cache}/devlore/star/gh/model/<account>.model.yaml.
+
+    model.star names the same file, which it reads to compare GitHub's record with the model star read; the ETag GitHub
+    gave it is beside it, <account>.model.etag.
+    """
+    return _sh('printf %s "${XDG_CACHE_HOME:-$HOME/.cache}/devlore/star/gh/model/' + account + '.model.yaml"').strip()
+
+def _remote_model(account):
+    """The account's model read from its .github repository by ETag, and kept: {"path", "fault", "note"}.
+
+    The read sends the copy's ETag when there is a copy. GitHub's 200 replaces the copy and its ETag; its 304 says the
+    copy is current. With no answer at all, gh could not reach GitHub, and the copy stands in, said in "note"; with no
+    copy, or a 404, or any other answer, "fault" says why there is no model and "path" is empty. The answer is written to
+    the cache and parsed there, so the copy is the file byte for byte.
+
+    star runs this module once for each command file that loads it, several times in one invocation, so GitHub is asked
+    once a process: a read that leaves a copy records star's process, the shell's parent, beside it, and a later load in
+    that process takes the copy as it stands.
+    """
+    copy = model_copy(account)
+    stem = copy[:-len(".yaml")]
+    path = "repos/" + account + "/.github/contents/" + _MODEL_FILE
+    status = _sh(
+        "c=" + _quote(copy) + "; e=" + _quote(stem + ".etag") + "; r=" + _quote(stem + ".response") + "; p=" +
+        _quote(stem + ".process") + "; mkdir -p \"$(dirname \"$c\")\"; " +
+        "if [ -f \"$c\" ] && [ \"$(cat \"$p\" 2>/dev/null)\" = \"$PPID\" ]; then printf read; exit 0; fi; " +
+        "if [ -f \"$c\" ] && [ -s \"$e\" ]; then " +
+        "gh api -i -H " + _quote("Accept: " + _RAW) + " -H \"If-None-Match: $(cat \"$e\")\" " + _quote(path) + " >\"$r\" 2>/dev/null; " +
+        "else gh api -i -H " + _quote("Accept: " + _RAW) + " " + _quote(path) + " >\"$r\" 2>/dev/null; fi; " +
+        "s=$(awk 'NR == 1 { print $2; exit }' \"$r\"); " +
+        "if [ \"$s\" = 200 ]; then " +
+        "awk 'b { print; next } $0 == \"\" || $0 == \"\\r\" { b = 1 }' \"$r\" >\"$c.new\" && mv \"$c.new\" \"$c\" && " +
+        "awk '$0 == \"\" || $0 == \"\\r\" { exit } tolower($0) ~ /^etag:/ { sub(/^[^:]*:[ \\t]*/, \"\"); sub(/\\r$/, \"\"); print; exit }' \"$r\" >\"$e\"; " +
+        "fi; rm -f \"$r\"; " +
+        "if [ -f \"$c\" ] && { [ \"$s\" = 200 ] || [ \"$s\" = 304 ] || [ -z \"$s\" ]; }; then printf %s \"$PPID\" >\"$p\"; fi; " +
+        "printf %s \"$s\"",
+    ).strip()
+    kept = _sh("test -f " + _quote(copy) + " && echo yes || echo no").strip() == "yes"
+    if status == "read" or status == "200" or (status == "304" and kept):
+        return {"path": copy, "fault": "", "note": ""}
+    if status == "" and kept:
+        return {"path": copy, "fault": "", "note": model_source(account) + " cannot be read from GitHub; using star's copy of it as last read, " + copy}
+    if status == "":
+        return {"path": "", "fault": model_source(account) + " cannot be read from GitHub, and star has no copy of it at " + copy, "note": ""}
+    if status == "404":
+        return {"path": "", "fault": account + "/.github holds no " + _MODEL_FILE + "; pull one into a clone of it with star github model pull --account " + account + " --asset <clone>/" + _MODEL_FILE + ", on a branch", "note": ""}
+    return {"path": "", "fault": model_source(account) + ": GitHub answered HTTP " + status, "note": ""}
+
+def _digest_fault(path, name):
+    """Empty when the model's digest verifies; otherwise the one line that says it does not, naming the model as name.
 
     A mismatch is recorded, not failed: star loads every command file when the extension loads, so a failure here
     would take star github model digest and pull down with the rest, and they are how a hand-edited model is repaired
@@ -124,37 +191,38 @@ def _digest_fault(path):
     computed = _sh("sed '/^  digest: /d' " + _quote(path) + " | (sha256sum 2>/dev/null || shasum -a 256) | cut -d' ' -f1").strip()
     if recorded == "sha256:" + computed:
         return ""
-    return path + ": the digest does not verify; the file was edited since its pull. Run star github model pull, or star github model digest after a deliberate edit"
+    return name + ": the digest does not verify; the file was edited since its pull. Run star github model pull, or star github model digest after a deliberate edit"
 
-def _load(path):
+def _load(path, name):
     """One model decoded and checked, with what the hierarchy means and each record's keys derived from it.
 
     Every type is of the hierarchy, with a level, or a collection, its description beginning "Collection:"; a type that
-    is neither is refused, named. A user account's types carry the label that stands for each.
+    is neither is refused, named. A user account's types carry the label that stands for each. path is the file read;
+    name is how a fault names it: the file beside the extension, or <account>/.github/model.yaml for star's copy of it.
     """
     model = yaml.decode(data = _sh("cat " + _quote(path)))
     if type(model) != "dict" or model.get("version") != _MODEL_VERSION:
-        fail(path + ": version " + str(model.get("version") if type(model) == "dict" else None) + " is not " + str(_MODEL_VERSION) + "; this extension reads version " + str(_MODEL_VERSION))
+        fail(name + ": version " + str(model.get("version") if type(model) == "dict" else None) + " is not " + str(_MODEL_VERSION) + "; this extension reads version " + str(_MODEL_VERSION))
     pulled = model.get("pulled") or {}
 
     # NobleFactor's file as pulled before #436 names its account with the key org (section 6, `pulled`).
     account = pulled.get("account") or pulled.get("org") or ""
     if account == "":
-        fail(path + ": names no account under pulled")
+        fail(name + ": names no account under pulled")
 
     hierarchy = []
     collections = []
     for t in model.get("types") or []:
         if type(t) != "dict" or "name" not in t:
-            fail(path + ": a type with no name: " + str(t))
+            fail(name + ": a type with no name: " + str(t))
         if t.get("level") != None:
             hierarchy.append(dict(t, level = int(t["level"])))
         elif str(t.get("description") or "").startswith(_COLLECTION):
             collections.append(dict(t))
         else:
-            fail(path + ": type " + t["name"] + " has no level and is no collection; a type of the hierarchy has the level its description's \"Level N:\" gives, and a collection's description begins \"Collection:\"")
+            fail(name + ": type " + t["name"] + " has no level and is no collection; a type of the hierarchy has the level its description's \"Level N:\" gives, and a collection's description begins \"Collection:\"")
     if len(hierarchy) == 0:
-        fail(path + ": no type of the hierarchy")
+        fail(name + ": no type of the hierarchy")
     levels = sorted({t["level"]: True for t in hierarchy}.keys())
     user = len([t for t in hierarchy + collections if t.get("label")]) > 0
     teams = model.get("teams") or []
@@ -177,14 +245,15 @@ def _load(path):
     seen = {k: "a record's own key" for k in FIXED_KEYS}
     for k in ancestor_keys + attribute_keys:
         if k in seen:
-            fail(path + ": the record key " + k + " would be given twice: once as " + seen[k] + ", and again by the model")
+            fail(name + ": the record key " + k + " would be given twice: once as " + seen[k] + ", and again by the model")
         seen[k] = "the model's"
 
     return {
         "path": path,
+        "name": name,
         "account": account,
         "user": user,
-        "digest_fault": _digest_fault(path),
+        "digest_fault": _digest_fault(path, name),
         "hierarchy": hierarchy,
         "collections": collections,
         "levels": levels,
@@ -196,29 +265,51 @@ def _load(path):
     }
 
 def _load_all():
-    """Every model beside the extension, by its account; two files naming one account are refused."""
-    paths = _model_paths(_extension_dir())
-    if len(paths) == 0:
-        fail(_extension_dir() + ": no model; run star github model pull")
-    models = {}
-    for path in paths:
-        m = _load(path)
-        if m["account"] in models:
-            fail(path + " and " + models[m["account"]]["path"] + " both hold " + m["account"] + "'s model")
-        models[m["account"]] = m
-    return models
+    """Every account's model, by account, and why an account's could not be read: (models, faults).
 
-MODELS = _load_all()
+    The default account's is its .github repository's (#431); every other account's is model.<account>.yaml beside the
+    extension. Two models naming one account are refused. A model GitHub cannot give is a fault, recorded rather than
+    failed, so that pull and digest still run; a copy standing in for GitHub is said as a warning.
+    """
+    models = {}
+    for path in _model_paths(_extension_dir()):
+        m = _load(path, path)
+        if m["account"] in models:
+            fail(path + " and " + models[m["account"]]["name"] + " both hold " + m["account"] + "'s model")
+        models[m["account"]] = m
+    faults = {}
+    account = default_account()
+    read = _remote_model(account)
+    if read["note"]:
+        warn(read["note"])
+    if read["fault"]:
+        faults[account] = read["fault"]
+    else:
+        m = _load(read["path"], model_source(account))
+        if m["account"] != account:
+            fail(model_source(account) + " holds " + m["account"] + "'s model, not " + account + "'s")
+        if account in models:
+            fail(models[account]["name"] + " and " + model_source(account) + " both hold " + account + "'s model; " +
+                 account + "'s is " + model_source(account) + " alone")
+        models[account] = m
+    return models, faults
+
+MODELS, MODEL_FAULTS = _load_all()
 
 # Each model's digest fault, for a command to say before its result; empty when every digest verifies.
 MODEL_DIGEST_FAULTS = [MODELS[a]["digest_fault"] for a in MODELS if MODELS[a]["digest_fault"]]
 
+def model_of(account):
+    """The account's model; fails, saying why it could not be read or naming the pull that would make it, when there is none."""
+    if account in MODEL_FAULTS:
+        fail(MODEL_FAULTS[account])
+    if account not in MODELS:
+        fail("no model for " + account + "; make one with star github model pull --account " + account + " in a worktree")
+    return MODELS[account]
+
 def model_for(repo):
-    """The model of the account that owns repo, owner/name; fails, naming the pull that would make it, when there is none."""
-    owner = repo.split("/")[0]
-    if owner not in MODELS:
-        fail("no model for " + owner + ", which owns " + repo + "; make one with star github model pull --account " + owner + " in a worktree")
-    return MODELS[owner]
+    """The model of the account that owns repo, owner/name; fails as model_of does when there is none."""
+    return model_of(repo.split("/")[0])
 
 def leaf_level(model):
     """The last level of the model's hierarchy: a schedule's steps are drawn from it."""
@@ -330,7 +421,9 @@ def resolve_repos(repo_flag, directory):
 # The labels commands, out of scope for #436, are as they were: they expect the hierarchy's type names, lower-cased, as
 # labels, and Epic:Ops:Process, in every repository. Their kinds are the default account's hierarchy types.
 
-KINDS = [t["name"].lower() for t in (MODELS.get(default_account()) or MODELS[sorted(MODELS.keys())[0]])["hierarchy"]]
+# None when no model could be read, which leaves the labels commands no kinds to require rather than stopping every command.
+_KINDS_MODEL = MODELS.get(default_account()) or (MODELS[sorted(MODELS.keys())[0]] if MODELS else {"hierarchy": []})
+KINDS = [t["name"].lower() for t in _KINDS_MODEL["hierarchy"]]
 
 REQUIRED_EVERYWHERE = KINDS + ["Epic:Ops:Process"]
 
