@@ -1,28 +1,30 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2026 Noble Factor. All rights reserved.
 
-# The issue data model as GitHub holds it: docs/architecture/issue-data-model/6-the-asset-and-its-sync.md. Written by
-# star github model pull; edit it by hand only deliberately, then run star github model digest. The digest is a SHA-256 over this
-# file with its own line excluded. A type is keyed by its id and takes its level from its description's "Level N:".
-# Within a level the types' order is the render order. Labels are in three tiers: the organization's, which every
-# participating repository carries; each team's; each repository's own.
+# An account's issue data model as GitHub holds it: docs/architecture/issue-data-model/6-the-asset-and-its-sync.md.
+# Written by star github model pull; edit it by hand only deliberately, then run star github model digest. The digest is
+# a SHA-256 over this file with its own line excluded. A type is keyed by its id; a type of the hierarchy takes its level
+# from its description's "Level N:", and a collection type, whose description begins "Collection:", has none. Within a
+# level the types' order is the render order. In a user account a type is a label, named under label. An organization's
+# issue fields and its teams follow, each team with the repositories it holds the maintain role on. Labels are in three
+# tiers: the organization's, which every participating repository carries; each team's; each repository's own.
 
 version: 1
 pulled:
-  at: 2026-11-03T03:25:02Z
-  org: NobleFactor
-  digest: sha256:86bb8f97b398bf4e5cb99e9283022e7ab83612edf9f15a8facac31ad4fcbec76
+  at: 2026-11-09T00:33:43Z
+  account: NobleFactor
+  digest: sha256:d99ac812da4d20dcf7f550c2618bb899dd3a6a5340d2fc80aa4fb6a100fe90ce
 types:
   - name: "Epic"
     id: 914457658
     level: 0
-    color: "purple"
-    description: "Level 0: a body of work with an owner, the root every other issue rolls up to; decomposes into features"
+    color: "gray"
+    description: "Level 0: a body of work with an owner, the root work issues roll up to; decomposes into features"
   - name: "Feature"
     id: 344350
     level: 1
-    color: "blue"
-    description: "Level 1: a capability, for the product or for engineering, its epic or area saying which; decomposes into tasks and bugs"
+    color: "gray"
+    description: "Level 1: a capability for the product or for engineering; decomposes into tasks and bugs"
   - name: "Bug"
     id: 344348
     level: 2
@@ -34,6 +36,76 @@ types:
     level: 2
     color: "yellow"
     description: "Level 2: planned work, a step in delivering a feature"
+  - name: "Schedule"
+    id: 927956059
+    color: "blue"
+    description: "Collection: describes a schedule, its deliverable and its exit criteria"
+  - name: "Scenario"
+    id: 927956069
+    color: "purple"
+    description: "Collection: describes a scenario, the story its features tell"
+fields:
+  - name: "Priority"
+    id: "IFSS_kgDOAAf67A"
+    type: single-select
+    options:
+      - { name: "Urgent", id: "IFSSO_kgDOAA3iKw" }
+      - { name: "High", id: "IFSSO_kgDOAA3iLA" }
+      - { name: "Medium", id: "IFSSO_kgDOAA3iLQ" }
+      - { name: "Low", id: "IFSSO_kgDOAA3iLg" }
+  - name: "Start date"
+    id: "IFD_kgDOAAf67Q"
+    type: date
+  - name: "Target date"
+    id: "IFD_kgDOAAf67g"
+    type: date
+  - name: "Effort"
+    id: "IFSS_kgDOAAf67w"
+    type: single-select
+    options:
+      - { name: "High", id: "IFSSO_kgDOAA3iLw" }
+      - { name: "Medium", id: "IFSSO_kgDOAA3iMA" }
+      - { name: "Low", id: "IFSSO_kgDOAA3iMQ" }
+  - name: "Resolution"
+    id: "IFSS_kgDOAvIUWw"
+    type: single-select
+    options:
+      - { name: "Declined", id: "IFSSO_kgDOBSg53g" }
+      - { name: "Duplicate", id: "IFSSO_kgDOBSg53w" }
+      - { name: "Invalid", id: "IFSSO_kgDOBSg54A" }
+  - name: "Area"
+    id: "IFSS_kgDOAvJV0w"
+    type: single-select
+    options:
+      - { name: "Product", id: "IFSSO_kgDOBSisgg" }
+      - { name: "Engineering", id: "IFSSO_kgDOBSisgw" }
+  - name: "Severity"
+    id: "IFSS_kgDOAvJiQQ"
+    type: single-select
+    options:
+      - { name: "Critical", id: "IFSSO_kgDOBSjCQw" }
+      - { name: "High", id: "IFSSO_kgDOBSjCRA" }
+      - { name: "Medium", id: "IFSSO_kgDOBSjCRQ" }
+      - { name: "Low", id: "IFSSO_kgDOBSjCRg" }
+      - { name: "N/A", id: "IFSSO_kgDOBSqVvQ" }
+teams:
+  - name: "DevLore"
+    slug: "devlore"
+    id: "T_kwDOAD1Dfc4BNErH"
+    repositories:
+      - "NobleFactor/devlore-cli"
+      - "NobleFactor/devlore-registry"
+      - "NobleFactor/devlore.noblefactor.com"
+  - name: "engprod"
+    slug: "engprod"
+    id: "T_kwDOAD1Dfc4BNb2P"
+    repositories:
+      - "NobleFactor/.github"
+      - "NobleFactor/noblefactor-engprod"
+  - name: "Owners"
+    slug: "owners"
+    id: "MDQ6VGVhbTM3MTY5Nw=="
+    repositories: []
 labels:
   organization:
     - name: "bug"
@@ -83,50 +155,8 @@ labels:
       description: "This will not be worked on"
   teams: {}
   repositories:
-    "NobleFactor/noblefactor-engprod":
-      - name: "Epic:Ops:IssueTracking"
-        color: "5319e7"
-        description: "Tooling axis: how NobleFactor tracks its work in GitHub"
-      - name: "Thread:Ops:PortableTooling"
-        color: "8a63d2"
-        description: "Tooling axis: the process commands work the same on every platform, shipped by the base layer"
-      - name: "Thread:WritDeploy"
-        color: "1D76DB"
-        description: "deploying converges the machine"
-      - name: "Thread:WritOrigin"
-        color: "0e8a16"
-        description: "Cross-cutting: writ records and verifies where a deployment came from"
-      - name: "Thread:WritRepo"
-        color: "1D76DB"
-        description: "a layer points where you say"
-      - name: "Thread:WritSelfInstall"
-        color: "1D76DB"
-        description: "a fresh machine installs writ and can use it"
+    "NobleFactor/noblefactor-engprod": []
 projects:
-  - name: "Thread: the model follows a rename"
-    id: "PVT_kwDOAD1Dfc4Boeo4"
-    number: 4
-    template: false
-    fields:
-      - name: "Step"
-        id: "PVTF_lADOAD1Dfc4Boeo4zhm-lhk"
-        type: number
-      - name: "Status"
-        id: "PVTSSF_lADOAD1Dfc4Boeo4zhm-lb0"
-        type: single-select
-        options:
-          - { name: "Not run", id: "f75ad846" }
-          - { name: "Fails", id: "47fc9ee4" }
-          - { name: "Passes", id: "98236657" }
-      - name: "Passed"
-        id: "PVTF_lADOAD1Dfc4Boeo4zhnVSlw"
-        type: date
-      - name: "Failed"
-        id: "PVTF_lADOAD1Dfc4Boeo4zhnVSmg"
-        type: date
-      - name: "Check"
-        id: "PVTF_lADOAD1Dfc4Boeo4zhnVSmo"
-        type: text
   - name: "Triage: engprod"
     id: "PVT_kwDOAD1Dfc4Bo3Lb"
     number: 5
@@ -136,9 +166,13 @@ projects:
         id: "PVTSSF_lADOAD1Dfc4Bo3LbzhnVTqQ"
         type: single-select
         options:
-          - { name: "Todo", id: "f75ad846" }
-          - { name: "In Progress", id: "47fc9ee4" }
-          - { name: "Done", id: "98236657" }
+          - { name: "Open", id: "f75ad846" }
+          - { name: "In progress", id: "47fc9ee4" }
+          - { name: "Closed", id: "98236657" }
+      - name: "Area"
+        id: "PVTSSF_lADOAD1Dfc4Bo3Lbzhoe9ms"
+        type: single-select
+        options: []
   - name: "Triage: devlore"
     id: "PVT_kwDOAD1Dfc4BpxNw"
     number: 6
@@ -148,9 +182,13 @@ projects:
         id: "PVTSSF_lADOAD1Dfc4BpxNwzhoLRTs"
         type: single-select
         options:
-          - { name: "Todo", id: "f75ad846" }
-          - { name: "In Progress", id: "47fc9ee4" }
-          - { name: "Done", id: "98236657" }
+          - { name: "Open", id: "f75ad846" }
+          - { name: "In progress", id: "47fc9ee4" }
+          - { name: "Closed", id: "98236657" }
+      - name: "Area"
+        id: "PVTSSF_lADOAD1Dfc4BpxNwzhoe9oI"
+        type: single-select
+        options: []
   - name: "Schedule"
     id: "PVT_kwDOAD1Dfc4BpxN-"
     number: 7
@@ -166,10 +204,18 @@ projects:
       - name: "Step"
         id: "PVTF_lADOAD1Dfc4BpxN-zhoLRj8"
         type: number
-      - name: "Next"
-        id: "PVTF_lADOAD1Dfc4BpxN-zhoLRkA"
+      - name: "Worktree"
+        id: "PVTF_lADOAD1Dfc4BpxN-zhobwBg"
         type: text
-  - name: "Thread"
+      - name: "Iteration"
+        id: "PVTIF_lADOAD1Dfc4BpxN-zhoeMvk"
+        type: iteration
+      - name: "Schedule"
+        id: "PVTSSF_lADOAD1Dfc4BpxN-zhofxMY"
+        type: single-select
+        options:
+          - { name: "placeholder", id: "53aae37d" }
+  - name: "Scenario"
     id: "PVT_kwDOAD1Dfc4BpxOB"
     number: 8
     template: true
@@ -184,240 +230,175 @@ projects:
       - name: "Beat"
         id: "PVTF_lADOAD1Dfc4BpxOBzhoLRoE"
         type: number
-  - name: "Schedule: process tooling"
-    id: "PVT_kwDOAD1Dfc4BpxOF"
-    number: 9
+      - name: "Scenario"
+        id: "PVTSSF_lADOAD1Dfc4BpxOBzhofuz4"
+        type: single-select
+        options:
+          - { name: "placeholder", id: "2ac96d3e" }
+  - name: "Triage"
+    id: "PVT_kwDOAD1Dfc4Bp9W_"
+    number: 23
+    template: true
+    fields:
+      - name: "Status"
+        id: "PVTSSF_lADOAD1Dfc4Bp9W_zhoWkdA"
+        type: single-select
+        options:
+          - { name: "Open", id: "dc6fec11" }
+          - { name: "In progress", id: "83cff555" }
+          - { name: "Closed", id: "c11622a4" }
+      - name: "Area"
+        id: "PVTSSF_lADOAD1Dfc4Bp9W_zhoe9lw"
+        type: single-select
+        options: []
+  - name: "Backlog"
+    id: "PVT_kwDOAD1Dfc4BqFiL"
+    number: 24
+    template: true
+    fields:
+      - name: "Status"
+        id: "PVTSSF_lADOAD1Dfc4BqFiLzhoeMv8"
+        type: single-select
+        options:
+          - { name: "Open", id: "fa8b3d98" }
+          - { name: "In progress", id: "2754212f" }
+          - { name: "Closed", id: "63b7fbe5" }
+      - name: "Priority"
+        id: "PVTSSF_lADOAD1Dfc4BqFiLzhoeMzE"
+        type: single-select
+        options: []
+  - name: "Backlog: engprod"
+    id: "PVT_kwDOAD1Dfc4BqFiZ"
+    number: 25
     template: false
     fields:
       - name: "Status"
-        id: "PVTSSF_lADOAD1Dfc4BpxOFzhoLRpM"
+        id: "PVTSSF_lADOAD1Dfc4BqFiZzhoeM9M"
+        type: single-select
+        options:
+          - { name: "Open", id: "fa8b3d98" }
+          - { name: "In progress", id: "2754212f" }
+          - { name: "Closed", id: "63b7fbe5" }
+      - name: "Priority"
+        id: "PVTSSF_lADOAD1Dfc4BqFiZzhoeM_Y"
+        type: single-select
+        options: []
+  - name: "Schedule: engprod"
+    id: "PVT_kwDOAD1Dfc4BqFie"
+    number: 26
+    template: false
+    fields:
+      - name: "Status"
+        id: "PVTSSF_lADOAD1Dfc4BqFiezhoeNB4"
         type: single-select
         options:
           - { name: "Open", id: "ba4e0e54" }
           - { name: "In progress", id: "fd5cef35" }
           - { name: "Closed", id: "470096a0" }
       - name: "Step"
-        id: "PVTF_lADOAD1Dfc4BpxOFzhoLRq0"
+        id: "PVTF_lADOAD1Dfc4BqFiezhoeNDg"
         type: number
-      - name: "Next"
-        id: "PVTF_lADOAD1Dfc4BpxOFzhoLRq4"
+      - name: "Worktree"
+        id: "PVTF_lADOAD1Dfc4BqFiezhoeNDk"
         type: text
-  - name: "Schedule: lint tooling"
-    id: "PVT_kwDOAD1Dfc4BpxOb"
-    number: 10
-    template: false
-    fields:
-      - name: "Status"
-        id: "PVTSSF_lADOAD1Dfc4BpxObzhoLR-M"
+      - name: "Iteration"
+        id: "PVTIF_lADOAD1Dfc4BqFiezhoeNDo"
+        type: iteration
+      - name: "Schedule"
+        id: "PVTSSF_lADOAD1Dfc4BqFiezhoeNx0"
         type: single-select
         options:
-          - { name: "Open", id: "ba4e0e54" }
-          - { name: "In progress", id: "fd5cef35" }
-          - { name: "Closed", id: "470096a0" }
-      - name: "Step"
-        id: "PVTF_lADOAD1Dfc4BpxObzhoLR-8"
-        type: number
-      - name: "Next"
-        id: "PVTF_lADOAD1Dfc4BpxObzhoLR_A"
-        type: text
-  - name: "Schedule: Start-Claude and Start-Claude.ps1 start a schedule's conversation beside a shell, on both platforms"
-    id: "PVT_kwDOAD1Dfc4BpxO6"
-    number: 11
+          - { name: "process tooling", id: "be04af87" }
+          - { name: "lint tooling", id: "e2df4b02" }
+          - { name: "Start-Claude and Start-Claude.ps1 start a schedule's conversation beside a shell, on both platforms", id: "91591e2e" }
+          - { name: "issue tracking, iteration 1", id: "9941eb67" }
+  - name: "Scenario: engprod"
+    id: "PVT_kwDOAD1Dfc4BqFin"
+    number: 27
     template: false
     fields:
       - name: "Status"
-        id: "PVTSSF_lADOAD1Dfc4BpxO6zhoLScY"
-        type: single-select
-        options:
-          - { name: "Open", id: "ba4e0e54" }
-          - { name: "In progress", id: "fd5cef35" }
-          - { name: "Closed", id: "470096a0" }
-      - name: "Step"
-        id: "PVTF_lADOAD1Dfc4BpxO6zhoLSd4"
-        type: number
-      - name: "Next"
-        id: "PVTF_lADOAD1Dfc4BpxO6zhoLSd8"
-        type: text
-  - name: "Schedule: issue tracking, iteration 1"
-    id: "PVT_kwDOAD1Dfc4BpxPj"
-    number: 12
-    template: false
-    fields:
-      - name: "Status"
-        id: "PVTSSF_lADOAD1Dfc4BpxPjzhoLTC8"
-        type: single-select
-        options:
-          - { name: "Open", id: "ba4e0e54" }
-          - { name: "In progress", id: "fd5cef35" }
-          - { name: "Closed", id: "470096a0" }
-      - name: "Step"
-        id: "PVTF_lADOAD1Dfc4BpxPjzhoLTEY"
-        type: number
-      - name: "Next"
-        id: "PVTF_lADOAD1Dfc4BpxPjzhoLTEg"
-        type: text
-  - name: "Schedule: the command line epic closes"
-    id: "PVT_kwDOAD1Dfc4BpxQA"
-    number: 13
-    template: false
-    fields:
-      - name: "Status"
-        id: "PVTSSF_lADOAD1Dfc4BpxQAzhoLTeI"
-        type: single-select
-        options:
-          - { name: "Open", id: "ba4e0e54" }
-          - { name: "In progress", id: "fd5cef35" }
-          - { name: "Closed", id: "470096a0" }
-      - name: "Step"
-        id: "PVTF_lADOAD1Dfc4BpxQAzhoLTfE"
-        type: number
-      - name: "Next"
-        id: "PVTF_lADOAD1Dfc4BpxQAzhoLTfI"
-        type: text
-  - name: "Schedule: writ works on a machine that has never seen it"
-    id: "PVT_kwDOAD1Dfc4BpxQY"
-    number: 14
-    template: false
-    fields:
-      - name: "Status"
-        id: "PVTSSF_lADOAD1Dfc4BpxQYzhoLT0Q"
-        type: single-select
-        options:
-          - { name: "Open", id: "ba4e0e54" }
-          - { name: "In progress", id: "fd5cef35" }
-          - { name: "Closed", id: "470096a0" }
-      - name: "Step"
-        id: "PVTF_lADOAD1Dfc4BpxQYzhoLT1g"
-        type: number
-      - name: "Next"
-        id: "PVTF_lADOAD1Dfc4BpxQYzhoLT1k"
-        type: text
-  - name: "Schedule: writ lifecycle management — the record, its lifetimes, and the four operations over it"
-    id: "PVT_kwDOAD1Dfc4BpxQ8"
-    number: 15
-    template: false
-    fields:
-      - name: "Status"
-        id: "PVTSSF_lADOAD1Dfc4BpxQ8zhoLUV8"
-        type: single-select
-        options:
-          - { name: "Open", id: "ba4e0e54" }
-          - { name: "In progress", id: "fd5cef35" }
-          - { name: "Closed", id: "470096a0" }
-      - name: "Step"
-        id: "PVTF_lADOAD1Dfc4BpxQ8zhoLUYM"
-        type: number
-      - name: "Next"
-        id: "PVTF_lADOAD1Dfc4BpxQ8zhoLUYQ"
-        type: text
-  - name: "Schedule: the install scripts tell the truth, upgrade fetches, and Windows has an installer"
-    id: "PVT_kwDOAD1Dfc4BpxRx"
-    number: 16
-    template: false
-    fields:
-      - name: "Status"
-        id: "PVTSSF_lADOAD1Dfc4BpxRxzhoLVH4"
-        type: single-select
-        options:
-          - { name: "Open", id: "ba4e0e54" }
-          - { name: "In progress", id: "fd5cef35" }
-          - { name: "Closed", id: "470096a0" }
-      - name: "Step"
-        id: "PVTF_lADOAD1Dfc4BpxRxzhoLVIo"
-        type: number
-      - name: "Next"
-        id: "PVTF_lADOAD1Dfc4BpxRxzhoLVIs"
-        type: text
-  - name: "Schedule: the execution model, iteration 1"
-    id: "PVT_kwDOAD1Dfc4BpxTA"
-    number: 17
-    template: false
-    fields:
-      - name: "Status"
-        id: "PVTSSF_lADOAD1Dfc4BpxTAzhoLWQE"
-        type: single-select
-        options:
-          - { name: "Open", id: "ba4e0e54" }
-          - { name: "In progress", id: "fd5cef35" }
-          - { name: "Closed", id: "470096a0" }
-      - name: "Step"
-        id: "PVTF_lADOAD1Dfc4BpxTAzhoLWQ0"
-        type: number
-      - name: "Next"
-        id: "PVTF_lADOAD1Dfc4BpxTAzhoLWQ4"
-        type: text
-  - name: "Thread: portable tooling — the process commands work the same everywhere"
-    id: "PVT_kwDOAD1Dfc4BpxTd"
-    number: 18
-    template: false
-    fields:
-      - name: "Status"
-        id: "PVTSSF_lADOAD1Dfc4BpxTdzhoLWqc"
+        id: "PVTSSF_lADOAD1Dfc4BqFinzhoeNKM"
         type: single-select
         options:
           - { name: "Open", id: "8d4a9acd" }
           - { name: "In progress", id: "7c9852e3" }
           - { name: "Closed", id: "a4f6d48d" }
       - name: "Beat"
-        id: "PVTF_lADOAD1Dfc4BpxTdzhoLWrM"
+        id: "PVTF_lADOAD1Dfc4BqFinzhoeNLk"
         type: number
-  - name: "Thread: writ origin — a deployment says where it came from"
-    id: "PVT_kwDOAD1Dfc4BpxTx"
-    number: 19
+      - name: "Scenario"
+        id: "PVTSSF_lADOAD1Dfc4BqFinzhoeQpg"
+        type: single-select
+        options:
+          - { name: "portable tooling — the process commands work the same everywhere", id: "71c8630d" }
+  - name: "Backlog: devlore"
+    id: "PVT_kwDOAD1Dfc4BqFip"
+    number: 28
     template: false
     fields:
       - name: "Status"
-        id: "PVTSSF_lADOAD1Dfc4BpxTxzhoLW9E"
+        id: "PVTSSF_lADOAD1Dfc4BqFipzhoeNMs"
+        type: single-select
+        options:
+          - { name: "Open", id: "fa8b3d98" }
+          - { name: "In progress", id: "2754212f" }
+          - { name: "Closed", id: "63b7fbe5" }
+      - name: "Priority"
+        id: "PVTSSF_lADOAD1Dfc4BqFipzhoeNOE"
+        type: single-select
+        options: []
+  - name: "Schedule: devlore"
+    id: "PVT_kwDOAD1Dfc4BqFit"
+    number: 29
+    template: false
+    fields:
+      - name: "Status"
+        id: "PVTSSF_lADOAD1Dfc4BqFitzhoeNRQ"
+        type: single-select
+        options:
+          - { name: "Open", id: "ba4e0e54" }
+          - { name: "In progress", id: "fd5cef35" }
+          - { name: "Closed", id: "470096a0" }
+      - name: "Step"
+        id: "PVTF_lADOAD1Dfc4BqFitzhoeNS4"
+        type: number
+      - name: "Worktree"
+        id: "PVTF_lADOAD1Dfc4BqFitzhoeNS8"
+        type: text
+      - name: "Iteration"
+        id: "PVTIF_lADOAD1Dfc4BqFitzhoeNTA"
+        type: iteration
+      - name: "Schedule"
+        id: "PVTSSF_lADOAD1Dfc4BqFitzhoePPo"
+        type: single-select
+        options:
+          - { name: "the command line epic closes", id: "769e7108" }
+          - { name: "writ works on a machine that has never seen it", id: "dbb3dd75" }
+          - { name: "writ lifecycle management — the record, its lifetimes, and the four operations over it", id: "afb36c6c" }
+          - { name: "the install scripts tell the truth, upgrade fetches, and Windows has an installer", id: "469842e2" }
+          - { name: "the execution model, iteration 1", id: "97d19beb" }
+  - name: "Scenario: devlore"
+    id: "PVT_kwDOAD1Dfc4BqFix"
+    number: 30
+    template: false
+    fields:
+      - name: "Status"
+        id: "PVTSSF_lADOAD1Dfc4BqFixzhoeNUQ"
         type: single-select
         options:
           - { name: "Open", id: "8d4a9acd" }
           - { name: "In progress", id: "7c9852e3" }
           - { name: "Closed", id: "a4f6d48d" }
       - name: "Beat"
-        id: "PVTF_lADOAD1Dfc4BpxTxzhoLW90"
+        id: "PVTF_lADOAD1Dfc4BqFixzhoeNVs"
         type: number
-  - name: "Thread: writ self install — a machine that has never seen writ can use it"
-    id: "PVT_kwDOAD1Dfc4BpxT-"
-    number: 20
-    template: false
-    fields:
-      - name: "Status"
-        id: "PVTSSF_lADOAD1Dfc4BpxT-zhoLXI4"
+      - name: "Scenario"
+        id: "PVTSSF_lADOAD1Dfc4BqFixzhoeQzA"
         type: single-select
         options:
-          - { name: "Open", id: "8d4a9acd" }
-          - { name: "In progress", id: "7c9852e3" }
-          - { name: "Closed", id: "a4f6d48d" }
-      - name: "Beat"
-        id: "PVTF_lADOAD1Dfc4BpxT-zhoLXKk"
-        type: number
-  - name: "Thread: writ repo set and unset — a layer points where you say"
-    id: "PVT_kwDOAD1Dfc4BpxUR"
-    number: 21
-    template: false
-    fields:
-      - name: "Status"
-        id: "PVTSSF_lADOAD1Dfc4BpxURzhoLXZg"
-        type: single-select
-        options:
-          - { name: "Open", id: "8d4a9acd" }
-          - { name: "In progress", id: "7c9852e3" }
-          - { name: "Closed", id: "a4f6d48d" }
-      - name: "Beat"
-        id: "PVTF_lADOAD1Dfc4BpxURzhoLXb8"
-        type: number
-  - name: "Thread: writ deploy and upgrade — deploying converges the machine and says what it did"
-    id: "PVT_kwDOAD1Dfc4BpxUb"
-    number: 22
-    template: false
-    fields:
-      - name: "Status"
-        id: "PVTSSF_lADOAD1Dfc4BpxUbzhoLXkY"
-        type: single-select
-        options:
-          - { name: "Open", id: "8d4a9acd" }
-          - { name: "In progress", id: "7c9852e3" }
-          - { name: "Closed", id: "a4f6d48d" }
-      - name: "Beat"
-        id: "PVTF_lADOAD1Dfc4BpxUbzhoLXlk"
-        type: number
+          - { name: "writ origin — a deployment says where it came from", id: "9d72f3a6" }
+          - { name: "writ self install — a machine that has never seen writ can use it", id: "d895036a" }
+          - { name: "writ repo set and unset — a layer points where you say", id: "0170afbd" }
+          - { name: "writ deploy and upgrade — deploying converges the machine and says what it did", id: "cde90b18" }
+          - { name: "The MSYS2 package: a real Windows lore scenario — user-space GNU Make on ARM64", id: "f453aea7" }

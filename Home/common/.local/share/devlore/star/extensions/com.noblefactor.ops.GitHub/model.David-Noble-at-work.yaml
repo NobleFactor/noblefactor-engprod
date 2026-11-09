@@ -1,0 +1,367 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Noble Factor. All rights reserved.
+
+# An account's issue data model as GitHub holds it: docs/architecture/issue-data-model/6-the-asset-and-its-sync.md.
+# Written by star github model pull; edit it by hand only deliberately, then run star github model digest. The digest is
+# a SHA-256 over this file with its own line excluded. A type is keyed by its id; a type of the hierarchy takes its level
+# from its description's "Level N:", and a collection type, whose description begins "Collection:", has none. Within a
+# level the types' order is the render order. In a user account a type is a label, named under label. An organization's
+# issue fields and its teams follow, each team with the repositories it holds the maintain role on. Labels are in three
+# tiers: the organization's, which every participating repository carries; each team's; each repository's own.
+
+version: 1
+pulled:
+  at: 2026-11-09T04:12:02Z
+  account: David-Noble-at-work
+  digest: sha256:1b8af3a5ee7e37d9e27de7afcad0f825a45777333ca2a916a0093cd9851252ae
+types:
+  - name: "Epic"
+    id: "LA_kwDOVhE47c8AAAADA0OT-Q"
+    label: "epic"
+    level: 0
+    color: "7057ff"
+    description: "Level 0: a body of work with an owner, the root work issues roll up to; decomposes into features"
+  - name: "Feature"
+    id: "LA_kwDOVhE47c8AAAADA0OU4w"
+    label: "feature"
+    level: 1
+    color: "0e8a16"
+    description: "Level 1: a capability for the product or for engineering; decomposes into tasks and bugs"
+  - name: "Bug"
+    id: "LA_kwDOVhE47c8AAAADAz2QRw"
+    label: "bug"
+    level: 2
+    unplanned: true
+    color: "d73a4a"
+    description: "Level 2: unplanned work, a defect found rather than planned; repairs a feature"
+  - name: "Task"
+    id: "LA_kwDOVhE47c8AAAADA0OVsA"
+    label: "task"
+    level: 2
+    color: "1d76db"
+    description: "Level 2: planned work, a step in delivering a feature"
+  - name: "Schedule"
+    id: "LA_kwDOVhE47c8AAAADA0NPOg"
+    label: "schedule"
+    color: "1d76db"
+    description: "Collection: describes a schedule, its deliverable and its exit criteria"
+  - name: "Scenario"
+    id: "LA_kwDOVhE47c8AAAADA0NPiA"
+    label: "scenario"
+    color: "8a63d2"
+    description: "Collection: describes a scenario, the story its features tell"
+labels:
+  organization: []
+  teams: {}
+  repositories:
+    "David-Noble-at-work/.github":
+      - name: "accessibility"
+        color: "f143ab"
+        description: "Barrier affecting people with disabilities"
+      - name: "area:engineering"
+        color: "0e8a16"
+        description: "Design artifacts, technical specs, internal infrastructure, testing, and executing development plans"
+      - name: "area:product"
+        color: "1d76db"
+        description: "User-facing features, capabilities, or functional components released from this repository"
+      - name: "bug"
+        color: "d73a4a"
+        description: "Level 2: unplanned work, a defect found rather than planned; repairs a feature"
+      - name: "documentation"
+        color: "0075ca"
+        description: "Improvements or additions to documentation"
+      - name: "effort:high"
+        color: "b60205"
+        description: "Effort: high"
+      - name: "effort:low"
+        color: "0e8a16"
+        description: "Effort: low"
+      - name: "effort:medium"
+        color: "fbca04"
+        description: "Effort: medium"
+      - name: "enhancement"
+        color: "a2eeef"
+        description: "New feature or request"
+      - name: "epic"
+        color: "7057ff"
+        description: "Level 0: a body of work with an owner, the root work issues roll up to; decomposes into features"
+      - name: "feature"
+        color: "0e8a16"
+        description: "Level 1: a capability for the product or for engineering; decomposes into tasks and bugs"
+      - name: "good first issue"
+        color: "7057ff"
+        description: "Good for newcomers"
+      - name: "help wanted"
+        color: "008672"
+        description: "Extra attention is needed"
+      - name: "priority:high"
+        color: "b60205"
+        description: "Priority: high"
+      - name: "priority:low"
+        color: "0e8a16"
+        description: "Priority: low"
+      - name: "priority:medium"
+        color: "fbca04"
+        description: "Priority: medium"
+      - name: "priority:urgent"
+        color: "e99695"
+        description: "Priority: urgent"
+      - name: "question"
+        color: "d876e3"
+        description: "Further information is requested"
+      - name: "resolution:declined"
+        color: "cfd3d7"
+        description: "Closed: the work was declined"
+      - name: "resolution:duplicate"
+        color: "cfd3d7"
+        description: "Closed: another issue covers it"
+      - name: "resolution:invalid"
+        color: "e4e669"
+        description: "Closed: not a real problem, or filed in the wrong place"
+      - name: "scenario"
+        color: "8a63d2"
+        description: "Collection: describes a scenario, the story its features tell"
+      - name: "schedule"
+        color: "1d76db"
+        description: "Collection: describes a schedule, its deliverable and its exit criteria"
+      - name: "severity:critical"
+        color: "b60205"
+        description: "Severity: data loss, corruption, or a security failure"
+      - name: "severity:high"
+        color: "d93f0b"
+        description: "Severity: a supported path is broken with no workaround"
+      - name: "severity:low"
+        color: "0e8a16"
+        description: "Severity: cosmetic, or a defect nobody is hitting"
+      - name: "severity:medium"
+        color: "fbca04"
+        description: "Severity: broken with a workaround, or a narrow path"
+      - name: "severity:n/a"
+        color: "cfd3d7"
+        description: "Severity: not applicable, the issue is not a bug"
+      - name: "task"
+        color: "1d76db"
+        description: "Level 2: planned work, a step in delivering a feature"
+    "David-Noble-at-work/personal":
+      - name: "area:engineering"
+        color: "0e8a16"
+        description: "Design artifacts, technical specs, internal infrastructure, testing, and executing development plans"
+      - name: "area:product"
+        color: "1d76db"
+        description: "User-facing features, capabilities, or functional components released from this repository"
+      - name: "bug"
+        color: "d73a4a"
+        description: "Level 2: unplanned work, a defect found rather than planned; repairs a feature"
+      - name: "dependencies"
+        color: "0366d6"
+        description: "Pull requests that update a dependency file"
+      - name: "documentation"
+        color: "0075ca"
+        description: "Documentation only; branches as doc/"
+      - name: "effort:high"
+        color: "b60205"
+        description: "Effort: high"
+      - name: "effort:low"
+        color: "0e8a16"
+        description: "Effort: low"
+      - name: "effort:medium"
+        color: "fbca04"
+        description: "Effort: medium"
+      - name: "enhancement"
+        color: "84b6eb"
+        description: "Improvement to existing behavior; branches as feature/"
+      - name: "epic"
+        color: "7057ff"
+        description: "Level 0: a body of work with an owner, the root work issues roll up to; decomposes into features"
+      - name: "feature"
+        color: "0e8a16"
+        description: "Level 1: a capability for the product or for engineering; decomposes into tasks and bugs"
+      - name: "good first issue"
+        color: "7057ff"
+        description: "Good for newcomers"
+      - name: "priority:high"
+        color: "b60205"
+        description: "Priority: high"
+      - name: "priority:low"
+        color: "0e8a16"
+        description: "Priority: low"
+      - name: "priority:medium"
+        color: "fbca04"
+        description: "Priority: medium"
+      - name: "priority:urgent"
+        color: "e99695"
+        description: "Priority: urgent"
+      - name: "resolution:declined"
+        color: "cfd3d7"
+        description: "Closed: the work was declined"
+      - name: "resolution:duplicate"
+        color: "cfd3d7"
+        description: "Closed: another issue covers it"
+      - name: "resolution:invalid"
+        color: "cfd3d7"
+        description: "Closed: not a real problem, or filed in the wrong place"
+      - name: "scenario"
+        color: "8a63d2"
+        description: "Collection: describes a scenario, the story its features tell"
+      - name: "schedule"
+        color: "1d76db"
+        description: "Collection: describes a schedule, its deliverable and its exit criteria"
+      - name: "severity:critical"
+        color: "b60205"
+        description: "Severity: data loss, corruption, or a security failure"
+      - name: "severity:high"
+        color: "d93f0b"
+        description: "Severity: a supported path is broken with no workaround"
+      - name: "severity:low"
+        color: "0e8a16"
+        description: "Severity: cosmetic, or a defect nobody is hitting"
+      - name: "severity:medium"
+        color: "fbca04"
+        description: "Severity: broken with a workaround, or a narrow path"
+      - name: "severity:n/a"
+        color: "cfd3d7"
+        description: "Severity: not applicable, the issue is not a bug"
+      - name: "task"
+        color: "1d76db"
+        description: "Level 2: planned work, a step in delivering a feature"
+projects:
+  - name: "Schedule"
+    id: "PVT_kwHOAC5Zr84Bp9ZZ"
+    number: 1
+    template: false
+    fields:
+      - name: "Status"
+        id: "PVTSSF_lAHOAC5Zr84Bp9ZZzhoWmqE"
+        type: single-select
+        options:
+          - { name: "Open", id: "ba4e0e54" }
+          - { name: "In progress", id: "fd5cef35" }
+          - { name: "Closed", id: "470096a0" }
+      - name: "Step"
+        id: "PVTF_lAHOAC5Zr84Bp9ZZzhoWmtA"
+        type: number
+      - name: "Worktree"
+        id: "PVTF_lAHOAC5Zr84Bp9ZZzhobwMY"
+        type: text
+      - name: "Iteration"
+        id: "PVTIF_lAHOAC5Zr84Bp9ZZzhoeM3w"
+        type: iteration
+      - name: "Schedule"
+        id: "PVTSSF_lAHOAC5Zr84Bp9ZZzhofxUQ"
+        type: single-select
+        options:
+          - { name: "placeholder", id: "4d409b8f" }
+  - name: "Scenario"
+    id: "PVT_kwHOAC5Zr84Bp9Zd"
+    number: 2
+    template: false
+    fields:
+      - name: "Status"
+        id: "PVTSSF_lAHOAC5Zr84Bp9ZdzhoWmvM"
+        type: single-select
+        options:
+          - { name: "Open", id: "8d4a9acd" }
+          - { name: "In progress", id: "7c9852e3" }
+          - { name: "Closed", id: "a4f6d48d" }
+      - name: "Beat"
+        id: "PVTF_lAHOAC5Zr84Bp9ZdzhoWmwM"
+        type: number
+      - name: "Scenario"
+        id: "PVTSSF_lAHOAC5Zr84Bp9Zdzhofu44"
+        type: single-select
+        options:
+          - { name: "placeholder", id: "04f89a4e" }
+  - name: "Triage: David-Noble-at-work"
+    id: "PVT_kwHOAC5Zr84Bp9Zg"
+    number: 3
+    template: false
+    fields:
+      - name: "Status"
+        id: "PVTSSF_lAHOAC5Zr84Bp9ZgzhoWmxo"
+        type: single-select
+        options:
+          - { name: "Open", id: "dc6fec11" }
+          - { name: "In progress", id: "83cff555" }
+          - { name: "Closed", id: "c11622a4" }
+  - name: "Triage"
+    id: "PVT_kwHOAC5Zr84BqCRR"
+    number: 4
+    template: false
+    fields:
+      - name: "Status"
+        id: "PVTSSF_lAHOAC5Zr84BqCRRzhobInc"
+        type: single-select
+        options:
+          - { name: "Open", id: "dc6fec11" }
+          - { name: "In progress", id: "83cff555" }
+          - { name: "Closed", id: "c11622a4" }
+  - name: "Backlog"
+    id: "PVT_kwHOAC5Zr84BqFiW"
+    number: 5
+    template: false
+    fields:
+      - name: "Status"
+        id: "PVTSSF_lAHOAC5Zr84BqFiWzhoeM6g"
+        type: single-select
+        options:
+          - { name: "Open", id: "fa8b3d98" }
+          - { name: "In progress", id: "2754212f" }
+          - { name: "Closed", id: "63b7fbe5" }
+  - name: "Backlog: David-Noble-at-work"
+    id: "PVT_kwHOAC5Zr84BqFi7"
+    number: 6
+    template: false
+    fields:
+      - name: "Status"
+        id: "PVTSSF_lAHOAC5Zr84BqFi7zhoeNdI"
+        type: single-select
+        options:
+          - { name: "Open", id: "fa8b3d98" }
+          - { name: "In progress", id: "2754212f" }
+          - { name: "Closed", id: "63b7fbe5" }
+  - name: "Schedule: David-Noble-at-work"
+    id: "PVT_kwHOAC5Zr84BqFjA"
+    number: 7
+    template: false
+    fields:
+      - name: "Status"
+        id: "PVTSSF_lAHOAC5Zr84BqFjAzhoeNiI"
+        type: single-select
+        options:
+          - { name: "Open", id: "ba4e0e54" }
+          - { name: "In progress", id: "fd5cef35" }
+          - { name: "Closed", id: "470096a0" }
+      - name: "Step"
+        id: "PVTF_lAHOAC5Zr84BqFjAzhoeNi8"
+        type: number
+      - name: "Worktree"
+        id: "PVTF_lAHOAC5Zr84BqFjAzhoeNjA"
+        type: text
+      - name: "Iteration"
+        id: "PVTIF_lAHOAC5Zr84BqFjAzhoeNjE"
+        type: iteration
+      - name: "Schedule"
+        id: "PVTSSF_lAHOAC5Zr84BqFjAzhofmeg"
+        type: single-select
+        options:
+          - { name: "issue tracking, iteration 1", id: "82b39e21" }
+  - name: "Scenario: David-Noble-at-work"
+    id: "PVT_kwHOAC5Zr84BqFjC"
+    number: 8
+    template: false
+    fields:
+      - name: "Status"
+        id: "PVTSSF_lAHOAC5Zr84BqFjCzhoeNkI"
+        type: single-select
+        options:
+          - { name: "Open", id: "8d4a9acd" }
+          - { name: "In progress", id: "7c9852e3" }
+          - { name: "Closed", id: "a4f6d48d" }
+      - name: "Beat"
+        id: "PVTF_lAHOAC5Zr84BqFjCzhoeNk4"
+        type: number
+      - name: "Scenario"
+        id: "PVTSSF_lAHOAC5Zr84BqFjCzhofu2I"
+        type: single-select
+        options:
+          - { name: "placeholder", id: "b6369d10" }

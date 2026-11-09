@@ -432,8 +432,9 @@ projects.
 
 A work item (a feature, a task or a bug) rolls up to exactly one epic through its parent links. Ruled 2026-11-04: a task
 or a bug may be a row of a Backlog project, of a schedule (§ Schedules) or of a scenario (§ Scenarios), and an epic or a
-feature is a row of none of them (§ What has no parent). Today the report renders each slice as `--by epic`,
-`--by thread` and `--by schedule`; its thread slice is the scenario slice under its old name.
+feature is a row of none of them (§ What has no parent). Since #379 (ruled 2026-11-08) the report returns every issue
+as one flat record, and star's `--filter` and `--jq` give each slice: an epic's on the record's `epic`, a schedule's
+and a scenario's on the rows in its `home`.
 
 ## Scenarios
 
@@ -505,8 +506,8 @@ Since 2026-11-03 that line links the issue's own rows (§ Schedules).
 Scenario field, so no label has to agree with a table. Ruled 2026-11-03, there are no compliance checks; superseded in
 part on 2026-11-04, the sweep (#436) will be the one check, and it will leave a scenario's rows alone but for the two
 structural rules above, on an epic or a feature in a scenario and on an issue that is also a row of another of its
-account's projects (§ Well classified). Today `star github schedule audit --unthreaded` lists open work in no thread as
-a question rather than a fault; it still reads the removed `Thread:` labels until the tooling follows.
+account's projects (§ Well classified). The audit, and with it `--unthreaded`, which read the removed `Thread:` labels,
+retired with #436 on 2026-11-08; the sweep holds a scenario's rows to those two rules.
 
 ## Schedules
 
@@ -537,8 +538,9 @@ as a step is a fault, not a shorthand.
 **The schedule issue** has the issue type Schedule (the label `schedule`, in a user account). It holds its schedule's
 deliverable and exit criteria (§ What has no parent), its schedule's option in the Schedule field is named for it, and
 its account's `.github` repository holds an issue form for it. The steps are the rows with that option, with their step
-numbers. Today the report still finds a schedule issue by its title beginning `Schedule:`. Under the old scheme it read
-the steps from a step table in the schedule issue's body. Ruled 2026-11-03, and done in GitHub the same day: those
+numbers. Since #379 (2026-11-08) the report finds a schedule's steps in its records' `home`, by the Schedule option of
+their rows, and Start-Claude knows a schedule issue by its type, or in a user account its `schedule` label, never by its
+title. Under the old scheme the report read the steps from a step table in the schedule issue's body. Ruled 2026-11-03, and done in GitHub the same day: those
 tables gave way to a line naming the issue's board and option (§ Scenarios).
 
 On 2026-11-03 that line, `The steps are on [<project>](...), under Schedule "<option>"` or, in a Scenario issue,
@@ -601,8 +603,9 @@ A schedule's members are the rows of its team's Schedule project with its option
 members are found down its sub-issue links, not by label. Ruled 2026-11-03, there are no compliance checks; superseded
 in part on 2026-11-04, the sweep (#436) will be the one check, and it will return an issue that breaks a rule to its
 team's Triage project (§ Well classified). Under the old scheme `star github schedule report --by schedule` read the
-schedule issue's step table and rendered each step's state; that table is gone (§ Schedules). What the audit compares
-against will be decided with the tooling, #426 and #437.
+schedule issue's step table and rendered each step's state; that table is gone (§ Schedules). Since #436 (2026-11-08) a
+record's `home` gives each step's schedule, step and Status from its row, and the sweep checks each account against its
+own model, the part of #426 it needs having come with it; `push`'s side stays with #426 and #437.
 
 ## What an empty level means
 
@@ -623,7 +626,14 @@ state, and the report should say so.
 
 An issue of any type, or of none, waits in its team's Triage project until a triage decision declines it or moves it on
 (§ What has no parent), but for an item found while walking a scenario, which waits in the scenario until it moves out
-(§ Scenarios). An issue moved on leaves with its type and its parent. Triage also sets and revises its attributes:
+(§ Scenarios). An issue moved on leaves with its type and its parent.
+
+Ruled 2026-11-08, recorded on #436: a Triage row sits beside an issue's home. An issue's home is at most one of its
+account's Backlog, Schedule and Scenario projects; when the sweep finds a fault, it adds the issue to its team's Triage
+project beside that home, and it never takes an issue off a schedule or a scenario, nor removes a row from any project.
+Triage fixes the fault, or declines or moves the issue, and removes the Triage row as part of that decision.
+
+Triage also sets and revises its attributes:
 
 | Attribute | Answers | In NobleFactor | In David-Noble-at-work |
 | --- | --- | --- | --- |
@@ -815,8 +825,10 @@ it, with the color and description David-Noble-at-work/.github's has, from the s
 that every repository that takes part, in both accounts, holds it. The sweep (#436) will return an issue that carries it
 and isn't a task or a bug to its team's Triage project (§ Well classified).
 
-## What the audit is for
+## What the sweep is for
 
-Today `star github schedule audit` is the classification audit, and `star github schedule report --view
-tree` opens with it before any section. That order is the point: a report that renders a tidy hierarchy while
-silently omitting the issues it could not place is worse than no report, because it looks complete.
+`star github triage sweep` (#436) is the classification check since the audit retired on 2026-11-08. The audit's point
+stands: a report that renders a tidy hierarchy while silently omitting the issues it could not place is worse than no
+report, because it looks complete. The report now omits nothing, since every issue is a record and one with no type or
+no parent says so in its keys, and the sweep sends each open issue that breaks a rule (§ Well classified) to its team's
+Triage project, beside its home and never in place of it.

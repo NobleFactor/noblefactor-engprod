@@ -1,241 +1,38 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright Noble Factor. All rights reserved.
 
-"""The epic, feature, lane tree from GitHub issues."""
+"""Every issue of the repositories named, or of writ's layers, as one flat record each."""
 
-# gh-issues-report.star
+# github-schedule-report.star
 #
-# Phase 1 of noblefactor-ops#140: one repository, --by epic, and row-for-row parity with
-# devlore-cli's scripts/Get-EpicReport. The result is the rows; --markdown returns the document the
-# script prints instead, for the reader and for the parity diff.
+# docs/plans/feature/436-triage-sweep.md, Requirement 2 (noblefactor-engprod#379). The result is the records, JSON by
+# default; star's global --filter and --jq narrow them and --output renders them, and the report binds none of them
+# (docs/architecture/10-command-line-interface.md in devlore-cli, §8 and §14). Its one selection of its own is
+# --search, which narrows what is read.
 
 load("commands/access.star", "check_access")
 load("commands/model.star", "read_first")
-load("commands/scheme.star", "LEAF_KINDS", "PARENT_KINDS", "audit", "audit_lines", "axis", "by_axis", "by_number", "canonical_repo", "children_of", "epic_name", "epic_rows", "epic_tag", "exempt_numbers", "feature_rows", "feature_table_lines", "fetch_issues", "is_child", "is_root", "key", "kind_of", "label_space", "lane_repos", "line", "parent", "parent_words", "parents_of", "resolve_all", "resolve_repos", "schedule_issues", "schedule_rows", "schedule_table_lines", "short", "table_lines", "task_row", "thread_names", "thread_rows", "thread_table_lines")
-
-def _epics(all, epic_filter):
-    return by_axis(by_number([i for i in all if is_root(i) and (epic_filter == "" or epic_tag(i) == "Epic:" + epic_filter)]), epic_name)
-
-# Between the last product section and the first tooling section, when both are present.
-def _divider(items, name_of, idx):
-    if idx == 0 or axis(name_of(items[idx])) != "tooling" or axis(name_of(items[idx - 1])) != "product":
-        return []
-    return ["\n---\n", "_The Ops: axis — tooling, not product._"]
-
-def _header(state, repos):
-    out = ["State filter: **" + state + "**."]
-    if len(repos) > 1:
-        out.append("Repositories: " + ", ".join(repos) + ".")
-    return out
-
-def _table_document(all, epics, state, repos):
-    out = ["# Epic status\n"] + _header(state, repos)
-    if len(epics) == 0:
-        out.append("\nNo epics matched.")
-        return out
-    for i, e in enumerate(epics):
-        out.extend(_divider(epics, epic_name, i))
-        out.append("\n## " + e["title"] + " [" + e["ref"] + "](" + e["url"] + ")\n")
-        out.extend(table_lines(epic_rows(e, all)))
-    return out
-
-def _tree_document(all, epics, state, repos, a):
-    out = ["# Epic report\n"] + _header(state, repos) + ["\n## Classification audit\n"]
-    out.extend(audit_lines(a))
-    if len(epics) == 0:
-        out.append("\nNo epics matched.")
-        return out
-    out.append("\n_" + str(len(epics)) + " epic(s)._")
-    for i, e in enumerate(epics):
-        out.extend(_divider(epics, epic_name, i))
-        tag = epic_tag(e)
-        parents = parents_of(tag, all)
-        tasks = [i for i in all if is_child(i) and epic_tag(i) == tag]
-        parent_keys = [key(f) for f in parents]
-        out.append("\n## " + line(e))
-        out.append("\n_" + ", ".join([str(len([f for f in parents if kind_of(f) == k])) + " " + k + "(s)" for k in PARENT_KINDS] + [str(len([x for x in tasks if kind_of(x) == k])) + " " + k + "(s)" for k in LEAF_KINDS]) + "._")
-        if len(parents) == 0:
-            out.append("\n_Awaiting plan and design: no " + parent_words(plural = True) + " filed._")
-        for f in parents:
-            out.append("\n### " + line(f))
-            mine = children_of(f, tasks)
-            if len(mine) == 0:
-                out.append("\n_Awaiting decomposition: no lanes filed._")
-            else:
-                out.append("\n| Done | Issue | Title | Kind | Severity | Priority |")
-                out.append("|---|---|---|---|---|---|")
-                out.extend([task_row(t) for t in mine])
-        unfiled = by_number([t for t in tasks if parent(t) == None or parent(t) not in parent_keys])
-        if len(unfiled) > 0:
-            out.append("\n### Unfiled — no parent stated, or a parent outside this epic")
-            out.append("\n| Done | Issue | Title | Kind | Severity | Priority |")
-            out.append("|---|---|---|---|---|---|")
-            out.extend([task_row(t) for t in unfiled])
-    return out
-
-def _thread_document(threads, state, repos):
-    out = ["# Thread status\n"] + _header(state, repos)
-    if len(threads) == 0:
-        out.append("\nNo threads matched.")
-        return out
-    for i, t in enumerate(threads):
-        out.extend(_divider(threads, lambda x: x["name"], i))
-        th = t["thread"]
-        if th:
-            out.append("\n## " + th["title"] + " [" + th["ref"] + "](" + th["url"] + ")\n")
-        else:
-            out.append("\n## Thread:" + t["name"] + " (no thread issue)\n")
-        out.extend(thread_table_lines(t["rows"]))
-        if len(t["faults"]) > 0:
-            out.append("")
-            for f in t["faults"]:
-                out.append("- **fault:** " + f)
-    return out
-
-def _feature_document(epics, all, state, repos):
-    out = ["# Feature status\n"] + _header(state, repos)
-    if len(epics) == 0:
-        out.append("\nNo epics matched.")
-        return out
-    rows = feature_rows(epics, all)
-    for i, e in enumerate(epics):
-        out.extend(_divider(epics, epic_name, i))
-        out.append("\n## " + e["title"] + " [" + e["ref"] + "](" + e["url"] + ")\n")
-        out.extend(feature_table_lines([r for r in rows if r["epic"] == e["number"] and r["epic_ref"] == e["ref"]]))
-    return out
-
-def _schedule_document(scheds, all, state, repos):
-    out = ["# Schedule status\n"] + _header(state, repos)
-    if len(scheds) == 0:
-        out.append("\nNo schedules matched.")
-        return out
-    for sc in scheds:
-        out.append("\n## " + sc["title"] + " [" + sc["ref"] + "](" + sc["url"] + ")\n")
-        out.extend(schedule_table_lines(schedule_rows(sc, all, repos, state)))
-    return out
-
-def _with_lane_repos(scheds, all, repos, state, limit):
-    """The issue set and repositories, with every repository the schedules' lanes name and the report has not read.
-
-    A schedule spans what its lanes name, wherever they are (noblefactor-ops#253, ruled 2026-10-19). Once more than one
-    repository is read, every ref names its repository, so the refs fetched before are written that way too.
-    """
-    extra = [r for r in lane_repos(scheds) if r not in repos]
-    if len(extra) == 0:
-        return all, repos
-    note("repositories the lanes name: " + ", ".join(extra))
-    for it in all:
-        it["ref"] = short(it["repo"]) + "#" + str(it["number"])
-    return resolve_all(all + fetch_issues(state, limit, extra, True)), repos + extra
-
-def _names_schedule(spec, sched):
-    """Whether spec, <owner>/<repository>#<number> or a bare <number>, names the schedule issue sched."""
-    if "#" in spec:
-        owner_repo, number = spec.rsplit("#", 1)
-        return canonical_repo(owner_repo) + "#" + number == key(sched)
-    return spec == str(sched["number"])
-
-def _run(ctx):
-    """Render the tree by epic; rows by default, the script's markdown document with --markdown.
-
-    Args:
-      ctx: the invocation -- ctx.args carries the flags.
-    """
-    by = ctx.args.get("by", "epic")
-    view = ctx.args.get("view", "table")
-    epic_filter = ctx.args.get("epic", "")
-    thread_filter = ctx.args.get("thread", "")
-    schedule_filter = ctx.args.get("schedule", "")
-    state = ctx.args.get("state", "")
-    limit = ctx.args.get("limit", 500)
-    directory = ctx.args.get("directory", "")
-    repo_flag = ctx.args.get("repo", "")
-    markdown = ctx.args.get("markdown", False)
-
-    if by not in ["epic", "feature", "thread", "schedule"]:
-        fail("--by must be epic, feature, thread, or schedule (got '" + by + "')")
-    if view not in ["tree", "table"]:
-        fail("--view must be tree or table (got '" + view + "')")
-
-    # Status includes what has closed: by thread and by feature the state defaults to all, since a
-    # done-versus-open rollup that cannot see closed issues counts nothing as done.
-    if state == "":
-        state = "all" if by in ["thread", "feature", "schedule"] else "open"
-    if state not in ["open", "closed", "all"]:
-        fail("--state must be open, closed, or all (got '" + state + "')")
-
-    repos = resolve_repos(repo_flag, directory)
-    space = None
-    if len(repos) > 1:
-        note("repositories: " + ", ".join(repos))
-    if by == "thread" or (len(repos) > 1 and epic_filter):
-        space = label_space(repos)
-    if len(repos) > 1:
-        if epic_filter:
-            known = sorted({label[len("Epic:"):]: True for r in space for label in space[r] if label.startswith("Epic:")}.keys())
-            if epic_filter not in known:
-                fail("no Epic:" + epic_filter + " label in " + ", ".join(repos) + "; known epics: " + ", ".join(known))
-    all = fetch_issues(state, limit, repos)
-    exempt = exempt_numbers()
-
-    if by == "thread":
-        names = by_axis(thread_names(space), lambda n: n)
-        if thread_filter:
-            if thread_filter not in names:
-                fail("no Thread:" + thread_filter + " label in " + ", ".join(repos) + "; known threads: " + ", ".join(names))
-            names = [thread_filter]
-        threads = [thread_rows(n, all) for n in names]
-        if markdown:
-            return "\n".join(_thread_document(threads, state, repos))
-        rows = []
-        for t in threads:
-            rows.extend(t["rows"])
-        return rows
-
-    if by == "schedule":
-        scheds = schedule_issues(all)
-        if schedule_filter:
-            scheds = [sc for sc in scheds if _names_schedule(schedule_filter, sc)]
-            if len(scheds) == 0:
-                fail("no schedule is issue '" + schedule_filter + "'; the schedules are " + ", ".join([key(sc) for sc in schedule_issues(all)]))
-            if len(scheds) > 1:
-                fail("'" + schedule_filter + "' names " + str(len(scheds)) + " schedules, " + ", ".join([key(sc) for sc in scheds]) + "; write <owner>/<repository>#<number>")
-        if not repo_flag:
-            all, repos = _with_lane_repos(scheds, all, repos, state, limit)
-        if markdown:
-            return "\n".join(_schedule_document(scheds, all, state, repos))
-        rows = []
-        for sc in scheds:
-            rows.extend(schedule_rows(sc, all, repos, state))
-        return rows
-
-    epics = _epics(all, epic_filter)
-    if by == "feature":
-        if markdown:
-            return "\n".join(_feature_document(epics, all, state, repos))
-        return feature_rows(epics, all)
-    a = audit(all, exempt)
-
-    if markdown:
-        lines = _table_document(all, epics, state, repos) if view == "table" else _tree_document(all, epics, state, repos, a)
-        return "\n".join(lines)
-
-    rows = []
-    for e in epics:
-        rows.extend(epic_rows(e, all))
-    return rows
+load("commands/records.star", "fetch", "records")
+load("commands/scheme.star", "MODEL_DIGEST_FAULTS", "canonical_repo", "default_repos", "model_for")
 
 def run(_command, ctx):
-    """Check gh's access, read GitHub's record against the asset, then run; say when the asset is behind (#378).
+    """Check gh's access, read each account's record against its model, then return every issue's record.
 
-    The line goes first in a markdown document, where --silent cannot hide it, and to a warning otherwise.
+    Args:
+      _command: the command as star names it.
+      ctx: the invocation: ctx.args carries the repositories named and --search.
     """
     check_access("star github schedule report", dry_run = ctx.dry_run)
-    behind = read_first(dry_run = ctx.dry_run)
-    result = _run(ctx)
-    if behind == "":
-        return result
-    if type(result) == "string":
-        return "> " + behind + "\n\n" + result
-    warn(behind)
-    return result
+    repos = [canonical_repo(r.strip()) for r in (ctx.args.get("repositories") or []) if r.strip()] or default_repos()
+    accounts = []
+    for repo in repos:
+        account = model_for(repo)["account"]
+        if account not in accounts:
+            accounts.append(account)
+    for fault in MODEL_DIGEST_FAULTS:
+        warn(fault)
+    for account in accounts:
+        behind = read_first(account = account, dry_run = ctx.dry_run)
+        if behind:
+            warn(behind)
+    return records(fetch(repos, search = ctx.args.get("search", "")))

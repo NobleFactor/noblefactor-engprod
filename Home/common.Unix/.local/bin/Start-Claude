@@ -80,7 +80,12 @@ function repository_slug {
     printf '%s\n' "${BASH_REMATCH[1]}"
 }
 
-# schedule_fields prints a schedule's title, link and labels, separated by tabs, from the schedule's own repository.
+# schedule_fields prints a schedule's title, link, issue type and labels, separated by the unit separator, from the
+# schedule's own repository.
+#
+# Read through GraphQL: gh 2.46.0, the build Ubuntu Pro pins, refuses issueType in `gh issue view --json`. The unit
+# separator, not a tab: read splits on a tab as whitespace, so the empty type every issue of a user account has would
+# vanish and move the labels into its place.
 #
 # Parameters:
 #   - `$1`: the repository, `<owner>/<repository>`.
@@ -91,8 +96,12 @@ function repository_slug {
 function schedule_fields {
     local slug="$1" number="$2"
 
-    gh issue view "$number" --repo "$slug" --json title,url,labels \
-        --jq '[.title, .url, ([.labels[].name] | join(","))] | @tsv' 2>&1
+    # shellcheck disable=SC2016 # $owner, $name and $number are GraphQL's
+    gh api graphql -f owner="${slug%%/*}" -f name="${slug#*/}" -F number="$number" -f query='
+      query($owner: String!, $name: String!, $number: Int!) { repository(owner: $owner, name: $name) {
+        issue(number: $number) { title url issueType { name } labels(first: 50) { nodes { name } } } } }' \
+        --jq '.data.repository.issue
+          | [.title, .url, (.issueType.name // ""), ([.labels.nodes[].name] | join(","))] | join("\u001f")' 2>&1
 }
 
 ## The store
@@ -1329,11 +1338,13 @@ else
 
     fields="$(schedule_fields "$schedule_slug" "$schedule_number")" ||
         error $EX_NOINPUT "The issue cannot be read: ${schedule_slug}#${schedule_number}. gh: ${fields//$'\n'/; }"
-    IFS=$'\t' read -r schedule_title schedule_url schedule_labels <<<"$fields"
+    IFS=$'\x1f' read -r schedule_title schedule_url schedule_type schedule_labels <<<"$fields"
 
-    if [[ "$schedule_title" != Schedule:* || ",${schedule_labels}," != *,chore,* ]]; then
-        message="${schedule_slug}#${schedule_number} is not a schedule: a schedule is of kind chore and its title"
-        error $EX_DATAERR "${message} begins \"Schedule:\"."
+    # issue-standards.md § Schedules: a schedule is an issue of type Schedule and, in a user account, which has no issue
+    # types, an issue labeled schedule (ruled 2026-11-03). The chore label and the title's "Schedule:" retired that day.
+    if [[ "$schedule_type" != Schedule && ",${schedule_labels}," != *,schedule,* ]]; then
+        message="${schedule_slug}#${schedule_number} is not a schedule: a schedule is an issue of type Schedule, or, in a"
+        error $EX_DATAERR "${message} user account, one labeled schedule."
     fi
 fi
 

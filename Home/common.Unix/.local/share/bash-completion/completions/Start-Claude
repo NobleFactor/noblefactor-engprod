@@ -48,10 +48,13 @@ _Start_Claude() {
                     -C | --directory) directory="${COMP_WORDS[index + 1]}" ;;
                 esac
             done
+            # A schedule is an issue of type Schedule, or, in a user account, which has no issue types, one labeled
+            # schedule (issue-standards.md § Schedules); each search finds nothing in the other kind of account.
             if command -v gh >/dev/null 2>&1; then
-                schedules+=" $(cd -- "${directory/#\~/${HOME}}" 2>/dev/null &&
-                    gh issue list --state open --label chore --limit 50 --json number,title \
-                        --jq '.[] | select(.title | startswith("Schedule:")) | .number' 2>/dev/null | tr '\n' ' ')"
+                schedules+=" $(cd -- "${directory/#\~/${HOME}}" 2>/dev/null && {
+                    gh issue list --state open --search 'type:Schedule' --limit 50 --json number --jq '.[].number'
+                    gh issue list --state open --label schedule --limit 50 --json number --jq '.[].number'
+                } 2>/dev/null | tr '\n' ' ')"
             fi
             COMPREPLY=($(compgen -W "${schedules}" -- "${cur}"))
             return 0

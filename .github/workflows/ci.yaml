@@ -52,7 +52,7 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update -y
-          sudo apt-get install -y findutils shellcheck tmux zsh
+          sudo apt-get install -y findutils jq shellcheck tmux zsh
           curl -sSfL -o shfmt \
             "https://github.com/mvdan/sh/releases/download/${SHFMT_VERSION}/shfmt_${SHFMT_VERSION}_linux_amd64"
           echo "${SHFMT_SHA256}  shfmt" | sha256sum --check --strict
@@ -75,6 +75,18 @@ jobs:
           $ErrorActionPreference = 'Stop'
           Install-Module PSScriptAnalyzer -RequiredVersion $env:PSSCRIPTANALYZER_VERSION -Scope CurrentUser -Force
 
+      # star, for the extension's test, tests/Test-StarGitHub (#436): a pinned devlore release, as the tools above are
+      # pinned, installed by devlore-cli's install.sh at that release's tag, which verifies the archive against the
+      # release's checksums before it extracts anything. The release must carry devlore-cli#1215: before it, star wrote
+      # an empty list as null, and the test's cases on the report's home and the sweep's lists fail.
+      - name: star
+        env:
+          DEVLORE_VERSION: v0.1.0-dev.20261109005023
+        run: |
+          set -euo pipefail
+          curl -sSfL "https://raw.githubusercontent.com/NobleFactor/devlore-cli/${DEVLORE_VERSION}/install.sh" | bash
+          "$HOME/.local/bin/star" version --output value --silent
+
       - name: make check
         run: make check
 
@@ -91,7 +103,7 @@ jobs:
       - name: Tools
         run: |
           set -euo pipefail
-          brew install bash coreutils diffutils findutils gawk gnu-getopt gnu-sed grep make tmux
+          brew install bash coreutils diffutils findutils gawk gnu-getopt gnu-sed grep jq make tmux
           prefix="$(brew --prefix)"
           {
             echo "${prefix}/bin"
@@ -100,6 +112,16 @@ jobs:
               echo "${prefix}/opt/${formula}/libexec/gnubin"
             done
           } >> "$GITHUB_PATH"
+
+      # star, for the extension's test, as the Linux job installs it: the same pinned release, by the same install.sh.
+      - name: star
+        env:
+          DEVLORE_VERSION: v0.1.0-dev.20261109005023
+        run: |
+          set -euo pipefail
+          curl -sSfL "https://raw.githubusercontent.com/NobleFactor/devlore-cli/${DEVLORE_VERSION}/install.sh" | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          "$HOME/.local/bin/star" version --output value --silent
 
       - name: make test
         run: make test

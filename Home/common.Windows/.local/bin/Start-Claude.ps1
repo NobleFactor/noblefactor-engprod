@@ -12,8 +12,8 @@
     the viewer ends the psmux session, as detaching does, and claude runs the conversation on until claude stop.
     Start-Claude is its counterpart on macOS and Linux, on tmux.
 
-    The session works a schedule: a GitHub issue of kind chore whose title begins "Schedule:", its lane table
-    listing the work. claude's background session is named "<owner>/<repository>#<number> | <host> | <repository> |
+    The session works a schedule: a GitHub issue of type Schedule, or, in a user account, which has no issue types,
+    one labeled schedule; its steps are the rows of its team's Schedule project. claude's background session is named "<owner>/<repository>#<number> | <host> | <repository> |
     <branch> | <title>", which is also its Remote Control name. Each psmux session onto it is named
     "<repository>#<number> $<id>", the schedule's repository and number and psmux's own id, since psmux loses a
     session whose name carries "/" or "|". A conversation on no schedule names it for its id.
@@ -468,15 +468,26 @@ begin {
             $Number
         )
 
-        # The issue's title, link and labels, read from its own repository and never from the caller's.
-        $result = Invoke-Gh -Argument @('issue', 'view', $Number, '--repo', $Slug, '--json', 'title,url,labels')
+        # The issue's title, link, issue type and labels, read from its own repository and never from the caller's,
+        # through GraphQL: gh 2.46.0, the build Ubuntu Pro pins, refuses issueType in `gh issue view --json`.
+        $owner, $name = $Slug.Split('/', 2)
+        $query = 'query($owner: String!, $name: String!, $number: Int!) { repository(owner: $owner, name: $name) { ' +
+        'issue(number: $number) { title url issueType { name } labels(first: 50) { nodes { name } } } } }'
+        $result = Invoke-Gh -Argument @('api', 'graphql', '-f', "owner=$owner", '-f', "name=$name", '-F', "number=$Number",
+            '-f', "query=$query", '--jq', '.data.repository.issue')
 
         if ($result.ExitCode -ne 0 -or -not $result.Output) {
             $message = "The issue cannot be read: $Slug#$Number. gh: $($result.Reason)"
             Exit-Launch -ErrorId 'ScheduleNotRead' -Category ObjectNotFound -Message $message
         }
 
-        return $result.Output | ConvertFrom-Json
+        $issue = $result.Output | ConvertFrom-Json
+        return [pscustomobject]@{
+            title  = $issue.title
+            url    = $issue.url
+            type   = $issue.issueType.name
+            labels = @($issue.labels.nodes.name)
+        }
     }
 
     function Open-Schedule {
@@ -1880,10 +1891,12 @@ end {
 
             $issue = Get-ScheduleIssue -Slug $scheduleSlug -Number $scheduleNumber
 
-            # issue-standards.md, Schedules: a schedule is of kind chore, and its title begins "Schedule:".
-            if (-not ($issue.title.StartsWith('Schedule:') -and @($issue.labels.name) -contains 'chore')) {
-                $message = "$scheduleSlug#$scheduleNumber is not a schedule: a schedule is of kind chore and its title"
-                Exit-Launch -ErrorId 'NotASchedule' -Category InvalidData -Message "$message begins ""Schedule:""."
+            # issue-standards.md, Schedules: a schedule is an issue of type Schedule and, in a user account, which has
+            # no issue types, an issue labeled schedule (ruled 2026-11-03). The chore label and the title's "Schedule:"
+            # retired that day.
+            if (-not ($issue.type -ceq 'Schedule' -or $issue.labels -ccontains 'schedule')) {
+                $message = "$scheduleSlug#$scheduleNumber is not a schedule: a schedule is an issue of type Schedule, or,"
+                Exit-Launch -ErrorId 'NotASchedule' -Category InvalidData -Message "$message in a user account, one labeled schedule."
             }
 
             $scheduleTitle = $issue.title
