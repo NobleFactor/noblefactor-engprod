@@ -21,9 +21,11 @@ load(
     "commands/scheme.star",
     "MODELS",
     "MODEL_DIGEST_FAULTS",
+    "MODEL_FAULTS",
     "TRIAGE_KIND",
     "USER_ATTRIBUTES",
     "leaf_level",
+    "model_of",
     "owners_of",
     "team_of",
     "type_named",
@@ -255,15 +257,17 @@ def _sweep(account, dry_run):
 def run(_command, ctx):
     """Check gh's access, read each account's record against its model, then sweep each account named, or every one with a model.
 
+    With no account named, an account whose model could not be read is among them, and fails, saying why, rather than
+    being passed over.
+
     Args:
       _command: the command as star names it.
       ctx: the invocation: ctx.args carries the accounts named; ctx.dry_run, star's --dry-run, under which nothing is added.
     """
     check_access("star github triage sweep", scopes = ["project"], dry_run = ctx.dry_run)
-    accounts = [a.strip() for a in (ctx.args.get("accounts") or []) if a.strip()] or sorted(MODELS.keys())
+    accounts = [a.strip() for a in (ctx.args.get("accounts") or []) if a.strip()] or sorted(list(MODELS.keys()) + list(MODEL_FAULTS.keys()))
     for account in accounts:
-        if account not in MODELS:
-            fail("no model for " + account + "; make one with star github model pull --account " + account + " in a worktree")
+        model_of(account)
     for fault in MODEL_DIGEST_FAULTS:
         warn(fault)
     for account in accounts:

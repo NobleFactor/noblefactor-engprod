@@ -67,7 +67,7 @@ commands:
       - name: asset
         type: string
         default: ""
-        help: "The model file to write; default: the account's beside this extension, model.yaml for the default account and model.<account>.yaml for another. A real pull writes only a file on a branch, so name a worktree's"
+        help: "The model file to write, which a real pull writes only on a branch; default: model.<account>.yaml beside this extension. The default account's model is <account>/.github/model.yaml, so name a clone's; without one, --check compares GitHub with star's copy of it"
       - name: check
         type: bool
         default: "false"
@@ -80,7 +80,7 @@ commands:
       - name: asset
         type: string
         default: ""
-        help: "The model.yaml to re-sign; default: the one beside this extension"
+        help: "The model file to re-sign. The default account's model is <account>/.github/model.yaml, so name a clone's; there is no default"
       - name: check
         type: bool
         default: "false"
@@ -132,7 +132,7 @@ commands:
       - name: asset
         type: string
         default: ""
-        help: "The model file to write; default: the account's beside this extension, model.yaml for the default account and model.<account>.yaml for another. A real pull writes only a file on a branch, so name a worktree's"
+        help: "The model file to write, which a real pull writes only on a branch; default: model.<account>.yaml beside this extension. The default account's model is <account>/.github/model.yaml, so name a clone's; without one, --check compares GitHub with star's copy of it"
       - name: check
         type: bool
         default: "false"
@@ -145,7 +145,7 @@ commands:
       - name: asset
         type: string
         default: ""
-        help: "The model.yaml to re-sign; default: the one beside this extension"
+        help: "The model file to re-sign. The default account's model is <account>/.github/model.yaml, so name a clone's; there is no default"
       - name: check
         type: bool
         default: "false"

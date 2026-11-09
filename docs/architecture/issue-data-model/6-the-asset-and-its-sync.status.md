@@ -105,9 +105,12 @@ option with its id (#437; § The asset, under Ids beside names, and § Risk).
 - [ ] Each account's model file in its `.github` repository, holding the issue types or type labels, the issue fields
   where the account has them, the teams, each repository's labels, and the four project templates with their fields,
   options and views: #431 for NobleFactor/.github, David-Noble-at-work/personal#311 for David-Noble-at-work/.github.
+  NobleFactor's landed on 2026-11-09 (#431, NobleFactor/.github#3), and star reads it from there by ETag;
+  David-Noble-at-work's comes with #441, which stands in for David-Noble-at-work/personal#311.
 - [ ] Each account's file templates in its `.github` repository, ruled 2026-11-03: its issue forms and its Triage
   workflow template, which were there on 2026-11-03, and its pull request template, which is part of #431 for
-  NobleFactor/.github and David-Noble-at-work/personal#311 for David-Noble-at-work/.github.
+  NobleFactor/.github and David-Noble-at-work/personal#311 for David-Noble-at-work/.github. NobleFactor's landed on
+  2026-11-09 (#431), with `CONTRIBUTING.md`, `SECURITY.md` and `SUPPORT.md`; David-Noble-at-work's comes with #441.
 - [ ] The ETag cache under `$XDG_CACHE_HOME/devlore/star/gh/model/`, and `star github model digest`, built in #377; how
   each account's model is read, #426; the gate checks the digest, which no issue names yet.
 - [ ] `star github model pull`, built in #377; `push`, #437; and `audit`, which no issue names yet; `labels sync` and

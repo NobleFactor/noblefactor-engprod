@@ -226,7 +226,7 @@ for compliance and an agent has reviewed its code, with the team lead's sign-off
   Backlog, Schedule and Scenario projects, whichever team owns them, and is on at most one schedule or scenario, and no
   epic or feature is a row of a Backlog, Schedule or Scenario project (§ Triage and the Backlog).
 - Schedules have no Next column. It was deleted from the Schedule template and every schedule on 2026-11-02.
-  The `model.yaml` beside the extension predates the cutover and still shows it.
+  NobleFactor's model, pulled on 2026-11-08 and NobleFactor/.github's `model.yaml` since #431, no longer shows it.
 - A schedule's Worktree column was ruled 2026-11-03. Each step's row links the branch its work is on, and the step's
   own issue records that the work merged or closed. The column holds a link to the branch on GitHub, so the branch is
   pushed before its row links it: a link to a branch GitHub does not have leads nowhere. Found 2026-11-03: the row of

@@ -27,10 +27,11 @@ request template, are stored in its `.github` repository, and every document tha
 there. Read from GitHub on 2026-11-03, NobleFactor/.github and David-Noble-at-work/.github each hold `README.md`, the
 six issue forms in `.github/ISSUE_TEMPLATE` (bug, epic, feature, scenario, schedule and task) and the Triage workflow
 template in `workflow-templates` (`triage.yml` and `triage.properties.json`). NobleFactor/.github also holds
-`.github/workflows/quality-gate.yml`. Neither holds a pull request template yet, nor `CONTRIBUTING.md`, `SECURITY.md`,
-`SUPPORT.md` or its account's model file. The pull request template is part of NobleFactor/noblefactor-engprod#431 for
-NobleFactor/.github and David-Noble-at-work/personal#311 for David-Noble-at-work/.github, the issues that bring each
-account's model file there.
+`.github/workflows/quality-gate.yml`. Since 2026-11-09 NobleFactor/.github also holds NobleFactor's model file,
+`model.yaml`, which star reads from there; its pull request template; and `CONTRIBUTING.md`, `SECURITY.md` and
+`SUPPORT.md` (NobleFactor/noblefactor-engprod#431, NobleFactor/.github#3). David-Noble-at-work/.github holds none of
+these yet; its model file and pull request template are part of NobleFactor/noblefactor-engprod#441, which stands in
+for David-Noble-at-work/personal#311.
 
 Ruled 2026-11-03: the model is a YAML description of an account's data model, and it is a cache. star queries the model
 instead of asking GitHub the same questions again. [Section 6](6-the-asset-and-its-sync.md) states what the model holds

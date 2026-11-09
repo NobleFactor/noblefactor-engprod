@@ -108,8 +108,8 @@ git push -u origin <branch>
 
 # The description says AI assisted and ends with the two trailers (rule 2). The sign-off comes from git's
 # configuration, never typed. The merge step below writes everything above ## Time into the squash commit.
-# The description's form is to be kept in the account's pull request template, in its .github repository;
-# neither account has one yet (rule 2).
+# The description's form is kept in the account's pull request template, in its .github repository: NobleFactor's
+# since #431; David-Noble-at-work's comes with #441 (rule 2).
 description="$(cat <<'EOF'
 ## Summary
 
@@ -303,8 +303,8 @@ git status --short
    Ruled 2026-11-03: the description's form is to be kept in the account's pull request template, stored in its
    `.github` repository with the account's other file templates
    ([section 6](../architecture/issue-data-model/6-the-asset-and-its-sync.md#one-model-per-account) of the issue data
-   model design). Neither account has one yet; it is part of #431 for NobleFactor/.github and
-   David-Noble-at-work/personal#311 for David-Noble-at-work/.github.
+   model design). NobleFactor's is NobleFactor/.github's `.github/pull_request_template.md`, since 2026-11-09 (#431);
+   David-Noble-at-work's comes with #441, which stands in for David-Noble-at-work/personal#311.
 3. **HEREDOC for messages.** Both commit messages and PR bodies use `cat <<'EOF'` for safe formatting.
 4. **CI gate is tolerant.** Repos with no required checks proceed; real failures abort.
 5. **Merge gate before merge.** Check `mergeStateStatus` to catch conflicts, blocks, or staleness before attempting
@@ -462,8 +462,8 @@ Written with AI assistance.
 '@
 
     # The description ends with the two trailers (rule 2); the sign-off comes from git's configuration.
-    # The description's form is to be kept in the account's pull request template, in its .github repository;
-    # neither account has one yet (rule 2).
+    # The description's form is kept in the account's pull request template, in its .github repository: NobleFactor's
+    # since #431; David-Noble-at-work's comes with #441 (rule 2).
     $trailers = "Signed-off-by: $name <$email>`nAssisted-by: Claude Code"
     return "$description`n`n$trailers`n`n## Time`n`n_Filled by the merge step below._"
 }

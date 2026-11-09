@@ -93,10 +93,29 @@ def extension_dir():
     """The deployed extension's directory: ${XDG_DATA_HOME:-$HOME/.local/share}/devlore/star/extensions/<extension>."""
     return sh('printf %s "${XDG_DATA_HOME:-$HOME/.local/share}/devlore/star/extensions/' + EXTENSION + '"')
 
+def kept_on_github(account):
+    """Whether the account's model is its .github repository's model.yaml, which scheme.star reads from GitHub: the default account's (#431)."""
+    return account == default_account()
+
+def model_source(account):
+    """Where an account's model kept on GitHub is: <account>/.github/model.yaml."""
+    return account + "/.github/model.yaml"
+
+def model_copy(account):
+    """star's copy of an account's model as GitHub last gave it, which scheme.star keeps, as its model_copy names it."""
+    return sh('printf %s "${XDG_CACHE_HOME:-$HOME/.cache}/devlore/star/gh/model/' + account + '.model.yaml"').strip()
+
 def default_asset(account = ""):
-    """An account's model file beside the extension: model.yaml for the default account, model.<account>.yaml for any other."""
+    """An account's model file when --asset names none: model.<account>.yaml beside the extension.
+
+    An account whose model is kept on GitHub has none: a pull or a digest writes that model only in a clone of the
+    account's .github repository, on a branch, and --asset names it there; so this fails, saying so.
+    """
     account = account or default_account()
-    return extension_dir() + ("/model.yaml" if account == default_account() else "/model." + account + ".yaml")
+    if kept_on_github(account):
+        fail(account + "'s model is " + model_source(account) + ", which a pull or a digest writes only in a clone of " +
+             account + "/.github, on a branch: name the clone's model.yaml with --asset")
+    return extension_dir() + "/model." + account + ".yaml"
 
 def cache_path(account):
     """The account's cache: ${XDG_CACHE_HOME:-$HOME/.cache}/devlore/star/gh/model/<account>.yaml."""
@@ -705,12 +724,16 @@ def read_first(account = "", dry_run = False):
 
     Writes nothing but the cache, and the cache only when what was read is what the model holds, so that a 304 never
     vouches for content the model lacks (section 6, § Every operation reads first). Each read is a note, shown unless
-    --silent; the returned line is the caller's to put where --silent cannot hide it.
+    --silent; the returned line is the caller's to put where --silent cannot hide it. An account whose model is kept on
+    GitHub is compared as star read it, its copy; with no copy, scheme.star has already said why there is no model.
     """
     if dry_run:
         return ""
     account = account or default_account()
-    path = default_asset(account)
+    kept = kept_on_github(account)
+    path = model_copy(account) if kept else default_asset(account)
+    if kept and not exists(path):
+        return ""
     old_text = read_text(path)
     c = compare(account, old_text)
     for line in c["reads"]:
@@ -725,5 +748,6 @@ def read_first(account = "", dry_run = False):
         what = moved[0]
     else:
         what = str(len(moved)) + " changes, " + moved[0] + " among them"
+    where = (" --asset <a clone of " + account + "/.github>/model.yaml, on a branch.") if kept else " in a worktree."
     return ("The model of " + account + " is behind GitHub: " + what + ", since its pull at " + recorded_at(old_text) +
-            ". Run star github model pull --account " + account + " in a worktree.")
+            ". Run star github model pull --account " + account + where)

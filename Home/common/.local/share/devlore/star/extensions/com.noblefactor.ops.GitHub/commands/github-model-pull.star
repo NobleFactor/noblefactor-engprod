@@ -17,6 +17,9 @@ load(
     "default_asset",
     "exists",
     "fresh_text",
+    "kept_on_github",
+    "model_copy",
+    "model_source",
     "owner_kind",
     "preview",
     "read_text",
@@ -33,11 +36,19 @@ def run(_command, ctx):
     """Pull an account's model, an organization's or a user's, into its model file; return what moved and the diff.
 
     --account names the account; with none, star configuration's github.account, and then NobleFactor. The model file is
-    --asset, or the account's beside the extension: model.yaml for the default account, model.<account>.yaml otherwise.
+    --asset. With none, it is model.<account>.yaml beside the extension; an account whose model is kept on GitHub, in its
+    .github repository (#431), has no such file, so a pull that would write refuses, and --check compares GitHub with
+    the model star read, its copy, named as <account>/.github/model.yaml.
     """
     account = ctx.args.get("account", "") or default_account()
-    asset = ctx.args.get("asset", "") or default_asset(account)
     check = preview(ctx)  # --check: the workaround for devlore-cli#1170
+    asset = ctx.args.get("asset", "")
+    shown = ""
+    if asset == "" and check and kept_on_github(account):
+        asset = model_copy(account)
+        shown = model_source(account)
+    elif asset == "":
+        asset = default_asset(account)
     check_access("star github model pull", scopes = ["read:project"])
     kind = owner_kind(account)
     if kind == "organization":
@@ -55,8 +66,8 @@ def run(_command, ctx):
     new_text = c["new_text"]
     recorded = c["recorded"]
     read_at = c["read_at"]
-    name = path.split("/")[-1]
-    report = ["[star] " + account + " (" + kind + ") into " + path + (" (--check: nothing written)" if check else "")]
+    name = (shown or path).split("/")[-1]
+    report = ["[star] " + account + " (" + kind + ") into " + (shown or path) + (" (--check: nothing written)" if check else "")]
     report.extend(["[star] " + line for line in c["reads"]])
     report.extend(["[star] " + n for n in c["notes"]])
 
