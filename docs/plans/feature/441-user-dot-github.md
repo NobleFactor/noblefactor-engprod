@@ -133,7 +133,7 @@ The documents do not settle these. Each is a proposal for the owner to change at
 
 ### Phase 4: personal's workflow
 
-- [ ] Requirement 3, in personal's worktree; its pull request merged
+- [x] Requirement 3, in personal's worktree; its pull request merged: David-Noble-at-work/personal#323
 
 ### Phase 5: the test, first
 
