@@ -1,7 +1,7 @@
 ---
 title: "David-Noble-at-work/.github holds that account's issue model, its health files and its Triage workflow"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/441
-status: active
+status: complete
 created: 2026-11-09
 updated: 2026-11-09
 ---
@@ -157,7 +157,7 @@ The documents do not settle these. Each is a proposal for the owner to change at
 
 ### Phase 9: merge
 
-- [ ] The pull request script written, shown and handed over; it closes #441 and personal#311
+- [x] The pull request script written, shown and handed over; it closes #441 and personal#311
 
 ## Test Plan
 
