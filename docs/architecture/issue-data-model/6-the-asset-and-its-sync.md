@@ -11,8 +11,10 @@ or not, into a model file. `push` writes a model to an account, and that model b
 model is a cache: star queries it instead of asking GitHub the same questions again, and builds sensible queries and
 updates from it. On 2026-10-21 the owner held that the model's file should travel with the extension and drive its
 behavior, as the definitive configuration, and on 2026-10-22 that star should read GitHub by ETag and offer pull and
-push as commands; since 2026-11-02 the file belongs in each account's `.github` repository instead. Whether star reads
-GitHub by ETag before every operation or answers from the model until the next pull is decided with #426.
+push as commands; since 2026-11-02 the file belongs in each account's `.github` repository instead. Since #431 star
+reads NobleFactor's file itself from NobleFactor/.github by ETag, once each invocation, keeping a copy (§ The asset).
+Whether star reads GitHub's record by ETag before every operation or answers from the model until the next pull is
+decided with #426.
 
 ## One model per account
 
@@ -58,8 +60,9 @@ Each repository's Triage workflow, which adds its new issues to its team's Triag
 2026-11-03: the issue forms in each account's `.github` repository have a required Area dropdown, and the Triage
 workflow copies its answer into the Area issue field, or in a user account the `area:` label, when the issue is opened:
 personal's adds the `area:` label today, and NobleFactor's will set the Area field once #447 and #448 land. Both
-repositories exist. NobleFactor's `model.yaml` beside the extension predates the ruling and moves with #431;
-David-Noble-at-work's model file lands with David-Noble-at-work/personal#311.
+repositories exist. NobleFactor's `model.yaml`, which lay beside the extension before the ruling, moved to
+NobleFactor/.github with #431 on 2026-11-09 (NobleFactor/.github#3); David-Noble-at-work's model file lands with #441,
+which stands in for David-Noble-at-work/personal#311.
 
 Ruled 2026-11-03: an account's file templates, which are its issue forms, its Triage workflow template and its pull
 request template, are stored in its `.github` repository, and every document that talks about one of them refers to it
@@ -82,9 +85,13 @@ scenario, schedule and task) and the Triage workflow template (`triage.yml` and 
   user account's. Whether GitHub offers this template to personal has not been checked; either way,
   David-Noble-at-work/personal#315 copies personal's `triage.yml` from it.
 
-Neither holds a pull request template yet, nor `CONTRIBUTING.md`, `SECURITY.md`, `SUPPORT.md` or the account's model
-file. The pull request templates are part of #431 for NobleFactor/.github and David-Noble-at-work/personal#311 for
-David-Noble-at-work/.github, the issues that bring each account's model file there.
+Since 2026-11-09 NobleFactor/.github also holds its model file, `model.yaml`; its pull request template,
+`.github/pull_request_template.md`; and `CONTRIBUTING.md`, `SECURITY.md` and `SUPPORT.md`, which apply to every
+NobleFactor repository without its own (#431, NobleFactor/.github#3). Each of its issue forms, the Schedule and
+Scenario forms among them, asks for the Plan and design documents table, and its quality gate parses a YAML timestamp,
+as a model file's `pulled.at` is. `SECURITY.md` sends reports to GitHub's private vulnerability reporting, on for every
+public NobleFactor repository since the same day. David-Noble-at-work/.github holds none of these yet; its model file
+and pull request template are part of #441, which stands in for David-Noble-at-work/personal#311.
 
 ## Reference models, read on demand
 
@@ -103,7 +110,8 @@ lives: not nowhere, as first ruled, but in a file in the account's own public `.
   or a change to it, and never otherwise. `pull` reads the data model of any account, ours or not, whether or not a
   model was ever pushed to it.
 - **Each of our accounts keeps its model file in its own `.github` repository.** Neither account's model file had
-  landed on 2026-11-03; § One model per account says what each `.github` repository held that day. Ruled 2026-11-03:
+  landed on 2026-11-03; § One model per account says what each `.github` repository held that day, and that
+  NobleFactor's landed on 2026-11-09 with #431. Ruled 2026-11-03:
   NobleFactor/.github gets a quality-gate check of its own, so it follows the organization's ruleset like every other
   repository. An account that is not ours has no such file; `pull` writes its model wherever `--asset` names.
 - **How a change the owner makes in GitHub reaches star** is decided with #426: whether star reads GitHub by ETag
@@ -122,10 +130,22 @@ Superseded 2026-11-02 by § Reference models, read on demand, and restored the s
 account's model file is kept in the account's `.github` repository. This section describes that file, the asset.
 
 Each account's model file is in that account's `.github` repository: NobleFactor's in NobleFactor/.github,
-David-Noble-at-work's in David-Noble-at-work/.github. Writ does not deploy it with the extension, and star finds it by
-`--asset` (ruled 2026-11-03), whose default is decided with #426 and #437. NobleFactor's file as pulled on 2026-11-02 is
-still `model.yaml` beside `extension.yaml` in `com.noblefactor.ops.GitHub`, and moves with #431. An organization's file
-holds these records:
+David-Noble-at-work's in David-Noble-at-work/.github. Writ does not deploy it with the extension. NobleFactor's moved
+there on 2026-11-09 (#431), as pulled on 2026-11-08; until then it was `model.yaml` beside `extension.yaml` in
+`com.noblefactor.ops.GitHub`.
+
+Built with #431, star reads the default account's model, NobleFactor's, from GitHub:
+`repos/NobleFactor/.github/contents/model.yaml`, in the raw media type, once each invocation. It sends the ETag of the
+copy it keeps in its cache, `${XDG_CACHE_HOME:-$HOME/.cache}/devlore/star/gh/model/NobleFactor.model.yaml`; a 304
+answers from the copy, a 200 replaces it, and when GitHub cannot be reached the copy stands in, said as a warning. A
+model star cannot read stops each command that needs it, saying why, and leaves `pull` and `digest` to run, since they
+make and mend a model. Any other account's model is `model.<account>.yaml` beside the extension until its own
+`.github` repository holds it (#441); a `model.yaml` there is not read.
+
+`pull` and `digest` write a model file only where `--asset` names it (ruled 2026-11-03), on a branch, which for one of
+our accounts is a clone of its `.github` repository. With no `--asset` they refuse for an account whose model star
+reads from GitHub, naming the file to give, and `pull --check` compares GitHub's record with star's copy. What
+`--asset` defaults to is decided with #426 and #437. An organization's file holds these records:
 
 ```yaml
 version: 1
@@ -481,8 +501,9 @@ delete" into `sync` and `copy`; here the split falls between the two verbs.
   is to take part; since 2026-11-02 personal's account has a model of its own.
 - **`star github model audit`** replaces `star github labels audit`: drift reported, nothing written. What it compares
   an account against is decided with #426 and #437.
-- `--asset` names the model file (ruled 2026-11-03). It no longer defaults to the file beside the extension; its
-  default is decided with #426 and #437.
+- `--asset` names the model file (ruled 2026-11-03). For an account whose model star reads from GitHub, NobleFactor's
+  since #431, it has no default, and `pull` and `digest` refuse without it; any other account's is
+  `model.<account>.yaml` beside the extension until #441. What it defaults to is decided with #426 and #437.
 - **Every command that talks to GitHub checks gh's access first,** § Access below.
 
 ## Risk
@@ -571,8 +592,8 @@ What follows is what #378 built. On 2026-10-22 the owner argued for a pull befor
 form of change detection. So every `star github schedule` operation begins with the conditional read `pull` makes,
 three or four requests sent with the cache's ETags and answered 304 when nothing moved, and runs against GitHub's
 record. It writes nothing but the cache. The model file is in the account's `.github` repository, not a deployed link
-into the layer clone, and a read-only command writes nothing there either; as built, it reads NobleFactor's
-`model.yaml` beside the extension, a link into the layer clone, until #431 moves it. When a record is not 304 and the
+into the layer clone, and a read-only command writes nothing there either; as built since #431, it compares GitHub's
+record with star's copy of NobleFactor/.github's `model.yaml` (§ The asset). When a record is not 304 and the
 asset is behind, the operation says so in one line of its header and goes on, the way the audit opened the tree
 report until it retired with #436 on 2026-11-08. Built 2026-10-27 (#378): `star github schedule report` and `audit` made
 `pull`'s read, sharing its comparison; since #436 the report and `star github triage sweep` make it, for each account

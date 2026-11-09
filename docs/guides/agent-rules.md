@@ -265,9 +265,10 @@ the disclosure and both trailers, the merge step writes the squash message from 
 commit that landed is checked for both: [pr-script-template.md](pr-script-template.md), rule 2.
 
 Ruled 2026-11-03: the description's form is to be kept in the account's pull request template, stored in its
-`.github` repository with its other file templates; neither account has one yet
+`.github` repository with its other file templates
 ([section 6](../architecture/issue-data-model/6-the-asset-and-its-sync.md#one-model-per-account) of the issue data
-model design).
+model design). NobleFactor's is NobleFactor/.github's `.github/pull_request_template.md`, since 2026-11-09 (#431);
+David-Noble-at-work's comes with #441.
 
 ## 14. A claim says how it is known
 

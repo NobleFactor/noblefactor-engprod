@@ -130,7 +130,7 @@ The documents do not settle these. Each is a proposal for the owner to change at
 
 ### Phase 5: the documents
 
-- [ ] Requirement 3
+- [x] Requirement 3: sections 3, 4 and 6 of the issue data model, section 6's status and the index; agent-rules.md rule 13; the PR script template's three notes on the pull request template
 
 ### Phase 6: proved on GitHub
 
