@@ -1,7 +1,7 @@
 ---
 title: "star reads the issue data model, and keeps every Triage project up to date"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/436
-status: approved
+status: complete
 created: 2026-11-08
 updated: 2026-11-08
 ---
@@ -351,16 +351,20 @@ David-Noble-at-work. Those files live in other repositories, so they land in the
 
 ### Phase 5: proved on the live repositories
 
-- [ ] #379's evidence: the report's tree for Epic #330 in NobleFactor and for an epic in David-Noble-at-work, each issue
-      under its parent and named with its epic, from the deployed extension
-- [ ] #436's evidence: for each of the three Triage projects, the sweep's command and output; the list matching the
-      project's rows; one issue added for a fault, with its comment, and one closed issue left where it is. Not a
-      `--dry-run` first: under it star reads nothing until devlore-cli#1170, and the owner ruled on 2026-11-08 not to
-      wait on it
+- [x] #379's evidence: the report's tree for Epic #330 in NobleFactor and for David-Noble-at-work's Epics #288 and
+      #317, each issue under its parent and named with its feature and its epic, read live with this branch's extension
+      on 2026-11-09, in a comment on #379
+- [x] #436's evidence: for each of the three Triage projects, the sweep's command and output; the list matching the
+      project's rows; one issue added for a fault, with its comment, and one closed issue left where it is, in a comment
+      on #436. Not a `--dry-run` first: under it star reads nothing until devlore-cli#1170, and the owner ruled on
+      2026-11-08 not to wait on it. Before the first run, the faults on this schedule's own issues were cleared, and the
+      backlog's evidence headings, written as Done when, Acceptance, Acceptance criteria, Exit criteria or Success
+      criteria before the ruling of 2026-11-04, were renamed in 175 issues; the run added 316 issues, 13 to Triage:
+      David-Noble-at-work, 285 to Triage: devlore and 18 to Triage: engprod, and a second run added none
 
 ### Phase 6: merge
 
-- [ ] The pull request script written, shown and handed over; it closes #376, #379 and #436
+- [x] The pull request script written, shown and handed over; it closes #376, #379, #436 and #466
 
 ## Test Plan
 
