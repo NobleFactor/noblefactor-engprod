@@ -67,7 +67,7 @@ commands:
       - name: asset
         type: string
         default: ""
-        help: "The model file to write, which a real pull writes only on a branch; default: model.<account>.yaml beside this extension. The default account's model is <account>/.github/model.yaml, so name a clone's; without one, --check compares GitHub with star's copy of it"
+        help: "The model file to write, which a real pull writes only on a branch; default: model.<account>.yaml beside this extension. The model of an account star reads from GitHub, the default account and each writ layer repository's owner, is <account>/.github/model.yaml, so name a clone's; without one, --check compares GitHub with star's copy of it"
       - name: check
         type: bool
         default: "false"
@@ -80,7 +80,7 @@ commands:
       - name: asset
         type: string
         default: ""
-        help: "The model file to re-sign. The default account's model is <account>/.github/model.yaml, so name a clone's; there is no default"
+        help: "The model file to re-sign. The model of an account star reads from GitHub, the default account and each writ layer repository's owner, is <account>/.github/model.yaml, so name a clone's; there is no default"
       - name: check
         type: bool
         default: "false"
@@ -132,7 +132,7 @@ commands:
       - name: asset
         type: string
         default: ""
-        help: "The model file to write, which a real pull writes only on a branch; default: model.<account>.yaml beside this extension. The default account's model is <account>/.github/model.yaml, so name a clone's; without one, --check compares GitHub with star's copy of it"
+        help: "The model file to write, which a real pull writes only on a branch; default: model.<account>.yaml beside this extension. The model of an account star reads from GitHub, the default account and each writ layer repository's owner, is <account>/.github/model.yaml, so name a clone's; without one, --check compares GitHub with star's copy of it"
       - name: check
         type: bool
         default: "false"
@@ -145,7 +145,7 @@ commands:
       - name: asset
         type: string
         default: ""
-        help: "The model file to re-sign. The default account's model is <account>/.github/model.yaml, so name a clone's; there is no default"
+        help: "The model file to re-sign. The model of an account star reads from GitHub, the default account and each writ layer repository's owner, is <account>/.github/model.yaml, so name a clone's; there is no default"
       - name: check
         type: bool
         default: "false"

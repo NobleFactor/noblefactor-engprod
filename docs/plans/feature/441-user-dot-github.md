@@ -141,7 +141,7 @@ The documents do not settle these. Each is a proposal for the owner to change at
 
 ### Phase 6: star reads every account's model from GitHub
 
-- [ ] Requirement 4; every case passes; `make check` passes
+- [x] Requirement 4; every case passes; `make check` passes: all 51 cases; the account set and the helpers scheme.star and model.star shared by copy now live in commands/accounts.star, which loads nothing
 
 ### Phase 7: the documents
 
