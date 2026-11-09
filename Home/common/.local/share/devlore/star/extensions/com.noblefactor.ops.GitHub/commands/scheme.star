@@ -5,17 +5,25 @@
 
 # scheme.star
 #
-# docs/architecture/issue-data-model/6-the-asset-and-its-sync.md. One model per account. The default account's,
-# NobleFactor's, is model.yaml in its .github repository (#431): read from GitHub by ETag, raw, with a copy kept in
-# star's cache, the copy answering a 304 and standing in when GitHub cannot be reached. Any other account's is
-# model.<account>.yaml beside extension.yaml until its own .github repository holds it (#441). Every model is loaded and
-# checked when the module loads, and a bad one stops every command with its fault named; a model that cannot be read is
-# recorded instead, so that pull and digest, which make and mend a model, still run, and a command that needs that
-# account's model fails with the reason (model_of). Nothing below names a type or a field: the hierarchy, the collection
-# types and each
-# record's keys are derived from the models (noblefactor-engprod#376, and the part of #426 the report and the sweep
-# need, #436). star hands a command no path to its extension, so the deployed path is resolved as writ's layers are,
-# through the shell.
+# docs/architecture/issue-data-model/6-the-asset-and-its-sync.md. One model per account. Each account star works with,
+# the default account and the owner of each of writ's layer repositories (accounts.star), keeps its model as model.yaml
+# in its .github repository (#431, #441): read from GitHub by ETag, raw, with a copy kept in star's cache, the copy
+# answering a 304 and standing in when GitHub cannot be reached. Any other account's is model.<account>.yaml beside
+# extension.yaml. Every model is loaded and checked when the module loads, and a bad one stops every command with its
+# fault named; a model that cannot be read is recorded instead, so that pull and digest, which make and mend a model,
+# still run, and a command that needs that account's model fails with the reason (model_of). Nothing below names a type
+# or a field: the hierarchy, the collection types and each record's keys are derived from the models
+# (noblefactor-engprod#376, and the part of #426 the report and the sweep need, #436). star hands a command no path to
+# its extension, so the deployed path is resolved as writ's layers are, through the shell.
+
+load(
+    "commands/accounts.star",
+    "ORIGIN",
+    "kept_accounts",
+    _canonical_repo = "canonical_repo",
+    _default_account = "default_account",
+    _layer_repos = "layer_repos",
+)
 
 _EXTENSION = "com.noblefactor.ops.GitHub"
 _MODEL_VERSION = 1
@@ -23,8 +31,10 @@ _MODEL_VERSION = 1
 # A collection type's description begins with this, and a collection has no level (section 6, `types`).
 _COLLECTION = "Collection:"
 
-# The account a command reads when none is named: star configuration's github.account, and then this one.
-DEFAULT_ACCOUNT_FALLBACK = "NobleFactor"
+# accounts.star's, bound here so that the commands that load them from this module still find them.
+default_account = _default_account
+canonical_repo = _canonical_repo
+layer_repos = _layer_repos
 
 # The project kinds each team, and each user account, has four of, named "<Kind>: <team>" in an organization and
 # "<Kind>: <account>" in a user account (section 6, `teams`). An issue's home is its row on one of the last three;
@@ -69,13 +79,6 @@ def _quote(s):
 def _extension_dir():
     """The deployed extension's directory: ${XDG_DATA_HOME:-$HOME/.local/share}/devlore/star/extensions/<extension>."""
     return _sh('printf %s "${XDG_DATA_HOME:-$HOME/.local/share}/devlore/star/extensions/' + _EXTENSION + '"').strip()
-
-def default_account():
-    """star configuration's github.account, or NobleFactor when it names none."""
-    cfg = config.get
-    if hasattr(cfg, "github") and hasattr(getattr(cfg, "github"), "account") and getattr(getattr(cfg, "github"), "account"):
-        return getattr(getattr(cfg, "github"), "account")
-    return DEFAULT_ACCOUNT_FALLBACK
 
 def key_of(name):
     """A record key from a model's name: lower case, each run of other characters one underscore; Target date is target_date."""
@@ -267,30 +270,33 @@ def _load(path, name):
 def _load_all():
     """Every account's model, by account, and why an account's could not be read: (models, faults).
 
-    The default account's is its .github repository's (#431); every other account's is model.<account>.yaml beside the
-    extension. Two models naming one account are refused. A model GitHub cannot give is a fault, recorded rather than
-    failed, so that pull and digest still run; a copy standing in for GitHub is said as a warning.
+    Each account star works with (kept_accounts: the default account and each writ layer repository's owner) keeps its
+    model in its .github repository (#431, #441); any other account's is model.<account>.yaml beside the extension. Two
+    models naming one account are refused, and so is a model beside the extension for an account whose model is kept on
+    GitHub. A model GitHub cannot give is a fault, recorded rather than failed, so that pull and digest still run; a copy
+    standing in for GitHub is said as a warning.
     """
+    kept = kept_accounts()
     models = {}
     for path in _model_paths(_extension_dir()):
         m = _load(path, path)
         if m["account"] in models:
             fail(path + " and " + models[m["account"]]["name"] + " both hold " + m["account"] + "'s model")
+        if m["account"] in kept:
+            fail(path + " holds " + m["account"] + "'s model, which is " + model_source(m["account"]) +
+                 " alone (#441): remove the file beside the extension")
         models[m["account"]] = m
     faults = {}
-    account = default_account()
-    read = _remote_model(account)
-    if read["note"]:
-        warn(read["note"])
-    if read["fault"]:
-        faults[account] = read["fault"]
-    else:
+    for account in kept:
+        read = _remote_model(account)
+        if read["note"]:
+            warn(read["note"])
+        if read["fault"]:
+            faults[account] = read["fault"]
+            continue
         m = _load(read["path"], model_source(account))
         if m["account"] != account:
             fail(model_source(account) + " holds " + m["account"] + "'s model, not " + account + "'s")
-        if account in models:
-            fail(models[account]["name"] + " and " + model_source(account) + " both hold " + account + "'s model; " +
-                 account + "'s is " + model_source(account) + " alone")
         models[account] = m
     return models, faults
 
@@ -349,15 +355,8 @@ def team_of(model, repo):
     return None
 
 # ── repositories ────────────────────────────────────────────────────────────
-
-# A repository renamed on GitHub keeps its old name as a redirect, and the record keeps it as text. Every owner/repo
-# the extension parses goes through canonical_repo, so the old name reads as the new. noblefactor-ops became
-# noblefactor-engprod on 2026-10-22 (noblefactor-ops#304).
-RENAMED = {"NobleFactor/noblefactor-ops": "NobleFactor/noblefactor-engprod"}
-
-def canonical_repo(name):
-    """owner/repo as it is named today: a renamed repository's old name maps to its new one, anything else is itself."""
-    return RENAMED.get(name, name)
+#
+# canonical_repo and layer_repos are accounts.star's, bound above.
 
 def short(repo):
     """The repository's name without its owner: noblefactor-engprod for NobleFactor/noblefactor-engprod."""
@@ -367,17 +366,10 @@ def cell(s):
     """A markdown table cell's text: its pipes escaped and its lines joined."""
     return s.replace("|", "\\|").replace("\n", " ")
 
-# owner/name at the end of a remote's URL, by HTTPS or by SSH, with or without .git.
-_ORIGIN = "[:/]([^/:]+/[^/]+?)(?:\\.git)?\\s*$"
-
-# writ's layers, in their order. Each registered one is an entry under writ's data directory naming a repository's
-# working tree; reading them needs nothing from writ (noblefactor-ops#253).
-_LAYERS = ["base", "team", "personal"]
-
 def _origin_repo(directory):
     """owner/name from the origin remote of a working tree."""
     r = shell.exec(command = "git -C '" + directory + "' remote get-url origin")
-    m = regex.find_submatch(pattern = _ORIGIN, text = r.stdout)
+    m = regex.find_submatch(pattern = ORIGIN, text = r.stdout)
     if m == None or len(m) < 2:
         fail("cannot read owner/name from the origin of " + directory + ": " + r.stdout.strip())
     return m[1]
@@ -386,22 +378,6 @@ def _current_repo():
     """owner/name of the repository the command runs in, as gh resolves it."""
     r = shell.exec(command = "gh repo view --json nameWithOwner --jq .nameWithOwner")
     return r.stdout.strip()
-
-def layer_repos():
-    """owner/name of each registered writ layer's repository, base first, each once.
-
-    A layer's entry is ${XDG_DATA_HOME:-$HOME/.local/share}/devlore/writ/layers/<layer>, naming a git working tree. One
-    that is absent, or names nothing git can read an origin from, is skipped, as writ reads an empty directory as no
-    layer. The script never fails, since shell.exec raises on a non-zero exit (devlore-cli#824).
-    """
-    script = ("layers=\"${XDG_DATA_HOME:-$HOME/.local/share}/devlore/writ/layers\"; for layer in " + " ".join(_LAYERS) +
-              "; do if [ -e \"$layers/$layer\" ]; then git -C \"$layers/$layer\" remote get-url origin 2>/dev/null; fi; done; true")
-    repos = []
-    for origin in shell.exec(command = script).stdout.split("\n"):
-        m = regex.find_submatch(pattern = _ORIGIN, text = origin)
-        if m != None and len(m) > 1 and canonical_repo(m[1]) not in repos:
-            repos.append(canonical_repo(m[1]))
-    return repos
 
 def default_repos():
     """The repositories of writ's layers, or the one the command runs in when no layer is registered."""

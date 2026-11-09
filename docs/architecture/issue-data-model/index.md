@@ -378,8 +378,9 @@ design.
   setting, NobleFactor unless set, and `--asset` names the model file (ruled 2026-11-03). `star github model push`
   writes a model to an account, and that model becomes the account's data model. Two reference models ship with the star
   extension, one for an organization's account and one for a user's. Until 2026-11-02 the model was a single committed
-  `model.yaml` beside the extension ([section 6](6-the-asset-and-its-sync.md)); since #431, on 2026-11-09, NobleFactor's
-  is NobleFactor/.github's `model.yaml`, which star reads from GitHub by ETag. Whether star reads GitHub by ETag before
+  `model.yaml` beside the extension ([section 6](6-the-asset-and-its-sync.md)); since 2026-11-09 each of our accounts'
+  is its `.github` repository's `model.yaml`, NobleFactor's with #431 and David-Noble-at-work's with #441, which star
+  reads from GitHub by ETag. Whether star reads GitHub by ETag before
   every operation or answers from the model until the next pull, what push writes, and `--asset`'s default are decided
   with the tooling, #426 and #437. Ruled 2026-11-03: an account's model holds its issue fields, as it holds its issue
   types and labels. NobleFactor's are Priority, Effort, Target date, Resolution, Area and Severity, and its Start date

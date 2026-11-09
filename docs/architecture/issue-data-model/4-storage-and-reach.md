@@ -29,9 +29,9 @@ six issue forms in `.github/ISSUE_TEMPLATE` (bug, epic, feature, scenario, sched
 template in `workflow-templates` (`triage.yml` and `triage.properties.json`). NobleFactor/.github also holds
 `.github/workflows/quality-gate.yml`. Since 2026-11-09 NobleFactor/.github also holds NobleFactor's model file,
 `model.yaml`, which star reads from there; its pull request template; and `CONTRIBUTING.md`, `SECURITY.md` and
-`SUPPORT.md` (NobleFactor/noblefactor-engprod#431, NobleFactor/.github#3). David-Noble-at-work/.github holds none of
-these yet; its model file and pull request template are part of NobleFactor/noblefactor-engprod#441, which stands in
-for David-Noble-at-work/personal#311.
+`SUPPORT.md` (NobleFactor/noblefactor-engprod#431, NobleFactor/.github#3). David-Noble-at-work/.github holds the same
+for its account since the same day, and runs its own Triage workflow (NobleFactor/noblefactor-engprod#441, which
+stands in for David-Noble-at-work/personal#311; David-Noble-at-work/.github#1).
 
 Ruled 2026-11-03: the model is a YAML description of an account's data model, and it is a cache. star queries the model
 instead of asking GitHub the same questions again. [Section 6](6-the-asset-and-its-sync.md) states what the model holds

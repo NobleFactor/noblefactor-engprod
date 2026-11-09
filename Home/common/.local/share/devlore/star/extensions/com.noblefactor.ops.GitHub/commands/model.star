@@ -6,19 +6,22 @@
 docs/architecture/issue-data-model/6-the-asset-and-its-sync.md. Loaded by github-model-pull.star and
 github-model-digest.star, and by the commands that read GitHub's record first; never by scheme.star, and it never
 loads scheme.star: scheme.star fails when a model does not load, and pull and digest are how a damaged model is
-repaired (noblefactor-engprod#377). One model per account (section 6, § One model per account): an organization's
-holds its issue types, its issue fields, its teams with the repositories each maintains, the hub's labels and its
-projects; a user account's holds its type labels, the labels of the repositories it owns that carry the topic
-issue-model, and its projects (noblefactor-engprod#436, the part of #426 the report and the sweep need).
+repaired (noblefactor-engprod#377). It loads accounts.star, which loads nothing. One model per account (section 6, §
+One model per account): an organization's holds its issue types, its issue fields, its teams with the repositories each
+maintains, the hub's labels and its projects; a user account's holds its type labels, the labels of the repositories it
+owns that carry the topic issue-model, and its projects (noblefactor-engprod#436, the part of #426 the report and the
+sweep need).
 """
 
 # model.star
 
+load("commands/accounts.star", "kept_accounts", _default_account = "default_account")
+
 EXTENSION = "com.noblefactor.ops.GitHub"
 MODEL_VERSION = 1
 
-# The account a command reads when none is named: star configuration's github.account, and then this one.
-DEFAULT_ACCOUNT_FALLBACK = "NobleFactor"
+# accounts.star's, bound here so that the commands that load it from this module still find it.
+default_account = _default_account
 
 # The hub repository, whose labels are an organization's record of them.
 HUB = "noblefactor-engprod"
@@ -82,20 +85,13 @@ def now():
     """The time in UTC, to the second, as GitHub writes it."""
     return sh("date -u +%Y-%m-%dT%H:%M:%SZ").strip()
 
-def default_account():
-    """star configuration's github.account, or NobleFactor when it names none."""
-    cfg = config.get
-    if hasattr(cfg, "github") and hasattr(getattr(cfg, "github"), "account") and getattr(getattr(cfg, "github"), "account"):
-        return getattr(getattr(cfg, "github"), "account")
-    return DEFAULT_ACCOUNT_FALLBACK
-
 def extension_dir():
     """The deployed extension's directory: ${XDG_DATA_HOME:-$HOME/.local/share}/devlore/star/extensions/<extension>."""
     return sh('printf %s "${XDG_DATA_HOME:-$HOME/.local/share}/devlore/star/extensions/' + EXTENSION + '"')
 
 def kept_on_github(account):
-    """Whether the account's model is its .github repository's model.yaml, which scheme.star reads from GitHub: the default account's (#431)."""
-    return account == default_account()
+    """Whether the account's model is its .github repository's model.yaml, which scheme.star reads from GitHub: one of kept_accounts (#431, #441)."""
+    return account in kept_accounts()
 
 def model_source(account):
     """Where an account's model kept on GitHub is: <account>/.github/model.yaml."""

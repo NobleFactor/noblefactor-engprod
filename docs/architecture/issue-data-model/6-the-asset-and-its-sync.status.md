@@ -102,15 +102,15 @@ option with its id (#437; § The asset, under Ids beside names, and § Risk).
   where it is stored, and what `pull` and `push` do with it: the four templates per account, Triage, Backlog, Schedule
   and Scenario, with the Schedule and Scenario fields and Iteration. Workflows and an organization's default labels are
   left out. On #303's branch, `doc/303-model-cutover`.
-- [ ] Each account's model file in its `.github` repository, holding the issue types or type labels, the issue fields
+- [x] Each account's model file in its `.github` repository, holding the issue types or type labels, the issue fields
   where the account has them, the teams, each repository's labels, and the four project templates with their fields,
   options and views: #431 for NobleFactor/.github, David-Noble-at-work/personal#311 for David-Noble-at-work/.github.
-  NobleFactor's landed on 2026-11-09 (#431, NobleFactor/.github#3), and star reads it from there by ETag;
-  David-Noble-at-work's comes with #441, which stands in for David-Noble-at-work/personal#311.
-- [ ] Each account's file templates in its `.github` repository, ruled 2026-11-03: its issue forms and its Triage
+  Both landed on 2026-11-09: NobleFactor's (#431, NobleFactor/.github#3) and David-Noble-at-work's (#441, standing in for
+  David-Noble-at-work/personal#311; David-Noble-at-work/.github#1). star reads each from there by ETag.
+- [x] Each account's file templates in its `.github` repository, ruled 2026-11-03: its issue forms and its Triage
   workflow template, which were there on 2026-11-03, and its pull request template, which is part of #431 for
-  NobleFactor/.github and David-Noble-at-work/personal#311 for David-Noble-at-work/.github. NobleFactor's landed on
-  2026-11-09 (#431), with `CONTRIBUTING.md`, `SECURITY.md` and `SUPPORT.md`; David-Noble-at-work's comes with #441.
+  NobleFactor/.github and David-Noble-at-work/personal#311 for David-Noble-at-work/.github. Both pull request
+  templates landed on 2026-11-09, each with `CONTRIBUTING.md`, `SECURITY.md` and `SUPPORT.md` (#431, #441).
 - [ ] The ETag cache under `$XDG_CACHE_HOME/devlore/star/gh/model/`, and `star github model digest`, built in #377; how
   each account's model is read, #426; the gate checks the digest, which no issue names yet.
 - [ ] `star github model pull`, built in #377; `push`, #437; and `audit`, which no issue names yet; `labels sync` and
