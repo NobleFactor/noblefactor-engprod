@@ -92,6 +92,25 @@ function make_extension {
     fi
 }
 
+# add_layer registers a writ layer in a data directory as writ does: an entry under devlore/writ/layers naming a git
+# working tree, whose origin is the repository given. The extension reads each layer repository's owner as an account
+# whose model is kept on GitHub (#441).
+#
+# Parameters:
+#   - `$1`: the data directory make_extension made.
+#   - `$2`: the layer's name: base, team or personal.
+#   - `$3`: the layer's repository, owner/name.
+#
+# Returns:
+#   - 0, the layer registered.
+function add_layer {
+    local layer="$1/devlore/writ/layers/$2"
+
+    mkdir -p -- "${layer}"
+    git -C "${layer}" init --quiet
+    git -C "${layer}" remote add origin "git@github.com:$3.git"
+}
+
 # run_star runs one star command against a case's extension and the stand-in gh, outside any git tree, so that no
 # project-local extension or configuration reaches it.
 #
@@ -926,6 +945,47 @@ run_star "${run_directory}/data-431" github schedule report test-user/personal
 expect "9.6: test-user's model is still read from beside the extension" ok '
     length > 0 and all(.[]; .issue | startswith("test-user/personal#"))
     and ([$calls[] | select(index("repos/test-user/.github/contents/model.yaml") != null)] | length == 0)'
+cache_home="${run_directory}/cache"
+
+# 10. Each account star works with, the default account and the owner of each writ layer repository, has its model
+# read from its .github repository (#441). test-user, the owner of a layer here, is read from GitHub and kept; a model
+# beside the extension for it as well is refused as a second; an account that owns no layer is still read from beside
+# the extension; and pull refuses without --asset for a layer's owner.
+declare -r data_441="${run_directory}/data-441"
+make_extension "${data_441}"
+add_layer "${data_441}" base NobleFactor/alpha
+add_layer "${data_441}" personal test-user/personal
+mkdir -p -- "${data_441}/remote/test-user/.github"
+mv -- "${data_441}/devlore/star/extensions/${extension_name}/model.test-user.yaml" "${data_441}/remote/test-user/.github/model.yaml"
+cache_home="${run_directory}/cache-441"
+
+run_star "${data_441}" github schedule report test-user/personal
+expect "10.1: a layer's owner has its model read from its .github repository" ok '
+    length > 0 and all(.[]; .issue | startswith("test-user/personal#"))
+    and ([$calls[] | select(index("repos/test-user/.github/contents/model.yaml") != null)] | length == 1)'
+check "10.1: star keeps a copy of test-user's model" \
+    cmp -s "${data_441}/remote/test-user/.github/model.yaml" "${cache_home}/devlore/star/gh/model/test-user.model.yaml"
+
+cp -- "${data_441}/remote/test-user/.github/model.yaml" "${data_441}/devlore/star/extensions/${extension_name}/model.test-user.yaml"
+quiet=""
+run_star "${data_441}" github schedule report test-user/personal
+quiet="--silent"
+expect "10.2: a model beside the extension for a layer's owner is refused as a second, both named" error "" \
+    'model\.test-user\.yaml.*test-user/\.github/model\.yaml'
+rm -f -- "${data_441}/devlore/star/extensions/${extension_name}/model.test-user.yaml"
+
+make_extension "${run_directory}/data-441-outside"
+add_layer "${run_directory}/data-441-outside" base NobleFactor/alpha
+run_star "${run_directory}/data-441-outside" github schedule report test-user/personal
+expect "10.3: an account that owns no layer is still read from beside the extension" ok '
+    length > 0 and all(.[]; .issue | startswith("test-user/personal#"))
+    and ([$calls[] | select(index("repos/test-user/.github/contents/model.yaml") != null)] | length == 0)'
+
+quiet=""
+run_star "${data_441}" github model pull --account test-user
+quiet="--silent"
+expect "10.4: pull without --asset refuses for a layer's owner, naming the file" error "" \
+    '(--asset.*test-user/\.github|test-user/\.github.*--asset)'
 cache_home="${run_directory}/cache"
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"

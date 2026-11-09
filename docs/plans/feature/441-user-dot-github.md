@@ -137,7 +137,7 @@ The documents do not settle these. Each is a proposal for the owner to change at
 
 ### Phase 5: the test, first
 
-- [ ] Test-StarGitHub's new cases written, failing against the extension as it is
+- [x] Test-StarGitHub's new cases written, failing against the extension as it is: 4 of the 51 cases fail, 10.1 twice, 10.2 and 10.4; 10.3 guards what must not change, and passes
 
 ### Phase 6: star reads every account's model from GitHub
 
