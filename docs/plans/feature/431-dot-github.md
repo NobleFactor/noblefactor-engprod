@@ -116,9 +116,9 @@ The documents do not settle these. Each is a proposal for the owner to change at
 
 ### Phase 2: NobleFactor/.github
 
-- [ ] The clone and its worktree (decision 8)
-- [ ] The files of Requirement 1; the quality gate's check passes locally
-- [ ] Its pull request script written, shown and handed over; merged; private vulnerability reporting read back on
+- [x] The clone and its worktree (decision 8)
+- [x] The files of Requirement 1; the quality gate's check passes locally
+- [x] Its pull request script written, shown and handed over; merged; private vulnerability reporting read back on: NobleFactor/.github#3
 
 ### Phase 3: the test, first
 
