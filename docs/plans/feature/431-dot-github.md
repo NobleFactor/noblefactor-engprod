@@ -1,7 +1,7 @@
 ---
 title: "NobleFactor/.github holds the organization's issue model and its shared health files"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/431
-status: active
+status: complete
 created: 2026-11-08
 updated: 2026-11-08
 ---
@@ -143,7 +143,7 @@ The documents do not settle these. Each is a proposal for the owner to change at
 
 ### Phase 7: merge
 
-- [ ] The pull request script written, shown and handed over; it closes #431
+- [x] The pull request script written, shown and handed over; it closes #431
 
 ## Test Plan
 
