@@ -284,10 +284,9 @@ git status --short
 # --- The end-of-PR report, when one is asked for (rule 9) ---
 #
 # Not automatic: ruled 2026-09-12 (development-process.md), retiring the standing rule of 2026-09-04.
-# When the owner asks for it, scope it to what the pull request served: --epic <Name>, --by feature
-# --epic <Name>, --by thread --thread <Name>, or --by schedule. --markdown -o value because a string
-# result renders quoted under the default json (devlore-cli#826); --silent, not 2>/dev/null.
-# star github schedule report --epic <Name> --view table --state all --markdown -o value --silent
+# When the owner asks for it, scope it to what the pull request served with --filter on its epic, feature or
+# schedule (#379, ruled 2026-11-08); --silent, not 2>/dev/null.
+# star github schedule report --silent --output table --filter epic=<owner>/<repo>#<n> --jq 'map({issue, type, state, title})'
 ```
 
 ---

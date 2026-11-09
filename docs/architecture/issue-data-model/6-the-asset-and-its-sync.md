@@ -573,9 +573,10 @@ three or four requests sent with the cache's ETags and answered 304 when nothing
 record. It writes nothing but the cache. The model file is in the account's `.github` repository, not a deployed link
 into the layer clone, and a read-only command writes nothing there either; as built, it reads NobleFactor's
 `model.yaml` beside the extension, a link into the layer clone, until #431 moves it. When a record is not 304 and the
-asset is behind, the operation says so in one line of its header and goes on, the way the audit opens the tree
-report today. Built 2026-10-27 (#378): `star github schedule report` and `audit` make `pull`'s read, sharing its
-comparison; the line is the first of a markdown document, where `--silent` cannot hide it, and a warning otherwise; the
+asset is behind, the operation says so in one line of its header and goes on, the way the audit opened the tree
+report until it retired with #436 on 2026-11-08. Built 2026-10-27 (#378): `star github schedule report` and `audit` made
+`pull`'s read, sharing its comparison; since #436 the report and `star github triage sweep` make it, for each account
+whose repositories they read; the line is the first of a markdown document, where `--silent` cannot hide it, and a warning otherwise; the
 comparison ignores comment lines, since `pull`'s header names the command and a rename changes it.
 
 ## Examples

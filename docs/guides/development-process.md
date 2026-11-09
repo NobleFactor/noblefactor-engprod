@@ -67,10 +67,10 @@ around it is organized.
 **A feature groups the issues that serve it.** Many features may be in flight at once. The feature is
 what makes a set of otherwise unrelated issues legible as one intent.
 
-**The report is `star github schedule report`.** By epic, by feature, by scenario, or by schedule — the
-same issues read four ways. A pull request ends with it when one is asked for, scoped to what the pull
-request served; it is not automatic. Ruled 2026-09-12, retiring the standing rule that every pull request
-print one.
+**The report is `star github schedule report`.** Every issue, one flat record each, narrowed by star's own
+`--filter` and `--jq` to an epic, a feature, a scenario or a schedule — the same issues read four ways (ruled
+2026-11-08, #379). A pull request ends with it when one is asked for, scoped to what the pull request served; it is
+not automatic. Ruled 2026-09-12, retiring the standing rule that every pull request print one.
 
 **And every pull request records its time.** A `## Time` section in its own body, written by the merge step:
 the branch's first commit, the pull request's creation, the merge, and the hours between them — one algorithm

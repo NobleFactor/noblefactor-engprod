@@ -1,11 +1,15 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright Noble Factor. All rights reserved.
 
-"""The model asset's sync: read GitHub's record conditionally, merge it into model.yaml, render, sign, and cache.
+"""An account's model's sync: read its record from GitHub conditionally, merge it into its model file, render, sign, and cache.
 
-docs/architecture/issue-data-model/6-the-asset-and-its-sync.md. Loaded by gh-model-pull.star and gh-model-digest.star,
-never by scheme.star, and it never loads scheme.star: scheme.star fails when the asset's digest does not verify, and
-these two commands are how a damaged asset is repaired (noblefactor-engprod#377).
+docs/architecture/issue-data-model/6-the-asset-and-its-sync.md. Loaded by github-model-pull.star and
+github-model-digest.star, and by the commands that read GitHub's record first; never by scheme.star, and it never
+loads scheme.star: scheme.star fails when a model does not load, and pull and digest are how a damaged model is
+repaired (noblefactor-engprod#377). One model per account (section 6, § One model per account): an organization's
+holds its issue types, its issue fields, its teams with the repositories each maintains, the hub's labels and its
+projects; a user account's holds its type labels, the labels of the repositories it owns that carry the topic
+issue-model, and its projects (noblefactor-engprod#436, the part of #426 the report and the sweep need).
 """
 
 # model.star
@@ -13,24 +17,38 @@ these two commands are how a damaged asset is repaired (noblefactor-engprod#377)
 EXTENSION = "com.noblefactor.ops.GitHub"
 MODEL_VERSION = 1
 
-# The hub repository, whose labels are the organization's record of them.
+# The account a command reads when none is named: star configuration's github.account, and then this one.
+DEFAULT_ACCOUNT_FALLBACK = "NobleFactor"
+
+# The hub repository, whose labels are an organization's record of them.
 HUB = "noblefactor-engprod"
+
+# A user account's repository takes part in the model when it carries this topic (section 6, § Reference models).
+TOPIC = "issue-model"
+
+# A collection type's description begins with this, and a collection has no level (section 6, `types`).
+COLLECTION = "Collection:"
 
 DIGEST_PREFIX = "  digest: "
 AT_PREFIX = "  at: "
 
-# The project field types the asset records; GitHub's own (title, assignees, labels, linked pull requests, milestone,
+# The project field types the model records; GitHub's own (title, assignees, labels, linked pull requests, milestone,
 # repository, reviewers, parent issue, sub-issue progress, tracks) are every project's and say nothing of the model.
 FIELD_TYPES = {"SINGLE_SELECT": "single-select", "TEXT": "text", "NUMBER": "number", "DATE": "date", "ITERATION": "iteration"}
+
+# The issue field types the model records.
+ISSUE_FIELD_TYPES = {"SINGLE_SELECT": "single-select", "TEXT": "text", "NUMBER": "number", "DATE": "date"}
 
 HEADER = """# SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2026 Noble Factor. All rights reserved.
 
-# The issue data model as GitHub holds it: docs/architecture/issue-data-model/6-the-asset-and-its-sync.md. Written by
-# star github model pull; edit it by hand only deliberately, then run star github model digest. The digest is a SHA-256 over this
-# file with its own line excluded. A type is keyed by its id and takes its level from its description's "Level N:".
-# Within a level the types' order is the render order. Labels are in three tiers: the organization's, which every
-# participating repository carries; each team's; each repository's own.
+# An account's issue data model as GitHub holds it: docs/architecture/issue-data-model/6-the-asset-and-its-sync.md.
+# Written by star github model pull; edit it by hand only deliberately, then run star github model digest. The digest is
+# a SHA-256 over this file with its own line excluded. A type is keyed by its id; a type of the hierarchy takes its level
+# from its description's "Level N:", and a collection type, whose description begins "Collection:", has none. Within a
+# level the types' order is the render order. In a user account a type is a label, named under label. An organization's
+# issue fields and its teams follow, each team with the repositories it holds the maintain role on. Labels are in three
+# tiers: the organization's, which every participating repository carries; each team's; each repository's own.
 
 """
 
@@ -64,13 +82,25 @@ def now():
     """The time in UTC, to the second, as GitHub writes it."""
     return sh("date -u +%Y-%m-%dT%H:%M:%SZ").strip()
 
-def default_asset():
-    """The deployed asset: ${XDG_DATA_HOME:-$HOME/.local/share}/devlore/star/extensions/<extension>/model.yaml."""
-    return sh('printf %s "${XDG_DATA_HOME:-$HOME/.local/share}/devlore/star/extensions/' + EXTENSION + '/model.yaml"')
+def default_account():
+    """star configuration's github.account, or NobleFactor when it names none."""
+    cfg = config.get
+    if hasattr(cfg, "github") and hasattr(getattr(cfg, "github"), "account") and getattr(getattr(cfg, "github"), "account"):
+        return getattr(getattr(cfg, "github"), "account")
+    return DEFAULT_ACCOUNT_FALLBACK
 
-def cache_path(org):
-    """The organization's cache: ${XDG_CACHE_HOME:-$HOME/.cache}/devlore/star/gh/model/<org>.yaml."""
-    return sh('printf %s "${XDG_CACHE_HOME:-$HOME/.cache}/devlore/star/gh/model/' + org + '.yaml"')
+def extension_dir():
+    """The deployed extension's directory: ${XDG_DATA_HOME:-$HOME/.local/share}/devlore/star/extensions/<extension>."""
+    return sh('printf %s "${XDG_DATA_HOME:-$HOME/.local/share}/devlore/star/extensions/' + EXTENSION + '"')
+
+def default_asset(account = ""):
+    """An account's model file beside the extension: model.yaml for the default account, model.<account>.yaml for any other."""
+    account = account or default_account()
+    return extension_dir() + ("/model.yaml" if account == default_account() else "/model." + account + ".yaml")
+
+def cache_path(account):
+    """The account's cache: ${XDG_CACHE_HOME:-$HOME/.cache}/devlore/star/gh/model/<account>.yaml."""
+    return sh('printf %s "${XDG_CACHE_HOME:-$HOME/.cache}/devlore/star/gh/model/' + account + '.yaml"')
 
 def exists(path):
     """Whether a file is there."""
@@ -114,6 +144,15 @@ def sign(text):
     d = digest_of(text)
     return "\n".join([DIGEST_PREFIX + d if line.startswith(DIGEST_PREFIX) else line for line in text.split("\n")])
 
+def fresh_text(account):
+    """An empty model of an account, the old text a first pull compares with, when the account has no model file yet.
+
+    Section 6: pull reads the data model of any account, and an account that has no model file gets one wherever
+    --asset names.
+    """
+    return ("version: " + str(MODEL_VERSION) + "\npulled:\n" + AT_PREFIX + "never\n  account: " + account + "\n" +
+            DIGEST_PREFIX + "none\ntypes: []\nlabels:\n  organization: []\n  teams: {}\n  repositories: {}\nprojects: []\n")
+
 def without_stamp(text):
     """text without its at and digest lines: what a pull compares, so that only a change in the record rewrites the asset."""
     return "\n".join([line for line in text.split("\n") if not line.startswith(DIGEST_PREFIX) and not line.startswith(AT_PREFIX)])
@@ -144,32 +183,121 @@ def conditional_get(path, etag):
         fail("gh api " + path + ": HTTP " + str(status) + ": " + body.strip())
     return {"status": 200, "etag": new_etag, "body": json.decode(data = body)}
 
-def read_projects(org):
-    """The organization's projects with their fields and options, or None when the token cannot read projects."""
-    query = ("{ organization(login: \"" + org + "\") { projectsV2(first: 50) { nodes { id number title template closed " +
+def graphql(query):
+    """A GraphQL query's data, failing on GitHub's errors."""
+    out = json.decode(data = sh("gh api graphql -f query=" + quote(query)))
+    if out.get("errors"):
+        fail("GitHub refused a query: " + json.encode(out["errors"]))
+    return out.get("data") or {}
+
+def owner_kind(login):
+    """Whether an account is an organization or a user, as GitHub answers for it: "organization" or "user"."""
+    t = sh("gh api graphql -f query=" + quote("query starOwner { repositoryOwner(login: \"" + login + "\") { __typename login } }") +
+           " --jq .data.repositoryOwner.__typename").strip()
+    if t == "Organization":
+        return "organization"
+    if t == "User":
+        return "user"
+    fail(login + " is neither an organization nor a user on GitHub: " + t)
+
+def read_projects(login, kind):
+    """The account's projects with their fields and options, or None when the token cannot read projects."""
+    query = ("query starProjects { " + kind + "(login: \"" + login + "\") { projectsV2(first: 50) { nodes { id number title template closed " +
              "fields(first: 50) { nodes { ... on ProjectV2FieldCommon { id name dataType } " +
              "... on ProjectV2SingleSelectField { options { id name } } } } } } } }")
     out = sh("gh api graphql -f query=" + quote(query) + " 2>/dev/null; true")
     if not out.strip().startswith("{"):
         return None
     data = json.decode(data = out)
-    if data.get("errors") or not data.get("data") or not data["data"].get("organization"):
+    if data.get("errors") or not data.get("data") or not data["data"].get(kind):
         return None
     projects = []
-    for node in data["data"]["organization"]["projectsV2"]["nodes"]:
+    for node in data["data"][kind]["projectsV2"]["nodes"]:
         if node.get("closed"):
             continue
         fields = []
         for f in node["fields"]["nodes"]:
-            kind = FIELD_TYPES.get(f.get("dataType", ""))
-            if kind == None:
+            field_type = FIELD_TYPES.get(f.get("dataType", ""))
+            if field_type == None:
                 continue
-            field = {"name": f["name"], "id": f["id"], "type": kind}
-            if kind == "single-select":
+            field = {"name": f["name"], "id": f["id"], "type": field_type}
+            if field_type == "single-select":
                 field["options"] = [{"name": o["name"], "id": o["id"]} for o in f.get("options", [])]
             fields.append(field)
         projects.append({"name": node["title"], "id": node["id"], "number": int(node["number"]), "template": bool(node["template"]), "fields": fields})
     return sorted(projects, key = lambda p: p["number"])
+
+def read_organization(org):
+    """An organization's issue fields, each with its options, and its teams, each with the repositories it maintains."""
+    query = ("query starOrganizationModel { organization(login: \"" + org + "\") { " +
+             "issueFields(first: 50) { nodes { __typename ... on IssueFieldCommon { name dataType } " +
+             "... on IssueFieldSingleSelect { id options { id name } } ... on IssueFieldText { id } " +
+             "... on IssueFieldNumber { id } ... on IssueFieldDate { id } } } " +
+             "teams(first: 100) { nodes { name slug id repositories(first: 100) { edges { permission node { nameWithOwner } } } } } } }")
+    node = graphql(query).get("organization") or {}
+    fields = []
+    for f in (node.get("issueFields") or {}).get("nodes") or []:
+        field_type = ISSUE_FIELD_TYPES.get(f.get("dataType", ""))
+        if field_type == None:
+            continue
+        field = {"name": f["name"], "id": f["id"], "type": field_type}
+        if field_type == "single-select":
+            field["options"] = [{"name": o["name"], "id": o["id"]} for o in f.get("options") or []]
+        fields.append(field)
+    teams = []
+    for t in (node.get("teams") or {}).get("nodes") or []:
+        maintained = [e["node"]["nameWithOwner"] for e in (t.get("repositories") or {}).get("edges") or [] if e.get("permission") == "MAINTAIN"]
+        teams.append({"name": t["name"], "slug": t["slug"], "id": t["id"], "repositories": sorted(maintained)})
+    return fields, sorted(teams, key = lambda t: t["slug"])
+
+def _reference_types():
+    """The reference model's types for a user account, by label: each one's name and whether it is the unplanned one."""
+    ref = yaml.decode(data = read_text(extension_dir() + "/reference/user.yaml")) or {}
+    out = {}
+    for i, t in enumerate(ref.get("types") or []):
+        if type(t) == "dict" and t.get("label"):
+            out[t["label"]] = {"name": t["name"], "unplanned": bool(t.get("unplanned")), "order": i}
+    return out
+
+def read_user(login):
+    """A user account's type labels, as types, and the labels of each repository it owns that carries the topic issue-model.
+
+    A type label is one whose description begins "Level N:" or "Collection:", the convention an organization's types
+    follow; each is named as the user account's reference model names it, and the first repository's, in name order,
+    stands for a label several carry.
+    """
+    query = ("query starUserModel { user(login: \"" + login + "\") { repositories(first: 100, ownerAffiliations: OWNER) { nodes { " +
+             "nameWithOwner repositoryTopics(first: 20) { nodes { topic { name } } } labels(first: 100) { nodes { id name color description } } } } } }")
+    node = graphql(query).get("user") or {}
+    repos = []
+    for r in (node.get("repositories") or {}).get("nodes") or []:
+        if TOPIC in [t["topic"]["name"] for t in (r.get("repositoryTopics") or {}).get("nodes") or []]:
+            repos.append(r)
+    repos = sorted(repos, key = lambda r: r["nameWithOwner"])
+    reference = _reference_types()
+    types = []
+    seen = {}
+    for r in repos:
+        for label in (r.get("labels") or {}).get("nodes") or []:
+            description = label.get("description") or ""
+            if label["name"] in seen or (level_of(description) == None and not description.startswith(COLLECTION)):
+                continue
+            seen[label["name"]] = True
+            ref = reference.get(label["name"]) or {"name": label["name"], "unplanned": False, "order": 1000}
+            types.append({
+                "id": label["id"],
+                "name": ref["name"],
+                "label": label["name"],
+                "color": label.get("color") or "",
+                "description": description,
+                "unplanned": ref["unplanned"],
+                "order": ref["order"],
+            })
+    repositories = {}
+    for r in repos:
+        repositories[r["nameWithOwner"]] = sorted([label_entry(g) for g in (r.get("labels") or {}).get("nodes") or []], key = lambda g: g["name"].lower())
+    labels = {"organization": [], "teams": {}, "repositories": repositories}
+    return sorted(types, key = lambda t: t["order"]), labels
 
 def level_of(description):
     """The N of a description that begins "Level N:", or None."""
@@ -190,45 +318,75 @@ def labels_of(model):
     if labels == None:
         return {"organization": [], "teams": {}, "repositories": {}}
     if type(labels) == "list":
-        return {"organization": [], "teams": {}, "repositories": {model["pulled"]["org"] + "/" + HUB: labels}}
+        pulled = model.get("pulled") or {}
+        return {"organization": [], "teams": {}, "repositories": {(pulled.get("account") or pulled.get("org")) + "/" + HUB: labels}}
     return {
         "organization": labels.get("organization") or [],
         "teams": labels.get("teams") or {},
         "repositories": labels.get("repositories") or {},
     }
 
+def _id(v):
+    """A type's id as the asset holds it: a whole number as an int, since encoding/json decodes every number as a float."""
+    if type(v) == "float":
+        return int(v)
+    return v
+
 def merge_types(old, github, notes, conflicts):
-    """The asset's types brought to GitHub's, matched by id: renames kept as renames, levels from the descriptions."""
-    by_id = {int(t["id"]): t for t in old}
+    """The asset's types brought to GitHub's, matched by id: renames kept as renames, levels from the descriptions.
+
+    A type whose description begins "Level N:" is of the hierarchy, at that level; one whose description begins
+    "Collection:" is a collection, with no level; any other is a conflict, and the pull writes nothing.
+    """
+    by_id = {str(_id(t["id"])): t for t in old}
     seen = {}
     merged = {}
     for g in github:
         if not g.get("is_enabled", True):
             continue
-        tid = int(g["id"])
+        tid = str(_id(g["id"]))
         seen[tid] = True
-        level = level_of(g.get("description"))
+        description = g.get("description") or ""
+        level = level_of(description)
         o = by_id.get(tid)
-        if level == None:
-            conflicts.append("type " + g["name"] + " (" + str(tid) + "): its description does not begin \"Level N:\": " + str(g.get("description")))
+        if level == None and not description.startswith(COLLECTION):
+            conflicts.append("type " + g["name"] + " (" + tid + "): its description begins neither \"Level N:\" nor \"" + COLLECTION + "\": " + description)
             continue
-        if o != None and int(o["level"]) != level:
-            conflicts.append("type " + g["name"] + " (" + str(tid) + "): its description says level " + str(level) + "; the asset says " + str(o["level"]))
+        if o != None and o.get("level") != None and level != None and int(o["level"]) != level:
+            conflicts.append("type " + g["name"] + " (" + tid + "): its description says level " + str(level) + "; the asset says " + str(o["level"]))
             continue
-        t = {"name": g["name"], "id": tid, "level": level, "color": g.get("color") or "", "description": g.get("description") or ""}
-        if o != None and o.get("unplanned"):
+        t = {"name": g["name"], "id": _id(g["id"])}
+        if g.get("label"):
+            t["label"] = g["label"]
+        if level != None:
+            t["level"] = level
+        if (o != None and o.get("unplanned")) or g.get("unplanned"):
             t["unplanned"] = True
+        t["color"] = g.get("color") or ""
+        t["description"] = description
+        what = "level " + str(level) if level != None else "a collection"
         if o == None:
-            notes.append("type " + g["name"] + " added, level " + str(level))
+            notes.append("type " + g["name"] + " added, " + what)
         elif o["name"] != g["name"]:
-            notes.append("type renamed " + o["name"] + " to " + g["name"] + ", id " + str(tid) + ", level " + str(level) + " kept")
+            notes.append("type renamed " + o["name"] + " to " + g["name"] + ", id " + tid + ", " + what + " kept")
         merged[tid] = t
-    out = [merged[int(t["id"])] for t in old if int(t["id"]) in merged]
-    out.extend([merged[int(g["id"])] for g in github if int(g["id"]) in merged and int(g["id"]) not in by_id])
+    out = [merged[str(_id(t["id"]))] for t in old if str(_id(t["id"])) in merged]
+    out.extend([merged[str(_id(g["id"]))] for g in github if str(_id(g["id"])) in merged and str(_id(g["id"])) not in by_id])
     for t in old:
-        if int(t["id"]) not in seen:
-            notes.append("type " + t["name"] + " removed, id " + str(t["id"]))
+        if str(_id(t["id"])) not in seen:
+            notes.append("type " + t["name"] + " removed, id " + str(_id(t["id"])))
     return out
+
+def note_named_changes(what, old, new, notes):
+    """Name every record of a kind, fields or teams, added or removed by name since the asset's pull."""
+    before = {r["name"]: True for r in old}
+    after = {r["name"]: True for r in new}
+    for name in after:
+        if name not in before:
+            notes.append(what + " " + name + " added")
+    for name in before:
+        if name not in after:
+            notes.append(what + " " + name + " removed")
 
 def label_entry(g):
     """A GitHub label in the asset's three fields."""
@@ -305,6 +463,10 @@ def s(v):
     """A YAML double-quoted scalar: JSON's string form is one."""
     return json.encode(v)
 
+def _scalar_id(v):
+    """An id as the asset writes it: a number bare, a string quoted."""
+    return str(v) if type(v) == "int" else s(v)
+
 def render_labels(lines, indent, labels):
     """A list of labels in block form."""
     if len(labels) == 0:
@@ -316,22 +478,47 @@ def render_labels(lines, indent, labels):
         lines.append(indent + "  description: " + s(lab["description"]))
 
 def render(model):
-    """The asset's text in its fixed layout, its digest line unsigned: an unchanged record renders byte for byte the same."""
+    """The asset's text in its fixed layout, its digest line unsigned: an unchanged record renders byte for byte the same.
+
+    An organization's model has fields and teams, written even when empty; a user account's has neither.
+    """
     lines = []
     lines.append("version: " + str(MODEL_VERSION))
     lines.append("pulled:")
     lines.append(AT_PREFIX + model["pulled"]["at"])
-    lines.append("  org: " + model["pulled"]["org"])
+    lines.append("  account: " + model["pulled"]["account"])
     lines.append(DIGEST_PREFIX + "sha256:")
     lines.append("types:")
     for t in model["types"]:
         lines.append("  - name: " + s(t["name"]))
-        lines.append("    id: " + str(t["id"]))
-        lines.append("    level: " + str(t["level"]))
+        lines.append("    id: " + _scalar_id(t["id"]))
+        if t.get("label"):
+            lines.append("    label: " + s(t["label"]))
+        if t.get("level") != None:
+            lines.append("    level: " + str(t["level"]))
         if t.get("unplanned"):
             lines.append("    unplanned: true")
         lines.append("    color: " + s(t["color"]))
         lines.append("    description: " + s(t["description"]))
+    if "fields" in model:
+        lines.append("fields:" + ("" if model["fields"] else " []"))
+        for f in model["fields"]:
+            lines.append("  - name: " + s(f["name"]))
+            lines.append("    id: " + s(f["id"]))
+            lines.append("    type: " + f["type"])
+            if "options" in f:
+                lines.append("    options:" + ("" if f["options"] else " []"))
+                for o in f["options"]:
+                    lines.append("      - { name: " + s(o["name"]) + ", id: " + s(o["id"]) + " }")
+    if "teams" in model:
+        lines.append("teams:" + ("" if model["teams"] else " []"))
+        for t in model["teams"]:
+            lines.append("  - name: " + s(t["name"]))
+            lines.append("    slug: " + s(t["slug"]))
+            lines.append("    id: " + s(t["id"]))
+            lines.append("    repositories:" + ("" if t["repositories"] else " []"))
+            for r in t["repositories"]:
+                lines.append("      - " + s(r))
     tiers = model["labels"]
     lines.append("labels:")
     lines.append("  organization:")
@@ -363,26 +550,28 @@ def render(model):
 
 # ── the cache ───────────────────────────────────────────────────────────────
 
-def read_cache(org):
-    """The organization's cache, or an empty one: deleting it costs one full read and loses nothing."""
-    path = cache_path(org)
+def read_cache(account):
+    """The account's cache, or an empty one: deleting it costs one full read and loses nothing."""
+    path = cache_path(account)
     if not exists(path):
         return {}
     c = yaml.decode(data = read_text(path))
     return c if type(c) == "dict" else {}
 
-def write_cache(org, asset_digest, types_etag, hub_repo, labels_etag, projects_read, read_at):
-    """The cache, keyed to the digest of the asset that holds what the ETags vouch for."""
+def write_cache(account, asset_digest, types_etag, hub_repo, labels_etag, projects_read, read_at):
+    """The cache, keyed to the digest of the asset that holds what the ETags vouch for; a user account has no ETags."""
     lines = [
         "# star github model pull's cache: docs/architecture/issue-data-model/6-the-asset-and-its-sync.md § The cache.",
         "asset: " + s(asset_digest),
-        "issue-types: { etag: " + s(types_etag) + ", read: " + s(read_at) + " }",
-        "labels:",
-        "  " + s(hub_repo) + ": { etag: " + s(labels_etag) + ", read: " + s(read_at) + " }",
     ]
+    if types_etag:
+        lines.append("issue-types: { etag: " + s(types_etag) + ", read: " + s(read_at) + " }")
+    if hub_repo:
+        lines.append("labels:")
+        lines.append("  " + s(hub_repo) + ": { etag: " + s(labels_etag) + ", read: " + s(read_at) + " }")
     if projects_read:
         lines.append("projects: { read: " + s(read_at) + " }")
-    write_text(cache_path(org), "\n".join(lines) + "\n")
+    write_text(cache_path(account), "\n".join(lines) + "\n")
 
 # ── the guard ───────────────────────────────────────────────────────────────
 
@@ -411,50 +600,82 @@ def without_comments(text):
     """text without its comment lines and its at and digest lines: the records alone, what read_first compares."""
     return "\n".join([line for line in without_stamp(text).split("\n") if not line.startswith("#")])
 
-def compare(org, old_text):
-    """Read the organization's record conditionally and merge it into the asset's: what pull and read_first share.
+def compare(account, old_text, kind = ""):
+    """Read an account's record conditionally and merge it into its model's: what pull and read_first share.
 
     Args:
-      org: the organization.
-      old_text: the asset's text.
+      account: the account, an organization or a user.
+      old_text: the model file's text.
+      kind: "organization" or "user"; asked of GitHub when empty.
 
     Returns:
       A dict: reads, one line per record read; notes, what moved; conflicts, what a pull will not resolve; new_text, the
-      asset as a pull would write it; recorded, the asset's digest; and the ETags and time a cache write needs.
+      model as a pull would write it; recorded, the model's digest; and the ETags and time a cache write needs.
     """
     old = yaml.decode(data = old_text)
     if type(old) != "dict" or old.get("version") != MODEL_VERSION:
         fail("the asset is not a version " + str(MODEL_VERSION) + " asset")
     pulled = old.get("pulled") or {}
-    if pulled.get("org", org) != org:
-        fail("the asset holds " + pulled["org"] + "'s model; this reads " + org)
+    holds = pulled.get("account") or pulled.get("org") or account
+    if holds != account:
+        fail("the asset holds " + holds + "'s model; this reads " + account)
+    kind = kind or owner_kind(account)
 
     recorded = recorded_digest(old_text)
     verified = recorded == digest_of(old_text)
-    cache = read_cache(org)
+    cache = read_cache(account)
     use_cache = verified and cache.get("asset") == recorded
-    hub_repo = org + "/" + HUB
     tiers = labels_of(old)
     reads = []
-    if not verified:
+    notes = []
+    conflicts = []
+    if recorded == "none":
+        reads.append("the account has no model yet: every record is read in full")
+    elif not verified:
         reads.append("the asset's digest does not verify: edited since its pull; every record is read in full")
 
-    # The organization's issue types, by ETag; a 304 means the asset's types are GitHub's.
-    etag = (cache.get("issue-types") or {}).get("etag", "") if use_cache else ""
-    got = conditional_get("orgs/" + org + "/issue-types", etag)
-    github_types = (old.get("types") or []) if got["status"] == 304 else got["body"]
-    types_etag = got["etag"]
-    reads.append("issue-types  " + ("unchanged (304)" if got["status"] == 304 else "read (200)"))
+    hub_repo = ""
+    types_etag = ""
+    labels_etag = ""
+    model = {}
+    if kind == "organization":
+        hub_repo = account + "/" + HUB
 
-    # The hub's labels, by ETag.
-    etag = ((cache.get("labels") or {}).get(hub_repo) or {}).get("etag", "") if use_cache else ""
-    got = conditional_get("repos/" + hub_repo + "/labels?per_page=100", etag)
-    hub = hub_labels_from(tiers, hub_repo) if got["status"] == 304 else got["body"]
-    labels_etag = got["etag"]
-    reads.append("labels       " + ("unchanged (304)" if got["status"] == 304 else "read (200)") + ", " + hub_repo)
+        # The organization's issue types, by ETag; a 304 means the asset's types are GitHub's.
+        etag = (cache.get("issue-types") or {}).get("etag", "") if use_cache else ""
+        got = conditional_get("orgs/" + account + "/issue-types", etag)
+        github_types = (old.get("types") or []) if got["status"] == 304 else got["body"]
+        types_etag = got["etag"]
+        reads.append("issue-types  " + ("unchanged (304)" if got["status"] == 304 else "read (200)"))
+
+        # The hub's labels, by ETag.
+        etag = ((cache.get("labels") or {}).get(hub_repo) or {}).get("etag", "") if use_cache else ""
+        got = conditional_get("repos/" + hub_repo + "/labels?per_page=100", etag)
+        hub = hub_labels_from(tiers, hub_repo) if got["status"] == 304 else got["body"]
+        labels_etag = got["etag"]
+        reads.append("labels       " + ("unchanged (304)" if got["status"] == 304 else "read (200)") + ", " + hub_repo)
+        labels = merge_labels(tiers, hub_repo, hub, notes)
+
+        # The issue fields and the teams: GraphQL takes no ETag, so this read is always made.
+        fields, teams = read_organization(account)
+        reads.append("fields       read, " + str(len(fields)))
+        reads.append("teams        read, " + str(len(teams)))
+        note_named_changes("field", old.get("fields") or [], fields, notes)
+        note_named_changes("team", old.get("teams") or [], teams, notes)
+        model["fields"] = fields
+        model["teams"] = teams
+    else:
+        github_types, labels = read_user(account)
+        reads.append("type labels  read, " + str(len(github_types)) + ", in " + str(len(labels["repositories"])) + " repositories carrying the topic " + TOPIC)
+        for repo in labels["repositories"]:
+            if repo not in tiers["repositories"]:
+                notes.append("repository " + repo + " added")
+        for repo in tiers["repositories"]:
+            if repo not in labels["repositories"]:
+                notes.append("repository " + repo + " removed")
 
     # The projects: GraphQL takes no ETag, so this read is always made.
-    projects = read_projects(org)
+    projects = read_projects(account, kind)
     old_projects = old.get("projects") or []
     if projects == None:
         projects = old_projects
@@ -462,13 +683,11 @@ def compare(org, old_text):
     else:
         reads.append("projects     read, " + str(len(projects)))
 
-    notes = []
-    conflicts = []
     types = merge_types(old.get("types") or [], github_types, notes, conflicts)
-    labels = merge_labels(tiers, hub_repo, hub, notes)
     note_project_renames(old_projects, projects, notes)
     read_at = now()
-    new_text = sign(render({"pulled": {"at": read_at, "org": org}, "types": types, "labels": labels, "projects": projects}))
+    model.update({"pulled": {"at": read_at, "account": account}, "types": types, "labels": labels, "projects": projects})
+    new_text = sign(render(model))
     return {
         "reads": reads,
         "notes": notes,
@@ -481,25 +700,30 @@ def compare(org, old_text):
         "read_at": read_at,
     }
 
-def read_first(dry_run = False):
-    """Read GitHub's record against the deployed asset before an operation: the line to show when the asset is behind, or "".
+def read_first(account = "", dry_run = False):
+    """Read an account's record against its model before an operation: the line to show when the model is behind, or "".
 
-    Writes nothing but the cache, and the cache only when what was read is what the asset holds, so that a 304 never
-    vouches for content the asset lacks (section 6, § Every operation reads first). Each read is a note, shown unless
+    Writes nothing but the cache, and the cache only when what was read is what the model holds, so that a 304 never
+    vouches for content the model lacks (section 6, § Every operation reads first). Each read is a note, shown unless
     --silent; the returned line is the caller's to put where --silent cannot hide it.
     """
     if dry_run:
         return ""
-    path = default_asset()
+    account = account or default_account()
+    path = default_asset(account)
     old_text = read_text(path)
-    pulled = (yaml.decode(data = old_text) or {}).get("pulled") or {}
-    org = pulled.get("org", "NobleFactor")
-    c = compare(org, old_text)
+    c = compare(account, old_text)
     for line in c["reads"]:
-        note("model " + line)
+        note("model " + account + " " + line)
     if not c["conflicts"] and without_comments(c["new_text"]) == without_comments(old_text):
-        write_cache(org, c["recorded"], c["types_etag"], c["hub_repo"], c["labels_etag"], True, c["read_at"])
+        write_cache(account, c["recorded"], c["types_etag"], c["hub_repo"], c["labels_etag"], True, c["read_at"])
         return ""
     moved = c["notes"] + c["conflicts"]
-    return ("The asset is behind GitHub: " + (moved[0] if len(moved) == 1 else str(len(moved)) + " changes, " + moved[0] + " among them") +
-            ", since its pull at " + recorded_at(old_text) + ". Run star github model pull in a worktree.")
+    if len(moved) == 0:
+        what = "its file is not in the layout a pull writes"
+    elif len(moved) == 1:
+        what = moved[0]
+    else:
+        what = str(len(moved)) + " changes, " + moved[0] + " among them"
+    return ("The model of " + account + " is behind GitHub: " + what + ", since its pull at " + recorded_at(old_text) +
+            ". Run star github model pull --account " + account + " in a worktree.")

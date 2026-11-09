@@ -1,84 +1,267 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright Noble Factor. All rights reserved.
 
-"""The NobleFactor issue classification scheme, as Get-EpicReport's jq states it."""
+"""The issue data model as each account's model file states it, and the label set the labels commands keep."""
 
 # scheme.star
 #
-# Every definition here is a line-for-line port of a jq def in devlore-cli's scripts/Get-EpicReport,
-# kept in the same order under the same names so the two can be read side by side until the script
-# retires (devlore-cli#797). The scheme itself is docs/issue-standards.md.
-
-# ── the model: the hierarchy as model.yaml beside this extension states it ──────────────────────
-#
-# docs/architecture/issue-data-model/6-the-asset-and-its-sync.md. The asset travels with the extension and drives it:
-# each type's name and level, the levels in order, and which leaf type is the unplanned one. Nothing below names a
-# type; what the hierarchy means is derived here, once, when the module loads, and a bad asset stops every command
-# with its fault named (noblefactor-engprod#376). star hands a command no path to its extension, so the deployed
-# path is resolved as writ's layers are, through the shell.
+# docs/architecture/issue-data-model/6-the-asset-and-its-sync.md. One model per account: NobleFactor's is model.yaml
+# beside extension.yaml, and any other account's is model.<account>.yaml beside it, until #431 moves each to its
+# account's .github repository. Every model is loaded and checked when the module loads, and a bad one stops every
+# command with its fault named. Nothing below names a type or a field: the hierarchy, the collection types and each
+# record's keys are derived from the models (noblefactor-engprod#376, and the part of #426 the report and the sweep
+# need, #436). star hands a command no path to its extension, so the deployed path is resolved as writ's layers are,
+# through the shell.
 
 _EXTENSION = "com.noblefactor.ops.GitHub"
 _MODEL_VERSION = 1
 
-def _model_path():
-    """The deployed asset's path: ${XDG_DATA_HOME:-$HOME/.local/share}/devlore/star/extensions/<extension>/model.yaml."""
-    return shell.exec(command = 'printf %s "${XDG_DATA_HOME:-$HOME/.local/share}/devlore/star/extensions/' + _EXTENSION + '"').stdout.strip() + "/model.yaml"
+# A collection type's description begins with this, and a collection has no level (section 6, `types`).
+_COLLECTION = "Collection:"
 
-def _load_model():
-    """model.yaml decoded and checked: its version is known and every type has a level; a digest that does not verify is recorded in digest_fault."""
-    path = _model_path()
-    text = shell.exec(command = "cat " + path).stdout
-    model = yaml.decode(data = text)
+# The account a command reads when none is named: star configuration's github.account, and then this one.
+DEFAULT_ACCOUNT_FALLBACK = "NobleFactor"
+
+# The project kinds each team, and each user account, has four of, named "<Kind>: <team>" in an organization and
+# "<Kind>: <account>" in a user account (section 6, `teams`). An issue's home is its row on one of the last three;
+# its Triage row sits beside its home (ruled 2026-11-08).
+TRIAGE_KIND = "Triage"
+HOME_KINDS = ["Backlog", "Schedule", "Scenario"]
+
+# The keys every record carries, whatever its account's model says; a model whose type or field would give a record
+# one of these keys a second time is refused.
+FIXED_KEYS = [
+    "issue",
+    "repository",
+    "type",
+    "title",
+    "url",
+    "state",
+    "state_reason",
+    "parent",
+    "home",
+    "in_triage",
+    "sub_issues_total",
+    "sub_issues_completed",
+    "labels",
+    "assignees",
+    "blocked_by",
+    "projects",
+    "created_at",
+    "updated_at",
+    "closed_at",
+]
+
+# ── the models ──────────────────────────────────────────────────────────────
+
+def _sh(command):
+    """A shell command's standard output; shell.exec raises on a non-zero exit (devlore-cli#824)."""
+    return shell.exec(command = command).stdout
+
+def _quote(s):
+    """s as one single-quoted shell word."""
+    return "'" + s.replace("'", "'\\''") + "'"
+
+def _extension_dir():
+    """The deployed extension's directory: ${XDG_DATA_HOME:-$HOME/.local/share}/devlore/star/extensions/<extension>."""
+    return _sh('printf %s "${XDG_DATA_HOME:-$HOME/.local/share}/devlore/star/extensions/' + _EXTENSION + '"').strip()
+
+def default_account():
+    """star configuration's github.account, or NobleFactor when it names none."""
+    cfg = config.get
+    if hasattr(cfg, "github") and hasattr(getattr(cfg, "github"), "account") and getattr(getattr(cfg, "github"), "account"):
+        return getattr(getattr(cfg, "github"), "account")
+    return DEFAULT_ACCOUNT_FALLBACK
+
+def key_of(name):
+    """A record key from a model's name: lower case, each run of other characters one underscore; Target date is target_date."""
+    out = ""
+    for c in name.lower().elems():
+        if c.isalnum():
+            out += c
+        elif not out.endswith("_"):
+            out += "_"
+    return out.strip("_")
+
+def _user_attributes():
+    """The labels that stand in for an organization's single-select fields in a user account, family by family.
+
+    Read from reference/user.yaml, the user account's reference model (section 6, § Reference models): each list whose
+    entries carry a label of the form <family>:<option> is a family, its key the family, each label's value the name
+    the reference gives it, so that area:product reads Product, as NobleFactor's Area field does.
+    """
+    ref = yaml.decode(data = _sh("cat " + _quote(_extension_dir() + "/reference/user.yaml"))) or {}
+    families = []
+    for section in ref:
+        entries = ref[section]
+        if type(entries) != "list" or len(entries) == 0:
+            continue
+        labeled = [e for e in entries if type(e) == "dict" and ":" in str(e.get("label", ""))]
+        if len(labeled) != len(entries):
+            continue
+        families.append({
+            "key": key_of(labeled[0]["label"].split(":")[0]),
+            "labels": [e["label"] for e in labeled],
+            "names": {e["label"]: e["name"] for e in labeled},
+        })
+    return families
+
+USER_ATTRIBUTES = _user_attributes()
+
+def _model_paths(directory):
+    """Every model file beside the extension: model.yaml and model.<account>.yaml."""
+    out = _sh("cd " + _quote(directory) + " && for f in model.yaml model.*.yaml; do if [ -f \"$f\" ]; then printf '%s\\n' \"$f\"; fi; done; true")
+    return [directory + "/" + n.strip() for n in out.split("\n") if n.strip() != ""]
+
+def _digest_fault(path):
+    """Empty when the model's digest verifies; otherwise the one line that says it does not.
+
+    A mismatch is recorded, not failed: star loads every command file when the extension loads, so a failure here
+    would take star github model digest and pull down with the rest, and they are how a hand-edited model is repaired
+    (#377). Section 6: a read-only operation runs anyway and says so.
+    """
+    recorded = _sh("sed -n 's/^  digest: //p' " + _quote(path)).strip()
+    computed = _sh("sed '/^  digest: /d' " + _quote(path) + " | (sha256sum 2>/dev/null || shasum -a 256) | cut -d' ' -f1").strip()
+    if recorded == "sha256:" + computed:
+        return ""
+    return path + ": the digest does not verify; the file was edited since its pull. Run star github model pull, or star github model digest after a deliberate edit"
+
+def _load(path):
+    """One model decoded and checked, with what the hierarchy means and each record's keys derived from it.
+
+    Every type is of the hierarchy, with a level, or a collection, its description beginning "Collection:"; a type that
+    is neither is refused, named. A user account's types carry the label that stands for each.
+    """
+    model = yaml.decode(data = _sh("cat " + _quote(path)))
     if type(model) != "dict" or model.get("version") != _MODEL_VERSION:
         fail(path + ": version " + str(model.get("version") if type(model) == "dict" else None) + " is not " + str(_MODEL_VERSION) + "; this extension reads version " + str(_MODEL_VERSION))
-    digest = (model.get("pulled") or {}).get("digest", "")
-    computed = shell.exec(command = "sed '/^  digest: /d' " + path + " | (sha256sum 2>/dev/null || shasum -a 256) | cut -d' ' -f1").stdout.strip()
+    pulled = model.get("pulled") or {}
 
-    # A mismatch is recorded, not failed: star loads every command file when the extension loads, so a failure here
-    # would take star github model digest and star github model pull down with the rest, and they are how a hand-edited asset
-    # is repaired (#377). Section 6: a read-only operation runs anyway and says so.
-    model["digest_fault"] = "" if digest == "sha256:" + computed else (
-        path + ": the digest does not verify; the file was edited since its pull. Run star github model pull, or star github model digest after a deliberate edit"
-    )
-    types = model.get("types") or []
-    for t in types:
-        if type(t) != "dict" or "name" not in t or "level" not in t:
-            fail(path + ": type " + str(t.get("name") if type(t) == "dict" else t) + " has no level; a type with no level is one the hierarchy cannot place")
-        t["level"] = int(t["level"])
-    if len(types) == 0:
-        fail(path + ": no types")
-    return model
+    # NobleFactor's file as pulled before #436 names its account with the key org (section 6, `pulled`).
+    account = pulled.get("account") or pulled.get("org") or ""
+    if account == "":
+        fail(path + ": names no account under pulled")
 
-MODEL = _load_model()
+    hierarchy = []
+    collections = []
+    for t in model.get("types") or []:
+        if type(t) != "dict" or "name" not in t:
+            fail(path + ": a type with no name: " + str(t))
+        if t.get("level") != None:
+            hierarchy.append(dict(t, level = int(t["level"])))
+        elif str(t.get("description") or "").startswith(_COLLECTION):
+            collections.append(dict(t))
+        else:
+            fail(path + ": type " + t["name"] + " has no level and is no collection; a type of the hierarchy has the level its description's \"Level N:\" gives, and a collection's description begins \"Collection:\"")
+    if len(hierarchy) == 0:
+        fail(path + ": no type of the hierarchy")
+    levels = sorted({t["level"]: True for t in hierarchy}.keys())
+    user = len([t for t in hierarchy + collections if t.get("label")]) > 0
+    teams = model.get("teams") or []
+    fields = model.get("fields") or []
+    labels = model.get("labels") or {}
 
-# Empty when the asset's digest verifies; otherwise the one line that says it does not, for a header to print.
-MODEL_DIGEST_FAULT = MODEL["digest_fault"]
+    if user:
+        repositories = sorted(((labels.get("repositories") if type(labels) == "dict" else None) or {}).keys())
+        attribute_keys = [f["key"] for f in USER_ATTRIBUTES]
+    else:
+        repositories = sorted({r: True for t in teams for r in (t.get("repositories") or [])}.keys())
+        attribute_keys = [key_of(f["name"]) for f in fields]
 
-# The types in the asset's order, which is also the render order within a level; the levels in order; and the
-# derived sets, each a list of label names, the type's name lower-cased, which is how an issue carries its type
-# until the switch to GitHub's issue type (section 5).
-TYPES = MODEL["types"]
-LEVELS = sorted({t["level"]: True for t in TYPES}.keys())
-KINDS = [t["name"].lower() for t in TYPES]
-ROOT_KINDS = [t["name"].lower() for t in TYPES if t["level"] == LEVELS[0]]
-LEAF_KINDS = [t["name"].lower() for t in TYPES if t["level"] == LEVELS[-1]]
-PARENT_KINDS = [t["name"].lower() for t in TYPES if t["level"] != LEVELS[0] and t["level"] != LEVELS[-1]]
-UNPLANNED_KINDS = [t["name"].lower() for t in TYPES if t.get("unplanned")]
-PARENT_MARKER_PATTERN = "(" + "|".join([t["name"] for t in TYPES if t["name"].lower() in PARENT_KINDS]) + "):\\*\\* (?:([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+))?#([0-9]+)"
+    # A key for each level above the last, named for its types: the record names the ancestor of each.
+    ancestor_keys = []
+    for t in hierarchy:
+        k = key_of(t["name"])
+        if t["level"] != levels[-1] and k not in ancestor_keys:
+            ancestor_keys.append(k)
+    seen = {k: "a record's own key" for k in FIXED_KEYS}
+    for k in ancestor_keys + attribute_keys:
+        if k in seen:
+            fail(path + ": the record key " + k + " would be given twice: once as " + seen[k] + ", and again by the model")
+        seen[k] = "the model's"
 
-# The words the report prints for tier two come from the asset, as the sets above do, so a change of types reaches them.
-def parent_words(plural = False, capital = False):
-    """The tier-two types' names joined with "or", as the report words them: feature, features or Feature while the asset names one."""
-    return " or ".join([(t["name"] if capital else t["name"].lower()) + ("s" if plural else "") for t in TYPES if t["name"].lower() in PARENT_KINDS])
+    return {
+        "path": path,
+        "account": account,
+        "user": user,
+        "digest_fault": _digest_fault(path),
+        "hierarchy": hierarchy,
+        "collections": collections,
+        "levels": levels,
+        "fields": fields,
+        "teams": teams,
+        "repositories": repositories,
+        "ancestor_keys": ancestor_keys,
+        "attribute_keys": attribute_keys,
+    }
 
-def is_root(it):
-    """Whether the issue's kind is of the first level: an epic, as the asset names it. The kind is GitHub's type first, the label second (#379)."""
-    return kind_of(it) in ROOT_KINDS
+def _load_all():
+    """Every model beside the extension, by its account; two files naming one account are refused."""
+    paths = _model_paths(_extension_dir())
+    if len(paths) == 0:
+        fail(_extension_dir() + ": no model; run star github model pull")
+    models = {}
+    for path in paths:
+        m = _load(path)
+        if m["account"] in models:
+            fail(path + " and " + models[m["account"]]["path"] + " both hold " + m["account"] + "'s model")
+        models[m["account"]] = m
+    return models
 
-# A repository renamed on GitHub keeps its old name as a redirect, and the record keeps it as text: markers in
-# bodies, lane and beat tables, and the schedule keys sessions are named by. Every owner/repo the extension parses
-# goes through canonical_repo, so the old name reads as the new. noblefactor-ops became noblefactor-engprod on
-# 2026-10-22 (noblefactor-ops#304).
+MODELS = _load_all()
+
+# Each model's digest fault, for a command to say before its result; empty when every digest verifies.
+MODEL_DIGEST_FAULTS = [MODELS[a]["digest_fault"] for a in MODELS if MODELS[a]["digest_fault"]]
+
+def model_for(repo):
+    """The model of the account that owns repo, owner/name; fails, naming the pull that would make it, when there is none."""
+    owner = repo.split("/")[0]
+    if owner not in MODELS:
+        fail("no model for " + owner + ", which owns " + repo + "; make one with star github model pull --account " + owner + " in a worktree")
+    return MODELS[owner]
+
+def leaf_level(model):
+    """The last level of the model's hierarchy: a schedule's steps are drawn from it."""
+    return model["levels"][-1]
+
+def type_named(model, name):
+    """The model's type of that name, of the hierarchy or a collection, or None."""
+    for t in model["hierarchy"] + model["collections"]:
+        if t["name"] == name:
+            return t
+    return None
+
+def type_of(model, issue_type, label_names):
+    """The name of an issue's type: GitHub's issue type in an organization, its type label in a user account; None when it has none the model knows."""
+    if model["user"]:
+        for t in model["hierarchy"] + model["collections"]:
+            if t.get("label") in label_names:
+                return t["name"]
+        return None
+    if type(issue_type) == "dict" and issue_type.get("name") and type_named(model, issue_type["name"]) != None:
+        return issue_type["name"]
+    return None
+
+def owners_of(model):
+    """What the account's project names end with: each team's slug in an organization, the account in a user account."""
+    if model["user"]:
+        return [model["account"]]
+    return [t["slug"] for t in model["teams"]]
+
+def team_of(model, repo):
+    """The team that owns repo, by the maintain role, as its slug; the account itself in a user account; None when none does."""
+    if model["user"]:
+        return model["account"]
+    for t in model["teams"]:
+        if repo in (t.get("repositories") or []):
+            return t["slug"]
+    return None
+
+# ── repositories ────────────────────────────────────────────────────────────
+
+# A repository renamed on GitHub keeps its old name as a redirect, and the record keeps it as text. Every owner/repo
+# the extension parses goes through canonical_repo, so the old name reads as the new. noblefactor-ops became
+# noblefactor-engprod on 2026-10-22 (noblefactor-ops#304).
 RENAMED = {"NobleFactor/noblefactor-ops": "NobleFactor/noblefactor-engprod"}
 
 def canonical_repo(name):
@@ -89,286 +272,9 @@ def short(repo):
     """The repository's name without its owner: noblefactor-engprod for NobleFactor/noblefactor-engprod."""
     return repo.split("/")[-1]
 
-def key(it):
-    """owner/repo#N -- the identity a **Feature:** marker names across repositories."""
-    return it["repo"] + "#" + str(it["number"])
-
-def names(it):
-    return [label["name"] for label in it["labels"]]
-
-def tagged(it, label):
-    return label in names(it)
-
-def kinds(it):
-    return [n for n in names(it) if n in KINDS]
-
-def epic_tags(it):
-    return [n for n in names(it) if n.startswith("Epic:")]
-
-def epic_tag(it):
-    """The epic an issue belongs to, as its Epic:<Name> label: the root its parent chain reaches when the fetch resolved it (#379), else its own label."""
-    if "epic_resolved" in it:
-        return it["epic_resolved"]
-    tags = epic_tags(it)
-    return tags[0] if tags else ""
-
-def mark(it):
-    return "~~" if it["state"] == "CLOSED" else ""
-
-def line(it):
-    return mark(it) + it["title"] + mark(it) + " [" + it["ref"] + "](" + it["url"] + ")"
-
-def is_bug(it):
-    """Whether the issue's kind is the unplanned leaf type, which the asset marks `unplanned: true`."""
-    return kind_of(it) in UNPLANNED_KINDS
-
-def _first_with_prefix(it, prefix):
-    for n in names(it):
-        if n.startswith(prefix):
-            return n
-    return ""
-
-def severity(it):
-    return _first_with_prefix(it, "Severity:")
-
-def priority(it):
-    return _first_with_prefix(it, "Priority:")
-
-def severity_rank(it):
-    s = severity(it)
-    return {"Severity:Critical": 0, "Severity:High": 1, "Severity:Medium": 2, "Severity:Low": 3}.get(s, 4)
-
-# A tier-three issue -- a lane -- is a task or a bug, peers (ruled 2026-10-21, noblefactor-ops#344) under a
-# feature. One with no parent falls through to "unfiled".
-def is_child(it):
-    return kind_of(it) in LEAF_KINDS
-
-# A tier-two issue is a feature: a body of work an epic decomposes into, with lanes of its own. A schedule
-# issue and a thread issue are views, with no lanes of their own, so neither is a parent, whatever its kind.
-def is_parent(it):
-    return kind_of(it) in PARENT_KINDS and not is_view_issue(it)
-
-# A lane's parent, stated in its body by the parent's kind: **Feature:** #123, or **Feature:**
-# owner/repo#123. The marker is the closing metadata line, so the LAST match wins: prose above it
-# may mention another parent in the same form, and the script's narrower regex happened never to
-# see those.
-def parent_marker(it):
-    """The last parent marker in the body as (key, kind named) -- (owner/repo#N, the parent level's type name lower-cased) -- or None. A bare #N is the issue's own repository."""
-    ms = regex.find_all_submatch(pattern = PARENT_MARKER_PATTERN, text = it.get("body", "") or "", count = -1)
-
-    # find_all_submatch returns None on no match; an optional group that did not participate is "".
-    if ms == None or len(ms) == 0:
-        return None
-    m = ms[-1]
-    return ((canonical_repo(m[2]) if m[2] else it["repo"]) + "#" + m[3], m[1].lower())
-
-def parent(it):
-    """The key of the issue's parent, owner/repo#N: the sub-issue link when the fetch resolved it (#379), else the body's last marker, else None."""
-    if "parent_resolved" in it:
-        return it["parent_resolved"]
-    pm = parent_marker(it)
-    return pm[0] if pm else None
-
-def resolve_all(issues):
-    """Resolve every fetched issue once, GitHub's record first and today's text second (#379): kind_resolved, parent_resolved and epic_resolved written onto each.
-
-    The kind is the issue type when it is one of the asset's, else the one kind label. The parent is the sub-issue
-    link, else the last marker. The epic is the Epic:<Name> label of the root the parent chain reaches within the
-    fetched set, else the issue's own label; the chain stops at the first issue not in the set, which is how a report
-    of one repository falls back to the label for a parent held elsewhere.
-    """
-    by_key = {key(i): i for i in issues}
-    for it in issues:
-        it["kind_resolved"] = _kind_by_type(it) or _kind_by_label(it)
-        link = _parent_by_link(it)
-        pm = parent_marker(it)
-        it["parent_resolved"] = link if link else (pm[0] if pm else None)
-    for it in issues:
-        cur = it
-        found = ""
-        for _ in range(16):
-            if cur["kind_resolved"] in ROOT_KINDS:
-                tags = epic_tags(cur)
-                found = tags[0] if tags else ""
-                break
-            nxt = by_key.get(cur["parent_resolved"] or "")
-            if nxt == None:
-                break
-            cur = nxt
-        own = epic_tags(it)
-        it["epic_resolved"] = found if found else (own[0] if own else "")
-    return issues
-
-def parents_of(tag, all):
-    """The tier-two issues of the epic carrying tag, kind by kind in the asset's order, each kind by number."""
-    mine = [i for i in all if is_parent(i) and epic_tag(i) == tag]
-    out = []
-    for k in PARENT_KINDS:
-        out.extend(by_number([i for i in mine if kind_of(i) == k]))
-    return out
-
-# A bug awaiting triage has no feature yet, so it has no epic. That is the triage queue, not a fault.
-def awaiting_triage(it):
-    return is_bug(it) and len(epic_tags(it)) == 0
-
-# A thread issue is a scenario, and a scenario has no owner: it carries no Epic: label and is placed
-# by its own label family. The second exception (issue-standards.md, The two exceptions). Its title
-# and its label make it one, whatever its kind.
-def is_thread_issue(it):
-    return it["title"].startswith("Thread:") and len([n for n in names(it) if n.startswith("Thread:")]) > 0
-
-# A schedule issue is the declared order of execution -- a view of the work, not work -- and carries
-# no Epic: label either. The three slices are peers (issue-standards.md, Three ways to slice the work).
-# Its title makes it one, whatever its kind.
-def is_schedule_issue(it):
-    return it["title"].startswith("Schedule:")
-
-def is_view_issue(it):
-    """A thread or schedule issue: organizes work, is not work, carries no epic."""
-    return is_thread_issue(it) or is_schedule_issue(it)
-
-def faults(it, by_key = None):
-    """The classification faults of an open issue: no kind label where one is due, a view needing none, or more than one; wrong count of epic labels; a parent marker on tier two; and, given the issues by key, a marker naming the wrong kind."""
-    if awaiting_triage(it):
-        return []
-    k = kinds(it)
-    e = epic_tags(it)
-    out = []
-    if len(k) == 0 and not is_view_issue(it):
-        out.append("no kind label (" + "/".join(KINDS) + ")")
-    if len(k) > 1:
-        out.append("multiple kind labels: " + ", ".join(k))
-    if len(e) == 0 and not is_view_issue(it):
-        out.append("no Epic:<Name> label")
-    if len(e) > 1:
-        out.append("multiple epics: " + ", ".join(e))
-    pm = parent_marker(it)
-    typed = _kind_by_type(it)
-    labeled = _kind_by_label(it)
-    if typed and labeled != "unclassified" and typed != labeled:
-        out.append("typed " + typed.capitalize() + ", labeled " + labeled)
-    link = _parent_by_link(it)
-    if link and pm != None and link != pm[0]:
-        out.append("linked to " + link + ", marker names " + pm[0])
-    if "epic_resolved" in it and it["epic_resolved"] and len(epic_tags(it)) > 0 and epic_tags(it)[0] != it["epic_resolved"]:
-        out.append("its parents reach " + it["epic_resolved"] + ", labeled " + epic_tags(it)[0])
-    if pm != None and is_parent(it):
-        out.append("tier two names a parent: **" + pm[1].capitalize() + ":** " + pm[0])
-    if pm != None and is_child(it) and by_key != None and pm[0] in by_key and kind_of(by_key[pm[0]]) != pm[1]:
-        out.append("names " + pm[0] + " as a " + pm[1] + "; it is a " + kind_of(by_key[pm[0]]))
-    return out
-
-def kind_of(it):
-    """The one kind an issue renders as: GitHub's issue type when the fetch resolved it (#379), else the one kind label in the asset's order, first level first; unclassified when it carries none."""
-    if "kind_resolved" in it:
-        return it["kind_resolved"]
-    return _kind_by_label(it)
-
-def _kind_by_label(it):
-    for k in KINDS:
-        if tagged(it, k):
-            return k
-    return "unclassified"
-
-def _kind_by_type(it):
-    """The kind GitHub's issue type names, lower-cased, when it is one of the asset's; else None."""
-    t = it.get("issueType")
-    if type(t) == "dict" and t.get("name") and t["name"].lower() in KINDS:
-        return t["name"].lower()
-    return None
-
-def _parent_by_link(it):
-    """The key of the sub-issue parent GitHub holds, owner/repo#N through canonical_repo, else None."""
-    p = it.get("parent")
-    if type(p) != "dict" or not p.get("url"):
-        return None
-    m = regex.find_submatch(pattern = "github\\.com/([^/]+/[^/]+)/issues/([0-9]+)$", text = p["url"])
-    if m == None or len(m) < 3:
-        return None
-    return canonical_repo(m[1]) + "#" + m[2]
-
 def cell(s):
+    """A markdown table cell's text: its pipes escaped and its lines joined."""
     return s.replace("|", "\\|").replace("\n", " ")
-
-def _strip(s, prefix):
-    return s[len(prefix):] if s.startswith(prefix) else s
-
-def comment(it, placement):
-    """The Comment column: kind, placement, WIP, severity, priority, and any open fault."""
-    parts = [kind_of(it), placement]
-    if tagged(it, "WIP"):
-        parts.append("WIP")
-    sev = _strip(severity(it), "Severity:")
-    if sev:
-        parts.append("severity " + sev)
-    pri = _strip(priority(it), "Priority:")
-    if pri:
-        parts.append("priority " + pri)
-    if it["state"] == "OPEN":
-        f = "; ".join(faults(it))
-        if f:
-            parts.append(f)
-    return "; ".join([p for p in parts if p != ""])
-
-def row(it, placement):
-    return {
-        "issue": it["number"],
-        "repo": it["repo"],
-        "ref": it["ref"],
-        "url": it["url"],
-        "title": cell(it["title"]),
-        "kind": kind_of(it),
-        "state": it["state"],
-        "done": it["state"] == "CLOSED",
-        "placement": placement,
-        "severity": _strip(severity(it), "Severity:"),
-        "priority": _strip(priority(it), "Priority:"),
-        "wip": tagged(it, "WIP"),
-        "faults": faults(it) if it["state"] == "OPEN" else [],
-        "comment": comment(it, placement),
-    }
-
-def task_row(it):
-    done = "✅" if it["state"] == "CLOSED" else ""
-    kind = kind_of(it)
-    return "| " + done + " | [" + it["ref"] + "](" + it["url"] + ") | " + mark(it) + cell(it["title"]) + mark(it) + " | " + kind + " | " + _strip(severity(it), "Severity:") + " | " + _strip(priority(it), "Priority:") + " |"
-
-def by_number(items):
-    return sorted(items, key = lambda i: (i["number"], i["repo"]))
-
-# The rows of one epic, in tree order: the epic, then each feature and its lanes, then the unfiled.
-def epic_rows(e, all):
-    """The rows of one epic in tree order: the epic, each feature with its lanes, then the unfiled."""
-    tag = epic_tag(e)
-    parents = parents_of(tag, all)
-    tasks = [i for i in all if is_child(i) and epic_tag(i) == tag]
-    parent_keys = [key(f) for f in parents]
-    rows = [row(e, "")]
-    for f in parents:
-        rows.append(row(f, "" if len(children_of(f, tasks)) > 0 else "awaiting decomposition"))
-        for t in children_of(f, tasks):
-            r = row(t, kind_of(f) + " " + f["ref"])
-            r["feature"] = f["number"]
-            r["feature_repo"] = f["repo"]
-            r["parent_kind"] = kind_of(f)
-            rows.append(r)
-    for t in by_number([t for t in tasks if parent(t) == None or parent(t) not in parent_keys]):
-        rows.append(row(t, "unfiled, no parent" if parent(t) == None else "unfiled, names " + parent(t) + ", not a " + parent_words() + " of this epic"))
-    if len(parents) == 0 and len(tasks) == 0:
-        rows[0]["comment"] = rows[0]["comment"] + "; awaiting plan and design"
-        rows[0]["placement"] = "awaiting plan and design"
-    for r in rows:
-        r["epic"] = e["number"]
-        r["axis"] = axis(epic_name(e))
-    return rows
-
-def table_lines(rows):
-    out = ["| ID | Issue | Title | Status | Comment |", "|---|---|---|---|---|"]
-    for i, r in enumerate(rows):
-        out.append("| " + str(i + 1) + " | [" + r["ref"] + "](" + r["url"] + ") | " + r["title"] + " | " + ("✅" if r["done"] else "") + " | " + r["comment"] + " |")
-    return out
-
-# ── fetching ────────────────────────────────────────────────────────────────
 
 # owner/name at the end of a remote's URL, by HTTPS or by SSH, with or without .git.
 _ORIGIN = "[:/]([^/:]+/[^/]+?)(?:\\.git)?\\s*$"
@@ -402,314 +308,29 @@ def layer_repos():
     repos = []
     for origin in shell.exec(command = script).stdout.split("\n"):
         m = regex.find_submatch(pattern = _ORIGIN, text = origin)
-        if m != None and len(m) > 1 and m[1] not in repos:
-            repos.append(m[1])
+        if m != None and len(m) > 1 and canonical_repo(m[1]) not in repos:
+            repos.append(canonical_repo(m[1]))
     return repos
 
+def default_repos():
+    """The repositories of writ's layers, or the one the command runs in when no layer is registered."""
+    repos = layer_repos()
+    return repos if repos else [_current_repo()]
+
 def resolve_repos(repo_flag, directory):
-    """The repositories to report on: --repo, else --directory's origin, else writ's layers', else the current one."""
+    """The labels commands' repositories: --repo, else --directory's origin, else writ's layers', else the current one."""
     if repo_flag:
         return [canonical_repo(r.strip()) for r in repo_flag.split(",") if r.strip()]
     if directory:
         return [_origin_repo(directory)]
-    repos = layer_repos()
-    return repos if repos else [_current_repo()]
-
-def lane_repos(scheds):
-    """Every repository a lane of the schedules names, owner/name, in lane order, each once."""
-    repos = []
-    for sc in scheds:
-        for lane in lane_table(sc):
-            if "key" in lane["spec"]:
-                repo = lane["spec"]["key"].split("#")[0]
-                if repo not in repos:
-                    repos.append(repo)
-    return repos
-
-_GQL_STATES = {"open": "OPEN", "closed": "CLOSED", "all": "OPEN, CLOSED"}
-
-def _type_and_parent(repo, state):
-    """Each issue's GitHub type and sub-issue parent, by number, in the shape gh issue list gives them, {"name": ...} and {"url": ...}.
-
-    Read through GraphQL, which answers from GitHub's schema whatever gh is installed, one paginated query per
-    repository over the whole state; --limit's cut is the list call's, and the extra numbers are never looked up (#395).
-
-    Args:
-      repo: the repository, owner/name.
-      state: open, closed, or all.
-    """
-    owner, name = repo.split("/")
-    query = "query($endCursor: String) { repository(owner: \"" + owner + "\", name: \"" + name + "\") { issues(first: 100, after: $endCursor, states: [" + _GQL_STATES[state] + "]) { nodes { number issueType { name } parent { url } } pageInfo { hasNextPage endCursor } } } }"
-    r = shell.exec(command = "gh api graphql --paginate -f query='" + query + "' --jq '.data.repository.issues.nodes[] | tojson'")
-    out = {}
-    for line in r.stdout.split("\n"):
-        if line.strip() == "":
-            continue
-        node = json.decode(data = line)
-        fields = {}
-        if node.get("issueType") != None:
-            fields["issueType"] = node["issueType"]
-        if node.get("parent") != None:
-            fields["parent"] = node["parent"]
-        out[int(node["number"])] = fields
-    return out
-
-def fetch_issues(state, limit, repos, multi = None):
-    """Every issue of each repository via gh issue list -- authoritative and immediate, unlike search -- tagged with its repository and display ref.
-
-    Args:
-      state: open, closed, or all.
-      limit: the most issues to fetch from each repository.
-      repos: the repositories, owner/name.
-      multi: whether a ref names its repository; by default, when more than one repository is read. A report that reads
-        more repositories after its first fetch passes True, so every ref is written one way.
-    """
-
-    # shell.exec raises on a non-zero exit (devlore-cli#824), so a failed gh never reaches this code;
-    # there is no exit_code to check.
-    if multi == None:
-        multi = len(repos) > 1
-    issues = []
-    for repo in repos:
-        # Only the fields every gh knows: gh 2.46.0, Ubuntu Pro's pinned build, refuses issueType and parent (#395).
-        r = shell.exec(command = "gh issue list -R " + repo + " --state " + state + " --limit " + str(limit) + " --json number,title,state,labels,body,url")
-        batch = json.decode(data = r.stdout)
-        typed = _type_and_parent(repo, state)
-        for it in batch:
-            # encoding/json decodes numbers as floats; the scheme compares and prints issue numbers as ints.
-            it["number"] = int(it["number"])
-            it.update(typed.get(it["number"], {}))
-            it["repo"] = repo
-            it["ref"] = (short(repo) + "#" if multi else "#") + str(it["number"])
-        issues.extend(batch)
-    return resolve_all(issues)
-
-def label_space(repos):
-    """Every Epic: and Thread: label per repository with its open count -- one GraphQL request, filtered here and never with labels(query:), which is a relevance search."""
-    parts = []
-    for i, repo in enumerate(repos):
-        owner, name = repo.split("/")
-        parts.append("r" + str(i) + ": repository(owner: \"" + owner + "\", name: \"" + name + "\") { nameWithOwner labels(first: 100) { nodes { name issues(states: OPEN) { totalCount } } } }")
-    r = shell.exec(command = "gh api graphql -f query='{ " + " ".join(parts) + " }'")
-    data = json.decode(data = r.stdout)["data"]
-    out = {}
-    for k in data:
-        node = data[k]
-        out[node["nameWithOwner"]] = {label["name"]: int(label["issues"]["totalCount"]) for label in node["labels"]["nodes"] if label["name"].startswith("Epic:") or label["name"].startswith("Thread:")}
-    return out
-
-def exempt_numbers():
-    # github.exempt in star/config.yaml (gh.exempt until #378). Flat, not github.schedule.exempt: the extension spec accepts a nested:
-    # block but the runtime does not build it into the config struct (noblefactor-ops#140, Phase 1).
-    cfg = config.get
-    if not hasattr(cfg, "github") or not hasattr(getattr(cfg, "github"), "exempt"):
-        return []
-    return [int(n) for n in getattr(getattr(cfg, "github"), "exempt")]
-
-# ── the audit ───────────────────────────────────────────────────────────────
-
-def audit(all, exempt):
-    """The classification audit: the faulty, the exempted, the open bugs, and those awaiting triage."""
-    open_ = [i for i in all if i["state"] == "OPEN"]
-    by_key = {key(i): i for i in all}
-    bad = by_number([i for i in open_ if i["number"] not in exempt and len(faults(i, by_key)) > 0])
-    exempted = by_number([i for i in open_ if i["number"] in exempt])
-    bugs = [i for i in open_ if is_bug(i)]
-    untriaged = by_number([i for i in bugs if awaiting_triage(i)])
-    return {"bad": bad, "exempted": exempted, "bugs": bugs, "untriaged": untriaged, "by_key": by_key}
-
-def audit_lines(a):
-    """The audit section as the script prints it."""
-    out = []
-    if len(a["bad"]) == 0:
-        out.append("All open issues carry exactly one kind label and exactly one epic.")
-    else:
-        out.append("**" + str(len(a["bad"])) + " issue(s) are not properly classified.** An issue the scheme cannot place is invisible to the tree below.\n")
-        for i in a["bad"]:
-            out.append("- " + line(i) + " — " + "; ".join(faults(i, a["by_key"])))
-    if len(a["exempted"]) > 0:
-        out.append("\nDeliberately outside the scheme, by decision:\n")
-        for i in a["exempted"]:
-            out.append("- " + line(i))
-    if len(a["untriaged"]) > 0:
-        out.append("\n**" + str(len(a["untriaged"])) + " bug(s) awaiting triage** — no parent, so no epic. Not a fault; this is the queue.\n")
-        for i in a["untriaged"]:
-            out.append("- " + line(i))
-    return out
-
-# ── threads ─────────────────────────────────────────────────────────────────
-#
-# A thread is a narrative -- a use case or scenario -- carrying cross-cutting feature development
-# (docs/issue-standards.md, Threads). Membership is the Thread:<Name> label; order is the beat table
-# in the thread issue's body; the two must agree, and disagreement either way is a fault.
-
-def thread_names(space):
-    """Every thread across the repositories read, from the label space, sorted."""
-    names = {}
-    for repo in space:
-        for label in space[repo]:
-            if label.startswith("Thread:"):
-                names[label[len("Thread:"):]] = True
-    return sorted(names.keys())
-
-def thread_issue(all, name):
-    """The thread's own issue: kind feature, carrying its label, titled 'Thread:'. None when absent."""
-    candidates = by_number([i for i in all if kind_of(i) in PARENT_KINDS and tagged(i, "Thread:" + name) and i["title"].startswith("Thread:")])
-    return candidates[0] if candidates else None
-
-def beat_table(thread):
-    """(beat, owner/repo#N) in document order, from rows of the thread issue's body whose first cell is a beat number."""
-    beats = []
-    for raw in (thread.get("body", "") or "").split("\n"):
-        cells = [c.strip() for c in raw.strip().strip("|").split("|")]
-        if len(cells) < 2 or not regex.match(pattern = "^[0-9]+$", text = cells[0]):
-            continue
-        refs = regex.find_all_submatch(pattern = "(?:([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+))?#([0-9]+)", text = raw, count = -1)
-        if refs == None or len(refs) == 0:
-            continue
-        m = refs[0]
-        beats.append((int(cells[0]), (canonical_repo(m[1]) if m[1] else thread["repo"]) + "#" + m[2]))
-    return beats
-
-def thread_rows(name, all):
-    """The thread issue, then its members in beat order, then labeled members the table omits; with the agreement faults."""
-    thread = thread_issue(all, name)
-    members = [i for i in all if tagged(i, "Thread:" + name) and (thread == None or key(i) != key(thread))]
-    by_key = {key(i): i for i in members}
-    beats = beat_table(thread) if thread else []
-    listed = {k: b for b, k in beats}
-
-    rows = []
-    faults = []
-    if thread == None:
-        faults.append("no thread issue: no feature titled 'Thread:' carries Thread:" + name)
-    else:
-        r = row(thread, "")
-        r["thread"] = name
-        r["beat"] = ""
-        rows.append(r)
-
-    for b, k in beats:
-        if k in by_key:
-            r = row(by_key[k], "beat " + str(b))
-            r["thread"] = name
-            r["beat"] = b
-            r["epic_name"] = _strip(epic_tag(by_key[k]), "Epic:")
-            rows.append(r)
-        else:
-            faults.append("beat " + str(b) + " names " + k + ", which does not carry Thread:" + name)
-
-    for i in by_number([i for i in members if key(i) not in listed]):
-        r = row(i, "labeled, not in the beat table")
-        r["thread"] = name
-        r["beat"] = ""
-        r["epic_name"] = _strip(epic_tag(i), "Epic:")
-        rows.append(r)
-        faults.append(i["ref"] + " carries Thread:" + name + " and is not in the beat table")
-
-    return {"name": name, "thread": thread, "rows": rows, "faults": faults}
-
-def thread_table_lines(rows):
-    """The thread's status table: beat, issue, title, status, owning epic, comment."""
-    out = ["| Beat | Issue | Title | Status | Epic | Comment |", "|---|---|---|---|---|---|"]
-    for r in rows:
-        out.append("| " + str(r.get("beat", "")) + " | [" + r["ref"] + "](" + r["url"] + ") | " + r["title"] + " | " + ("✅" if r["done"] else "") + " | " + r.get("epic_name", "") + " | " + r["comment"] + " |")
-    return out
-
-# ── the scheme's semantics: axes, and what an empty level means ────────────
-#
-# docs/issue-standards.md: the Ops: segment marks the tooling axis; an epic with no features is
-# awaiting plan and design; a feature with no lanes is awaiting decomposition; a lane with no parent
-# is unfiled. The report says which, rather than rendering blank.
-
-def axis(name):
-    """tooling for a name carrying the Ops: segment, else product."""
-    return "tooling" if name.startswith("Ops:") else "product"
-
-def by_axis(items, name_of):
-    """Product first, then tooling; stable within each."""
-    return [i for i in items if axis(name_of(i)) == "product"] + [i for i in items if axis(name_of(i)) == "tooling"]
-
-def epic_name(it):
-    """The Name in an issue's Epic:<Name> label, or empty."""
-    return _strip(epic_tag(it), "Epic:")
-
-def children_of(f, tasks):
-    """The lanes that name the feature f as their parent."""
-    return by_number([t for t in tasks if parent(t) == key(f)])
-
-def feature_state(f, kids):
-    """The named condition of a feature: closed; awaiting decomposition; children done; or n of m done."""
-    if f["state"] == "CLOSED":
-        return "closed"
-    if f["title"].startswith("Thread:"):
-        return "a thread; its members report under --by thread"
-    if len(kids) == 0:
-        return "awaiting decomposition"
-    done = len([k for k in kids if k["state"] == "CLOSED"])
-    if done == len(kids):
-        return "children done"
-    return str(done) + " of " + str(len(kids)) + " done"
-
-def feature_rows(epics, all):
-    """One row per feature across the given epics, with its counts and state; an epic with none contributes a row saying so."""
-    rows = []
-    for e in epics:
-        tag = epic_tag(e)
-        features = parents_of(tag, all)
-        tasks = [i for i in all if is_child(i) and epic_tag(i) == tag]
-        if len(features) == 0:
-            rows.append({
-                "epic": e["number"],
-                "epic_ref": e["ref"],
-                "epic_name": epic_name(e),
-                "axis": axis(epic_name(e)),
-                "feature": None,
-                "ref": "",
-                "url": e["url"],
-                "title": "",
-                "done": 0,
-                "open": 0,
-                "state": "awaiting plan and design" if len(tasks) == 0 else "awaiting plan and design; " + str(len(tasks)) + " unfiled",
-            })
-            continue
-        for f in features:
-            kids = children_of(f, tasks)
-            done = len([k for k in kids if k["state"] == "CLOSED"])
-            rows.append({
-                "epic": e["number"],
-                "epic_ref": e["ref"],
-                "epic_name": epic_name(e),
-                "axis": axis(epic_name(e)),
-                "feature": f["number"],
-                "kind": kind_of(f),
-                "repo": f["repo"],
-                "ref": f["ref"],
-                "url": f["url"],
-                "title": cell(f["title"]),
-                "closed": f["state"] == "CLOSED",
-                "done": done,
-                "open": len(kids) - done,
-                "state": feature_state(f, kids),
-            })
-    return rows
-
-def feature_table_lines(rows):
-    """The tier-two rollup: the feature, its kind, done, open, state."""
-    out = ["| " + parent_words(capital = True) + " | Kind | Done | Open | State |", "|---|---|---|---|---|"]
-    for r in rows:
-        if r["feature"] == None:
-            out.append("| _no " + parent_words(plural = True) + "_ |  |  |  | " + r["state"] + " |")
-        else:
-            out.append("| [" + r["ref"] + "](" + r["url"] + ") " + ("~~" + r["title"] + "~~" if r["closed"] else r["title"]) + " | " + r["kind"] + " | " + str(r["done"]) + " | " + str(r["open"]) + " | " + r["state"] + " |")
-    return out
+    return default_repos()
 
 # ── the label set every participating repository carries ───────────────────
 #
-# docs/issue-standards.md, The labels a repository provides: the five kinds, Epic:Ops:Process, and
-# every Thread:<Name> whose members reach it. A thread crosses repositories by design, so a thread
-# label present in one configured repository is expected in all of them -- otherwise nothing there
-# can join. Epic:<Name> labels are per-repository by definition and are not synced.
+# The labels commands, out of scope for #436, are as they were: they expect the hierarchy's type names, lower-cased, as
+# labels, and Epic:Ops:Process, in every repository. Their kinds are the default account's hierarchy types.
+
+KINDS = [t["name"].lower() for t in (MODELS.get(default_account()) or MODELS[sorted(MODELS.keys())[0]])["hierarchy"]]
 
 REQUIRED_EVERYWHERE = KINDS + ["Epic:Ops:Process"]
 
@@ -807,182 +428,3 @@ def label_sync(rows, dry_run):
             note(action + "d " + r["label"] + " in " + r["repo"])
             done.append({"repo": r["repo"], "label": r["label"], "action": action, "dry_run": False})
     return done
-
-# ── schedules ───────────────────────────────────────────────────────────────
-#
-# A schedule says what we are executing, in what order, and what is next (issue-standards.md, Three
-# ways to slice the work). Lane, item, next and waits-on are declared in a Schedule: issue's table;
-# progress is derived here from the feature rollup. A lane names an epic or a feature.
-
-def schedule_issues(all):
-    """Every schedule issue in the set, by its title beginning 'Schedule:', by number."""
-    return by_number([i for i in all if is_schedule_issue(i)])
-
-def schedule_name(sched):
-    """The name after 'Schedule:' in the title."""
-    return sched["title"][len("Schedule:"):].strip()
-
-def _short_refs(text, repos):
-    """owner/repo#N rendered as repo#N for the repositories read."""
-    for repo in repos:
-        text = text.replace(repo + "#", short(repo) + "#")
-    return text
-
-def lane_table(sched):
-    """(lane, item spec, next, waits-on) per row whose first cell is a lane number. The item is the Epic:<Name> token if present, else the first issue reference."""
-    lanes = []
-    for raw in (sched.get("body", "") or "").split("\n"):
-        cells = [c.strip() for c in raw.strip().strip("|").split("|")]
-        if len(cells) < 2 or not regex.match(pattern = "^[0-9]+$", text = cells[0]):
-            continue
-        item = cells[1]
-        epic = regex.find_submatch(pattern = "Epic:([A-Za-z0-9:_.-]+)", text = item)
-        ref = regex.find_submatch(pattern = "(?:([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+))?#([0-9]+)", text = item)
-        if epic != None and len(epic) > 1:
-            spec = {"epic": epic[1]}
-        elif ref != None and len(ref) > 2:
-            spec = {"key": (canonical_repo(ref[1]) if ref[1] else sched["repo"]) + "#" + ref[2]}
-        else:
-            spec = {"unresolved": item}
-        lanes.append({
-            "lane": int(cells[0]),
-            "spec": spec,
-            "item_text": item,
-            "next": cells[2] if len(cells) > 2 else "",
-            "waits_on": cells[3] if len(cells) > 3 else "",
-        })
-    return lanes
-
-def _aggregate(frows):
-    """Sum a set of feature rows into done, open, feature count, and a state."""
-    done = 0
-    open_ = 0
-    n = 0
-    for r in frows:
-        if r["feature"] == None:
-            continue
-        n += 1
-        done += r["done"]
-        open_ += r["open"]
-    if n == 0:
-        return {"done": 0, "open": 0, "features": 0, "state": "awaiting plan and design"}
-    total = done + open_
-    state = "no tasks filed" if total == 0 else (str(done) + " of " + str(total) + " done across " + str(n) + " feature(s)")
-    return {"done": done, "open": open_, "features": n, "state": state}
-
-def _missing(spec_key, repos, state):
-    """Why a lane's issue is not in the set: its repository was not read, or the issue is not among the state's."""
-    repo = spec_key.split("#")[0]
-    if repo not in repos:
-        return spec_key + " is in " + repo + ", which this report did not read"
-    if state == "all":
-        return spec_key + " was not found"
-    return spec_key + " is not among the " + state + " issues"
-
-def resolve_lane(spec, all, repos, state):
-    """The issue a lane names and its live progress. An epic aggregates its features; a feature rolls up its lanes; anything else reports its own state."""
-    it = None
-    if "epic" in spec:
-        tag = "Epic:" + spec["epic"]
-        epics = [i for i in all if is_root(i) and epic_tag(i) == tag]
-        it = epics[0] if epics else None
-        if it == None:
-            return None, {"done": 0, "open": 0, "features": 0, "state": "no epic issue carries " + tag}
-        return it, _aggregate(feature_rows([it], all))
-    if "key" in spec:
-        hits = [i for i in all if key(i) == spec["key"]]
-        it = hits[0] if hits else None
-        if it == None:
-            return None, {"done": 0, "open": 0, "features": 0, "state": _missing(spec["key"], repos, state)}
-        if is_root(it):
-            return it, _aggregate(feature_rows([it], all))
-        if is_parent(it):
-            tag = epic_tag(it)
-            tasks = [i for i in all if is_child(i) and epic_tag(i) == tag]
-            kids = children_of(it, tasks)
-            done = len([k for k in kids if k["state"] == "CLOSED"])
-            return it, {"done": done, "open": len(kids) - done, "features": 1, "state": feature_state(it, kids)}
-        return it, {"done": 1 if it["state"] == "CLOSED" else 0, "open": 0 if it["state"] == "CLOSED" else 1, "features": 0, "state": "closed" if it["state"] == "CLOSED" else "open"}
-    return None, {"done": 0, "open": 0, "features": 0, "state": "unresolved: " + spec.get("unresolved", "")}
-
-def schedule_rows(sched, all, repos, state):
-    """The lanes of one schedule, in declared order, with live progress."""
-    rows = []
-    for lane in lane_table(sched):
-        it, prog = resolve_lane(lane["spec"], all, repos, state)
-        rows.append({
-            "schedule": schedule_name(sched),
-            "lane": lane["lane"],
-            "item_ref": it["ref"] if it else "",
-            "item_url": it["url"] if it else "",
-            "item_title": cell(it["title"]) if it else lane["item_text"],
-            "item_kind": kind_of(it) if it else "",
-            "done": prog["done"],
-            "open": prog["open"],
-            "features": prog["features"],
-            "state": prog["state"],
-            "next": _short_refs(lane["next"], repos),
-            "waits_on": _short_refs(lane["waits_on"], repos),
-        })
-    return rows
-
-def schedule_table_lines(rows):
-    """Lane, item, progress, next, waits on."""
-    out = ["| Lane | Item | Progress | Next | Waits on |", "|---|---|---|---|---|"]
-    for r in rows:
-        item = ("[" + r["item_ref"] + "](" + r["item_url"] + ") " if r["item_ref"] else "") + r["item_title"]
-        out.append("| " + str(r["lane"]) + " | " + item + " | " + r["state"] + " | " + cell(r["next"]) + " | " + cell(r["waits_on"]) + " |")
-    return out
-
-# ── the unthreaded validation ───────────────────────────────────────────────
-#
-# Zero threads is the normal state of most issues, so this is not a fault and not part of the
-# default audit. It is requested: every open lane carrying no Thread: label, grouped by epic and
-# parent, so "should this be in a thread?" is asked once of someone who can answer it.
-
-def unthreaded(all, epic_filter):
-    """Open tasks and bugs with no Thread: label, as rows carrying their epic and parent."""
-    features = {key(f): f for f in all if is_parent(f)}
-    rows = []
-    for it in all:
-        if it["state"] != "OPEN" or not is_child(it):
-            continue
-        if len([n for n in names(it) if n.startswith("Thread:")]) > 0:
-            continue
-        if epic_filter and epic_name(it) != epic_filter:
-            continue
-        pf = parent(it)
-        f = features.get(pf) if pf else None
-        rows.append({
-            "repo": it["repo"],
-            "ref": it["ref"],
-            "url": it["url"],
-            "title": cell(it["title"]),
-            "kind": kind_of(it),
-            "epic_name": epic_name(it),
-            "feature": f["number"] if f else None,
-            "feature_ref": f["ref"] if f else "",
-            "feature_title": cell(f["title"]) if f else "",
-        })
-    return sorted(rows, key = lambda r: (r["epic_name"], r["feature_ref"], r["ref"]))
-
-def unthreaded_lines(rows):
-    """The validation as a document, grouped by epic and parent."""
-    out = ["## Not in any thread\n"]
-    if len(rows) == 0:
-        out.append("Every open task and bug carries a thread label.")
-        return out
-    out.append("_" + str(len(rows)) + " open issue(s) carry no Thread: label. Zero threads is normal; this is a question, not a fault._")
-    last = None
-    for r in rows:
-        group = (r["epic_name"] or "no epic", r["feature_ref"])
-        if group != last:
-            head = "Epic: " + (r["epic_name"] or "none")
-            if r["feature_ref"]:
-                head += " — " + r["feature_title"] + " (" + r["feature_ref"] + ")"
-            else:
-                head += " — unfiled"
-            out.append("\n### " + head)
-            last = group
-        out.append("- [" + r["ref"] + "](" + r["url"] + ") " + r["title"] + " · " + r["kind"])
-    return out

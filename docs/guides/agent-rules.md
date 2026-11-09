@@ -64,32 +64,31 @@ because it is about star's options, which that design will decide.
 ## 3. A question about issues is answered by the report
 
 **The rule.** What exists, what is open, what covers a symptom, what a feature holds: `star github schedule
-report` and `star github schedule audit`, never an ad-hoc `gh issue list --search`. `gh issue view` is for
-reading one body once the report has named it.
+report`, never an ad-hoc `gh issue list --search`; what breaks a classification rule: `star github triage sweep`.
+`gh issue view` is for reading one body once the report has named it.
 
 **The breakage.** 2026-09-07: ten searches to answer "which bugs cover this command line", against a
 tool built for exactly that. "You should be running a `star gh` command to get the issues list." Then:
 "it is our tool and we spent significant resources to write that command. USE IT." The report's first
 run found three of the agent's own filings missing their parent feature.
 
-**Compliance.** From any directory: the report reads the repositories of writ's layers, and a schedule report
-also reads every repository its steps name (#253):
+**Compliance.** From any directory: the report reads every issue, open and closed, of the repositories of writ's
+layers, or of the repositories named as its arguments, and returns each as one flat record. star's own `--filter` and
+`--jq` narrow the records and `--output` renders them; `--search` narrows what is read, in GitHub's issue-search syntax
+(ruled 2026-11-08, #379):
 
 ```bash
-star github schedule report --epic <Name> --view table --state open --markdown -o value --silent
-star github schedule report --by feature --epic <Name>     # or --by thread --thread <Name>, --by schedule
-star github schedule audit                                 # and --unthreaded
+star github schedule report --silent --output table --filter epic=<owner>/<repository>#<number> --jq 'map({issue, type, state, title})'
+star github schedule report --silent --output table --filter type=Bug --filter state=open --jq 'map({issue, severity, title})'
+star github triage sweep                                   # the open issues that break a rule, to their Triage projects
 ```
 
-`--epic <Name>` and `--thread <Name>` name the Epic: and Thread: labels. Ruled 2026-11-03: those labels are removed from
-both accounts, and sub-issue parent links and project rows replace them. Ruled the same day: threads are renamed
-scenarios, and each team's one Scenario project holds its features, its Scenario field naming the scenario each row
-belongs to. Ruled 2026-11-04: a scenario's rows are no longer features but its Scenario issue and the tasks and bugs
-found while walking it ([issue-standards.md § Scenarios](../issue-standards.md#scenarios)).
-
-Open in #439, the design of the `star github schedule` commands: what `--epic` and `--thread` take now that those labels
-are gone. Like rule 2's question, it was left open on #303 and went to #439 on 2026-11-04, because it is about star's
-options, which that design will decide.
+The star-github-schedule-progress skill gives the schedule's own invocation. Ruled 2026-11-03: the Epic: and Thread:
+labels are removed from both accounts, and sub-issue parent links and project rows replace them; threads are renamed
+scenarios. Ruled 2026-11-04: a scenario's rows are its Scenario issue and the tasks and bugs found while walking it
+([issue-standards.md § Scenarios](../issue-standards.md#scenarios)). Ruled 2026-11-08 (#379): `--epic`, `--thread`,
+`--by` and the audit are gone; a record names its epic and its feature, read up its parent chain, and `--filter`
+selects on either. What #439 held open of this rule, what `--epic` and `--thread` take, is settled so.
 
 What `--unthreaded` checks is part of what the audit compares against, which #426 and #437 will decide with the tooling.
 

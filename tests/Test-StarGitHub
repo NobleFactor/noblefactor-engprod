@@ -1,0 +1,793 @@
+#!/usr/bin/env bash
+
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Noble Factor. All rights reserved.
+
+# Test-StarGitHub - Tests the com.noblefactor.ops.GitHub star extension against a stand-in gh: the model's load and pull
+# (#376, and the part of #426 they need), the report's records and selection (#379), and the triage sweep (#436), as
+# docs/plans/feature/436-triage-sweep.md's test plan lists them
+
+[[ -r "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" ]] || {
+    printf '%s: cannot find Declare-BashScript in %s\n' "${0##*/}" "$(dirname "$0")/../Home/common/.local/bin" >&2
+    exit 72 # EX_OSFILE
+}
+
+# The helper sources Set-Environment from ${XDG_DATA_HOME:-$HOME/.local/share}/shell/functions. This checkout's is the
+# file under review, so the test points XDG_DATA_HOME at it while the helper loads; each star the test runs gets an
+# XDG_DATA_HOME of its own, holding a copy of this checkout's extension.
+XDG_DATA_HOME="$(cd "$(dirname "$0")/../Home/common/.local/share" && pwd)" || exit 72 # EX_OSFILE
+export XDG_DATA_HOME
+
+# shellcheck source=Declare-BashScript
+source "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" "$0" "help" "h" "$@"
+require_command jq mktemp star
+
+declare -r extension_name=com.noblefactor.ops.GitHub
+extension_source="${XDG_DATA_HOME}/devlore/star/extensions/${extension_name}"
+declare -r extension_source
+
+###########
+# Functions
+###########
+
+# cleanup removes the run's directory, which holds every case's extension, fixtures and calls, however the run ends;
+# with TEST_STAR_GITHUB_KEEP set, it keeps the directory and names it, for a failing case's calls to be read.
+#
+# Returns:
+#   - 0, the run's directory gone, or kept and named.
+function cleanup {
+    if [[ -n "${run_directory:-}" && -d "${run_directory}" ]]; then
+        if [[ -n "${TEST_STAR_GITHUB_KEEP:-}" ]]; then
+            printf 'kept: %s\n' "${run_directory}" >&2
+            return 0
+        fi
+        rm -rf -- "${run_directory}"
+    fi
+}
+
+# sign_model rewrites a model file's digest line to the SHA-256 of the file with that line excluded, the rule the
+# extension checks on load.
+#
+# Parameters:
+#   - `$1`: the model file.
+#
+# Returns:
+#   - 0, the file signed.
+function sign_model {
+    local digest
+
+    digest="$(sed '/^  digest: /d' "$1" | { sha256sum 2>/dev/null || shasum -a 256; } | cut -d' ' -f1)"
+    sed -i.unsigned "s|^  digest: .*|  digest: sha256:${digest}|" "$1"
+    rm -f -- "$1.unsigned"
+}
+
+# make_extension lays out an extension directory as writ deploys one: this checkout's manifest, commands and reference
+# models, linked, and the two fixture models, copied and signed, so that a case may change a model.
+#
+# Parameters:
+#   - `$1`: the data directory to make, which star is given as XDG_DATA_HOME.
+#   - `$2`: the organization's model, a file; optional, the fixture's by default.
+#   - `$3`: the user account's model, a file; optional, the fixture's by default; `none` for the account to have none.
+#
+# Returns:
+#   - 0, with `$1`/devlore/star/extensions/com.noblefactor.ops.GitHub laid out.
+function make_extension {
+    local directory="$1/devlore/star/extensions/${extension_name}"
+
+    mkdir -p -- "${directory}"
+    ln -s -- "${extension_source}/extension.yaml" "${directory}/extension.yaml"
+    ln -s -- "${extension_source}/commands" "${directory}/commands"
+    ln -s -- "${extension_source}/reference" "${directory}/reference"
+    cp -- "${2:-${run_directory}/models/model.yaml}" "${directory}/model.yaml"
+    sign_model "${directory}/model.yaml"
+    if [[ "${3:-}" != none ]]; then
+        cp -- "${3:-${run_directory}/models/model.test-user.yaml}" "${directory}/model.test-user.yaml"
+        sign_model "${directory}/model.test-user.yaml"
+    fi
+}
+
+# run_star runs one star command against a case's extension and the stand-in gh, outside any git tree, so that no
+# project-local extension or configuration reaches it.
+#
+# Sets `output`, `errors` and `status`, and empties the calls the stand-in recorded before it runs. star runs with
+# --silent unless `quiet` is set empty: an extension that fails to load says why only in star's narration.
+#
+# Parameters:
+#   - `$1`: the data directory make_extension made.
+#   - `${@:2}`: star's arguments.
+#
+# Returns:
+#   - 0.
+function run_star {
+    local data="$1"
+    shift 1
+
+    : >"${run_directory}/calls.jsonl"
+    : >"${run_directory}/state"
+    status=0
+    output="$(
+        cd "${run_directory}/work" &&
+            PATH="${run_directory}/bin:${PATH}" XDG_DATA_HOME="${data}" XDG_CACHE_HOME="${run_directory}/cache" \
+                XDG_CONFIG_HOME="${run_directory}/config" XDG_STATE_HOME="${run_directory}/state-home" \
+                GH_FIXTURES="${run_directory}/fixtures" GH_CALLS="${run_directory}/calls.jsonl" \
+                GH_STATE="${run_directory}/state" star "$@" ${quiet} 2>"${run_directory}/errors"
+    )" || status=$?
+    errors="$(<"${run_directory}/errors")"
+}
+
+# expect checks the last run_star: its status, and a jq program over its output that must print true.
+#
+# Parameters:
+#   - `$1`: the case's name.
+#   - `$2`: `ok` for a zero status, `error` for any other, `any` for either.
+#   - `$3`: a jq program run over the output, which must print true; empty to check nothing. It sees the calls the
+#     stand-in recorded as `$calls`, an array of argument arrays.
+#   - `$4`: an extended regular expression a line of the errors must match; optional, empty to check nothing.
+#   - `$5`: `json`, the default, when the output is JSON; `text` to give the program the output as one string.
+#
+# Returns:
+#   - 0, the case counted as passed or failed.
+function expect {
+    local name="$1" want="$2" program="$3" pattern="${4:-}" input="${5:-json}" problem="" verdict
+    local -a read_as=()
+
+    case_count=$((case_count + 1))
+    if [[ "${want}" == ok && ${status} -ne 0 ]]; then
+        problem+="its status was ${status}, not 0; "
+    elif [[ "${want}" == error && ${status} -eq 0 ]]; then
+        problem+="its status was 0, not an error; "
+    fi
+    [[ "${input}" == json ]] || read_as=(--raw-input --slurp)
+    if [[ -n "${program}" ]]; then
+        verdict="$(jq "${read_as[@]}" --raw-output --slurpfile calls "${run_directory}/calls.jsonl" "${program}" \
+            <<<"${output}" 2>&1)" || true
+        [[ "${verdict}" == true ]] || problem+="the output does not satisfy ${program} (${verdict}); "
+    fi
+    if [[ -n "${pattern}" ]] && ! grep --quiet --extended-regexp --regexp="${pattern}" <<<"${errors}"; then
+        problem+="no line of the errors matches '${pattern}'; "
+    fi
+
+    if [[ -z "${problem}" ]]; then
+        success "${name}"
+        return 0
+    fi
+    error 0 "${name}: ${problem%; }:"
+    printf '    output: %s\n' "${output:0:2000}" >&2
+    printf '    errors: %s\n' "${errors:0:2000}" >&2
+    failures=$((failures + 1))
+}
+
+# write_stand_in writes the stand-in for gh to the run's bin directory.
+#
+# It records each call as a JSON array of its arguments, one per line of ${GH_CALLS}, and answers from ${GH_FIXTURES}:
+# a GraphQL request by the operation name the extension gives it, a REST request by its path. Every fixture file is a
+# JSON array of responses, one per page; --paginate answers every page and a request without it the first, and --jq
+# is applied to each, as gh does. An addition to a project is remembered in ${GH_STATE}, so that reading the row back
+# finds it.
+#
+# Returns:
+#   - 0, the stand-in written and executable.
+function write_stand_in {
+    mkdir -p -- "${run_directory}/bin"
+    cat >"${run_directory}/bin/gh" <<'GH'
+#!/usr/bin/env bash
+set -uo pipefail
+
+# Each argument NUL-terminated, so that jq reads them as data: given them as --args, it parses gh's own options.
+printf '%s\0' "$@" | jq -c -R -s 'split("\u0000") | .[:-1]' >>"${GH_CALLS}"
+
+# answer prints a fixture's responses, every page with --paginate, through --jq when it was given.
+function answer {
+    local file="$1" filter="${2:-.}" count index
+    [[ -r "${file}" ]] || { printf 'stand-in gh: no fixture %s\n' "${file}" >&2; exit 1; }
+    count="$(jq 'length' "${file}")"
+    ((paginate)) || count=1
+    for ((index = 0; index < count; index++)); do
+        jq -c ".[${index}] | ${filter}" "${file}" | if [[ -n "${jq_program}" ]]; then jq -r -c "${jq_program}"; else cat; fi
+    done
+}
+
+case "${1:-} ${2:-}" in
+    "auth status")
+        printf '%s\n' "github.com" "  ✓ Logged in to github.com account tester (keyring)" "  - Active account: true" \
+            "  - Git operations protocol: https" "  - Token scopes: 'project', 'read:org', 'repo'"
+        exit 0
+        ;;
+    "api rate_limit")
+        echo "4999 0"
+        exit 0
+        ;;
+    "repo view")
+        echo "NobleFactor/alpha"
+        exit 0
+        ;;
+esac
+
+declare -A vars=()
+paginate=0 jq_program="" rest_path="" include=0
+shift 1
+while (($#)); do
+    case $1 in
+        graphql) rest_path=graphql ;;
+        -f | -F)
+            vars["${2%%=*}"]="${2#*=}"
+            shift 1
+            ;;
+        --paginate) paginate=1 ;;
+        --jq)
+            jq_program="$2"
+            shift 1
+            ;;
+        -i) include=1 ;;
+        -H) shift 1 ;;
+        *) rest_path="$1" ;;
+    esac
+    shift 1
+done
+
+if [[ "${rest_path}" != graphql ]]; then
+    ((include)) || { printf 'stand-in gh: a REST call without -i: %s\n' "${rest_path}" >&2; exit 1; }
+    file="${GH_FIXTURES}/rest/${rest_path//[?=&]/_}.json"
+    if [[ "${rest_path}" =~ ^orgs/[^/]+$ ]]; then
+        printf 'HTTP/2.0 200 OK\n\n{}\n'
+        exit 0
+    fi
+    [[ -r "${file}" ]] || { printf 'HTTP/2.0 404 Not Found\n\n{}\n'; exit 1; }
+    printf 'HTTP/2.0 200 OK\nEtag: "e-%s"\n\n' "${rest_path//[^a-z]/}"
+    jq -c '.[0]' "${file}"
+    exit 0
+fi
+
+query="${vars[query]:-}"
+[[ "${query}" =~ (query|mutation)[[:space:]]+(star[A-Za-z]+) ]] || { printf 'stand-in gh: no operation name in %s\n' "${query}" >&2; exit 1; }
+operation="${BASH_REMATCH[2]}"
+login="" owner="" name=""
+[[ "${query}" =~ login:[[:space:]]*\"([^\"]+)\" ]] && login="${BASH_REMATCH[1]}"
+[[ "${query}" =~ repository\(owner:[[:space:]]*\"([^\"]+)\",[[:space:]]*name:[[:space:]]*\"([^\"]+)\" ]] && owner="${BASH_REMATCH[1]}" name="${BASH_REMATCH[2]}"
+
+case ${operation} in
+    starIssues)
+        filter=.
+        [[ "${query}" == *"states: [OPEN]"* ]] && filter='.data.repository.issues.nodes |= map(select(.state == "OPEN"))'
+        answer "${GH_FIXTURES}/issues/${owner}/${name}.json" "${filter}"
+        ;;
+    starSearchCount | starSearch)
+        [[ "${vars[q]:-}" =~ repo:([^/[:space:]]+)/([^[:space:]\)]+) ]] || { printf 'stand-in gh: no repo: in %s\n' "${vars[q]:-}" >&2; exit 1; }
+        answer "${GH_FIXTURES}/search/${BASH_REMATCH[1]}/${BASH_REMATCH[2]}.json"
+        ;;
+    starOwner | starOrganizationModel | starUserModel | starProjects)
+        answer "${GH_FIXTURES}/${operation}/${login}.json"
+        ;;
+    starTriage)
+        [[ "${query}" =~ query:[[:space:]]*\"Triage:[[:space:]]*([^\"]+)\" ]] || { printf 'stand-in gh: no Triage title in %s\n' "${query}" >&2; exit 1; }
+        answer "${GH_FIXTURES}/starTriage/${login}/${BASH_REMATCH[1]}.json"
+        ;;
+    starTriageItems)
+        [[ "${query}" =~ node\(id:[[:space:]]*\"([^\"]+)\" ]] || exit 1
+        answer "${GH_FIXTURES}/starTriageItems/${BASH_REMATCH[1]}.json"
+        ;;
+    starAddToTriage)
+        [[ "${query}" =~ projectId:[[:space:]]*\"([^\"]+)\",[[:space:]]*contentId:[[:space:]]*\"([^\"]+)\" ]] || exit 1
+        printf 'PVTI_new_%s %s\n' "${BASH_REMATCH[2]}" "${BASH_REMATCH[1]}" >>"${GH_STATE}"
+        jq -cn --arg id "PVTI_new_${BASH_REMATCH[2]}" '{data: {addProjectV2ItemById: {item: {id: $id}}}}' |
+            if [[ -n "${jq_program}" ]]; then jq -r -c "${jq_program}"; else cat; fi
+        ;;
+    starSetStatus)
+        jq -cn '{data: {updateProjectV2ItemFieldValue: {projectV2Item: {id: "set"}}}}'
+        ;;
+    starComment)
+        jq -cn --arg s "${vars[s]:-}" '{data: {addComment: {commentEdge: {node: {id: ("IC_" + $s)}}}}}' |
+            if [[ -n "${jq_program}" ]]; then jq -r -c "${jq_program}"; else cat; fi
+        ;;
+    starItem)
+        [[ "${query}" =~ node\(id:[[:space:]]*\"([^\"]+)\" ]] || exit 1
+        project="$(awk -v id="${BASH_REMATCH[1]}" '$1 == id { print $2 }' "${GH_STATE}")"
+        jq -cn --arg p "${project}" '{data: {node: {project: {id: $p}, status: {name: "Open"}}}}' |
+            if [[ -n "${jq_program}" ]]; then jq -r -c "${jq_program}"; else cat; fi
+        ;;
+    *)
+        printf 'stand-in gh: no answer for %s\n' "${operation}" >&2
+        exit 1
+        ;;
+esac
+GH
+    chmod +x "${run_directory}/bin/gh"
+}
+
+# write_models writes the two fixture models: NobleFactor's, an organization's, and test-user's, a user account's, each
+# unsigned, which make_extension signs as it copies them; and a minimal one for each, holding the hierarchy's types
+# alone, so that a pull's diff shows every record it adds.
+#
+# Returns:
+#   - 0, with models/model.yaml, models/model.test-user.yaml, and the two minimal ones.
+function write_models {
+    local spec name level id label types="" labels=""
+
+    mkdir -p -- "${run_directory}/models"
+    for spec in Epic:0:1 Feature:1:2 Bug:2:3 Task:2:4; do
+        IFS=: read -r name level id <<<"${spec}"
+        label="$(tr '[:upper:]' '[:lower:]' <<<"${name}")"
+        types+="  - name: \"${name}\"
+    id: ${id}
+    level: ${level}
+    color: \"c\"
+    description: \"Level ${level}: a type\"
+"
+        labels+="  - name: \"${name}\"
+    id: \"LA_${label}\"
+    label: \"${label}\"
+    level: ${level}
+    color: \"c\"
+    description: \"Level ${level}: a type\"
+"
+    done
+    printf 'version: 1\npulled:\n  at: 2026-11-01T00:00:00Z\n  account: NobleFactor\n  digest: sha256:\ntypes:\n%slabels:\n  organization: []\n  teams: {}\n  repositories: {}\nprojects: []\n' \
+        "${types}" >"${run_directory}/models/minimal.yaml"
+    printf 'version: 1\npulled:\n  at: 2026-11-01T00:00:00Z\n  account: test-user\n  digest: sha256:\ntypes:\n%slabels:\n  organization: []\n  teams: {}\n  repositories: {}\nprojects: []\n' \
+        "${labels}" >"${run_directory}/models/minimal.test-user.yaml"
+
+    cat >"${run_directory}/models/model.yaml" <<'YAML'
+version: 1
+pulled:
+  at: 2026-11-08T00:00:00Z
+  account: NobleFactor
+  digest: sha256:
+types:
+  - name: "Epic"
+    id: 1
+    level: 0
+    color: "purple"
+    description: "Level 0: the root"
+  - name: "Feature"
+    id: 2
+    level: 1
+    color: "blue"
+    description: "Level 1: a capability"
+  - name: "Bug"
+    id: 3
+    level: 2
+    unplanned: true
+    color: "red"
+    description: "Level 2: unplanned work"
+  - name: "Task"
+    id: 4
+    level: 2
+    color: "yellow"
+    description: "Level 2: planned work"
+  - name: "Schedule"
+    id: 5
+    color: "green"
+    description: "Collection: a schedule"
+  - name: "Scenario"
+    id: 6
+    color: "orange"
+    description: "Collection: a scenario"
+fields:
+  - name: "Area"
+    id: "IF_area"
+    type: single-select
+    options:
+      - { name: "Product", id: "o_product" }
+      - { name: "Engineering", id: "o_engineering" }
+  - name: "Severity"
+    id: "IF_severity"
+    type: single-select
+    options:
+      - { name: "Critical", id: "o_critical" }
+      - { name: "High", id: "o_high" }
+      - { name: "Medium", id: "o_medium" }
+      - { name: "Low", id: "o_low" }
+      - { name: "N/A", id: "o_na" }
+  - name: "Resolution"
+    id: "IF_resolution"
+    type: single-select
+    options:
+      - { name: "Declined", id: "o_declined" }
+      - { name: "Duplicate", id: "o_duplicate" }
+      - { name: "Invalid", id: "o_invalid" }
+  - name: "Target date"
+    id: "IF_target"
+    type: date
+teams:
+  - name: "engprod"
+    slug: "engprod"
+    id: "T_engprod"
+    repositories:
+      - "NobleFactor/alpha"
+  - name: "DevLore"
+    slug: "devlore"
+    id: "T_devlore"
+    repositories:
+      - "NobleFactor/beta"
+labels:
+  organization: []
+  teams: {}
+  repositories: {}
+projects: []
+YAML
+    cat >"${run_directory}/models/model.test-user.yaml" <<'YAML'
+version: 1
+pulled:
+  at: 2026-11-08T00:00:00Z
+  account: test-user
+  digest: sha256:
+types:
+  - name: "Epic"
+    id: "LA_epic"
+    label: "epic"
+    level: 0
+    color: "7057ff"
+    description: "Level 0: the root"
+  - name: "Feature"
+    id: "LA_feature"
+    label: "feature"
+    level: 1
+    color: "0e8a16"
+    description: "Level 1: a capability"
+  - name: "Bug"
+    id: "LA_bug"
+    label: "bug"
+    level: 2
+    unplanned: true
+    color: "d73a4a"
+    description: "Level 2: unplanned work"
+  - name: "Task"
+    id: "LA_task"
+    label: "task"
+    level: 2
+    color: "1d76db"
+    description: "Level 2: planned work"
+  - name: "Schedule"
+    id: "LA_schedule"
+    label: "schedule"
+    color: "cccccc"
+    description: "Collection: a schedule"
+  - name: "Scenario"
+    id: "LA_scenario"
+    label: "scenario"
+    color: "cccccc"
+    description: "Collection: a scenario"
+labels:
+  organization: []
+  teams: {}
+  repositories:
+    "test-user/personal": []
+projects: []
+YAML
+}
+
+# write_fixtures writes what the stand-in answers: each repository's issues, the searches, the accounts' records as
+# the model's pull reads them, and the Triage projects with their rows.
+#
+# The issues, by what each case reads of them:
+#
+#   NobleFactor/alpha, engprod's: #1 an epic; #2 a feature under it, labeled good first issue; #3 a task under #2 at
+#   step 2 of schedule s1, blocked by #4 at step 3; #4 a task at step 3, blocked by #6, closed; #5 a bug with no
+#   Area, no evidence and Severity N/A, on no project; #6 a closed task; #7 a feature on Backlog: engprod and on
+#   Schedule: engprod, already a row of Triage: engprod; #8 an open task with a Resolution; #9 a task on Scenario:
+#   engprod with no Area and no evidence; #10 a task with Severity High; #11 a task at step 5 of s1, blocked by
+#   NobleFactor/beta#1, on no schedule.
+#   NobleFactor/beta, devlore's: #1 a task under NobleFactor/alpha#2.
+#   test-user/personal: #1 an epic; #2 a task under it with two area: labels; #3 a bug with area:product.
+#   NobleFactor/many: 250 issues over three pages, every fifth closed.
+#
+# Returns:
+#   - 0, with the fixtures under fixtures/.
+function write_fixtures {
+    local fixtures="${run_directory}/fixtures" library
+
+    mkdir -p -- "${fixtures}"/{issues/NobleFactor,issues/test-user,search/NobleFactor,rest/orgs/NobleFactor,rest/repos/NobleFactor/noblefactor-engprod}
+    mkdir -p -- "${fixtures}"/{starOwner,starOrganizationModel,starUserModel,starProjects,starTriageItems}
+    mkdir -p -- "${fixtures}"/starTriage/{NobleFactor,test-user}
+
+    # The jq that builds an issue node as GraphQL returns it, from the few things a fixture says of it.
+    library='
+        def evidence: "## Evidence of completion\n\nShown.";
+        def node($repo; $n; $spec): {
+            id: ("I_" + ($repo | gsub("/"; "_")) + "_" + ($n | tostring)), number: $n, title: ($spec.title // "Issue \($n)"),
+            url: "https://github.com/\($repo)/issues/\($n)", state: ($spec.state // "OPEN"),
+            stateReason: (if ($spec.state // "OPEN") == "CLOSED" then "COMPLETED" else null end),
+            createdAt: "2026-11-01T00:00:00Z", updatedAt: "2026-11-02T00:00:00Z",
+            closedAt: (if ($spec.state // "OPEN") == "CLOSED" then "2026-11-03T00:00:00Z" else null end),
+            body: ($spec.body // evidence), repository: {nameWithOwner: $repo},
+            issueType: (if $spec.type then {name: $spec.type} else null end),
+            labels: {nodes: [($spec.labels // [])[] | {name: .}]}, assignees: {nodes: []},
+            blockedBy: {nodes: [($spec.blocked // [])[] | {number: .[1], state: .[2], repository: {nameWithOwner: .[0]}}]},
+            subIssuesSummary: {total: 0, completed: 0},
+            issueFieldValues: {nodes: [($spec.fields // {}) | to_entries[] | {field: {name: .key}, name: .value}]},
+            projectItems: {nodes: [($spec.rows // [])[] | {id: ("PVTI_" + .[0]), project: {id: .[0], number: .[1], title: .[2]},
+                fieldValues: {nodes: ([{field: {name: "Title", dataType: "TITLE"}, text: "t"}] +
+                    [.[3] | to_entries[] | if (.value | type) == "number" then {field: {name: .key, dataType: "NUMBER"}, number: .value}
+                        else {field: {name: .key, dataType: "SINGLE_SELECT"}, name: .value} end])}}]},
+            parent: $spec.parent
+        };
+        def parent($repo; $n; $type; $grand): {number: $n, repository: {nameWithOwner: $repo},
+            issueType: (if $type then {name: $type} else null end), labels: {nodes: []}, parent: $grand};
+        def uparent($repo; $n; $label; $grand): {number: $n, repository: {nameWithOwner: $repo}, issueType: null,
+            labels: {nodes: [{name: $label}]}, parent: $grand};
+        def page($nodes; $next): {data: {repository: {issues: {pageInfo: {hasNextPage: $next, endCursor: "c"}, nodes: $nodes}}}};
+        def search($count; $nodes): {data: {search: {issueCount: $count, pageInfo: {hasNextPage: false, endCursor: null}, nodes: $nodes}}};
+        def schedule($n; $step): ["PVT_schedule", 26, "Schedule: engprod", {Schedule: "s1", Step: $step, Status: "Open"}];
+    '
+
+    jq -n "${library}"'
+        def epic: parent("NobleFactor/alpha"; 1; "Epic"; null);
+        def feature: parent("NobleFactor/alpha"; 2; "Feature"; epic);
+        [page([
+            node("NobleFactor/alpha"; 1; {type: "Epic", fields: {Area: "Engineering", Severity: "N/A"}}),
+            node("NobleFactor/alpha"; 2; {type: "Feature", parent: epic, labels: ["good first issue"], fields: {Area: "Engineering", Severity: "N/A"}}),
+            node("NobleFactor/alpha"; 3; {type: "Task", parent: feature, fields: {Area: "Product", Severity: "N/A"},
+                rows: [schedule(3; 2)], blocked: [["NobleFactor/alpha", 4, "OPEN"]]}),
+            node("NobleFactor/alpha"; 4; {type: "Task", parent: feature, fields: {Area: "Product", Severity: "N/A"},
+                rows: [schedule(4; 3)], blocked: [["NobleFactor/alpha", 6, "CLOSED"]]}),
+            node("NobleFactor/alpha"; 5; {type: "Bug", fields: {Severity: "N/A"}, body: "A bug."}),
+            node("NobleFactor/alpha"; 6; {type: "Task", parent: feature, state: "CLOSED", fields: {Area: "Product", Severity: "N/A"},
+                rows: [schedule(6; 1)]}),
+            node("NobleFactor/alpha"; 7; {type: "Feature", parent: epic, fields: {Area: "Product", Severity: "N/A"},
+                rows: [["PVT_backlog", 24, "Backlog: engprod", {Status: "Open"}], schedule(7; 4),
+                    ["PVT_triage_engprod", 5, "Triage: engprod", {Status: "Open"}]]}),
+            node("NobleFactor/alpha"; 8; {type: "Task", parent: feature, fields: {Area: "Product", Severity: "N/A", Resolution: "Declined"}}),
+            node("NobleFactor/alpha"; 9; {type: "Task", parent: feature, fields: {Severity: "N/A"}, body: "Found while walking.",
+                rows: [["PVT_scenario", 8, "Scenario: engprod", {Scenario: "walk", Beat: 1}]]}),
+            node("NobleFactor/alpha"; 10; {type: "Task", parent: feature, fields: {Area: "Product", Severity: "High"}}),
+            node("NobleFactor/alpha"; 11; {type: "Task", parent: feature, fields: {Area: "Product", Severity: "N/A"},
+                rows: [schedule(11; 5)], blocked: [["NobleFactor/beta", 1, "OPEN"]]})
+        ]; false)]' >"${fixtures}/issues/NobleFactor/alpha.json"
+
+    jq -n "${library}"'
+        [page([node("NobleFactor/beta"; 1; {type: "Task", fields: {Area: "Engineering", Severity: "N/A"},
+            parent: parent("NobleFactor/alpha"; 2; "Feature"; parent("NobleFactor/alpha"; 1; "Epic"; null))})]; false)]
+    ' >"${fixtures}/issues/NobleFactor/beta.json"
+
+    jq -n "${library}"'
+        [page([
+            node("test-user/personal"; 1; {labels: ["epic", "area:engineering", "severity:n/a"]}),
+            node("test-user/personal"; 2; {labels: ["task", "area:product", "area:engineering", "severity:n/a"],
+                parent: uparent("test-user/personal"; 1; "epic"; null)}),
+            node("test-user/personal"; 3; {labels: ["bug", "area:product", "severity:high"]})
+        ]; false)]' >"${fixtures}/issues/test-user/personal.json"
+
+    jq -n "${library}"'
+        [range(0; 3) as $p | page([range($p * 100 + 1; [($p + 1) * 100, 250] | min + 1) as $n |
+            node("NobleFactor/many"; $n; {type: "Task", state: (if $n % 5 == 0 then "CLOSED" else "OPEN" end),
+                fields: {Area: "Product", Severity: "N/A"}})]; $p < 2)]
+    ' >"${fixtures}/issues/NobleFactor/many.json"
+
+    jq -n "${library}"'[search(1; [node("NobleFactor/alpha"; 5; {type: "Bug", fields: {Severity: "N/A"}})])]' \
+        >"${fixtures}/search/NobleFactor/alpha.json"
+    jq -n "${library}"'[search(1001; [])]' >"${fixtures}/search/NobleFactor/huge.json"
+
+    # The records the model's pull and every command's read-first make.
+    jq -n '[{data: {repositoryOwner: {__typename: "Organization", login: "NobleFactor"}}}]' >"${fixtures}/starOwner/NobleFactor.json"
+    jq -n '[{data: {repositoryOwner: {__typename: "User", login: "test-user"}}}]' >"${fixtures}/starOwner/test-user.json"
+    jq -n '[[
+        {id: 1, name: "Epic", description: "Level 0: the root", color: "purple", is_enabled: true},
+        {id: 2, name: "Feature", description: "Level 1: a capability", color: "blue", is_enabled: true},
+        {id: 3, name: "Bug", description: "Level 2: unplanned work", color: "red", is_enabled: true},
+        {id: 4, name: "Task", description: "Level 2: planned work", color: "yellow", is_enabled: true},
+        {id: 5, name: "Schedule", description: "Collection: a schedule", color: "green", is_enabled: true},
+        {id: 6, name: "Scenario", description: "Collection: a scenario", color: "orange", is_enabled: true}
+    ]]' >"${fixtures}/rest/orgs/NobleFactor/issue-types.json"
+    jq -n '[[]]' >"${fixtures}/rest/repos/NobleFactor/noblefactor-engprod/labels_per_page_100.json"
+    jq -n '[{data: {organization: {
+        issueFields: {nodes: [
+            {__typename: "IssueFieldSingleSelect", name: "Area", dataType: "SINGLE_SELECT", id: "IF_area",
+                options: [{id: "o_product", name: "Product"}, {id: "o_engineering", name: "Engineering"}]},
+            {__typename: "IssueFieldSingleSelect", name: "Severity", dataType: "SINGLE_SELECT", id: "IF_severity",
+                options: [{id: "o_critical", name: "Critical"}, {id: "o_high", name: "High"}, {id: "o_medium", name: "Medium"},
+                    {id: "o_low", name: "Low"}, {id: "o_na", name: "N/A"}]},
+            {__typename: "IssueFieldSingleSelect", name: "Resolution", dataType: "SINGLE_SELECT", id: "IF_resolution",
+                options: [{id: "o_declined", name: "Declined"}, {id: "o_duplicate", name: "Duplicate"}, {id: "o_invalid", name: "Invalid"}]},
+            {__typename: "IssueFieldDate", name: "Target date", dataType: "DATE", id: "IF_target"}]},
+        teams: {nodes: [
+            {name: "engprod", slug: "engprod", id: "T_engprod",
+                repositories: {edges: [{permission: "MAINTAIN", node: {nameWithOwner: "NobleFactor/alpha"}},
+                    {permission: "READ", node: {nameWithOwner: "NobleFactor/beta"}}]}},
+            {name: "DevLore", slug: "devlore", id: "T_devlore",
+                repositories: {edges: [{permission: "MAINTAIN", node: {nameWithOwner: "NobleFactor/beta"}}]}}]}}}}]' \
+        >"${fixtures}/starOrganizationModel/NobleFactor.json"
+    jq -n '[{data: {user: {repositories: {nodes: [
+        {nameWithOwner: "test-user/personal", repositoryTopics: {nodes: [{topic: {name: "issue-model"}}]}, labels: {nodes: [
+            {id: "LA_epic", name: "epic", color: "7057ff", description: "Level 0: the root"},
+            {id: "LA_feature", name: "feature", color: "0e8a16", description: "Level 1: a capability"},
+            {id: "LA_bug", name: "bug", color: "d73a4a", description: "Level 2: unplanned work"},
+            {id: "LA_task", name: "task", color: "1d76db", description: "Level 2: planned work"},
+            {id: "LA_schedule", name: "schedule", color: "cccccc", description: "Collection: a schedule"},
+            {id: "LA_scenario", name: "scenario", color: "cccccc", description: "Collection: a scenario"},
+            {id: "LA_area_product", name: "area:product", color: "1d76db", description: "Area"}]}},
+        {nameWithOwner: "test-user/elsewhere", repositoryTopics: {nodes: []}, labels: {nodes: [
+            {id: "LA_other", name: "epic", color: "000000", description: "Level 0: not in the model"}]}}]}}}}]' \
+        >"${fixtures}/starUserModel/test-user.json"
+    jq -n '[{data: {organization: {projectsV2: {nodes: []}}}}]' >"${fixtures}/starProjects/NobleFactor.json"
+    jq -n '[{data: {user: {projectsV2: {nodes: []}}}}]' >"${fixtures}/starProjects/test-user.json"
+
+    # The Triage projects and their rows: Triage: engprod holds NobleFactor/alpha#7 and one closed issue.
+    local status_field='{id: "F_status", name: "Status", options: [{id: "o_open", name: "Open"}, {id: "o_closed", name: "Closed"}]}'
+    jq -n "[{data: {organization: {projectsV2: {nodes: [{id: \"PVT_triage_engprod\", number: 5, title: \"Triage: engprod\",
+        fields: {nodes: [${status_field}]}}]}}}}]" >"${fixtures}/starTriage/NobleFactor/engprod.json"
+    jq -n "[{data: {organization: {projectsV2: {nodes: [{id: \"PVT_triage_devlore\", number: 6, title: \"Triage: devlore\",
+        fields: {nodes: [${status_field}]}}]}}}}]" >"${fixtures}/starTriage/NobleFactor/devlore.json"
+    jq -n "[{data: {user: {projectsV2: {nodes: [{id: \"PVT_triage_user\", number: 9, title: \"Triage: test-user\",
+        fields: {nodes: [${status_field}]}}]}}}}]" >"${fixtures}/starTriage/test-user/test-user.json"
+    jq -n 'def content($n; $state; $type): {number: $n, title: "Issue \($n)", url: "https://github.com/NobleFactor/alpha/issues/\($n)",
+            state: $state, issueType: {name: $type}, labels: {nodes: []}, repository: {nameWithOwner: "NobleFactor/alpha"}};
+        [{data: {node: {items: {pageInfo: {hasNextPage: false, endCursor: null}, nodes: [
+        {id: "PVTI_PVT_triage_engprod", content: content(7; "OPEN"; "Feature"), status: {name: "Open"}},
+        {id: "PVTI_closed", content: content(6; "CLOSED"; "Task"), status: {name: "Closed"}}]}}}}]' \
+        >"${fixtures}/starTriageItems/PVT_triage_engprod.json"
+    jq -n '[{data: {node: {items: {pageInfo: {hasNextPage: false, endCursor: null}, nodes: []}}}}]' \
+        >"${fixtures}/starTriageItems/PVT_triage_devlore.json"
+    jq -n '[{data: {node: {items: {pageInfo: {hasNextPage: false, endCursor: null}, nodes: []}}}}]' \
+        >"${fixtures}/starTriageItems/PVT_triage_user.json"
+}
+
+######
+# Main
+######
+
+case_count=0
+failures=0
+run_directory=""
+output="" errors="" status=0 quiet="--silent"
+
+Set-Traps cleanup
+run_directory="$(mktemp -d)"
+mkdir -p -- "${run_directory}"/{work,cache,config,state-home}
+write_stand_in
+write_models
+write_fixtures
+
+data="${run_directory}/data"
+make_extension "${data}"
+
+# The jq that finds one issue's record in the report's output, or one issue's entry in the sweep's.
+declare -r record='def record($k): first(.[] | select(.issue == $k));'
+declare -r entry='def entry($k): first(.[] | select(.issue == $k and (.action == "added" or .action == "in-triage")));
+    def absent($k): [.[] | select(.issue == $k and .faults != [])] | length == 0;'
+declare -r faulted='def faulted($k; $rule): [entry($k).faults[].rule] | index($rule) != null;'
+
+# 1. The model's load: a type with neither a level nor a Collection: description stops the extension, named; a
+# collection type loads.
+sed 's/^  - name: "Scenario"$/  - name: "Chore"\n    id: 7\n    color: "gray"\n    description: "Work of no level"\n  - name: "Scenario"/' \
+    "${run_directory}/models/model.yaml" >"${run_directory}/models/model.chore.yaml"
+make_extension "${run_directory}/data-chore" "${run_directory}/models/model.chore.yaml"
+quiet=""
+run_star "${run_directory}/data-chore" github schedule report NobleFactor/alpha
+quiet="--silent"
+expect "1: a type with no level and no Collection: description is refused, named" error "" "type Chore"
+run_star "${data}" github schedule report NobleFactor/alpha
+expect "1: a model with collection types loads, and the report runs" ok 'type == "array" and length == 11'
+
+# 1a. pull reads collection types, fields with their options and teams with the repositories they maintain. The
+# models hold the hierarchy's types alone, so the diff shows every record the pull adds.
+make_extension "${run_directory}/data-minimal" "${run_directory}/models/minimal.yaml" \
+    "${run_directory}/models/minimal.test-user.yaml"
+run_star "${run_directory}/data-minimal" github model pull --check --output value
+expect "1a: pull records the collection types without a level, the fields and the teams" ok '
+    test("/model\\.yaml") and test("\\+  - name: \"Schedule\"\n\\+    id: 5\n\\+    color: \"green\"")
+    and test("\\+fields:") and test("\"Severity\"") and test("\"N/A\"") and test("\\+teams:") and test("slug: \"devlore\"")
+    and test("\"NobleFactor/beta\"")' "" text
+
+# 1b. pull --account for a user account reads its types from its type labels, in its issue-model repositories only.
+run_star "${run_directory}/data-minimal" github model pull --check --account test-user --output value
+expect "1b: pull --account test-user reads its type labels and names model.test-user.yaml" ok '
+    test("/model\\.test-user\\.yaml") and test("label: \"schedule\"") and test("label: \"scenario\"")
+    and (test("test-user/elsewhere") | not) and (test("\\+fields:") | not)' "" text
+
+# 1b. An account with no model file yet gets its first: the pull starts from an empty model of it.
+make_extension "${run_directory}/data-first" "${run_directory}/models/minimal.yaml" none
+run_star "${run_directory}/data-first" github model pull --check --account test-user --output value
+expect "1b: an account with no model file gets its first, model.test-user.yaml" ok '
+    test("/model\\.test-user\\.yaml") and test("would be written, the account.s first") and test("\\+    label: \"task\"")
+    and test("\\+    label: \"scenario\"")' "" text
+
+# 1c. A record's keys come from its repository owner's model: Area from the field in an organization, from the area:
+# label in a user account, both Product.
+run_star "${data}" github schedule report NobleFactor/alpha test-user/personal --filter area=Product
+expect "1c: --filter area=Product selects in both accounts, from each one's model" ok "${record}"'
+    (map(.issue) | index("NobleFactor/alpha#3") != null and index("test-user/personal#3") != null)
+    and all(.[]; .area == "Product")'
+
+# 2. An issue's epic is its parent chain's level-0 issue, across repositories, in an organization and a user account.
+run_star "${data}" github schedule report NobleFactor/alpha NobleFactor/beta test-user/personal
+expect "2: the epic is the parent chain's root, in both accounts and across repositories" ok "${record}"'
+    record("NobleFactor/alpha#3").epic == "NobleFactor/alpha#1" and record("NobleFactor/alpha#3").feature == "NobleFactor/alpha#2"
+    and record("NobleFactor/beta#1").epic == "NobleFactor/alpha#1" and record("test-user/personal#2").epic == "test-user/personal#1"
+    and record("test-user/personal#2").type == "Task" and record("NobleFactor/alpha#2").epic == "NobleFactor/alpha#1"
+    and record("NobleFactor/alpha#2").feature == null and record("NobleFactor/alpha#1").epic == null'
+
+# 3. The audit is gone.
+run_star "${data}" github schedule audit
+expect "3: star github schedule audit is refused as unknown" error ""
+
+# 3a. --search reaches GraphQL's search as given, once for each repository, scoped by star.
+run_star "${data}" github schedule report NobleFactor/alpha --search 'type:Bug'
+expect "3a: --search is passed as given, as (<expression>) repo:<repository> is:issue" ok '
+    ([$calls[] | .[] | select(type == "string" and startswith("q="))] | unique) == ["q=(type:Bug) repo:NobleFactor/alpha is:issue"]
+    and map(.issue) == ["NobleFactor/alpha#5"]'
+
+# 3b. A search that matches more than 1,000 issues in a repository is an error, the repository named.
+run_star "${data}" github schedule report NobleFactor/huge --search 'is:open'
+expect "3b: a search matching more than 1,000 issues is an error naming the repository" error "" "NobleFactor/huge"
+
+# 3c. Without --search, every issue is read, open and closed, past the first page.
+run_star "${data}" github schedule report NobleFactor/many
+expect "3c: every issue of the repository, open and closed, across three pages" ok '
+    length == 250 and (map(select(.state == "closed")) | length) == 50'
+
+# 3d. Every key the model names is at the top level: --filter selects on it, and CSV gives it a column.
+run_star "${data}" github schedule report NobleFactor/alpha --filter epic=NobleFactor/alpha#1
+expect "3d: --filter epic=<issue> selects everything under the epic" ok '
+    (map(.issue) | sort) == (["NobleFactor/alpha#10", "NobleFactor/alpha#11", "NobleFactor/alpha#2", "NobleFactor/alpha#3",
+        "NobleFactor/alpha#4", "NobleFactor/alpha#6", "NobleFactor/alpha#7", "NobleFactor/alpha#8", "NobleFactor/alpha#9"] | sort)'
+run_star "${data}" github schedule report NobleFactor/alpha --filter issue=NobleFactor/alpha#3 \
+    --jq 'map({issue, area, epic, severity})' --output csv
+expect "3d: --output csv gives each model key a column holding one value" ok \
+    '. == "area,epic,issue,severity\nProduct,NobleFactor/alpha#1,NobleFactor/alpha#3,N/A\n"' "" text
+
+# 3e. home is a list and never null: empty with no home, one element for one, two for two.
+run_star "${data}" github schedule report NobleFactor/alpha
+expect "3e: home is a list: empty, one element, two elements" ok "${record}"'
+    record("NobleFactor/alpha#5").home == [] and (record("NobleFactor/alpha#3").home | length) == 1
+    and record("NobleFactor/alpha#3").home[0].schedule == "s1" and record("NobleFactor/alpha#3").home[0].step == 2
+    and record("NobleFactor/alpha#3").home[0].project == "Schedule: engprod" and (record("NobleFactor/alpha#7").home | length) == 2
+    and record("NobleFactor/alpha#7").in_triage == true and record("NobleFactor/alpha#3").in_triage == false
+    and all(.[]; .home | type == "array")'
+
+# 3f. The flags that went are refused.
+for flag in --query --root --state --by --view --markdown --limit --schedule --directory --repo; do
+    run_star "${data}" github schedule report "${flag}" x
+    expect "3f: the report refuses ${flag}" error ""
+done
+run_star "${data}" github triage sweep --account NobleFactor
+expect "3f: the sweep refuses --account" error ""
+
+# 4 to 8. The sweep, over both accounts: each rule catches its fault and passes a clean issue; an issue on a schedule
+# keeps its schedule row; a scenario's row meets the two structural rules alone; an issue already in Triage is not
+# added again; the step order.
+run_star "${data}" github triage sweep NobleFactor test-user
+expect "4: each rule catches its fault" ok "${entry} ${faulted}"'
+    faulted("NobleFactor/alpha#5"; "no-area") and faulted("NobleFactor/alpha#5"; "severity") and faulted("NobleFactor/alpha#5"; "no-evidence")
+    and faulted("NobleFactor/alpha#10"; "severity") and faulted("NobleFactor/alpha#8"; "resolution-open")
+    and faulted("NobleFactor/alpha#2"; "good-first-issue") and faulted("NobleFactor/alpha#7"; "two-homes")
+    and faulted("NobleFactor/alpha#7"; "epic-on-collection") and faulted("NobleFactor/alpha#3"; "step-order")
+    and faulted("test-user/personal#2"; "two-labels")'
+expect "4: a clean issue passes every rule" ok "${entry}"'
+    absent("NobleFactor/alpha#1") and absent("NobleFactor/alpha#4") and absent("NobleFactor/alpha#11")
+    and absent("NobleFactor/beta#1") and absent("test-user/personal#1") and absent("test-user/personal#3")'
+expect "5: an issue on a schedule with a fault gets a Triage row, and no row is removed" ok '
+    ([$calls[] | select(any(.[]; type == "string" and test("addProjectV2ItemById")))] | length) > 0
+    and any($calls[]; any(.[]; type == "string" and test("projectId: \"PVT_triage_engprod\", contentId: \"I_NobleFactor_alpha_3\"")))
+    and (any($calls[]; any(.[]; type == "string" and test("delete|archive|clear"; "i"))) | not)'
+expect "5: an issue the sweep adds gets a comment naming the rule it broke" ok '
+    any($calls[]; index("s=I_NobleFactor_alpha_3") != null and any(.[]; startswith("query=mutation starComment"))
+        and any(.[]; startswith("b=") and test("Triage: engprod") and test("`step-order`")))'
+expect "6: a scenario row meets the structural rules alone" ok "${entry}"'absent("NobleFactor/alpha#9")'
+expect "7: an issue already in Triage is not added again, nor commented on" ok "${entry}"'
+    (any($calls[]; any(.[]; type == "string" and test("contentId: \"I_NobleFactor_alpha_7\""))) | not)
+    and (any($calls[]; index("s=I_NobleFactor_alpha_7") != null) | not)
+    and entry("NobleFactor/alpha#7").action == "in-triage"'
+expect "8: a step blocked by an open step at the same or a higher step is a fault; by a closed issue or one on no schedule is not" ok \
+    "${entry} ${faulted}"'faulted("NobleFactor/alpha#3"; "step-order") and absent("NobleFactor/alpha#4")
+    and absent("NobleFactor/alpha#11")'
+expect "4: one flat record per issue, each with every key, a Triage row with no fault among them" ok '
+    (map(.account) | unique) == ["NobleFactor", "test-user"]
+    and all(.[]; keys == ["account", "action", "faults", "home", "issue", "project", "rules", "state", "status", "title", "type", "url"])
+    and (map(select(.project == "Triage: engprod") | .issue) | index("NobleFactor/alpha#6") != null)
+    and (first(.[] | select(.issue == "NobleFactor/alpha#6")) as $closed
+        | $closed.action == "row" and $closed.state == "closed" and $closed.faults == [] and $closed.rules == "")
+    and first(.[] | select(.issue == "NobleFactor/alpha#5")).rules == "no-area,severity,no-evidence"
+    and first(.[] | select(.issue == "test-user/personal#2")).project == "Triage: test-user"'
+
+run_star "${data}" github triage sweep NobleFactor --filter action=added --jq 'map({issue, project, rules})' --output csv
+expect "4: --filter action=added and CSV give what the run sent to Triage, one row each" ok '
+    split("\n") | .[0] == "issue,project,rules" and (.[1:] | map(select(. != "")) | length) == 5
+    and (.[1:] | map(select(test("^NobleFactor/alpha#3,Triage: engprod,step-order$"))) | length) == 1' "" text
+
+# Under star's --dry-run every shell.exec is skipped, reads with writes, until NobleFactor/devlore-cli#1170: the sweep
+# can read nothing then, and what this case holds it to is that it writes nothing.
+run_star "${data}" github triage sweep NobleFactor --dry-run
+expect "7: --dry-run adds nothing" any '(any($calls[]; any(.[]; type == "string" and test("mutation"))) | not)'
+
+((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
+success "every case passed"
