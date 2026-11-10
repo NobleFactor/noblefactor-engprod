@@ -291,7 +291,9 @@ def label_entry(g):
 def read_model(account):
     """The account's data model as GitHub holds it now.
 
-    Its version, its account, its types and labels, its projects, and in an organization its issue fields and teams.     A type whose description begins neither "Level N:" nor "Collection:" fits no model, and stops the read, named; so does
+    Its version, its account, its types and labels, its projects, and in an organization its issue fields and teams.
+
+    A type whose description begins neither "Level N:" nor "Collection:" fits no model, and stops the read, named; so does
     a token that cannot read projects, since a model without them would be no backup of the account.
     """
     kind = owner_kind(account)

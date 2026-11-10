@@ -3,7 +3,7 @@ title: "GitHub is the model: star github model get and backup, and the report an
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/426
 status: active
 created: 2026-11-09
-updated: 2026-11-09
+updated: 2026-11-10
 ---
 
 # Plan: GitHub is the model: star github model get and backup, and the report and the sweep on the live model
@@ -16,13 +16,13 @@ checkpoint, and nothing reads it but a restore. Five commands follow from that, 
 `restore`. This plan builds the reading side, `get` and `backup`, puts the report and the sweep on the live model, and
 retires what treated a copy as the model: `pull`, `digest`, the model cache and the checkpoint reading #431 and #441
 built. #437 builds the writing side, `diff`, `apply` and `restore`; reading the model's pieces in parallel, through a
-graph, is a follow-up of its own.
+graph, is #471.
 
 ## The issue
 
 | Step | Type | Issue | Done when |
 | --- | --- | --- | --- |
-| 21 | Task | [#426](https://github.com/NobleFactor/noblefactor-engprod/issues/426), star works for organization and user accounts, and pull saves each account's issue types, issue fields, labels and projects in its .github repository | Its "Done when" list, rewritten to this plan in Phase 7 |
+| 21 | Task | [#426](https://github.com/NobleFactor/noblefactor-engprod/issues/426), star github model get and backup, and the report and the sweep on the model GitHub holds | Its evidence of completion, rewritten to this plan in Phase 6 |
 
 ## Rulings
 
@@ -35,9 +35,9 @@ Ruled by the owner on 2026-11-09, in this session.
   ```text
   star github model get <account>
   star github model diff <model> <account>
-  star github model apply <model> <account>
+  star github model apply <model> <account> [--prune]
   star github model backup <account>
-  star github model restore <account> [<revision>]
+  star github model restore <account> [<revision>] [--prune]
   ```
 
   `get` returns data (`show` would be for people; star's `--output` serves them). `backup` and `restore` pair; `apply`
@@ -48,14 +48,22 @@ Ruled by the owner on 2026-11-09, in this session.
   (ruled later the same day): an extension cannot ask until devlore's TUI can (NobleFactor/devlore-cli#1219, built by
   NobleFactor/devlore-cli#1221), so each place a question belongs carries a TODO linking NobleFactor/devlore-cli#1219,
   and #470, step 36, tracks the dependency: the issue tracking system is not done until it asks.
-- **`apply` reconciles; it never deletes and recreates.** It creates what is missing, changes what differs and deletes
-  only what the model lacks. On the same account it matches by id, so a rename is a rename; across accounts, by name.
+- **`apply` reconciles; it never deletes and recreates.** It creates what is missing and changes what differs, and
+  deletes what the model lacks only with `--prune`. On the same account it matches by id, so a rename is a rename;
+  across accounts, by name.
+- **Nothing is deleted without `--prune`** (ruled 2026-11-10). With `--prune`, `apply` and `restore` also delete what
+  the model lacks, and first list each deletion and how many issues and rows it touches; once devlore's TUI can ask,
+  they ask about each one, and `--unattended --prune` deletes without asking. Without it, `restore` puts back what
+  changed or vanished, leaves what was added since the revision, and lists what it left. A deletion is the one change a
+  restore cannot undo: GitHub strips a deleted label from every issue that carries it, and blanks every row's value in a
+  deleted field or option. The name is `kubectl apply --prune`'s and `git push --prune`'s, the tools that apply a model
+  to a remote; it replaces the `--delete` of 2026-10-22, which followed rsync when the verbs were `push` and `pull`.
 - **A backup follows our process.** Alignment is complete before its pull request merges. Its branch is
   `chore/model-<date>`, with no issue: the process is documented and the intent clear, and the pull request's comments
   record the steps and outcomes. The clone stays at `~/Workspace/<account>/.github`.
 - **Reads in parallel, through a graph.** Building and executing a graph from star, with the flow provider's `gather`,
-  is design work of its own; devlore-cli's `cmd/devlore-test` shows how a graph is built and run. Until it lands,
-  `get` reads the pieces one at a time.
+  is design work of its own, #471; devlore-cli's `cmd/devlore-test` shows how a graph is built and run. Until it
+  lands, `get` reads the pieces one at a time.
 
 ## Current State
 
@@ -112,7 +120,8 @@ The rulings settle the commands. These remain.
   and stop. Otherwise create the repository if it is missing, clone or update
   `~/Workspace/<account>/.github`, branch `chore/model-<date>`, write `model.yaml`, commit, push, and open a pull
   request whose description lists the changes and ends with the owner's `Signed-off-by:`; wait for the quality gate;
-  merge; remove the branch; leave the clone current. It asks nothing: a TODO linking NobleFactor/devlore-cli#1219
+  merge; remove the branch; leave the clone current. The pull request's comments record each step and its outcome,
+  as the ruling has it. It asks nothing: a TODO linking NobleFactor/devlore-cli#1219
   stands where it will ask before it creates the repository and before it merges (#470).
 
 ### Requirement 4: two type labels
@@ -122,7 +131,7 @@ The rulings settle the commands. These remain.
 ### Requirement 5: the issues and the documents
 
 - #426's "Done when" rewritten to this plan; #437's to `diff`, `apply` and `restore` and the rulings above; #338's
-  gains filing and retyping; a new issue for the parallel reads through a graph.
+  gains filing and retyping; #471, the parallel reads through a graph.
 - Section 6 and its status, section 4, the index, and every document that names `pull`, `digest`, the model cache or the
   checkpoint as the model.
 
@@ -164,7 +173,17 @@ The rulings settle the commands. These remain.
 
 ### Phase 6: the issues and the documents
 
-- [ ] Requirement 5
+- [x] Requirement 5: #426 and #437 rewritten in the task shape, problem, solution, outstanding questions and evidence of
+      completion, #426's title with them; #338 gains retyping; #471 filed for the parallel reads, Priority Low on
+      Backlog: engprod. Section 6 gains § GitHub is the model, its opening and every section that took a copy for the
+      model marked superseded or brought to the ruling; its status, sections 2's and 4's status, sections 4 and 5, the
+      index, issue-standards.md and the README follow, and the ruling of 2026-11-10 that nothing is deleted without
+      `--prune` is recorded in #437, #426's syntax, section 6 and its status, and issue-standards.md. Found on the way
+      and fixed: backup's pull request had no comments, though the ruling has them record each step, because Requirement
+      3 had left that out, so backup now comments when the checks finish and after the merge reads back, and case 11.1
+      checks it; backup dated its branch by UTC, now by the local date; read_model's docstring ran two paragraphs
+      together; and section 6 said an organization's labels are every repository's, where get, as pull did, reads the
+      hub's. All 48 cases pass, and make check passes
 
 ### Phase 7: proved on GitHub
 
@@ -187,7 +206,7 @@ The rulings settle the commands. These remain.
 | 5 | The report and the sweep | Run on the model the stand-in serves; no model file read anywhere |
 | 6 | `--help` and the labels commands | No read of the model |
 | 7 | `backup NobleFactor`, the checkpoint current | Says so; no branch, no pull request |
-| 8 | `backup NobleFactor`, the checkpoint behind, `--unattended` | Branch `chore/model-<date>`, `model.yaml` written, a pull request opened and merged; read back |
+| 8 | `backup NobleFactor`, the checkpoint behind, `--unattended` | Branch `chore/model-<date>`, `model.yaml` written, a pull request opened and merged, its comments recording the checks and the merge; read back |
 | 9 | A user-account issue with two type labels | The sweep's `two-types` fault, naming both |
 | 10 | `pull`, `digest` | Unknown commands |
 | 11 | Every existing case, brought to the live model | Passes |
@@ -205,7 +224,7 @@ Under `Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitH
 | `commands/github-model-pull.star`, `commands/github-model-digest.star` | Remove | Retired |
 | `extension.yaml` | Modify | `get` and `backup`; `pull` and `digest` gone |
 | `tests/Test-StarGitHub` | Modify | The test plan |
-| `docs/architecture/issue-data-model/` | Modify | Requirement 5 |
+| `docs/architecture/issue-data-model/`, `docs/issue-standards.md`, `README.md` | Modify | Requirement 5 |
 
 ## Related Documents
 

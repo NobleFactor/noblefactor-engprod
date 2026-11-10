@@ -20,6 +20,10 @@ def _ok(command):
     """Whether a shell command exits 0, its output and errors discarded."""
     return sh("(" + command + ") >/dev/null 2>&1 && echo yes || echo no").strip() == "yes"
 
+def _comment(repository, number, text):
+    """Records one step of the backup and its outcome as a comment on the backup's pull request."""
+    sh("gh pr comment " + number + " --repo " + quote(repository) + " --body " + quote(text))
+
 def run(_command, ctx):
     """Check gh's access, read the account's model from GitHub, and land it in the account's .github repository.
 
@@ -56,7 +60,7 @@ def run(_command, ctx):
     if on_main.rstrip("\n") == model.rstrip("\n"):
         return {"account": account, "repository": repository, "status": "current"}
 
-    day = sh("date -u +%Y-%m-%d").strip()
+    day = sh("date +%Y-%m-%d").strip()
     branch = "chore/model-" + day
     title = "chore: " + account + "'s model as GitHub holds it, " + day
     sh(git + "checkout --quiet -B " + quote(branch) + " origin/main")
@@ -70,15 +74,22 @@ def run(_command, ctx):
     url = sh("gh pr create --repo " + quote(repository) + " --base main --head " + quote(branch) + " --title " + quote(title) +
              " --body " + quote(body)).strip().split("\n")[-1]
     number = url.rsplit("/", 1)[-1]
-    if not _ok("gh pr checks " + number + " --repo " + quote(repository) + " --watch"):
-        report = sh("gh pr checks " + number + " --repo " + quote(repository) + " 2>&1 || true")
-        if "no checks reported" not in report:
-            fail(url + ": its checks did not pass:\n" + report)
+    passed = _ok("gh pr checks " + number + " --repo " + quote(repository) + " --watch")
+    report = sh("gh pr checks " + number + " --repo " + quote(repository) + " 2>&1 || true").strip()
+    if not passed and "no checks reported" not in report:
+        _comment(repository, number, "Checks did not pass, so the backup stops here, unmerged.\n\n```text\n" + report + "\n```")
+        fail(url + ": its checks did not pass:\n" + report)
+    _comment(repository, number, ("Checks passed" if passed else "Checks: none reported") + "; merging.\n\n```text\n" + report + "\n```")
 
     # TODO(NobleFactor/devlore-cli#1219): ask before merging, defaulting to yes (#470).
     sh("gh pr merge " + number + " --repo " + quote(repository) + " --squash --admin --subject " + quote(title + " (#" + number + ")"))
     sh(git + "fetch --quiet origin && " + git + "checkout --quiet main && " + git + "merge --quiet --ff-only origin/main && " +
        git + "branch --quiet -D " + quote(branch) + " && (" + git + "push --quiet origin --delete " + quote(branch) + " 2>/dev/null || true)")
+    head = sh(git + "rev-parse --short origin/main").strip()
     if sh(git + "show origin/main:model.yaml").rstrip("\n") != model.rstrip("\n"):
+        _comment(repository, number, "Merged, but main, at " + head + ", does not read back as the model.")
         fail(url + " merged, but " + repository + "'s main does not read back as the model")
+    merged = ("Merged. main, at " + head + ", reads back as the model; " + branch + " is removed, and the clone, ~/Workspace/" +
+              account + "/.github, is on main.")
+    _comment(repository, number, merged)
     return {"account": account, "repository": repository, "status": "merged", "branch": branch, "pull_request": url}

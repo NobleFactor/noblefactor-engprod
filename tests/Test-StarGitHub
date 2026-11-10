@@ -320,6 +320,9 @@ case "${1:-} ${2:-}" in
         printf 'quality-gate\tpass\t5s\thttps://github.com/checks\n'
         exit 0
         ;;
+    "pr comment")
+        exit 0
+        ;;
     "pr merge")
         repo="$(option --repo "$@")" number="${3:-}"
         head="$(awk -v r="${repo}" -v n="${number}" '$1 == "pr" && $2 == r && $3 == n { print $4; exit }' "${GH_STATE}")"
@@ -811,14 +814,17 @@ expect "10: the two-types fault names both type labels" ok "${entry} ${faulted}"
     and ([entry("test-user/personal#4").faults[] | select(.rule == "two-types") | .message] | .[0] | test("task") and test("bug"))'
 
 # 11. backup writes the model get returns into the account's .github repository through a pull request on
-# chore/model-<date>, merged, with nothing asked (#426); a backup that is current opens none; an account with no .github
-# repository is given one.
+# chore/model-<date>, merged, with nothing asked, its comments recording the checks and the merge (#426); a backup that
+# is current opens none; an account with no .github repository is given one.
 remote NobleFactor "old: true"
 run_star "${data}" github model backup NobleFactor
 expect "11.1: backup opens a pull request on chore/model-<date> and merges it" ok '
     ([$calls[] | select(.[0:2] == ["pr", "create"]) | .[index("--head") + 1]] | length == 1
         and (.[0] | test("^chore/model-[0-9]{4}-[0-9]{2}-[0-9]{2}$")))
     and ([$calls[] | select(.[0:2] == ["pr", "merge"])] | length == 1)'
+expect "11.1: the pull request's comments record the checks and the merge" ok '
+    [$calls[] | select(.[0:2] == ["pr", "comment"]) | .[index("--body") + 1]]
+    | length == 2 and (.[0] | test("^Checks passed")) and (.[1] | test("^Merged") and test("reads back as the model"))'
 run_star "${data}" github model get NobleFactor --output yaml
 get_yaml="${output}"
 check "11.1: NobleFactor/.github's main holds the model get returns" main_holds_model NobleFactor

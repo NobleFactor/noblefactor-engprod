@@ -587,15 +587,17 @@ and hold GitHub's Triage role on a repository. So teams are where ownership and 
 organization home, so they are held per repository (ruled 2026-11-03). The model records each repository's labels as
 pull reads them, and push writes them back.
 
-**Every repository an account owns is in its model.** Ruled 2026-11-03: pull takes the whole model, every repository
-the account owns, and has no `--repo` option. On 2026-10-22 an organization custom property, `issue-model`, was
-proposed to mark the repositories that take part and to version the model. It was set aside the same day: the owner
-judged versioning too complex, and ruled that who takes part is asked only when it needs an answer, when building and
-reporting on schedules and scenarios or filing a new issue. There is one model per account. Pull comes first, then push
-(ruled 2026-11-02), and each names its account with `--account`. Ruled 2026-11-03: pull's `--account` defaults from
-star configuration, `github.account`, whose default is NobleFactor, and the option that names the model file is
-`--asset`. Ruled 2026-11-03: pull reads the data model of any account, ours or not, and push writes a model to an
-account, where that model becomes the account's data model.
+**Every repository an account owns is in its model.** Ruled 2026-11-03: pull takes the whole model, every repository the
+account owns, and has no `--repo` option. On 2026-10-22 an organization custom property, `issue-model`, was proposed to
+mark the repositories that take part and to version the model. It was set aside the same day: the owner judged
+versioning too complex, and ruled that who takes part is asked only when it needs an answer, when building and reporting
+on schedules and scenarios or filing a new issue. There is one model per account. Pull comes first, then push (ruled
+2026-11-02), and each names its account with `--account`. Ruled 2026-11-03: pull's `--account` defaults from star
+configuration, `github.account`, whose default is NobleFactor, and the option that names the model file is `--asset`.
+Ruled 2026-11-03: pull reads the data model of any account, ours or not, and push writes a model to an account, where
+that model becomes the account's data model. Ruled 2026-11-09 (#426): GitHub is the model, and `get`, `diff`, `apply`,
+`backup` and `restore` replace pull and push, each naming its account, with no default account and no `--asset`
+([section 6](6-the-asset-and-its-sync.md#github-is-the-model)).
 
 **Proving that a repository takes part.** On 2026-10-22 the owner asked that the tooling be able to refuse to file an
 issue in a repository, or to make one of its issues a row, when that repository does not take part, and suggested

@@ -18,6 +18,13 @@ Iteration. It leaves out issues, the projects made from templates, any project's
 organization's default labels. Ruled 2026-11-03: Thread is renamed Scenario, and each team, and each user account, has
 one Triage, Backlog, Schedule and Scenario project, with no project per schedule or per scenario.
 
+Ruled 2026-11-09 (#426): GitHub is the model. A command reads an account's model from GitHub when it needs it, and the
+model file in the account's `.github` repository is a backup, written by `backup` and read only by `restore`. Five
+commands, each naming its account, with no default account, no `--asset` and no `--check`: `get`, `diff`, `apply`,
+`backup` and `restore` (§ GitHub is the model). That supersedes the rulings above on `pull`'s options and that the model
+is a cache. Ruled 2026-11-10: `apply` and `restore` delete nothing without `--prune`, which replaces the `--delete` of
+2026-10-22 (§ GitHub is the model).
+
 Ruled 2026-11-03: the model holds the account's issue fields, as it holds its issue types and labels. NobleFactor's are
 Priority, Effort, Target date, Resolution, Area and Severity, its Start date field staying unused; a user account has
 none. Area has two values, product and engineering, and a blank Area is an error. Also ruled 2026-11-03: the old
@@ -26,9 +33,11 @@ issue bodies, the step and beat tables of 14 Schedule and Scenario issues gave w
 and option, and the kind labels epic, feature, task and bug left NobleFactor's 12 repositories. David-Noble-at-work
 keeps its type labels, which are its types.
 
-Built: `pull`, `digest`, the cache and § Access, 2026-10-24 to 2026-10-26 in #377, `--check` standing in for
-`--dry-run` until devlore-cli#1170; the read before every operation, in #378. Not built: `push` (#437), `model audit`,
-and the asset's `teams` record, which `pull` neither reads nor writes, though GitHub has devlore and engprod.
+Built: `pull`, `digest`, the cache and § Access, 2026-10-24 to 2026-10-26 in #377, `--check` standing in for `--dry-run`
+until devlore-cli#1170; the read before every operation, in #378. Built 2026-11-09 in #426: `get`, which reads the teams
+among the rest, and `backup`, and the report and the sweep on the model GitHub holds; `pull`, `digest`, the cache and
+the read before every operation retired with it. Not built: `diff`, `apply` and `restore` (#437). `model audit` is not
+among the five commands ruled 2026-11-09.
 
 Pulled again 2026-11-02, Chore retired: the four types and projects 4 to 22. Of those, only the Schedule and Thread
 templates, projects 7 and 8, belong in the model as ruled 2026-11-03, the Thread template now being the Scenario
@@ -46,8 +55,7 @@ six issue forms and its Triage workflow template, and NobleFactor/.github also h
 `.github/workflows/quality-gate.yml`; neither holds its model file or a pull request template yet (§ One model per
 account, in section 6). Section 6 states where each model lives on #303's branch, `doc/303-model-cutover`; #431 and
 David-Noble-at-work/personal#311 move the files, and each account's pull request template is part of the same two
-issues. Whether star reads GitHub by ETag before every operation or answers from the model until the next pull is
-decided with #426.
+issues. How star reads the model was decided with #426 on 2026-11-09: from GitHub, when a command needs it.
 
 Brought later on the evening of 2026-11-03 to that day's last rulings. Ruled 2026-11-03: Severity is an issue field of
 the organization in NobleFactor, and section 6 lists it among NobleFactor's issue fields
@@ -62,7 +70,7 @@ Brought at the end of 2026-11-03 to that day's last changes. Since 2026-11-03 no
 team's and the user account's four projects, has a built-in workflow, because GitHub's API can't make one or turn one
 on, so section 6 no longer says the owner switches them on or off by hand
 ([section 3](3-collections.md#triage-and-the-backlog)). The user account's reference model lists the labels that stand
-in for NobleFactor's issue fields, and what is decided with #426, how each account's model is read, and #437, `push`, is
+in for NobleFactor's issue fields, and what is decided with #437, `apply`, is
 whether a reference model holds a repository's other labels (§ Reference models, read on demand, in section 6). Every
 Schedule and Scenario template and copy has its field, whose one option names a placeholder issue (§ The asset, under
 `projects`, in section 6).
@@ -75,7 +83,7 @@ other than Bug has Severity N/A: the asset's sketch shows the option N/A beside 
 Admin role ruled for each team's Triage project on 2026-10-22, the By priority view of the Backlog template and of the
 teams' Backlog projects, and the fields the views show are made by the script of #303's closing pull request. The write
 role lets a member edit a project, its fields and views included, and keeping every project of a kind configured the
-same way rests on `push` (#437), not on the role. Ruled under `projects`: how an issue moves between projects, to
+same way rests on `apply` (#437), not on the role. Ruled under `projects`: how an issue moves between projects, to
 another team's among them, by the person whose name is on it, and how it is kept in one of its account's projects at a
 time, whichever team owns them, with triage removing an issue's Triage row as part of its decision; epics and features,
 which are rows of no project once classified; and a scenario, a high-level description of a feature, a workflow or a
@@ -84,37 +92,39 @@ it, rows the sweep will leave alone but for two structural rules, on an epic or 
 in a scenario and in another of its account's projects. Under `types`, the ruling of 2026-11-03 that a Scenario issue
 tells a scenario's story is followed by that of 2026-11-04, that it summarizes an end-user goal, and #453 will bring the
 Scenario type's description and the `scenario` labels' in personal and David-Noble-at-work/.github to that ruling. A
-hierarchy type whose description names no level is a fault of the model, which `pull` and `push` will check (#426 and
-#437), and the audit still reports a type whose level the asset disagrees with (§ The asset, under `types`). The sweep
-(#436) will return an open issue with a resolution to its team's Triage project, and the ruling of 2026-11-03 that there
-are no compliance checks is superseded in part by the sweep, which will be the one check (§ The asset, under `types` and
-`labels`, and § Participation: a user account's repositories). § Participation also says that `star github issue`, which
-will be the one path for the issues we file ourselves once it is built, will refuse an issue without an Area (#338).
-Under `projects`, a user account's new participant is a collaborator on each participating repository, personal and
-David-Noble-at-work/.github; § One model per account says that personal's Triage workflow copies a form's Area into an
-`area:` label today, and that NobleFactor's will set the Area field once #447 and #448 land. Settled the same day:
-GitHub's REST call for an issue field takes each option's id and its GraphQL call takes none, so `push` will send every
-option with its id (#437; § The asset, under Ids beside names, and § Risk).
+hierarchy type whose description names no level is a fault of the model, on which `get` stops (#426) and which `apply`
+will check (#437) (§ The asset, under `types`). The sweep (#436) will return an open issue with a resolution to its
+team's Triage project, and the ruling of 2026-11-03 that there are no compliance checks is superseded in part by the
+sweep, which will be the one check (§ The asset, under `types` and `labels`, and § Participation: a user account's
+repositories). § Participation also says that `star github issue`, which will be the one path for the issues we file
+ourselves once it is built, will refuse an issue without an Area (#338). Under `projects`, a user account's new
+participant is a collaborator on each participating repository, personal and David-Noble-at-work/.github; § One model
+per account says that personal's Triage workflow copies a form's Area into an `area:` label today, and that
+NobleFactor's will set the Area field once #447 and #448 land. Settled the same day: GitHub's REST call for an issue
+field takes each option's id and its GraphQL call takes none, so `apply` will send every option with its id (#437; § The
+asset, under Ids beside names, and § Risk).
 
 ## Completion
 
-- [ ] Section 6 states what the model holds, the issue fields among it, and what it leaves out, that it is a cache,
-  where it is stored, and what `pull` and `push` do with it: the four templates per account, Triage, Backlog, Schedule
-  and Scenario, with the Schedule and Scenario fields and Iteration. Workflows and an organization's default labels are
-  left out. On #303's branch, `doc/303-model-cutover`.
+- [ ] Section 6 states what the model holds, the issue fields among it, and what it leaves out, that GitHub is the model
+  and the file its backup, where the file is stored, and what the five commands do with it: the four templates per
+  account, Triage, Backlog, Schedule and Scenario, with the Schedule and Scenario fields and Iteration. Workflows and an
+  organization's default labels are left out. On #303's branch, `doc/303-model-cutover`.
 - [x] Each account's model file in its `.github` repository, holding the issue types or type labels, the issue fields
   where the account has them, the teams, each repository's labels, and the four project templates with their fields,
   options and views: #431 for NobleFactor/.github, David-Noble-at-work/personal#311 for David-Noble-at-work/.github.
-  Both landed on 2026-11-09: NobleFactor's (#431, NobleFactor/.github#3) and David-Noble-at-work's (#441, standing in for
-  David-Noble-at-work/personal#311; David-Noble-at-work/.github#1). star reads each from there by ETag.
+  Both landed on 2026-11-09: NobleFactor's (#431, NobleFactor/.github#3) and David-Noble-at-work's (#441, standing in
+  for David-Noble-at-work/personal#311; David-Noble-at-work/.github#1). Since #426 each is its account's backup, written
+  by `backup`; star reads the model from GitHub.
 - [x] Each account's file templates in its `.github` repository, ruled 2026-11-03: its issue forms and its Triage
   workflow template, which were there on 2026-11-03, and its pull request template, which is part of #431 for
   NobleFactor/.github and David-Noble-at-work/personal#311 for David-Noble-at-work/.github. Both pull request
   templates landed on 2026-11-09, each with `CONTRIBUTING.md`, `SECURITY.md` and `SUPPORT.md` (#431, #441).
-- [ ] The ETag cache under `$XDG_CACHE_HOME/devlore/star/gh/model/`, and `star github model digest`, built in #377; how
-  each account's model is read, #426; the gate checks the digest, which no issue names yet.
-- [ ] `star github model pull`, built in #377; `push`, #437; and `audit`, which no issue names yet; `labels sync` and
-  `labels audit` retired into them.
+- [x] How each account's model is read: from GitHub, when a command needs it, built in #426 on 2026-11-09. The ETag
+  cache under `$XDG_CACHE_HOME/devlore/star/gh/model/` and `star github model digest`, built in #377, retired with it,
+  and with them the gate's check of the digest, which no issue had named.
+- [ ] The model commands: `get` and `backup`, built in #426, `pull` and `digest` retiring with it; `diff`, `apply` and
+  `restore`, #437; `labels sync` and `labels audit` retired into them.
 - [ ] The hierarchy derived by the extension from `types`, with no type named in the extension itself: #376.
 - [x] Every `star github schedule` operation reads GitHub's record conditionally first and reports when the asset is
-  behind. Built in #378.
+  behind. Built in #378; since #426 every command that needs the model reads it from GitHub, and no copy can be behind.
