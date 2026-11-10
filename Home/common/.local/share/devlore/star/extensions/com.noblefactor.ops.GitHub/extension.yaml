@@ -63,6 +63,13 @@ commands:
       - name: account
         help: "The account, an organization or a user; required"
 
+  - name: github.model.backup
+    help: "Checkpoint an account's model, as GitHub holds it now, in its .github repository: written on a chore/model-<date> branch and landed by a pull request, asking nothing yet"
+    implementation: commands/github-model-backup.star
+    args:
+      - name: account
+        help: "The account, an organization or a user; required"
+
   # The names before #378, kept so that what sessions run today still works; each runs the new command's code and
   # its help names the new command. A later task removes them once no skill, document or session names them. The
   # report's and the audit's went with #436, whose report takes none of the flags they declared, and whose audit

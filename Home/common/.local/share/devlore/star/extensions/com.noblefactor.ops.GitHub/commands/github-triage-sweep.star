@@ -97,6 +97,12 @@ def faults(r, node, model, by_key):
             mine = [label for label in family["labels"] if label in r["labels"]]
             if len(mine) > 1:
                 out.append(_fault("two-labels", "two " + family["key"] + ": labels: " + ", ".join(mine)))
+
+        # GitHub allows an issue one issue type; a user account's types are labels, and nothing stops an issue carrying two
+        # (noblefactor-engprod#426). type_of takes the first the model lists, so the second is silently ignored.
+        types = [label for label in [t.get("label") for t in model["hierarchy"] + model["collections"]] if label and label in r["labels"]]
+        if len(types) > 1:
+            out.append(_fault("two-types", "two type labels: " + ", ".join(types)))
     if _GOOD_FIRST_ISSUE in r["labels"] and level != leaf:
         out.append(_fault("good-first-issue", _GOOD_FIRST_ISSUE + " on " + named + "; it goes on tasks and bugs only"))
     if r["type"] not in _EVIDENCE_EXEMPT and not regex.match(pattern = _EVIDENCE, text = node.get("body") or ""):

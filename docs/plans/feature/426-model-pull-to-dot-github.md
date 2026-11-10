@@ -159,7 +159,8 @@ The rulings settle the commands. These remain.
 
 ### Phase 5: backup, and two type labels
 
-- [ ] Requirements 3 and 4; every case passes; `make check` passes
+- [x] Requirements 3 and 4; every case passes; `make check` passes: all 47 cases. backup takes the model's text from
+      star github model get -o yaml, which it runs, so the file is what get renders byte for byte
 
 ### Phase 6: the issues and the documents
 
