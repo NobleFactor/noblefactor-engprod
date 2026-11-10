@@ -124,7 +124,8 @@ asset, under Ids beside names, and § Risk).
   cache under `$XDG_CACHE_HOME/devlore/star/gh/model/` and `star github model digest`, built in #377, retired with it,
   and with them the gate's check of the digest, which no issue had named.
 - [ ] The model commands: `get` and `backup`, built in #426, `pull` and `digest` retiring with it; `diff`, `apply` and
-  `restore`, #437; `labels sync` and `labels audit` retired into them.
+  `restore`, #437; `labels sync` and `labels audit`, which still enforced the label scheme retired on 2026-11-03,
+  removed with #437 on 2026-11-10.
 - [ ] The hierarchy derived by the extension from `types`, with no type named in the extension itself: #376.
 - [x] Every `star github schedule` operation reads GitHub's record conditionally first and reports when the asset is
   behind. Built in #378; since #426 every command that needs the model reads it from GitHub, and no copy can be behind.

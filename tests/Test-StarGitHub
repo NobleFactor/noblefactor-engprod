@@ -981,5 +981,13 @@ run_star "${data}" github model get NobleFactor --output yaml
 get_yaml="${output}"
 check "11.6: NobleFactor/.github's main holds the model get returns" main_holds_model NobleFactor
 
+# 12. The label commands, which enforced the label scheme retired on 2026-11-03, are gone, and their names before #378
+# with them; diff and apply take their place (#437).
+for command in "github labels audit" "github labels sync" "gh labels audit" "gh labels sync"; do
+    read -r -a words <<<"${command}"
+    run_star "${data}" "${words[@]}"
+    expect "12: star ${command} is an unknown command" error "" 'unknown command "(labels|gh)"'
+done
+
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"

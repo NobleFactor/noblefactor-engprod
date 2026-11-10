@@ -612,8 +612,9 @@ with the tooling, noblefactor-engprod#426 and #437.
 ## Labels
 
 A label belongs to one repository. GitHub has no organization label, and an organization's default labels are not part
-of the model (ruled 2026-11-03). Each repository's labels are part of its account's model, stored in the account's
-`.github` repository, and push writes them. Push takes the place of `star github labels sync`.
+of the model (ruled 2026-11-03). Each repository's labels are part of its account's model, which GitHub holds and the
+account's `.github` repository backs up, and `apply` writes them (#437). `apply` takes the place of push and of
+`star github labels sync`, which #437 removed on 2026-11-10.
 
 Ruled 2026-11-03: labels are lowercase, and issue types are capitalized, as GitHub names them. The labels that remain
 are lowercase: a user account's type labels, and its severity:, priority:, effort: and area: labels, such as

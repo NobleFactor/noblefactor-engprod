@@ -190,7 +190,11 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
 
 ### Phase 2: the label commands retired
 
-- [ ] Requirement 6, the test first: `labels sync` and `labels audit` are unknown commands; `make check` passes
+- [x] Requirement 6, the test first: `labels sync` and `labels audit` are unknown commands; `make check` passes.
+      Case 12 failed first, all four commands answering; then the two command files went with `git rm`, the four
+      manifest entries with them, the names before #378 being the label commands alone, and `scheme.star`'s label
+      code, `cell`, `resolve_repos`, `_origin_repo` and the `ORIGIN` and `default_account` bindings, which only they
+      used. All 60 cases pass
 
 ### Phase 3: the test, first
 

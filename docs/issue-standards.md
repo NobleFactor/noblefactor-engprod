@@ -811,9 +811,10 @@ reads. `star github model get <account>` reads the model of any account, ours or
 the account's `.github` repository through a pull request (#426). `diff <model> <account>`, `apply <model> <account>`
 and `restore <account> [<revision>]` will compare a model with an account's, make a model the account's, and restore a
 backup (#437); neither `apply` nor `restore` deletes anything without `--prune` (ruled 2026-11-10). Each names its
-account, and no account is a default. Until #437 lands, the extension still ships `star github labels audit` and
-`star github labels sync`. Until 2026-11-09, `pull` read the whole model into the file `--asset` named, its `--account`
-defaulting to NobleFactor, and `push` was to write a model back (ruled 2026-11-02 and 2026-11-03).
+account, and no account is a default. `star github labels audit` and `labels sync`, which still enforced the label
+scheme retired on 2026-11-03, were removed with #437 on 2026-11-10. Until 2026-11-09, `pull` read the whole model into
+the file `--asset` named, its `--account` defaulting to NobleFactor, and `push` was to write a model back (ruled
+2026-11-02 and 2026-11-03).
 
 GitHub's default labels `enhancement`, `documentation`, `good first issue`, `help wanted` and `question`
 are **not types**. They look reasonable at filing time and place nothing. `enhancement` in particular is
