@@ -198,9 +198,16 @@ The rulings settle the commands. These remain.
 
 ### Phase 7: proved on GitHub
 
-- [ ] `get` on both accounts; the report and the sweep on both, on the live model; `backup` of both, each through its
+- [x] `get` on both accounts; the report and the sweep on both, on the live model; `backup` of both, each through its
       pull request; a test issue in personal carrying two type labels named by the sweep, then closed; a comment on
-      #426 shows each
+      #426 shows each: run on 2026-11-10 on the branch's extension at 1210345. NobleFactor/.github#4 and
+      David-Noble-at-work/.github#3 merged after quality-gate passed, each main's model.yaml what get renders;
+      the sweep added nothing and named personal#324's two type labels, and #324 is closed as not planned. Found
+      on the way and fixed, each test first: backup could merge before the quality gate ran, so it now waits for
+      the head commit's runs and requires every check main requires (#472 takes the same gate to the PR script
+      template); get read every open project and no views, as pull had, and now reads the templates and their
+      views; and personal's Triage workflow held the token revoked on 2026-11-09, set again from the vault.
+      https://github.com/NobleFactor/noblefactor-engprod/issues/426#issuecomment-6774624184
 
 ### Phase 8: merge
 
