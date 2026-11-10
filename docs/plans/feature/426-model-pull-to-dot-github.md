@@ -144,8 +144,10 @@ The rulings settle the commands. These remain.
 
 ### Phase 3: the test, first
 
-- [ ] Test-StarGitHub's stand-in `gh` answers the model's pieces as GitHub does; the new cases written, failing against
-      the extension as it is
+- [x] Test-StarGitHub's stand-in `gh` answers the model's pieces as GitHub does; the new cases written, failing against
+      the extension as it is:
+      34 of the 47 cases fail, every new one among them, and the kept report and sweep cases, which find no model file;
+      the 13 that pass are guards that hold either way
 
 ### Phase 4: get, and the report and the sweep on the live model
 
