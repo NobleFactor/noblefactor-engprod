@@ -4,10 +4,10 @@
 """The accounts star works with, and the repositories it reads when none is named.
 
 docs/architecture/issue-data-model/6-the-asset-and-its-sync.md. The default account is star configuration's
-github.account, and then NobleFactor. The accounts whose models star reads from their .github repositories are the
-default account and the owner of each of writ's layer repositories, the repositories the report reads when none is named
-(noblefactor-engprod#441); no configuration names them. This module loads nothing, so that scheme.star, which fails when a
-model does not load, and model.star, which must run when one does not, both load it.
+github.account, and then NobleFactor. With no account named, the sweep works with the default account and the owner of
+each of writ's layer repositories, the repositories the report reads when none is named (noblefactor-engprod#441); no
+configuration names them. Each account's model is read from GitHub when a command needs it (#426). This module loads
+nothing.
 """
 
 # accounts.star
@@ -54,8 +54,8 @@ def layer_repos():
             repos.append(canonical_repo(m[1]))
     return repos
 
-def kept_accounts():
-    """The accounts whose models star reads from their .github repositories: the default account, then each writ layer repository's owner, each once."""
+def default_accounts():
+    """The accounts star works with when none is named: the default account, then each writ layer repository's owner, each once."""
     accounts = [default_account()]
     for repo in layer_repos():
         owner = repo.split("/")[0]

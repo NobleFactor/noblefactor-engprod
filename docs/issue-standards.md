@@ -760,8 +760,8 @@ sweep blocks no filing and corrects nothing by itself: triage fixes each issue i
 row either: triage removes an issue's row as part of its decision, and an issue someone closes outside triage stays in
 its Triage project until triage decides its disposition. It waits on #452, which will give every open issue an Area
 first (§ What has no parent). A hierarchy type whose description names no level is a fault of the model, not of an
-issue, and `star github model pull` and `push` will check it (#426 and #437). #361, which held the audit's faults, was
-closed on 2026-11-04 as completed with Resolution Declined.
+issue: `star github model get` stops on it, naming the type (#426), and `apply` will check a model it is given the same
+way (#437). #361, which held the audit's faults, was closed on 2026-11-04 as completed with Resolution Declined.
 
 Only **open** issues are checked: the rules apply to open work, and a closed issue keeps the classification it was left
 with. Closed issues were not skipped in the cutover: the chore label was removed from every repository in both accounts,
@@ -805,14 +805,15 @@ not done is closed as completed, with its Resolution, or in a user account its `
 The model holds an account's issue fields, as it holds its issue types and labels: in NobleFactor,
 Priority, Effort, Target date, Resolution, Area and Severity. A user account has none. Ruled 2026-11-03.
 
-**The model's two verbs.** `star github model pull` reads the whole model of any account, ours or not: every repository
-the account owns. Pull has no `--repo` option. `--account` names the account and defaults from star configuration's
-`github.account`, which defaults to NobleFactor; `--asset` names the model file. `star github model push` will write a
-model to an account (#437), and that model will become the account's data model. Pull comes first, then push, and their
-account option is `--account`, not `--org`. Ruled 2026-11-02 and 2026-11-03. What push will write (views, `--repo`, the
-default of its `--account`) and the default of `--asset` will be decided with the tooling, #426 and #437. Until the
-tooling follows, the extension still ships `star github labels audit` and `star github labels sync`, it has no push yet,
-and pull still takes `--org`.
+**The model's commands.** GitHub is the model, ruled 2026-11-09 (#426): a command that needs an account's model reads it
+from GitHub when it runs, and the model file in the account's `.github` repository is a backup that only a restore
+reads. `star github model get <account>` reads the model of any account, ours or not, and `backup <account>` lands it in
+the account's `.github` repository through a pull request (#426). `diff <model> <account>`, `apply <model> <account>`
+and `restore <account> [<revision>]` will compare a model with an account's, make a model the account's, and restore a
+backup (#437); neither `apply` nor `restore` deletes anything without `--prune` (ruled 2026-11-10). Each names its
+account, and no account is a default. Until #437 lands, the extension still ships `star github labels audit` and
+`star github labels sync`. Until 2026-11-09, `pull` read the whole model into the file `--asset` named, its `--account`
+defaulting to NobleFactor, and `push` was to write a model back (ruled 2026-11-02 and 2026-11-03).
 
 GitHub's default labels `enhancement`, `documentation`, `good first issue`, `help wanted` and `question`
 are **not types**. They look reasonable at filing time and place nothing. `enhancement` in particular is

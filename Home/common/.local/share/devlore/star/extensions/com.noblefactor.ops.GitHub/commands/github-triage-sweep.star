@@ -15,17 +15,15 @@
 # exit is an error and nothing else (ruled 2026-11-08).
 
 load("commands/access.star", "check_access")
-load("commands/model.star", "read_first")
+load("commands/accounts.star", "default_accounts")
+load("commands/model.star", "refuse_dry_run")
 load("commands/records.star", "fetch", "json_lines", "pairs", "quote", "sh")
 load(
     "commands/scheme.star",
-    "MODELS",
-    "MODEL_DIGEST_FAULTS",
-    "MODEL_FAULTS",
     "TRIAGE_KIND",
     "USER_ATTRIBUTES",
     "leaf_level",
-    "model_of",
+    "models_for",
     "owners_of",
     "team_of",
     "type_named",
@@ -99,6 +97,12 @@ def faults(r, node, model, by_key):
             mine = [label for label in family["labels"] if label in r["labels"]]
             if len(mine) > 1:
                 out.append(_fault("two-labels", "two " + family["key"] + ": labels: " + ", ".join(mine)))
+
+        # GitHub allows an issue one issue type; a user account's types are labels, and nothing stops an issue carrying two
+        # (noblefactor-engprod#426). type_of takes the first the model lists, so the second is silently ignored.
+        types = [label for label in [t.get("label") for t in model["hierarchy"] + model["collections"]] if label and label in r["labels"]]
+        if len(types) > 1:
+            out.append(_fault("two-types", "two type labels: " + ", ".join(types)))
     if _GOOD_FIRST_ISSUE in r["labels"] and level != leaf:
         out.append(_fault("good-first-issue", _GOOD_FIRST_ISSUE + " on " + named + "; it goes on tasks and bugs only"))
     if r["type"] not in _EVIDENCE_EXEMPT and not regex.match(pattern = _EVIDENCE, text = node.get("body") or ""):
@@ -209,14 +213,14 @@ def _record(account, project, issue, action, status, found, home):
         "home": home,
     }
 
-def _sweep(account, dry_run):
+def _sweep(account, models, dry_run):
     """One account's sweep: its open issues read and checked, each with a fault added to its team's Triage project.
 
     The records, by project and then by repository and number: each issue added, or under --dry-run to be added; each
     already in Triage with a fault; and each other row of the Triage project, with no fault.
     """
-    model = MODELS[account]
-    checked = pairs(fetch(model["repositories"], open_only = True, with_body = True))
+    model = models[account]
+    checked = pairs(fetch(model["repositories"], models, open_only = True, with_body = True), models)
     by_key = {p[0]["issue"]: p[0] for p in checked}
     found = {}
     order = []
@@ -255,26 +259,21 @@ def _sweep(account, dry_run):
     return sorted(records, key = lambda x: (x["project"], x["issue"].split("#")[0], int(x["issue"].split("#")[-1])))
 
 def run(_command, ctx):
-    """Check gh's access, read each account's record against its model, then sweep each account named, or every one with a model.
+    """Check gh's access, read each account's model and record, then sweep each account named, or the default accounts.
 
-    With no account named, an account whose model could not be read is among them, and fails, saying why, rather than
-    being passed over.
+    With no account named, it sweeps the default account and the owner of each of writ's layer repositories. Each
+    account's model is read from GitHub when the sweep runs (noblefactor-engprod#426).
 
     Args:
       _command: the command as star names it.
-      ctx: the invocation: ctx.args carries the accounts named; ctx.dry_run, star's --dry-run, under which nothing is added.
+      ctx: the invocation: ctx.args carries the accounts named; ctx.dry_run, star's --dry-run, which the sweep refuses until
+        NobleFactor/devlore-cli#1170 lets a dry run read.
     """
+    refuse_dry_run(ctx.dry_run)
     check_access("star github triage sweep", scopes = ["project"], dry_run = ctx.dry_run)
-    accounts = [a.strip() for a in (ctx.args.get("accounts") or []) if a.strip()] or sorted(list(MODELS.keys()) + list(MODEL_FAULTS.keys()))
-    for account in accounts:
-        model_of(account)
-    for fault in MODEL_DIGEST_FAULTS:
-        warn(fault)
-    for account in accounts:
-        behind = read_first(account = account, dry_run = ctx.dry_run)
-        if behind:
-            warn(behind)
+    accounts = [a.strip() for a in (ctx.args.get("accounts") or []) if a.strip()] or default_accounts()
+    models = models_for(accounts)
     records = []
     for account in accounts:
-        records.extend(_sweep(account, ctx.dry_run))
+        records.extend(_sweep(account, models, ctx.dry_run))
     return records

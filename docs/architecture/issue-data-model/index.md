@@ -209,7 +209,7 @@ design.
 | [3. Collections](3-collections.md) | The four projects of each team and each user account, Triage, Backlog, Schedule and Scenario, as GitHub projects made from the Triage, Backlog, Schedule and Scenario templates: who joins which, the Schedule and Scenario fields, steps, beats and iterations, a schedule's or scenario's own record, an issue of type Schedule or Scenario (a Triage project has none), ownership | [Ruled in part](3-collections.status.md) |
 | [4. Storage and reach](4-storage-and-reach.md) | Where each part lives in GitHub, what enforces it, and which repositories it reaches | [Ruled](4-storage-and-reach.status.md) |
 | [5. From today's scheme](5-from-todays-scheme.md) | The deltas the task list is drawn from, and the order that keeps running work running | [Revised](5-from-todays-scheme.status.md) |
-| [6. The asset and its sync](6-the-asset-and-its-sync.md) | Each account's model, a YAML file stored in the account's `.github` repository; `star github model pull`, which reads a whole account, `--account` defaulting from `github.account` and `--asset` naming the file; then `push`. Whether star reads GitHub by ETag before every operation is decided with #426 and #437 | [Ruled](6-the-asset-and-its-sync.status.md) |
+| [6. The asset and its sync](6-the-asset-and-its-sync.md) | GitHub is each account's model, read when a command needs it; the YAML file in the account's `.github` repository is its backup. `star github model get`, `diff`, `apply`, `backup` and `restore`, each naming its account (#426, #437) | [Ruled](6-the-asset-and-its-sync.status.md) |
 | [7. The workflow, before and after](7-the-workflow-before-and-after.md) | Why this epic: filing an issue, writing a schedule and reporting progress, as a session does them today and once the model is in | [Written](7-the-workflow-before-and-after.status.md) |
 
 ## Terms
@@ -370,18 +370,15 @@ design.
 - **The model, or the asset:** a YAML description of an account's data model: its issue types (type labels, in a user
   account), its issue fields, the labels of each of its repositories, its teams, and its project templates with their
   custom fields, options and views. It leaves out issues, the projects made from templates, the projects' built-in
-  workflows and an organization's default labels (ruled 2026-11-03). None of the twenty projects of the four kinds has
-  a built-in workflow: GitHub's API can't make one, so projects of a kind match only with none. The model is a cache:
-  star queries it instead of asking GitHub the same questions again, and builds sensible queries and updates from it.
-  Pull comes first, then push (ruled 2026-11-02). `star github model pull` reads the whole model of any account, ours or
-  not, every repository it owns, and has no `--repo` option. Its `--account` defaults from star's `github.account`
-  setting, NobleFactor unless set, and `--asset` names the model file (ruled 2026-11-03). `star github model push`
-  writes a model to an account, and that model becomes the account's data model. Two reference models ship with the star
-  extension, one for an organization's account and one for a user's. Until 2026-11-02 the model was a single committed
-  `model.yaml` beside the extension ([section 6](6-the-asset-and-its-sync.md)); since 2026-11-09 each of our accounts'
-  is its `.github` repository's `model.yaml`, NobleFactor's with #431 and David-Noble-at-work's with #441, which star
-  reads from GitHub by ETag. Whether star reads GitHub by ETag before
-  every operation or answers from the model until the next pull, what push writes, and `--asset`'s default are decided
-  with the tooling, #426 and #437. Ruled 2026-11-03: an account's model holds its issue fields, as it holds its issue
-  types and labels. NobleFactor's are Priority, Effort, Target date, Resolution, Area and Severity, and its Start date
-  field stays unused. A user account has none.
+  workflows and an organization's default labels (ruled 2026-11-03). None of the twenty projects of the four kinds has a
+  built-in workflow: GitHub's API can't make one, so projects of a kind match only with none. GitHub is the model (ruled
+  2026-11-09, #426): star reads an account's model from GitHub when a command needs it, and the YAML file in the
+  account's `.github` repository is a backup of it, written by `star github model backup` and read only by `restore`.
+  `star github model get` reads the model of any account, ours or not; `diff`, `apply` and `restore` are #437's. Each
+  names its account, and no account is a default ([section 6](6-the-asset-and-its-sync.md#github-is-the-model)). Two
+  reference models ship with the star extension, one for an organization's account and one for a user's. Until
+  2026-11-02 the model was a single committed `model.yaml` beside the extension; from #431 and #441 until #426, star
+  read each of our accounts' `model.yaml` from its `.github` repository by ETag as the model, a cache it queried instead
+  of asking GitHub again, and `pull` and `push` were its two verbs. Ruled 2026-11-03: an account's model holds its issue
+  fields, as it holds its issue types and labels. NobleFactor's are Priority, Effort, Target date, Resolution, Area and
+  Severity, and its Start date field stays unused. A user account has none.
