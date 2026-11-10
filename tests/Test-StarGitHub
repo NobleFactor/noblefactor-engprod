@@ -79,7 +79,8 @@ function override {
 }
 
 # remote makes an account's .github repository on the stand-in's GitHub: a bare repository under
-# ${run_directory}/remotes whose main holds a README and, when given, model.yaml.
+# ${run_directory}/remotes whose main holds a README and, when given, model.yaml. Whatever an earlier one of the same
+# name left goes with it: its pull requests, its CI's setting, and the clone a backup left in the run's home.
 #
 # Parameters:
 #   - `$1`: the account.
@@ -88,9 +89,13 @@ function override {
 # Returns:
 #   - 0, the repository made.
 function remote {
-    local bare="${run_directory}/remotes/$1/.github.git" seed="${run_directory}/seed-$1"
+    local bare="${run_directory}/remotes/$1/.github.git" seed="${run_directory}/seed-$1" pulls="${run_directory}/remotes/pulls"
 
-    rm -rf -- "${bare}" "${seed}"
+    rm -rf -- "${bare}" "${seed}" "${run_directory}/remotes/$1/.github.ci" "${run_directory}/home/Workspace/$1/.github"
+    if [[ -f "${pulls}" ]]; then
+        grep -v "^pr $1/.github " "${pulls}" >"${pulls}.kept" || true
+        mv -- "${pulls}.kept" "${pulls}"
+    fi
     git init --quiet --bare --initial-branch=main "${bare}"
     git init --quiet --initial-branch=main "${seed}"
     printf '# .github\n' >"${seed}/README.md"
@@ -111,6 +116,21 @@ function remote {
 #   - 0 when they match; 1 otherwise.
 function main_holds_model {
     [[ -n "${get_yaml}" && "$(git --git-dir="${run_directory}/remotes/$1/.github.git" show main:model.yaml 2>/dev/null)" == "${get_yaml}" ]]
+}
+
+# ci sets how the CI of an account's .github repository behaves on the stand-in's GitHub. With none, the default, main
+# requires no check and no workflow runs. With pass or fail, main requires quality-gate, and the head commit's workflow
+# run appears on the third read of its runs, is in progress on the fourth, and has finished on the fifth, its check
+# passing or failing. With never, main requires quality-gate and no run starts.
+#
+# Parameters:
+#   - `$1`: the account.
+#   - `$2`: none, pass, fail or never.
+#
+# Returns:
+#   - 0, the setting written.
+function ci {
+    printf '%s\n' "$2" >"${run_directory}/remotes/$1/.github.ci"
 }
 
 # same_text succeeds when two texts are the same and not empty.
@@ -239,12 +259,21 @@ function check {
 # A fixture may be the data directory's own, under ${XDG_DATA_HOME}/fixtures, which a case gives it with override; it
 # is answered before the run's. An account's .github repository is a bare repository under ${GH_REMOTES}, which `repo
 # view`, `repo create` and `repo clone` answer from, and a pull request opened on it is merged by moving its main to the
-# pull request's branch: the git side of `star github model backup` (#426).
+# pull request's branch: the git side of `star github model backup` (#426). Its pull requests are remembered in
+# ${GH_REMOTES}/pulls, across runs, so that a backup run again finds the one an earlier run left open; its main's rules,
+# its head commit's workflow runs and its checks are as the case's ci set them.
+#
+# The stand-in for sleep records how long it was asked to wait, among gh's calls, and returns at once.
 #
 # Returns:
-#   - 0, the stand-in written and executable.
+#   - 0, the stand-ins written and executable.
 function write_stand_in {
     mkdir -p -- "${run_directory}/bin"
+    cat >"${run_directory}/bin/sleep" <<'SLEEP'
+#!/usr/bin/env bash
+printf '%s\0' sleep "$@" | jq -c -R -s 'split("\u0000") | .[:-1]' >>"${GH_CALLS}"
+SLEEP
+    chmod +x "${run_directory}/bin/sleep"
     cat >"${run_directory}/bin/gh" <<'GH'
 #!/usr/bin/env bash
 set -uo pipefail
@@ -268,6 +297,18 @@ function fixture {
     if [[ -r "${XDG_DATA_HOME}/fixtures/$1" ]]; then printf '%s' "${XDG_DATA_HOME}/fixtures/$1"; else printf '%s' "${GH_FIXTURES}/$1"; fi
 }
 
+# ci_mode prints how a repository's CI behaves, as the case's ci set it: none, pass, fail or never.
+function ci_mode {
+    cat "${GH_REMOTES}/$1.ci" 2>/dev/null || echo none
+}
+
+# filtered prints standard input through --jq, when the arguments give it, as gh does.
+function filtered {
+    local program
+    program="$(option --jq "$@")"
+    if [[ -n "${program}" ]]; then jq -r "${program}"; else cat; fi
+}
+
 # option prints the value that follows a flag among the arguments, or nothing.
 function option {
     local flag="$1"
@@ -279,7 +320,8 @@ function option {
 }
 
 # An account's .github repository is a bare repository under ${GH_REMOTES}; each pull request is remembered in
-# ${GH_STATE} as `pr <repository> <number> <branch> <open|merged>`, and merging one moves main to its branch.
+# ${GH_REMOTES}/pulls as `pr <repository> <number> <branch> <open|merged>`, and merging one moves main to its branch.
+pulls="${GH_REMOTES}/pulls"
 case "${1:-} ${2:-}" in
     "repo view" | "repo create" | "repo clone")
         target="${3:-}"
@@ -311,31 +353,47 @@ case "${1:-} ${2:-}" in
         ;;
     "pr create")
         repo="$(option --repo "$@")" head="$(option --head "$@")"
-        number=$(($(grep -c '^pr ' "${GH_STATE}" 2>/dev/null || true) + 1))
-        printf 'pr %s %s %s open\n' "${repo}" "${number}" "${head}" >>"${GH_STATE}"
+        number=$(($(awk '$1 == "pr" && $5 == "open"' "${pulls}" 2>/dev/null | wc -l) + 1))
+        printf 'pr %s %s %s open\n' "${repo}" "${number}" "${head}" >>"${pulls}"
         printf 'https://github.com/%s/pull/%s\n' "${repo}" "${number}"
         exit 0
         ;;
-    "pr checks")
-        printf 'quality-gate\tpass\t5s\thttps://github.com/checks\n'
+    "pr list")
+        repo="$(option --repo "$@")" head="$(option --head "$@")"
+        awk -v r="${repo}" -v h="${head}" '$1 == "pr" && $2 == r && $4 == h { state[$3] = $5 }
+            END { for (n in state) if (state[n] == "open") print n }' "${pulls}" 2>/dev/null |
+            jq -R -s -c --arg r "${repo}" '[split("\n")[] | select(. != "") | {number: tonumber, url: ("https://github.com/" + $r + "/pull/" + .)}]' |
+            filtered "$@"
         exit 0
         ;;
-    "pr comment")
+    "pr checks")
+        repo="$(option --repo "$@")"
+        case "$(ci_mode "${repo}")" in
+            pass) bucket=pass ;;
+            fail) bucket=fail ;;
+            *)
+                printf "no checks reported on the 'chore' branch\n" >&2
+                exit 1
+                ;;
+        esac
+        jq -cn --arg b "${bucket}" '[{name: "quality-gate", bucket: $b}]' | filtered "$@"
+        exit 0
+        ;;
+    "pr comment" | "pr edit")
         exit 0
         ;;
     "pr merge")
         repo="$(option --repo "$@")" number="${3:-}"
-        head="$(awk -v r="${repo}" -v n="${number}" '$1 == "pr" && $2 == r && $3 == n { print $4; exit }' "${GH_STATE}")"
+        head="$(awk -v r="${repo}" -v n="${number}" '$1 == "pr" && $2 == r && $3 == n { print $4; exit }' "${pulls}")"
         [[ -n "${head}" ]] || { printf 'stand-in gh: no pull request %s in %s\n' "${number}" "${repo}" >&2; exit 1; }
         git --git-dir="${GH_REMOTES}/${repo}.git" update-ref refs/heads/main "refs/heads/${head}" || exit 1
-        printf 'pr %s %s %s merged\n' "${repo}" "${number}" "${head}" >>"${GH_STATE}"
+        printf 'pr %s %s %s merged\n' "${repo}" "${number}" "${head}" >>"${pulls}"
         exit 0
         ;;
     "pr view")
         repo="$(option --repo "$@")" number="${3:-}" state=OPEN
-        grep -q "^pr ${repo} ${number} .* merged$" "${GH_STATE}" 2>/dev/null && state=MERGED
-        jq -cn --arg s "${state}" --arg u "https://github.com/${repo}/pull/${number}" '{state: $s, url: $u}' |
-            if [[ -n "$(option --jq "$@")" ]]; then jq -r "$(option --jq "$@")"; else cat; fi
+        grep -q "^pr ${repo} ${number} .* merged$" "${pulls}" 2>/dev/null && state=MERGED
+        jq -cn --arg s "${state}" --arg u "https://github.com/${repo}/pull/${number}" '{state: $s, url: $u}' | filtered "$@"
         exit 0
         ;;
 esac
@@ -377,6 +435,30 @@ while (($#)); do
     esac
     shift 1
 done
+
+# The rules on a .github repository's main, and its head commit's workflow runs, as the case's ci set them.
+ci_path='^repos/([^/]+/[^/]+)/(rules/branches/main|actions/runs\?head_sha=)'
+if [[ "${rest_path}" =~ ${ci_path} ]]; then
+    repo="${BASH_REMATCH[1]}" kind="${BASH_REMATCH[2]}"
+    mode="$(ci_mode "${repo}")"
+    if [[ "${kind}" == rules/* ]]; then
+        body='[]'
+        [[ "${mode}" == none ]] ||
+            body='[{"type": "pull_request"}, {"type": "required_status_checks", "parameters": {"required_status_checks": [{"context": "quality-gate"}]}}]'
+    else
+        printf 'runs %s\n' "${repo}" >>"${GH_STATE}"
+        reads="$(grep -c "^runs ${repo}$" "${GH_STATE}")"
+        if [[ "${mode}" == none || "${mode}" == never ]] || ((reads < 3)); then
+            body='{"workflow_runs": []}'
+        elif ((reads < 5)); then
+            body='{"workflow_runs": [{"id": 1, "status": "in_progress"}]}'
+        else
+            body='{"workflow_runs": [{"id": 1, "status": "completed"}]}'
+        fi
+    fi
+    jq -c . <<<"${body}" | if [[ -n "${jq_program}" ]]; then jq -r "${jq_program}"; else cat; fi
+    exit 0
+fi
 
 if [[ "${rest_path}" != graphql ]]; then
     ((include)) || { printf 'stand-in gh: a REST call without -i: %s\n' "${rest_path}" >&2; exit 1; }
@@ -590,8 +672,26 @@ function write_fixtures {
         {nameWithOwner: "test-user/elsewhere", repositoryTopics: {nodes: []}, labels: {nodes: [
             {id: "LA_other", name: "epic", color: "000000", description: "Level 0: not in the model"}]}}]}}}}]' \
         >"${fixtures}/starUserModel/test-user.json"
-    jq -n '[{data: {organization: {projectsV2: {nodes: []}}}}]' >"${fixtures}/starProjects/NobleFactor.json"
-    jq -n '[{data: {user: {projectsV2: {nodes: []}}}}]' >"${fixtures}/starProjects/test-user.json"
+    # The projects: NobleFactor's Triage template with two views, beside a team's own project and a closed template;
+    # test-user's copies of Triage and Backlog, beside its own Triage project and a project of no kind.
+    jq -n 'def project($id; $n; $title; $template; $closed; $views): {id: $id, number: $n, title: $title, template: $template,
+            closed: $closed, fields: {nodes: [{id: "F_\($id)_status", name: "Status", dataType: "SINGLE_SELECT",
+            options: [{id: "o_open", name: "Open"}]}, {id: "F_\($id)_title", name: "Title", dataType: "TITLE"}]}, views: {nodes: $views}};
+        def names($list): {nodes: [$list[] | {name: .}]};
+        [{data: {organization: {projectsV2: {nodes: [
+            project("PVT_template_triage"; 23; "Triage"; true; false; [
+                {name: "Missing Area", number: 2, layout: "TABLE_LAYOUT", filter: "-has:area", fields: names(["Title", "Status"]),
+                 groupByFields: names([]), verticalGroupByFields: names([]),
+                 sortByFields: {nodes: [{direction: "DESC", field: {name: "Title"}}]}},
+                {name: "Board", number: 3, layout: "BOARD_LAYOUT", filter: "", fields: names(["Title"]),
+                 groupByFields: names([]), verticalGroupByFields: names(["Status"]), sortByFields: {nodes: []}}]),
+            project("PVT_triage_engprod"; 5; "Triage: engprod"; false; false; []),
+            project("PVT_template_old"; 7; "Old"; true; true; [])]}}}}]' >"${fixtures}/starProjects/NobleFactor.json"
+    jq -n 'def project($id; $n; $title): {id: $id, number: $n, title: $title, template: false, closed: false,
+            fields: {nodes: []}, views: {nodes: []}};
+        [{data: {user: {projectsV2: {nodes: [project("PVT_copy_triage"; 4; "Triage"), project("PVT_copy_backlog"; 5; "Backlog"),
+            project("PVT_triage_user"; 9; "Triage: test-user"), project("PVT_notes"; 10; "Notes")]}}}}]' \
+        >"${fixtures}/starProjects/test-user.json"
 
     # The Triage projects and their rows: Triage: engprod holds NobleFactor/alpha#7 and one closed issue.
     local status_field='{id: "F_status", name: "Status", options: [{id: "o_open", name: "Open"}, {id: "o_closed", name: "Closed"}]}'
@@ -656,7 +756,8 @@ run_star "${data}" github schedule report NobleFactor/alpha
 expect "1: a model with collection types loads, and the report runs" ok 'type == "array" and length == 11'
 
 # 1a. get returns an organization's model as GitHub holds it: its types with their levels, the collection types without
-# one, its fields, and its teams with the repositories each maintains (#426).
+# one, its fields, its teams with the repositories each maintains, and its open templates with their fields and views,
+# not the projects made from them (#426).
 run_star "${data}" github model get NobleFactor
 expect "1a: get NobleFactor returns its types, fields, teams and projects" ok '
     .account == "NobleFactor" and .version == 1 and (has("pulled") | not)
@@ -665,16 +766,25 @@ expect "1a: get NobleFactor returns its types, fields, teams and projects" ok '
     and ([.fields[].name] | sort) == ["Area", "Resolution", "Severity", "Target date"]
     and ([.teams[] | {slug, repositories}] | sort_by(.slug))
         == [{slug: "devlore", repositories: ["NobleFactor/beta"]}, {slug: "engprod", repositories: ["NobleFactor/alpha"]}]
-    and .projects == []'
+    and [.projects[] | {name, template}] == [{name: "Triage", template: true}]
+    and [.projects[0].fields[] | {name, type}] == [{name: "Status", type: "single-select"}]'
+expect "1a: get reads each template's views: layout, filter, and the fields each shows, groups and sorts by" ok '
+    .projects[0].views == [
+        {name: "Missing Area", number: 2, layout: "table", filter: "-has:area", fields: ["Title", "Status"], group_by: [],
+         vertical_group_by: [], sort_by: [{field: "Title", direction: "desc"}]},
+        {name: "Board", number: 3, layout: "board", filter: "", fields: ["Title"], group_by: [], vertical_group_by: ["Status"],
+         sort_by: []}]'
 
 # 1b. get returns a user account's model: its types from its type labels, in its issue-model repositories alone; no
-# fields and no teams. The account is required; the YAML is the same every time.
+# fields and no teams; and its copies of the templates the user reference names, not its other projects. The account is
+# required; the YAML is the same every time.
 run_star "${data}" github model get test-user
 expect "1b: get test-user reads its type labels, in its issue-model repositories alone" ok '
     .account == "test-user"
     and ([.types[].label] | sort) == ["bug", "epic", "feature", "scenario", "schedule", "task"]
     and ((.fields // []) | length) == 0 and ((.teams // []) | length) == 0
     and (tostring | test("test-user/elsewhere") | not)'
+expect "1b: get reads a user account's copies of the templates alone" ok '[.projects[].name] == ["Triage", "Backlog"]'
 run_star "${data}" github model get
 expect "1b: get with no account is refused" error ""
 run_star "${data}" github model get NobleFactor --output yaml
@@ -814,9 +924,12 @@ expect "10: the two-types fault names both type labels" ok "${entry} ${faulted}"
     and ([entry("test-user/personal#4").faults[] | select(.rule == "two-types") | .message] | .[0] | test("task") and test("bug"))'
 
 # 11. backup writes the model get returns into the account's .github repository through a pull request on
-# chore/model-<date>, merged, with nothing asked, its comments recording the checks and the merge (#426); a backup that
-# is current opens none; an account with no .github repository is given one.
+# chore/model-<date>, merged, with nothing asked, its comments recording the checks and the merge (#426). It merges
+# only once every workflow run on the head commit has finished and every check main requires has passed; a run that
+# never starts, or a check that fails, stops it unmerged, and running it again reuses the pull request it left open. A
+# backup that is current opens none; an account with no .github repository is given one, which requires no check.
 remote NobleFactor "old: true"
+ci NobleFactor pass
 run_star "${data}" github model backup NobleFactor
 expect "11.1: backup opens a pull request on chore/model-<date> and merges it" ok '
     ([$calls[] | select(.[0:2] == ["pr", "create"]) | .[index("--head") + 1]] | length == 1
@@ -825,6 +938,10 @@ expect "11.1: backup opens a pull request on chore/model-<date> and merges it" o
 expect "11.1: the pull request's comments record the checks and the merge" ok '
     [$calls[] | select(.[0:2] == ["pr", "comment"]) | .[index("--body") + 1]]
     | length == 2 and (.[0] | test("^Checks passed")) and (.[1] | test("^Merged") and test("reads back as the model"))'
+expect "11.1: backup waits for the head commit's workflow run to start and to finish, then merges" ok '
+    ($calls | map((.[1] // "") | test("/actions/runs\\?head_sha=")) | indices(true)) as $runs
+    | ($calls | map(.[0:2] == ["pr", "merge"]) | index(true)) as $merge
+    | ($runs | length) == 5 and $runs[-1] < $merge and any($calls[]; .[0] == "sleep")'
 run_star "${data}" github model get NobleFactor --output yaml
 get_yaml="${output}"
 check "11.1: NobleFactor/.github's main holds the model get returns" main_holds_model NobleFactor
@@ -834,9 +951,35 @@ expect "11.2: a backup that is current opens no pull request" ok '([$calls[] | s
 run_star "${data}" github model backup test-user
 expect "11.3: backup creates the account's .github repository when it is missing" ok \
     'any($calls[]; .[0:2] == ["repo", "create"])'
+expect "11.3: with no check required on main, backup merges without waiting for a run" ok '
+    (any($calls[]; (.[1] // "") | test("/actions/runs")) | not)
+    and ([$calls[] | select(.[0:2] == ["pr", "merge"])] | length == 1)
+    and ([$calls[] | select(.[0:2] == ["pr", "comment"]) | .[index("--body") + 1]] | .[0] | test("^No check is required"))'
 run_star "${data}" github model get test-user --output yaml
 get_yaml="${output}"
 check "11.3: test-user/.github's main holds the model get returns" main_holds_model test-user
+remote NobleFactor "old: true"
+ci NobleFactor never
+run_star "${data}" github model backup NobleFactor
+expect "11.4: a required check whose workflow run never starts stops the backup after 60 seconds, unmerged" error '
+    ([$calls[] | select(.[0:2] == ["pr", "merge"])] | length == 0)
+    and ([$calls[] | select(.[0] == "sleep") | .[1] | tonumber] | add == 60)
+    and ([$calls[] | select(.[0:2] == ["pr", "comment"]) | .[index("--body") + 1]] | length == 1 and (.[0] | test("quality-gate")))' \
+    'quality-gate' text
+ci NobleFactor fail
+run_star "${data}" github model backup NobleFactor
+expect "11.5: a failed check stops the backup unmerged, on the pull request the last run left open" error '
+    ([$calls[] | select(.[0:2] == ["pr", "create"] or .[0:2] == ["pr", "merge"])] | length == 0)
+    and ([$calls[] | select(.[0:2] == ["pr", "comment"]) | .[index("--body") + 1]] | length == 1
+        and (.[0] | test("did not pass") and test("quality-gate")))' 'quality-gate' text
+ci NobleFactor pass
+run_star "${data}" github model backup NobleFactor
+expect "11.6: run again, backup merges the pull request the earlier runs left open" ok '
+    ([$calls[] | select(.[0:2] == ["pr", "create"])] | length == 0)
+    and ([$calls[] | select(.[0:2] == ["pr", "merge"])] | length == 1) and (.pull_request | test("/pull/[0-9]+$"))'
+run_star "${data}" github model get NobleFactor --output yaml
+get_yaml="${output}"
+check "11.6: NobleFactor/.github's main holds the model get returns" main_holds_model NobleFactor
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"

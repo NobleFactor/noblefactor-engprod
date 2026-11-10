@@ -60,9 +60,12 @@ star github model restore <account> [<revision>] [--prune]
 - **A backup follows our process.** `backup` creates the account's `.github` repository if it has none, and clones or
   updates `~/Workspace/<account>/.github`. When `main`'s `model.yaml` differs from GitHub's model, it branches
   `chore/model-<date>`, with no issue, writes `model.yaml`, commits, pushes, and opens a pull request whose description
-  shows the change and ends with the owner's `Signed-off-by:`. It waits for the quality gate, merges, removes the
-  branch and leaves the clone on `main`, and the pull request's comments record each step and its outcome. When
-  `main`'s file already matches, it says so and stops.
+  shows the change and ends with the owner's `Signed-off-by:`. It merges only once every workflow run on the pull
+  request's head commit has finished and every check `main` requires has passed (ruled 2026-11-10): a job that needs
+  another is not listed until that one finishes, so the runs, not the checks, say when the checks are all there. A run
+  that has not started within 60 seconds, or a check that fails, stops it unmerged, and a backup run again reuses the
+  pull request it left open. It removes the branch and leaves the clone on `main`, and the pull request's comments
+  record each step and its outcome. When `main`'s file already matches, it says so and stops.
 - **The model is read when a command runs, not when the extension loads,** so `--help` and the commands that need no
   model read nothing, and a model that cannot be read stops only the command that needs it. The report and the sweep
   read the model of each account whose repositories they read.
@@ -294,8 +297,11 @@ projects:                             # the account's four project templates
       - name: Worktree
         id: PVTF_lADO…
         type: text
-    views:
-      - { name: …, layout: table }
+    views:                            # each view's columns, grouping and sort, by field name
+      - { name: Default, number: 1, layout: table, filter: "", fields: [Title, Assignees, Status, …, Step],
+          group_by: [], vertical_group_by: [], sort_by: [] }
+      - { name: By schedule, number: 2, layout: table, filter: "", fields: [Title, Assignees, Status, …, Worktree],
+          group_by: [Schedule], vertical_group_by: [], sort_by: [] }
   - name: Scenario
     id: PVT_kwDO…
     template: true
@@ -400,26 +406,29 @@ projects:                             # the account's four project templates
   saying why, never with GitHub's not-planned reason (ruled 2026-11-03). Ruled 2026-11-04: `good first issue` goes on
   tasks and bugs only, and personal gets the label, made by the script of #303's closing pull request, so that both
   accounts hold it.
-- **`projects`** is the account's project templates with their custom fields, options and views
-  ([section 3](3-collections.md)). Ruled 2026-11-03: NobleFactor's are Triage (project 23), Schedule (project 7),
-  Scenario (project 8, the former Thread template) and Backlog (project 24). David-Noble-at-work cannot mark a project
-  as a template, so it keeps copies of them to copy new projects from. A team's projects are copied from these, and are
-  not in the model, nor are any project's built-in workflows. Ruled 2026-11-02 and 2026-11-03: a template's description
-  says nothing about star, Status is a field on a project row that anyone may set, and a Schedule project has no Next
-  column. Ruled 2026-11-03: a team's Schedule project holds its committed tasks and bugs; its single-select Schedule
-  field names the schedule each row belongs to, one option per schedule, named for its Schedule issue; Step orders the
-  rows within a schedule, and a Schedule issue's own row has no step; GitHub's Iteration field gives each row its
-  sprint, for scrums and sprint review; and its Worktree column holds, in each step's row, a link to the branch its work
-  is on. A team's Scenario project held its features until the ruling of 2026-11-04 below; its single-select Scenario
-  field names the scenario each row belongs to, named for its Scenario issue, and Beat orders the rows within a
-  scenario. Each template's and each copy's Schedule or Scenario field has one option, placeholder, which names a
-  placeholder issue, so every Schedule and Scenario project and template in both accounts has its field
-  ([section 3](3-collections.md#the-schedule-and-scenario-fields)). There is no longer a project per schedule or per
-  scenario. A team's Backlog project holds accepted work not yet scheduled, ordered by priority, and its Triage project
-  is where every issue is reviewed and a triage decision made. Either the work is declined, and the issue is closed as
-  completed with Resolution Declined, or in a user account the `resolution:declined` label; or the issue is moved to the
-  team's Backlog, Schedule or Scenario project. Ruled 2026-11-03: a blank Area is an error. Each Triage project has the
-  Area field (in a user account, the `area:` labels, in its Labels column) and a view named Missing Area, both made
+- **`projects`** is the account's project templates with their custom fields, options and views ([section
+  3](3-collections.md)). Ruled 2026-11-03: NobleFactor's are Triage (project 23), Schedule (project 7), Scenario
+  (project 8, the former Thread template) and Backlog (project 24). David-Noble-at-work cannot mark a project as a
+  template, so it keeps copies of them to copy new projects from. A team's projects are copied from these, and are not
+  in the model, nor are any project's built-in workflows. As built through #426's Phase 6, `get`, as `pull` before it,
+  read every open project and no views; since 2026-11-10 it reads the templates alone, an organization's marked ones and
+  a user account's copies of those the user reference names, and each view's name, number, layout, filter, and the
+  fields it shows, groups and sorts by. Ruled 2026-11-02 and 2026-11-03: a template's description says nothing about
+  star, Status is a field on a project row that anyone may set, and a Schedule project has no Next column. Ruled
+  2026-11-03: a team's Schedule project holds its committed tasks and bugs; its single-select Schedule field names the
+  schedule each row belongs to, one option per schedule, named for its Schedule issue; Step orders the rows within a
+  schedule, and a Schedule issue's own row has no step; GitHub's Iteration field gives each row its sprint, for scrums
+  and sprint review; and its Worktree column holds, in each step's row, a link to the branch its work is on. A team's
+  Scenario project held its features until the ruling of 2026-11-04 below; its single-select Scenario field names the
+  scenario each row belongs to, named for its Scenario issue, and Beat orders the rows within a scenario. Each
+  template's and each copy's Schedule or Scenario field has one option, placeholder, which names a placeholder issue, so
+  every Schedule and Scenario project and template in both accounts has its field ([section
+  3](3-collections.md#the-schedule-and-scenario-fields)). There is no longer a project per schedule or per scenario. A
+  team's Backlog project holds accepted work not yet scheduled, ordered by priority, and its Triage project is where
+  every issue is reviewed and a triage decision made. Either the work is declined, and the issue is closed as completed
+  with Resolution Declined, or in a user account the `resolution:declined` label; or the issue is moved to the team's
+  Backlog, Schedule or Scenario project. Ruled 2026-11-03: a blank Area is an error. Each Triage project has the Area
+  field (in a user account, the `area:` labels, in its Labels column) and a view named Missing Area, both made
   2026-11-03, and nothing leaves Triage without an Area; a scheduled sweep will return any open issue without an Area to
   its team's Triage project. Read 2026-11-04, no view shows the Area or Labels column, and the script of #303's closing
   pull request shows it (below).

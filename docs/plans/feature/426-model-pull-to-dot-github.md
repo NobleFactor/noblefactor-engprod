@@ -61,6 +61,13 @@ Ruled by the owner on 2026-11-09, in this session.
 - **A backup follows our process.** Alignment is complete before its pull request merges. Its branch is
   `chore/model-<date>`, with no issue: the process is documented and the intent clear, and the pull request's comments
   record the steps and outcomes. The clone stays at `~/Workspace/<account>/.github`.
+- **A backup merges only on every check** (ruled 2026-11-10). It merges only once every workflow run on the pull
+  request's head commit has finished and every check `main` requires has passed. A job that needs another is not listed
+  until that one finishes: in devlore-cli the last required check is listed 7½ to 13 minutes into CI. So the runs, not
+  the checks, say when the checks are all there; every run a pull request starts is created within seconds of its
+  opening, 3 to 4 measured. A run that has not started within 60 seconds, or a check that fails, stops the backup
+  unmerged, saying why on the pull request, and a backup run again reuses the pull request it left open. #472 brings the
+  same gate to the PR script template.
 - **Reads in parallel, through a graph.** Building and executing a graph from star, with the flow provider's `gather`,
   is design work of its own, #471; devlore-cli's `cmd/devlore-test` shows how a graph is built and run. Until it
   lands, `get` reads the pieces one at a time.
@@ -105,7 +112,10 @@ The rulings settle the commands. These remain.
 
 - `star github model get <account>` reads the account's model from GitHub, piece by piece, and returns it as one
   record: issue types or type labels, issue fields, teams and their repositories, each participating repository's
-  labels, and the project templates with their fields, options and views.
+  labels, and the project templates with their fields, options and views. An organization's templates are those it
+  marks; a user account's are its copies of those the user reference names; the projects made from them are not read.
+  Each view is its name, number, layout, filter, and the fields it shows, groups and sorts by. Found in Phase 7, on
+  2026-11-10: as built through Phase 6, get, as pull before it, read every open project and no views.
 
 ### Requirement 2: the report and the sweep on the live model
 
@@ -117,12 +127,13 @@ The rulings settle the commands. These remain.
 ### Requirement 3: backup
 
 - `star github model backup <account>`: `get`; if `<account>/.github`'s `model.yaml` on `main` already matches, say so
-  and stop. Otherwise create the repository if it is missing, clone or update
-  `~/Workspace/<account>/.github`, branch `chore/model-<date>`, write `model.yaml`, commit, push, and open a pull
-  request whose description lists the changes and ends with the owner's `Signed-off-by:`; wait for the quality gate;
-  merge; remove the branch; leave the clone current. The pull request's comments record each step and its outcome,
-  as the ruling has it. It asks nothing: a TODO linking NobleFactor/devlore-cli#1219
-  stands where it will ask before it creates the repository and before it merges (#470).
+  and stop. Otherwise create the repository if it is missing, clone or update `~/Workspace/<account>/.github`, branch
+  `chore/model-<date>`, write `model.yaml`, commit, push, and open a pull request whose description lists the changes
+  and ends with the owner's `Signed-off-by:`; wait until every workflow run on the head commit has finished and every
+  check `main` requires has passed, stopping unmerged when a run has not started within 60 seconds or a check fails, and
+  reusing the open pull request when run again; merge; remove the branch; leave the clone current. The pull request's
+  comments record each step and its outcome, as the ruling has it. It asks nothing: a TODO linking
+  NobleFactor/devlore-cli#1219 stands where it will ask before it creates the repository and before it merges (#470).
 
 ### Requirement 4: two type labels
 
@@ -207,6 +218,7 @@ The rulings settle the commands. These remain.
 | 6 | `--help` and the labels commands | No read of the model |
 | 7 | `backup NobleFactor`, the checkpoint current | Says so; no branch, no pull request |
 | 8 | `backup NobleFactor`, the checkpoint behind, `--unattended` | Branch `chore/model-<date>`, `model.yaml` written, a pull request opened and merged, its comments recording the checks and the merge; read back |
+| 8a | `backup NobleFactor`, a required check whose run never starts, then one that fails, then all passing | Stops unmerged twice, saying why on the pull request; the third run merges the same pull request |
 | 9 | A user-account issue with two type labels | The sweep's `two-types` fault, naming both |
 | 10 | `pull`, `digest` | Unknown commands |
 | 11 | Every existing case, brought to the live model | Passes |

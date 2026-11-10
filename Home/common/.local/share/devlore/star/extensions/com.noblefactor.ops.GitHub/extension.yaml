@@ -57,7 +57,7 @@ commands:
         help: A working tree; the sync targets the repository its origin names
 
   - name: github.model.get
-    help: "An account's issue data model as GitHub holds it now: its issue types or type labels, its issue fields, its teams, its labels and its projects, as one record; -o yaml gives the form a backup keeps"
+    help: "An account's issue data model as GitHub holds it now: its issue types or type labels, its issue fields, its teams, its labels, and its project templates with their fields and views, as one record; -o yaml gives the form a backup keeps"
     implementation: commands/github-model-get.star
     args:
       - name: account

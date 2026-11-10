@@ -5,10 +5,11 @@
 
 docs/architecture/issue-data-model/6-the-asset-and-its-sync.md. read_model enumerates what GitHub holds for an account,
 piece by piece, when a command needs it: an organization's issue types, issue fields, teams with the repositories each
-maintains, the hub's labels and its projects; a user account's type labels and the labels of the repositories it owns
-that carry the topic issue-model, and its projects. star github model get returns it; scheme.star derives from it what
-the report and the sweep place issues by. Nothing here keeps a copy. The pieces are read one at a time; reading them in
-parallel, through a graph, is a follow-up of its own. This module loads nothing, and nothing it reads is a file but the
+maintains, the hub's labels and its project templates; a user account's type labels, the labels of the repositories it
+owns that carry the topic issue-model, and its copies of the templates. Each template comes with its fields, options and
+views; the projects made from the templates are not part of the model. star github model get returns it; scheme.star
+derives from it what the report and the sweep place issues by. Nothing here keeps a copy. The pieces are read one at a
+time; reading them in parallel, through a graph, is noblefactor-engprod#471. This module loads nothing, and nothing it reads is a file but the
 extension's reference models.
 """
 
@@ -112,20 +113,62 @@ def owner_kind(login):
         return "user"
     fail(login + " is neither an organization nor a user on GitHub: " + t)
 
+# A view's layout as GitHub names it, and as the model records it.
+VIEW_LAYOUTS = {"TABLE_LAYOUT": "table", "BOARD_LAYOUT": "board", "ROADMAP_LAYOUT": "roadmap"}
+
+# The names of the fields in a connection of a view's fields.
+_FIELD_NAMES = "nodes { ... on ProjectV2FieldCommon { name } }"
+
+def _template_names():
+    """The templates the user reference names: a user account cannot mark a project as a template, so it keeps copies."""
+    ref = yaml.decode(data = read_text(extension_dir() + "/reference/user.yaml")) or {}
+    return [p["name"] for p in (ref.get("projects") or []) if type(p) == "dict" and p.get("name")]
+
+def _names(connection):
+    """The names of the fields in a connection, in its order."""
+    return [n["name"] for n in (connection or {}).get("nodes") or [] if type(n) == "dict" and n.get("name")]
+
+def _view(node):
+    """One view as the model records it: its name, number, layout and filter, and the fields it shows, groups and sorts by."""
+    layout = node.get("layout") or ""
+    return {
+        "name": node["name"],
+        "number": int(node["number"]),
+        "layout": VIEW_LAYOUTS.get(layout, layout.lower()),
+        "filter": node.get("filter") or "",
+        "fields": _names(node.get("fields")),
+        "group_by": _names(node.get("groupByFields")),
+        "vertical_group_by": _names(node.get("verticalGroupByFields")),
+        "sort_by": [
+            {"field": (s.get("field") or {}).get("name"), "direction": (s.get("direction") or "").lower()}
+            for s in (node.get("sortByFields") or {}).get("nodes") or []
+        ],
+    }
+
 def read_projects(login, kind):
-    """The account's projects with their fields and options, or None when the token cannot read projects."""
+    """The account's open templates with their fields, options and views, or None when the token cannot read projects.
+
+    An organization's templates are the projects it marks as templates. A user account cannot mark one, so its templates
+    are its copies of those the user reference names. The projects made from them are not part of the model.
+    """
     query = ("query starProjects { " + kind + "(login: \"" + login + "\") { projectsV2(first: 50) { nodes { id number title template closed " +
              "fields(first: 50) { nodes { ... on ProjectV2FieldCommon { id name dataType } " +
-             "... on ProjectV2SingleSelectField { options { id name } } } } } } } }")
+             "... on ProjectV2SingleSelectField { options { id name } } } } " +
+             "views(first: 25) { nodes { name number layout filter fields(first: 50) { " + _FIELD_NAMES + " } " +
+             "groupByFields(first: 10) { " + _FIELD_NAMES + " } verticalGroupByFields(first: 10) { " + _FIELD_NAMES + " } " +
+             "sortByFields(first: 10) { nodes { direction field { ... on ProjectV2FieldCommon { name } } } } } } } } } }")
     out = sh("gh api graphql -f query=" + quote(query) + " 2>/dev/null; true")
     if not out.strip().startswith("{"):
         return None
     data = json.decode(data = out)
     if data.get("errors") or not data.get("data") or not data["data"].get(kind):
         return None
+    copies = [] if kind == "organization" else _template_names()
     projects = []
     for node in data["data"][kind]["projectsV2"]["nodes"]:
         if node.get("closed"):
+            continue
+        if not (node.get("template") if kind == "organization" else node["title"] in copies):
             continue
         fields = []
         for f in node["fields"]["nodes"]:
@@ -136,7 +179,15 @@ def read_projects(login, kind):
             if field_type == "single-select":
                 field["options"] = [{"name": o["name"], "id": o["id"]} for o in f.get("options", [])]
             fields.append(field)
-        projects.append({"name": node["title"], "id": node["id"], "number": int(node["number"]), "template": bool(node["template"]), "fields": fields})
+        views = sorted([_view(v) for v in (node.get("views") or {}).get("nodes") or []], key = lambda v: v["number"])
+        projects.append({
+            "name": node["title"],
+            "id": node["id"],
+            "number": int(node["number"]),
+            "template": bool(node["template"]),
+            "fields": fields,
+            "views": views,
+        })
     return sorted(projects, key = lambda p: p["number"])
 
 def read_organization(org):
