@@ -259,14 +259,15 @@ def _sweep(account, models, dry_run):
     return sorted(records, key = lambda x: (x["project"], x["issue"].split("#")[0], int(x["issue"].split("#")[-1])))
 
 def run(_command, ctx):
-    """Check gh's access, read each account's record against its model, then sweep each account named, or every one with a model.
+    """Check gh's access, read each account's model and record, then sweep each account named, or the default accounts.
 
     With no account named, it sweeps the default account and the owner of each of writ's layer repositories. Each
     account's model is read from GitHub when the sweep runs (noblefactor-engprod#426).
 
     Args:
       _command: the command as star names it.
-      ctx: the invocation: ctx.args carries the accounts named; ctx.dry_run, star's --dry-run, under which nothing is added.
+      ctx: the invocation: ctx.args carries the accounts named; ctx.dry_run, star's --dry-run, which the sweep refuses until
+        NobleFactor/devlore-cli#1170 lets a dry run read.
     """
     refuse_dry_run(ctx.dry_run)
     check_access("star github triage sweep", scopes = ["project"], dry_run = ctx.dry_run)

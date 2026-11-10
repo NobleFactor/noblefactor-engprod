@@ -238,10 +238,10 @@ def _id(v):
     return v
 
 def merge_types(old, github, notes, conflicts):
-    """The asset's types brought to GitHub's, matched by id: renames kept as renames, levels from the descriptions.
+    """A model's types brought to GitHub's, matched by id: renames kept as renames, levels from the descriptions.
 
     A type whose description begins "Level N:" is of the hierarchy, at that level; one whose description begins
-    "Collection:" is a collection, with no level; any other is a conflict, and the pull writes nothing.
+    "Collection:" is a collection, with no level; any other is a conflict, and read_model stops, naming it.
     """
     by_id = {str(_id(t["id"])): t for t in old}
     seen = {}

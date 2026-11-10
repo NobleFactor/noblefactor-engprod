@@ -19,11 +19,11 @@ commands:
         help: "Read only what GitHub's issue search finds, in its syntax, passed unchanged and run once for each repository as (<search>) repo:<repository> is:issue; an error when it matches more than 1,000 issues in one"
 
   - name: github.triage.sweep
-    help: "Add every open issue that breaks a classification rule to its team's Triage project, commenting on it with the rules it breaks; return one flat record for each issue added, already there with a fault, or a Triage row; adds only, never removes; nothing is added under --dry-run"
+    help: "Add every open issue that breaks a classification rule to its team's Triage project, commenting on it with the rules it breaks; return one flat record for each issue added, already there with a fault, or a Triage row; adds only, never removes; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
     implementation: commands/github-triage-sweep.star
     args:
       - name: accounts
-        help: "The accounts to sweep, NobleFactor or David-Noble-at-work; default: every account with a model"
+        help: "The accounts to sweep, NobleFactor or David-Noble-at-work; default: star's default account and the owner of each of writ's layer repositories"
         variadic: true
 
   - name: github.labels.audit
