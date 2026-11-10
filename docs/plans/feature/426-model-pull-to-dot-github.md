@@ -44,7 +44,10 @@ Ruled by the owner on 2026-11-09, in this session.
   takes any model, a reference or another account's, and is how a new account is set up. `<model>` is a file, or `-`.
 - **No `--check`, no `--asset`.** A preview is `diff`, or star's own `--dry-run`; the model's file is wherever
   `get`'s output is redirected.
-- **Interactive by default; star's global `--unattended` skips every prompt.** No `--force`.
+- **Interactive by default; star's global `--unattended` skips every prompt.** No `--force`. **For now, nothing asks**
+  (ruled later the same day): an extension cannot ask until devlore's TUI can (NobleFactor/devlore-cli#1219, built by
+  NobleFactor/devlore-cli#1221), so each place a question belongs carries a TODO linking NobleFactor/devlore-cli#1219,
+  and #470, step 36, tracks the dependency: the issue tracking system is not done until it asks.
 - **`apply` reconciles; it never deletes and recreates.** It creates what is missing, changes what differs and deletes
   only what the model lacks. On the same account it matches by id, so a rename is a rename; across accounts, by name.
 - **A backup follows our process.** Alignment is complete before its pull request merges. Its branch is
@@ -106,10 +109,11 @@ The rulings settle the commands. These remain.
 ### Requirement 3: backup
 
 - `star github model backup <account>`: `get`; if `<account>/.github`'s `model.yaml` on `main` already matches, say so
-  and stop. Otherwise create the repository if it is missing (asked), clone or update
+  and stop. Otherwise create the repository if it is missing, clone or update
   `~/Workspace/<account>/.github`, branch `chore/model-<date>`, write `model.yaml`, commit, push, and open a pull
   request whose description lists the changes and ends with the owner's `Signed-off-by:`; wait for the quality gate;
-  merge (asked); remove the branch; leave the clone current. `--unattended` asks nothing.
+  merge; remove the branch; leave the clone current. It asks nothing: a TODO linking NobleFactor/devlore-cli#1219
+  stands where it will ask before it creates the repository and before it merges (#470).
 
 ### Requirement 4: two type labels
 
@@ -130,8 +134,13 @@ The rulings settle the commands. These remain.
 
 ### Phase 2: what star gives an extension
 
-- [ ] Recorded here: how an extension prompts and reads `--unattended`; whether `-o yaml` renders a record the same
-      every run
+- [x] Recorded here: how an extension prompts and reads `--unattended`; whether `-o yaml` renders a record the same
+      every run. Read on 2026-11-09 from devlore-cli's `develop` at `1ae1da72`: an extension's `ctx` carries `args` and
+      `dry_run` alone (`cmd/star/extension/command.go`), and the `ui` module offers `error`, `fail`, `note`, `print`,
+      `succeed` and `warn`, none of which asks; so an extension can neither prompt nor learn of `--unattended`, and no
+      open devlore-cli issue asks for either. star's own `--unattended` takes each prompt's default and asks nothing,
+      and `--force` answers yes (`self uninstall`, `cmd/internal/cli/selfinstall.go`). `-o yaml` rendered one record the
+      same twice: star turns a dict into a Go map, so keys come out sorted and lists keep their order
 
 ### Phase 3: the test, first
 
