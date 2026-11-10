@@ -1,7 +1,7 @@
 ---
 title: "GitHub is the model: star github model get and backup, and the report and the sweep on the live model"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/426
-status: active
+status: complete
 created: 2026-11-09
 updated: 2026-11-10
 ---
@@ -211,7 +211,7 @@ The rulings settle the commands. These remain.
 
 ### Phase 8: merge
 
-- [ ] The pull request script written, shown and handed over; it closes #426
+- [x] The pull request script written, shown and handed over; it closes #426
 
 ## Test Plan
 
