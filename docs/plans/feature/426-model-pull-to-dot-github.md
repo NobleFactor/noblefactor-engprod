@@ -151,7 +151,11 @@ The rulings settle the commands. These remain.
 
 ### Phase 4: get, and the report and the sweep on the live model
 
-- [ ] Requirements 1 and 2; every case passes; `make check` passes
+- [x] Requirements 1 and 2; every case passes; `make check` passes, but for Phase 5's: 39 of the 47 cases pass, the 8
+      left being backup, two-types and backup among the model's commands, and make check's other gates pass. Two things
+      the build found: GitHub's issue types carry no unplanned mark, so an organization's comes from its reference model
+      by type name, as a user account's does by label; and a read skipped by star's --dry-run answers empty, so get, the
+      report and the sweep refuse --dry-run before they read, a TODO linking NobleFactor/devlore-cli#1170 at the check
 
 ### Phase 5: backup, and two type labels
 

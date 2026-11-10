@@ -2,7 +2,7 @@
 # Copyright Noble Factor. All rights reserved.
 
 extension: com.noblefactor.ops.GitHub
-description: GitHub under the NobleFactor issue data model -- every issue as a record, the triage sweep, the label set, and the model's pull
+description: GitHub under the NobleFactor issue data model -- every issue as a record, the triage sweep, the label set, and each account's model as GitHub holds it
 
 commands:
   - name: github.schedule.report
@@ -56,40 +56,17 @@ commands:
         default: ""
         help: A working tree; the sync targets the repository its origin names
 
-  - name: github.model.pull
-    help: "Pull an account's issue types, issue fields, teams, labels and projects into its model file, read by ETag where GitHub offers one, and print the diff; --check previews"
-    implementation: commands/github-model-pull.star
-    flags:
+  - name: github.model.get
+    help: "An account's issue data model as GitHub holds it now: its issue types or type labels, its issue fields, its teams, its labels and its projects, as one record; -o yaml gives the form a backup keeps"
+    implementation: commands/github-model-get.star
+    args:
       - name: account
-        type: string
-        default: ""
-        help: "The account whose model is pulled, an organization or a user; default: star configuration's github.account, and then NobleFactor"
-      - name: asset
-        type: string
-        default: ""
-        help: "The model file to write, which a real pull writes only on a branch; default: model.<account>.yaml beside this extension. The model of an account star reads from GitHub, the default account and each writ layer repository's owner, is <account>/.github/model.yaml, so name a clone's; without one, --check compares GitHub with star's copy of it"
-      - name: check
-        type: bool
-        default: "false"
-        help: "Print what would change and write nothing. A workaround for NobleFactor/devlore-cli#1170: star's --dry-run skips the reads a preview needs, so this command refuses it"
-
-  - name: github.model.digest
-    help: Re-sign a deliberately hand-edited model.yaml, its digest over the file with its own line excluded; --check previews
-    implementation: commands/github-model-digest.star
-    flags:
-      - name: asset
-        type: string
-        default: ""
-        help: "The model file to re-sign. The model of an account star reads from GitHub, the default account and each writ layer repository's owner, is <account>/.github/model.yaml, so name a clone's; there is no default"
-      - name: check
-        type: bool
-        default: "false"
-        help: "Print what would change and write nothing. A workaround for NobleFactor/devlore-cli#1170: star's --dry-run skips the reads a preview needs, so this command refuses it"
+        help: "The account, an organization or a user; required"
 
   # The names before #378, kept so that what sessions run today still works; each runs the new command's code and
   # its help names the new command. A later task removes them once no skill, document or session names them. The
   # report's and the audit's went with #436, whose report takes none of the flags they declared, and whose audit
-  # retired.
+  # retired; the model's pull and digest went with #426.
 
   - name: gh.labels.audit
     help: "Renamed: star github labels audit. Which repositories lack a kind, Epic:Ops:Process, or a thread label, and which carry one that has drifted"
@@ -120,36 +97,6 @@ commands:
         type: string
         default: ""
         help: A working tree; the sync targets the repository its origin names
-
-  - name: gh.model.pull
-    help: "Renamed: star github model pull. Pull an account's issue types, issue fields, teams, labels and projects into its model file, and print the diff; --check previews"
-    implementation: commands/github-model-pull.star
-    flags:
-      - name: account
-        type: string
-        default: ""
-        help: "The account whose model is pulled, an organization or a user; default: star configuration's github.account, and then NobleFactor"
-      - name: asset
-        type: string
-        default: ""
-        help: "The model file to write, which a real pull writes only on a branch; default: model.<account>.yaml beside this extension. The model of an account star reads from GitHub, the default account and each writ layer repository's owner, is <account>/.github/model.yaml, so name a clone's; without one, --check compares GitHub with star's copy of it"
-      - name: check
-        type: bool
-        default: "false"
-        help: "Print what would change and write nothing. A workaround for NobleFactor/devlore-cli#1170: star's --dry-run skips the reads a preview needs, so this command refuses it"
-
-  - name: gh.model.digest
-    help: "Renamed: star github model digest. Re-sign a deliberately hand-edited model.yaml, its digest over the file with its own line excluded; --check previews"
-    implementation: commands/github-model-digest.star
-    flags:
-      - name: asset
-        type: string
-        default: ""
-        help: "The model file to re-sign. The model of an account star reads from GitHub, the default account and each writ layer repository's owner, is <account>/.github/model.yaml, so name a clone's; there is no default"
-      - name: check
-        type: bool
-        default: "false"
-        help: "Print what would change and write nothing. A workaround for NobleFactor/devlore-cli#1170: star's --dry-run skips the reads a preview needs, so this command refuses it"
 
 config:
   path: github

@@ -656,7 +656,7 @@ expect "1: a model with collection types loads, and the report runs" ok 'type ==
 # one, its fields, and its teams with the repositories each maintains (#426).
 run_star "${data}" github model get NobleFactor
 expect "1a: get NobleFactor returns its types, fields, teams and projects" ok '
-    .pulled.account == "NobleFactor"
+    .account == "NobleFactor" and .version == 1 and (has("pulled") | not)
     and ([.types[] | select(.level != null) | "\(.name):\(.level)"] | sort) == ["Bug:2", "Epic:0", "Feature:1", "Task:2"]
     and ([.types[] | select(.level == null) | .name] | sort) == ["Scenario", "Schedule"]
     and ([.fields[].name] | sort) == ["Area", "Resolution", "Severity", "Target date"]
@@ -668,7 +668,7 @@ expect "1a: get NobleFactor returns its types, fields, teams and projects" ok '
 # fields and no teams. The account is required; the YAML is the same every time.
 run_star "${data}" github model get test-user
 expect "1b: get test-user reads its type labels, in its issue-model repositories alone" ok '
-    .pulled.account == "test-user"
+    .account == "test-user"
     and ([.types[].label] | sort) == ["bug", "epic", "feature", "scenario", "schedule", "task"]
     and ((.fields // []) | length) == 0 and ((.teams // []) | length) == 0
     and (tostring | test("test-user/elsewhere") | not)'
@@ -783,9 +783,10 @@ expect "4: --filter action=added and CSV give what the run sent to Triage, one r
     and (.[1:] | map(select(test("^NobleFactor/alpha#3,Triage: engprod,step-order$"))) | length) == 1' "" text
 
 # Under star's --dry-run every shell.exec is skipped, reads with writes, until NobleFactor/devlore-cli#1170: the sweep
-# can read nothing then, and what this case holds it to is that it writes nothing.
+# cannot read the model then, and says so; what this case holds it to is that it writes nothing.
 run_star "${data}" github triage sweep NobleFactor --dry-run
-expect "7: --dry-run adds nothing" any '(any($calls[]; any(.[]; type == "string" and test("mutation"))) | not)'
+expect "7: --dry-run adds nothing, and says why it read nothing" any \
+    '($calls | map(select(any(.[]; type == "string" and test("mutation")))) | length) == 0' 'devlore-cli#1170' text
 
 # 9. No model file is read or kept: the report and the sweep run on the model GitHub holds, read when they need it
 # (#426); --help reads nothing; get and backup are the model's commands, and pull and digest are gone.
@@ -800,7 +801,7 @@ quiet=""
 run_star "${data}" github model --help
 quiet="--silent"
 expect "9: the model's commands are get and backup; pull and digest are gone" ok \
-    'test("\\bget\\b") and test("\\bbackup\\b") and (test("\\bpull\\b") | not) and (test("\\bdigest\\b") | not)' "" text
+    'test("\\n  get\\s") and test("\\n  backup\\s") and (test("\\n  (pull|digest)\\s") | not)' "" text
 cache_home="${run_directory}/cache"
 
 # 10. A user-account issue carrying two type labels is a fault, both named (#426).
