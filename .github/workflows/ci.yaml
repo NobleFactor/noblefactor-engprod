@@ -95,9 +95,10 @@ jobs:
   # bash 5.3 and GNU getopt, which Declare-BashScript requires (#268, #290), GNU make, for .ONESHELL, and
   # the GNU coreutils, diffutils, findutils, grep, sed and awk the scripts are run with there; and tmux, for
   # Start-Claude's test. macOS ships bash 3.2, BSD getopt, make 3.81 and BSD tools, so Homebrew's go first
-  # on PATH. Homebrew's formulas are not pinned: they are whatever it installs on the day.
+  # on PATH. Homebrew's formulas are not pinned: they are whatever it installs on the day. macOS 26, on
+  # arm64, GitHub's newest (the owner, 2026-11-11, #480).
   test-macos:
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
 
@@ -128,9 +129,16 @@ jobs:
         run: make test
 
   # The PowerShell tests on Windows, as make test runs them there (#312). The runner has pwsh and git and
-  # no psmux, for which Test-StartClaude.ps1 stands in a tmux that refuses every command.
+  # no psmux, for which Test-StartClaude.ps1 stands in a tmux that refuses every command. Two legs (the
+  # owner, 2026-11-11, #480): Windows 11 on arm64, and on amd64 Windows Server 2025, since GitHub hosts
+  # Windows 11 on arm64 alone; neither leg cancels the other when it fails.
   test-windows:
-    runs-on: windows-2025
+    name: test-windows (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-11-arm, windows-2025]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
