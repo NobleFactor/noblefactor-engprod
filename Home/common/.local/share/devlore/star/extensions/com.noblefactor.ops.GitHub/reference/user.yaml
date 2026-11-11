@@ -70,9 +70,11 @@ types:
     description: "Level 2: planned work, a step in delivering a feature"
   - name: "Schedule"
     label: "schedule"
+    color: "1d76db"
     description: "Collection: the issue that describes a schedule, its deliverable and exit criteria"
   - name: "Scenario"
     label: "scenario"
+    color: "8a63d2"
     description: "Collection: the issue that describes a scenario, the end-user goal it summarizes"
 
 # Labels that stand in for issue fields. A user's account has no issue fields: GitHub's GraphQL schema says
@@ -317,6 +319,7 @@ labels:
 # David-Noble-at-work's copies on 2026-11-10.
 templates:
   - name: "Triage"
+    short_description: "{account}'s copy of NobleFactor's Triage template. A user account can't have templates, so a Triage project is copied from this one."
     views:
       - name: "View 1"
         layout: table
@@ -333,6 +336,7 @@ templates:
         vertical_group_by: []
         sort_by: []
   - name: "Backlog"
+    short_description: "{account}'s copy of NobleFactor's Backlog template. A user account can't have templates, so a Backlog project is copied from this one."
     views:
       - name: "View 1"
         layout: table
@@ -341,3 +345,7 @@ templates:
         group_by: []
         vertical_group_by: []
         sort_by: []
+  - name: "Schedule"
+    short_description: "{account}'s copy of NobleFactor's Schedule template. A user account can't have templates, so a Schedule project is copied from this one."
+  - name: "Scenario"
+    short_description: "{account}'s copy of NobleFactor's Scenario template. A user account can't have templates, so a Scenario project is copied from this one."

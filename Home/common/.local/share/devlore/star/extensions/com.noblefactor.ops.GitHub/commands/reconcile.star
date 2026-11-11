@@ -19,7 +19,7 @@
 #
 # One record for each difference: kind, path, change (missing: the model has it and GitHub does not; different;
 # renamed; extra: GitHub has it and the model does not), what GitHub holds, what the model holds, and by_hand when
-# GitHub's API cannot make the change, a view's grouping or sort, or a team.
+# GitHub's API cannot make the change, a view's grouping or sort.
 
 load("commands/model.star", "extension_dir", "read_account", "read_text")
 
@@ -41,7 +41,7 @@ KINDS = [
 ]
 
 # What is compared of each thing, and what of it GitHub's API cannot write.
-_TYPE = ["description", "color", "enabled"]
+_TYPE = ["description", "color", "enabled", "pinned_fields"]
 _FIELD = ["type", "description", "visibility"]
 _OPTION = ["color", "description", "priority"]
 _LABEL = ["color", "description"]
@@ -49,6 +49,23 @@ _PROJECT_FIELD = ["type", "issue_field", "configuration"]
 _PROJECT_OPTION = ["color", "description"]
 _VIEW = ["layout", "filter", "fields"]
 _VIEW_BY_HAND = ["group_by", "vertical_group_by", "sort_by"]
+_TEMPLATE = ["short_description", "readme", "public"]
+_TEMPLATE_LINKS = ["teams", "repositories"]
+_TEAM = ["name", "description", "privacy", "notification_setting", "parent", "roles", "repositories"]
+
+# What every reference entry names, a deliberate none written as one, null (the owner, 2026-11-10): an attribute left out
+# is an omission, refused, not a decision.
+_REQUIRED = {
+    "organization type": ["name", "color", "description", "enabled", "pinned_fields"],
+    "user type": ["name", "label", "color", "description"],
+    "field": ["name", "type", "description", "visibility"],
+    "field option": ["name", "color", "description", "priority"],
+    "label": ["name", "label", "color", "description"],
+    "template": ["name", "short_description", "readme", "public"],
+    "template field": ["name", "type"],
+    "template option": ["name", "color", "description"],
+    "view": ["name", "layout", "filter", "fields", "group_by", "vertical_group_by", "sort_by"],
+}
 
 # A model on standard input waits on the command provider, which gives an extension's commands standard input.
 _STDIN = ("a model on standard input waits on NobleFactor/devlore-cli#1136: star's shell provider gives an extension's " +
@@ -70,6 +87,24 @@ def is_reference(m):
     """Whether a model is a reference: one holding templates, where the form get returns holds projects."""
     return "templates" in m and "projects" not in m
 
+def _complete(source, what, entry):
+    """Fails when a reference entry leaves out an attribute every entry of its kind names."""
+    missing = [a for a in _REQUIRED[what] if a not in entry]
+    if missing:
+        fail(source + ": the " + what + " " + str(entry.get("name") or entry.get("label") or "?") + " names no " +
+             ", ".join(missing) + "; a reference names every attribute, and a deliberate none is written as one: " +
+             missing[0] + ": null")
+
+def _complete_templates(source, templates):
+    """Checks a reference's templates, the common set's or a kind's additions, field, option and view by view."""
+    for t in templates or []:
+        for f in t.get("fields") or []:
+            _complete(source, "template field", f)
+            for o in f.get("options") or []:
+                _complete(source, "template option", o)
+        for v in t.get("views") or []:
+            _complete(source, "view", v)
+
 def _reference(name):
     """One of the extension's reference files, decoded."""
     return yaml.decode(data = read_text(extension_dir() + "/reference/" + name + ".yaml")) or {}
@@ -80,8 +115,10 @@ def templates_for(additions):
     A kind adds fields, and views, a view of the same name replacing the common one.
     """
     added = {t["name"]: t for t in additions or [] if type(t) == "dict"}
+    common = _reference("templates").get("templates") or []
+    _complete_templates("reference/templates.yaml", common)
     out = []
-    for t in _reference("templates").get("templates") or []:
+    for t in common:
         a = added.get(t["name"]) or {}
         views = {}
         order = []
@@ -89,11 +126,14 @@ def templates_for(additions):
             if v["name"] not in views:
                 order.append(v["name"])
             views[v["name"]] = v
-        out.append({
-            "name": t["name"],
-            "fields": list(t.get("fields") or []) + list(a.get("fields") or []),
-            "views": [views[n] for n in order],
-        })
+        merged = {"name": t["name"], "fields": list(t.get("fields") or []) + list(a.get("fields") or []), "views": [views[n] for n in order]}
+        for attribute in ["short_description", "readme", "public"]:
+            if attribute in a:
+                merged[attribute] = a[attribute]
+            elif attribute in t:
+                merged[attribute] = t[attribute]
+        _complete("reference/templates.yaml and its kind's reference", "template", merged)
+        out.append(merged)
     return out
 
 def _own_options():
@@ -133,8 +173,20 @@ def from_reference(ref, github):
     additions.
     """
     user = ref.get("account") == "user"
+    source = "the " + ("user" if user else "organization") + " reference"
+    for t in ref.get("types") or []:
+        _complete(source, "user type" if user else "organization type", t)
+    for f in ref.get("fields") or []:
+        _complete(source, "field", f)
+        for o in f.get("options") or []:
+            _complete(source, "field option", o)
+    for key in ref:
+        if key != "types" and type(ref[key]) == "list" and ref[key] and all([type(e) == "dict" and "label" in e for e in ref[key]]):
+            for e in ref[key]:
+                _complete(source, "label", e)
+    _complete_templates(source, ref.get("templates"))
     m = {"version": ref.get("version") or 1, "reference": True, "files_from": ref.get("files_from")}
-    keep = ["name", "label", "level", "unplanned", "color", "description"]
+    keep = ["name", "label", "level", "unplanned", "color", "description", "enabled", "pinned_fields"]
     m["types"] = [{k: t[k] for k in keep if k in t} for t in ref.get("types") or [] if type(t) == "dict"]
     if not user:
         m["fields"] = []
@@ -146,8 +198,16 @@ def from_reference(ref, github):
     wanted = _label_families(ref) if user else []
     m["labels"] = {"repositories": {r: wanted for r in sorted((github.get("labels") or {}).get("repositories") or {})}}
     m["label_kinds"] = _label_kinds(wanted)
-    m["projects"] = [dict(t, template = not user) for t in templates_for(ref.get("templates"))]
+    account = github["account"]
+    m["projects"] = [
+        dict(t, template = not user, short_description = _for(t["short_description"], account), readme = _for(t["readme"], account))
+        for t in templates_for(ref.get("templates"))
+    ]
     return m
+
+def _for(text, account):
+    """A reference's text for the account it is applied to: a reference names no account, so its text says {account}."""
+    return text.replace("{account}", account) if type(text) == "string" else text
 
 def _label_kinds(labels):
     """The kinds of label a reference names: each label's prefix up to its colon, and each label with none."""
@@ -326,8 +386,11 @@ def compare(model, github, projects, kind):
             if mf != None and gf != None:
                 _options(out, "issue-field-option", name, mf, gf, same, False, {})
 
+    # An account's own parts, its labels, its teams and their roles, and its templates' links, are compared only against
+    # its own backup, labels against a reference too: another account's belong to its repositories and its people (the
+    # owner, 2026-11-10).
     kinds = model.get("label_kinds")
-    for mr, gr in _repositories(model, github, same):
+    for mr, gr in (_repositories(model, github, same) if same or model.get("reference") else []):
         mlabels = model["labels"]["repositories"][mr]
         glabels = github["labels"]["repositories"][gr]
         for ml, gl in match(mlabels, glabels, same):
@@ -339,7 +402,8 @@ def compare(model, github, projects, kind):
     templates = model.get("projects") or []
     for mt, gt in match(templates, github.get("projects") or [], same):
         name = (gt or mt)["name"]
-        _compare(out, "template", name, mt, gt, [], same, drop = ["fields", "views"])
+        attributes = _TEMPLATE + (_TEMPLATE_LINKS if same else [])
+        _compare(out, "template", name, mt, gt, attributes, same, drop = ["fields", "views"])
         if mt != None and gt != None:
             _project(out, name, mt, gt, same, own, {}, ("template-field", "template-option", "template-view"))
 
@@ -359,12 +423,9 @@ def compare(model, github, projects, kind):
                 continue
             _project(out, name, mt, gp, False, own, renames, ("project-field", "project-option", "project-view"))
 
-    if kind == "organization" and not model.get("reference") and "teams" in model:
+    if kind == "organization" and same and "teams" in model:
         for mt, gt in match(model.get("teams") or [], github.get("teams") or [], same, key = "slug"):
-            name = (gt or mt)["slug"]
-            change = "missing" if gt == None else ("extra" if mt == None else "different")
-            if change != "different" or sorted(mt.get("repositories") or []) != sorted(gt.get("repositories") or []):
-                out.append(record("team", name, change, gt, mt, by_hand = True))
+            _compare(out, "team", (gt or mt)["slug"], mt, gt, _TEAM, same)
 
     order = {k: i for i, k in enumerate(KINDS)}
     return sorted(out, key = lambda r: (order.get(r["kind"], len(KINDS)), r["path"]))

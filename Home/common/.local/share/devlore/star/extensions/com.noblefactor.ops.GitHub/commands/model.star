@@ -29,6 +29,9 @@ COLLECTION = "Collection:"
 # repository, reviewers, parent issue, sub-issue progress, tracks) are every project's and say nothing of the model.
 FIELD_TYPES = {"SINGLE_SELECT": "single-select", "TEXT": "text", "NUMBER": "number", "DATE": "date", "ITERATION": "iteration"}
 
+# A team's privacy as GitHub's REST calls name it, which apply writes a team through; GraphQL's VISIBLE is REST's closed.
+TEAM_PRIVACY = {"VISIBLE": "closed", "SECRET": "secret"}
+
 # The issue field types the model records.
 ISSUE_FIELD_TYPES = {"SINGLE_SELECT": "single-select", "TEXT": "text", "NUMBER": "number", "DATE": "date"}
 
@@ -149,6 +152,7 @@ def read_all_projects(login, kind):
     The templates are the model's; diff and apply read the projects made from them too, to hold each to its template.
     """
     query = ("query starProjects { " + kind + "(login: \"" + login + "\") { projectsV2(first: 50) { nodes { id number title template closed " +
+             "shortDescription readme public teams(first: 20) { nodes { slug } } repositories(first: 50) { nodes { nameWithOwner } } " +
              "fields(first: 50) { nodes { ... on ProjectV2FieldCommon { id name dataType isIssueField } " +
              "... on ProjectV2SingleSelectField { options { id name color description } } " +
              "... on ProjectV2IterationField { configuration { duration startDay } } } } " +
@@ -187,6 +191,11 @@ def read_all_projects(login, kind):
             "id": node["id"],
             "number": int(node["number"]),
             "template": bool(node["template"]),
+            "short_description": node.get("shortDescription") or "",
+            "readme": node.get("readme") or "",
+            "public": bool(node.get("public")),
+            "teams": sorted([n["slug"] for n in (node.get("teams") or {}).get("nodes") or []]),
+            "repositories": sorted([n["nameWithOwner"] for n in (node.get("repositories") or {}).get("nodes") or []]),
             "fields": fields,
             "views": views,
         })
@@ -216,7 +225,9 @@ def read_organization(org):
              "issueFields(first: 50) { nodes { __typename ... on IssueFieldCommon { name dataType description visibility fullDatabaseId } " +
              "... on IssueFieldSingleSelect { id options { id databaseId name color description priority } } ... on IssueFieldText { id } " +
              "... on IssueFieldNumber { id } ... on IssueFieldDate { id } } } " +
-             "teams(first: 100) { nodes { name slug id repositories(first: 100) { edges { permission node { nameWithOwner } } } } } } }")
+             "issueTypes(first: 50) { nodes { name pinnedFields { ... on IssueFieldCommon { name } } } } " +
+             "teams(first: 100) { nodes { name slug id description privacy notificationSetting parentTeam { slug } " +
+             "repositories(first: 100) { edges { permission node { nameWithOwner } } } } } } }")
     node = graphql(query).get("organization") or {}
     fields = []
     for f in (node.get("issueFields") or {}).get("nodes") or []:
@@ -246,9 +257,23 @@ def read_organization(org):
         fields.append(field)
     teams = []
     for t in (node.get("teams") or {}).get("nodes") or []:
-        maintained = [e["node"]["nameWithOwner"] for e in (t.get("repositories") or {}).get("edges") or [] if e.get("permission") == "MAINTAIN"]
-        teams.append({"name": t["name"], "slug": t["slug"], "id": t["id"], "repositories": sorted(maintained)})
-    return fields, sorted(teams, key = lambda t: t["slug"])
+        edges = (t.get("repositories") or {}).get("edges") or []
+        maintained = [e["node"]["nameWithOwner"] for e in edges if e.get("permission") == "MAINTAIN"]
+        teams.append({
+            "name": t["name"],
+            "slug": t["slug"],
+            "id": t["id"],
+            "description": t.get("description") or "",
+            "privacy": TEAM_PRIVACY.get(t.get("privacy") or "", (t.get("privacy") or "").lower()),
+            "notification_setting": (t.get("notificationSetting") or "").lower(),
+            "parent": (t.get("parentTeam") or {}).get("slug"),
+            "roles": {e["node"]["nameWithOwner"]: (e.get("permission") or "").lower() for e in edges},
+            "repositories": sorted(maintained),
+        })
+    pinned = {}
+    for it in (node.get("issueTypes") or {}).get("nodes") or []:
+        pinned[it["name"]] = [f["name"] for f in it.get("pinnedFields") or [] if type(f) == "dict" and f.get("name")]
+    return fields, sorted(teams, key = lambda t: t["slug"]), pinned
 
 def _reference_types():
     """The reference model's types for a user account, by label: each one's name and whether it is the unplanned one."""
@@ -409,9 +434,10 @@ def read_account(account, strict = True):
     kind = owner_kind(account)
     model = {"version": MODEL_VERSION, "account": account}
     conflicts = []
+    pinned = {}
     if kind == "organization":
         github_types = conditional_get("orgs/" + account + "/issue-types", "")["body"]
-        fields, teams = read_organization(account)
+        fields, teams, pinned = read_organization(account)
         maintained = sorted({r: True for t in teams for r in t["repositories"]}.keys())
         labels = {"organization": [], "teams": {}, "repositories": repository_labels(maintained)}
         model["fields"] = fields
@@ -424,6 +450,7 @@ def read_account(account, strict = True):
     if kind == "organization":
         unplanned = _unplanned_names()
         types = [dict(t, unplanned = True) if t["name"] in unplanned else t for t in types]
+        types = [dict(t, pinned_fields = pinned.get(t["name"]) or []) for t in types]
     projects = read_all_projects(account, kind)
     if projects == None:
         fail(account + "'s projects cannot be read: the token lacks read:project; run gh auth refresh -s read:project")

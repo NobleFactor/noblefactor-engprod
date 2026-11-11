@@ -58,6 +58,15 @@ Ruled by the owner on 2026-11-09 and 2026-11-10, recorded in #437 and section 6'
   that differs. Drift is a value that changed, or one dropped where the model expects it. An attribute may be decided
   empty, `color: null`, and an empty value in GitHub then matches it; so a reference names every attribute, a deliberate
   none written as one, and an attribute left out is an omission a test catches.
+- **What `apply` never destroys, and what it carries** (the owner, 2026-11-10). A team, and its ownership of its
+  repositories, is never destroyed: `apply` and `restore` delete no team and remove or lower no team's role on a
+  repository, even with `--prune`; a team's attributes and roles are written only from the account's own backup, set or
+  added. The `.github` repository is added to or updated, by pull request, and none of its own files deleted. Every team
+  that maintains a repository gets the same set of projects, one for each template the model holds. The labels a backup
+  holds are restored to its account; another account's labels are never carried, since an organization's issue tracking
+  runs on its issue fields and its repositories are its own, and a reference names labels for a user account alone.
+  `good first issue`, the one label the sweep reads in an organization, is left to GitHub, which gives it to every new
+  repository.
 
 ## Current State
 
@@ -99,14 +108,18 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
    repository must have, and no others. So with a reference, `--prune` removes only labels of the reference's own kinds,
    a type label or an `area:`, `priority:`, `severity:`, `effort:` or `resolution:` label it does not list, and leaves a
    repository's other labels, `good first issue` among them. With a backup or another account's model, `--prune` removes
-   whatever the model lacks.
+   whatever the model lacks. Across accounts no label is compared or written: another account's labels belong to its
+   repositories (the owner, 2026-11-10).
 4. **Views** (an open question on #437). `apply` writes a view's name, layout, filter and visible fields. Its grouping
    and sort cannot be written through GitHub's API, so `diff` reports a difference in them and `apply` lists each as a
    step to take by hand.
-5. **Teams,** revised on 2026-11-10 by the ruling on every attribute: `apply` writes a team's attributes, its
-   description, privacy, notification setting and parent, and the role it holds on each repository, through GitHub's
-   REST calls; never its members, who are people, not the model. A team an organization lacks is made, its attributes
-   and roles with it. The first draft left teams to an organization owner, `diff` reporting a difference.
+5. **Teams,** revised twice on 2026-11-10. `apply` never deletes a team, nor removes or lowers its role on a repository,
+   even with `--prune`. From the account's own backup it sets a team's attributes, its description, privacy,
+   notification setting and parent, and adds the roles the backup holds, through GitHub's REST calls; never its members,
+   who are people, not the model. From another account's model or a reference, it writes no team, and `diff` reports
+   none: a team, its roles and a template's links are the account's own. The first draft left teams to an organization
+   owner; the first revision, to every attribute, would have made another account's teams in this one and, with
+   `--prune`, deleted this one's.
 6. **A missing template is made:** with its fields and views, marked a template; in a user account the copy, by name.
 7. **Every project of a kind is held to its template.** The model holds the templates alone (ruled 2026-11-03); `diff`
    and `apply` read alongside them each team's four projects, `<Kind>: <team>`, or the user account's four,
@@ -133,7 +146,7 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
     from the account the reference is kept for, as its `.github` repository stands, NobleFactor/.github for an
     organization and David-Noble-at-work/.github for a user account, through a pull request as `backup` lands one; each
     repository's workflow through a pull request in it; the variable directly; and the secret from `--token` (decision
-    15).
+    15). Its own files, those the reference account's repository lacks, are never deleted.
 13. **The label commands go first,** before any other change on the branch: until they go, `labels sync` puts the
     retired type labels back.
 14. **The templates are defined once,** in `reference/templates.yaml`, with their fields, options and views. Each
@@ -276,8 +289,24 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
 
 ### Phase 5a: every attribute
 
-- [ ] Decision 17 and the revised decision 5, the test first: `get` records every attribute GitHub exposes; a test fails
-      on any reference entry that leaves an attribute out; the references name every attribute; `make check` passes
+- [x] Decision 17 and the revised decision 5, the test first: `get` records every attribute GitHub exposes; a test fails
+      on any reference entry that leaves an attribute out; the references name every attribute; `make check` passes, but
+      for the 20 cases of `apply` and `restore`: 82 of the 102 pass. `get` now records each template's short
+      description, README, public flag and linked teams and repositories; each type's pinned fields; each team's
+      description, privacy, notification setting, parent and its role on every repository, in the names GitHub's REST
+      calls take. `diff` compares them all, a team's no longer by hand. The check is the extension's: `diff` and `apply`
+      refuse a reference entry that leaves an attribute out, naming it, and a template is checked as merged, the common
+      set with its kind's additions. The references were completed from the accounts as they stand: every type's enabled
+      flag and pinned fields, Schedule's and Scenario's colors, every field's visibility, every option's priority, the
+      user reference's two type labels' colors, each template's README, public flag and short description, and
+      NobleFactor's Start date field, unused and kept, which Feature pins and which `--prune` would otherwise have
+      deleted. A user account's short descriptions name the account, which a reference cannot, so a reference's text
+      says `{account}` and is filled for the account it is compared with. Run live, each account's own model shows no
+      difference, and its reference shows the drift alone: four types' descriptions and Epic's and Feature's colors in
+      NobleFactor; David-Noble-at-work's type labels' descriptions and `resolution:invalid`'s color. By the ruling on
+      what `apply` never destroys, `diff` compares an account's own parts, its teams and their roles and its templates'
+      links, only against the account's own backup, and its labels against that or a reference; cases 36 and 37, of
+      `apply` across accounts and of `--prune`, are written and fail until Phase 6
 
 ### Phase 6: apply, account-wide
 
@@ -332,6 +361,8 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
 | 16 | `apply` with a team lacking its Triage project | The project copied from the template, linked to the team, the team's write role on it |
 | 17 | `apply` with a team project drifted from its template | Brought back; its rows, schedule options and iterations untouched |
 | 18 | `apply --token env:<NAME>` of the reference to a new organization | Its types, fields, templates, teams' projects, labels, `.github` files by pull request, each repository's workflow by pull request, variable, and secret from the variable, its record showing the token's fingerprint and never the token |
+| 18a | `apply` of another organization's model to an organization with three teams | No team made or deleted, no role changed, no label written; each team that maintains a repository gets one project for each template |
+| 18b | `apply --prune` of another organization's model, and of the account's own backup lacking a team and a role | No team deleted, no role removed or lowered |
 | 19 | `apply` with no `--token` | A missing secret named as a step by hand; the rest made |
 | 19a | `apply --token file:<path>` | Refused when others can read the file; at mode `600`, the secret set from it, replacing one already there |
 | 19b | `apply --token` with a token's value, or a source but `env:` and `file:` | Refused; nothing written |

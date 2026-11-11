@@ -45,23 +45,37 @@ types:
     level: 0
     color: "purple"
     description: "Level 0: a body of work with an owner, the root of the hierarchy; decomposes into features"
+    enabled: true
+    pinned_fields: []
   - name: "Feature"
     level: 1
     color: "blue"
     description: "Level 1: a capability; decomposes into tasks and bugs"
+    enabled: true
+    pinned_fields: ["Priority", "Start date", "Target date", "Effort"]
   - name: "Bug"
     level: 2
     unplanned: true
     color: "red"
     description: "Level 2: unplanned work, a defect found rather than planned; repairs a feature"
+    enabled: true
+    pinned_fields: ["Priority", "Effort"]
   - name: "Task"
     level: 2
     color: "yellow"
     description: "Level 2: planned work, a step in delivering a feature"
+    enabled: true
+    pinned_fields: ["Priority", "Effort"]
   - name: "Schedule"
     description: "Collection: the issue that describes a schedule, its deliverable and exit criteria"
+    color: "blue"
+    enabled: true
+    pinned_fields: []
   - name: "Scenario"
     description: "Collection: the issue that describes a scenario, the end-user goal it summarizes"
+    color: "purple"
+    enabled: true
+    pinned_fields: []
 
 # Issue fields, the organization's own. The model holds an account's issue fields as it holds its issue types and
 # labels (ruled 2026-11-03). NobleFactor's are Priority, Effort, Target date, Resolution, Area and Severity, listed here
@@ -113,43 +127,53 @@ fields:
   - name: "Priority"
     type: single-select
     description: "Current importance level assigned to this issue"
+    visibility: ORG_ONLY
     options:
-      - { name: "Urgent", color: "PINK", description: "" }
-      - { name: "High", color: "RED", description: "" }
-      - { name: "Medium", color: "YELLOW", description: "" }
-      - { name: "Low", color: "GREEN", description: "" }
+      - { name: "Urgent", color: "PINK", description: "", priority: 1 }
+      - { name: "High", color: "RED", description: "", priority: 2 }
+      - { name: "Medium", color: "YELLOW", description: "", priority: 3 }
+      - { name: "Low", color: "GREEN", description: "", priority: 4 }
   - name: "Effort"
     type: single-select
     description: "Relative level of effort for completing this issue"
+    visibility: ORG_ONLY
     options:
-      - { name: "High", color: "RED", description: "" }
-      - { name: "Medium", color: "YELLOW", description: "" }
-      - { name: "Low", color: "GREEN", description: "" }
+      - { name: "High", color: "RED", description: "", priority: 1 }
+      - { name: "Medium", color: "YELLOW", description: "", priority: 2 }
+      - { name: "Low", color: "GREEN", description: "", priority: 3 }
+  - name: "Start date"                # unused (ruled 2026-11-03), and kept: Feature pins it
+    type: date
+    description: "Date when work on issue will begin"
+    visibility: ORG_ONLY
   - name: "Target date"
     type: date
     description: "Expected completion date for this issue"
+    visibility: ORG_ONLY
   - name: "Resolution"
     type: single-select
     description: "Why a closed issue was closed when its work was not done"
+    visibility: ORG_ONLY
     options:
-      - { name: "Declined", color: "GRAY", description: "The work was declined" }
-      - { name: "Duplicate", color: "GRAY", description: "Another issue covers it" }
-      - { name: "Invalid", color: "GRAY", description: "Not a real problem, or filed in the wrong place" }
+      - { name: "Declined", color: "GRAY", description: "The work was declined", priority: 1 }
+      - { name: "Duplicate", color: "GRAY", description: "Another issue covers it", priority: 2 }
+      - { name: "Invalid", color: "GRAY", description: "Not a real problem, or filed in the wrong place", priority: 3 }
   - name: "Area"
     type: single-select
     description: "Whether an issue's own work is product or engineering"
+    visibility: ORG_ONLY
     options:
-      - { name: "Product", color: "BLUE", description: "User-facing features, capabilities, or functional components released from this repository" }
-      - { name: "Engineering", color: "GREEN", description: "Design artifacts, technical specs, internal infrastructure, testing, and executing development plans" }
+      - { name: "Product", color: "BLUE", description: "User-facing features, capabilities, or functional components released from this repository", priority: 1 }
+      - { name: "Engineering", color: "GREEN", description: "Design artifacts, technical specs, internal infrastructure, testing, and executing development plans", priority: 2 }
   - name: "Severity"
     type: single-select
     description: "What the impact is if this fires"
+    visibility: ORG_ONLY
     options:
-      - { name: "Critical", color: "RED", description: "Data loss, corruption, or a security failure" }
-      - { name: "High", color: "ORANGE", description: "A supported path is broken with no workaround" }
-      - { name: "Medium", color: "YELLOW", description: "Broken with a workaround, or a narrow path" }
-      - { name: "Low", color: "GREEN", description: "Cosmetic, or a defect nobody is hitting" }
-      - { name: "N/A", color: "GRAY", description: "Not applicable: the issue is not a bug" }
+      - { name: "Critical", color: "RED", description: "Data loss, corruption, or a security failure", priority: 1 }
+      - { name: "High", color: "ORANGE", description: "A supported path is broken with no workaround", priority: 2 }
+      - { name: "Medium", color: "YELLOW", description: "Broken with a workaround, or a narrow path", priority: 3 }
+      - { name: "Low", color: "GREEN", description: "Cosmetic, or a defect nobody is hitting", priority: 4 }
+      - { name: "N/A", color: "GRAY", description: "Not applicable: the issue is not a bug", priority: 5 }
 
 # Labels, held per repository: the model holds the labels of each repository the account owns, and an organization's
 # default labels are not part of it (ruled 2026-11-03). Type is an issue type here, so no label carries it, and no label
@@ -285,6 +309,7 @@ teams: []
 # shown in both its views, and the By priority view, sorted on it. Read from NobleFactor's templates on 2026-11-10.
 templates:
   - name: "Triage"
+    short_description: "The organization's Triage template: copy it to make a team's Triage project"
     fields:
       - { name: "Area", type: single-select, issue_field: true }
     views:
@@ -303,6 +328,7 @@ templates:
         vertical_group_by: []
         sort_by: []
   - name: "Backlog"
+    short_description: "The organization's Backlog template: copy it to make a team's Backlog project"
     fields:
       - { name: "Priority", type: single-select, issue_field: true }
     views:
@@ -320,3 +346,7 @@ templates:
         group_by: []
         vertical_group_by: []
         sort_by: [{ field: "Priority", direction: "asc" }]
+  - name: "Schedule"
+    short_description: "The organization's Schedule template: copy it to make a team's Schedule project"
+  - name: "Scenario"
+    short_description: "The organization's Scenario template: copy it to make a team's Scenario project"

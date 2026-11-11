@@ -668,6 +668,7 @@ function write_fixtures {
 
     mkdir -p -- "${fixtures}"/{issues/NobleFactor,issues/test-user,search/NobleFactor,rest/orgs/NobleFactor,rest/repos/NobleFactor/noblefactor-engprod}
     mkdir -p -- "${fixtures}"/{rest/repos/NobleFactor/alpha,rest/repos/NobleFactor/beta,rest/orgs/Acme,rest/repos/Acme/site}
+    mkdir -p -- "${fixtures}"/{rest/repos/Acme/app,rest/repos/Acme/docs}
     mkdir -p -- "${fixtures}"/{starOwner,starOrganizationModel,starUserModel,starProjects,starTriageItems}
     mkdir -p -- "${fixtures}"/starTriage/{NobleFactor,test-user}
 
@@ -766,20 +767,28 @@ function write_fixtures {
         >"${fixtures}/rest/repos/NobleFactor/alpha/labels_per_page_100.json"
     jq -n '[[{id: 201, node_id: "LA_beta_gfi", name: "good first issue", color: "7057ff", description: "Good for newcomers"}]]' \
         >"${fixtures}/rest/repos/NobleFactor/beta/labels_per_page_100.json"
-    # Acme, an organization new to the model: GitHub's three issue types, one team maintaining one repository, GitHub's
-    # default labels on it, no issue fields and no projects (#437).
+    # Acme, an organization new to the model: GitHub's three issue types; three teams, web, b and c, each maintaining a
+    # repository, site, app and docs; GitHub's default labels on each; no issue fields and no projects (#437).
     jq -n '[{data: {repositoryOwner: {__typename: "Organization", login: "Acme"}}}]' >"${fixtures}/starOwner/Acme.json"
     jq -n '[[
         {id: 11, name: "Task", description: "A specific piece of work", color: "yellow", is_enabled: true},
         {id: 12, name: "Bug", description: "An unexpected problem or behavior", color: "red", is_enabled: true},
         {id: 13, name: "Feature", description: "A request, idea, or new functionality", color: "blue", is_enabled: true}
     ]]' >"${fixtures}/rest/orgs/Acme/issue-types.json"
-    jq -n '[{data: {organization: {issueFields: {nodes: []}, teams: {nodes: [{name: "web", slug: "web", id: "T_web",
-        repositories: {edges: [{permission: "MAINTAIN", node: {nameWithOwner: "Acme/site"}}]}}]}}}}]' \
+    jq -n 'def team($slug; $repo): {name: $slug, slug: $slug, id: "T_\($slug)", description: "", privacy: "VISIBLE",
+            notificationSetting: "NOTIFICATIONS_ENABLED", parentTeam: null,
+            repositories: {edges: [{permission: "MAINTAIN", node: {nameWithOwner: $repo}}]}};
+        [{data: {organization: {issueFields: {nodes: []}, issueTypes: {nodes: []},
+            teams: {nodes: [team("web"; "Acme/site"), team("b"; "Acme/app"), team("c"; "Acme/docs")]}}}}]' \
         >"${fixtures}/starOrganizationModel/Acme.json"
     jq -n '[[{id: 301, node_id: "LA_site_bug", name: "bug", color: "d73a4a", description: "Something is not working"},
         {id: 302, node_id: "LA_site_gfi", name: "good first issue", color: "7057ff", description: "Good for newcomers"}]]' \
         >"${fixtures}/rest/repos/Acme/site/labels_per_page_100.json"
+    for repo in app docs; do
+        jq -n --arg r "${repo}" '[[{id: 401, node_id: "LA_\($r)_bug", name: "bug", color: "d73a4a", description: "Something is not working"},
+            {id: 402, node_id: "LA_\($r)_gfi", name: "good first issue", color: "7057ff", description: "Good for newcomers"}]]' \
+            >"${fixtures}/rest/repos/Acme/${repo}/labels_per_page_100.json"
+    done
     jq -n '[{data: {organization: {projectsV2: {nodes: []}}}}]' >"${fixtures}/starProjects/Acme.json"
     jq -n '[{data: {organization: {
         issueFields: {nodes: [
@@ -797,13 +806,18 @@ function write_fixtures {
             {__typename: "IssueFieldSingleSelect", name: "Resolution", dataType: "SINGLE_SELECT", id: "IF_resolution",
                 options: [{id: "o_declined", name: "Declined"}, {id: "o_duplicate", name: "Duplicate"}, {id: "o_invalid", name: "Invalid"}]},
             {__typename: "IssueFieldDate", name: "Target date", dataType: "DATE", id: "IF_target"}]},
+        issueTypes: {nodes: [{name: "Bug", pinnedFields: [{name: "Severity"}, {name: "Area"}]},
+            {name: "Task", pinnedFields: [{name: "Area"}]}, {name: "Epic", pinnedFields: []}]},
         teams: {nodes: [
-            {name: "engprod", slug: "engprod", id: "T_engprod",
+            {name: "engprod", slug: "engprod", id: "T_engprod", description: "Engineering productivity", privacy: "VISIBLE",
+                notificationSetting: "NOTIFICATIONS_ENABLED", parentTeam: null,
                 repositories: {edges: [{permission: "MAINTAIN", node: {nameWithOwner: "NobleFactor/alpha"}},
                     {permission: "READ", node: {nameWithOwner: "NobleFactor/beta"}}]}},
-            {name: "DevLore", slug: "devlore", id: "T_devlore",
+            {name: "DevLore", slug: "devlore", id: "T_devlore", description: "", privacy: "VISIBLE",
+                notificationSetting: "NOTIFICATIONS_ENABLED", parentTeam: null,
                 repositories: {edges: [{permission: "MAINTAIN", node: {nameWithOwner: "NobleFactor/beta"}}]}},
-            {name: "Owners", slug: "owners", id: "T_owners", repositories: {edges: []}}]}}}}]' \
+            {name: "Owners", slug: "owners", id: "T_owners", description: "", privacy: "SECRET",
+                notificationSetting: "NOTIFICATIONS_DISABLED", parentTeam: null, repositories: {edges: []}}]}}}}]' \
         >"${fixtures}/starOrganizationModel/NobleFactor.json"
     jq -n '[{data: {user: {repositories: {nodes: [
         {nameWithOwner: "test-user/personal", repositoryTopics: {nodes: [{topic: {name: "issue-model"}}]}, labels: {nodes: [
@@ -829,7 +843,9 @@ function write_fixtures {
         def schedule($id; $options): {id: "F_\($id)_schedule", name: "Schedule", dataType: "SINGLE_SELECT",
             options: [$options[] | {id: "O_\($id)_\(.)", name: ., color: "GRAY", description: ""}]};
         def project($id; $n; $title; $template; $closed; $fields; $views): {id: $id, number: $n, title: $title,
-            template: $template, closed: $closed, fields: {nodes: $fields}, views: {nodes: $views}};
+            template: $template, closed: $closed, fields: {nodes: $fields}, views: {nodes: $views},
+            shortDescription: "The \($title) project", readme: "# \($title)", public: false, teams: {nodes: []},
+            repositories: {nodes: []}};
         def names($list): {nodes: [$list[] | {name: .}]};
         def missing_area: {name: "Missing Area", number: 2, layout: "TABLE_LAYOUT", filter: "-has:area",
             fields: names(["Title", "Status"]), groupByFields: names([]), verticalGroupByFields: names([]),
@@ -1176,6 +1192,16 @@ expect "14: get records each issue field's description and visibility, and each 
 expect "14: get records each template option's color and description" ok '
     (.projects[] | select(.name == "Triage") | .fields[] | select(.name == "Status") | .options[0] | {name, color, description})
         == {name: "Open", color: "GRAY", description: "The issue is open"}'
+expect "14: get records each type's pinned fields" ok '
+    (.types[] | select(.name == "Bug") | .pinned_fields) == ["Severity", "Area"]
+    and (.types[] | select(.name == "Feature") | .pinned_fields) == []'
+expect "14: get records each template's short description, README, public flag, and the teams and repositories linked to it" ok '
+    (.projects[] | select(.name == "Triage") | {short_description, readme, public, teams, repositories})
+        == {short_description: "The Triage project", readme: "# Triage", public: false, teams: [], repositories: []}'
+expect "14: get records each team's description, privacy, notification setting, parent, and its role on every repository" ok '
+    (.teams[] | select(.slug == "engprod") | {description, privacy, notification_setting, parent, roles})
+        == {description: "Engineering productivity", privacy: "closed", notification_setting: "notifications_enabled",
+            parent: null, roles: {"NobleFactor/alpha": "maintain", "NobleFactor/beta": "read"}}'
 
 # 15. diff compares a model with the account's model in GitHub, one record for each difference, and writes nothing.
 printf '%s\n' "${model_nf}" >"${run_directory}/work/noblefactor.json"
@@ -1369,6 +1395,40 @@ for token in ghp_0123456789abcdefghijABCDEFGHIJ012345 vault:kv-acme/site; do
     run_star "${data}" github model apply "${reference}/organization.yaml" Acme --token "${token}"
     expect "34: --token ${token%%_*} is refused, and nothing written" error "${writes}"'(writes | length) == 0' 'env:|file:' text
 done
+
+# 35. A reference names every attribute, a deliberate none written as one: an attribute left out is refused, named, and
+# the references the extension ships are accepted.
+jq -n '{version: 1, account: "user", types: [{name: "Epic", label: "epic", description: "Level 0: the root"}], templates: []}' \
+    >"${run_directory}/work/omits.json"
+run_star "${data}" github model diff omits.json test-user
+expect "35: a reference that leaves an attribute out is refused, the entry and the attribute named" error "" 'Epic.*color' text
+run_star "${data}" github model diff "${reference}/organization.yaml" NobleFactor
+expect "35: the organization reference names every attribute" ok 'type == "array"'
+run_star "${data}" github model diff "${reference}/user.yaml" test-user
+expect "35: the user reference names every attribute" ok 'type == "array"'
+
+# 36. Another organization's model applied to an organization with teams of its own: no team made or deleted, no role
+# changed, no label written; every team that maintains a repository gets one project for each template the model holds.
+repository Acme/app
+repository Acme/docs
+run_star "${data}" github model apply noblefactor.json Acme
+expect "36: another organization's model makes no team, deletes none, changes no role, and writes no label" ok "${writes}"'
+    (wrote("orgs/Acme/teams") | not) and (wrote("teams/[^/]+/repos/") | not) and (wrote("repos/Acme/[^/]+/labels") | not)
+    and (any(.[]; .kind == "team" or .kind == "label") | not)'
+expect "36: every team that maintains a repository gets one project for each template the model holds" ok '
+    ([.[] | select(.kind == "project" and .action == "created") | .path] | sort)
+        == ["Schedule: b", "Schedule: c", "Schedule: web", "Triage: b", "Triage: c", "Triage: web"]'
+
+# 37. --prune deletes no team, and removes or lowers no role, from another account's model or the account's own backup.
+run_star "${data}" github model apply noblefactor.json Acme --prune
+expect "37: with --prune, another organization's model deletes no team and changes no role" ok "${writes}"'
+    (any(writes[]; index("DELETE") != null and any(.[]; type == "string" and test("teams")))) | not'
+jq '.teams |= map(select(.slug != "devlore"))
+    | .teams |= map(if .slug == "engprod" then .roles |= del(.["NobleFactor/beta"]) else . end)' \
+    <<<"${model_nf}" >"${run_directory}/work/fewer-teams.json"
+run_star "${data}" github model apply fewer-teams.json NobleFactor --prune
+expect "37: with --prune, the account's own backup lacking a team and a role deletes neither" ok "${writes}"'
+    (any(writes[]; any(.[]; type == "string" and (test("teams/devlore") or test("teams/engprod/repos/NobleFactor/beta"))))) | not'
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"
