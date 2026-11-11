@@ -44,13 +44,13 @@ types:
   - name: "Epic"
     level: 0
     color: "purple"
-    description: "Level 0: a body of work with an owner, the root of the hierarchy; decomposes into features"
+    description: "Level 0: a body of work with an owner, the root work issues roll up to; decomposes into features"
     enabled: true
     pinned_fields: []
   - name: "Feature"
     level: 1
     color: "blue"
-    description: "Level 1: a capability; decomposes into tasks and bugs"
+    description: "Level 1: a capability for the product or for engineering; decomposes into tasks and bugs"
     enabled: true
     pinned_fields: ["Priority", "Start date", "Target date", "Effort"]
   - name: "Bug"
@@ -67,12 +67,12 @@ types:
     enabled: true
     pinned_fields: ["Priority", "Effort"]
   - name: "Schedule"
-    description: "Collection: the issue that describes a schedule, its deliverable and exit criteria"
+    description: "Collection: describes a schedule, its deliverable and its exit criteria"
     color: "blue"
     enabled: true
     pinned_fields: []
   - name: "Scenario"
-    description: "Collection: the issue that describes a scenario, the end-user goal it summarizes"
+    description: "Collection: describes a scenario, the story its features tell"
     color: "purple"
     enabled: true
     pinned_fields: []

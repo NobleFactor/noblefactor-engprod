@@ -211,6 +211,14 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
     capability. Pull request titles keep their `chore:` type. The ruleset let `chore/model-2026-11-10` through on
     NobleFactor/.github#4 with no bypass actor, so GitHub does not enforce it on NobleFactor's plan; that is Bug #475,
     filed in Backlog: engprod with Priority High, outside this plan.
+19. **The references stay for now, in our accounts' wording; every fact is to come from GitHub** (the owner,
+    2026-11-10). With each account's backup in its `.github` repository and no cache, the references hold only what
+    GitHub doesn't record, which `get` reads from them: Bug is the unplanned type; a user account's type labels are named
+    as types, in order; which of a user account's projects are its template copies; and which template fields hold each
+    project's own options. They also set up a user account, since `apply` carries no other account's labels. The owner's
+    goal is that every fact originates in GitHub and is derived from it, with no reference file; that is Task #476,
+    in Backlog: engprod with Priority High. For now each reference takes the four type descriptions both accounts hold, read on 2026-11-10, Epic and
+    Feature keeping purple and blue.
 
 ## Requirements
 

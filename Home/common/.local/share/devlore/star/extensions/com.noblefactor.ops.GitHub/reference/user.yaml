@@ -51,12 +51,12 @@ types:
     label: "epic"
     level: 0
     color: "7057ff"
-    description: "Level 0: a body of work with an owner, the root of the hierarchy; decomposes into features"
+    description: "Level 0: a body of work with an owner, the root work issues roll up to; decomposes into features"
   - name: "Feature"
     label: "feature"
     level: 1
     color: "0e8a16"
-    description: "Level 1: a capability; decomposes into tasks and bugs"
+    description: "Level 1: a capability for the product or for engineering; decomposes into tasks and bugs"
   - name: "Bug"
     label: "bug"
     level: 2
@@ -71,11 +71,11 @@ types:
   - name: "Schedule"
     label: "schedule"
     color: "1d76db"
-    description: "Collection: the issue that describes a schedule, its deliverable and exit criteria"
+    description: "Collection: describes a schedule, its deliverable and its exit criteria"
   - name: "Scenario"
     label: "scenario"
     color: "8a63d2"
-    description: "Collection: the issue that describes a scenario, the end-user goal it summarizes"
+    description: "Collection: describes a scenario, the story its features tell"
 
 # Labels that stand in for issue fields. A user's account has no issue fields: GitHub's GraphQL schema says
 # createIssueField makes a field in an organization, and its User type has no issue fields. So a label stands in for
