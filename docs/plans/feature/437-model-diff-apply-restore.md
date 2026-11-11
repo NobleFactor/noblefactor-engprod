@@ -388,7 +388,8 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
 
 ### Phase 10: proved on GitHub
 
-- [ ] #447's pull request to NobleFactor/.github merged first (decision 12)
+- [x] #447's pull request to NobleFactor/.github merged first (decision 12): NobleFactor/.github#5, `db08485`,
+      2026-11-10
 - [ ] For NobleFactor and David-Noble-at-work, on the branch's extension: `diff` of the account's fresh backup, showing
       nothing to change, and of its reference, showing what differs; a team project's field changed by hand and brought
       back; an `apply` of a model changed for the purpose, then `diff` showing nothing left; a label renamed through

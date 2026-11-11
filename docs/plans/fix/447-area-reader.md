@@ -1,7 +1,7 @@
 ---
 title: "NobleFactor/.github's Triage workflow template stops at the end of an issue's body, and names no account"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/447
-status: active
+status: complete
 created: 2026-11-10
 updated: 2026-11-10
 ---
@@ -85,22 +85,26 @@ template's first run in a NobleFactor repository, a test issue filed from a form
 
 ### Phase 2: the fix
 
-- [ ] The worktree made by hand, as #431's was: `git open-branch` reads the issue from the clone's own repository, and
+- [x] The worktree made by hand, as #431's was: `git open-branch` reads the issue from the clone's own repository, and
       #447 belongs to noblefactor-engprod. From the clone `~/Workspace/NobleFactor/.github`, the worktree
       `~/Workspace/NobleFactor/.github.447-area-reader` on `fix/447-area-reader`; its script
-      `~/Workspace/NobleFactor/.github.447-area-reader.bash`. #447's row on Schedule: engprod set In progress, its
-      Worktree column linking the branch
-- [ ] Requirements 1 to 3 in `workflow-templates/triage.yml`; test cases 1 to 6 run and pass
+      `~/Workspace/NobleFactor/.github.447-area-reader.bash`. #447's row on Schedule: engprod set In progress; the
+      script links the branch in its Worktree column once it has pushed it (agent-rules.md, rule 19)
+- [x] Requirements 1 to 3 in `workflow-templates/triage.yml`; test cases 1 to 6 run and pass, with GNU awk and
+      macOS's awk, on 2026-11-10
 
 ### Phase 3: merge
 
-- [ ] The pull request script written, shown and handed over. It opens the pull request, its description closing
+- [x] The pull request script written, shown and handed over. It opens the pull request, its description closing
       NobleFactor/noblefactor-engprod#447, waits for the quality gate, merges, and comments on #447 with cases 1 to 6's
-      output and the merged pull request. `git close-branch` removes the worktree and the script afterward
+      output and the merged pull request. `git close-branch` removes the worktree and the script afterward. Run on
+      2026-11-10, by the owner's one-time grant: NobleFactor/.github#5, merged as `db08485`, its quality gate passing;
+      #447 closed, its evidence comment posted, its row Closed and linked to the pull request; the worktree and the
+      script removed
 
 ### Phase 4: the documents
 
-- [ ] On #437's branch: section 3's status, whose rows say the reader loops and the template names NobleFactor, brought
+- [x] On #437's branch: section 3's status, whose rows say the reader loops and the template names NobleFactor, brought
       to the merged fix; this plan's status `complete`
 
 ## Files to Create/Modify

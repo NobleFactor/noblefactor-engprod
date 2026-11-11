@@ -395,6 +395,12 @@ pushed, and a link to a branch GitHub doesn't have leads nowhere. The worktree's
 links it and reads the row back. It ran on 2026-11-03: `doc/303-model-cutover` is on GitHub, at `60828ac`, and the
 row has read back the link in its Worktree column since.
 
+And 2026-11-10, a third: making the worktree of #447 by hand, `~/Workspace/NobleFactor/.github.447-area-reader`, the
+session set the Worktree column of #447's row to `fix/447-area-reader` before the branch was on GitHub, the same link
+to nowhere as #303's. It reported it, cleared the link, and wrote the push and then the link, read back, into the
+worktree's script, `~/Workspace/NobleFactor/.github.447-area-reader.bash`. The owner acknowledged the report the same
+day.
+
 **Compliance.** The Worktree column holds a link to the branch on GitHub, so a worktree's first script pushes its
 branch, then links it in the Worktree column of each of its steps' rows. The pull request's script records on each
 step's issue that it merged, as it lands, by
