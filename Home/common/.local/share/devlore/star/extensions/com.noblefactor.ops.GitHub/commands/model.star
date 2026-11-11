@@ -201,6 +201,10 @@ def read_projects(login, kind):
     projects = read_all_projects(login, kind)
     if projects == None:
         return None
+    return templates_of(projects, kind)
+
+def templates_of(projects, kind):
+    """The templates among an account's projects: an organization's marked ones, or a user account's copies, by name."""
     if kind == "organization":
         return [p for p in projects if p["template"]]
     copies = _template_names()
@@ -321,11 +325,12 @@ def _id(v):
         return int(v)
     return v
 
-def merge_types(old, github, notes, conflicts):
+def merge_types(old, github, notes, conflicts, strict = True):
     """A model's types brought to GitHub's, matched by id: renames kept as renames, levels from the descriptions.
 
     A type whose description begins "Level N:" is of the hierarchy, at that level; one whose description begins
-    "Collection:" is a collection, with no level; any other is a conflict, and read_model stops, naming it.
+    "Collection:" is a collection, with no level; any other is a conflict, and read_model stops, naming it. Not strict, as
+    diff and apply read an account, such a type is kept with no level, a difference to report rather than a stop.
     """
     by_id = {str(_id(t["id"])): t for t in old}
     seen = {}
@@ -337,7 +342,7 @@ def merge_types(old, github, notes, conflicts):
         description = g.get("description") or ""
         level = level_of(description)
         o = by_id.get(tid)
-        if enabled and level == None and not description.startswith(COLLECTION):
+        if strict and enabled and level == None and not description.startswith(COLLECTION):
             conflicts.append("type " + g["name"] + " (" + tid + "): its description begins neither \"Level N:\" nor \"" + COLLECTION + "\": " + description)
             continue
         if o != None and o.get("level") != None and level != None and int(o["level"]) != level:
@@ -388,6 +393,19 @@ def read_model(account):
     A type whose description begins neither "Level N:" nor "Collection:" fits no model, and stops the read, named; so does
     a token that cannot read projects, since a model without them would be no backup of the account.
     """
+    return read_account(account)[0]
+
+def read_account(account, strict = True):
+    """The account's model as GitHub holds it, every open project of the account, and the account's kind.
+
+    Args:
+      account: the account, an organization or a user.
+      strict: stop on a type that fits no model, as get does; diff and apply read one as a difference.
+
+    Returns:
+      (model, projects, kind): the model read_model returns; every open project, the templates and the projects made from
+      them; "organization" or "user".
+    """
     kind = owner_kind(account)
     model = {"version": MODEL_VERSION, "account": account}
     conflicts = []
@@ -400,16 +418,16 @@ def read_model(account):
         model["teams"] = teams
     else:
         github_types, labels = read_user(account)
-    types = merge_types([], github_types, [], conflicts)
+    types = merge_types([], github_types, [], conflicts, strict)
     if conflicts:
         fail(account + "'s model, read from GitHub, does not fit: " + "; ".join(conflicts))
     if kind == "organization":
         unplanned = _unplanned_names()
         types = [dict(t, unplanned = True) if t["name"] in unplanned else t for t in types]
-    projects = read_projects(account, kind)
+    projects = read_all_projects(account, kind)
     if projects == None:
         fail(account + "'s projects cannot be read: the token lacks read:project; run gh auth refresh -s read:project")
     model["types"] = types
     model["labels"] = labels
-    model["projects"] = projects
-    return model
+    model["projects"] = templates_of(projects, kind)
+    return model, projects, kind

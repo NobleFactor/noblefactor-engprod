@@ -53,6 +53,11 @@ Ruled by the owner on 2026-11-09 and 2026-11-10, recorded in #437 and section 6'
   issue (section 6; `reference/organization.yaml`).
 - **All of it in one pull request** (2026-11-10): the projects of each kind, a new account joining, and the label
   commands retired.
+- **Every attribute, and what drift is** (the owner, 2026-11-10). A backup holds every attribute of each part of the
+  model, color among them; `apply` and `restore` write every one GitHub's API can write; `diff` reports any attribute
+  that differs. Drift is a value that changed, or one dropped where the model expects it. An attribute may be decided
+  empty, `color: null`, and an empty value in GitHub then matches it; so a reference names every attribute, a deliberate
+  none written as one, and an attribute left out is an omission a test catches.
 
 ## Current State
 
@@ -98,8 +103,10 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
 4. **Views** (an open question on #437). `apply` writes a view's name, layout, filter and visible fields. Its grouping
    and sort cannot be written through GitHub's API, so `diff` reports a difference in them and `apply` lists each as a
    step to take by hand.
-5. **Teams.** `apply` leaves teams and their repository roles alone; `diff` reports a difference. A team is people and
-   permissions, set by an organization owner; the teams an account has decide which of its repositories take part.
+5. **Teams,** revised on 2026-11-10 by the ruling on every attribute: `apply` writes a team's attributes, its
+   description, privacy, notification setting and parent, and the role it holds on each repository, through GitHub's
+   REST calls; never its members, who are people, not the model. A team an organization lacks is made, its attributes
+   and roles with it. The first draft left teams to an organization owner, `diff` reporting a difference.
 6. **A missing template is made:** with its fields and views, marked a template; in a user account the copy, by name.
 7. **Every project of a kind is held to its template.** The model holds the templates alone (ruled 2026-11-03); `diff`
    and `apply` read alongside them each team's four projects, `<Kind>: <team>`, or the user account's four,
@@ -154,6 +161,12 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
     devlore-cli's architecture makes standard input an attribute of the request, `Options.Stdin`, and
     NobleFactor/devlore-cli#1136 builds it. Until then `diff` and `apply` refuse `-` for `<model>`, saying why, and
     `--token` takes no `-`.
+17. **`get` records every attribute GitHub exposes,** beyond what Phase 4 added: each template's short description,
+    README, public flag, and the teams and repositories linked to it; each type's pinned fields; each team's
+    description, privacy, notification setting, parent and its role on every repository. What GitHub's API cannot write,
+    a view's grouping and sort, and a type's pinned fields if no call takes them, `apply` lists as a step by hand,
+    naming each value. The references name every attribute too, read from the accounts as they stand where they named
+    none, but for Epic's and Feature's colors, which stay purple and blue: GitHub's gray is drift.
 
 ## Requirements
 
@@ -249,7 +262,22 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
 
 ### Phase 5: diff
 
-- [ ] Requirement 3
+- [x] Requirement 3: `commands/reconcile.star` reads a model file, brings a reference to the form `get` returns, and
+      compares it with the account's, read by `get`'s code leniently, a type that fits no model a difference;
+      `commands/github-model-diff.star` returns the records. Every `diff` case passes, 74 of the 94 in all, the 20 left
+      being `apply`'s and `restore`'s. Run live on 2026-11-10 from the worktree, each account's own model shows no
+      difference. Found on the way and fixed, each test first: NobleFactor's Owners team, which maintains no repository,
+      was given the four projects, and now a team owns projects only when it maintains a repository; and a reference's
+      label with no color, the user reference's `schedule` and `scenario`, was compared as an empty color, a fix the
+      owner's ruling on every attribute reversed the same day: `diff` compares every attribute of each kind, a value the
+      model lacks counting as none, and an absent value and an empty one as one. Against the references, the accounts
+      differ: NobleFactor's Epic, Feature, Schedule and Scenario descriptions, and Epic's and Feature's colors;
+      David-Noble-at-work's type labels the same way, and `resolution:invalid`'s color
+
+### Phase 5a: every attribute
+
+- [ ] Decision 17 and the revised decision 5, the test first: `get` records every attribute GitHub exposes; a test fails
+      on any reference entry that leaves an attribute out; the references name every attribute; `make check` passes
 
 ### Phase 6: apply, account-wide
 

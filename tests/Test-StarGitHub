@@ -802,7 +802,8 @@ function write_fixtures {
                 repositories: {edges: [{permission: "MAINTAIN", node: {nameWithOwner: "NobleFactor/alpha"}},
                     {permission: "READ", node: {nameWithOwner: "NobleFactor/beta"}}]}},
             {name: "DevLore", slug: "devlore", id: "T_devlore",
-                repositories: {edges: [{permission: "MAINTAIN", node: {nameWithOwner: "NobleFactor/beta"}}]}}]}}}}]' \
+                repositories: {edges: [{permission: "MAINTAIN", node: {nameWithOwner: "NobleFactor/beta"}}]}},
+            {name: "Owners", slug: "owners", id: "T_owners", repositories: {edges: []}}]}}}}]' \
         >"${fixtures}/starOrganizationModel/NobleFactor.json"
     jq -n '[{data: {user: {repositories: {nodes: [
         {nameWithOwner: "test-user/personal", repositoryTopics: {nodes: [{topic: {name: "issue-model"}}]}, labels: {nodes: [
@@ -924,7 +925,8 @@ expect "1a: get NobleFactor returns its types, fields, teams and projects" ok '
     and ([.types[] | select(.level == null) | .name] | sort) == ["Scenario", "Schedule"]
     and ([.fields[].name] | sort) == ["Area", "Resolution", "Severity", "Target date"]
     and ([.teams[] | {slug, repositories}] | sort_by(.slug))
-        == [{slug: "devlore", repositories: ["NobleFactor/beta"]}, {slug: "engprod", repositories: ["NobleFactor/alpha"]}]
+        == [{slug: "devlore", repositories: ["NobleFactor/beta"]}, {slug: "engprod", repositories: ["NobleFactor/alpha"]},
+            {slug: "owners", repositories: []}]
     and [.projects[] | {name, template}] == [{name: "Triage", template: true}, {name: "Schedule", template: true}]
     and [.projects[0].fields[] | {name, type}] == [{name: "Status", type: "single-select"}]'
 expect "1a: get reads each template's views: layout, filter, and the fields each shows, groups and sorts by" ok '
@@ -1192,6 +1194,13 @@ expect "16: diff names what the model adds, what it changes and what it lacks" o
     and any(.[]; .kind == "label" and .path == "NobleFactor/alpha/good first issue" and .change == "different")
     and any(.[]; .kind == "issue-field-option" and .path == "Severity/Low" and .change == "extra")'
 
+expect "16: a changed color is drift" ok \
+    'any(.[]; .kind == "label" and .path == "NobleFactor/alpha/good first issue" and .github.color == "7057ff" and .model.color == "000000")'
+jq '.types |= map(if .name == "Epic" then del(.color) else . end)' <<<"${model_nf}" >"${run_directory}/work/colorless.json"
+run_star "${data}" github model diff colorless.json NobleFactor
+expect "16: a model that names no color for a type GitHub colors has drifted" ok '
+    any(.[]; .kind == "issue-type" and .path == "Epic" and .change == "different" and .github.color == "purple")'
+
 # 17. On the same account, a rename is a rename, matched by ID.
 jq '.labels.repositories["NobleFactor/alpha"] |= ((. // []) | map(if .name == "good first issue" then .name = "starter" else . end))
     | .fields |= map(if .name == "Severity" then .options |= map(if .name == "N/A" then .name = "None" else . end) else . end)' \
@@ -1219,6 +1228,9 @@ expect "19: diff reads the user reference: its families as labels, on participat
     any(.[]; .kind == "label" and .path == "test-user/personal/priority:urgent" and .change == "missing")
     and any(.[]; .kind == "template" and .path == "Schedule" and .change == "missing")
     and (any(.[]; .path | startswith("test-user/elsewhere")) | not)'
+expect "19: every attribute is compared: a color the reference does not name is drift" ok '
+    any(.[]; .kind == "label" and .path == "test-user/personal/schedule" and .change == "different"
+        and .github.color == "cccccc" and (.model.color // "") != "cccccc")'
 
 # 20. A view's grouping, which GitHub's API cannot write, is a difference to set by hand.
 jq '.projects |= map(if .name == "Triage" then .views |= map(if .name == "Missing Area" then .group_by = ["Status"] else . end)
@@ -1234,6 +1246,7 @@ expect "21: diff holds each team's projects to their templates, each project's o
     and any(.[]; .kind == "project" and .path == "Triage: devlore" and .change == "missing")
     and any(.[]; .kind == "project" and .path == "Schedule: devlore" and .change == "missing")
     and (any(.[]; .path | startswith("Schedule: engprod/Schedule")) | not)'
+expect "21: a team that maintains no repository owns no projects" ok '(any(.[]; .path | test(": owners")) | not)'
 
 # 22. apply makes the model the account's: it creates and changes, and without --prune it keeps what the model lacks.
 run_star "${data}" github model apply changed.json NobleFactor

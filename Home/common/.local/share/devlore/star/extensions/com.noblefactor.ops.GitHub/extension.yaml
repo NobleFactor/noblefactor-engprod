@@ -33,6 +33,15 @@ commands:
       - name: account
         help: "The account, an organization or a user; required"
 
+  - name: github.model.diff
+    help: "What differs between a model and an account's, as GitHub holds it now: one record for each difference; writes nothing"
+    implementation: commands/github-model-diff.star
+    args:
+      - name: model
+        help: "The model: a file in the form get returns, another account's, a backup, or a reference, by its path"
+      - name: account
+        help: "The account, an organization or a user; required"
+
   - name: github.model.backup
     help: "Checkpoint an account's model, as GitHub holds it now, in its .github repository: written on a chore/model-<date> branch and landed by a pull request, asking nothing yet"
     implementation: commands/github-model-backup.star
