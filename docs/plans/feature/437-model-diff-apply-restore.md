@@ -398,13 +398,17 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
 
 - [x] #447's pull request to NobleFactor/.github merged first (decision 12): NobleFactor/.github#5, `db08485`,
       2026-11-10
-- [ ] For NobleFactor and David-Noble-at-work, on the branch's extension: `diff` of the account's fresh backup, showing
+- [x] For NobleFactor and David-Noble-at-work, on the branch's extension: `diff` of the account's fresh backup, showing
       nothing to change, and of its reference, showing what differs; a team project's field changed by hand and brought
       back; an `apply` of a model changed for the purpose, then `diff` showing nothing left; a label renamed through
       `apply`, the issues that carried it keeping it; `restore` to the revision before, without `--prune` and then with
-      it; `backup` afterward. For a new organization: `apply` of the reference, then `diff` showing nothing left, in a
-      temporary organization made for the proof, deleted when the proof passes and kept for troubleshooting when it does
-      not. A comment on #437 shows each. The owner runs every `apply` and `restore`
+      it; `backup` afterward. Run by the owner on 2026-11-11: every step passed, and nothing of the proof was left on
+      GitHub. NobleFactor's first `apply` landed the Triage workflow in its five participating repositories, the last,
+      NobleFactor/noblefactor-engprod#477, after #478 and #480. Shown on #437:
+      https://github.com/NobleFactor/noblefactor-engprod/issues/437#issuecomment-6806178635
+- [ ] For a new organization: `apply` of the reference, then `diff` showing nothing left, in a temporary organization
+      made for the proof, deleted when the proof passes and kept for troubleshooting when it does not. A comment on #437
+      shows it. The owner runs every `apply`
 
 ### Phase 11: merge
 
