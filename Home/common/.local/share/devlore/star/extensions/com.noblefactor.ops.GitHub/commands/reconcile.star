@@ -136,7 +136,7 @@ def templates_for(additions):
         out.append(merged)
     return out
 
-def _own_options():
+def own_options():
     """The fields whose options are each project's own, by template and field name, from the common templates."""
     out = {}
     for t in _reference("templates").get("templates") or []:
@@ -356,7 +356,7 @@ def _project(out, prefix, mt, gp, by_id, own, renames, kinds):
         name = (gv or mv)["name"]
         _compare(out, view_kind, prefix + "/" + name, mv, gv, _VIEW, False, hand = _VIEW_BY_HAND)
 
-def _template_renames(out):
+def template_renames(out):
     """The options renamed on each template, by template and field: {template: {field: {old: new}}}."""
     renames = {}
     for r in out:
@@ -398,7 +398,7 @@ def compare(model, github, projects, kind):
                 continue
             _compare(out, "label", gr + "/" + (gl or ml)["name"], ml, gl, _LABEL, same)
 
-    own = _own_options()
+    own = own_options()
     templates = model.get("projects") or []
     for mt, gt in match(templates, github.get("projects") or [], same):
         name = (gt or mt)["name"]
@@ -407,7 +407,7 @@ def compare(model, github, projects, kind):
         if mt != None and gt != None:
             _project(out, name, mt, gt, same, own, {}, ("template-field", "template-option", "template-view"))
 
-    renames = _template_renames(out)
+    renames = template_renames(out)
 
     # A team owns projects of each kind when it maintains a repository: a repository takes part when a team maintains
     # it, and its issues reach that team's projects (ruled 2026-11-03). A team that maintains none, an organization's
@@ -430,13 +430,23 @@ def compare(model, github, projects, kind):
     order = {k: i for i, k in enumerate(KINDS)}
     return sorted(out, key = lambda r: (order.get(r["kind"], len(KINDS)), r["path"]))
 
-def differences(path, account):
-    """What star github model diff returns.
+def prepare(path, account):
+    """The model a file holds, brought to the form get returns, with the account as GitHub holds it now.
 
-    The records of every difference between the model a file holds and the account's, read from GitHub now.
+    Returns:
+      (model, github, projects, kind): the model; the account's model, read leniently; every open project of the account,
+      with the IDs apply writes through; "organization" or "user".
     """
     model = read_model_file(path)
     github, projects, kind = read_account(account, strict = False)
     if is_reference(model):
         model = from_reference(model, github)
+    return model, github, projects, kind
+
+def differences(path, account):
+    """What star github model diff returns.
+
+    The records of every difference between the model a file holds and the account's, read from GitHub now.
+    """
+    model, github, projects, kind = prepare(path, account)
     return compare(model, github, projects, kind)

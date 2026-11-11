@@ -42,6 +42,24 @@ commands:
       - name: account
         help: "The account, an organization or a user; required"
 
+  - name: github.model.apply
+    help: "Make a model the account's: every difference diff finds made in GitHub, renames in place, nothing deleted without --prune; one record for each difference, with what was done"
+    implementation: commands/github-model-apply.star
+    args:
+      - name: model
+        help: "The model: a file in the form get returns, another account's, a backup, or a reference, by its path"
+      - name: account
+        help: "The account, an organization or a user; required"
+    flags:
+      - name: prune
+        type: bool
+        default: "false"
+        help: "Delete what the model lacks too, each deletion first counted; never a team, its roles, a project or a template"
+      - name: token
+        type: string
+        default: ""
+        help: "Where a repository's ADD_TO_PROJECT_PAT comes from: env:<NAME> or file:<path>; never the token itself"
+
   - name: github.model.backup
     help: "Checkpoint an account's model, as GitHub holds it now, in its .github repository: written on a chore/model-<date> branch and landed by a pull request, asking nothing yet"
     implementation: commands/github-model-backup.star

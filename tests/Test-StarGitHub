@@ -489,7 +489,7 @@ esac
 case "${1:-} ${2:-}" in
     "auth status")
         printf '%s\n' "github.com" "  ✓ Logged in to github.com account tester (keyring)" "  - Active account: true" \
-            "  - Git operations protocol: https" "  - Token scopes: 'project', 'read:org', 'repo'"
+            "  - Git operations protocol: https" "  - Token scopes: 'admin:org', 'project', 'read:org', 'repo', 'workflow'"
         exit 0
         ;;
     "api rate_limit")
@@ -519,6 +519,7 @@ while (($#)); do
             method="$2"
             shift 1
             ;;
+        --input) shift 1 ;;
         -H)
             headers+=("$2")
             shift 1
@@ -623,6 +624,27 @@ case ${operation} in
     starComment)
         jq -cn --arg s "${vars[s]:-}" '{data: {addComment: {commentEdge: {node: {id: ("IC_" + $s)}}}}}' |
             if [[ -n "${jq_program}" ]]; then jq -r -c "${jq_program}"; else cat; fi
+        ;;
+    starProject)
+        # A project apply has just made or copied: GitHub's own fields, Status with its three options, and View 1.
+        jq -cn 'def names($list): {nodes: [$list[] | {name: .}]};
+            {data: {node: {id: "NEW", number: 99, title: "new", template: false, closed: false, shortDescription: "", readme: "",
+            public: false, teams: {nodes: []}, repositories: {nodes: []}, fields: {nodes: [
+                {id: "NF_title", name: "Title", dataType: "TITLE"}, {id: "NF_assignees", name: "Assignees", dataType: "ASSIGNEES"},
+                {id: "NF_status", name: "Status", dataType: "SINGLE_SELECT", options: [
+                    {id: "NO_todo", name: "Todo", color: "GRAY", description: ""},
+                    {id: "NO_progress", name: "In Progress", color: "YELLOW", description: ""},
+                    {id: "NO_done", name: "Done", color: "PURPLE", description: ""}]},
+                {id: "NF_labels", name: "Labels", dataType: "LABELS"},
+                {id: "NF_prs", name: "Linked pull requests", dataType: "LINKED_PULL_REQUESTS"},
+                {id: "NF_subissues", name: "Sub-issues progress", dataType: "SUB_ISSUES_PROGRESS"}]},
+            views: {nodes: [{id: "NV_1", name: "View 1", number: 1, layout: "TABLE_LAYOUT", filter: "",
+                fields: names(["Title", "Assignees", "Status"]), groupByFields: names([]), verticalGroupByFields: names([]),
+                sortByFields: {nodes: []}}]}}}}' |
+            if [[ -n "${jq_program}" ]]; then jq -r -c "${jq_program}"; else cat; fi
+        ;;
+    starCount)
+        jq -cn '{data: {search: {issueCount: 3}}}' | if [[ -n "${jq_program}" ]]; then jq -r -c "${jq_program}"; else cat; fi
         ;;
     starItem)
         [[ "${query}" =~ node\(id:[[:space:]]*\"([^\"]+)\" ]] || exit 1
@@ -751,8 +773,8 @@ function write_fixtures {
     jq -n "${library}"'[search(1001; [])]' >"${fixtures}/search/NobleFactor/huge.json"
 
     # The records the model's pull and every command's read-first make.
-    jq -n '[{data: {repositoryOwner: {__typename: "Organization", login: "NobleFactor"}}}]' >"${fixtures}/starOwner/NobleFactor.json"
-    jq -n '[{data: {repositoryOwner: {__typename: "User", login: "test-user"}}}]' >"${fixtures}/starOwner/test-user.json"
+    jq -n '[{data: {repositoryOwner: {__typename: "Organization", login: "NobleFactor", id: "O_NobleFactor"}}}]' >"${fixtures}/starOwner/NobleFactor.json"
+    jq -n '[{data: {repositoryOwner: {__typename: "User", login: "test-user", id: "U_test_user"}}}]' >"${fixtures}/starOwner/test-user.json"
     jq -n '[[
         {id: 1, name: "Epic", description: "Level 0: the root", color: "purple", is_enabled: true},
         {id: 2, name: "Feature", description: "Level 1: a capability", color: "blue", is_enabled: true},
@@ -769,7 +791,7 @@ function write_fixtures {
         >"${fixtures}/rest/repos/NobleFactor/beta/labels_per_page_100.json"
     # Acme, an organization new to the model: GitHub's three issue types; three teams, web, b and c, each maintaining a
     # repository, site, app and docs; GitHub's default labels on each; no issue fields and no projects (#437).
-    jq -n '[{data: {repositoryOwner: {__typename: "Organization", login: "Acme"}}}]' >"${fixtures}/starOwner/Acme.json"
+    jq -n '[{data: {repositoryOwner: {__typename: "Organization", login: "Acme", id: "O_Acme"}}}]' >"${fixtures}/starOwner/Acme.json"
     jq -n '[[
         {id: 11, name: "Task", description: "A specific piece of work", color: "yellow", is_enabled: true},
         {id: 12, name: "Bug", description: "An unexpected problem or behavior", color: "red", is_enabled: true},
@@ -1280,7 +1302,7 @@ expect "22: apply creates what the model adds and changes what differs, and keep
     any(.[]; .kind == "issue-type" and .path == "Chore" and .action == "created")
     and any(.[]; .kind == "label" and .path == "NobleFactor/alpha/good first issue" and .action == "changed")
     and any(.[]; .kind == "issue-field-option" and .path == "Severity/Low" and .action == "kept")
-    and wrote("createIssueType")
+    and any(writes[]; index("POST") != null and any(.[]; type == "string" and test("^orgs/NobleFactor/issue-types$")))
     and any(writes[]; index("PATCH") != null and any(.[]; type == "string" and test("repos/NobleFactor/alpha/labels/")))
     and (any(writes[]; any(.[]; type == "string" and test("issue-fields"))) | not)'
 
@@ -1308,7 +1330,8 @@ expect "25: a template option renamed is renamed on the template and on each cop
 
 # 26. A template the account lacks is made.
 jq '.projects += [{name: "Backlog", template: true,
-        fields: [{name: "Status", type: "single-select", options: [{name: "Open", color: "GRAY", description: "The issue is open"}]}],
+        fields: [{name: "Status", type: "single-select", options: [{name: "Open", color: "GRAY", description: "The issue is open"}]},
+            {name: "Step", type: "number"}],
         views: [{name: "By priority", number: 2, layout: "table", filter: "", fields: ["Title"], group_by: [], vertical_group_by: [],
             sort_by: []}]}]' <<<"${model_nf}" >"${run_directory}/work/backlog.json"
 run_star "${data}" github model apply backlog.json NobleFactor

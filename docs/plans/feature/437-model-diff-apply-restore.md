@@ -310,11 +310,27 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
 
 ### Phase 6: apply, account-wide
 
-- [ ] Requirement 4's issue types, issue fields, labels and templates
+- [x] Requirement 4's issue types, issue fields, labels and templates: `commands/apply.star` and
+      `commands/github-model-apply.star`, with `--prune` and `--token` in the manifest. Issue types and issue fields are
+      written through GitHub's REST calls, which take the database IDs `get` records, an issue field's options sent
+      whole, each with its ID; GitHub's REST documentation, read on 2026-11-10, has no call that pins a field to a type,
+      so pinned fields are a step by hand. Labels go through REST; templates and their parts through GraphQL, each
+      mutation's input written as literals so that every value is in the call star narrates. A new GitHub project comes
+      with a Status field and a View 1, so a template is made and then brought to the model by the one routine that
+      brings any project to its template. Teams are written from the account's own backup alone: attributes set, roles
+      added or raised, none deleted, removed or lowered. Two cases written in Phase 3 were corrected before the code:
+      case 22 expects an issue type written through REST rather than GraphQL, and case 26's Backlog template gains a
+      field the default Status does not cover. The stand-in answers a project just made, with GitHub's defaults, a
+      count, and `gh api --input -`, and reports the `admin:org` and `workflow` scopes `apply` needs, which the owner's
+      login holds. 94 of the 106 cases pass, the 12 left being Phase 8's; `get` and `diff` read both accounts cleanly
+      afterward, and `apply` itself first runs on GitHub in Phase 10, by the owner
 
 ### Phase 7: apply, the projects of each kind
 
-- [ ] Requirement 4's projects of each kind
+- [x] Requirement 4's projects of each kind, built with Phase 6, since the routine is the one templates use: a missing
+      project is copied from its template, linked to its team with the team's write role, and brought to the template; a
+      drifted one is brought back, its own options left alone, an option renamed on the template renamed on it under its
+      old name. Cases 25, 27, 28 and 36 pass
 
 ### Phase 8: apply, a new account; and restore
 

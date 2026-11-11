@@ -104,10 +104,18 @@ def graphql(query):
         fail("GitHub refused a query: " + json.encode(out["errors"]))
     return out.get("data") or {}
 
+def _owner(login, what):
+    """One thing GitHub answers about an account: its __typename or its node ID."""
+    return sh("gh api graphql -f query=" + quote("query starOwner { repositoryOwner(login: \"" + login + "\") { __typename login id } }") +
+              " --jq .data.repositoryOwner." + what).strip()
+
+def owner_id(login):
+    """An account's node ID, which a project is made for."""
+    return _owner(login, "id")
+
 def owner_kind(login):
     """Whether an account is an organization or a user, as GitHub answers for it: "organization" or "user"."""
-    t = sh("gh api graphql -f query=" + quote("query starOwner { repositoryOwner(login: \"" + login + "\") { __typename login } }") +
-           " --jq .data.repositoryOwner.__typename").strip()
+    t = _owner(login, "__typename")
     if t == "Organization":
         return "organization"
     if t == "User":
@@ -119,6 +127,23 @@ VIEW_LAYOUTS = {"TABLE_LAYOUT": "table", "BOARD_LAYOUT": "board", "ROADMAP_LAYOU
 
 # The names of the fields in a connection of a view's fields.
 _FIELD_NAMES = "nodes { ... on ProjectV2FieldCommon { name } }"
+
+# What is read of a project: its own attributes and links, its fields with their options, and its views.
+_PROJECT_SELECTION = (
+    "id number title template closed shortDescription readme public teams(first: 20) { nodes { " +
+    "slug } } repositories(first: 50) { nodes { nameWithOwner } } fields(first: 50) { nodes { " +
+    "... on ProjectV2FieldCommon { id name dataType isIssueField } ... on " +
+    "ProjectV2SingleSelectField { options { id name color description } } ... on " +
+    "ProjectV2IterationField { configuration { duration startDay } } } } views(first: 25) { " +
+    "nodes { id name number layout filter fields(first: 50) { " +
+    _FIELD_NAMES +
+    "} groupByFields(first: 10) { " +
+    _FIELD_NAMES +
+    "} verticalGroupByFields(first: 10) { " +
+    _FIELD_NAMES +
+    "} sortByFields(first: 10) { nodes { direction field { ... on ProjectV2FieldCommon { name } " +
+    "} } } } }"
+)
 
 def _template_names():
     """The templates every account holds, reference/templates.yaml's: a user account keeps copies of them, by name."""
@@ -151,14 +176,8 @@ def read_all_projects(login, kind):
 
     The templates are the model's; diff and apply read the projects made from them too, to hold each to its template.
     """
-    query = ("query starProjects { " + kind + "(login: \"" + login + "\") { projectsV2(first: 50) { nodes { id number title template closed " +
-             "shortDescription readme public teams(first: 20) { nodes { slug } } repositories(first: 50) { nodes { nameWithOwner } } " +
-             "fields(first: 50) { nodes { ... on ProjectV2FieldCommon { id name dataType isIssueField } " +
-             "... on ProjectV2SingleSelectField { options { id name color description } } " +
-             "... on ProjectV2IterationField { configuration { duration startDay } } } } " +
-             "views(first: 25) { nodes { name number layout filter fields(first: 50) { " + _FIELD_NAMES + " } " +
-             "groupByFields(first: 10) { " + _FIELD_NAMES + " } verticalGroupByFields(first: 10) { " + _FIELD_NAMES + " } " +
-             "sortByFields(first: 10) { nodes { direction field { ... on ProjectV2FieldCommon { name } } } } } } } } } }")
+    query = ("query starProjects { " + kind + "(login: \"" + login + "\") { projectsV2(first: 50) { nodes { " + _PROJECT_SELECTION +
+             " } } } }")
     out = sh("gh api graphql -f query=" + quote(query) + " 2>/dev/null; true")
     if not out.strip().startswith("{"):
         return None
@@ -169,37 +188,58 @@ def read_all_projects(login, kind):
     for node in data["data"][kind]["projectsV2"]["nodes"]:
         if node.get("closed"):
             continue
-        fields = []
-        for f in node["fields"]["nodes"]:
-            field_type = FIELD_TYPES.get(f.get("dataType", ""))
-            if field_type == None:
-                continue
-            field = {"name": f["name"], "id": f["id"], "type": field_type}
-            if f.get("isIssueField"):
-                field["issue_field"] = True
-            if field_type == "single-select":
-                field["options"] = [
-                    {"name": o["name"], "id": o["id"], "color": o.get("color") or "", "description": o.get("description") or ""}
-                    for o in f.get("options") or []
-                ]
-            if field_type == "iteration" and f.get("configuration"):
-                field["configuration"] = {"duration": f["configuration"].get("duration"), "start_day": f["configuration"].get("startDay")}
-            fields.append(field)
-        views = sorted([_view(v) for v in (node.get("views") or {}).get("nodes") or []], key = lambda v: v["number"])
-        projects.append({
-            "name": node["title"],
-            "id": node["id"],
-            "number": int(node["number"]),
-            "template": bool(node["template"]),
-            "short_description": node.get("shortDescription") or "",
-            "readme": node.get("readme") or "",
-            "public": bool(node.get("public")),
-            "teams": sorted([n["slug"] for n in (node.get("teams") or {}).get("nodes") or []]),
-            "repositories": sorted([n["nameWithOwner"] for n in (node.get("repositories") or {}).get("nodes") or []]),
-            "fields": fields,
-            "views": views,
-        })
+        projects.append(_project(node))
     return sorted(projects, key = lambda p: p["number"])
+
+def _project(node):
+    """One project as the model records it, with the IDs of all its fields and views.
+
+    The IDs are apply's alone, under names that begin with an underscore, and never reach a record.
+    """
+    fields = []
+    for f in node["fields"]["nodes"]:
+        field_type = FIELD_TYPES.get(f.get("dataType", ""))
+        if field_type == None:
+            continue
+        field = {"name": f["name"], "id": f["id"], "type": field_type}
+        if f.get("isIssueField"):
+            field["issue_field"] = True
+        if field_type == "single-select":
+            field["options"] = [
+                {"name": o["name"], "id": o["id"], "color": o.get("color") or "", "description": o.get("description") or ""}
+                for o in f.get("options") or []
+            ]
+        if field_type == "iteration" and f.get("configuration"):
+            field["configuration"] = {"duration": f["configuration"].get("duration"), "start_day": f["configuration"].get("startDay")}
+        fields.append(field)
+    views = sorted([_view(v) for v in (node.get("views") or {}).get("nodes") or []], key = lambda v: v["number"])
+    return {
+        "_field_ids": {f["name"]: f["id"] for f in node["fields"]["nodes"] if type(f) == "dict" and f.get("name") and f.get("id")},
+        "_view_ids": {v["name"]: v.get("id") for v in (node.get("views") or {}).get("nodes") or [] if type(v) == "dict" and v.get("name")},
+        "name": node["title"],
+        "id": node["id"],
+        "number": int(node["number"]),
+        "template": bool(node["template"]),
+        "short_description": node.get("shortDescription") or "",
+        "readme": node.get("readme") or "",
+        "public": bool(node.get("public")),
+        "teams": sorted([n["slug"] for n in (node.get("teams") or {}).get("nodes") or []]),
+        "repositories": sorted([n["nameWithOwner"] for n in (node.get("repositories") or {}).get("nodes") or []]),
+        "fields": fields,
+        "views": views,
+    }
+
+def read_project(project_id):
+    """One project by its node ID, as read_all_projects reads each: the one apply has just made or copied."""
+    query = ("query starProject { node(id: \"" + project_id + "\") { ... on ProjectV2 { " + _PROJECT_SELECTION + " } } }")
+    node = graphql(query).get("node")
+    if type(node) != "dict":
+        fail("GitHub has no project " + project_id)
+    return _project(node)
+
+def public(project):
+    """A project without the IDs apply writes through, as a record holds it."""
+    return {k: project[k] for k in project if not k.startswith("_")}
 
 def read_projects(login, kind):
     """The account's open templates with their fields, options and views, or None when the token cannot read projects.
@@ -456,5 +496,5 @@ def read_account(account, strict = True):
         fail(account + "'s projects cannot be read: the token lacks read:project; run gh auth refresh -s read:project")
     model["types"] = types
     model["labels"] = labels
-    model["projects"] = templates_of(projects, kind)
+    model["projects"] = [public(p) for p in templates_of(projects, kind)]
     return model, projects, kind
