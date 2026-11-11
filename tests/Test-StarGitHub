@@ -340,7 +340,12 @@ function check {
 # The stand-in for sleep records how long it was asked to wait, among gh's calls, and returns at once.
 #
 # A write, a REST call with -X or a GraphQL mutation, is recorded among the calls and answered with a new ID; a secret
-# set is remembered, value and all, in ${GH_REMOTES}/secrets, so that a case can read back the token it was given.
+# set is remembered, value and all, a newline written as \n, in ${GH_REMOTES}/secrets, on a repository or an
+# organization, so that a case can read back the token it was given.
+#
+# Any repository under ${GH_REMOTES} answers what apply reads and writes of it (#437): GitHub's record of it, its files
+# raw at a revision, the git data API apply commits through, a ref, a commit, a tree, and its variables, remembered in
+# ${GH_REMOTES}/variables. A body sent with --input - is read from standard input.
 #
 # Returns:
 #   - 0, the stand-ins written and executable.
@@ -460,14 +465,14 @@ case "${1:-} ${2:-}" in
         exit 0
         ;;
     "secret set")
-        repo="$(option --repo "$@")"
-        printf 'secret %s %s %s\n' "${repo}" "$3" "$(cat)" >>"${GH_REMOTES}/secrets"
+        repo="$(option --repo "$@")" org="$(option --org "$@")" value="$(cat)"
+        printf 'secret %s %s %s\n' "${repo:-${org}}" "$3" "${value//$'\n'/\\n}" >>"${GH_REMOTES}/secrets"
         exit 0
         ;;
     "secret list")
-        repo="$(option --repo "$@")"
-        awk -v r="${repo}" '$1 == "secret" && $2 == r { print $3 }' "${GH_REMOTES}/secrets" 2>/dev/null |
-            jq -R -s -c '[split("\n")[] | select(. != "") | {name: .}] | unique' | filtered "$@"
+        repo="$(option --repo "$@")" org="$(option --org "$@")"
+        awk -v r="${repo:-${org}}" '$1 == "secret" && $2 == r { print $3 }' "${GH_REMOTES}/secrets" 2>/dev/null |
+            jq -R -s -c '[split("\n")[] | select(. != "") | {name: ., visibility: "all"}] | unique' | filtered "$@"
         exit 0
         ;;
     "pr merge")
@@ -500,7 +505,7 @@ esac
 
 declare -A vars=()
 declare -a headers=()
-paginate=0 jq_program="" rest_path="" include=0 method=GET
+paginate=0 jq_program="" rest_path="" include=0 method=GET input="" body=""
 shift 1
 while (($#)); do
     case $1 in
@@ -519,7 +524,10 @@ while (($#)); do
             method="$2"
             shift 1
             ;;
-        --input) shift 1 ;;
+        --input)
+            input="$2"
+            shift 1
+            ;;
         -H)
             headers+=("$2")
             shift 1
@@ -529,8 +537,10 @@ while (($#)); do
     shift 1
 done
 
-# The rules on a .github repository's main, and its head commit's workflow runs, as the case's ci set them.
-ci_path='^repos/([^/]+/[^/]+)/(rules/branches/main|actions/runs\?head_sha=)'
+[[ "${input}" != - ]] || body="$(cat)"
+
+# The rules on a repository's branch, and its head commit's workflow runs, as the case's ci set them.
+ci_path='^repos/([^/]+/[^/]+)/(rules/branches/[^?]+|actions/runs\?head_sha=)'
 if [[ "${rest_path}" =~ ${ci_path} ]]; then
     repo="${BASH_REMATCH[1]}" kind="${BASH_REMATCH[2]}"
     mode="$(ci_mode "${repo}")"
@@ -553,15 +563,105 @@ if [[ "${rest_path}" =~ ${ci_path} ]]; then
     exit 0
 fi
 
-# A .github repository's model.yaml at a revision, main by default, raw, as restore reads it.
-contents_path='^repos/([^/]+/\.github)/contents/model\.yaml(\?ref=(.+))?$'
-if [[ "${rest_path}" =~ ${contents_path} ]]; then
-    repo="${BASH_REMATCH[1]}" revision="${BASH_REMATCH[3]:-main}"
-    git --git-dir="${GH_REMOTES}/${repo}.git" show "${revision}:model.yaml" 2>/dev/null || {
-        printf 'stand-in gh: no model.yaml at %s in %s\n' "${revision}" "${repo}" >&2
-        exit 1
-    }
+# respond prints an answer as gh does: with -i, its status line and headers first; through --jq, a success; and exits 1
+# on an error, its body on standard output.
+function respond {
+    local status="$1" answer="$2"
+    if ((include)); then
+        printf 'HTTP/2.0 %s\r\nContent-Type: application/json\r\n\r\n%s' "${status}" "${answer}"
+    elif [[ "${status}" == 2* && -n "${jq_program}" ]]; then
+        jq -r "${jq_program}" <<<"${answer}"
+    else
+        printf '%s' "${answer}"
+    fi
+    [[ "${status}" == 2* ]] || exit 1
     exit 0
+}
+
+# A repository on the stand-in's GitHub, a bare repository under ${GH_REMOTES}: what GitHub says of it, its files raw at
+# a revision, its default branch's by default, and the git data API's reads and writes, which apply commits through; and
+# its variables, remembered in ${GH_REMOTES}/variables as `variable <repository> <name> <value>`. A path none of these
+# answers is left to the fixtures below.
+repo_path='^repos/([^/]+/[^/?]+)(/(.*))?$'
+if [[ "${rest_path}" =~ ${repo_path} ]]; then
+    repo="${BASH_REMATCH[1]}" part="${BASH_REMATCH[3]}" git_dir="${GH_REMOTES}/${BASH_REMATCH[1]}.git"
+    not_found='{"message": "Not Found", "status": "404"}'
+    export GIT_AUTHOR_NAME=stand-in GIT_AUTHOR_EMAIL=stand-in@example.com GIT_COMMITTER_NAME=stand-in GIT_COMMITTER_EMAIL=stand-in@example.com
+    case "${method} ${part}" in
+        "GET ")
+            [[ -d "${git_dir}" ]] || respond "404 Not Found" "${not_found}"
+            respond "200 OK" "$(jq -cn --arg r "${repo}" '{full_name: $r, default_branch: "main"}')"
+            ;;
+        "GET contents/"*)
+            path="${part#contents/}" ref=main
+            if [[ "${path}" == *"?ref="* ]]; then
+                ref="${path#*\?ref=}" path="${path%%\?*}"
+            fi
+            path="$(printf '%b' "${path//%/\\x}")"
+            if [[ -d "${git_dir}" ]] && content="$(git --git-dir="${git_dir}" show "${ref}:${path}" 2>/dev/null && printf x)"; then
+                respond "200 OK" "${content%x}"
+            fi
+            respond "404 Not Found" "${not_found}"
+            ;;
+        "GET git/ref/heads/"*)
+            ref="refs/heads/${part#git/ref/heads/}"
+            sha="$(git --git-dir="${git_dir}" rev-parse --verify --quiet "${ref}" 2>/dev/null)" || respond "404 Not Found" "${not_found}"
+            respond "200 OK" "$(jq -cn --arg s "${sha}" --arg r "${ref}" '{ref: $r, object: {sha: $s}}')"
+            ;;
+        "GET git/commits/"*)
+            sha="${part#git/commits/}"
+            tree="$(git --git-dir="${git_dir}" rev-parse --verify --quiet "${sha}^{tree}" 2>/dev/null)" || respond "404 Not Found" "${not_found}"
+            respond "200 OK" "$(jq -cn --arg s "${sha}" --arg t "${tree}" '{sha: $s, tree: {sha: $t}}')"
+            ;;
+        "GET git/trees/"*)
+            ref="${part#git/trees/}"
+            listing="$(git --git-dir="${git_dir}" ls-tree -r --name-only "${ref%%\?*}" 2>/dev/null)" || respond "404 Not Found" "${not_found}"
+            respond "200 OK" "$(jq -R -s -c '{tree: [split("\n")[] | select(. != "") | {path: ., type: "blob"}]}' <<<"${listing}")"
+            ;;
+        "POST git/trees")
+            index="${GH_REMOTES}/index-$$"
+            GIT_INDEX_FILE="${index}" git --git-dir="${git_dir}" read-tree "$(jq -r .base_tree <<<"${body}")" || exit 1
+            for ((entry = 0; entry < $(jq '.tree | length' <<<"${body}"); entry++)); do
+                blob="$(jq -j ".tree[${entry}].content" <<<"${body}" | git --git-dir="${git_dir}" hash-object -w --stdin)" || exit 1
+                GIT_INDEX_FILE="${index}" git --git-dir="${git_dir}" update-index --add \
+                    --cacheinfo "100644,${blob},$(jq -r ".tree[${entry}].path" <<<"${body}")" || exit 1
+            done
+            tree="$(GIT_INDEX_FILE="${index}" git --git-dir="${git_dir}" write-tree)" || exit 1
+            rm -f -- "${index}"
+            respond "201 Created" "$(jq -cn --arg t "${tree}" '{sha: $t}')"
+            ;;
+        "POST git/commits")
+            commit="$(git --git-dir="${git_dir}" commit-tree "$(jq -r .tree <<<"${body}")" -p "$(jq -r '.parents[0]' <<<"${body}")" \
+                -m "$(jq -r .message <<<"${body}")")" || exit 1
+            respond "201 Created" "$(jq -cn --arg s "${commit}" '{sha: $s}')"
+            ;;
+        "POST git/refs")
+            ref="$(jq -r .ref <<<"${body}")"
+            ! git --git-dir="${git_dir}" rev-parse --verify --quiet "${ref}" >/dev/null ||
+                respond "422 Unprocessable Entity" '{"message": "Reference already exists"}'
+            git --git-dir="${git_dir}" update-ref "${ref}" "$(jq -r .sha <<<"${body}")" || exit 1
+            respond "201 Created" "$(jq -cn --arg r "${ref}" '{ref: $r}')"
+            ;;
+        "PATCH git/refs/heads/"*)
+            git --git-dir="${git_dir}" update-ref "refs/heads/${part#git/refs/heads/}" "$(jq -r .sha <<<"${body}")" || exit 1
+            respond "200 OK" '{}'
+            ;;
+        "DELETE git/refs/heads/"*)
+            git --git-dir="${git_dir}" update-ref -d "refs/heads/${part#git/refs/heads/}" || exit 1
+            respond "204 No Content" ''
+            ;;
+        "GET actions/variables/"*)
+            name="${part#actions/variables/}"
+            value="$(awk -v r="${repo}" -v n="${name}" '$1 == "variable" && $2 == r && $3 == n { v = $4 } END { print v }' \
+                "${GH_REMOTES}/variables" 2>/dev/null)"
+            [[ -n "${value}" ]] || respond "404 Not Found" "${not_found}"
+            respond "200 OK" "$(jq -cn --arg n "${name}" --arg v "${value}" '{name: $n, value: $v}')"
+            ;;
+        "POST actions/variables" | "PATCH actions/variables/"*)
+            printf 'variable %s %s %s\n' "${repo}" "$(jq -r .name <<<"${body}")" "$(jq -r .value <<<"${body}")" >>"${GH_REMOTES}/variables"
+            respond "201 Created" '{}'
+            ;;
+    esac
 fi
 
 # A REST write: recorded among the calls, and answered with an ID.
@@ -1188,13 +1288,16 @@ for command in "github labels audit" "github labels sync" "gh labels audit" "gh 
     expect "12: star ${command} is an unknown command" error "" 'unknown command "(labels|gh)"'
 done
 
-# The writes a run made: REST calls with -X, GraphQL mutations, and secrets set.
-declare -r writes='def writes: [$calls[] | select((.[0:2] == ["secret", "set"]) or (index("-X") != null)
+# The writes a run made: REST calls with -X, GraphQL mutations, secrets set, repositories made, and pull requests opened,
+# edited, commented on and merged.
+declare -r writes='def writes: [$calls[] | select((.[0:2] | IN(["secret", "set"], ["repo", "create"], ["pr", "create"],
+        ["pr", "edit"], ["pr", "comment"], ["pr", "merge"])) or (index("-X") != null)
     or any(.[]; type == "string" and test("^query=\\s*mutation")))];
 def wrote($pattern): any(writes[]; any(.[]; type == "string" and test($pattern)));'
 declare -r reference="${data}/devlore/star/extensions/${extension_name}/reference"
 remote NobleFactor
 remote test-user
+remote David-Noble-at-work
 
 # 13. get reads any organization: its labels are those of each repository a team maintains, with no hub (#437).
 run_star "${data}" github model get NobleFactor
@@ -1352,40 +1455,78 @@ expect "28: a team project drifted from its template is brought back, its own sc
     and any(writes[]; any(.[]; type == "string" and test("createProjectV2View")) and any(.[]; type == "string" and test("PVT_triage_engprod")))
     and (wrote("F_PVT_schedule_engprod_schedule") | not)'
 
-# 29. A new organization joins through apply: the model, its team's projects, its .github repository's files from the
-# reference account's as it stands, and its repository's Triage workflow, variable and secret.
-repository NobleFactor/.github ".github/ISSUE_TEMPLATE/task.yml=name: Task" "workflow-templates/triage.yml=name: Triage" \
-    "CONTRIBUTING.md=# Contributing" "model.yaml=version: 1"
+# The Triage workflow templates, as each account's .github repository holds one: an organization's signs in with a
+# GitHub App, through two organization secrets; a user account's with a classic token in a repository secret.
+org_template=$'name: Triage\napp-id: ${{ secrets.NOBLEFACTOR_AUTOMATION_APP_ID }}\nkey: ${{ secrets.NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY }}\nowner: ${{ github.repository_owner }}'
+user_template=$'name: Triage\ntoken: ${{ secrets.ADD_TO_PROJECT_PAT }}'
+
+# 29. A new organization joins through apply: the model, its teams' projects, its .github repository's files from the
+# reference account's as it stands, NobleFactor's name in them its own, and its repository's Triage workflow and variable;
+# the App's secrets, which it has none of, named as steps by hand.
+repository NobleFactor/.github ".github/ISSUE_TEMPLATE/task.yml=name: Task" "workflow-templates/triage.yml=${org_template}" \
+    "CONTRIBUTING.md=# Contributing to NobleFactor" "model.yaml=version: 1" ".github/workflows/triage.yml=${org_template}"
 repository Acme/site
-export SITE_TOKEN=token-for-site
-run_star "${data}" github model apply "${reference}/organization.yaml" Acme --token env:SITE_TOKEN
-unset SITE_TOKEN
-fingerprint="$(printf %s token-for-site | { sha256sum 2>/dev/null || shasum -a 256; } | cut -c1-12)"
+repository Acme/app
+repository Acme/docs
+run_star "${data}" github model apply "${reference}/organization.yaml" Acme
 expect "29: apply of the reference brings a new organization into the model" ok '
     any(.[]; .kind == "issue-type" and .path == "Task" and .action == "changed")
     and any(.[]; .kind == "issue-type" and .path == "Epic" and .action == "created")
     and any(.[]; .kind == "issue-field" and .path == "Severity" and .action == "created")
     and any(.[]; .kind == "template" and .path == "Triage" and .action == "created")
     and any(.[]; .kind == "project" and .path == "Triage: web" and .action == "created")
-    and any(.[]; .kind == "file" and .action == "created")
-    and any(.[]; .kind == "workflow" and .path == "Acme/site" and .action == "created")
-    and any(.[]; .kind == "variable" and .path == "Acme/site/TRIAGE_PROJECT_URL" and .action == "created")
-    and any(.[]; .kind == "secret" and .path == "Acme/site/ADD_TO_PROJECT_PAT" and .action == "created")
-    and (tostring | test("token-for-site") | not)'
-expect "29: the secret's record shows the token's fingerprint, never the token" ok \
-    "any(.[]; .kind == \"secret\" and .fingerprint == \"${fingerprint}\")"
+    and any(.[]; .kind == "file" and .path == "Acme/.github/CONTRIBUTING.md" and .action == "created" and (.pull_request | test("Acme/.github/pull/")))
+    and any(.[]; .kind == "workflow" and .path == "Acme/site" and .action == "created" and (.pull_request | test("Acme/site/pull/")))
+    and any(.[]; .kind == "variable" and .path == "Acme/site/TRIAGE_PROJECT_URL" and .action == "created"
+        and .value == "https://github.com/orgs/Acme/projects/99")'
+expect "29: the App's secrets, missing, are steps by hand, set on the organization" ok '
+    ([.[] | select(.kind == "secret") | {path, action}] | sort_by(.path)) == [
+        {path: "Acme/NOBLEFACTOR_AUTOMATION_APP_ID", action: "by-hand"},
+        {path: "Acme/NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY", action: "by-hand"}]
+    and ([.[] | select(.kind == "secret") | .steps[0]] | all(test("gh secret set NOBLEFACTOR_AUTOMATION_APP_[A-Z_]+ --org Acme")))'
 check "29: Acme/.github holds NobleFactor/.github's issue form" shows Acme/.github .github/ISSUE_TEMPLATE/task.yml "name: Task"
+check "29: Acme/.github's files name Acme where NobleFactor's name NobleFactor" shows Acme/.github CONTRIBUTING.md "# Contributing to Acme"
 check "29: Acme/.github holds no copy of NobleFactor's model" lacks Acme/.github model.yaml
-check "29: Acme/site holds the Triage workflow, from NobleFactor/.github's template" shows Acme/site .github/workflows/triage.yml "name: Triage"
-check "29: Acme/site's secret is the token --token named" grep -qxF "secret Acme/site ADD_TO_PROJECT_PAT token-for-site" "${run_directory}/remotes/secrets"
+check "29: Acme/.github's own Triage workflow is not copied: it takes part only when a team maintains it" lacks Acme/.github .github/workflows/triage.yml
+check "29: Acme/site holds the Triage workflow, NobleFactor/.github's template as it stands" shows Acme/site .github/workflows/triage.yml "${org_template}"
+check "29: apply removes the branches it landed its pull requests from" bash -c \
+    "! git --git-dir='${run_directory}/remotes/Acme/site.git' rev-parse --verify --quiet refs/heads/chore/triage-workflow"
+run_star "${data}" github model diff "${reference}/organization.yaml" Acme
+expect "29: afterward diff finds no file or workflow to change" ok '[.[] | select(.kind == "file" or .kind == "workflow")] == []'
 
-# 30. With no --token, apply names a missing secret to set by hand, and makes the rest.
-repository David-Noble-at-work/.github ".github/ISSUE_TEMPLATE/task.yml=name: Task" "workflow-templates/triage.yml=name: Triage"
+# 29b. --token names a secret the template signs in with, or none: an organization's template uses no token.
+export SITE_TOKEN=token-for-site
+run_star "${data}" github model apply "${reference}/organization.yaml" Acme --token env:SITE_TOKEN
+expect "29b: a bare --token, where the template uses two secrets, is refused, both named, and nothing written" error "${writes}"'
+    (writes | length) == 0' 'NOBLEFACTOR_AUTOMATION_APP_ID, NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY' text
+run_star "${data}" github model apply "${reference}/organization.yaml" Acme --token ADD_TO_PROJECT_PAT=env:SITE_TOKEN
+expect "29b: a secret the template does not use is refused, and nothing written" error "${writes}"'(writes | length) == 0' \
+    'ADD_TO_PROJECT_PAT, which .* does not use' text
+
+# 30. A new user account joins through apply: with no --token, it names the missing secret to set by hand, and makes the
+# rest; with --token env:<NAME>, it sets the secret on each repository, showing the token's fingerprint, never the token.
+repository David-Noble-at-work/.github ".github/ISSUE_TEMPLATE/task.yml=name: Task" "workflow-templates/triage.yml=${user_template}" \
+    "README.md=# David-Noble-at-work's .github"
 repository test-user/personal
 run_star "${data}" github model apply "${reference}/user.yaml" test-user
 expect "30: with no --token, apply names the missing secret to set by hand, and makes the rest" ok '
-    any(.[]; .kind == "secret" and .path == "test-user/personal/ADD_TO_PROJECT_PAT" and .action == "by-hand")
-    and any(.[]; .kind == "workflow" and .path == "test-user/personal" and .action == "created")'
+    any(.[]; .kind == "secret" and .path == "test-user/personal/ADD_TO_PROJECT_PAT" and .action == "by-hand"
+        and (.steps[0] | test("gh secret set ADD_TO_PROJECT_PAT --repo test-user/personal")))
+    and any(.[]; .kind == "workflow" and .path == "test-user/personal" and .action == "created")
+    and any(.[]; .kind == "file" and .path == "test-user/.github/.github/ISSUE_TEMPLATE/task.yml" and .action == "created")
+    and any(.[]; .kind == "file" and .path == "test-user/.github/README.md" and .action == "changed")'
+check "30: test-user/.github's README names test-user" shows test-user/.github README.md "# test-user's .github"
+check "30: test-user/personal holds the Triage workflow" shows test-user/personal .github/workflows/triage.yml "${user_template}"
+run_star "${data}" github model apply "${reference}/user.yaml" test-user --token env:SITE_TOKEN
+unset SITE_TOKEN
+fingerprint="$(printf %s token-for-site | { sha256sum 2>/dev/null || shasum -a 256; } | cut -c1-12)"
+expect "30: --token env:<NAME> sets the secret, its record showing the token's fingerprint and never the token" ok "
+    any(.[]; .kind == \"secret\" and .path == \"test-user/personal/ADD_TO_PROJECT_PAT\" and .action == \"created\"
+        and .fingerprint == \"${fingerprint}\")
+    and (tostring | test(\"token-for-site\") | not)"
+check "30: test-user/personal's secret is the token --token named" grep -qxF "secret test-user/personal ADD_TO_PROJECT_PAT token-for-site" \
+    "${run_directory}/remotes/secrets"
+check "30: the token appears in none of gh's calls" bash -c "! grep -qF token-for-site '${run_directory}/calls.jsonl'"
 
 # 31. apply refuses star's --dry-run, whose reads are skipped until NobleFactor/devlore-cli#1170.
 run_star "${data}" github model apply noblefactor.json NobleFactor --dry-run
@@ -1406,12 +1547,15 @@ expect "32: restore <revision> applies that revision's backup" ok '[.[] | select
 # 33. A token from a file must be readable by its owner alone; --token replaces a secret already set.
 printf 'token-from-file' >"${run_directory}/work/token"
 chmod 644 "${run_directory}/work/token"
-run_star "${data}" github model apply "${reference}/organization.yaml" Acme --token file:token
-expect "33: a token file others can read is refused, and nothing written" error "${writes}"'(writes | length) == 0' 'token' text
+run_star "${data}" github model apply "${reference}/user.yaml" test-user --token file:token
+expect "33: a token file others can read is refused, and nothing written" error "${writes}"'(writes | length) == 0' 'others can read' text
 chmod 600 "${run_directory}/work/token"
-run_star "${data}" github model apply "${reference}/organization.yaml" Acme --token file:token
-check "33: a token file only its owner can read replaces the secret already set" \
-    grep -qxF "secret Acme/site ADD_TO_PROJECT_PAT token-from-file" "${run_directory}/remotes/secrets"
+run_star "${data}" github model apply "${reference}/user.yaml" test-user --token file:token
+expect "33: a token file only its owner can read replaces the secret already set" ok '
+    any(.[]; .kind == "secret" and .path == "test-user/personal/ADD_TO_PROJECT_PAT" and .action == "changed")'
+check "33: the secret is the file's token" grep -qxF "secret test-user/personal ADD_TO_PROJECT_PAT token-from-file" "${run_directory}/remotes/secrets"
+run_star "${data}" github model apply "${reference}/user.yaml" test-user --token file:no-such-token
+expect "33: a token file that is not there is refused, and nothing written" error "${writes}"'(writes | length) == 0' 'no-such-token' text
 
 # 34. No token's value is taken on the command line, nor a source but env: and file:.
 for token in ghp_0123456789abcdefghijABCDEFGHIJ012345 vault:kv-acme/site; do
@@ -1452,6 +1596,43 @@ jq '.teams |= map(select(.slug != "devlore"))
 run_star "${data}" github model apply fewer-teams.json NobleFactor --prune
 expect "37: with --prune, the account's own backup lacking a team and a role deletes neither" ok "${writes}"'
     (any(writes[]; any(.[]; type == "string" and (test("teams/devlore") or test("teams/engprod/repos/NobleFactor/beta"))))) | not'
+
+# 38. On the account's own model, diff compares no .github file, which is the account's own, and holds each participating
+# repository's workflow to the template and its variable to its team's Triage project.
+repository NobleFactor/.github "workflow-templates/triage.yml=${org_template}"
+repository NobleFactor/alpha ".github/workflows/triage.yml=name: An older Triage"
+printf 'variable NobleFactor/alpha TRIAGE_PROJECT_URL https://github.com/orgs/NobleFactor/projects/6\n' >>"${run_directory}/remotes/variables"
+run_star "${data}" github model diff noblefactor.json NobleFactor
+expect "38: diff of the account's own model compares no .github file" ok '[.[] | select(.kind == "file")] == []'
+expect "38: a workflow that differs from the template, and one missing, are each a record" ok '
+    any(.[]; .kind == "workflow" and .path == "NobleFactor/alpha" and .change == "different")
+    and any(.[]; .kind == "workflow" and .path == "NobleFactor/beta" and .change == "missing")'
+expect "38: a variable naming another team's Triage project is a record, the team's own named" ok '
+    any(.[]; .kind == "variable" and .path == "NobleFactor/alpha/TRIAGE_PROJECT_URL" and .change == "different"
+        and .model.value == "https://github.com/orgs/NobleFactor/projects/5" and .model.project == "Triage: engprod")'
+printf 'secret NobleFactor NOBLEFACTOR_AUTOMATION_APP_ID 1\nsecret NobleFactor NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY k\n' \
+    >>"${run_directory}/remotes/secrets"
+run_star "${data}" github model diff noblefactor.json NobleFactor
+expect "38: the organization's secrets, visible to all its repositories, are no difference" ok '[.[] | select(.kind == "secret")] == []'
+
+# 39. An organization's App secrets come from --token, each named: set on the organization, visible to all its
+# repositories, a private key's lines kept.
+export APP_ID=12345
+printf -- '-----BEGIN KEY-----\nabc\n-----END KEY-----\n' >"${run_directory}/work/app.pem"
+chmod 600 "${run_directory}/work/app.pem"
+repository NobleFactor/.github "workflow-templates/triage.yml=${org_template}" "CONTRIBUTING.md=# Contributing to NobleFactor"
+run_star "${data}" github model apply "${reference}/organization.yaml" Acme \
+    --token NOBLEFACTOR_AUTOMATION_APP_ID=env:APP_ID,NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY=file:app.pem
+unset APP_ID
+expect "39: each named secret is set on the organization, its fingerprint shown" ok '
+    ([.[] | select(.kind == "secret") | {path, action, f: (.fingerprint | length)}] | sort_by(.path)) == [
+        {path: "Acme/NOBLEFACTOR_AUTOMATION_APP_ID", action: "created", f: 12},
+        {path: "Acme/NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY", action: "created", f: 12}]'
+check "39: the App's ID is set on the organization" grep -qxF "secret Acme NOBLEFACTOR_AUTOMATION_APP_ID 12345" "${run_directory}/remotes/secrets"
+check "39: the private key keeps its lines, its final newline dropped" \
+    grep -qxF 'secret Acme NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY -----BEGIN KEY-----\nabc\n-----END KEY-----' "${run_directory}/remotes/secrets"
+check "39: the organization secrets were set visible to all its repositories" bash -c \
+    "jq -e 'select(.[0:2] == [\"secret\", \"set\"]) | select(index(\"--org\") != null and index(\"all\") != null)' '${run_directory}/calls.jsonl' >/dev/null"
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"

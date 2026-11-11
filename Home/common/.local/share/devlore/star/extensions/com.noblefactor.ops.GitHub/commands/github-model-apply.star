@@ -13,6 +13,7 @@
 load("commands/access.star", "check_access")
 load("commands/apply.star", "apply_model")
 load("commands/model.star", "refuse_dry_run")
+load("commands/tokens.star", "check", "parse")
 
 def run(_command, ctx):
     """Check gh's access, then make the model the account's and return what was done about each difference.
@@ -25,6 +26,8 @@ def run(_command, ctx):
     account = (ctx.args.get("account") or "").strip()
     if model == "" or account == "":
         fail("name the model and the account: star github model apply <model> <account>")
+    sources = parse(ctx.args.get("token") or "")
     refuse_dry_run(ctx.dry_run)
-    check_access("star github model apply", scopes = ["repo", "project", "admin:org"], dry_run = ctx.dry_run)
-    return apply_model(model, account, ctx.args.get("prune") in [True, "true"])
+    check(sources)
+    check_access("star github model apply", scopes = ["repo", "project", "admin:org", "workflow"], dry_run = ctx.dry_run)
+    return apply_model(model, account, ctx.args.get("prune") in [True, "true"], sources)

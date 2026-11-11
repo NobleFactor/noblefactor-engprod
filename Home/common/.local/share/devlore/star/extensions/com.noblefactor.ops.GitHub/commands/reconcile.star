@@ -19,9 +19,11 @@
 #
 # One record for each difference: kind, path, change (missing: the model has it and GitHub does not; different;
 # renamed; extra: GitHub has it and the model does not), what GitHub holds, what the model holds, and by_hand when
-# GitHub's API cannot make the change, a view's grouping or sort.
+# GitHub's API cannot make the change, a view's grouping or sort. The .github files, and each participating
+# repository's Triage workflow, variable and secrets, come last, from participation.star (decision 12).
 
 load("commands/model.star", "extension_dir", "read_account", "read_text")
+load("commands/participation.star", participation_compare = "compare", participation_read = "read")
 
 # The order the records come in, which is the order apply makes them in: each kind after what it depends on.
 KINDS = [
@@ -38,6 +40,10 @@ KINDS = [
     "project-option",
     "project-view",
     "team",
+    "file",
+    "workflow",
+    "variable",
+    "secret",
 ]
 
 # What is compared of each thing, and what of it GitHub's API cannot write.
@@ -430,23 +436,32 @@ def compare(model, github, projects, kind):
     order = {k: i for i, k in enumerate(KINDS)}
     return sorted(out, key = lambda r: (order.get(r["kind"], len(KINDS)), r["path"]))
 
-def prepare(path, account):
-    """The model a file holds, brought to the form get returns, with the account as GitHub holds it now.
+def prepare(source, account):
+    """A model brought to the form get returns, with the account as GitHub holds it now.
+
+    Args:
+      source: the model's file, or the model itself, as restore reads it from a backup.
+      account: the account.
 
     Returns:
-      (model, github, projects, kind): the model; the account's model, read leniently; every open project of the account,
-      with the IDs apply writes through; "organization" or "user".
+      (model, github, projects, kind, state): the model; the account's model, read leniently; every open project of the
+      account, with the IDs apply writes through; "organization" or "user"; and what the account holds of its .github
+      files and each participating repository's Triage workflow, variable and secrets, with what it should (decision 12).
     """
-    model = read_model_file(path)
+    model = read_model_file(source) if type(source) == "string" else source
     github, projects, kind = read_account(account, strict = False)
     if is_reference(model):
         model = from_reference(model, github)
-    return model, github, projects, kind
+    return model, github, projects, kind, participation_read(model, github, projects, kind)
+
+def every_difference(model, github, projects, kind, state):
+    """The records of every difference: the model's, then the .github files', and each repository's workflow's."""
+    return compare(model, github, projects, kind) + participation_compare(state, kind, github["account"])
 
 def differences(path, account):
     """What star github model diff returns.
 
     The records of every difference between the model a file holds and the account's, read from GitHub now.
     """
-    model, github, projects, kind = prepare(path, account)
-    return compare(model, github, projects, kind)
+    model, github, projects, kind, state = prepare(path, account)
+    return every_difference(model, github, projects, kind, state)

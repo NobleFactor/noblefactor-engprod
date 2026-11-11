@@ -81,6 +81,7 @@ Read on 2026-11-10 from `develop` at `1923a24`, from GitHub's GraphQL schema, an
 | The reference models | ⚠️ | Each writes the four templates out, the two identical, listing no views. `reference/organization.yaml` is `get`'s shape without IDs, with more in it: each type's color and description, each field's description, each option's color and description. `reference/user.yaml` names its labels as families, `areas`, `priorities`, `severities`, `efforts` and `resolutions`, rather than per repository |
 | The projects made from templates | ⚠️ | Each team's four in NobleFactor, the account's four in David-Noble-at-work; configured by hand on 2026-11-03 and by #303's closing script, nothing keeping them so. Each Schedule project's Schedule field holds one option per schedule, the template a placeholder: Schedule: engprod 4, Schedule: devlore 5 |
 | A new account | ❌ | Brought in by hand: #431 and #441 made each `.github` repository's files, and personal#315 and #323 its Triage workflow, variable and secret |
+| The Triage workflow | ⚠️ | Read on 2026-11-10. NobleFactor's template signs in with the noblefactor-automation GitHub App, through the organization secrets `NOBLEFACTOR_AUTOMATION_APP_ID` and `NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY`, and names NobleFactor twice in its steps; David-Noble-at-work's signs in with the classic token in `ADD_TO_PROJECT_PAT`. None of NobleFactor's five participating repositories has the workflow yet, each with its `TRIAGE_PROJECT_URL` set (#448, waiting on #447); personal and David-Noble-at-work/.github have it |
 
 What GitHub's API can write, read from its schema on 2026-11-10:
 
@@ -92,7 +93,7 @@ What GitHub's API can write, read from its schema on 2026-11-10:
 | Project fields | `createProjectV2Field`, `updateProjectV2Field` (options with their IDs), `deleteProjectV2Field`; an issue field on a project, `createProjectV2IssueField` | |
 | Project views | `createProjectV2View`, `updateProjectV2View`, `deleteProjectV2View`: name, layout, filter, visible fields | A view's grouping and sort: no input takes them |
 | Templates and their copies | `createProjectV2`, `markProjectV2AsTemplate`, `copyProjectV2`, `linkProjectV2ToTeam`, `updateProjectV2Collaborators` (a team's role) | |
-| A repository's workflow, variable, secret | REST: contents, `actions/variables`, `actions/secrets` | A secret's value is never read back |
+| A repository's workflow, variable, secret | REST: contents and git data, `actions/variables`, `actions/secrets` | A secret's value is never read back |
 
 ## Decisions for review
 
@@ -140,13 +141,31 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
 11. **`get` reads any account.** No hub: an organization's labels are those of each repository a team maintains, as a
     user account's are those of each repository carrying the topic issue-model. NobleFactor's backup then holds the
     labels of every repository its teams maintain, not noblefactor-engprod's alone.
-12. **A new account joins through `apply`.** Beyond the model, an account needs its `.github` repository's files and
-    each participating repository's Triage workflow, with the `TRIAGE_PROJECT_URL` variable naming its team's Triage
-    project and an `ADD_TO_PROJECT_PAT` secret. `apply` writes what is missing of them: the `.github` repository's files
-    from the account the reference is kept for, as its `.github` repository stands, NobleFactor/.github for an
-    organization and David-Noble-at-work/.github for a user account, through a pull request as `backup` lands one; each
-    repository's workflow through a pull request in it; the variable directly; and the secret from `--token` (decision
-    15). Its own files, those the reference account's repository lacks, are never deleted.
+12. **A new account joins through `apply`,** revised on 2026-11-10 from what GitHub holds. Beyond the model, an account
+    needs its `.github` repository's files, and in each participating repository the Triage workflow, the
+    `TRIAGE_PROJECT_URL` variable naming its team's Triage project, and the secrets the workflow signs in with. `apply`
+    writes what is missing or different of them, and `diff` reports it:
+    - The `.github` repository's files come from the account the model comes from, as its `.github` repository stands: a
+      reference's `files_from`, NobleFactor/.github for an organization and David-Noble-at-work/.github for a user
+      account, or a backup's own account. Every file but `model.yaml`, the account's own, and
+      `.github/workflows/triage.yml`, which the workflow below covers. The source account's name in them becomes the
+      target's, as a reference's `{account}` does: NobleFactor's README, CONTRIBUTING, SECURITY and SUPPORT name
+      NobleFactor as the account they serve (decided in Phase 8; approved by the owner, 2026-11-10). They land through one pull request, as `backup` lands
+      one; the account's own files, those the source lacks, are never deleted. On the account they come from there is
+      nothing to compare.
+    - Each participating repository's `.github/workflows/triage.yml` is the source's `workflow-templates/triage.yml`,
+      landed through a pull request on its default branch.
+    - The variable is set directly.
+    - The secrets are those the template names. An organization's template signs in with a GitHub App, NobleFactor's
+      through the organization secrets `NOBLEFACTOR_AUTOMATION_APP_ID` and `NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY`; a
+      user account's with a classic token in `ADD_TO_PROJECT_PAT`. One missing, on the repository or, in an organization,
+      on the organization, is set from `--token` (decision 15) or named as a step by hand. The first draft assumed
+      `ADD_TO_PROJECT_PAT` in every account.
+    - The template names its account nowhere (the owner, 2026-11-10): NobleFactor's names NobleFactor twice, so a copy
+      in another organization would sign in to NobleFactor and set NobleFactor's Area field. #447's pull request to
+      NobleFactor/.github makes both `github.repository_owner` and fixes the Area reader that can hang a run, before
+      Phase 10, so that the `apply` there lands NobleFactor's five workflows sound; #448 keeps the Severity step and its
+      proof.
 13. **The label commands go first,** before any other change on the branch: until they go, `labels sync` puts the
     retired type labels back.
 14. **The templates are defined once,** in `reference/templates.yaml`, with their fields, options and views. Each
@@ -157,18 +176,23 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
     common set and its kind's additions. A field marked `own_options`, Schedule's and Scenario's, holds options that are
     each project's own, and `diff` and `apply` leave them alone. Corrected on 2026-11-10, reading both accounts: the
     first draft had the organization adding to a common set and the user account adding nothing.
-15. **A token comes from where `--token` names, never from its value** (the owner, 2026-11-10): `env:<NAME>`, an
-    environment variable set for the run, or `file:<path>`, a file its owner alone can read, mode `600` or stricter. A
-    value on the command line, a token's shape or any other source, is refused, since it is already in the shell's
-    history; star calls no other tool for a token, Azure's among them. The token goes from its source to `gh secret set`
-    through one shell pipeline, so it enters neither Starlark nor star's records; the record shows the first 12
-    hexadecimal digits of its SHA-256. Without `--token`, a secret already set, an organization's included, is kept, and
+15. **A secret comes from where `--token` names, never from its value** (the owner, 2026-11-10). `--token` names each
+    secret and its source, `<SECRET>=env:<NAME>` or `<SECRET>=file:<path>`, comma-separated for several; a bare
+    `env:<NAME>` or `file:<path>` serves when the template uses one secret, as a user account's does. `env:` is an
+    environment variable set for the run; `file:` a file its owner alone can read, mode `600` or stricter, which holds a
+    token or an App's private key. A value on the command line, a token's shape or any other source, is refused, since it
+    is already in the shell's history, and so is a secret the template does not use, before anything is written; star
+    calls no other tool for a secret, Azure's among them. The value goes from its source to `gh secret set` through one
+    shell pipeline, carriage returns and the final newline dropped and a key's other lines kept, so it enters neither
+    Starlark nor star's records; the record shows the first 12 hexadecimal digits of its SHA-256. In an organization a
+    secret is set on the organization, visible to all its repositories, as NobleFactor holds its App's; in a user account
+    on each participating repository. Without `--token`, a secret already set, an organization's included, is kept, and
     a missing one is named as a step by hand; with it, the secret is set, replacing one already there. On Windows, where
     a file has no mode, `file:` reads its ACL with `powershell.exe`'s `Get-Acl`, part of Windows, and refuses a file
     anyone but its owner, SYSTEM and Administrators can read (the owner, 2026-11-10: the extension is cross-platform).
     That half is written now and tested once the command provider replaces the shell provider
     (NobleFactor/devlore-cli#1136, and #474), when Test-StarGitHub can run on Windows; until then the test runs on macOS
-    and Linux, as it does today.
+    and Linux, as it does today. Revised the same day: the first ruling named one token, `ADD_TO_PROJECT_PAT`.
 16. **A model on standard input waits on the command provider.** star gives an extension's shell commands no standard
     input: its shell provider sends none, and a missing one closes the child's input at once. Section 6.3 of
     devlore-cli's architecture makes standard input an attribute of the request, `Options.Stdin`, and
@@ -198,13 +222,13 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
 - `star github model diff <model> <account>` reads the model, brings a reference to `get`'s form, reads the account's
   model with `get`'s code and its projects of each kind, and returns one record for each difference: what it is (a
   type, a field, an option, a label, a template, a project of a kind, a field or view of one, a `.github` file, a
-  repository's workflow or variable), its key, what is wrong (missing, different, renamed, or not in the model), what
+  repository's workflow, variable or secret), its key, what is wrong (missing, different, renamed, or not in the model), what
   GitHub holds and what the model holds. A difference `apply` cannot make, a view's grouping or sort or a team, says so.
   Nothing is written. It exits 0 whether there are differences or none; an error alone fails it.
 
 ### Requirement 4: apply
 
-- `star github model apply <model> <account> [--prune] [--token <source>]` makes `diff`'s changes, in an order that
+- `star github model apply <model> <account> [--prune] [--token <sources>]` makes `diff`'s changes, in an order that
   keeps every reference whole: issue types; issue fields and their options; each participating repository's labels; the
   templates, a missing one first made; each project of a kind, a missing one first copied and linked; the `.github`
   repository's files; each participating repository's workflow, variable and secret.
@@ -216,8 +240,8 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
 
 ### Requirement 5: restore
 
-- `star github model restore <account> [<revision>] [--prune]` reads `model.yaml` at the revision of
-  `<account>/.github`, `main` when none is named, and applies it.
+- `star github model restore <account> [<revision>] [--prune] [--token <sources>]` reads `model.yaml` at the revision
+  of `<account>/.github`, `main` when none is named, and applies it.
 
 ### Requirement 6: the label commands retired
 
@@ -334,8 +358,17 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
 
 ### Phase 8: apply, a new account; and restore
 
-- [ ] Requirement 4's `.github` files, workflows, variables and secrets, and Requirement 5; every case passes;
-      `make check` passes
+- [x] Requirement 4's `.github` files, workflows, variables and secrets, and Requirement 5; every case passes;
+      `make check` passes. Reading GitHub first changed decisions 12 and 15 (the owner, 2026-11-10): an organization's
+      workflow signs in with a GitHub App, so the secrets are those the template names, and `--token` names each one.
+      `commands/participation.star` reads, compares and writes what an account needs beyond its model;
+      `commands/tokens.star` takes `--token`; `commands/pull.star` lands a change through a pull request, `backup`'s
+      gate moved there, apply committing through GitHub's git data API so that no clone is touched;
+      `commands/github-model-restore.star` is Requirement 5. The test's stand-in answers the git data API, raw contents,
+      variables and organization secrets; cases 29 and 30 now bring in a new organization and a new user account, 29b
+      and 39 hold `--token` to the template's secrets, and 38 an account's own workflows and variables. 126 of 126 cases
+      pass. Read live on 2026-11-10 with the branch's extension, `diff` of each account's own model finds NobleFactor's
+      five missing Triage workflows, #448's, and nothing else, and nothing in David-Noble-at-work
 
 ### Phase 9: the issues and the documents
 
@@ -343,6 +376,7 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
 
 ### Phase 10: proved on GitHub
 
+- [ ] #447's pull request to NobleFactor/.github merged first (decision 12)
 - [ ] For NobleFactor and David-Noble-at-work, on the branch's extension: `diff` of the account's fresh backup, showing
       nothing to change, and of its reference, showing what differs; a team project's field changed by hand and brought
       back; an `apply` of a model changed for the purpose, then `diff` showing nothing left; a label renamed through
@@ -376,12 +410,14 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
 | 15 | `apply` with a template the account lacks | The template made, its fields and views, marked a template |
 | 16 | `apply` with a team lacking its Triage project | The project copied from the template, linked to the team, the team's write role on it |
 | 17 | `apply` with a team project drifted from its template | Brought back; its rows, schedule options and iterations untouched |
-| 18 | `apply --token env:<NAME>` of the reference to a new organization | Its types, fields, templates, teams' projects, labels, `.github` files by pull request, each repository's workflow by pull request, variable, and secret from the variable, its record showing the token's fingerprint and never the token |
+| 18 | `apply` of the reference to a new organization | Its types, fields, templates and teams' projects; its `.github` files by pull request, the source account's name in them its own, `model.yaml` not among them; each repository's workflow by pull request, and its variable; the App's secrets, missing, named as steps by hand |
 | 18a | `apply` of another organization's model to an organization with three teams | No team made or deleted, no role changed, no label written; each team that maintains a repository gets one project for each template |
 | 18b | `apply --prune` of another organization's model, and of the account's own backup lacking a team and a role | No team deleted, no role removed or lowered |
-| 19 | `apply` with no `--token` | A missing secret named as a step by hand; the rest made |
+| 19 | `apply` of the user reference to a new user account, with no `--token` and then `--token env:<NAME>` | First the missing secret named as a step by hand, the rest made; then the secret set on each repository from the variable, its record showing the token's fingerprint and never the token |
+| 19c | `apply --token <SECRET>=env:<NAME>,<SECRET>=file:<path>` to an organization | The App's secrets set on the organization; a secret the template does not use, or a bare source where it uses two, refused, nothing written |
 | 19a | `apply --token file:<path>` | Refused when others can read the file; at mode `600`, the secret set from it, replacing one already there |
 | 19b | `apply --token` with a token's value, or a source but `env:` and `file:` | Refused; nothing written |
+| 21a | `diff` of an account's own backup, its `.github` files and workflows as they stand | No file record; a workflow that differs from the template, and a variable naming another team's Triage project, each a record |
 | 20 | `apply` under `--dry-run` | Refused, naming NobleFactor/devlore-cli#1170; nothing written |
 | 21 | `restore NobleFactor`, and `restore NobleFactor <revision>` | `main`'s `model.yaml`, then the revision's, applied |
 | 22 | Every existing case | Passes |
@@ -393,8 +429,13 @@ Under `Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitH
 | File | Action | Purpose |
 | --- | --- | --- |
 | `docs/plans/feature/437-model-diff-apply-restore.md` | Create | This plan |
-| `commands/reconcile.star` | Create | Bringing a reference to `get`'s form, the comparison `diff`, `apply` and `restore` share, and the writes |
+| `commands/reconcile.star` | Create | Bringing a reference to `get`'s form, and the comparison `diff`, `apply` and `restore` share |
+| `commands/apply.star` | Create | The writes |
+| `commands/participation.star` | Create | Decision 12: the `.github` files, and each participating repository's Triage workflow, variable and secrets, read, compared and written |
+| `commands/tokens.star` | Create | Decision 15: `--token` |
+| `commands/pull.star` | Create | A change landed through a pull request, `backup`'s and `apply`'s |
 | `commands/github-model-diff.star`, `commands/github-model-apply.star`, `commands/github-model-restore.star` | Create | Requirements 3 to 5 |
+| `commands/github-model-backup.star` | Modify | Its pull request landed through `commands/pull.star` |
 | `commands/model.star` | Modify | Requirement 1 |
 | `reference/templates.yaml`, `reference/organization.yaml`, `reference/user.yaml` | Create, modify | Requirement 2 |
 | `commands/scheme.star`, `commands/github-labels-audit.star`, `commands/github-labels-sync.star` | Modify, remove | Requirement 6 |

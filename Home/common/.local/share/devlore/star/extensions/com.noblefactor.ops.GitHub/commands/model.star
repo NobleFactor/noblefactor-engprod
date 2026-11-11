@@ -104,6 +104,28 @@ def graphql(query):
         fail("GitHub refused a query: " + json.encode(out["errors"]))
     return out.get("data") or {}
 
+def rest(method, path, body = None):
+    """A REST write; its body goes to gh as JSON through a pipe within the one command. Returns the answer, decoded."""
+    command = "gh api -X " + method + " " + quote(path)
+    if body != None:
+        command = "printf %s " + quote(json.encode(body)) + " | " + command + " --input -"
+    out = sh(command).strip()
+    return json.decode(data = out) if out.startswith("{") else None
+
+_UNRESERVED = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.~"
+_HEX = "0123456789ABCDEF"
+
+def escape(s):
+    """A name as one segment of a REST path, percent-encoded."""
+    out = ""
+    for c in s.elems():
+        if c in _UNRESERVED:
+            out += c
+        else:
+            for b in c.elem_ords():
+                out += "%" + _HEX[b // 16] + _HEX[b % 16]
+    return out
+
 def _owner(login, what):
     """One thing GitHub answers about an account: its __typename or its node ID."""
     return sh("gh api graphql -f query=" + quote("query starOwner { repositoryOwner(login: \"" + login + "\") { __typename login id } }") +

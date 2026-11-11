@@ -58,7 +58,26 @@ commands:
       - name: token
         type: string
         default: ""
-        help: "Where a repository's ADD_TO_PROJECT_PAT comes from: env:<NAME> or file:<path>; never the token itself"
+        help: "Where each secret the Triage workflow signs in with comes from: <SECRET>=env:<NAME> or <SECRET>=file:<path>, comma-separated, or a bare env:<NAME> or file:<path> when the workflow uses one; never a secret's value"
+
+  - name: github.model.restore
+    help: "Apply an account's backup to it: model.yaml from its .github repository, at the revision named or main, applied as apply applies a model"
+    implementation: commands/github-model-restore.star
+    args:
+      - name: account
+        help: "The account, an organization or a user; required"
+      - name: revision
+        default: "main"
+        help: "The backup's revision in the account's .github repository: a commit, a tag or a branch; main when none is named"
+    flags:
+      - name: prune
+        type: bool
+        default: "false"
+        help: "Delete what the backup lacks too, each deletion first counted; never a team, its roles, a project or a template"
+      - name: token
+        type: string
+        default: ""
+        help: "Where each secret the Triage workflow signs in with comes from, as apply takes it; never a secret's value"
 
   - name: github.model.backup
     help: "Checkpoint an account's model, as GitHub holds it now, in its .github repository: written on a chore/model-<date> branch and landed by a pull request, asking nothing yet"

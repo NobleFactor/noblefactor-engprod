@@ -7,8 +7,10 @@
 #
 # docs/plans/feature/437-model-diff-apply-restore.md, Requirement 4. apply makes the differences reconcile.star finds,
 # in the order its records come in, which keeps every reference whole: issue types, issue fields and their options,
-# labels, the templates, each team's projects of a kind, and teams. It reconciles; it never deletes something to make it
-# again (ruled 2026-11-09). On the same account a rename is made in place, by ID; an option list is sent whole, each
+# labels, the templates, each team's projects of a kind, and teams; then what the account needs beyond its model, its
+# .github files and each participating repository's Triage workflow, variable and secrets (participation.star, decision
+# 12), the variable naming a Triage project made first. It reconciles; it never deletes something to make it again
+# (ruled 2026-11-09). On the same account a rename is made in place, by ID; an option list is sent whole, each
 # option with its ID, so that no issue or row loses its value. Nothing is deleted without --prune, and with it each
 # deletion first counts what it touches; a team, its roles, a project and a template are never deleted (the owner,
 # 2026-11-10). What GitHub's API cannot write, a type's pinned fields, a view's grouping and sort, is a step by hand,
@@ -17,8 +19,10 @@
 # Issue types and issue fields are written through GitHub's REST calls, which take the database IDs get records; the
 # rest through GraphQL, each mutation's input written as literals, so that every value is in the call star narrates.
 
-load("commands/model.star", "graphql", "owner_id", "quote", "read_project", "sh", "templates_of")
-load("commands/reconcile.star", "compare", "differs", "match", "own_options", "prepare", "template_renames")
+load("commands/model.star", "escape", "graphql", "owner_id", "quote", "read_project", "rest", "sh", "templates_of")
+load("commands/participation.star", "TEMPLATE", "token_records", participation_apply = "apply")
+load("commands/reconcile.star", "differs", "every_difference", "match", "own_options", "prepare", "template_renames")
+load("commands/tokens.star", "for_secrets")
 
 # GitHub's spellings, where its REST calls and GraphQL name a thing differently from the record.
 _REST_VISIBILITY = {"ORG_ONLY": "organization_members_only", "ALL": "all"}
@@ -56,28 +60,6 @@ def _first(data, key):
 def mutate(query):
     """Runs a GraphQL mutation, failing on GitHub's errors; returns the ID its payload carries."""
     return _first(graphql(query), "id")
-
-def rest(method, path, body = None):
-    """A REST write; its body goes to gh as JSON through a pipe within the one command."""
-    command = "gh api -X " + method + " " + quote(path)
-    if body != None:
-        command = "printf %s " + quote(json.encode(body)) + " | " + command + " --input -"
-    out = sh(command).strip()
-    return json.decode(data = out) if out.startswith("{") else None
-
-_UNRESERVED = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.~"
-_HEX = "0123456789ABCDEF"
-
-def _escape(s):
-    """A name as one segment of a REST path, percent-encoded."""
-    out = ""
-    for c in s.elems():
-        if c in _UNRESERVED:
-            out += c
-        else:
-            for b in c.elem_ords():
-                out += "%" + _HEX[b // 16] + _HEX[b % 16]
-    return out
 
 def _count(search):
     """How many issues GitHub's search finds; None when it cannot say."""
@@ -218,13 +200,13 @@ def _labels(c, records, done):
             body = {"color": m.get("color") or "ededed", "description": m.get("description") or ""}
             if r["change"] == "renamed":
                 body["new_name"] = m["name"]
-            rest("PATCH", "repos/" + repo + "/labels/" + _escape(g["name"]), body)
+            rest("PATCH", "repos/" + repo + "/labels/" + escape(g["name"]), body)
             _done(done, "label", r["path"], "renamed" if r["change"] == "renamed" else "changed")
         elif c["prune"]:
             touches = _count("repo:" + repo + " label:\"" + g["name"] + "\"")
 
             # TODO(NobleFactor/devlore-cli#1219): ask before each deletion, naming what it touches (#470).
-            rest("DELETE", "repos/" + repo + "/labels/" + _escape(g["name"]))
+            rest("DELETE", "repos/" + repo + "/labels/" + escape(g["name"]))
             _done(done, "label", r["path"], "deleted", {"touches": touches})
 
 # ── a project brought to its template ───────────────────────────────────────
@@ -456,7 +438,9 @@ def _kind_projects(c, records, done):
                    "}) { team { id } } }")
             mutate("mutation starTeamRole { r: updateProjectV2Collaborators(input: {projectId: " + _s(project_id) +
                    ", collaborators: [{teamId: " + _s(team["id"]) + ", role: WRITER}]}) { collaborators { totalCount } } }")
-        converge(c, project_id, read_project(project_id), templates[template], r["path"], _PROJECT_KINDS, {}, done, copy = True)
+        made = read_project(project_id)
+        c["made"][r["path"]] = made["number"]
+        converge(c, project_id, made, templates[template], r["path"], _PROJECT_KINDS, {}, done, copy = True)
         _done(done, "project", r["path"], "created")
     by_name = {p["name"]: p for p in c["projects"] if not p.get("template")}
     drifted = []
@@ -511,16 +495,21 @@ def _teams(c, records, done):
 
 # ── apply ───────────────────────────────────────────────────────────────────
 
-def apply_model(path, account, prune):
-    """What star github model apply returns: each difference, with what apply did about it.
+def apply_model(source, account, prune, sources = []):
+    """What star github model apply and restore return: each difference, with what apply did about it.
 
     Args:
-      path: the model's file, the form get returns, another account's, a backup, or a reference.
+      source: the model's file, the form get returns, another account's, a backup, or a reference; or the model itself.
       account: the account, an organization or a user.
       prune: delete what the model lacks, a team, its roles, a project and a template excepted.
+      sources: where --token says each secret comes from, parsed and checked (tokens.star).
     """
-    model, github, projects, kind = prepare(path, account)
-    records = compare(model, github, projects, kind)
+    model, github, projects, kind, state = prepare(source, account)
+    records = every_difference(model, github, projects, kind, state)
+    names = (state or {}).get("secrets") or []
+    where = ((state or {}).get("source") or "the model's account") + "/.github's " + TEMPLATE
+    if sources and (state == None or state["template"] == None):
+        fail("--token names a secret, but " + where + " is not there to sign in with one")
     c = {
         "account": account,
         "kind": kind,
@@ -533,7 +522,10 @@ def apply_model(path, account, prune):
         "own": own_options(),
         "template_ids": {},
         "issue_field_ids": {f["name"]: f["id"] for f in github.get("fields") or []},
+        "made": {},
+        "tokens": for_secrets(sources, names, where),
     }
+    records = records + token_records(c, state, records)
 
     # TODO(NobleFactor/devlore-cli#1219): ask before applying, showing what will change, defaulting to yes (#470).
     done = {}
@@ -543,6 +535,7 @@ def apply_model(path, account, prune):
     _templates(c, records, done)
     _kind_projects(c, records, done)
     _teams(c, records, done)
+    participation_apply(c, state, records, done)
     out = []
     for r in records:
         action, extra = done.get(r["kind"] + " " + r["path"]) or (("by-hand" if r.get("by_hand") else "kept"), {})
