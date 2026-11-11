@@ -31,7 +31,7 @@ Ruled by the owner on 2026-11-09 and 2026-11-10, recorded in #437 and section 6'
 
   ```text
   star github model diff <model> <account>
-  star github model apply <model> <account> [--prune]
+  star github model apply <model> <account> [--prune] [--token <source>]
   star github model restore <account> [<revision>] [--prune]
   ```
 
@@ -125,21 +125,38 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
     project and an `ADD_TO_PROJECT_PAT` secret. `apply` writes what is missing of them: the `.github` repository's files
     from the account the reference is kept for, as its `.github` repository stands, NobleFactor/.github for an
     organization and David-Noble-at-work/.github for a user account, through a pull request as `backup` lands one; each
-    repository's workflow through a pull request in it; the variable directly. The secret's value comes from the
-    account's Key Vault (the owner's conventions: `kv-nf-<team>-<env>`, `kv-david-noble-at-work`, secret
-    `<repository>--ADD-TO-PROJECT-PAT`); with none there, `apply` names the secret to set and goes on.
+    repository's workflow through a pull request in it; the variable directly; and the secret from `--token` (decision
+    15).
 13. **The label commands go first,** before any other change on the branch: until they go, `labels sync` puts the
     retired type labels back.
 14. **The templates are defined once,** in `reference/templates.yaml`, with their fields, options and views. The
     organization reference adds only what issue fields bring, the Area field to Triage and the Priority field and the
     By priority view to Backlog; `diff` and `apply` build each account's templates from the common set and its kind's
     additions.
+15. **A token comes from where `--token` names, never from its value** (the owner, 2026-11-10): `env:<NAME>`, an
+    environment variable set for the run, or `file:<path>`, a file its owner alone can read, mode `600` or stricter. A
+    value on the command line, a token's shape or any other source, is refused, since it is already in the shell's
+    history; star calls no other tool for a token, Azure's among them. The token goes from its source to `gh secret set`
+    through one shell pipeline, so it enters neither Starlark nor star's records; the record shows the first 12
+    hexadecimal digits of its SHA-256. Without `--token`, a secret already set, an organization's included, is kept, and
+    a missing one is named as a step by hand; with it, the secret is set, replacing one already there. On Windows, where
+    a file has no mode, `file:` reads its ACL with `powershell.exe`'s `Get-Acl`, part of Windows, and refuses a file
+    anyone but its owner, SYSTEM and Administrators can read (the owner, 2026-11-10: the extension is cross-platform).
+    That half is written now and tested once the command provider replaces the shell provider
+    (NobleFactor/devlore-cli#1136), when Test-StarGitHub can run on Windows; until then the test runs on macOS and
+    Linux, as it does today.
+16. **A model on standard input waits on the command provider.** star gives an extension's shell commands no standard
+    input: its shell provider sends none, and a missing one closes the child's input at once. Section 6.3 of
+    devlore-cli's architecture makes standard input an attribute of the request, `Options.Stdin`, and
+    NobleFactor/devlore-cli#1136 builds it. Until then `diff` and `apply` refuse `-` for `<model>`, saying why, and
+    `--token` takes no `-`.
 
 ## Requirements
 
 ### Requirement 1: get reads any account, and records everything apply writes
 
-- Decisions 1 and 11. `-o yaml` stays the same text every run.
+- Decisions 1 and 11, with each label's ID and each issue field's and option's database ID, which GitHub's REST calls
+  take. `-o yaml` stays the same text every run.
 
 ### Requirement 2: the references
 
@@ -157,10 +174,10 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
 
 ### Requirement 4: apply
 
-- `star github model apply <model> <account> [--prune]` makes `diff`'s changes, in an order that keeps every reference
-  whole: issue types; issue fields and their options; each participating repository's labels; the templates, a missing
-  one first made; each project of a kind, a missing one first copied and linked; the `.github` repository's files; each
-  participating repository's workflow, variable and secret.
+- `star github model apply <model> <account> [--prune] [--token <source>]` makes `diff`'s changes, in an order that
+  keeps every reference whole: issue types; issue fields and their options; each participating repository's labels; the
+  templates, a missing one first made; each project of a kind, a missing one first copied and linked; the `.github`
+  repository's files; each participating repository's workflow, variable and secret.
 - Renames are made in place, matched by ID on the same account. Option lists are sent with their IDs. Deletions happen
   only with `--prune`, decisions 3 and 7 limiting them, each first listed with how many issues and rows it touches.
 - It returns a record of each change made, and of each it could not make, with the step to take by hand. A TODO
@@ -198,8 +215,18 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
 
 ### Phase 3: the test, first
 
-- [ ] Test-StarGitHub's stand-in `gh` answers the write calls and records them, and serves an organization other than
-      NobleFactor; the test plan's cases written, failing against the extension as it is
+- [x] Test-StarGitHub's stand-in `gh` answers the write calls and records them, and serves an organization other than
+      NobleFactor; the test plan's cases written, failing against the extension as it is: every new case fails, and the
+      existing cases pass, 1a now finding the Schedule template, with the guards that hold either way. The cases fix the
+      interface. `diff` returns one record for each difference, `kind`, `path`, `change`, `github`, `model` and
+      `by_hand`, its change `missing`, `different`, `renamed` or `extra`; `apply` returns the same with `action`,
+      `created`, `changed`, `renamed`, `deleted`, `kept` or `by-hand`, and `touches` on a deletion. A model is a file, a
+      reference named by its path. `get` records each label's ID, and each issue field's and option's database ID, which
+      GitHub's REST calls take. A new account's `.github` files are every file of the reference account's but
+      `model.yaml`. `get` still stops on a type that fits no model; `diff` and `apply` read one as a difference, as they
+      must GitHub's three default types in a new organization. A token comes from `--token`, decision 15, added at the
+      owner's direction on 2026-11-10 after a first draft read it from Azure Key Vault. `make check` passes but for the
+      test
 
 ### Phase 4: get reads any account, and records everything apply writes; the references
 
@@ -261,8 +288,10 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
 | 15 | `apply` with a template the account lacks | The template made, its fields and views, marked a template |
 | 16 | `apply` with a team lacking its Triage project | The project copied from the template, linked to the team, the team's write role on it |
 | 17 | `apply` with a team project drifted from its template | Brought back; its rows, schedule options and iterations untouched |
-| 18 | `apply` of the reference to a new organization | Its types, fields, templates, teams' projects, labels, `.github` files by pull request, each repository's workflow by pull request, variable and secret |
-| 19 | `apply` with no secret in the vault | The secret named as a step by hand; the rest made |
+| 18 | `apply --token env:<NAME>` of the reference to a new organization | Its types, fields, templates, teams' projects, labels, `.github` files by pull request, each repository's workflow by pull request, variable, and secret from the variable, its record showing the token's fingerprint and never the token |
+| 19 | `apply` with no `--token` | A missing secret named as a step by hand; the rest made |
+| 19a | `apply --token file:<path>` | Refused when others can read the file; at mode `600`, the secret set from it, replacing one already there |
+| 19b | `apply --token` with a token's value, or a source but `env:` and `file:` | Refused; nothing written |
 | 20 | `apply` under `--dry-run` | Refused, naming NobleFactor/devlore-cli#1170; nothing written |
 | 21 | `restore NobleFactor`, and `restore NobleFactor <revision>` | `main`'s `model.yaml`, then the revision's, applied |
 | 22 | Every existing case | Passes |
@@ -291,6 +320,8 @@ Under `Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitH
 - [#426's plan](426-model-pull-to-dot-github.md): `get` and `backup`
 - #470: the questions the commands will ask; NobleFactor/devlore-cli#1219, devlore's TUI
 - NobleFactor/devlore-cli#1170: star's `--dry-run` reading
+- NobleFactor/devlore-cli#1136: the command provider, which replaces the shell provider: standard input as an
+  attribute of the request, and the argv and script tiers that run on Windows with no `sh`; devlore-cli's section 6.3
 
 ## Open Questions
 
