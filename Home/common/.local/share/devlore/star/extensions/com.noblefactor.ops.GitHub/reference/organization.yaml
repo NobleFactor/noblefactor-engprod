@@ -4,10 +4,9 @@
 # The reference model for an organization's account: the initial desired state of the issue data model, applied to an
 # organization that adopts it (docs/architecture/issue-data-model/6-the-asset-and-its-sync.md). Its records name no
 # account and hold no ids; its comments record what was read from NobleFactor.
-# An account's own model names the account, is written by pull, and is stored in the account's .github
-# repository; it is a cache that star queries, and builds its queries and updates from, instead of asking GitHub the
-# same questions again. Pull reads the model of any account; push writes a model to an account, and that model becomes
-# the account's data model. What the audit compares an account against is decided with noblefactor-engprod#426 and #437.
+# An account's own model names the account and is what GitHub holds, read by star github model get and backed up in the
+# account's .github repository (ruled 2026-11-09, noblefactor-engprod#426). star github model diff compares this file,
+# or any model, with an account's, and apply makes it the account's (noblefactor-engprod#437).
 # The hierarchy is Epic (level 0), then Feature (level 1), then Task or Bug (level 2), ruled 2026-11-02, when Chore was
 # retired. Issues are classified by issue type in that hierarchy; enforcement is lax, and there are no compliance checks
 # (ruled 2026-11-03), a ruling superseded in part on 2026-11-04: the sweep, noblefactor-engprod#436, will be the one
@@ -23,6 +22,10 @@
 
 version: 1
 account: organization
+
+# The account whose .github repository's files a new organization gets, as it stands: its issue forms, health files,
+# workflow template and quality gate, every file but its model.yaml (ruled 2026-11-10, noblefactor-engprod#437).
+files_from: NobleFactor
 
 # Issue types, the organization's own. A type's level is the "Level N:" its description begins with; within a level,
 # the order here is the render order; the leaf type marked unplanned is the one found rather than planned. A type whose
@@ -274,50 +277,46 @@ teams: []
 # Backlog, Schedule or Scenario project. GitHub's GraphQL schema has a call that deletes a built-in workflow,
 # deleteProjectV2Workflow, and none that makes one or turns one on, so the only state every project of a kind can share
 # is none; those they had were deleted on 2026-11-03. GitHub Actions cannot run a workflow when a project row changes:
-# projects_v2_item is a webhook event for organization webhooks and GitHub Apps only. Each template's views are part
-# of the model and are not yet listed here; whether push writes them is decided with noblefactor-engprod#426 and #437.
-projects:
+# projects_v2_item is a webhook event for organization webhooks and GitHub Apps only.
+#
+# The four templates, their fields, options and views, are reference/templates.yaml's, the set every account holds
+# (noblefactor-engprod#437, decision 14). Below is what an organization adds to them, from its issue fields: the Area
+# field on Triage, shown in both its views, and the Missing Area view's filter on it; the Priority field on Backlog,
+# shown in both its views, and the By priority view, sorted on it. Read from NobleFactor's templates on 2026-11-10.
+templates:
   - name: "Triage"
-    template: true
     fields:
-      - name: "Status"
-        type: single-select
-        options:
-          - { name: "Open", color: "GRAY", description: "The issue is open" }
-          - { name: "In progress", color: "YELLOW", description: "Someone is working on the issue" }
-          - { name: "Closed", color: "PURPLE", description: "The issue is closed. Closed does not always mean done" }
+      - { name: "Area", type: single-select, issue_field: true }
+    views:
+      - name: "View 1"
+        layout: table
+        filter: ""
+        fields: ["Title", "Assignees", "Status", "Linked pull requests", "Sub-issues progress", "Area"]
+        group_by: []
+        vertical_group_by: []
+        sort_by: []
+      - name: "Missing Area"
+        layout: table
+        filter: "no:area"
+        fields: ["Title", "Assignees", "Status", "Linked pull requests", "Sub-issues progress", "Area"]
+        group_by: []
+        vertical_group_by: []
+        sort_by: []
   - name: "Backlog"
-    template: true
     fields:
-      - name: "Status"
-        type: single-select
-        options:
-          - { name: "Open", color: "GRAY", description: "The issue is open" }
-          - { name: "In progress", color: "YELLOW", description: "Someone is working on the issue" }
-          - { name: "Closed", color: "PURPLE", description: "The issue is closed. Closed does not always mean done" }
-  - name: "Schedule"
-    template: true
-    fields:
-      - { name: "Schedule", type: single-select, options: [] }
-      - { name: "Step", type: number }
-      - { name: "Iteration", type: iteration }
-      - name: "Status"
-        type: single-select
-        options:
-          - { name: "Open", color: "GRAY", description: "The issue is open" }
-          - { name: "In progress", color: "YELLOW", description: "Someone is working on the issue" }
-          - { name: "Closed", color: "PURPLE",
-              description: "The issue is closed; closed is not done until the record says so" }
-      - { name: "Worktree", type: text }
-  - name: "Scenario"
-    template: true
-    fields:
-      - { name: "Scenario", type: single-select, options: [] }
-      - { name: "Beat", type: number }
-      - name: "Status"
-        type: single-select
-        options:
-          - { name: "Open", color: "GRAY", description: "The issue is open" }
-          - { name: "In progress", color: "YELLOW", description: "Someone is working on the issue" }
-          - { name: "Closed", color: "PURPLE",
-              description: "The issue is closed; closed is not done until the record says so" }
+      - { name: "Priority", type: single-select, issue_field: true }
+    views:
+      - name: "View 1"
+        layout: table
+        filter: ""
+        fields: ["Title", "Assignees", "Status", "Linked pull requests", "Sub-issues progress", "Priority"]
+        group_by: []
+        vertical_group_by: []
+        sort_by: []
+      - name: "By priority"
+        layout: table
+        filter: ""
+        fields: ["Title", "Assignees", "Status", "Linked pull requests", "Sub-issues progress", "Priority"]
+        group_by: []
+        vertical_group_by: []
+        sort_by: [{ field: "Priority", direction: "asc" }]

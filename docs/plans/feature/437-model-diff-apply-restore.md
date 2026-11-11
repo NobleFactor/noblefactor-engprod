@@ -129,10 +129,14 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
     15).
 13. **The label commands go first,** before any other change on the branch: until they go, `labels sync` puts the
     retired type labels back.
-14. **The templates are defined once,** in `reference/templates.yaml`, with their fields, options and views. The
-    organization reference adds only what issue fields bring, the Area field to Triage and the Priority field and the
-    By priority view to Backlog; `diff` and `apply` build each account's templates from the common set and its kind's
-    additions.
+14. **The templates are defined once,** in `reference/templates.yaml`, with their fields, options and views. Each
+    reference adds what its kind brings: an organization's, its issue fields, the Area field on Triage and the Priority
+    field on Backlog, shown in their views, the Missing Area view's filter on Area and the By priority view; a user
+    account's, having no issue fields, the Labels column and the Missing Area view's filter on the area labels. A view a
+    kind adds replaces the common view of the same name. `diff` and `apply` build each account's templates from the
+    common set and its kind's additions. A field marked `own_options`, Schedule's and Scenario's, holds options that are
+    each project's own, and `diff` and `apply` leave them alone. Corrected on 2026-11-10, reading both accounts: the
+    first draft had the organization adding to a common set and the user account adding nothing.
 15. **A token comes from where `--token` names, never from its value** (the owner, 2026-11-10): `env:<NAME>`, an
     environment variable set for the run, or `file:<path>`, a file its owner alone can read, mode `600` or stricter. A
     value on the command line, a token's shape or any other source, is refused, since it is already in the shell's
@@ -143,8 +147,8 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
     a file has no mode, `file:` reads its ACL with `powershell.exe`'s `Get-Acl`, part of Windows, and refuses a file
     anyone but its owner, SYSTEM and Administrators can read (the owner, 2026-11-10: the extension is cross-platform).
     That half is written now and tested once the command provider replaces the shell provider
-    (NobleFactor/devlore-cli#1136), when Test-StarGitHub can run on Windows; until then the test runs on macOS and
-    Linux, as it does today.
+    (NobleFactor/devlore-cli#1136, and #474), when Test-StarGitHub can run on Windows; until then the test runs on macOS
+    and Linux, as it does today.
 16. **A model on standard input waits on the command provider.** star gives an extension's shell commands no standard
     input: its shell provider sends none, and a missing one closes the child's input at once. Section 6.3 of
     devlore-cli's architecture makes standard input an attribute of the request, `Options.Stdin`, and
@@ -230,7 +234,18 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
 
 ### Phase 4: get reads any account, and records everything apply writes; the references
 
-- [ ] Requirements 1 and 2; every case of them passes; `make check` passes
+- [x] Requirements 1 and 2; every case of them passes; `make check` passes, but for the test's cases of `diff`, `apply`
+      and `restore`, 27 of the 92, which Phases 5 to 8 build: cases 13 and 14 pass. `get` reads an organization's labels
+      from each repository a team maintains, the hub gone, and records each type's enabled flag, a disabled type kept;
+      each issue field's description, visibility and database ID; each option's color, description, priority and
+      database ID; each label's ID; a project field's issue-field mark and an iteration field's configuration.
+      `read_all_projects` reads every open project for `diff` and `apply`, and `read_projects` picks the templates from
+      it. Run live on 2026-11-10 from the worktree, both accounts read cleanly: NobleFactor's labels from its five
+      maintained repositories, Triage/Area and Backlog/Priority marked as issue fields. `reference/templates.yaml` holds
+      the common set, read from both accounts, and each reference names its kind's additions and the account its
+      `.github` files come from; their comments that called an account's model a cache written by `pull` are corrected.
+      A project option's ID repeats across projects, so a copy matches its template by name, as decision 7 has it.
+      Section 6 says where `get` reads labels
 
 ### Phase 5: diff
 

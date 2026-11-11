@@ -5,21 +5,19 @@
 
 docs/architecture/issue-data-model/6-the-asset-and-its-sync.md. read_model enumerates what GitHub holds for an account,
 piece by piece, when a command needs it: an organization's issue types, issue fields, teams with the repositories each
-maintains, the hub's labels and its project templates; a user account's type labels, the labels of the repositories it
-owns that carry the topic issue-model, and its copies of the templates. Each template comes with its fields, options and
-views; the projects made from the templates are not part of the model. star github model get returns it; scheme.star
-derives from it what the report and the sweep place issues by. Nothing here keeps a copy. The pieces are read one at a
-time; reading them in parallel, through a graph, is noblefactor-engprod#471. This module loads nothing, and nothing it reads is a file but the
-extension's reference models.
+maintains, the labels of those repositories and its project templates; a user account's type labels, the labels of the
+repositories it owns that carry the topic issue-model, and its copies of the templates. Each template comes with its
+fields, options and views; the projects made from the templates are not part of the model. The record holds everything
+star github model apply writes (noblefactor-engprod#437). star github model get returns it; scheme.star derives from it
+what the report and the sweep place issues by. Nothing here keeps a copy. The pieces are read one at a time; reading them
+in parallel, through a graph, is noblefactor-engprod#471. This module loads nothing, and nothing it reads is a file but
+the extension's reference models.
 """
 
 # model.star
 
 EXTENSION = "com.noblefactor.ops.GitHub"
 MODEL_VERSION = 1
-
-# The hub repository, whose labels are an organization's record of them.
-HUB = "noblefactor-engprod"
 
 # A user account's repository takes part in the model when it carries this topic (section 6, § Reference models).
 TOPIC = "issue-model"
@@ -120,9 +118,9 @@ VIEW_LAYOUTS = {"TABLE_LAYOUT": "table", "BOARD_LAYOUT": "board", "ROADMAP_LAYOU
 _FIELD_NAMES = "nodes { ... on ProjectV2FieldCommon { name } }"
 
 def _template_names():
-    """The templates the user reference names: a user account cannot mark a project as a template, so it keeps copies."""
-    ref = yaml.decode(data = read_text(extension_dir() + "/reference/user.yaml")) or {}
-    return [p["name"] for p in (ref.get("projects") or []) if type(p) == "dict" and p.get("name")]
+    """The templates every account holds, reference/templates.yaml's: a user account keeps copies of them, by name."""
+    ref = yaml.decode(data = read_text(extension_dir() + "/reference/templates.yaml")) or {}
+    return [p["name"] for p in (ref.get("templates") or []) if type(p) == "dict" and p.get("name")]
 
 def _names(connection):
     """The names of the fields in a connection, in its order."""
@@ -145,15 +143,15 @@ def _view(node):
         ],
     }
 
-def read_projects(login, kind):
-    """The account's open templates with their fields, options and views, or None when the token cannot read projects.
+def read_all_projects(login, kind):
+    """Every open project of the account with its fields, options and views, or None when the token cannot read projects.
 
-    An organization's templates are the projects it marks as templates. A user account cannot mark one, so its templates
-    are its copies of those the user reference names. The projects made from them are not part of the model.
+    The templates are the model's; diff and apply read the projects made from them too, to hold each to its template.
     """
     query = ("query starProjects { " + kind + "(login: \"" + login + "\") { projectsV2(first: 50) { nodes { id number title template closed " +
-             "fields(first: 50) { nodes { ... on ProjectV2FieldCommon { id name dataType } " +
-             "... on ProjectV2SingleSelectField { options { id name } } } } " +
+             "fields(first: 50) { nodes { ... on ProjectV2FieldCommon { id name dataType isIssueField } " +
+             "... on ProjectV2SingleSelectField { options { id name color description } } " +
+             "... on ProjectV2IterationField { configuration { duration startDay } } } } " +
              "views(first: 25) { nodes { name number layout filter fields(first: 50) { " + _FIELD_NAMES + " } " +
              "groupByFields(first: 10) { " + _FIELD_NAMES + " } verticalGroupByFields(first: 10) { " + _FIELD_NAMES + " } " +
              "sortByFields(first: 10) { nodes { direction field { ... on ProjectV2FieldCommon { name } } } } } } } } } }")
@@ -163,12 +161,9 @@ def read_projects(login, kind):
     data = json.decode(data = out)
     if data.get("errors") or not data.get("data") or not data["data"].get(kind):
         return None
-    copies = [] if kind == "organization" else _template_names()
     projects = []
     for node in data["data"][kind]["projectsV2"]["nodes"]:
         if node.get("closed"):
-            continue
-        if not (node.get("template") if kind == "organization" else node["title"] in copies):
             continue
         fields = []
         for f in node["fields"]["nodes"]:
@@ -176,8 +171,15 @@ def read_projects(login, kind):
             if field_type == None:
                 continue
             field = {"name": f["name"], "id": f["id"], "type": field_type}
+            if f.get("isIssueField"):
+                field["issue_field"] = True
             if field_type == "single-select":
-                field["options"] = [{"name": o["name"], "id": o["id"]} for o in f.get("options", [])]
+                field["options"] = [
+                    {"name": o["name"], "id": o["id"], "color": o.get("color") or "", "description": o.get("description") or ""}
+                    for o in f.get("options") or []
+                ]
+            if field_type == "iteration" and f.get("configuration"):
+                field["configuration"] = {"duration": f["configuration"].get("duration"), "start_day": f["configuration"].get("startDay")}
             fields.append(field)
         views = sorted([_view(v) for v in (node.get("views") or {}).get("nodes") or []], key = lambda v: v["number"])
         projects.append({
@@ -190,11 +192,25 @@ def read_projects(login, kind):
         })
     return sorted(projects, key = lambda p: p["number"])
 
+def read_projects(login, kind):
+    """The account's open templates with their fields, options and views, or None when the token cannot read projects.
+
+    An organization's templates are the projects it marks as templates. A user account cannot mark one, so its templates
+    are its copies of those the user reference names. The projects made from them are not part of the model.
+    """
+    projects = read_all_projects(login, kind)
+    if projects == None:
+        return None
+    if kind == "organization":
+        return [p for p in projects if p["template"]]
+    copies = _template_names()
+    return [p for p in projects if p["name"] in copies]
+
 def read_organization(org):
     """An organization's issue fields, each with its options, and its teams, each with the repositories it maintains."""
     query = ("query starOrganizationModel { organization(login: \"" + org + "\") { " +
-             "issueFields(first: 50) { nodes { __typename ... on IssueFieldCommon { name dataType } " +
-             "... on IssueFieldSingleSelect { id options { id name } } ... on IssueFieldText { id } " +
+             "issueFields(first: 50) { nodes { __typename ... on IssueFieldCommon { name dataType description visibility fullDatabaseId } " +
+             "... on IssueFieldSingleSelect { id options { id databaseId name color description priority } } ... on IssueFieldText { id } " +
              "... on IssueFieldNumber { id } ... on IssueFieldDate { id } } } " +
              "teams(first: 100) { nodes { name slug id repositories(first: 100) { edges { permission node { nameWithOwner } } } } } } }")
     node = graphql(query).get("organization") or {}
@@ -203,9 +219,26 @@ def read_organization(org):
         field_type = ISSUE_FIELD_TYPES.get(f.get("dataType", ""))
         if field_type == None:
             continue
-        field = {"name": f["name"], "id": f["id"], "type": field_type}
+        field = {
+            "name": f["name"],
+            "id": f["id"],
+            "database_id": str(f.get("fullDatabaseId") or ""),
+            "type": field_type,
+            "description": f.get("description") or "",
+            "visibility": f.get("visibility") or "",
+        }
         if field_type == "single-select":
-            field["options"] = [{"name": o["name"], "id": o["id"]} for o in f.get("options") or []]
+            field["options"] = [
+                {
+                    "name": o["name"],
+                    "id": o["id"],
+                    "database_id": _id(o.get("databaseId")),
+                    "color": o.get("color") or "",
+                    "description": o.get("description") or "",
+                    "priority": _id(o.get("priority")),
+                }
+                for o in f.get("options") or []
+            ]
         fields.append(field)
     teams = []
     for t in (node.get("teams") or {}).get("nodes") or []:
@@ -298,14 +331,13 @@ def merge_types(old, github, notes, conflicts):
     seen = {}
     merged = {}
     for g in github:
-        if not g.get("is_enabled", True):
-            continue
+        enabled = g.get("is_enabled", True) != False
         tid = str(_id(g["id"]))
         seen[tid] = True
         description = g.get("description") or ""
         level = level_of(description)
         o = by_id.get(tid)
-        if level == None and not description.startswith(COLLECTION):
+        if enabled and level == None and not description.startswith(COLLECTION):
             conflicts.append("type " + g["name"] + " (" + tid + "): its description begins neither \"Level N:\" nor \"" + COLLECTION + "\": " + description)
             continue
         if o != None and o.get("level") != None and level != None and int(o["level"]) != level:
@@ -320,6 +352,7 @@ def merge_types(old, github, notes, conflicts):
             t["unplanned"] = True
         t["color"] = g.get("color") or ""
         t["description"] = description
+        t["enabled"] = enabled
         what = "level " + str(level) if level != None else "a collection"
         if o == None:
             notes.append("type " + g["name"] + " added, " + what)
@@ -334,8 +367,16 @@ def merge_types(old, github, notes, conflicts):
     return out
 
 def label_entry(g):
-    """A GitHub label in the asset's three fields."""
-    return {"name": g["name"], "color": g.get("color") or "", "description": g.get("description") or ""}
+    """A GitHub label as the model holds it: its ID, the node ID REST and GraphQL both give, its name, color and description."""
+    return {"id": g.get("node_id") or g.get("id"), "name": g["name"], "color": g.get("color") or "", "description": g.get("description") or ""}
+
+def repository_labels(repos):
+    """The labels of each repository named, read over REST, each sorted by name."""
+    out = {}
+    for repo in repos:
+        body = conditional_get("repos/" + repo + "/labels?per_page=100", "")["body"]
+        out[repo] = sorted([label_entry(g) for g in body], key = lambda g: g["name"].lower())
+    return out
 
 # ── the model ───────────────────────────────────────────────────────────────
 
@@ -351,11 +392,10 @@ def read_model(account):
     model = {"version": MODEL_VERSION, "account": account}
     conflicts = []
     if kind == "organization":
-        hub_repo = account + "/" + HUB
         github_types = conditional_get("orgs/" + account + "/issue-types", "")["body"]
-        hub = conditional_get("repos/" + hub_repo + "/labels?per_page=100", "")["body"]
-        labels = {"organization": [], "teams": {}, "repositories": {hub_repo: sorted([label_entry(g) for g in hub], key = lambda g: g["name"].lower())}}
         fields, teams = read_organization(account)
+        maintained = sorted({r: True for t in teams for r in t["repositories"]}.keys())
+        labels = {"organization": [], "teams": {}, "repositories": repository_labels(maintained)}
         model["fields"] = fields
         model["teams"] = teams
     else:

@@ -1,0 +1,92 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Noble Factor. All rights reserved.
+
+# The project templates every account holds, an organization's marked as templates and a user account's as copies of
+# them: Triage, Backlog, Schedule and Scenario, with their fields, options and views (noblefactor-engprod#437, decision
+# 14). Ruled 2026-11-03: every project of a kind is configured the same way. Each reference adds what its kind brings:
+# reference/organization.yaml its issue fields, Area on Triage and Priority on Backlog, with their columns, the Missing
+# Area view's filter on the field, and Backlog's By priority view; reference/user.yaml the Labels column, and the
+# Missing Area view's filter on the area labels, since a user account has no issue fields. A view a kind adds replaces
+# the common view of the same name. star github model diff and apply build an account's templates from this set and its
+# kind's additions, and hold each team's projects, or a user account's, to them.
+#
+# A field marked own_options holds options that are each project's own, one for each schedule or scenario, named for its
+# issue; a template's one option names a placeholder issue. diff and apply leave those options alone, on the templates
+# and on every project made from them, as they leave each project's rows and its Iteration field's iterations.
+#
+# Read from NobleFactor's templates and David-Noble-at-work's copies on 2026-11-10, which match but for what each kind
+# adds. A view lists the fields it shows, groups by and sorts by, by name; GitHub's API writes a view's name, layout,
+# filter and visible fields, not its grouping or sort, which apply lists as steps to take by hand.
+
+version: 1
+templates:
+  - name: "Triage"
+    fields:
+      - name: "Status"
+        type: single-select
+        options:
+          - { name: "Open", color: "GRAY", description: "The issue is open" }
+          - { name: "In progress", color: "YELLOW", description: "Someone is working on the issue" }
+          - { name: "Closed", color: "PURPLE", description: "The issue is closed. Closed does not always mean done" }
+  - name: "Backlog"
+    fields:
+      - name: "Status"
+        type: single-select
+        options:
+          - { name: "Open", color: "GRAY", description: "The issue is open" }
+          - { name: "In progress", color: "YELLOW", description: "Someone is working on the issue" }
+          - { name: "Closed", color: "PURPLE", description: "The issue is closed. Closed does not always mean done" }
+  - name: "Schedule"
+    fields:
+      - name: "Status"
+        type: single-select
+        options:
+          - { name: "Open", color: "GRAY", description: "The issue is open" }
+          - { name: "In progress", color: "YELLOW", description: "Someone is working on the issue" }
+          - { name: "Closed", color: "PURPLE",
+              description: "The issue is closed; closed is not done until the record says so" }
+      - { name: "Step", type: number }
+      - { name: "Worktree", type: text }
+      - { name: "Iteration", type: iteration, configuration: { duration: 14, start_day: 1 } }
+      - { name: "Schedule", type: single-select, own_options: true }
+    views:
+      - name: "Default"
+        layout: table
+        filter: ""
+        fields: ["Title", "Assignees", "Status", "Linked pull requests", "Sub-issues progress", "Step"]
+        group_by: []
+        vertical_group_by: []
+        sort_by: []
+      - name: "By schedule"
+        layout: table
+        filter: ""
+        fields: ["Title", "Assignees", "Status", "Linked pull requests", "Sub-issues progress", "Step", "Worktree"]
+        group_by: ["Schedule"]
+        vertical_group_by: []
+        sort_by: []
+  - name: "Scenario"
+    fields:
+      - name: "Status"
+        type: single-select
+        options:
+          - { name: "Open", color: "GRAY", description: "The issue is open" }
+          - { name: "In progress", color: "YELLOW", description: "Someone is working on the issue" }
+          - { name: "Closed", color: "PURPLE",
+              description: "The issue is closed; closed is not done until the record says so" }
+      - { name: "Beat", type: number }
+      - { name: "Scenario", type: single-select, own_options: true }
+    views:
+      - name: "View 1"
+        layout: table
+        filter: ""
+        fields: ["Title", "Assignees", "Status", "Linked pull requests", "Sub-issues progress"]
+        group_by: []
+        vertical_group_by: []
+        sort_by: []
+      - name: "By scenario"
+        layout: table
+        filter: ""
+        fields: ["Title", "Assignees", "Status", "Linked pull requests", "Sub-issues progress", "Beat"]
+        group_by: ["Scenario"]
+        vertical_group_by: []
+        sort_by: []

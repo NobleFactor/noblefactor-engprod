@@ -258,13 +258,15 @@ fields:                               # the account's issue fields; a user accou
 teams:
   - { name: devlore, slug: devlore, id: T_kwDO…, repositories: [NobleFactor/devlore-cli, …] }
   - { name: engprod, slug: engprod, id: T_kwDO…, repositories: [NobleFactor/noblefactor-engprod, …] }
-labels:                               # held per repository: an organization's hub, a user account's issue-model ones
+labels:                               # held per repository: each a team maintains, or each tagged issue-model
   organization: []
   teams: {}
   repositories:
     NobleFactor/noblefactor-engprod:
-      - { name: good first issue, color: "7057ff", description: "Good for newcomers" }   # on tasks and bugs only
-      - { name: …, color: "…", description: "…" }
+      - { id: LA_kwDO…, name: good first issue, color: "7057ff", description: "Good for newcomers" }   # tasks and bugs
+      - { id: LA_kwDO…, name: …, color: "…", description: "…" }
+    NobleFactor/devlore-cli:
+      - { id: LA_kwDO…, name: good first issue, color: "7057ff", description: "Good for newcomers" }
 projects:                             # the account's four project templates
   - name: Triage
     id: PVT_kwDO…
@@ -383,11 +385,12 @@ projects:                             # the account's four project templates
   link between a project and its team is the record; a user account's projects are its owner's. The team with the
   maintain role on a repository owns that repository, and each repository's `TRIAGE_PROJECT_URL` variable names its
   team's Triage project, from that mapping (ruled 2026-11-03).
-- **The repositories** are those that take part in the model, each with its labels: `get` takes the whole model and
-  has no `--repo` (ruled 2026-11-03, of `pull`). That supersedes the ruling of 2026-10-22 that a repository was in when
-  a schedule, a scenario, a filing or `--repo` named it. As `pull` did, `get` reads an organization's labels from its
-  hub repository, noblefactor-engprod, the organization's record of them, and a user account's from each repository
-  carrying the topic issue-model; an organization's teams list the repositories each maintains.
+- **The repositories** are those that take part in the model, each with its labels: `get` takes the whole model and has
+  no `--repo` (ruled 2026-11-03, of `pull`). That supersedes the ruling of 2026-10-22 that a repository was in when a
+  schedule, a scenario, a filing or `--repo` named it. `get` reads an organization's labels from each repository a team
+  maintains, and a user account's from each repository carrying the topic issue-model; an organization's teams list the
+  repositories each maintains. Until #437 on 2026-11-10, `get`, as `pull` before it, read an organization's labels from
+  a hub repository alone, noblefactor-engprod, hard-coded since #377, so it could read no other organization.
 - **`labels`** is the labels of each repository named above, read from GitHub in the API's own fields and held per
   repository, with no organization or team tier; an organization's default labels are not in the model (ruled
   2026-11-03). The labels that remain are lowercase, among them a user account's `severity:`, `priority:`, `effort:` and
