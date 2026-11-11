@@ -204,6 +204,13 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
     a view's grouping and sort, and a type's pinned fields if no call takes them, `apply` lists as a step by hand,
     naming each value. The references name every attribute too, read from the accounts as they stand where they named
     none, but for Epic's and Feature's colors, which stay purple and blue: GitHub's gray is drift.
+18. **The branches the tools open take a prefix NobleFactor allows** (the owner, 2026-11-10). `chore/` retired on
+    2026-11-03, and NobleFactor's ruleset 12515090 allows only `doc/`, `feature/`, `fix/`, `hotfix/`, `refactor/` and
+    `release/`. `backup` opens `doc/model-<date>`, where #426 opened `chore/model-<date>`; `apply` opens
+    `doc/issue-model-files` for the `.github` files and `feature/triage-workflow` in each repository, a workflow being a
+    capability. Pull request titles keep their `chore:` type. The ruleset let `chore/model-2026-11-10` through on
+    NobleFactor/.github#4 with no bypass actor, so GitHub does not enforce it on NobleFactor's plan; that is Bug #475,
+    filed in Backlog: engprod with Priority High, outside this plan.
 
 ## Requirements
 
@@ -372,7 +379,12 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
 
 ### Phase 9: the issues and the documents
 
-- [ ] Requirement 7
+- [x] Requirement 7. Section 6's § GitHub is the model states the commands as built, and § Reference models, § Recovery
+      and § Access what #437 settled; its status, sections 2 to 5 and their status files, the index,
+      `docs/issue-standards.md` and the README follow. #437's body was rewritten to this plan, its three questions
+      answered and its evidence of completion Phase 10's; #447 takes the template's owner names, and #448 says `apply`
+      lands its five workflows. Reading section 5 turned up decision 18: the tools opened `chore/` branches, which
+      NobleFactor's ruleset is meant to refuse and does not, Bug #475. #437 closes with the pull request, Phase 11
 
 ### Phase 10: proved on GitHub
 

@@ -80,7 +80,7 @@ commands:
         help: "Where each secret the Triage workflow signs in with comes from, as apply takes it; never a secret's value"
 
   - name: github.model.backup
-    help: "Checkpoint an account's model, as GitHub holds it now, in its .github repository: written on a chore/model-<date> branch and landed by a pull request, asking nothing yet"
+    help: "Checkpoint an account's model, as GitHub holds it now, in its .github repository: written on a doc/model-<date> branch and landed by a pull request, asking nothing yet"
     implementation: commands/github-model-backup.star
     args:
       - name: account

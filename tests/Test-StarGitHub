@@ -1223,16 +1223,16 @@ expect "10: the two-types fault names both type labels" ok "${entry} ${faulted}"
     and ([entry("test-user/personal#4").faults[] | select(.rule == "two-types") | .message] | .[0] | test("task") and test("bug"))'
 
 # 11. backup writes the model get returns into the account's .github repository through a pull request on
-# chore/model-<date>, merged, with nothing asked, its comments recording the checks and the merge (#426). It merges
+# doc/model-<date>, merged, with nothing asked, its comments recording the checks and the merge (#426). It merges
 # only once every workflow run on the head commit has finished and every check main requires has passed; a run that
 # never starts, or a check that fails, stops it unmerged, and running it again reuses the pull request it left open. A
 # backup that is current opens none; an account with no .github repository is given one, which requires no check.
 remote NobleFactor "old: true"
 ci NobleFactor pass
 run_star "${data}" github model backup NobleFactor
-expect "11.1: backup opens a pull request on chore/model-<date> and merges it" ok '
+expect "11.1: backup opens a pull request on doc/model-<date> and merges it" ok '
     ([$calls[] | select(.[0:2] == ["pr", "create"]) | .[index("--head") + 1]] | length == 1
-        and (.[0] | test("^chore/model-[0-9]{4}-[0-9]{2}-[0-9]{2}$")))
+        and (.[0] | test("^doc/model-[0-9]{4}-[0-9]{2}-[0-9]{2}$")))
     and ([$calls[] | select(.[0:2] == ["pr", "merge"])] | length == 1)'
 expect "11.1: the pull request's comments record the checks and the merge" ok '
     [$calls[] | select(.[0:2] == ["pr", "comment"]) | .[index("--body") + 1]]
@@ -1484,13 +1484,17 @@ expect "29: the App's secrets, missing, are steps by hand, set on the organizati
         {path: "Acme/NOBLEFACTOR_AUTOMATION_APP_ID", action: "by-hand"},
         {path: "Acme/NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY", action: "by-hand"}]
     and ([.[] | select(.kind == "secret") | .steps[0]] | all(test("gh secret set NOBLEFACTOR_AUTOMATION_APP_[A-Z_]+ --org Acme")))'
+expect "29: every branch apply opens has a prefix NobleFactor's ruleset allows, the .github files' doc/, a workflow's feature/" ok '
+    [$calls[] | select(.[0:2] == ["pr", "create"]) | .[index("--head") + 1]] as $heads
+    | ($heads | length) == 4 and ($heads | map(select(. == "doc/issue-model-files")) | length) == 1
+    and ($heads | map(select(. == "feature/triage-workflow")) | length) == 3'
 check "29: Acme/.github holds NobleFactor/.github's issue form" shows Acme/.github .github/ISSUE_TEMPLATE/task.yml "name: Task"
 check "29: Acme/.github's files name Acme where NobleFactor's name NobleFactor" shows Acme/.github CONTRIBUTING.md "# Contributing to Acme"
 check "29: Acme/.github holds no copy of NobleFactor's model" lacks Acme/.github model.yaml
 check "29: Acme/.github's own Triage workflow is not copied: it takes part only when a team maintains it" lacks Acme/.github .github/workflows/triage.yml
 check "29: Acme/site holds the Triage workflow, NobleFactor/.github's template as it stands" shows Acme/site .github/workflows/triage.yml "${org_template}"
 check "29: apply removes the branches it landed its pull requests from" bash -c \
-    "! git --git-dir='${run_directory}/remotes/Acme/site.git' rev-parse --verify --quiet refs/heads/chore/triage-workflow"
+    "! git --git-dir='${run_directory}/remotes/Acme/site.git' rev-parse --verify --quiet refs/heads/feature/triage-workflow"
 run_star "${data}" github model diff "${reference}/organization.yaml" Acme
 expect "29: afterward diff finds no file or workflow to change" ok '[.[] | select(.kind == "file" or .kind == "workflow")] == []'
 

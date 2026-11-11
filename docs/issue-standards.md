@@ -222,7 +222,10 @@ repository and says nothing about a user account's; whether GitHub offers David-
 personal has not been checked, and either way the task that added personal's Triage workflow on 2026-11-04,
 David-Noble-at-work/personal#315, copied personal's `triage.yml` from it. How the workflow signs in, with a token from
 the noblefactor-automation GitHub App in NobleFactor and a classic personal access token in a user account, is
-[section 4](architecture/issue-data-model/4-storage-and-reach.md#triage) of the design.
+[section 4](architecture/issue-data-model/4-storage-and-reach.md#triage) of the design. Since #437,
+`star github model apply` lands the workflow in each participating repository from its account's template, through a
+pull request, sets the variable, and sets the secrets the template signs in with from `--token`, or names each missing
+one as a step by hand.
 
 **The team that owns a project is accountable for it**, and GitHub's link between the project and its
 team is the record. A user account's projects are its owner's. Ruled 2026-11-03.
@@ -760,8 +763,8 @@ sweep blocks no filing and corrects nothing by itself: triage fixes each issue i
 row either: triage removes an issue's row as part of its decision, and an issue someone closes outside triage stays in
 its Triage project until triage decides its disposition. It waits on #452, which will give every open issue an Area
 first (§ What has no parent). A hierarchy type whose description names no level is a fault of the model, not of an
-issue: `star github model get` stops on it, naming the type (#426), and `apply` will check a model it is given the same
-way (#437). #361, which held the audit's faults, was closed on 2026-11-04 as completed with Resolution Declined.
+issue: `star github model get` stops on it, naming the type (#426), and `diff` and `apply` report it as a difference
+from the model they are given (#437). #361, which held the audit's faults, was closed on 2026-11-04 as completed with Resolution Declined.
 
 Only **open** issues are checked: the rules apply to open work, and a closed issue keeps the classification it was left
 with. Closed issues were not skipped in the cutover: the chore label was removed from every repository in both accounts,
@@ -809,9 +812,12 @@ Priority, Effort, Target date, Resolution, Area and Severity. A user account has
 from GitHub when it runs, and the model file in the account's `.github` repository is a backup that only a restore
 reads. `star github model get <account>` reads the model of any account, ours or not, and `backup <account>` lands it in
 the account's `.github` repository through a pull request (#426). `diff <model> <account>`, `apply <model> <account>`
-and `restore <account> [<revision>]` will compare a model with an account's, make a model the account's, and restore a
-backup (#437); neither `apply` nor `restore` deletes anything without `--prune` (ruled 2026-11-10). Each names its
-account, and no account is a default. `star github labels audit` and `labels sync`, which still enforced the label
+and `restore <account> [<revision>]` compare a model with an account's, make a model the account's, and restore a
+backup, `main`'s when no revision is named (#437); neither `apply` nor `restore` deletes anything without `--prune`
+(ruled 2026-11-10), and neither ever deletes a team, a project or a template. `apply` also brings a new account in: its
+`.github` files, and in each participating repository the Triage workflow, its `TRIAGE_PROJECT_URL` and the secrets it
+signs in with, each from the source `--token` names, `env:` or `file:`, never its value. Each names its account, and
+no account is a default. `star github labels audit` and `labels sync`, which still enforced the label
 scheme retired on 2026-11-03, were removed with #437 on 2026-11-10. Until 2026-11-09, `pull` read the whole model into
 the file `--asset` named, its `--account` defaulting to NobleFactor, and `push` was to write a model back (ruled
 2026-11-02 and 2026-11-03).

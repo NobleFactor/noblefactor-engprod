@@ -27,9 +27,10 @@ VARIABLE = "TRIAGE_PROJECT_URL"
 # The source's files that are not copied: its model, and its own Triage workflow, which WORKFLOW's comparison covers.
 _NOT_COPIED = ["model.yaml", WORKFLOW]
 
-# The branches apply lands its changes from.
-_FILES_BRANCH = "chore/issue-model-files"
-_WORKFLOW_BRANCH = "chore/triage-workflow"
+# The branches apply lands its changes from, named as NobleFactor's ruleset allows: doc/ for the .github files, feature/
+# for a workflow, which is a capability (the owner, 2026-11-10; chore/ retired on 2026-11-03).
+_FILES_BRANCH = "doc/issue-model-files"
+_WORKFLOW_BRANCH = "feature/triage-workflow"
 
 # ── reading ─────────────────────────────────────────────────────────────────
 

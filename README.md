@@ -31,7 +31,7 @@ one repository is valid in all of them.
 
 `Home/` is what `writ` deploys, laid out as the home directory it lands in. Today it holds the
 `com.noblefactor.ops.GitHub` star extension — `star github schedule report`, `star github triage sweep` and
-`star github model get|diff|apply|backup` — under `Home/common/.local/share/devlore/star/extensions/`, where star looks for a
+`star github model get|diff|apply|backup|restore` — under `Home/common/.local/share/devlore/star/extensions/`, where star looks for a
 user-scoped extension since devlore-cli#918. `Declare-BashScript` and the `git-*` process commands arrive with #147 and
 #146.
 

@@ -26,26 +26,75 @@ it. Five commands, each naming its account; no account is a default:
 ```text
 star github model get <account>
 star github model diff <model> <account>
-star github model apply <model> <account> [--prune]
+star github model apply <model> <account> [--prune] [--token <sources>]
 star github model backup <account>
-star github model restore <account> [<revision>] [--prune]
+star github model restore <account> [<revision>] [--prune] [--token <sources>]
 ```
 
 | Command | What it does | Built by |
 | --- | --- | --- |
 | `get` | Reads the account's model from GitHub and returns it as one record; `-o yaml` renders it as the model file | #426 |
 | `backup` | Writes `get`'s record to `model.yaml` in the account's `.github` repository through a pull request, when `main`'s differs | #426 |
-| `diff` | Compares a model, a file or `-`, with the account's model in GitHub | #437 |
-| `apply` | Makes the account's model in GitHub the model given: a reference, another account's, or a backup; deletes nothing without `--prune` | #437 |
-| `restore` | Applies the account's backup as it stood at `<revision>` of its `.github` repository; deletes nothing without `--prune` | #437 |
+| `diff` | Compares a model, a file, with the account's model in GitHub, and returns one record for each difference; writes nothing | #437 |
+| `apply` | Makes the account's model in GitHub the model given: a reference, another account's, or a backup; and gives the account what it needs beyond its model, its `.github` files and each participating repository's Triage workflow, variable and secrets; deletes nothing without `--prune` | #437 |
+| `restore` | Applies the account's backup as it stood at `<revision>` of its `.github` repository, `main` when none is named; deletes nothing without `--prune` | #437 |
 
 - **`get` returns data.** `show` would be for people; star's `--output`, `--filter` and `--jq` serve them. There is no
   `--asset`: the model's file is wherever `get`'s output is redirected. There is no `--check`: a preview is `diff`, or
   star's `--dry-run` once [NobleFactor/devlore-cli#1170](https://github.com/NobleFactor/devlore-cli/issues/1170) lets a
-  dry run read. Until then `get`, `backup`, the report and the sweep refuse `--dry-run`, naming #1170.
+  dry run read. Until then `get`, `backup`, `diff`, `apply`, `restore`, the report and the sweep refuse `--dry-run`,
+  naming #1170.
+- **`diff` returns one record for each difference** (#437, 2026-11-10): its kind, its path, its change (`missing`, the
+  model has it and GitHub does not; `different`; `renamed`; or `extra`, GitHub has it and the model does not), what
+  GitHub holds, what the model holds, and `by_hand` when GitHub's API cannot make the change. It exits 0 whether there
+  are differences or none. Every attribute is compared, color among them: a value that changed is drift, and so is one
+  GitHub holds that the model leaves out (the owner, 2026-11-10). A reference is brought to `get`'s form first, and
+  names every attribute, a deliberate none written as `null`; one it leaves out is refused, named. A model on standard
+  input, `-`, waits on star's command provider, which gives an extension's commands standard input
+  ([NobleFactor/devlore-cli#1136](https://github.com/NobleFactor/devlore-cli/issues/1136)).
 - **`apply` reconciles; it never deletes and recreates.** It creates what is missing and changes what differs, and
   deletes what the model lacks only with `--prune`. On the same account it matches by id, so a rename is a rename;
-  across accounts, by name. `apply` takes any model, so it is also how a new account is set up.
+  across accounts, by name. `apply` takes any model, so it is also how a new account is set up. It writes in an order
+  that keeps every reference whole, and returns `diff`'s records, each with what it did: `created`, `changed`,
+  `renamed`, `deleted`, `kept` or `by-hand`, with the step to take. Built on 2026-11-10 (#437):
+  - Issue types and issue fields, through GitHub's REST calls; an option list is sent whole, each option with its id,
+    so that no issue loses its value.
+  - Labels, on each participating repository, from the account's own backup or a reference; another account's labels
+    are never carried, since its repositories are its own. With a reference, `--prune` removes only labels of the
+    kinds it names, and `good first issue` is left to GitHub.
+  - The templates, a missing one made with its fields and views and marked a template; in a user account, the copy.
+  - Each project of a kind held to its template: every team that maintains a repository gets one project for each
+    template, `<Kind>: <team>`, copied from the template, linked to the team and given the team's write role; in a user
+    account, `<Kind>: <account>`. A drifted one is brought back. Its rows, its Schedule or Scenario options, one per
+    schedule or scenario, and its iterations are its own, and left alone. An option renamed on a template is renamed on
+    each copy under its old name. No project or template is ever deleted, even with `--prune`.
+  - Teams, from the account's own backup alone: their attributes set and their roles added or raised. No team is
+    deleted, and no role removed or lowered, even with `--prune` (the owner, 2026-11-10).
+  - What GitHub's API cannot write, a view's grouping and sort and a type's pinned fields, is a step by hand, each
+    value named.
+- **A new account joins through `apply`** (#437, the owner, 2026-11-10). Beyond the model, an account needs its
+  `.github` repository's files, and in each participating repository the Triage workflow, the `TRIAGE_PROJECT_URL`
+  variable naming its team's Triage project, and the secrets the workflow signs in with:
+  - The files come from the account the model comes from, as its `.github` repository stands: a reference's
+    `files_from`, NobleFactor/.github for an organization and David-Noble-at-work/.github for a user account, or a
+    backup's own account. Every file but `model.yaml` and the Triage workflow is copied, the source account's name in
+    them made the target's, and lands through one pull request; the account's own files are never deleted.
+  - Each participating repository's `.github/workflows/triage.yml` is the source's `workflow-templates/triage.yml`,
+    landed through a pull request on its default branch, and its variable is set directly.
+  - The secrets are those the template names. An organization's signs in with a GitHub App, NobleFactor's through the
+    organization secrets `NOBLEFACTOR_AUTOMATION_APP_ID` and `NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY`, set on the
+    organization, visible to all its repositories; a user account's with a classic token in `ADD_TO_PROJECT_PAT`, set
+    on each repository. A missing one is set from `--token`, or named as a step by hand.
+  - `apply` commits through GitHub's git data API, so that no clone is touched, and lands each pull request as `backup`
+    does, below: the files from `doc/issue-model-files`, each workflow from `feature/triage-workflow`.
+- **`--token` names where each secret comes from, never its value** (the owner, 2026-11-10): `<SECRET>=env:<NAME>` or
+  `<SECRET>=file:<path>`, comma-separated, or a bare `env:<NAME>` or `file:<path>` when the template uses one secret.
+  `file:` takes a file its owner alone can read, mode `600` or stricter; on Windows, its ACL is read with
+  `powershell.exe`'s `Get-Acl`, untested until the command provider replaces the shell provider (#474). A value on the
+  command line is refused, being in the shell's history already, and so is any other source and any secret the template
+  does not use, before anything is written; star calls no other tool for a secret. The value goes from its source to
+  `gh secret set` through one shell pipeline, so it never enters Starlark or a record; the record shows the first 12
+  hexadecimal digits of its SHA-256. Without `--token`, a secret already set is kept; with it, the secret is replaced.
 - **Nothing is deleted without `--prune`** (ruled 2026-11-10). With `--prune`, `apply` and `restore` also delete what
   the model lacks, and first list each deletion and how many issues and rows it touches; once devlore's TUI can ask,
   they ask about each one, and `--unattended --prune` deletes without asking. Without it, `restore` puts back what
@@ -59,13 +108,14 @@ star github model restore <account> [<revision>] [--prune]
   belongs carries a TODO linking it, and #470 tracks the dependency.
 - **A backup follows our process.** `backup` creates the account's `.github` repository if it has none, and clones or
   updates `~/Workspace/<account>/.github`. When `main`'s `model.yaml` differs from GitHub's model, it branches
-  `chore/model-<date>`, with no issue, writes `model.yaml`, commits, pushes, and opens a pull request whose description
+  `doc/model-<date>`, with no issue, writes `model.yaml`, commits, pushes, and opens a pull request whose description
   shows the change and ends with the owner's `Signed-off-by:`. It merges only once every workflow run on the pull
   request's head commit has finished and every check `main` requires has passed (ruled 2026-11-10): a job that needs
   another is not listed until that one finishes, so the runs, not the checks, say when the checks are all there. A run
   that has not started within 60 seconds, or a check that fails, stops it unmerged, and a backup run again reuses the
   pull request it left open. It removes the branch and leaves the clone on `main`, and the pull request's comments
-  record each step and its outcome. When `main`'s file already matches, it says so and stops.
+  record each step and its outcome. When `main`'s file already matches, it says so and stops. `apply` lands its pull
+  requests through the same gate, on each repository's default branch (#437).
 - **The model is read when a command runs, not when the extension loads,** so `--help` and the commands that need no
   model read nothing, and a model that cannot be read stops only the command that needs it. The report and the sweep
   read the model of each account whose repositories they read.
@@ -173,8 +223,8 @@ account. Each holds, in its records, what a model needs and nothing of any one a
 Scenario, whose descriptions begin `Collection:` (ruled 2026-11-03); and the Triage, Backlog, Schedule and Scenario
 templates with their custom fields, options and views, and no built-in workflows. The user account's reference model,
 `user.yaml`, lists the labels that stand in for NobleFactor's single-select issue fields, the `area:`, `priority:`,
-`severity:`, `effort:` and `resolution:` labels; whether a reference model holds a repository's other labels is decided
-with #437, `apply`; #426, how each account's model is read, left it open. The same day the owner revised where each
+`severity:`, `effort:` and `resolution:` labels; whether a reference model holds a repository's other labels, left open
+by #426, was settled with #437, below. The same day the owner revised where each
 account's model lives: not nowhere, as first ruled, but in a file in the account's own public `.github` repository
 (§ One model per account).
 
@@ -196,6 +246,16 @@ account's model lives: not nowhere, as first ruled, but in a file in the account
 
 Ruled 2026-11-03: a repository takes part in the data model when a team has the maintain role on it, in an organization,
 or when it has the topic issue-model, in a user account.
+
+Settled with #437 on 2026-11-10. The templates are defined once, in `reference/templates.yaml`, with their fields,
+options and views, read from both accounts; each reference adds what its kind brings. An organization's adds its issue
+fields, the Area field on Triage and the Priority field on Backlog, shown in their views, the Missing Area view's filter
+on Area, and Backlog's By priority view. A user account's adds the Labels column and the Missing Area view's filter on
+the area labels, having no issue fields. A view a kind adds replaces the common view of the same name. A reference names
+labels only for a user account, the families above; an organization's issue tracking runs on its issue fields, and its
+repositories' labels are their own. Each reference names `files_from`, the account whose `.github` repository a new
+account's files come from, as it stands: NobleFactor for an organization, David-Noble-at-work for a user account.
+Epic's and Feature's colors stay purple and blue in the reference, and GitHub's gray is drift (the owner, 2026-11-10).
 
 ## The asset
 
@@ -637,8 +697,8 @@ What it restores, and what it cannot:
 | A type, a label, a field or an option renamed or given the wrong description or color | `restore` from the last good commit | none: these are held by id, and the restore corrects them in place |
 | A label deleted | `restore` recreates it | the issues that carried it do not get it back; GitHub stripped it on deletion. The report's last rows say which issues had it |
 | A field or an option deleted | `restore` recreates it | with a new id, so the backup's id is updated by the next `backup`, and every row's value in that field or option is gone; GitHub cleared it on deletion |
-| A template deleted | `restore` recreates it from the backup with its fields and options; whether it writes views is decided with #437. No template has had a built-in workflow since 2026-11-03, so there is none to restore (§ One model per account) | with new ids, so the backup's ids are updated by the next `backup` |
-| A team's Triage, Backlog, Schedule or Scenario project deleted | made again from its template; it is not in the model, so `restore` cannot recreate it | its rows are gone: the issues exist, their membership and their Schedule, Scenario, Step, Beat and Iteration values do not. The blocked-by links between its steps live on the issues and survive. A Schedule or Scenario issue's body holds no step or beat table, only a line naming its board and option |
+| A template deleted | `restore` recreates it from the backup with its fields, options and views, each view's name, layout, filter and fields; its grouping and sort are steps by hand (#437). No template has had a built-in workflow since 2026-11-03, so there is none to restore (§ One model per account) | with new ids, so the backup's ids are updated by the next `backup` |
+| A team's Triage, Backlog, Schedule or Scenario project deleted | `restore` and `apply` copy it again from its template and link it to its team, since every team that maintains a repository has one of each (#437) | its rows are gone: the issues exist, their membership and their Schedule, Scenario, Step, Beat and Iteration values do not. The blocked-by links between its steps live on the issues and survive. A Schedule or Scenario issue's body holds no step or beat table, only a line naming its board and option |
 | The asset itself damaged | git | a commit before the damage, or a `backup` from GitHub if GitHub is right |
 
 The asset backs up the model, not the data the model holds: which issue has which type, which issues are rows of
@@ -655,8 +715,8 @@ NobleFactor's kind labels, retired that day, and the retirement is done in GitHu
 ## Access
 
 Ruled 2026-10-26: the extension checks for access, and when the login is stale or access is denied it exits with
-specific instructions. Every command that reads or writes GitHub, the model commands and the `star github schedule`,
-triage and labels commands, checks gh's access before its first request, and when it cannot go on it fails with what is
+specific instructions. Every command that reads or writes GitHub, the model commands and the `star github schedule`
+and triage commands, checks gh's access before its first request, and when it cannot go on it fails with what is
 wrong and the one thing that fixes it. It never signs in or adds a scope itself: star captures a command's output, so
 gh's one-time code would never reach the user, and the sessions that run star must not change credentials. The user
 signs in and adds a scope; GitHub issues the token and refuses what it cannot do. Built 2026-10-26 in
@@ -670,8 +730,9 @@ signs in and adds a scope; GitHub issues the token and refuses what it cannot do
 | 4 | the login cannot see the account it reads, 403 or 404, every scope held | the login cannot see that account; no command here fixes it: for an organization, an owner of the organization must grant the login access |
 | 5 | the rate limit is spent | when it resets, in local time; rerun after that |
 
-`get` needs `read:project`, and `backup` `repo` as well, each checking the account it reads, an organization or a
-user; the `star github schedule` and labels commands need gh's own scopes. The refresh in rows 2 and 3 is interactive,
+`get` and `diff` need `read:project`, and `backup` `repo` as well; `apply` and `restore` need `repo`, `project`,
+`admin:org` and `workflow`, the last to write a repository's Triage workflow. Each checks the account it reads, an
+organization or a user; the `star github schedule` commands need gh's own scopes. The refresh in rows 2 and 3 is interactive,
 a one-time code approved in a browser, so it runs in the user's own terminal, not through a session. Under star's
 `--dry-run` every shell call is skipped, so nothing can be checked and the check is skipped with it; since #426, `get`,
 `backup`, the report and the sweep refuse `--dry-run` before they check, naming NobleFactor/devlore-cli#1170.
@@ -775,4 +836,6 @@ Ruled 2026-11-09: GitHub is the model (§ GitHub is the model). #426 builds `get
 sweep on the model GitHub holds, and retires `pull`, `digest`, the cache and the checkpoint reading; #437 builds
 `diff`, `apply` and `restore`; #471 reads the model in parallel, through a graph; #338 files and retypes issues, which
 #426 had held; and #470 tracks the questions the model commands will ask once devlore's TUI can
-([NobleFactor/devlore-cli#1219](https://github.com/NobleFactor/devlore-cli/issues/1219)).
+([NobleFactor/devlore-cli#1219](https://github.com/NobleFactor/devlore-cli/issues/1219)). #437 built `diff`, `apply` and
+`restore` on 2026-11-10; #474 moves the extension onto devlore-cli's command provider, and tests it on Windows, once
+NobleFactor/devlore-cli#1136 builds it.

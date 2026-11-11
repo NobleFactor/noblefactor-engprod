@@ -8,7 +8,7 @@
 # docs/plans/feature/426-model-pull-to-dot-github.md, Requirement 3. GitHub holds the only definitive model; a backup is
 # a checkpoint of it, model.yaml on the main branch of the account's .github repository, which a restore reads
 # (noblefactor-engprod#437). It follows the owner's process (ruled 2026-11-09): the model is written on a branch named
-# chore/model-<date>, with no issue, and lands through a pull request, its comments the record of each step. The clone is
+# doc/model-<date>, with no issue, and lands through a pull request, its comments the record of each step. The clone is
 # ~/Workspace/<account>/.github and is left current. The model's text is what star github model get renders as YAML,
 # byte for byte, since backup runs it. It merges only once every workflow run on the pull request's head commit has
 # finished and every check main requires has passed: a job that needs another is not listed until that one finishes,
@@ -61,7 +61,7 @@ def run(_command, ctx):
         return {"account": account, "repository": repository, "status": "current"}
 
     day = sh("date +%Y-%m-%d").strip()
-    branch = "chore/model-" + day
+    branch = "doc/model-" + day
     title = "chore: " + account + "'s model as GitHub holds it, " + day
     sh(git + "checkout --quiet -B " + quote(branch) + " origin/main")
     sh("printf %s " + quote(model) + " > " + quote(clone + "/model.yaml"))

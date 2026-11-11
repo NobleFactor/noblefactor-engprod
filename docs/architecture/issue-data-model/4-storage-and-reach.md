@@ -614,7 +614,12 @@ with the tooling, noblefactor-engprod#426 and #437.
 A label belongs to one repository. GitHub has no organization label, and an organization's default labels are not part
 of the model (ruled 2026-11-03). Each repository's labels are part of its account's model, which GitHub holds and the
 account's `.github` repository backs up, and `apply` writes them (#437). `apply` takes the place of push and of
-`star github labels sync`, which #437 removed on 2026-11-10.
+`star github labels sync`, which #437 removed on 2026-11-10. Ruled 2026-11-10: `apply` writes a repository's labels
+from its account's own backup, or from a reference, and never carries another account's, since that account's
+repositories are its own. A reference names labels only for a user account, whose labels stand in for issue fields; an
+organization's issue tracking runs on its issue fields. With a reference, `--prune` removes only labels of the kinds
+the reference names, and `good first issue`, the one label the sweep reads in an organization, is left to GitHub, which
+gives it to every new repository.
 
 Ruled 2026-11-03: labels are lowercase, and issue types are capitalized, as GitHub names them. The labels that remain
 are lowercase: a user account's type labels, and its severity:, priority:, effort: and area: labels, such as
