@@ -4,8 +4,9 @@
 # The reference model for a user's account: the initial desired state of the issue data model, applied to an
 # individual's account that adopts it (docs/architecture/issue-data-model/6-the-asset-and-its-sync.md). Its records name
 # no account and hold no ids; its comments record what was read from NobleFactor and David-Noble-at-work.
-# An account's own model names the account, is written by pull, and is stored in the account's .github repository; it is
-# a cache that star queries, and builds its queries and updates from, instead of asking GitHub the same questions again.
+# An account's own model names the account and is what GitHub holds, read by star github model get and backed up in the
+# account's .github repository (ruled 2026-11-09, noblefactor-engprod#426); star github model diff and apply compare it
+# with this file and make this file the account's (noblefactor-engprod#437).
 # Ruled 2026-11-03: a user account and an organization have exactly the same data model, apart from what GitHub offers
 # organizations only. So this file is the organization's reference with five deviations, all from what a user's account
 # lacks (section 4, Accounts): type is a label, so the sweep, noblefactor-engprod#436, not GitHub, will hold an issue to
@@ -28,6 +29,10 @@
 version: 1
 account: user
 
+# The account whose .github repository's files a new user account gets, as it stands: its issue forms, health files,
+# workflow template and quality gate, every file but its model.yaml (ruled 2026-11-10, noblefactor-engprod#437).
+files_from: David-Noble-at-work
+
 # Type labels, carried by every repository of the account; type names are capitalized and labels lowercase. A type's
 # level is the "Level N:" its label's description begins with; within a level, the order here is the render order; the
 # leaf marked unplanned is the one found rather than planned. A label whose description begins "Collection:" has no
@@ -46,12 +51,12 @@ types:
     label: "epic"
     level: 0
     color: "7057ff"
-    description: "Level 0: a body of work with an owner, the root of the hierarchy; decomposes into features"
+    description: "Level 0: a body of work with an owner, the root work issues roll up to; decomposes into features"
   - name: "Feature"
     label: "feature"
     level: 1
     color: "0e8a16"
-    description: "Level 1: a capability; decomposes into tasks and bugs"
+    description: "Level 1: a capability for the product or for engineering; decomposes into tasks and bugs"
   - name: "Bug"
     label: "bug"
     level: 2
@@ -65,10 +70,12 @@ types:
     description: "Level 2: planned work, a step in delivering a feature"
   - name: "Schedule"
     label: "schedule"
-    description: "Collection: the issue that describes a schedule, its deliverable and exit criteria"
+    color: "1d76db"
+    description: "Collection: describes a schedule, its deliverable and its exit criteria"
   - name: "Scenario"
     label: "scenario"
-    description: "Collection: the issue that describes a scenario, the end-user goal it summarizes"
+    color: "8a63d2"
+    description: "Collection: describes a scenario, the story its features tell"
 
 # Labels that stand in for issue fields. A user's account has no issue fields: GitHub's GraphQL schema says
 # createIssueField makes a field in an organization, and its User type has no issue fields. So a label stands in for
@@ -304,46 +311,41 @@ labels:
 # built-in workflow. GitHub's GraphQL schema has a call that deletes a built-in workflow, deleteProjectV2Workflow, and
 # none that makes one or turns one on, so the only state every project of a kind can share is none. GitHub Actions
 # cannot run a workflow when a project row changes: projects_v2_item is a webhook event for organization webhooks and
-# GitHub Apps only. Each copy's views are part of the model and are not yet listed here; whether push writes them is
-# decided with noblefactor-engprod#426 and #437.
-projects:
+# GitHub Apps only.
+#
+# The four copies' fields, options and views are reference/templates.yaml's, the set every account holds
+# (noblefactor-engprod#437, decision 14). Below is what a user account adds to them, having no issue fields: the Labels
+# column in Triage's and Backlog's views, and the Missing Area view's filter on the area labels. Read from
+# David-Noble-at-work's copies on 2026-11-10.
+templates:
   - name: "Triage"
-    fields:
-      - name: "Status"
-        type: single-select
-        options:
-          - { name: "Open", color: "GRAY", description: "The issue is open" }
-          - { name: "In progress", color: "YELLOW", description: "Someone is working on the issue" }
-          - { name: "Closed", color: "PURPLE", description: "The issue is closed. Closed does not always mean done" }
+    short_description: "{account}'s copy of NobleFactor's Triage template. A user account can't have templates, so a Triage project is copied from this one."
+    views:
+      - name: "View 1"
+        layout: table
+        filter: ""
+        fields: ["Title", "Assignees", "Status", "Labels", "Linked pull requests", "Sub-issues progress"]
+        group_by: []
+        vertical_group_by: []
+        sort_by: []
+      - name: "Missing Area"
+        layout: table
+        filter: "-label:area:product -label:area:engineering"
+        fields: ["Title", "Assignees", "Status", "Labels", "Linked pull requests", "Sub-issues progress"]
+        group_by: []
+        vertical_group_by: []
+        sort_by: []
   - name: "Backlog"
-    fields:
-      - name: "Status"
-        type: single-select
-        options:
-          - { name: "Open", color: "GRAY", description: "The issue is open" }
-          - { name: "In progress", color: "YELLOW", description: "Someone is working on the issue" }
-          - { name: "Closed", color: "PURPLE", description: "The issue is closed. Closed does not always mean done" }
+    short_description: "{account}'s copy of NobleFactor's Backlog template. A user account can't have templates, so a Backlog project is copied from this one."
+    views:
+      - name: "View 1"
+        layout: table
+        filter: ""
+        fields: ["Title", "Assignees", "Status", "Labels", "Linked pull requests", "Sub-issues progress"]
+        group_by: []
+        vertical_group_by: []
+        sort_by: []
   - name: "Schedule"
-    fields:
-      - { name: "Schedule", type: single-select, options: [] }
-      - { name: "Step", type: number }
-      - { name: "Iteration", type: iteration }
-      - name: "Status"
-        type: single-select
-        options:
-          - { name: "Open", color: "GRAY", description: "The issue is open" }
-          - { name: "In progress", color: "YELLOW", description: "Someone is working on the issue" }
-          - { name: "Closed", color: "PURPLE",
-              description: "The issue is closed; closed is not done until the record says so" }
-      - { name: "Worktree", type: text }
+    short_description: "{account}'s copy of NobleFactor's Schedule template. A user account can't have templates, so a Schedule project is copied from this one."
   - name: "Scenario"
-    fields:
-      - { name: "Scenario", type: single-select, options: [] }
-      - { name: "Beat", type: number }
-      - name: "Status"
-        type: single-select
-        options:
-          - { name: "Open", color: "GRAY", description: "The issue is open" }
-          - { name: "In progress", color: "YELLOW", description: "Someone is working on the issue" }
-          - { name: "Closed", color: "PURPLE",
-              description: "The issue is closed; closed is not done until the record says so" }
+    short_description: "{account}'s copy of NobleFactor's Scenario template. A user account can't have templates, so a Scenario project is copied from this one."

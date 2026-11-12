@@ -89,6 +89,6 @@ the Area field in every Triage view, the Priority field in every view of NobleFa
 field in David-Noble-at-work's Triage and Backlog views; read 2026-11-04, no such view showed any of them. #452 will
 give every open issue an Area before the sweep runs, and #436 waits on it: read 2026-11-04, before #452 and #453 were
 filed, 9 of the 528 open issues in NobleFactor's five participating repositories had one, and 5 of personal's 42.
-Keeping the fields and labels in step belongs to `star github model apply` (#437); `get` reads them from GitHub (#426).
-Read on 2026-11-04, 83 open bugs had no severity, 77 in NobleFactor and 6 in personal, and giving each one its severity
-is triage's work.
+Keeping the fields and labels in step is `star github model apply`'s, built in #437 on 2026-11-10; `get` reads them
+from GitHub (#426). Read on 2026-11-04, 83 open bugs had no severity, 77 in NobleFactor and 6 in personal, and giving
+each one its severity is triage's work.

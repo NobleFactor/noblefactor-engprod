@@ -1,0 +1,120 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Noble Factor. All rights reserved.
+
+# The project templates every account holds, an organization's marked as templates and a user account's as copies of
+# them: Triage, Backlog, Schedule and Scenario, with their fields, options and views (noblefactor-engprod#437, decision
+# 14). Ruled 2026-11-03: every project of a kind is configured the same way. Each reference adds what its kind brings:
+# reference/organization.yaml its issue fields, Area on Triage and Priority on Backlog, with their columns, the Missing
+# Area view's filter on the field, and Backlog's By priority view; reference/user.yaml the Labels column, and the
+# Missing Area view's filter on the area labels, since a user account has no issue fields. A view a kind adds replaces
+# the common view of the same name. star github model diff and apply build an account's templates from this set and its
+# kind's additions, and hold each team's projects, or a user account's, to them.
+#
+# A field marked own_options holds options that are each project's own, one for each schedule or scenario, named for its
+# issue; a template's one option names a placeholder issue. diff and apply leave those options alone, on the templates
+# and on every project made from them, as they leave each project's rows and its Iteration field's iterations.
+#
+# Read from NobleFactor's templates and David-Noble-at-work's copies on 2026-11-10, which match but for what each kind
+# adds. A view lists the fields it shows, groups by and sorts by, by name; GitHub's API writes a view's name, layout,
+# filter and visible fields, not its grouping or sort, which apply lists as steps to take by hand.
+
+version: 1
+templates:
+  - name: "Triage"
+    readme: |-
+      A Triage project is a team's queue of issues waiting to be classified. See the issue data model, section 3: https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/architecture/issue-data-model/3-collections.md
+
+      - Each team has one Triage project, copied from this template. A user account has one too.
+      - Any issue can be a row, of any type or none. The rows have no order and no step numbers: this is a queue, worked and emptied.
+      - A row leaves the queue once its issue is fully classified, or closed with a reason.
+      - Status is Open, In progress or Closed.
+    public: false
+    fields:
+      - name: "Status"
+        type: single-select
+        options:
+          - { name: "Open", color: "GRAY", description: "The issue is open" }
+          - { name: "In progress", color: "YELLOW", description: "Someone is working on the issue" }
+          - { name: "Closed", color: "PURPLE", description: "The issue is closed. Closed does not always mean done" }
+  - name: "Backlog"
+    readme: |-
+      A team's Backlog project holds work that triage accepted and that isn't scheduled yet, ordered by priority.
+
+      - Status is Open, In progress or Closed.
+    public: false
+    fields:
+      - name: "Status"
+        type: single-select
+        options:
+          - { name: "Open", color: "GRAY", description: "The issue is open" }
+          - { name: "In progress", color: "YELLOW", description: "Someone is working on the issue" }
+          - { name: "Closed", color: "PURPLE", description: "The issue is closed. Closed does not always mean done" }
+  - name: "Schedule"
+    readme: |-
+      A team's Schedule project holds its committed tasks and bugs.
+
+      - The Schedule field names the schedule each row belongs to: one option per schedule, named for its Schedule issue, which holds the schedule's deliverable and exit criteria.
+      - Step orders the rows within a schedule. A Schedule issue's own row has no step.
+      - Iteration gives each row its sprint.
+      - Status is Open, In progress or Closed. Worktree links a step to the branch its work is on.
+    public: false
+    fields:
+      - name: "Status"
+        type: single-select
+        options:
+          - { name: "Open", color: "GRAY", description: "The issue is open" }
+          - { name: "In progress", color: "YELLOW", description: "Someone is working on the issue" }
+          - { name: "Closed", color: "PURPLE",
+              description: "The issue is closed; closed is not done until the record says so" }
+      - { name: "Step", type: number }
+      - { name: "Worktree", type: text }
+      - { name: "Iteration", type: iteration, configuration: { duration: 14, start_day: 1 } }
+      - { name: "Schedule", type: single-select, own_options: true }
+    views:
+      - name: "Default"
+        layout: table
+        filter: ""
+        fields: ["Title", "Assignees", "Status", "Linked pull requests", "Sub-issues progress", "Step"]
+        group_by: []
+        vertical_group_by: []
+        sort_by: []
+      - name: "By schedule"
+        layout: table
+        filter: ""
+        fields: ["Title", "Assignees", "Status", "Linked pull requests", "Sub-issues progress", "Step", "Worktree"]
+        group_by: ["Schedule"]
+        vertical_group_by: []
+        sort_by: []
+  - name: "Scenario"
+    readme: |-
+      A team's Scenario project holds its features.
+
+      - The Scenario field names the scenario each row belongs to: one option per scenario, named for its Scenario issue, which tells the story.
+      - Beat orders the rows within a scenario.
+      - Status is Open, In progress or Closed.
+    public: false
+    fields:
+      - name: "Status"
+        type: single-select
+        options:
+          - { name: "Open", color: "GRAY", description: "The issue is open" }
+          - { name: "In progress", color: "YELLOW", description: "Someone is working on the issue" }
+          - { name: "Closed", color: "PURPLE",
+              description: "The issue is closed; closed is not done until the record says so" }
+      - { name: "Beat", type: number }
+      - { name: "Scenario", type: single-select, own_options: true }
+    views:
+      - name: "View 1"
+        layout: table
+        filter: ""
+        fields: ["Title", "Assignees", "Status", "Linked pull requests", "Sub-issues progress"]
+        group_by: []
+        vertical_group_by: []
+        sort_by: []
+      - name: "By scenario"
+        layout: table
+        filter: ""
+        fields: ["Title", "Assignees", "Status", "Linked pull requests", "Sub-issues progress", "Beat"]
+        group_by: ["Scenario"]
+        vertical_group_by: []
+        sort_by: []

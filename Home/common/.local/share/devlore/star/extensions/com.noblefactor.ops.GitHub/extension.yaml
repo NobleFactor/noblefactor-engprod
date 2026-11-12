@@ -2,7 +2,7 @@
 # Copyright Noble Factor. All rights reserved.
 
 extension: com.noblefactor.ops.GitHub
-description: GitHub under the NobleFactor issue data model -- every issue as a record, the triage sweep, the label set, and each account's model as GitHub holds it
+description: GitHub under the NobleFactor issue data model -- every issue as a record, the triage sweep, and each account's model as GitHub holds it
 
 commands:
   - name: github.schedule.report
@@ -26,36 +26,6 @@ commands:
         help: "The accounts to sweep, NobleFactor or David-Noble-at-work; default: star's default account and the owner of each of writ's layer repositories"
         variadic: true
 
-  - name: github.labels.audit
-    help: Which repositories lack a kind, Epic:Ops:Process, or a thread label, and which carry one that has drifted
-    implementation: commands/github-labels-audit.star
-    flags:
-      - name: repo
-        type: string
-        default: ""
-        help: "Repositories to audit, owner/name, comma-separated; default: the repositories of writ's layers"
-      - name: directory
-        type: string
-        default: ""
-        help: A working tree; the audit targets the repository its origin names
-      - name: markdown
-        type: bool
-        default: "false"
-        help: Return the audit as a document, one string (render with -o value)
-
-  - name: github.labels.sync
-    help: Create the labels the audit reports missing and align the ones that drifted; never deletes; honors --dry-run
-    implementation: commands/github-labels-sync.star
-    flags:
-      - name: repo
-        type: string
-        default: ""
-        help: "Repositories to sync, owner/name, comma-separated; default: the repositories of writ's layers"
-      - name: directory
-        type: string
-        default: ""
-        help: A working tree; the sync targets the repository its origin names
-
   - name: github.model.get
     help: "An account's issue data model as GitHub holds it now: its issue types or type labels, its issue fields, its teams, its labels, and its project templates with their fields and views, as one record; -o yaml gives the form a backup keeps"
     implementation: commands/github-model-get.star
@@ -63,47 +33,58 @@ commands:
       - name: account
         help: "The account, an organization or a user; required"
 
+  - name: github.model.diff
+    help: "What differs between a model and an account's, as GitHub holds it now: one record for each difference; writes nothing"
+    implementation: commands/github-model-diff.star
+    args:
+      - name: model
+        help: "The model: a file in the form get returns, another account's, a backup, or a reference, by its path"
+      - name: account
+        help: "The account, an organization or a user; required"
+
+  - name: github.model.apply
+    help: "Make a model the account's: every difference diff finds made in GitHub, renames in place, nothing of the account's deleted without --prune; one record for each difference, with what was done"
+    implementation: commands/github-model-apply.star
+    args:
+      - name: model
+        help: "The model: a file in the form get returns, another account's, a backup, or a reference, by its path"
+      - name: account
+        help: "The account, an organization or a user; required"
+    flags:
+      - name: prune
+        type: bool
+        default: "false"
+        help: "Delete what the model lacks too, each deletion first counted; never a team, its roles, a project or a template"
+      - name: token
+        type: string
+        default: ""
+        help: "Where each secret the Triage workflow signs in with comes from: <SECRET>=env:<NAME> or <SECRET>=file:<path>, comma-separated, or a bare env:<NAME> or file:<path> when the workflow uses one; never a secret's value"
+
+  - name: github.model.restore
+    help: "Apply an account's backup to it: model.yaml from its .github repository, at the revision named or main, applied as apply applies a model"
+    implementation: commands/github-model-restore.star
+    args:
+      - name: account
+        help: "The account, an organization or a user; required"
+      - name: revision
+        default: "main"
+        help: "The backup's revision in the account's .github repository: a commit, a tag or a branch; main when none is named"
+    flags:
+      - name: prune
+        type: bool
+        default: "false"
+        help: "Delete what the backup lacks too, each deletion first counted; never a team, its roles, a project or a template"
+      - name: token
+        type: string
+        default: ""
+        help: "Where each secret the Triage workflow signs in with comes from, as apply takes it; never a secret's value"
+
   - name: github.model.backup
-    help: "Checkpoint an account's model, as GitHub holds it now, in its .github repository: written on a chore/model-<date> branch and landed by a pull request, asking nothing yet"
+    help: "Checkpoint an account's model, as GitHub holds it now, in its .github repository: written on a doc/model-<date> branch and landed by a pull request, asking nothing yet"
     implementation: commands/github-model-backup.star
     args:
       - name: account
         help: "The account, an organization or a user; required"
-
-  # The names before #378, kept so that what sessions run today still works; each runs the new command's code and
-  # its help names the new command. A later task removes them once no skill, document or session names them. The
-  # report's and the audit's went with #436, whose report takes none of the flags they declared, and whose audit
-  # retired; the model's pull and digest went with #426.
-
-  - name: gh.labels.audit
-    help: "Renamed: star github labels audit. Which repositories lack a kind, Epic:Ops:Process, or a thread label, and which carry one that has drifted"
-    implementation: commands/github-labels-audit.star
-    flags:
-      - name: repo
-        type: string
-        default: ""
-        help: "Repositories to audit, owner/name, comma-separated; default: the repositories of writ's layers"
-      - name: directory
-        type: string
-        default: ""
-        help: A working tree; the audit targets the repository its origin names
-      - name: markdown
-        type: bool
-        default: "false"
-        help: Return the audit as a document, one string (render with -o value)
-
-  - name: gh.labels.sync
-    help: "Renamed: star github labels sync. Create the labels the audit reports missing and align the ones that drifted; never deletes; honors --dry-run"
-    implementation: commands/github-labels-sync.star
-    flags:
-      - name: repo
-        type: string
-        default: ""
-        help: "Repositories to sync, owner/name, comma-separated; default: the repositories of writ's layers"
-      - name: directory
-        type: string
-        default: ""
-        help: A working tree; the sync targets the repository its origin names
 
 config:
   path: github

@@ -374,9 +374,11 @@ design.
   built-in workflow: GitHub's API can't make one, so projects of a kind match only with none. GitHub is the model (ruled
   2026-11-09, #426): star reads an account's model from GitHub when a command needs it, and the YAML file in the
   account's `.github` repository is a backup of it, written by `star github model backup` and read only by `restore`.
-  `star github model get` reads the model of any account, ours or not; `diff`, `apply` and `restore` are #437's. Each
-  names its account, and no account is a default ([section 6](6-the-asset-and-its-sync.md#github-is-the-model)). Two
-  reference models ship with the star extension, one for an organization's account and one for a user's. Until
+  `star github model get` reads the model of any account, ours or not; `diff`, `apply` and `restore`, built in #437,
+  compare a model with an account's, make it the account's, and restore a backup, and `apply` brings a new account in,
+  with its `.github` files and each repository's Triage workflow. Each names its account, and no account is a default
+  ([section 6](6-the-asset-and-its-sync.md#github-is-the-model)). Two reference models ship with the star extension,
+  one for an organization's account and one for a user's, beside the project templates they share. Until
   2026-11-02 the model was a single committed `model.yaml` beside the extension; from #431 and #441 until #426, star
   read each of our accounts' `model.yaml` from its `.github` repository by ETag as the model, a cache it queried instead
   of asking GitHub again, and `pull` and `push` were its two verbs. Ruled 2026-11-03: an account's model holds its issue

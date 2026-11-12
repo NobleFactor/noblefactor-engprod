@@ -22,8 +22,17 @@ Ruled 2026-11-09 (#426): GitHub is the model. A command reads an account's model
 model file in the account's `.github` repository is a backup, written by `backup` and read only by `restore`. Five
 commands, each naming its account, with no default account, no `--asset` and no `--check`: `get`, `diff`, `apply`,
 `backup` and `restore` (§ GitHub is the model). That supersedes the rulings above on `pull`'s options and that the model
-is a cache. Ruled 2026-11-10: `apply` and `restore` delete nothing without `--prune`, which replaces the `--delete` of
-2026-10-22 (§ GitHub is the model).
+is a cache. Ruled 2026-11-10: `apply` and `restore` delete nothing of the account's without `--prune`, which replaces
+the `--delete` of 2026-10-22. Ruled 2026-11-11: a project `apply` has just made is brought to its template exactly,
+GitHub's default Status options, View 1 and built-in workflows deleted without it (§ GitHub is the model).
+
+Ruled 2026-11-10 with #437 (§ GitHub is the model). `diff` compares every attribute, color among them, and a reference
+names every attribute. `apply` never deletes a team, a project or a template, nor removes or lowers a team's role, even
+with `--prune`; it writes a team only from the account's own backup, and labels only from the account's own backup or a
+reference, never another account's. Every team that maintains a repository gets one project of each kind. A new
+account joins through `apply`, which gives it its `.github` files and, in each participating repository, the Triage
+workflow, its variable and the secrets the workflow signs in with, read from the template: an organization's GitHub
+App's, a user account's token. `--token` names where each secret comes from, `env:` or `file:`, never its value.
 
 Ruled 2026-11-03: the model holds the account's issue fields, as it holds its issue types and labels. NobleFactor's are
 Priority, Effort, Target date, Resolution, Area and Severity, its Start date field staying unused; a user account has
@@ -36,8 +45,10 @@ keeps its type labels, which are its types.
 Built: `pull`, `digest`, the cache and § Access, 2026-10-24 to 2026-10-26 in #377, `--check` standing in for `--dry-run`
 until devlore-cli#1170; the read before every operation, in #378. Built 2026-11-09 in #426: `get`, which reads the teams
 among the rest, and `backup`, and the report and the sweep on the model GitHub holds; `pull`, `digest`, the cache and
-the read before every operation retired with it. Not built: `diff`, `apply` and `restore` (#437). `model audit` is not
-among the five commands ruled 2026-11-09.
+the read before every operation retired with it. Built 2026-11-10 in #437: `diff`, `apply` and `restore`, a new
+account's `.github` files, Triage workflows, variables and secrets through `apply`, and `backup`'s pull-request gate
+shared with `apply`; `labels sync` and `labels audit` removed. `model audit` is not among the five commands ruled
+2026-11-09.
 
 Pulled again 2026-11-02, Chore retired: the four types and projects 4 to 22. Of those, only the Schedule and Thread
 templates, projects 7 and 8, belong in the model as ruled 2026-11-03, the Thread template now being the Scenario
@@ -123,8 +134,9 @@ asset, under Ids beside names, and § Risk).
 - [x] How each account's model is read: from GitHub, when a command needs it, built in #426 on 2026-11-09. The ETag
   cache under `$XDG_CACHE_HOME/devlore/star/gh/model/` and `star github model digest`, built in #377, retired with it,
   and with them the gate's check of the digest, which no issue had named.
-- [ ] The model commands: `get` and `backup`, built in #426, `pull` and `digest` retiring with it; `diff`, `apply` and
-  `restore`, #437; `labels sync` and `labels audit` retired into them.
+- [x] The model commands: `get` and `backup`, built in #426, `pull` and `digest` retiring with it; `diff`, `apply` and
+  `restore`, built in #437 on 2026-11-10; `labels sync` and `labels audit`, which still enforced the label scheme
+  retired on 2026-11-03, removed with #437 the same day.
 - [ ] The hierarchy derived by the extension from `types`, with no type named in the extension itself: #376.
 - [x] Every `star github schedule` operation reads GitHub's record conditionally first and reports when the asset is
   behind. Built in #378; since #426 every command that needs the model reads it from GitHub, and no copy can be behind.

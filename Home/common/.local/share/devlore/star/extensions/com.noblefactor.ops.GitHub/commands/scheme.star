@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright Noble Factor. All rights reserved.
 
-"""The issue data model as GitHub holds it for each account, and the label set the labels commands keep."""
+"""The issue data model as GitHub holds it for each account, and what the report and the sweep derive from it."""
 
 # scheme.star
 #
@@ -15,9 +15,7 @@
 
 load(
     "commands/accounts.star",
-    "ORIGIN",
     _canonical_repo = "canonical_repo",
-    _default_account = "default_account",
     _layer_repos = "layer_repos",
 )
 load("commands/model.star", "read_model")
@@ -29,7 +27,6 @@ _MODEL_VERSION = 1
 _COLLECTION = "Collection:"
 
 # accounts.star's, bound here so that the commands that load them from this module still find them.
-default_account = _default_account
 canonical_repo = _canonical_repo
 layer_repos = _layer_repos
 
@@ -237,18 +234,6 @@ def short(repo):
     """The repository's name without its owner: noblefactor-engprod for NobleFactor/noblefactor-engprod."""
     return repo.split("/")[-1]
 
-def cell(s):
-    """A markdown table cell's text: its pipes escaped and its lines joined."""
-    return s.replace("|", "\\|").replace("\n", " ")
-
-def _origin_repo(directory):
-    """owner/name from the origin remote of a working tree."""
-    r = shell.exec(command = "git -C '" + directory + "' remote get-url origin")
-    m = regex.find_submatch(pattern = ORIGIN, text = r.stdout)
-    if m == None or len(m) < 2:
-        fail("cannot read owner/name from the origin of " + directory + ": " + r.stdout.strip())
-    return m[1]
-
 def _current_repo():
     """owner/name of the repository the command runs in, as gh resolves it."""
     r = shell.exec(command = "gh repo view --json nameWithOwner --jq .nameWithOwner")
@@ -258,119 +243,3 @@ def default_repos():
     """The repositories of writ's layers, or the one the command runs in when no layer is registered."""
     repos = layer_repos()
     return repos if repos else [_current_repo()]
-
-def resolve_repos(repo_flag, directory):
-    """The labels commands' repositories: --repo, else --directory's origin, else writ's layers', else the current one."""
-    if repo_flag:
-        return [canonical_repo(r.strip()) for r in repo_flag.split(",") if r.strip()]
-    if directory:
-        return [_origin_repo(directory)]
-    return default_repos()
-
-# ── the label set every participating repository carries ───────────────────
-#
-# The labels commands, out of scope for #436, are as they were: they expect the hierarchy's type names, lower-cased, as
-# labels, and Epic:Ops:Process, in every repository. Their kinds are the default account's hierarchy types.
-
-def required_everywhere():
-    """The labels every participating repository carries.
-
-    The default account's hierarchy types, lower-cased, read from GitHub now, and Epic:Ops:Process.
-    """
-    account = default_account()
-    return [t["name"].lower() for t in models_for([account])[account]["hierarchy"]] + ["Epic:Ops:Process"]
-
-def label_inventory(repos):
-    """Every label per repository with its color and description -- one GraphQL request; first 100 per repository."""
-    parts = []
-    for i, repo in enumerate(repos):
-        owner, name = repo.split("/")
-        parts.append("r" + str(i) + ": repository(owner: \"" + owner + "\", name: \"" + name + "\") { nameWithOwner labels(first: 100) { totalCount nodes { name color description } } }")
-    r = shell.exec(command = "gh api graphql -f query='{ " + " ".join(parts) + " }'")
-    data = json.decode(data = r.stdout)["data"]
-    out = {}
-    for k in data:
-        node = data[k]
-        if int(node["labels"]["totalCount"]) > 100:
-            warn(node["nameWithOwner"] + " has more than 100 labels; only the first 100 were read")
-        out[node["nameWithOwner"]] = {label["name"]: {"color": label["color"], "description": label["description"] or ""} for label in node["labels"]["nodes"]}
-    return out
-
-def canonical_labels(inv, repos):
-    """The expected set and its canonical color and description: the kinds, Epic:Ops:Process, and every thread label, each as first seen in configuration order."""
-    expected = {}
-    names = required_everywhere()
-    threads = {}
-    for repo in repos:
-        for name in inv.get(repo, {}):
-            if name.startswith("Thread:"):
-                threads[name] = True
-    names.extend(sorted(threads.keys()))
-    for name in names:
-        for repo in repos:
-            if name in inv.get(repo, {}):
-                expected[name] = inv[repo][name]
-                break
-        if name not in expected:
-            expected[name] = None
-    return expected
-
-def label_faults(inv, repos):
-    """Per repository: missing labels, and labels whose color or description differs from the canonical."""
-    expected = canonical_labels(inv, repos)
-    rows = []
-    for repo in repos:
-        have = inv.get(repo, {})
-        for name in sorted(expected.keys()):
-            want = expected[name]
-            if want == None:
-                rows.append({"repo": repo, "label": name, "status": "absent everywhere", "color": "", "description": ""})
-            elif name not in have:
-                rows.append({"repo": repo, "label": name, "status": "missing", "color": want["color"], "description": want["description"]})
-            elif have[name]["color"] != want["color"] or have[name]["description"] != want["description"]:
-                rows.append({"repo": repo, "label": name, "status": "divergent", "color": want["color"], "description": want["description"], "actual_color": have[name]["color"], "actual_description": have[name]["description"]})
-    return rows
-
-def label_audit_lines(rows, repos):
-    """The audit as a document: one section per repository, or one line when clean."""
-    out = ["# Label audit\n", "Repositories: " + ", ".join(repos) + "."]
-    if len(rows) == 0:
-        out.append("\nEvery repository carries the five kinds, Epic:Ops:Process, and every thread label.")
-        return out
-    for repo in repos:
-        mine = [r for r in rows if r["repo"] == repo]
-        if len(mine) == 0:
-            continue
-        out.append("\n## " + repo + "\n")
-        out.append("| Label | Status | Canonical |")
-        out.append("|---|---|---|")
-        for r in mine:
-            canon = ("#" + r["color"] + " " + r["description"]) if r["color"] else ""
-            out.append("| `" + r["label"] + "` | " + r["status"] + " | " + cell(canon) + " |")
-    return out
-
-def _sh_quote(s):
-    """Single-quote a string for sh -c."""
-    return "'" + s.replace("'", "'\\''") + "'"
-
-def label_sync(rows, dry_run):
-    """Create missing labels and align divergent ones, per the audit rows; never delete. Returns what was done, or would be."""
-    done = []
-    for r in rows:
-        if r["status"] == "missing":
-            cmd = "gh label create -R " + r["repo"] + " " + _sh_quote(r["label"]) + " --color " + r["color"] + " --description " + _sh_quote(r["description"])
-            action = "create"
-        elif r["status"] == "divergent":
-            cmd = "gh label edit -R " + r["repo"] + " " + _sh_quote(r["label"]) + " --color " + r["color"] + " --description " + _sh_quote(r["description"])
-            action = "align"
-        else:
-            done.append({"repo": r["repo"], "label": r["label"], "action": "skip", "reason": r["status"]})
-            continue
-        if dry_run:
-            note("would " + action + " " + r["label"] + " in " + r["repo"])
-            done.append({"repo": r["repo"], "label": r["label"], "action": action, "dry_run": True})
-        else:
-            shell.exec(command = cmd)
-            note(action + "d " + r["label"] + " in " + r["repo"])
-            done.append({"repo": r["repo"], "label": r["label"], "action": action, "dry_run": False})
-    return done

@@ -20,7 +20,9 @@ David-Noble-at-work/personal#311), which section 6 states with #431.
 Ruled 2026-11-09 (#426): GitHub is the model. star reads an account's model from GitHub when a command needs it, and the
 file in its `.github` repository is a backup; `get`, `diff`, `apply`, `backup` and `restore`, each naming its account,
 replace pull and push. That supersedes the rulings below that the model is a cache and on pull's options, and section 4
-says so where it names them ([section 6](6-the-asset-and-its-sync.md#github-is-the-model)).
+says so where it names them ([section 6](6-the-asset-and-its-sync.md#github-is-the-model)). Ruled 2026-11-10 with #437,
+which built `diff`, `apply` and `restore`: `apply` writes a repository's labels only from its account's own backup or
+a reference, never another account's, and a reference names labels only for a user account (§ Labels).
 
 Brought up to date on 2026-11-03 with the rulings of 2026-11-02 and 2026-11-03. Section 4 now states each of these:
 
