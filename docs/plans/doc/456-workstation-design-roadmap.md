@@ -40,7 +40,7 @@ The owner requested: "We must get this into noblefactor-engprod as a draft desig
 - Preserve persistent role sessions and the iterative development method. Retain the private archive's pre-compaction and anytime-reasoning purpose.
 - The source's hardware and model claims remain dated research inputs requiring qualification; this publication is not a refreshed market survey or purchase approval.
 - No raw transcripts, credentials, private source artifacts, or infrastructure secrets are added.
-- Existing approved guides are not rewritten by this change. Any proposed differences are identified for owner review.
+- Existing approved guides are not rewritten except for the separately authorized API-authored documentation refinement below. Other proposed differences remain for owner review.
 
 ## Implementation Phases
 
@@ -66,7 +66,40 @@ Open a draft pull request after the documentation commits, linked to #456 and #4
 - [ ] File approved new work through the supported issue-filing path, verifying native type, Area, parent, and Triage placement.
 - [ ] Owner separately authorizes merge/adoption and any schedule commitments.
 
+## Owner-authorized follow-up: API-authored documentation
+
+On November 11, 2026, the owner asked to add the API-authored documentation/worktree distinction to the engineering
+process and include it in the existing open PR. This addition is confined to `docs/guides/development-process.md`
+and this plan. It does not reconcile or adopt this branch's alternative architecture/roadmap; the four-epic draft
+merged through #505 remains the published baseline. Keep #506 open and unmerged for now.
+
+The guide now permits documentation-only commits through GitHub's API without creating a local clone, worktree,
+or PR script. Record repository, tracked issues, source/target branches, PR, reviewed commit, authoring mode, and
+`Worktree: Not applicable — authored through GitHub API`. Required planning, validation, review, authorization,
+and merge controls remain in force. Report unavailable checks honestly. A later local checkout is recorded and
+managed under the normal worktree rules.
+
+Cleanup applies only to resources that exist: no invented local path or pruning operation, no assumption about
+another agent's uninspected hosts, and remote-branch housekeeping treated separately. Nothing is deleted by this
+refinement.
+
+| Authoring record | Value |
+| --- | --- |
+| Repository | NobleFactor/noblefactor-engprod |
+| Source branch | `doc/456-workstation-design-roadmap` |
+| Target branch | `develop` |
+| PR | #506 |
+| Authoring mode | GitHub API |
+| Worktree | Not applicable — authored through GitHub API |
+| Commit and verification | Recorded in the PR's follow-up comment against the resulting head SHA |
+
+The guide and this plan are updated together. Before updating the branch, inspect the commit diff and preserve the
+expected branch head. Read back the saved guide and report CI status separately; this entry does not claim that CI,
+full repository tests, or rendered documentation checks have passed for the new commit.
+
 ## Validation record
+
+The following record describes the initial publication, before the follow-up process-guide edit.
 
 GitHub comparison against develop reported exactly four added Markdown files and no edits to existing files. The system design was reconstructed locally from the original conversation artifact using the explicit publication changes; its computed Git blob SHA matched the published blob `bab00394b6b1970ef10e256cc68e6c088958a5bd`. This verifies preservation apart from those changes, not the truth of each technical claim.
 
@@ -76,16 +109,21 @@ Full repository CI, codespell, rendered Mermaid diagrams, and external-link avai
 
 ## Migration Path
 
-Publication does not replace the current development environment or change approved process. The design and roadmap become reviewable inputs. After review, feature scope is reconciled with existing issues, approved new work is filed, and a bounded first schedule is committed through the normal owner-controlled process. Earlier conversation artifacts remain available as source material.
+Publication does not replace the current development environment. The design and roadmap remain reviewable inputs;
+the process-guide addition is the owner's separately requested methodology refinement, pending this PR's merge.
+After architecture review, feature scope is reconciled with existing issues, approved new work is filed, and a
+bounded first schedule is committed through the normal owner-controlled process. Earlier conversation artifacts
+remain available as source material.
 
 ## Files to Create/Modify
 
 | File | Action | Purpose |
 | --- | --- | --- |
-| `docs/plans/doc/456-workstation-design-roadmap.md` | Create | Publication scope, progress, and review boundary |
+| `docs/plans/doc/456-workstation-design-roadmap.md` | Create | Publication scope, progress, review boundary and authorized follow-up |
 | `docs/architecture/agentic-workstation/index.md` | Create | Entry point and status |
 | `docs/architecture/agentic-workstation/system-design.md` | Create | Complete system design |
 | `docs/architecture/agentic-workstation/roadmap.md` | Create | Peer-epic decomposition and incremental delivery |
+| `docs/guides/development-process.md` | Modify | API-authored documentation, authoring record and resource-specific cleanup |
 
 ## Related Documents
 

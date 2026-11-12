@@ -1,11 +1,11 @@
 ---
 title: Development Process
-description: How work is organized — one issue at a time, one worktree, a plan before the work, and documents updated on every commit
+description: How work is organized — tracked issues, pull requests, local worktrees when needed, and plans and documents kept current
 type: Process
 audience: Engineers
 status: Approved
 created: 2026-09-01
-updated: 2026-11-04
+updated: 2026-11-11
 ---
 
 # Development Process
@@ -22,12 +22,12 @@ in [release-process.md](release-process.md); the two are read together.
 
 | Section | Status | Notes |
 |---------|--------|-------|
-| The unit of work | Approved | Feature spans issues; worktree is a pull request; session is an issue |
+| The unit of work | Approved | Feature spans issues; a local worktree serves one pull request; API-authored documentation is the explicit exception |
 | Discovering issues mid-work | Approved | Log, then decide where it is resolved |
 | Blocking issues | Approved | Definition and the choice it forces; a pull request outside the worktree that blocks it is fixed, the owner consulted first |
 | Plans | Approved | Named after the issue; committed before the work begins; every issue ends with a linked table of its plan and design documents |
 | Documents on every commit | Approved | No deviations |
-| Reference implementation | Approved | `git-open-branch`, `git-close-branch` |
+| Reference implementation | Approved | `git-open-branch`, `git-close-branch`; equivalent authorized API operations for documentation without a worktree |
 
 ---
 
@@ -56,13 +56,16 @@ Scenario are its two peers there.
 This document begins where that one ends: it assumes a well-classified issue and describes how the work
 around it is organized.
 
-**Three things nest, and they are not the same size.**
+**Three things nest in locally authored work, and they are not the same size.**
 
 | | What it is | How many at once |
 |---|---|---|
 | **Feature** | A body of work spanning several linked issues | Many, in parallel |
-| **Worktree** | One pull request, resolving one or more of that feature's issues | One per pull request |
+| **Local worktree** | The checkout for one pull request, resolving one or more of that feature's issues | One per locally authored pull request |
 | **Session** | One issue, worked to completion | One per issue |
+
+Documentation authored entirely through the GitHub API uses the same issue, branch, plan and pull-request
+boundaries without a local worktree; see [the exception below](#documentation-authored-through-the-github-api).
 
 **A feature groups the issues that serve it.** Many features may be in flight at once. The feature is
 what makes a set of otherwise unrelated issues legible as one intent.
@@ -116,7 +119,7 @@ its team's Triage project or schedule and the other team's: triage to triage, tr
 schedule to schedule.
 
 **A schedule is how the work is ordered, not another size of it.** A feature, a worktree and a session are
-nested; a schedule cuts across them. Its rows are **steps** — tasks and bugs, drawn from any feature and any epic
+nested in locally authored work; a schedule cuts across them. Its rows are **steps** — tasks and bugs, drawn from any feature and any epic
 of its own account — in the order someone has committed to working them, and it is what an agent actually
 executes: the steps in step order, until the last one closes. Ruled 2026-11-03: there is no longer a project per
 schedule. The team's Schedule project holds its committed tasks and bugs, and its single-select Schedule field
@@ -139,11 +142,12 @@ the scenario each row belongs to, with one option per scenario, named for its Sc
 joins it only through a stand-in issue in the scenario's own account. It is a view across units of work, not a unit
 itself, and it is defined in [issue-standards.md](../issue-standards.md#scenarios).
 
-**A worktree is a pull request.** It branches from the default branch and resolves one or more of its
+**A local worktree serves one pull request.** Its branch starts from the default branch and resolves one or more of its
 feature's issues. As many worktrees may be open as there are pull requests in flight; they do not
 compete for attention, because `git-open-branch` names each one `<clone>.<issue>-<name>` and places it under
-`~/Workspace/<org>/`, so a directory listing is the whole picture. Legibility comes from naming, not from
-scarcity.
+`~/Workspace/<org>/`, so a directory listing is the whole picture for locally authored work. Legibility comes from
+naming, not from scarcity. An API-authored documentation branch is recorded in GitHub, not represented by an invented
+local directory.
 
 **The structure is one directory per GitHub organization.** Ruled 2026-10-21 (#366): "key by GitHub Organization,
 clone name, and branch name". Under `~/Workspace/<org>/` sit three kinds of thing and nothing else: the clone,
@@ -155,11 +159,13 @@ repository is a place for work to strand, and the day this was ruled one was fou
 lacked. `git open-branch` runs in the clone, or in the symlink to it, and puts the worktree where the structure
 says.
 
-**A worktree and its script go when the pull request merges**, or when the branch is abandoned
+**When a local worktree exists, it and its script go when the pull request merges**, or when the branch is abandoned
 ([agent-rules.md](agent-rules.md), rule 8): `git close-branch` removes both in one run. Ruled 2026-10-21: "scripts
 and worktrees should be removed as soon as possible. Lingering worktrees and scripts should be identified as soon
 as they're noticed." One that lingers is a defect, named by whoever notices it the moment it is noticed; the day it
 was ruled, a worktree was found seven months past its merge, and a script beside the clones that served no branch.
+For API-authored documentation, local cleanup is not applicable when no local worktree or script was created;
+remote-branch cleanup is a separate operation under the normal merge or abandonment rules.
 
 **A clone is retired in four steps, and `rm -rf` is the last.** Ruled 2026-10-21 (#367), when a second clone was
 found carrying work origin lacked. First, save what origin lacks: every uncommitted change, stash and local commit
@@ -190,6 +196,44 @@ flight, the session name is the only thing distinguishing one from another at a 
 
 A pull request resolves one or more issues. Nothing else is acceptable in it. Work that resolves no issue
 is a stray commit, and a stray commit is how a change arrives that nobody can explain six months later.
+
+### Documentation authored through the GitHub API
+
+**A pull request requires a source branch, not necessarily a local worktree.** Ruled 2026-11-11:
+documentation-only changes may be authored and committed through GitHub's API on a tracked source branch,
+without creating a local clone, linked worktree, or local PR script. This is an exception to the local execution
+mechanics, not to issue tracking, branch naming, planning, authorization, validation, review, or merge requirements.
+Do not write directly to the default branch under this exception.
+
+Record the authoring mode in the PR description and keep its handoff current:
+
+| Field | Required record |
+| --- | --- |
+| Repository and work | Repository name and tracked issue references |
+| Branches | Actual source branch and target branch |
+| Pull request | GitHub PR number or URL |
+| Commit | Reviewed head commit SHA; add the resulting merge commit after merge |
+| Authoring mode | GitHub API |
+| Worktree | `Not applicable — authored through GitHub API` when none was created |
+| Validation | Checks performed against an identified revision, results, and any checks not performed |
+
+Read the current file and branch state before writing; use the available content-SHA or branch-head precondition
+so a stale update cannot silently replace another contributor's work. Read back the resulting commit and diff.
+Documentation changes still require the applicable frontmatter, spelling, link, rendering, CI and review checks.
+Unavailable checks are reported as not performed, not treated as passed. If required validation needs a local
+checkout, use the normal worktree process and record the actual host and path. The absence of a local PR script
+does not waive the checks or approvals that script would enforce.
+
+**Cleanup follows resources that actually exist.** If this author created no local worktree or script, there is
+nothing local to remove on that author's behalf. Do not invent a path, create an empty worktree merely for tracking,
+or run removal/pruning against an assumed location. This does not establish whether another agent created a checkout
+on another host; report that as unverified unless inspected. Record a real worktree if one is introduced later, and
+apply the normal preservation and cleanup rules to it.
+
+Remote branches and PRs are separate from local worktrees. Keep an open PR and its branch unless its abandonment
+is authorized. After merge or authorized abandonment, perform the applicable remote-branch housekeeping separately,
+checking for work or other PRs that still depend on it. A missing local worktree is neither an error nor permission
+to delete a remote branch.
 
 ---
 
@@ -391,11 +435,15 @@ and is retired, and so is `chartered`.
 
 ## Reference implementation
 
-`git-open-branch` and `git-close-branch` implement the worktree rules above. `git-open-branch` refuses to create a
+`git-open-branch` and `git-close-branch` implement the local-worktree rules above. `git-open-branch` refuses to create a
 branch without an issue, derives the branch name from that issue's labels and title so the name is a consequence of the
 work rather than of the typist, and creates the worktree. Approved 2026-11-04, #449 will have it take the branch type
 from the issue's type instead, or from its type label in a user account. `git-close-branch` verifies a pull request is
 merged before it deletes anything, removes the worktree, and deletes the branch locally and on the remote.
+
+For [API-authored documentation](#documentation-authored-through-the-github-api), equivalent authorized API operations
+must preserve the same issue, branch, review and merge requirements. Do not require a local script or cleanup command
+for resources that were never created; record the actual authoring mode and verify the remote state instead.
 
 All three — `git-reset-branch` travels with them — ship from this repository's `Home/common/.local/bin`,
 beside the `Declare-BashScript` they source, each with its man page and bash and zsh completions. They
