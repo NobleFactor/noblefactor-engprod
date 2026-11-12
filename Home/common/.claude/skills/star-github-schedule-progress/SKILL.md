@@ -48,13 +48,19 @@ devlore-cli and personal on the owner's machines. Name others as arguments, `own
 
 ## Verify star first, and do not clobber it
 
-`star` is a tool we build, so rule 1 applies: `git fetch` in devlore-cli — comparing against an unfetched local
-`develop` proves nothing — then compare the installed build with `origin/develop`.
+`star` is a tool we build, so rule 1 applies: compare the installed build with devlore-cli's `develop`. GitHub answers
+that through `gh`, with no git command to ask a grant for (rule 17, #389):
 
-**If the installed build is `-dirty`, or `git branch -r --contains <build>` does not place it on `develop`, it belongs
-to another session's work in progress.** Use it read-only and say so. Do not `make install`: that replaces
-`~/.local/bin/star` and the extensions under `~/.local/share/devlore/star/`, which is someone's working environment. A
-release is installed with `star self upgrade`.
+```bash
+build="$(star version --silent --no-pager -o value --jq .commit)"
+gh api "repos/NobleFactor/devlore-cli/compare/${build}...develop" --jq .status
+```
+
+`ahead` or `identical` places the build on `develop`. **If `star version` says the build is dirty, or GitHub answers
+`behind` or `diverged`, or has no such commit, the build belongs to another session's work in progress.** Use it
+read-only and say so. Do not `make install`: that replaces `~/.local/bin/star` and the extensions under
+`~/.local/share/devlore/star/`, which is someone's working environment. A release is installed with
+`star self upgrade`.
 
 ## The invocations
 
