@@ -25,11 +25,11 @@ The owner requested: "We must get this into noblefactor-engprod as a draft desig
 
 | Component | State | Notes |
 | --- | --- | --- |
-| System design | Conversation artifact, RFC / Draft, revision 0.1 | The document is not yet in this repository |
-| Agent-assisted engineering | Epic #456; Features #457-#461 | Reuse existing ownership; proposed scope additions require review |
+| System design | On the documentation branch as RFC / Draft, revision 0.2 | Original fourteen sections and four diagrams retained; publication/navigation qualifications added |
+| Agent-assisted engineering | Epic #456; Features #457-#461 | Existing ownership reused; proposed scope additions require review |
 | Engineering evidence archive | Epic #490; Features #491-#496 | Canonical feature set; #497-#502 were closed as duplicates |
-| Integrated roadmap | Missing | This publication provides the proposal |
-| Native issue metadata support in the current connector | Incomplete | Do not replace native hierarchy with labels or prose, or bulk-file proposals that cannot be classified |
+| Integrated roadmap | Draft on the documentation branch | Three peer epics; eleven existing and five proposed features |
+| Native issue metadata support in the current connector | Incomplete | No new unclassified epic/feature issues filed; approved additions must use supported tooling |
 
 ## Requirements
 
@@ -53,17 +53,26 @@ The owner requested: "We must get this into noblefactor-engprod as a draft desig
 
 ### Phase 2: Publish the draft set
 
-- [ ] Add the system design under `docs/architecture/agentic-workstation/`.
-- [ ] Add a roadmap with existing/proposed feature identities, substantial outcomes, acceptance evidence, and dependencies.
-- [ ] Add a navigation index and explicit decision boundaries.
-- [ ] Check frontmatter, relative links, source references, and changed-file scope; report any validation limitations.
+- [x] Add the system design under `docs/architecture/agentic-workstation/`.
+- [x] Add a roadmap with existing/proposed feature identities, substantial outcomes, acceptance evidence, and dependencies.
+- [x] Add a navigation index and explicit decision boundaries.
+- [x] Read back the published design and roadmap; check source preservation, frontmatter, anchors and changed-file scope within the limits recorded below.
 
-### Phase 3: Review
+### Phase 3: Review and adoption
 
-- [ ] Open a draft pull request linked to #456 and #490, without closing either epic.
+Open a draft pull request after the documentation commits, linked to #456 and #490 without closing either epic. GitHub's pull-request record supplies its actual creation status and URL; no success is inferred before the operation is confirmed.
+
 - [ ] Owner reviews the proposed epic boundaries, additional features, and policy differences.
 - [ ] File approved new work through the supported issue-filing path, verifying native type, Area, parent, and Triage placement.
 - [ ] Owner separately authorizes merge/adoption and any schedule commitments.
+
+## Validation record
+
+GitHub comparison against develop reported exactly four added Markdown files and no edits to existing files. The system design was reconstructed locally from the original conversation artifact using the explicit publication changes; its computed Git blob SHA matched the published blob `bab00394b6b1970ef10e256cc68e6c088958a5bd`. This verifies preservation apart from those changes, not the truth of each technical claim.
+
+Programmatic checks passed for the system design's RFC/Draft frontmatter, fourteen numbered sections, four Mermaid source blocks, balanced code fences, twenty-nine defined footnotes, table-of-contents anchors, and local links resolving to the recorded repository file scope. The roadmap and navigation were read/reviewed as Markdown. The roadmap maps three peer epics and sixteen features: eleven existing and five proposed.
+
+Full repository CI, codespell, rendered Mermaid diagrams, and external-link availability were not tested in this session. The local environment could not download repository files directly; repository reads/writes and scope verification used the GitHub connector. No runtime or hardware benchmark was run. These limitations remain visible in the draft pull request.
 
 ## Migration Path
 
