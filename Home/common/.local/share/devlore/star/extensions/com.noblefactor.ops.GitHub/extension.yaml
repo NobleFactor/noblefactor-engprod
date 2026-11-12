@@ -18,6 +18,33 @@ commands:
         default: ""
         help: "Read only what GitHub's issue search finds, in its syntax, passed unchanged and run once for each repository as (<search>) repo:<repository> is:issue; an error when it matches more than 1,000 issues in one"
 
+  - name: github.schedule.add
+    help: "Put issues on a schedule, each with its step, its schedule's option and Status Open, placed in step order, and leaving the project it was on, then write one amendment line in the Schedule issue naming the date, who ran it and why; with --after, after that step, every later step moving down, closed or open; return one flat record for each row it added, moved or took off; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    implementation: commands/github-schedule-add.star
+    args:
+      - name: schedule
+        help: "The schedule's own issue, <owner>/<repository>#<number>, as a session's NFEP_AGENT_SCHEDULE names it"
+      - name: issues
+        help: "The tasks and bugs to put on it, <owner>/<repository>#<number>, in the order their steps take"
+        variadic: true
+    flags:
+      - name: after
+        type: string
+        default: ""
+        help: "The step to put them after, every later step moving down; 0 puts them first; default: after the last"
+      - name: blocked-by
+        type: string
+        default: ""
+        help: "The issues each is blocked by, <owner>/<repository>#<number>, comma-separated; links the issues already have are kept"
+      - name: assignee
+        type: string
+        default: ""
+        help: "The member of the schedule's team who answers for an issue of another team's repository, which then needs one"
+      - name: reason
+        type: string
+        default: ""
+        help: "Why the schedule changes, written in its amendment; required"
+
   - name: github.triage.sweep
     help: "Add every open issue that breaks a classification rule to its team's Triage project, commenting on it with the rules it breaks; return one flat record for each issue added, already there with a fault, or a Triage row; adds only, never removes; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
     implementation: commands/github-triage-sweep.star

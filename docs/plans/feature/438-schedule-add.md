@@ -1,7 +1,7 @@
 ---
 title: "star github schedule add puts issues on a schedule, with their steps, links and amendment, in one act"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/438
-status: draft
+status: active
 created: 2026-11-12
 updated: 2026-11-12
 ---
@@ -24,6 +24,11 @@ Its code for reading a schedule's steps and renumbering them is shared, so that 
   schedule, naming the date, who ran the command and its required `--reason` (question 4); closed steps move with the
   open ones (question 5); every write read back, since GitHub promises no stability for the features the model is
   built on (question 3).
+- 2026-11-12, on this plan: the organization half's live evidence runs in NobleFactor-sandbox, an organization made
+  to last, built from NobleFactor's model with `star github model apply` and kept, for every star github command's
+  proof. NobleFactor-test, deleted after #437's proof, can't be restored or its name reused yet. A user account's
+  half can't be proven live: David-Noble-at-home, the one user account that could stand in for one, is unavailable
+  until the owner restores it. So it will not be proven by any other means, and #438 stays open until it is.
 
 ## Current State
 
@@ -66,7 +71,12 @@ Read on 2026-11-12 from develop at `3beea6b`:
    that moved, and the `--reason`.
 7. **One act:** the schedule's rows are read before anything is written and again just before the first write; if they
    differ, `add` stops and writes nothing. A write that fails partway is reported with what was written, and the same
-   command run again finishes it. Every write is read back.
+   command run again finishes it. Every write is read back. Built so: the amendment line is written first, ending
+   "(in progress)", and settled last, its marker dropped. It is the change's record as planned, so a run that stops
+   partway leaves one a reader sees is unfinished, and a run of the same issues finishes it, keeping the steps the
+   first run moved among it. Any other issue already on the schedule is refused: most steps were put on schedules by
+   hand, before `add`, and no amendment names them. The later rows move from the highest down, which keeps their order
+   should a run stop between them.
 8. **Refusals,** each writing nothing: an issue that is closed, already on this schedule, of a type other than Task or
    Bug, or of another account; a `--blocked-by` issue of another account; an `--after` step the schedule doesn't have;
    a `<schedule>` that is not an open Schedule issue; no `--reason`; star's `--dry-run`, until devlore-cli#1170 lets a
@@ -95,7 +105,8 @@ Against the stand-in `gh` in `tests/Test-StarGitHub`, each case reading back the
 | 11 | The template | Rendered from fixed data, byte for byte |
 | 12 | `make check` | Passes |
 
-Then the evidence #438 asks for, run live in both accounts (Open Questions, 1).
+Then the evidence #438 asks for, run live: in NobleFactor-sandbox now, and in David-Noble-at-home once the owner
+restores it (§ Rulings).
 
 ## Implementation Phases
 
@@ -107,22 +118,27 @@ Then the evidence #438 asks for, run live in both accounts (Open Questions, 1).
 
 ### Phase 2: the shared steps
 
-- [ ] `commands/steps.star`: a schedule's rows read, the next step and the renumbering worked out, the rows written and
-      placed, and the amendment rendered and written; cases 8, 9 and 11
+- [x] `commands/steps.star`: a schedule's rows read, the next step and the renumbering worked out, the rows written and
+      placed, and the amendment rendered and written; cases 8, 9 and 11, `Test-StarGitHub`'s 53, 54 and 47
 
 ### Phase 3: add
 
-- [ ] `commands/github-schedule-add.star` and its entry in `extension.yaml`; cases 1 to 7 and 10; `make check`
+- [x] `commands/github-schedule-add.star` and its entry in `extension.yaml`; cases 1 to 7 and 10, `Test-StarGitHub`'s
+      46 to 52 and 55; `make check`. The stand-in answers the schedule commands from one world, which their writes
+      change, so that every read-back, and a run again after one that stopped, reads what GitHub would
 
 ### Phase 4: the live evidence
 
-- [ ] `add` run in both accounts, as #438's Evidence of completion lists, and the comment written for #438
+- [ ] NobleFactor-sandbox made by the owner and built with `star github model apply`; `add` run there, as #438's
+      Evidence of completion lists, and the comment written for #438
+- [ ] `add` run in David-Noble-at-home, once the owner restores it, and #438 closed then, not before
 
 ### Phase 5: documents and merge
 
 - [ ] Sections 3, 7 and 8 and their status pages, the index, issue-standards.md and agent-rules.md brought to `add` as
-      built, where they say it will come; the pull request script written, shown and handed over, closing #438 and
-      setting step 28's row Closed with the pull request as its Worktree
+      built, where they say it will come; NobleFactor-sandbox recorded in section 6 as where star github proofs
+      run; the pull request script written, shown and handed over. It leaves #438 open, as the ruling of 2026-11-12
+      has it, and links the pull request in step 28's Worktree column
 
 ## Files to Create/Modify
 
@@ -144,9 +160,6 @@ Then the evidence #438 asks for, run live in both accounts (Open Questions, 1).
 
 ## Open Questions
 
-1. **Where does the live evidence run?** #438 asks for real runs in both accounts. Proposed: NobleFactor-test, made
-   again with `star github model apply` as #437's proof made it, for the organization; and a proof schedule made by
-   hand on Schedule: David-Noble-at-work, since `new` (#509) isn't built, for the user account. Each is removed after.
-2. **Does David-Noble-at-work's half still wait on David-Noble-at-work/personal#309?** #438 says it does, but
-   Schedule: David-Noble-at-work has had a schedule since 2026-11-03, David-Noble-at-work/personal#314, so the
-   command can run there now. Proposed: it no longer waits, and #438's body says so.
+None. Ruled 2026-11-12: the live evidence runs in NobleFactor-sandbox, and in David-Noble-at-home once restored
+(§ Rulings). The wait on David-Noble-at-work/personal#309 that #438's body names gives way to that one: the user
+account's half is proven in David-Noble-at-home, not on personal's schedules.
