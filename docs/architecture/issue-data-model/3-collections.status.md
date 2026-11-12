@@ -19,7 +19,9 @@ in section 4); question 17 settled the same day, and the model read on demand fr
 models, read on demand, in section 6). Revised the same day: each participating account keeps its model in its own
 `.github` repository (#431, David-Noble-at-work/personal#311), which section 6 states with #431. Ruled 2026-11-02: a
 schedule's rows are numbered by Step, not Lane, and its own issue's row has none; Lane renamed Step in GitHub the same
-day, on the template and the nine schedules (§ The Schedule and Scenario fields).
+day, on the template and the nine schedules (§ The Schedule and Scenario fields). Ruled 2026-11-11 on #439: closed steps
+move with the open ones, so a step inserted, moved or taken off renumbers every later step, closed or open, in place of
+the rule that a closed step keeps its number (§ The Schedule and Scenario fields; section 8, question 5).
 
 Ruled 2026-11-02 and 2026-11-03, with the cutover. Chore is retired, so a scenario's rows no longer include chores.
 The collection's own issue is typed Schedule or Scenario, not Epic, from 2026-11-03, and labeled schedule or scenario
