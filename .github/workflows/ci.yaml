@@ -40,8 +40,9 @@ jobs:
       # Each tool is pinned: a gate whose tool changes under CI fails on someone else's commit. shfmt
       # and buildifier are pinned to a release and its digest; upstream publishes no checksum file for
       # shfmt, so its digest was computed from the release asset on 2026-09-06. codespell is pinned to
-      # a version through pipx. shellcheck comes from apt, as personal takes it, and so do zsh, for
-      # the zsh cases of Declare-BashScript's test (#294), and tmux, for Start-Claude's (#312).
+      # a version through pipx. shellcheck comes from apt, as personal takes it, and so does tmux, for
+      # Start-Claude's test (#312). No zsh: Ubuntu ships none, so Declare-BashScript's test runs its zsh
+      # cases on the macOS job alone, and nothing here depends on Ubuntu's archive answering (#478).
       - name: Tools
         env:
           SHFMT_VERSION: v3.14.0
@@ -52,7 +53,7 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update -y
-          sudo apt-get install -y findutils jq shellcheck tmux zsh
+          sudo apt-get install -y findutils jq shellcheck tmux
           curl -sSfL -o shfmt \
             "https://github.com/mvdan/sh/releases/download/${SHFMT_VERSION}/shfmt_${SHFMT_VERSION}_linux_amd64"
           echo "${SHFMT_SHA256}  shfmt" | sha256sum --check --strict
@@ -94,9 +95,10 @@ jobs:
   # bash 5.3 and GNU getopt, which Declare-BashScript requires (#268, #290), GNU make, for .ONESHELL, and
   # the GNU coreutils, diffutils, findutils, grep, sed and awk the scripts are run with there; and tmux, for
   # Start-Claude's test. macOS ships bash 3.2, BSD getopt, make 3.81 and BSD tools, so Homebrew's go first
-  # on PATH. Homebrew's formulas are not pinned: they are whatever it installs on the day.
+  # on PATH. Homebrew's formulas are not pinned: they are whatever it installs on the day. macOS 26, on
+  # arm64, GitHub's newest (the owner, 2026-11-11, #480).
   test-macos:
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
 
@@ -127,9 +129,16 @@ jobs:
         run: make test
 
   # The PowerShell tests on Windows, as make test runs them there (#312). The runner has pwsh and git and
-  # no psmux, for which Test-StartClaude.ps1 stands in a tmux that refuses every command.
+  # no psmux, for which Test-StartClaude.ps1 stands in a tmux that refuses every command. Two legs (the
+  # owner, 2026-11-11, #480): Windows 11 on arm64, and on amd64 Windows Server 2025, since GitHub hosts
+  # Windows 11 on arm64 alone; neither leg cancels the other when it fails.
   test-windows:
-    runs-on: windows-2025
+    name: test-windows (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-11-arm, windows-2025]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
