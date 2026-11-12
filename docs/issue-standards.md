@@ -127,7 +127,7 @@ personal repository exists only for personal productivity, and no `area:product`
 **Engineering is work on things outside the deliverables a repository releases,** the work that doesn't ship. Ruled
 2026-11-05. It covers build orchestration, Makefile changes, CI pipelines, tests, tools that don't release with a
 product, design work, planning work, and documentation that doesn't release with a product. Ruled 2026-11-04: a bug in
-a test is an engineering issue, not a product issue, as the Test-ClearClaude bug (#445) is.
+a test is an engineering issue, not a product issue, as the Test-ClearClaude bug (#445) was.
 
 **An issue's Area describes its own work, not its parent's.** Ruled 2026-11-05: an epic is a product epic or an
 engineering epic, never both, and a feature is the same. Product work may hold engineering work, and engineering work

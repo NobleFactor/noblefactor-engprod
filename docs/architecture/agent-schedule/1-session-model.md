@@ -59,7 +59,8 @@ This model replaced claude running in the tmux session's left pane, and the tmux
 ## The parts, drawn
 
 The clear's view of the model: one background session, zero or more viewers on it, one conversation at a time, and
-the records each leaves. Every box under records is one row of Clear-Claude(1)'s inventory.
+the records each leaves. Every box under records is one row of Clear-Claude(1)'s inventory. Clear-Claude was removed on
+2026-11-12 (#529); its parts of this diagram are history.
 
 ```mermaid
 flowchart LR
@@ -188,7 +189,10 @@ its prompt lines, among them the typed `/clear`, recorded as a prompt of the con
 
 ## Clearing and retiring a conversation
 
-Clear-Claude ([2. Command line](2-command-line.md#clear-claude)) ends a conversation in one of two ways, under the
+**History.** Clear-Claude was removed on 2026-11-12, on the owner's word (#529). This section records its
+design as it stood.
+
+Clear-Claude ([2. Command line](2-command-line.md#clear-claude)) ended a conversation in one of two ways, under the
 store's lock for the schedule, so that no start resumes or renames the conversation meanwhile. What follows is the
 script as built, `f0211f4` (#417). The promise the owner set on 2026-10-27, "Clear-Claude is supposed to remove ALL
 trace of the session's transcript. EVERYTHING.", is not yet met: the plan for meeting it is

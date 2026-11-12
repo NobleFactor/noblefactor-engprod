@@ -17,6 +17,9 @@ deploy.
 § Open names where the clear should live, the operation graph once it can observe an outcome before deciding, and a
 `star` command meanwhile; nothing decided.
 
+**Amended 2026-11-12** (#529): Clear-Claude is removed; § Clearing and retiring a conversation says it is
+history.
+
 ## Completion
 
 - [x] Every conversation in claude's background, the store keeping its background session's short id.
@@ -43,6 +46,6 @@ deploy.
   (NobleFactor/noblefactor-engprod#412): both test scripts' stand-in viewer takes an Enter sent with the text as part
   of it, as claude does, and the rename cases, which failed so, pass; 2026-10-27.
 - [x] A conversation cleared, or retired, by Clear-Claude (NobleFactor/noblefactor-engprod#411): its cases in
-  `tests/Test-ClearClaude`; 2026-10-27.
+  `tests/Test-ClearClaude`; 2026-10-27. Removed on 2026-11-12 (#529).
 
 [plan-259]: https://github.com/David-Noble-at-work/personal/blob/main/docs/plans/chore/259-start-claude-documents-claude.md
