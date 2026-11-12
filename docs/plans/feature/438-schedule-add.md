@@ -129,7 +129,7 @@ restores it (§ Rulings).
 
 ### Phase 4: the live evidence
 
-- [ ] NobleFactor-sandbox made by the owner and built with `star github model apply`; `add` run there, as #438's
+- [x] NobleFactor-sandbox made by the owner and built with `star github model apply`; `add` run there, as #438's
       Evidence of completion lists, and the comment written for #438
 - [ ] `add` run in David-Noble-at-home, once the owner restores it, and #438 closed then, not before
 
