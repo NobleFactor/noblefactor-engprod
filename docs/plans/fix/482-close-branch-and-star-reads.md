@@ -1,7 +1,7 @@
 ---
 title: "git close-branch deletes only what is verified merged; star reads whole accounts, in any case"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/482
-status: draft
+status: active
 created: 2026-11-11
 updated: 2026-11-11
 ---
@@ -101,21 +101,27 @@ logins ignore case. `noblefactor/alpha` and `NobleFactor/alpha` both find NobleF
 | 12 | The report and the sweep given `noblefactor/alpha` | NobleFactor's model read once; its issues placed as for `NobleFactor/alpha` |
 | 13 | Every existing case of `tests/Test-StarGitHub` | Passes |
 
-Each new case fails against develop at `32d773e` before its fix, as each issue's evidence asks.
+Each case that refuses, or names what `--force` costs, fails against develop at `32d773e` before its fix, as each
+issue's evidence asks: cases 2 to 6, and 9 to 12. Cases 1 and 7 close a branch, as develop already does, and pass on
+both; they hold the fix to closing what it should.
 
 ## Implementation Phases
 
 ### Phase 1: the plan
 
-- [ ] Written and committed on `fix/482-close-branch-and-star-reads` by the worktree's first script, which opens the
+- [x] Written and committed on `fix/482-close-branch-and-star-reads` by the worktree's first script, which opens the
       branch with `git open-branch 482 -T fix`, since the kind labels it reads were retired on 2026-11-03, pushes it,
       and links it in the Worktree column of steps 23 to 26, each set In progress and read back (agent-rules.md, rule
-      19); reviewed with the owner
+      19); reviewed with the owner. Run by the owner on 2026-11-11: the plan at `27e0162`, the four rows In progress
+      and linked. The owner set aside rewriting `git close-branch` as a star command and gave the go the same day
 
 ### Phase 2: git close-branch, test first (#482, #483)
 
-- [ ] Cases 1 to 7, failing against develop; then Requirements 1 and 2 and `git-close-branch.1`; cases 1 to 8 pass;
-      `make check` passes
+- [x] Cases 1 to 7, written first, with a stand-in `gh` that answers each case's pull request from a file of its own:
+      against develop at `32d773e` the six that refuse or name a cost failed, the branch deleted every time, and cases
+      1 and 7 passed. Then Requirements 1 and 2: `pull_request` asks GitHub once for the state, number and head;
+      `delete_flag` refuses a local commit the head lacks; `survey_branch` refuses a branch on origin alone that
+      nothing shows merged; `git-close-branch.1` says both. 24 of 24 cases pass; `make check` passes
 
 ### Phase 3: star, test first (#484, #485)
 

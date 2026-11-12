@@ -4,8 +4,10 @@
 # Copyright (c) 2026 Noble Factor. All rights reserved.
 
 # Test-GitCloseBranch - Tests git-close-branch's two jobs, closing a merged branch and syncing the main worktree to the
-# target branch: the line the sync prints, the three ways it can fail, and what --dry-run says of it (#306); and the
-# pull-request script beside the worktree, removed with it and named, absent without error (#366)
+# target branch: the line the sync prints, the three ways it can fail, and what --dry-run says of it (#306); the
+# pull-request script beside the worktree, removed with it and named, absent without error (#366); and what it will
+# not delete unasked: a branch on origin alone that nothing shows merged (#482), and a commit made after the squash
+# merge once origin's branch is gone (#483)
 
 [[ -r "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" ]] || {
     printf '%s: cannot find Declare-BashScript in %s\n' "${0##*/}" "$(dirname "$0")/../Home/common/.local/bin" >&2
@@ -49,13 +51,14 @@ function cleanup {
 # A bare origin whose main carries the squash commit GitHub makes, its subject ending in "(#1)"; a clone of it whose
 # main is one commit behind, since it was made before the merge; the merged branch, feature/x, pushed, with a
 # commit of its own, in a linked worktree; and the pull-request script named for that worktree, worktree.bash,
-# beside it (#366).
+# beside it (#366). Beside them, pr: the pull request as the stand-in gh reports it, merged, number 1, its head the
+# commit pushed.
 #
 # Parameters:
 #   - `$1`: the case's directory, which must not exist yet.
 #
 # Returns:
-#   - 0, with origin.git, clone and worktree under `$1`.
+#   - 0, with origin.git, clone, worktree and pr under `$1`.
 function make_repositories {
     local origin="$1/origin.git" seed="$1/seed" clone="$1/clone" worktree="$1/worktree"
 
@@ -75,11 +78,29 @@ function make_repositories {
     git -C "${worktree}" commit --quiet --message="Add x"
     git -C "${worktree}" push --quiet --set-upstream origin feature/x
     printf '#!/usr/bin/env bash\n' >"${worktree}.bash"
+    printf 'state=MERGED\nnumber=1\nhead=%s\n' "$(git -C "${worktree}" rev-parse HEAD)" >"$1/pr"
 
     printf 'x\n' >"${seed}/x.txt"
     git -C "${seed}" add x.txt
     git -C "${seed}" commit --quiet --message="Add x (#1)"
     git -C "${seed}" push --quiet "${origin}" main
+}
+
+# remote_only leaves the merged branch on origin alone: its worktree, the script beside it and its local branch gone,
+# as when CI pushed it and nothing here ever checked it out (#482).
+#
+# Parameters:
+#   - `$1`: the clone.
+#
+# Returns:
+#   - 0, feature/x on origin alone.
+function remote_only {
+    local clone="$1" directory
+    directory="$(dirname "${clone}")"
+
+    git -C "${clone}" worktree remove "${directory}/worktree"
+    rm -- "${directory}/worktree.bash"
+    git -C "${clone}" branch --quiet -D feature/x
 }
 
 # set_up puts one case's main worktree in the state the case names.
@@ -89,13 +110,19 @@ function make_repositories {
 #     detached-with-changes, a tracked file changed; in-the-way, detached where a.txt is not tracked, with an untracked
 #     a.txt that checking out main would overwrite; or diverged, on main with a commit origin lacks. Two more leave
 #     the main worktree on main and change what sits beside the linked worktree: no-script, nothing; two-scripts,
-#     worktree.ps1 beside worktree.bash (#366).
+#     worktree.ps1 beside worktree.bash (#366). The rest leave it on main and change the branch or its pull request:
+#     remote-only, feature/x on origin alone (#482), and with it remote-only-open, its pull request open;
+#     remote-only-no-pull-request, none; and remote-only-gh-failing, gh unable to reach GitHub. committed-after-merge,
+#     a commit made in the worktree after the merge, origin's branch deleted; and origin-gone, origin's branch deleted,
+#     the local tip at the pull request's head (#483).
 #   - `$2`: the clone, whose own directory is the main worktree.
 #
 # Returns:
 #   - 0, the main worktree in that state.
 function set_up {
     local state="$1" clone="$2"
+    local pr
+    pr="$(dirname "${clone}")/pr"
 
     case ${state} in
         on-main) ;;
@@ -121,6 +148,30 @@ function set_up {
             ;;
         two-scripts)
             printf 'Write-Host\n' >"$(dirname "${clone}")/worktree.ps1"
+            ;;
+        remote-only)
+            remote_only "${clone}"
+            ;;
+        remote-only-open)
+            remote_only "${clone}"
+            printf 'state=OPEN\n' >>"${pr}"
+            ;;
+        remote-only-no-pull-request)
+            remote_only "${clone}"
+            printf 'state=none\n' >>"${pr}"
+            ;;
+        remote-only-gh-failing)
+            remote_only "${clone}"
+            printf 'state=fail\n' >>"${pr}"
+            ;;
+        committed-after-merge)
+            printf 'y\n' >"$(dirname "${clone}")/worktree/y.txt"
+            git -C "$(dirname "${clone}")/worktree" add y.txt
+            git -C "$(dirname "${clone}")/worktree" commit --quiet --message="Add y, after the merge"
+            git -C "${clone}" push --quiet origin --delete feature/x
+            ;;
+        origin-gone)
+            git -C "${clone}" push --quiet origin --delete feature/x
             ;;
         *)
             error $EX_SOFTWARE "set_up knows no state '${state}'."
@@ -175,7 +226,8 @@ function traces {
 #   - `$3`: the exit status the run must end with.
 #   - `$4`: extended regular expressions the run's output must match, one per line.
 #   - `$5`: "synced" when the main worktree must end on main at origin's main, "unchanged" when as it was.
-#   - `$6`: "closed" when no trace of the branch may remain, "kept" when all four must.
+#   - `$6`: the branch's traces that must remain: "closed" for none, "kept" for all four, or those that must, as traces
+#     prints them, such as "remote".
 #   - `$@` after them: options for git-close-branch.
 #
 # Returns:
@@ -186,13 +238,14 @@ function run_case {
     case_count=$((case_count + 1))
     local directory="${run_directory}/${case_count}"
     local clone="${directory}/clone" origin="${directory}/origin.git" worktree="${directory}/worktree"
-    local output status=0 before after origin_main left pattern problem=""
+    local output status=0 before after origin_main left want pattern problem=""
 
     make_repositories "${directory}"
     set_up "${state}" "${clone}"
     before="$(main_state "${clone}")"
 
-    output="$(cd "${clone}" && PATH="${run_directory}/bin:${PATH}" "${close_branch}" "$@" feature/x 2>&1)" || status=$?
+    output="$(cd "${clone}" && GH_PR_FILE="${directory}/pr" PATH="${run_directory}/bin:${PATH}" "${close_branch}" "$@" \
+        feature/x 2>&1)" || status=$?
 
     if ((status != expected_status)); then
         problem+="its status was ${status}, not ${expected_status}; "
@@ -215,10 +268,14 @@ function run_case {
 
     left="$(traces "${clone}" "${origin}" "${worktree}")"
 
-    if [[ "${expected_branch}" == closed && -n "${left}" ]]; then
-        problem+="the branch's traces remain: ${left}; "
-    elif [[ "${expected_branch}" == kept && "${left}" != "local remote worktree script" ]]; then
-        problem+="the branch's traces were touched, leaving '${left}'; "
+    case ${expected_branch} in
+        closed) want="" ;;
+        kept) want="local remote worktree script" ;;
+        *) want="${expected_branch}" ;;
+    esac
+
+    if [[ "${left}" != "${want}" ]]; then
+        problem+="the branch's traces are '${left:-none}', not '${want:-none}'; "
     fi
 
     if [[ -z "${problem}" ]]; then
@@ -243,13 +300,21 @@ run_directory=""
 Set-Traps cleanup
 run_directory="$(mktemp -d)"
 
-# A stand-in for gh on PATH: every branch's pull request is number 1, and merged.
+# A stand-in for gh on PATH, answering for one case's pull request as the file ${GH_PR_FILE} has it: its state,
+# MERGED unless the case says otherwise, none when the branch has no pull request, or fail when gh cannot reach
+# GitHub; its number; and its head. gh auth status succeeds unless gh is failing, which is how git-close-branch tells
+# no pull request from no answer.
 mkdir -p -- "${run_directory}/bin"
 cat >"${run_directory}/bin/gh" <<'GH'
 #!/usr/bin/env bash
+state=MERGED number=1 head=""
+# shellcheck source=/dev/null
+[[ -r "${GH_PR_FILE:-}" ]] && source "${GH_PR_FILE}"
+answered() { [[ "${state}" != none && "${state}" != fail ]]; }
 case "$*" in
-    *'--json state'*) echo MERGED ;;
-    *'--json number'*) echo 1 ;;
+    'auth status'*) [[ "${state}" != fail ]] ;;
+    *'--json state,number,headRefOid'*) answered && printf '%s %s %s\n' "${state}" "${number}" "${head}" ;;
+    *'--json state'*) answered && echo "${state}" ;;
     *) exit 1 ;;
 esac
 GH
@@ -295,6 +360,33 @@ removed its script .+/worktree\.ps1" synced closed
 run_case "no script beside the worktree: not an error" no-script 0 "Closed: feature/x" synced closed
 run_case "--dry-run names the script" on-main 0 \
     "removes worktree .+/worktree and script .+/worktree\.bash\)" unchanged kept --dry-run
+
+# A branch on origin alone (#482): deleted only when GitHub reports its pull request merged and the target carries its
+# squash commit; refused otherwise, nothing removed, --force overriding.
+run_case "remote only, its pull request merged and its squash commit on main: deleted" remote-only 0 \
+    "no local branch, closing the remote one
+Closed: feature/x" synced closed
+run_case "remote only, its pull request open: refused" remote-only-open 65 \
+    "'feature/x': it exists only on origin, and its pull request is OPEN, not merged; nothing was removed\. Pass --force" \
+    synced remote
+run_case "remote only, its pull request open, with --force: deleted, the cost named" remote-only-open 0 \
+    "--force deletes a branch that exists only on origin, though its pull request is OPEN, not merged
+Closed: feature/x" synced closed --force
+run_case "remote only, no pull request: refused" remote-only-no-pull-request 65 \
+    "'feature/x': it exists only on origin, and it has no pull request; nothing was removed" synced remote
+run_case "remote only, gh failing: refused" remote-only-gh-failing 65 \
+    "'feature/x': it exists only on origin, and gh could not say whether its pull request merged; nothing was removed" \
+    synced remote
+
+# A commit made after the squash merge, origin's branch gone (#483): refused, since the pull request's head lacks it.
+run_case "a commit made after the squash merge, origin's branch gone: refused" committed-after-merge 65 \
+    "'feature/x': commits exist only locally; nothing was removed\. Pass --force" synced "local worktree script"
+run_case "a commit made after the squash merge, origin's branch gone, with --force: closed, the cost named" \
+    committed-after-merge 0 \
+    "--force discards 1 commit\(s\) made after its pull request's head, which exist only here
+Closed: feature/x" synced closed --force
+run_case "the local tip at its pull request's head, origin's branch gone: closed" origin-gone 0 "Closed: feature/x" \
+    synced closed
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"
