@@ -755,6 +755,19 @@ case ${operation} in
             {id: ($p + "W_merged"), name: "Pull request merged"}]}}}}' |
             if [[ -n "${jq_program}" ]]; then jq -r -c "${jq_program}"; else cat; fi
         ;;
+    starIterations)
+        # An Iteration field's iterations, completed ones among them, as the projects' fixture holds them, the data
+        # directory's own first.
+        [[ "${query}" =~ node\(id:[[:space:]]*\"([^\"]+)\" ]] || exit 1
+        field_id="${BASH_REMATCH[1]}" configuration=null
+        for file in "${XDG_DATA_HOME}"/fixtures/starProjects/*.json "${GH_FIXTURES}"/starProjects/*.json; do
+            [[ -r "${file}" && "${configuration}" == null ]] || continue
+            configuration="$(jq -c --arg id "${field_id}" \
+                'first(.[] | .. | objects | select(.id? == $id and has("configuration")) | .configuration) // null' "${file}")"
+        done
+        jq -cn --argjson c "${configuration}" '{data: {node: {configuration: $c}}}' |
+            if [[ -n "${jq_program}" ]]; then jq -r -c "${jq_program}"; else cat; fi
+        ;;
     starCount)
         jq -cn '{data: {search: {issueCount: 3}}}' | if [[ -n "${jq_program}" ]]; then jq -r -c "${jq_program}"; else cat; fi
         ;;
@@ -767,11 +780,18 @@ case ${operation} in
     *)
         # A mutation the cases need no particular answer from: a new ID, number and URL, for the caller to read. One
         # that selects what GitHub's schema lacks is refused, as GitHub refuses it: a view's deletion answers the view,
-        # and no deletedViewId (GitHub's GraphQL schema, DeleteProjectV2ViewPayload, read 2026-11-11).
+        # and no deletedViewId (GitHub's GraphQL schema, DeleteProjectV2ViewPayload, read 2026-11-11). So is one that
+        # writes an iteration's duration, an Int in that schema, as a decimal, which a number read from GitHub's JSON
+        # becomes when it is decoded.
         if [[ "${operation_kind}" == mutation ]]; then
             if [[ "${query}" == *deletedViewId* ]]; then
                 printf '%s\n' "{\"errors\": [{\"message\": \"Field 'deletedViewId' doesn't exist on type 'DeleteProjectV2ViewPayload'\"}]}"
                 printf '%s\n' "gh: Field 'deletedViewId' doesn't exist on type 'DeleteProjectV2ViewPayload'" >&2
+                exit 1
+            fi
+            if [[ "${query}" =~ duration:[[:space:]]*([0-9]+\.[0-9]+) ]]; then
+                printf '%s\n' "{\"errors\": [{\"message\": \"Argument 'duration' has an invalid value (${BASH_REMATCH[1]}). Expected type 'Int!'.\"}]}"
+                printf '%s\n' "gh: Argument 'duration' has an invalid value (${BASH_REMATCH[1]}). Expected type 'Int!'." >&2
                 exit 1
             fi
             jq -cn --arg op "${operation}" '{data: {r: {node: {id: ("NEW_" + $op), number: 99,
@@ -1521,6 +1541,16 @@ expect "29: each template made holds the reference's parts alone, and no project
     and before("createProjectV2View.*NEW_starCreateProject.*By schedule"; "deleteProjectV2View.*NV_1")
     and count("createProjectV2\\(") == 4 and count("copyProjectV2") == 12
     and count("deleteProjectV2Workflow") == 2 * (count("createProjectV2\\(") + count("copyProjectV2"))'
+# The day of the week of a date written YYYY-MM-DD, Sunday 0 to Saturday 6, as GitHub numbers an Iteration field's
+# start day, Monday 1: Sakamoto's method, which needs no strptime.
+declare -r weekday='def weekday: capture("^(?<y>[0-9]{4})-(?<m>[0-9]{2})-(?<d>[0-9]{2})$") | map_values(tonumber)
+    | (if .m < 3 then .y - 1 else .y end) as $y
+    | ($y + ($y / 4 | floor) - ($y / 100 | floor) + ($y / 400 | floor) + [0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4][.m - 1] + .d) % 7;'
+expect "29: each Iteration field apply makes starts on the reference's start day, the latest on or before today" ok "${writes}${weekday}"'
+    [writes[] | .[] | select(type == "string" and test("createProjectV2Field.*ITERATION"))
+        | capture("startDate: \"(?<day>[0-9-]+)\"").day] as $days
+    | ($days | length) > 0 and ($days | all(weekday == 1))
+    and ($days | all(. <= (now | strflocaltime("%Y-%m-%d")) and . > ((now - 7 * 86400) | strflocaltime("%Y-%m-%d"))))'
 expect "29: a template or project made says on its own record what its views still need by hand" ok '
     def steps($kind; $path): first(.[] | select(.kind == $kind and .path == $path and .action == "created")) | .steps // [];
     (steps("template"; "Schedule") | length == 1 and (.[0] | test("^set the Schedule/By schedule view.s group by to \\[\"Schedule\"\\] in GitHub")))
@@ -1687,6 +1717,42 @@ check "39: the private key keeps its lines, its final newline dropped" \
     grep -qxF 'secret Acme NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY -----BEGIN KEY-----\nabc\n-----END KEY-----' "${run_directory}/remotes/secrets"
 check "39: the organization secrets were set visible to all its repositories" bash -c \
     "jq -e 'select(.[0:2] == [\"secret\", \"set\"]) | select(index(\"--org\") != null and index(\"all\") != null)' '${run_directory}/calls.jsonl' >/dev/null"
+
+# 40. An Iteration field whose start day or duration differs from the model's is set to the model's, on a template and
+# on each project made from it, each of its iterations, completed ones among them, sent back with its ID, title, start
+# date and duration, so that none is lost; one that matches the model is left alone (#437).
+make_extension "${run_directory}/data-iteration"
+# NobleFactor/.github without the Triage workflow template case 38 gave it, so that apply writes the projects alone.
+repository NobleFactor/.github
+jq 'def iteration($p): {id: "F_\($p)_iteration", name: "Iteration", dataType: "ITERATION", configuration: {duration: 14,
+        startDay: 3, iterations: [{id: "I_\($p)_2", title: "Sprint 2", startDate: "2026-11-11", duration: 14},
+            {id: "I_\($p)_3", title: "Sprint 3", startDate: "2026-11-25", duration: 14}],
+        completedIterations: [{id: "I_\($p)_1", title: "Sprint 1", startDate: "2026-10-28", duration: 14}]}};
+    .[0].data.organization.projectsV2.nodes |= map(if .id == "PVT_template_schedule" or .id == "PVT_schedule_engprod"
+        then .fields.nodes += [iteration(.id)] else . end)' "${run_directory}/fixtures/starProjects/NobleFactor.json" |
+    override "${run_directory}/data-iteration" starProjects/NobleFactor.json
+jq '.projects |= map(if .name == "Schedule" then .fields += [{name: "Iteration", type: "iteration",
+        configuration: {duration: 14, start_day: 1}}] else . end)' <<<"${model_nf}" >"${run_directory}/work/iteration.json"
+run_star "${run_directory}/data-iteration" github model apply iteration.json NobleFactor
+expect "40: an Iteration field's start day is set to the model's, on the template and on each project made from it" ok "${writes}${weekday}"'
+    any(.[]; .kind == "template-field" and .path == "Schedule/Iteration" and .action == "changed" and (has("steps") | not))
+    and any(.[]; .kind == "project-field" and .path == "Schedule: engprod/Iteration" and .action == "changed" and (has("steps") | not))
+    and ([writes[] | .[] | select(type == "string" and test("updateProjectV2Field.*iterationConfiguration"))
+        | capture("iterationConfiguration: \\{startDate: \"(?<day>[0-9-]+)\"").day] | length == 2 and all(weekday == 1))'
+expect "40: each of its iterations, completed ones among them, is sent back with its ID, title, start date and duration" ok "${writes}"'
+    def sent($p): any(writes[]; any(.[]; type == "string"
+        and test("updateProjectV2Field\\(input: \\{fieldId: \"F_\($p)_iteration\", iterationConfiguration: \\{startDate: \"[0-9-]+\", duration: 14, iterations: \\[")
+        and test("\\{id: \"I_\($p)_1\", title: \"Sprint 1\", startDate: \"2026-10-28\", duration: 14\\}")
+        and test("\\{id: \"I_\($p)_2\", title: \"Sprint 2\", startDate: \"2026-11-11\", duration: 14\\}")
+        and test("\\{id: \"I_\($p)_3\", title: \"Sprint 3\", startDate: \"2026-11-25\", duration: 14\\}")));
+    sent("PVT_template_schedule") and sent("PVT_schedule_engprod")'
+jq '.projects |= map(if .name == "Schedule" then .fields += [{name: "Iteration", type: "iteration",
+        configuration: {duration: 14, start_day: 3}}] else . end)' <<<"${model_nf}" >"${run_directory}/work/iteration-same.json"
+run_star "${run_directory}/data-iteration" github model apply iteration-same.json NobleFactor
+expect "40: an Iteration field that matches the model is left alone, its iterations not read" ok "${writes}"'
+    (wrote("updateProjectV2Field.*iterationConfiguration") | not)
+    and (any(.[]; .path == "Schedule/Iteration" or .path == "Schedule: engprod/Iteration") | not)
+    and (any($calls[]; any(.[]; type == "string" and test("starIterations"))) | not)'
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"

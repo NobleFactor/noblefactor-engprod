@@ -65,12 +65,16 @@ star github model restore <account> [<revision>] [--prune] [--token <sources>]
   - The templates, a missing one made with its fields and views and marked a template; in a user account, the copy.
     One just made holds nothing of the account's, only what GitHub gives every new project, so it is brought to the
     model exactly, with or without `--prune` (ruled 2026-11-11): GitHub's Status options and its View 1 go where the
-    model names neither, and its built-in workflows, which no project has (§ One model per account).
+    model names neither, and its built-in workflows, which no project has (§ One model per account). Its Iteration
+    field starts on the model's start day, the latest on or before the day `apply` runs, since GitHub takes the start
+    day from the date the field starts on.
   - Each project of a kind held to its template: every team that maintains a repository gets one project for each
     template, `<Kind>: <team>`, copied from the template, linked to the team and given the team's write role; in a user
     account, `<Kind>: <account>`. One just copied loses whatever built-in workflows it came with, and keeps what its
-    template gave it (ruled 2026-11-11). A drifted one is brought back. Its rows, its Schedule or Scenario options, one
-    per schedule or scenario, and its iterations are its own, and left alone. An option renamed on a template is
+    template gave it (ruled 2026-11-11). A drifted one is brought back, an Iteration field's start day and duration
+    among it. Its rows, its Schedule or Scenario options, one per schedule or scenario, and its iterations are its own,
+    and left alone: setting an Iteration field's start day sends each of its iterations back with its ID, so that no row
+    loses its sprint (ruled 2026-11-11). An option renamed on a template is
     renamed on each copy under its old name. No project or template is ever deleted, even with `--prune`.
   - Teams, from the account's own backup alone: their attributes set and their roles added or raised. No team is
     deleted, and no role removed or lowered, even with `--prune` (the owner, 2026-11-10).

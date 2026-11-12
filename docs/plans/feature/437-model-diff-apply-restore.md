@@ -95,7 +95,7 @@ What GitHub's API can write, read from its schema on 2026-11-10:
 | Issue types | `createIssueType`, `updateIssueType`, `deleteIssueType`: name, description, color, enabled | |
 | Issue fields | `createIssueField`, `updateIssueField`, `deleteIssueField`: name, description, visibility, options | GraphQL takes no option IDs; the REST call `PATCH /orgs/{org}/issue-fields/{issue_field_id}` does (settled 2026-11-04) |
 | Labels | REST, per repository: create, change (renaming with `new_name`), delete | |
-| Project fields | `createProjectV2Field`, `updateProjectV2Field` (options with their IDs), `deleteProjectV2Field`; an issue field on a project, `createProjectV2IssueField` | |
+| Project fields | `createProjectV2Field`, `updateProjectV2Field` (options with their IDs; an Iteration field's start date and duration, its iterations with their IDs), `deleteProjectV2Field`; an issue field on a project, `createProjectV2IssueField` | An Iteration field's start day: GitHub takes it from the date the field starts on (read 2026-11-11) |
 | Project views | `createProjectV2View`, `updateProjectV2View`, `deleteProjectV2View`: name, layout, filter, visible fields | A view's grouping and sort: no input takes them |
 | Templates and their copies | `createProjectV2`, `markProjectV2AsTemplate`, `copyProjectV2`, `linkProjectV2ToTeam`, `updateProjectV2Collaborators` (a team's role), `deleteProjectV2Workflow` (a built-in workflow; read 2026-11-11) | A built-in workflow: no call makes one or turns one on |
 | A repository's workflow, variable, secret | REST: contents and git data, `actions/variables`, `actions/secrets` | A secret's value is never read back |
@@ -434,6 +434,19 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
       which selected `deletedViewId`, a field its payload lacks, so GitHub would have refused it, under `--prune` as
       well. The stand-in now refuses that selection as GitHub does, 29 cases failing on it, and the call selects the
       view. 132 of 132 cases pass; `make check` passes. Not yet run on GitHub: the proof below is the first
+- [x] Found on 2026-11-11 by the new organization's first run, in NobleFactor-test, and fixed test first on the owner's
+      ruling that day to follow decision 1: `apply` started each Iteration field it made on the day it ran, a
+      Wednesday, where the model says Monday, and listed an existing field's start day as a step by hand while `diff`
+      counted it as one `apply` writes. Read from GitHub that day: the two fields made from Wednesday's date start on
+      day 3, and NobleFactor's Schedule template, its sprints starting Monday 2026-11-02, on day 1. Now an Iteration field
+      `apply` makes starts on the model's start day, the latest on or before the day it runs, and one whose start day
+      or duration differs is set to the model's, each of its iterations, completed ones among them, sent back with its
+      ID, title, start date and duration. The new case 40 caught a duration sent as `14.0`, a number read from GitHub
+      decoded as a float, which GitHub's `Int!` refuses; the stand-in now refuses it too. Everything else in the run
+      passed: the types, fields, templates, projects, `.github` files and Triage workflow by pull request, the variable
+      and the App's two secrets, and no project kept a built-in workflow. Not yet seen on GitHub: a field with
+      iterations set, NobleFactor-test's two holding none and no field of NobleFactor's differing from the model. 136 of
+      136 cases pass; `make check` passes
 - [ ] For a new organization: `apply` of the reference, then `diff` showing nothing left, in a temporary organization
       made for the proof, deleted when the proof passes and kept for troubleshooting when it does not. A comment on #437
       shows it. The owner runs every `apply`
@@ -460,9 +473,9 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
 | 12 | `apply --prune`, case 5's model | The removal made too, after the count of what it touches |
 | 13 | `apply --prune` of a reference | Only labels of the reference's kinds removed; `good first issue` kept |
 | 14 | `apply` renaming an option of a template | The option list sent with every ID; the option renamed on each copy, under its old name |
-| 15 | `apply` with a template the account lacks | The template made with its model's fields and views alone, GitHub's Status options, View 1 and built-in workflows gone, then marked a template; a project copied from it keeps what the template gave it, and loses its built-in workflows |
+| 15 | `apply` with a template the account lacks | The template made with its model's fields and views alone, an Iteration field starting on the model's start day, GitHub's Status options, View 1 and built-in workflows gone, then marked a template; a project copied from it keeps what the template gave it, and loses its built-in workflows |
 | 16 | `apply` with a team lacking its Triage project | The project copied from the template, linked to the team, the team's write role on it; its built-in workflows gone, and nothing else of it deleted |
-| 17 | `apply` with a team project drifted from its template | Brought back; its rows, schedule options and iterations untouched |
+| 17 | `apply` with a team project drifted from its template | Brought back, an Iteration field's start day and duration among it, each of its iterations, completed ones among them, sent back with its ID; its rows and schedule options untouched; a field that matches its template left alone |
 | 18 | `apply` of the reference to a new organization | Its types, fields, templates and teams' projects; its `.github` files by pull request, the source account's name in them its own, `model.yaml` not among them; each repository's workflow by pull request, and its variable; the App's secrets, missing, named as steps by hand; each template made holding the reference's parts alone, no project made or copied keeping a built-in workflow, and each one's record naming what its views need by hand |
 | 18a | `apply` of another organization's model to an organization with three teams | No team made or deleted, no role changed, no label written; each team that maintains a repository gets one project for each template |
 | 18b | `apply --prune` of another organization's model, and of the account's own backup lacking a team and a role | No team deleted, no role removed or lowered |

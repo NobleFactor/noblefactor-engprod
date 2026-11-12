@@ -16,9 +16,11 @@
 # (the owner, 2026-11-10). A project apply has itself just made holds nothing of the account's, only what GitHub gives
 # every new project, so apply brings it to its template exactly, with or without --prune (ruled 2026-11-11): a template
 # just made loses GitHub's Status options and its View 1 where the model names neither, and it and every project just
-# copied from a template lose GitHub's built-in workflows, which no project has (ruled 2026-11-03). What GitHub's API
-# cannot write, a type's pinned fields, a view's grouping and sort, is a step by hand, named in the record; the steps
-# for the parts of a template or project just made are on its own record.
+# copied from a template lose GitHub's built-in workflows, which no project has (ruled 2026-11-03). An Iteration field
+# starts on the model's start day, and one whose start day or duration differs is set to the model's, each of its
+# iterations sent back with its ID so that no row loses its sprint (ruled 2026-11-11). What GitHub's API cannot write,
+# a type's pinned fields, a view's grouping and sort, is a step by hand, named in the record; the steps for the parts of
+# a template or project just made are on its own record.
 #
 # Issue types and issue fields are written through GitHub's REST calls, which take the database IDs get records; the
 # rest through GraphQL, each mutation's input written as literals, so that every value is in the call star narrates.
@@ -225,6 +227,64 @@ def _option_literal(o):
     parts.append("description: " + _s(o.get("description") or ""))
     return "{" + ", ".join(parts) + "}"
 
+def _days(date):
+    """The days from 1970-01-01 to a date written YYYY-MM-DD: Howard Hinnant's days_from_civil."""
+    y, m, d = [int(part, 10) for part in date.split("-")]
+    if m <= 2:
+        y -= 1
+    era = y // 400
+    year = y - era * 400
+    day = (153 * (m - 3 if m > 2 else m + 9) + 2) // 5 + d - 1
+    return era * 146097 + year * 365 + year // 4 - year // 100 + day - 719468
+
+def _date(days):
+    """The date, written YYYY-MM-DD, the days after 1970-01-01: Howard Hinnant's civil_from_days."""
+    z = days + 719468
+    era = z // 146097
+    doe = z - era * 146097
+    year = (doe - doe // 1460 + doe // 36524 - doe // 146096) // 365
+    day = doe - (365 * year + year // 4 - year // 100)
+    mp = (5 * day + 2) // 153
+    d = day - (153 * mp + 2) // 5 + 1
+    m = mp + 3 if mp < 10 else mp - 9
+    y = year + era * 400 + (1 if m <= 2 else 0)
+    return "-".join([str(y), ("0" if m < 10 else "") + str(m), ("0" if d < 10 else "") + str(d)])
+
+def _start_date(configuration):
+    """The date an Iteration field starts from: the latest, on or before today, on the configuration's start day.
+
+    GitHub takes a field's start day from that date, Monday 1 to Saturday 6 and Sunday 0 or 7, so today's date would
+    start the field on whatever day apply ran. A number GitHub's JSON gives decodes as a float, so each is made an int.
+    """
+    today = sh("date +%Y-%m-%d").strip()
+    start_day = (configuration or {}).get("start_day")
+    if start_day == None:
+        return today
+    days = _days(today)
+    return _date(days - ((days + 4) % 7 - int(start_day) % 7) % 7)
+
+def _iterations(field_id):
+    """An Iteration field's iterations as GitHub holds them, completed ones among them, in the order they start."""
+    selection = "{ id title startDate duration }"
+    data = graphql("query starIterations { node(id: " + _s(field_id) + ") { ... on ProjectV2IterationField { configuration { " +
+                   "iterations " + selection + " completedIterations " + selection + " } } } }")
+    configuration = (data.get("node") or {}).get("configuration") or {}
+    every = (configuration.get("completedIterations") or []) + (configuration.get("iterations") or [])
+    return sorted(every, key = lambda i: i["startDate"])
+
+def _set_iterations(field_id, configuration):
+    """An Iteration field's start day and duration set to the model's.
+
+    Each of its iterations, completed ones among them, is sent back with its ID, title, start date and duration, so that
+    GitHub keeps it and no row loses its sprint.
+    """
+    sent = ["{id: " + _s(i["id"]) + ", title: " + _s(i["title"]) + ", startDate: " + _s(i["startDate"]) + ", duration: " +
+            str(int(i["duration"])) + "}" for i in _iterations(field_id)]
+    mutate("mutation starSetIterations { r: updateProjectV2Field(input: {fieldId: " + _s(field_id) +
+           ", iterationConfiguration: {startDate: " + _s(_start_date(configuration)) + ", duration: " +
+           str(int(configuration.get("duration") or 14)) + ", iterations: [" + ", ".join(sent) + "]}}) { projectV2Field { " +
+           "... on ProjectV2FieldCommon { id } } } }")
+
 def _create_field(c, project_id, mf):
     """A field the project lacks, made: an issue field put on it, or a field of its own."""
     if mf.get("issue_field"):
@@ -241,8 +301,8 @@ def _create_field(c, project_id, mf):
         extra = ", singleSelectOptions: [" + ", ".join([_option_literal(dict(o, id = None)) for o in options]) + "]"
     elif kind == "iteration":
         configuration = mf.get("configuration") or {}
-        extra = (", iterationConfiguration: {startDate: " + _s(sh("date +%Y-%m-%d").strip()) + ", duration: " +
-                 str(configuration.get("duration") or 14) + ", iterations: []}")
+        extra = (", iterationConfiguration: {startDate: " + _s(_start_date(configuration)) + ", duration: " +
+                 str(int(configuration.get("duration") or 14)) + ", iterations: []}")
     return mutate("mutation starCreateField { r: createProjectV2Field(input: {projectId: " + _s(project_id) + ", dataType: " +
                   _GRAPHQL_DATA_TYPE.get(kind, "TEXT") + ", name: " + _s(mf["name"]) + extra + "}) { projectV2Field { " +
                   "... on ProjectV2FieldCommon { id } } } }")
@@ -309,8 +369,8 @@ def _visible(field_ids, mv, path, steps):
 def converge(c, project_id, gp, mt, prefix, kinds, renames, done, copy = False):
     """Brings one project, a template or a project of a kind, to its template in the model.
 
-    Its fields, their options and its views are brought to the template's; a field's options that are each project's own
-    are left alone.
+    Its fields, their options and its views are brought to the template's, an Iteration field's start day and duration
+    among them; a field's options that are each project's own, and an Iteration field's iterations, are left alone.
     """
     field_kind, option_kind, view_kind = kinds
     by_id = c["same"] and not copy
@@ -338,9 +398,11 @@ def converge(c, project_id, gp, mt, prefix, kinds, renames, done, copy = False):
             steps.append("make " + path + " a " + str(mf.get("type")) + " field by hand: GitHub cannot change a field's type")
         if (mf.get("issue_field") or False) != (gf.get("issue_field") or False):
             steps.append("make " + path + (" the " if mf.get("issue_field") else " not the ") + "issue field of its name by hand")
-        if mf.get("configuration") and mf.get("configuration") != gf.get("configuration"):
-            steps.append("set " + path + "'s iterations to " + json.encode(mf["configuration"]) + " in GitHub")
-        if steps:
+        wanted = mf.get("configuration") if mf.get("type") == "iteration" and gf.get("type") == "iteration" else None
+        if wanted and wanted != gf.get("configuration"):
+            _set_iterations(gf["id"], wanted)
+            _done(done, field_kind, path, "changed", {"steps": steps} if steps else {})
+        elif steps:
             _done(done, field_kind, path, "by-hand", {"steps": steps})
         if gf.get("type") == "single-select" and not c["own"].get(mt["name"] + "/" + name):
             _options(c, gf, mf, path, option_kind, renames.get(name) or {}, by_id, done)
