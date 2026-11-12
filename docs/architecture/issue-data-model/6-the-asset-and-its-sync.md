@@ -827,6 +827,19 @@ will classify an issue as it is made, and it will refuse an issue without an Are
 in GitHub's interface. Those come only with an organization's issue types; on 2026-10-22 the owner ruled against moving
 personal into the organization to get them.
 
+## Where star github's proofs run
+
+Ruled 2026-11-12, on #438's plan: an organization's half of a star github command is proved live in
+NobleFactor-sandbox, an organization the owner made that day to last. It is built from NobleFactor's model, read
+with `star github model get NobleFactor` and applied with `star github model apply`, which gave it NobleFactor's
+issue types and fields, its four templates, its `.github` files, and the four projects of its one team, sandbox,
+which maintains its one repository, NobleFactor-sandbox/sandbox. Left by hand: the grouping of each By priority, By
+scenario and By schedule view, which GitHub's API can't set, and the App's two secrets, which no proof has needed.
+Each proof makes its own issues, named for its run, and a proof of `add` adds one option to Schedule: sandbox's
+Schedule field, which holds 50 at most. NobleFactor-test, made for #437's proof and deleted after, can't be restored,
+nor its name reused yet. A user account's half is proved in David-Noble-at-home once the owner restores it, and by
+nothing else until then.
+
 ## What this changes in the task list
 
 Ruled 2026-11-02: pull comes first, then push. [Section 5](5-from-todays-scheme.md)'s step 2, tooling that reads both,

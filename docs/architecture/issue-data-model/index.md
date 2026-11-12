@@ -187,7 +187,8 @@ classified, leaves Triage for no project, since the hierarchy holds it and its t
 and the schedules, from which a work item's parent link leads to its feature and its epic. From the Backlog, work goes
 onto a schedule highest Priority first, with the schedule's option, the next step or the step the schedule's owner gives
 it, Status Open and its blocked-by links. A committed schedule takes it only by its owner's amendment, recorded in the
-Schedule issue. `star github schedule add` (#438) will make that move in one command. The sweep (#436) will return an
+Schedule issue. `star github schedule add` (#438), built on 2026-11-12, makes that move in one command. The sweep
+(#436) will return an
 issue in more than one of its account's projects, the Scenario projects among them, or on more than one schedule or
 scenario, to its team's Triage project, and will remove no Triage row. The Backlog shows its order in a view named By
 priority, sorted by Priority, which the script of #303's closing pull request makes in Backlog: engprod, Backlog:

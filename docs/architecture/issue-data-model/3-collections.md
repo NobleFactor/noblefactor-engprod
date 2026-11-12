@@ -334,7 +334,8 @@ leaves. Out of Triage, declined work is closed as completed with Resolution Decl
 the Backlog with their Priority or onto a schedule. From the Backlog, work goes onto a schedule highest Priority first,
 with the schedule's option, the next step or the step the schedule's owner gives it, Status Open and its blocked-by
 links. A committed schedule takes it only by its owner's amendment, recorded in the Schedule issue (§ A committed
-schedule). `star github schedule add` (#438) will make that move in one command. An issue on another team's project is
+schedule). `star github schedule add` (#438), built on 2026-11-12, makes that move in one command. An issue on another
+team's project is
 assigned to an accountable member of that team: GitHub allows up to 10 assignees on an issue, any organization member
 who can read the repository among them (GitHub's documentation on assigning issues, read 2026-11-04), and all five of
 NobleFactor's participating repositories are public. The person whose name is on an issue moves it to another team the
@@ -456,8 +457,8 @@ Scenario are its two peers there.
 The schedule is two records, its rulings on its own issue and its rows in its team's Schedule project, and one ruling
 can change both. When a row is added to a committed schedule, the owner's amendment that adds it is recorded in the
 Schedule issue (the plan's question 8, § A committed schedule, below). A working issue tracking system on GitHub
-comes first, and tooling follows (ruled 2026-11-02), so `star github schedule add` (#438), which will make that move
-in one command, comes later.
+comes first, and tooling follows (ruled 2026-11-02), so `star github schedule add` (#438), which makes that move in
+one command, came after it, on 2026-11-12.
 
 ## Ownership
 
@@ -513,5 +514,5 @@ Today a committed schedule takes no new step except by the owner's amendment
 with write access. Ruled 2026-11-02, the plan's question 8: a row added to a committed schedule gets its step number
 and its blocked-by links when it is added, and adding the row and its amendment by hand in GitHub must work before
 any star command does both. Ruled 2026-11-04: the rule stands, and a committed schedule takes new work only by its
-owner's amendment, recorded in the Schedule issue; `star github schedule add` (#438) will make that move in one
-command (§ Triage and the Backlog).
+owner's amendment, recorded in the Schedule issue; `star github schedule add` (#438), built on 2026-11-12, makes that
+move in one command (§ Triage and the Backlog).

@@ -6,7 +6,8 @@
 # Test-StarGitHub - Tests the com.noblefactor.ops.GitHub star extension against a stand-in gh: the report's records and
 # selection (#379) and the triage sweep (#436), as docs/plans/feature/436-triage-sweep.md's test plan lists them; and
 # each account's model read from GitHub when a command needs it, star github model get and backup, and the sweep's
-# two-types rule (#426), as docs/plans/feature/426-model-pull-to-dot-github.md's test plan lists them
+# two-types rule (#426), as docs/plans/feature/426-model-pull-to-dot-github.md's test plan lists them; and star github
+# schedule add (#438), as docs/plans/feature/438-schedule-add.md's test plan lists them
 
 [[ -r "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" ]] || {
     printf '%s: cannot find Declare-BashScript in %s\n' "${0##*/}" "$(dirname "$0")/../Home/common/.local/bin" >&2
@@ -46,8 +47,8 @@ function cleanup {
     fi
 }
 
-# make_extension lays out an extension directory as writ deploys one: this checkout's manifest, commands and reference
-# models, linked, and no model file: an account's model is what GitHub holds, which the stand-in serves (#426).
+# make_extension lays out an extension directory as writ deploys one: this checkout's manifest, commands, reference
+# models and templates, linked, and no model file: an account's model is what GitHub holds, which the stand-in serves (#426).
 #
 # Parameters:
 #   - `$1`: the data directory to make, which star is given as XDG_DATA_HOME.
@@ -61,6 +62,7 @@ function make_extension {
     ln -s -- "${extension_source}/extension.yaml" "${directory}/extension.yaml"
     ln -s -- "${extension_source}/commands" "${directory}/commands"
     ln -s -- "${extension_source}/reference" "${directory}/reference"
+    ln -s -- "${extension_source}/templates" "${directory}/templates"
 }
 
 # override gives one data directory's GitHub a piece of its own: the stand-in answers `$1`/fixtures/`$2` before the
@@ -322,6 +324,120 @@ function check {
     failures=$((failures + 1))
 }
 
+# base_world prints the world add's cases start from (#438), the GitHub the stand-in's schedule operations answer from.
+#
+#   Schedule: engprod: s1, NobleFactor/alpha#20's, steps 1 to 4: #21 closed, #22, #23 a closed bug, #24, which #20's
+#   Amendments name; and s2, #30's, steps 1 to 3: #31, #32, #33. Backlog: engprod holds #25, Triage: engprod #26, and
+#   Scenario: engprod's scenario walk, #40's, #27 at beat 1. #25 is also a row, step 11, of a closed per-schedule
+#   project of 2026-11-01, as #438 itself is. #28 is an epic, #29 a closed task, #41 a task on no project, blocked by #22.
+#   Schedule: devlore: d1, NobleFactor/beta#50's, steps 1 and 2: beta#51 and beta#52; beta#53 is a devlore task on no
+#   project. Schedule: test-user: u1, test-user/personal#10's, step 1: personal#11; personal#12 a task on no project.
+#   engprod's members are stand-in and member; devlore's, other. gh runs as stand-in.
+function base_world {
+    jq -n '
+        def id($repo; $n): "I_" + ($repo | split("/")[1]) + "_" + ($n | tostring);
+        def issue($repo; $n; $type; $title; $extra):
+            {(id($repo; $n)): ({id: id($repo; $n), repo: $repo, number: $n, title: $title, state: "OPEN", type: $type,
+                labels: [], assignees: [], blockedBy: [], body: ""} + $extra)};
+        def item($repo; $n; $values): {id: ("IT_" + ($repo | split("/")[1]) + "_" + ($n | tostring)), content: id($repo; $n), values: $values};
+        def status: {id: "F_status", name: "Status", dataType: "SINGLE_SELECT", options: [{id: "O_open", name: "Open", description: ""},
+            {id: "O_progress", name: "In progress", description: ""}, {id: "O_closed", name: "Closed", description: ""}]};
+        def schedule_fields($options): [{id: "F_schedule", name: "Schedule", dataType: "SINGLE_SELECT", options: $options},
+            {id: "F_step", name: "Step", dataType: "NUMBER"}, status];
+        def body($option; $amendments): "## Deliverable\n\nWhat \($option) delivers.\n\n## Steps\n\nThe steps are the rows under \($option).\n\n## Amendments\n\n" + $amendments;
+        def step($s; $n; $status): {Schedule: $s, Step: $n, Status: $status};
+        {viewer: "stand-in", teams: {engprod: ["stand-in", "member"], devlore: ["other"]},
+        issues: (
+            issue("NobleFactor/alpha"; 20; "Schedule"; "Schedule: s1"; {body: body("s1"; "- 2026-11-01, on the owner'"'"'s word: step 4 was added, Task NobleFactor/alpha#24.\n")})
+            + issue("NobleFactor/alpha"; 21; "Task"; "the first step"; {state: "CLOSED"})
+            + issue("NobleFactor/alpha"; 22; "Task"; "the second step"; {})
+            + issue("NobleFactor/alpha"; 23; "Bug"; "the third step"; {state: "CLOSED"})
+            + issue("NobleFactor/alpha"; 24; "Task"; "the fourth step"; {})
+            + issue("NobleFactor/alpha"; 25; "Task"; "a task from the backlog"; {})
+            + issue("NobleFactor/alpha"; 26; "Bug"; "a bug from triage"; {})
+            + issue("NobleFactor/alpha"; 27; "Task"; "a task found walking"; {})
+            + issue("NobleFactor/alpha"; 28; "Epic"; "an epic"; {})
+            + issue("NobleFactor/alpha"; 29; "Task"; "a closed task"; {state: "CLOSED"})
+            + issue("NobleFactor/alpha"; 30; "Schedule"; "Schedule: s2"; {body: body("s2"; "- 2026-11-02, on the owner'"'"'s word: steps 1 to 3 were added.\n")})
+            + issue("NobleFactor/alpha"; 31; "Task"; "s2 first"; {})
+            + issue("NobleFactor/alpha"; 32; "Task"; "s2 second"; {})
+            + issue("NobleFactor/alpha"; 33; "Task"; "s2 third"; {})
+            + issue("NobleFactor/alpha"; 40; "Scenario"; "Scenario: walk"; {})
+            + issue("NobleFactor/alpha"; 41; "Task"; "a spare task"; {blockedBy: [id("NobleFactor/alpha"; 22)]})
+            + issue("NobleFactor/beta"; 50; "Schedule"; "Schedule: d1"; {body: body("d1"; "")})
+            + issue("NobleFactor/beta"; 51; "Task"; "d1 first"; {})
+            + issue("NobleFactor/beta"; 52; "Task"; "d1 second"; {})
+            + issue("NobleFactor/beta"; 53; "Task"; "a devlore task"; {})
+            + issue("test-user/personal"; 10; null; "Schedule: u1"; {labels: ["schedule"], body: body("u1"; "")})
+            + issue("test-user/personal"; 11; null; "u1 first"; {labels: ["task"]})
+            + issue("test-user/personal"; 12; null; "a personal task"; {labels: ["task"]})),
+        projects: {
+            PVT_s_eng: {id: "PVT_s_eng", title: "Schedule: engprod", number: 26,
+                fields: schedule_fields([{id: "O_s1", name: "s1", description: "NobleFactor/alpha#20"},
+                    {id: "O_s2", name: "s2", description: "NobleFactor/alpha#30"}]),
+                items: [item("NobleFactor/alpha"; 20; {Schedule: "s1", Status: "Open"}),
+                    item("NobleFactor/alpha"; 21; step("s1"; 1; "Closed")), item("NobleFactor/alpha"; 22; step("s1"; 2; "Open")),
+                    item("NobleFactor/alpha"; 23; step("s1"; 3; "Closed")), item("NobleFactor/alpha"; 24; step("s1"; 4; "Open")),
+                    item("NobleFactor/alpha"; 30; {Schedule: "s2", Status: "Open"}),
+                    item("NobleFactor/alpha"; 31; step("s2"; 1; "Open")), item("NobleFactor/alpha"; 32; step("s2"; 2; "Open")),
+                    item("NobleFactor/alpha"; 33; step("s2"; 3; "Open"))]},
+            PVT_b_eng: {id: "PVT_b_eng", title: "Backlog: engprod", number: 25, fields: [status],
+                items: [item("NobleFactor/alpha"; 25; {Status: "Open"})]},
+            PVT_t_eng: {id: "PVT_t_eng", title: "Triage: engprod", number: 5, fields: [status],
+                items: [item("NobleFactor/alpha"; 26; {Status: "Open"})]},
+            PVT_c_eng: {id: "PVT_c_eng", title: "Scenario: engprod", number: 27,
+                fields: [{id: "F_scenario", name: "Scenario", dataType: "SINGLE_SELECT",
+                    options: [{id: "O_walk", name: "walk", description: "NobleFactor/alpha#40"}]},
+                    {id: "F_beat", name: "Beat", dataType: "NUMBER"}, status],
+                items: [item("NobleFactor/alpha"; 40; {Scenario: "walk", Status: "Open"}),
+                    item("NobleFactor/alpha"; 27; {Scenario: "walk", Beat: 1, Status: "Open"})]},
+            PVT_old: {id: "PVT_old", title: "Schedule: issue tracking, iteration 1", number: 12, closed: true,
+                fields: [{id: "F_lane", name: "Step", dataType: "NUMBER"}, status],
+                items: [{id: "IT_old_25", content: id("NobleFactor/alpha"; 25), values: {Step: 11, Status: "Open"}}]},
+            PVT_s_dev: {id: "PVT_s_dev", title: "Schedule: devlore", number: 29,
+                fields: schedule_fields([{id: "O_d1", name: "d1", description: "NobleFactor/beta#50"}]),
+                items: [item("NobleFactor/beta"; 50; {Schedule: "d1", Status: "Open"}),
+                    item("NobleFactor/beta"; 51; step("d1"; 1; "Open")), item("NobleFactor/beta"; 52; step("d1"; 2; "Open"))]},
+            PVT_s_user: {id: "PVT_s_user", title: "Schedule: test-user", number: 7,
+                fields: schedule_fields([{id: "O_u1", name: "u1", description: "test-user/personal#10"}]),
+                items: [item("test-user/personal"; 10; {Schedule: "u1", Status: "Open"}),
+                    item("test-user/personal"; 11; step("u1"; 1; "Open"))]}}}'
+}
+
+# world gives one of add's cases its GitHub: base_world, changed by a jq program when one is given, as the world the
+# stand-in's schedule operations answer from.
+#
+# Parameters:
+#   - `$1`: a jq program to change base_world by; optional, none by default.
+#
+# Returns:
+#   - 0, the world written.
+function world {
+    base_world | jq "${1:-.}" >"${run_directory}/remotes/world.json"
+}
+
+# world_holds succeeds when a jq program over the world, as the last run left it, prints true.
+#
+# Parameters:
+#   - `$1`: the jq program.
+#
+# Returns:
+#   - 0 when it prints true; 1 otherwise.
+function world_holds {
+    [[ "$(jq "$1" "${run_directory}/remotes/world.json")" == true ]]
+}
+
+# calls_hold succeeds when a jq program over the calls the last run made, as one array of argument arrays, prints true.
+#
+# Parameters:
+#   - `$1`: the jq program.
+#
+# Returns:
+#   - 0 when it prints true; 1 otherwise.
+function calls_hold {
+    [[ "$(jq --slurp "$1" "${run_directory}/calls.jsonl")" == true ]]
+}
+
 # write_stand_in writes the stand-in for gh to the run's bin directory.
 #
 # It records each call as a JSON array of its arguments, one per line of ${GH_CALLS}, and answers from ${GH_FIXTURES}:
@@ -349,6 +465,11 @@ function check {
 # raw at a revision, the git data API apply commits through, a ref, a commit, a tree, and its variables, remembered in
 # ${GH_REMOTES}/variables. A body sent with --input - is read from standard input.
 #
+# The schedule commands' operations (#438), starViewer and every starStep one, answer from one world,
+# ${GH_REMOTES}/world.json, which a case writes with world and its writes change, through world.jq beside the
+# stand-in, so that a read after a write finds it, as GitHub's would. The world may name an operation to fail once,
+# fail_on, and another writer's change to make after an operation's first answer, change.
+#
 # Returns:
 #   - 0, the stand-ins written and executable.
 function write_stand_in {
@@ -358,6 +479,82 @@ function write_stand_in {
 printf '%s\0' sleep "$@" | jq -c -R -s 'split("\u0000") | .[:-1]' >>"${GH_CALLS}"
 SLEEP
     chmod +x "${run_directory}/bin/sleep"
+    cat >"${run_directory}/bin/world.jq" <<'JQ'
+# The schedule commands' GitHub: one world that their reads answer from and their writes change. Its issues and its
+# projects are keyed by node ID; a project's items are its rows, in its order, each with its content's ID and its
+# values by field name. The answer is {answer} for a read, {answer, world} for a write.
+def values_of($p; $item):
+    [$item.values | to_entries[] | . as $e | ($p.fields[] | select(.name == $e.key)) as $f |
+        if $f.dataType == "SINGLE_SELECT" then
+            {name: $e.value, optionId: ([$f.options[] | select(.name == $e.value) | .id][0]), field: {name: $e.key}}
+        else {number: $e.value, field: {name: $e.key}} end];
+def content($w; $id):
+    $w.issues[$id] as $i |
+    {id: $i.id, number: $i.number, title: $i.title, state: $i.state,
+        issueType: (if $i.type then {name: $i.type} else null end),
+        labels: {nodes: [($i.labels // [])[] | {name: .}]}, repository: {nameWithOwner: $i.repo}};
+def issue_node($w; $i):
+    content($w; $i.id) + {body: $i.body, url: "https://github.com/\($i.repo)/issues/\($i.number)",
+        assignees: {nodes: [($i.assignees // [])[] | {login: .}]},
+        blockedBy: {nodes: [($i.blockedBy // [])[] | $w.issues[.] | {id, number, repository: {nameWithOwner: .repo}}]},
+        projectItems: {nodes: [$w.projects[] as $p | $p.items[] | select(.content == $i.id) |
+            {id, project: {id: $p.id, title: $p.title, number: $p.number, closed: ($p.closed // false)},
+                fieldValues: {nodes: values_of($p; .)}}]}};
+def field($w; $p; $f): $w.projects[$p].fields[] | select(.id == $f);
+def set_value($w; $p; $i; $name; $value):
+    $w | .projects[$p].items |= map(if .id == $i then .values[$name] = $value else . end);
+
+. as $w |
+(if $op == "starViewer" then {answer: {data: {viewer: {login: $w.viewer}}}}
+elif $op == "starStepIssue" then
+    {answer: {data: {repository: {issue: ([$w.issues[] | select(.repo == $repo and (.number | tostring) == $number)][0]
+        | if . then issue_node($w; .) else null end)}}}}
+elif $op == "starStepProject" then
+    {answer: {data: {node: ($w.projects[$node] | {id, title, number, fields: {nodes: .fields}})}}}
+elif $op == "starStepRows" then
+    {answer: {data: {node: {items: {pageInfo: {hasNextPage: false, endCursor: null}, nodes: [$w.projects[$node] as $p |
+        $p.items[] | {id, content: content($w; .content), fieldValues: {nodes: values_of($p; .)}}]}}}}}
+elif $op == "starStepReadRow" then
+    {answer: {data: {node: ([$w.projects[] as $p | $p.items[] | select(.id == $node) |
+        {project: {id: $p.id}, fieldValues: {nodes: values_of($p; .)}}][0])}}}
+elif $op == "starStepBody" then {answer: {data: {node: {body: $w.issues[$node].body}}}}
+elif $op == "starStepTeam" then
+    {answer: {data: {organization: {team: {members: {nodes: [($w.teams[$slug] // [])[]
+        | select(ascii_downcase | contains($member | ascii_downcase)) | {login: .}]}}}}}}
+elif $op == "starStepUser" then {answer: {data: {user: {id: ("U_" + $user)}}}}
+elif $op == "starStepAddRow" then
+    ([$w.projects[$p].items[] | select(.content == $c) | .id][0]) as $have |
+    if $have then {answer: {data: {addProjectV2ItemById: {item: {id: $have}}}}}
+    else ("PVTI_" + $c) as $id |
+        {world: ($w | .projects[$p].items += [{id: $id, content: $c, values: {}}]),
+            answer: {data: {addProjectV2ItemById: {item: {id: $id}}}}} end
+elif $op == "starStepSetOption" then
+    field($w; $p; $f) as $fd |
+    {world: set_value($w; $p; $i; $fd.name; ([$fd.options[] | select(.id == $o) | .name][0])),
+        answer: {data: {updateProjectV2ItemFieldValue: {projectV2Item: {id: $i}}}}}
+elif $op == "starStepSetStep" then
+    {world: set_value($w; $p; $i; field($w; $p; $f).name; ($v | tonumber)),
+        answer: {data: {updateProjectV2ItemFieldValue: {projectV2Item: {id: $i}}}}}
+elif $op == "starStepPlace" then
+    ($w.projects[$p].items | map(select(.id == $i))[0]) as $it | ($w.projects[$p].items | map(select(.id != $i))) as $rest |
+    ($rest | map(.id) | index($a)) as $at |
+    {world: ($w | .projects[$p].items = ($rest[:($at + 1)] + [$it] + $rest[($at + 1):])),
+        answer: {data: {updateProjectV2ItemPosition: {clientMutationId: null}}}}
+elif $op == "starStepDeleteRow" then
+    {world: ($w | .projects[$p].items |= map(select(.id != $i))), answer: {data: {deleteProjectV2Item: {deletedItemId: $i}}}}
+elif $op == "starStepAmend" then {world: ($w | .issues[$i].body = $b), answer: {data: {updateIssue: {issue: {id: $i}}}}}
+elif $op == "starStepBlock" then
+    {world: ($w | .issues[$i].blockedBy += [$b]), answer: {data: {addBlockedBy: {clientMutationId: null}}}}
+elif $op == "starStepAssign" then
+    {world: ($w | .issues[$a].assignees += [$u | ltrimstr("U_")]), answer: {data: {addAssigneesToAssignable: {clientMutationId: null}}}}
+else error("the world has no answer for " + $op) end) as $r |
+
+# Another writer, as a case may ask: after the first answer to the operation it names, the rows it sets change.
+if ($w.change.on? // "") == $op then
+    $r | .world = ((.world // $w) | reduce $w.change.set[] as $s (.;
+        .projects[$s.project].items |= map(if .id == $s.item then .values[$s.field] = $s.value else . end)) | del(.change))
+else $r end
+JQ
     cat >"${run_directory}/bin/gh" <<'GH'
 #!/usr/bin/env bash
 set -uo pipefail
@@ -711,6 +908,32 @@ operation_kind="${BASH_REMATCH[1]}" operation="${BASH_REMATCH[2]}"
 login="" owner="" name=""
 [[ "${query}" =~ login:[[:space:]]*\"([^\"]+)\" ]] && login="${BASH_REMATCH[1]}"
 [[ "${query}" =~ repository\(owner:[[:space:]]*\"([^\"]+)\",[[:space:]]*name:[[:space:]]*\"([^\"]+)\" ]] && owner="${BASH_REMATCH[1]}" name="${BASH_REMATCH[2]}"
+
+# The schedule commands' GitHub (#438): the world, read and changed through world.jq.
+if [[ "${operation}" == starViewer || "${operation}" == starStep* ]]; then
+    world="${GH_REMOTES}/world.json"
+    [[ -r "${world}" ]] || { printf 'stand-in gh: no world for %s\n' "${operation}" >&2; exit 1; }
+    if [[ "$(jq -r '.fail_on // ""' "${world}")" == "${operation}" ]]; then
+        jq '.fail_on = ""' "${world}" >"${world}.next" && mv -- "${world}.next" "${world}"
+        printf 'gh: %s failed, as the case asked\n' "${operation}" >&2
+        exit 1
+    fi
+    number="" node="" slug="" member="" user=""
+    [[ "${query}" =~ issue\(number:[[:space:]]*([0-9]+)\) ]] && number="${BASH_REMATCH[1]}"
+    [[ "${query}" =~ node\(id:[[:space:]]*\"([^\"]+)\" ]] && node="${BASH_REMATCH[1]}"
+    [[ "${query}" =~ team\(slug:[[:space:]]*\"([^\"]+)\" ]] && slug="${BASH_REMATCH[1]}"
+    [[ "${query}" =~ members\(query:[[:space:]]*\"([^\"]*)\" ]] && member="${BASH_REMATCH[1]}"
+    [[ "${query}" =~ user\(login:[[:space:]]*\"([^\"]+)\" ]] && user="${BASH_REMATCH[1]}"
+    result="$(jq -c --arg op "${operation}" --arg repo "${owner}/${name}" --arg number "${number}" --arg node "${node}" \
+        --arg slug "${slug}" --arg member "${member}" --arg user "${user}" --arg p "${vars[p]:-}" --arg i "${vars[i]:-}" \
+        --arg c "${vars[c]:-}" --arg f "${vars[f]:-}" --arg o "${vars[o]:-}" --arg v "${vars[v]:-}" --arg a "${vars[a]:-}" \
+        --arg b "${vars[b]:-}" --arg u "${vars[u]:-}" -f "${BASH_SOURCE[0]%/*}/world.jq" "${world}")" || exit 1
+    if jq -e 'has("world")' <<<"${result}" >/dev/null; then
+        jq '.world' <<<"${result}" >"${world}.next" && mv -- "${world}.next" "${world}"
+    fi
+    jq -c '.answer' <<<"${result}" | if [[ -n "${jq_program}" ]]; then jq -r -c "${jq_program}"; else cat; fi
+    exit 0
+fi
 
 case ${operation} in
     starIssues)
@@ -1830,6 +2053,156 @@ swept="$(jq -c '[.[].issue | ascii_downcase] | sort' <<<"${output}")"
 run_star "${data}" github triage sweep noblefactor
 expect "45: the sweep given noblefactor sweeps NobleFactor's issues as for NobleFactor" ok \
     '([.[].issue | ascii_downcase] | sort) == '"${swept}"
+
+# The schedule commands' cases (#438), as docs/plans/feature/438-schedule-add.md's test plan lists them: each starts
+# from base_world, and reads back what add left in it.
+today="$(date -u +%Y-%m-%d)"
+declare -r amendments='def amendments($id): .issues[$id].body | split("\n") | index("## Amendments") as $at
+    | .[($at + 1):] | reduce .[] as $line ([]; if ($line | startswith("- ")) then . + [$line]
+        elif ($line | startswith("  ")) and length > 0 then .[:-1] + [.[-1] + " " + ($line | ltrimstr("  "))] else . end);'
+declare -r no_writes='([$calls[] | select(any(.[]; type == "string" and test("mutation star")))] | length) == 0'
+declare -r s1_rows='[.projects.PVT_s_eng.items[] | select(.values.Schedule == "s1" and .values.Step != null) | [.content, .values.Step]]'
+
+# 46. add puts an issue from the Backlog on a schedule as its next step: the schedule's option, Status Open and step 5,
+# placed after step 4; its Backlog row gone, its row on a closed per-schedule project left alone; and one amendment
+# line, rendered from its template, naming the date, who ran it and why.
+world
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/alpha#25 --reason "Found in review."
+expect "46: add puts NobleFactor/alpha#25 at step 5 of s1, after the last" ok \
+    '[.[] | select(.action == "added")] == [{schedule: "NobleFactor/alpha#20", issue: "NobleFactor/alpha#25", type: "Task",
+        title: "a task from the backlog", action: "added", step: 5, from_step: null, project: "Schedule: engprod"}]'
+check "46: its row has s1, Status Open and step 5, just after step 4's" world_holds \
+    '.projects.PVT_s_eng.items | (map(.content) | index("I_alpha_25")) as $at
+        | .[$at].values == {Schedule: "s1", Status: "Open", Step: 5} and .[$at - 1].id == "IT_alpha_24"'
+check "46: its Backlog row is gone, and its row on a closed per-schedule project is left alone" world_holds \
+    '(.projects.PVT_b_eng.items | length) == 0 and (.projects.PVT_old.items | length) == 1'
+check "46: #20's last amendment names the date, who ran add, the step and the reason, and is settled" world_holds \
+    "${amendments}"' amendments("I_alpha_20")[-1] == "- '"${today}"', by stand-in: step 5 was added, Task " +
+        "NobleFactor/alpha#25, a task from the backlog. Found in review." and (.issues.I_alpha_20.body | contains("(in progress)") | not)'
+
+# 47. Two issues after step 2: they take steps 3 and 4, and every later step moves down two, the closed bug #23
+# among them (section 8, question 5). The amendment is the template's, byte for byte, wrapped at 120 columns.
+world
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/alpha#26 NobleFactor/alpha#41 --after 2 \
+    --reason "Moved up for review."
+expect "47: add puts #26 and #41 at steps 3 and 4, moving #23 and #24 down two" ok \
+    '[.[] | select(.action == "added") | [.issue, .step]] == [["NobleFactor/alpha#26", 3], ["NobleFactor/alpha#41", 4]]
+        and ([.[] | select(.action == "moved") | [.issue, .from_step, .step]] | sort)
+            == [["NobleFactor/alpha#23", 3, 5], ["NobleFactor/alpha#24", 4, 6]]'
+check "47: s1's rows run 1 to 6, in step order, the closed #23 at 5" world_holds \
+    "${s1_rows}"' == [["I_alpha_21", 1], ["I_alpha_22", 2], ["I_alpha_26", 3], ["I_alpha_41", 4], ["I_alpha_23", 5], ["I_alpha_24", 6]]'
+check "47: #26's Triage row is gone" world_holds '(.projects.PVT_t_eng.items | length) == 0'
+check "47: the amendment is the template's, byte for byte, and no line of #20's body is over 120 columns" world_holds \
+    "${amendments}"' amendments("I_alpha_20")[-1] == "- '"${today}"', by stand-in: step 3 was added, Bug " +
+        "NobleFactor/alpha#26, a bug from triage; step 4 was added, Task NobleFactor/alpha#41, a spare task. Steps 3 to 4 " +
+        "moved down 2, to 5 to 6. Moved up for review." and ([.issues.I_alpha_20.body | split("\n")[] | length] | max) <= 120'
+
+# 48. An issue found walking a scenario leaves it: its Scenario row is deleted, after a comment on the Scenario issue.
+world
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/alpha#27 --reason "Found walking."
+expect "48: add puts #27 on s1, and it leaves Scenario: engprod" ok \
+    '[.[] | select(.issue == "NobleFactor/alpha#27") | [.action, .project]]
+        == [["left", "Scenario: engprod"], ["added", "Schedule: engprod"]]'
+check "48: its Scenario row is gone, the scenario's own row kept" world_holds '[.projects.PVT_c_eng.items[].content] == ["I_alpha_40"]'
+check "48: the Scenario issue, #40, has the comment that #27 left it" calls_hold \
+    '[.[] | select(any(.[]; . == "s=I_alpha_40")) | select(any(.[]; type == "string" and test("^b=NobleFactor/alpha#27 left this scenario")))]
+        | length == 1'
+
+# 49. An issue on another schedule of the same project is taken off it: its row keeps its place on the project and
+# takes s1's option, s2's later step moves up one, and s2's Schedule issue is amended too.
+world
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/alpha#32 --reason "Needed sooner."
+expect "49: add takes #32 off s2 for s1, and #33 moves up on s2" ok \
+    '[.[] | select(.issue == "NobleFactor/alpha#32") | [.schedule, .action, .from_step, .step]]
+        == [["NobleFactor/alpha#30", "taken-off", 2, null], ["NobleFactor/alpha#20", "added", null, 5]]
+        and [.[] | select(.issue == "NobleFactor/alpha#33") | [.schedule, .action, .from_step, .step]]
+            == [["NobleFactor/alpha#30", "moved", 3, 2]]'
+check "49: #32 has one row, on s1 at step 5, and s2 runs 1 and 2" world_holds \
+    '([.projects.PVT_s_eng.items[] | select(.content == "I_alpha_32")] | length) == 1
+        and (.projects.PVT_s_eng.items[] | select(.content == "I_alpha_32") | .values) == {Schedule: "s1", Status: "Open", Step: 5}
+        and [.projects.PVT_s_eng.items[] | select(.values.Schedule == "s2" and .values.Step != null) | [.content, .values.Step]]
+            == [["I_alpha_31", 1], ["I_alpha_33", 2]]'
+check "49: s2's Schedule issue, #30, says #32 was taken off for #20" world_holds \
+    "${amendments}"' amendments("I_alpha_30")[-1] == "- '"${today}"', by stand-in: step 2, Task NobleFactor/alpha#32, s2 " +
+        "second, was taken off, for NobleFactor/alpha#20. Step 3 moved up 1, to 2. Needed sooner."'
+
+# 50. --blocked-by adds each link the issue lacks, and keeps the ones it has.
+world
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/alpha#41 \
+    --blocked-by NobleFactor/alpha#22,NobleFactor/alpha#29 --reason "Waits on both."
+expect "50: add links #41 as blocked by #29 alone, since it is blocked by #22 already" ok \
+    '([$calls[] | select(any(.[]; type == "string" and test("starStepBlock")))] | length) == 1'
+check "50: #41 is blocked by #22 and #29" world_holds '.issues.I_alpha_41.blockedBy == ["I_alpha_22", "I_alpha_29"]'
+
+# 51. Another team's issue needs --assignee, a member of the schedule's team, who answers for it there (ruled
+# 2026-11-04).
+world
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/beta#53 --reason "Engprod's to do."
+expect "51: devlore's issue is refused without --assignee, and nothing written" error "${no_writes}" \
+    "NobleFactor/beta#53 is devlore's: give --assignee, a member of engprod" text
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/beta#53 --assignee other --reason "Engprod's to do."
+expect "51: and with an --assignee who is not a member of engprod" error "${no_writes}" "other is not a member of engprod" text
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/beta#53 --assignee member --reason "Engprod's to do."
+expect "51: and with a member of engprod, it goes on s1" ok '[.[] | select(.action == "added") | .step] == [5]'
+check "51: NobleFactor/beta#53 is assigned to member" world_holds '.issues.I_beta_53.assignees == ["member"]'
+
+# 52. Each refusal names why, and nothing is written.
+world
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/alpha#29 --reason "R."
+expect "52: a closed issue is refused" error "${no_writes}" "NobleFactor/alpha#29 is closed" text
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/alpha#24 --reason "R."
+expect "52: an issue already on the schedule is refused" error "${no_writes}" \
+    "NobleFactor/alpha#24 is already on this schedule, at step 4" text
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/alpha#28 --reason "R."
+expect "52: an epic is refused" error "${no_writes}" "NobleFactor/alpha#28 is of type Epic: a schedule's steps are tasks and bugs" text
+run_star "${data}" github schedule add NobleFactor/alpha#20 test-user/personal#12 --reason "R."
+expect "52: another account's issue is refused" error "${no_writes}" "not in NobleFactor, the schedule's account: test-user/personal#12" text
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/alpha#41 --blocked-by test-user/personal#12 --reason "R."
+expect "52: and so is another account's blocker" error "${no_writes}" "not in NobleFactor, the schedule's account: test-user/personal#12" text
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/alpha#41 --after 9 --reason "R."
+expect "52: a step the schedule doesn't have is refused" error "${no_writes}" "the schedule has no step 9; its steps run 1 to 4" text
+run_star "${data}" github schedule add NobleFactor/alpha#22 NobleFactor/alpha#41 --reason "R."
+expect "52: a schedule that is not a Schedule issue is refused" error "${no_writes}" \
+    "NobleFactor/alpha#22 is not a Schedule issue: its type is Task" text
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/alpha#41
+expect "52: a change with no --reason is refused" error "${no_writes}" "add needs --reason" text
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/alpha#41 --reason "R." --dry-run
+expect "52: and star's --dry-run, until devlore-cli#1170" error "${no_writes}" "1170" text
+
+# 53. One act: the schedule's rows change between add's two reads, and it stops, nothing written.
+world '.change = {on: "starStepRows", set: [{project: "PVT_s_eng", item: "IT_alpha_24", field: "Step", value: 7}]}'
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/alpha#25 --reason "R."
+expect "53: the rows changed while add read them: refused, nothing written" error "${no_writes}" \
+    "changed while add read it; nothing was written" text
+
+# 54. A run that stops partway says what it wrote and leaves its amendment in progress; the same command run again
+# finishes it, as one run would have.
+world '.fail_on = "starStepPlace"'
+quiet=""
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/alpha#26 NobleFactor/alpha#41 --after 2 \
+    --reason "Moved up for review."
+quiet="--silent"
+expect "54: a run that stops partway says what it wrote" error "" "moved NobleFactor/alpha#24 from step 4 to 6"
+check "54: and leaves its amendment in progress" world_holds '.issues.I_alpha_20.body | contains("(in progress)")'
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/alpha#26 NobleFactor/alpha#41 --after 2 \
+    --reason "Moved up for review."
+expect "54: the same command run again finishes it" ok ""
+check "54: s1 is as one run leaves it: steps 1 to 6, one row for #26, one amendment for the change, settled" world_holds \
+    "${amendments}${s1_rows}"' == [["I_alpha_21", 1], ["I_alpha_22", 2], ["I_alpha_26", 3], ["I_alpha_41", 4], ["I_alpha_23", 5], ["I_alpha_24", 6]]
+        and ([.projects.PVT_s_eng.items[] | select(.content == "I_alpha_26")] | length) == 1
+        and (.issues.I_alpha_20.body | contains("(in progress)") | not)
+        and ([amendments("I_alpha_20")[] | select(contains("NobleFactor/alpha#26"))] | length) == 1
+        and (amendments("I_alpha_20")[-1] | contains("Steps 3 to 4 moved down 2, to 5 to 6."))'
+
+# 55. A user account's schedule, its types its labels, on Schedule: test-user.
+world
+run_star "${data}" github schedule add test-user/personal#10 test-user/personal#12 --reason "Personal work."
+expect "55: add puts test-user/personal#12, labeled task, at step 2 of u1" ok \
+    '[.[] | select(.action == "added") | [.issue, .type, .step]] == [["test-user/personal#12", "Task", 2]]'
+check "55: its row has u1, Status Open and step 2, and test-user/personal#10 is amended" world_holds \
+    "${amendments}"' (.projects.PVT_s_user.items[] | select(.content == "I_personal_12") | .values) == {Schedule: "u1", Status: "Open", Step: 2}
+        and amendments("I_personal_10")[-1] == "- '"${today}"', by stand-in: step 2 was added, Task test-user/personal#12, a " +
+        "personal task. Personal work."'
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"

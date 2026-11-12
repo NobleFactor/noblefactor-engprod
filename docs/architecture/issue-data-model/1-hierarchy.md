@@ -192,7 +192,8 @@ project (below).
   fields set, and loses its row in the project it leaves. Out of Triage, declined work is closed as completed with
   Resolution Declined, and accepted tasks and bugs go to the Backlog with their Priority or onto a schedule. From the
   Backlog, work goes onto a schedule highest Priority first, and onto a committed schedule only by its owner's
-  amendment, recorded in the Schedule issue; `star github schedule add` (#438) will make that move in one command
+  amendment, recorded in the Schedule issue; `star github schedule add` (#438), built on 2026-11-12, makes that move
+  in one command
   ([section 3](3-collections.md#triage-and-the-backlog)).
 - Ruled 2026-11-04: epics and features are never rows of a Backlog, Schedule or Scenario project. A new one reaches
   Triage like every new issue and, once classified, leaves Triage for no project: the hierarchy holds it, and its tasks
