@@ -3,7 +3,7 @@ title: "star github model diff, apply and restore"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/437
 status: active
 created: 2026-11-10
-updated: 2026-11-10
+updated: 2026-11-11
 ---
 
 # Plan: star github model diff, apply and restore
@@ -21,11 +21,12 @@ retired on 2026-11-03, go first. The owner, 2026-11-10: all of it in this pull r
 
 | Step | Type | Issue | Done when |
 | --- | --- | --- | --- |
-| 22 | Task | [#437](https://github.com/NobleFactor/noblefactor-engprod/issues/437), star github model diff, apply and restore | Its evidence of completion, rewritten to this plan in Phase 12 |
+| 22 | Task | [#437](https://github.com/NobleFactor/noblefactor-engprod/issues/437), star github model diff, apply and restore | Its evidence of completion, rewritten to this plan in Phase 9 |
 
 ## Rulings
 
-Ruled by the owner on 2026-11-09 and 2026-11-10, recorded in #437 and section 6's § GitHub is the model.
+Ruled by the owner on 2026-11-09 and 2026-11-10, recorded in #437 and section 6's § GitHub is the model, and on
+2026-11-11, recorded in section 6.
 
 - **The commands, each naming its account, with no default account:**
 
@@ -40,9 +41,13 @@ Ruled by the owner on 2026-11-09 and 2026-11-10, recorded in #437 and section 6'
 - **`apply` reconciles; it never deletes something to create it again.** It creates what is missing and changes what
   differs. On the same account it matches by ID, so a rename is a rename; across accounts the IDs differ, and it matches
   by name.
-- **Nothing is deleted without `--prune`.** With it, `apply` and `restore` also delete what the model lacks, and first
-  list each deletion and how many issues and rows it touches. Without it, `restore` puts back what changed or vanished,
-  leaves what was added since the revision, and lists what it left.
+- **Nothing of the account's is deleted without `--prune`.** With it, `apply` and `restore` also delete what the model
+  lacks, and first list each deletion and how many issues and rows it touches. Without it, `restore` puts back what
+  changed or vanished, leaves what was added since the revision, and lists what it left.
+- **A project `apply` has just made is brought to its template exactly, with or without `--prune`** (the owner,
+  2026-11-11). It holds nothing of the account's yet, only what GitHub gives every new project. A template just made
+  loses GitHub's three Status options and its View 1 where the model names neither; it and every project just copied
+  from a template lose whatever built-in workflows GitHub gave them, since no project has one (ruled 2026-11-03).
 - **Option IDs.** Every project and issue field option is sent with the ID the model holds, an issue field's through
   GitHub's REST call, so a changed option list blanks no issue or row.
 - **Asking.** Interactive by default, star's `--unattended` skipping every question, no `--force`. For now nothing asks:
@@ -92,7 +97,7 @@ What GitHub's API can write, read from its schema on 2026-11-10:
 | Labels | REST, per repository: create, change (renaming with `new_name`), delete | |
 | Project fields | `createProjectV2Field`, `updateProjectV2Field` (options with their IDs), `deleteProjectV2Field`; an issue field on a project, `createProjectV2IssueField` | |
 | Project views | `createProjectV2View`, `updateProjectV2View`, `deleteProjectV2View`: name, layout, filter, visible fields | A view's grouping and sort: no input takes them |
-| Templates and their copies | `createProjectV2`, `markProjectV2AsTemplate`, `copyProjectV2`, `linkProjectV2ToTeam`, `updateProjectV2Collaborators` (a team's role) | |
+| Templates and their copies | `createProjectV2`, `markProjectV2AsTemplate`, `copyProjectV2`, `linkProjectV2ToTeam`, `updateProjectV2Collaborators` (a team's role), `deleteProjectV2Workflow` (a built-in workflow; read 2026-11-11) | A built-in workflow: no call makes one or turns one on |
 | A repository's workflow, variable, secret | REST: contents and git data, `actions/variables`, `actions/secrets` | A secret's value is never read back |
 
 ## Decisions for review
@@ -122,11 +127,15 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
    owner; the first revision, to every attribute, would have made another account's teams in this one and, with
    `--prune`, deleted this one's.
 6. **A missing template is made:** with its fields and views, marked a template; in a user account the copy, by name.
+   Revised on 2026-11-11, before the new organization's proof: one just made is brought to the model exactly, GitHub's
+   own Status options, its View 1 and its built-in workflows gone, since nothing in it is the account's yet. The first
+   build kept them, deleting nothing without `--prune`.
 7. **Every project of a kind is held to its template.** The model holds the templates alone (ruled 2026-11-03); `diff`
    and `apply` read alongside them each team's four projects, `<Kind>: <team>`, or the user account's four,
    `<Kind>: <account>`.
    - A missing one is copied from its template, and in an organization linked to its team with the team's write role
-     (ruled 2026-11-04).
+     (ruled 2026-11-04). Whatever built-in workflows the copy comes with are deleted, and what its template gave it is
+     kept (revised 2026-11-11).
    - Each is configured like its template: the same fields, options, colors and descriptions, and the same views, their
      grouping and sort listed as steps by hand.
    - What is the project's own is left alone: its rows and their values, its Schedule or Scenario field's options, one
@@ -247,11 +256,16 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
   keeps every reference whole: issue types; issue fields and their options; each participating repository's labels; the
   templates, a missing one first made; each project of a kind, a missing one first copied and linked; the `.github`
   repository's files; each participating repository's workflow, variable and secret.
-- Renames are made in place, matched by ID on the same account. Option lists are sent with their IDs. Deletions happen
-  only with `--prune`, decisions 3 and 7 limiting them, each first listed with how many issues and rows it touches.
-- It returns a record of each change made, and of each it could not make, with the step to take by hand. A TODO
-  linking NobleFactor/devlore-cli#1219 stands where it will ask, before any deletion and before it starts (#470). It
-  refuses star's `--dry-run`, as `get` does, until NobleFactor/devlore-cli#1170: `diff` is the preview.
+- Renames are made in place, matched by ID on the same account. Option lists are sent with their IDs. Deletions of
+  what the account holds happen only with `--prune`, decisions 3 and 7 limiting them, each first listed with how many
+  issues and rows it touches.
+- A project `apply` has just made is brought to its template exactly, with or without `--prune` (ruled 2026-11-11;
+  decisions 6 and 7): a template just made loses GitHub's Status options and its View 1 where the model names neither,
+  and it and each project just copied lose their built-in workflows.
+- It returns a record of each change made, and of each it could not make, with the step to take by hand; the record of
+  a template or project just made carries the steps for its views. A TODO linking NobleFactor/devlore-cli#1219 stands
+  where it will ask, before any deletion and before it starts (#470). It refuses star's `--dry-run`, as `get` does,
+  until NobleFactor/devlore-cli#1170: `diff` is the preview.
 
 ### Requirement 5: restore
 
@@ -406,6 +420,20 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
       GitHub. NobleFactor's first `apply` landed the Triage workflow in its five participating repositories, the last,
       NobleFactor/noblefactor-engprod#477, after #478 and #480. Shown on #437:
       https://github.com/NobleFactor/noblefactor-engprod/issues/437#issuecomment-6806178635
+- [x] Found on 2026-11-11, getting the new organization's proof ready, and fixed test first on the owner's go: `apply`
+      had never made a project from nothing on GitHub, both accounts already holding their templates and projects. Run
+      for a new organization against the test's stand-in, it left GitHub's three Status options beside the model's on
+      each template it made and View 1 on Schedule, and returned no step by hand for a new template's or project's
+      views; it had no code for GitHub's built-in workflows, which no project has had since 2026-11-03. Now a project
+      `apply` has just made is brought to its template exactly, with or without `--prune` (Requirement 4, revised): a
+      template just made loses GitHub's Status options, its View 1 where the model names none, and its built-in
+      workflows before it is marked a template; a project just copied loses its built-in workflows and keeps what its
+      template gave it; and each one's record carries the steps by hand for its views. The stand-in answers a project
+      made and a copy apart, and each one's built-in workflows; cases 26, 27 and 29 hold all of it. Every GraphQL
+      mutation `apply` sends was then compared with GitHub's schema, read that day: each matches but the view deletion,
+      which selected `deletedViewId`, a field its payload lacks, so GitHub would have refused it, under `--prune` as
+      well. The stand-in now refuses that selection as GitHub does, 29 cases failing on it, and the call selects the
+      view. 132 of 132 cases pass; `make check` passes. Not yet run on GitHub: the proof below is the first
 - [ ] For a new organization: `apply` of the reference, then `diff` showing nothing left, in a temporary organization
       made for the proof, deleted when the proof passes and kept for troubleshooting when it does not. A comment on #437
       shows it. The owner runs every `apply`
@@ -432,10 +460,10 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
 | 12 | `apply --prune`, case 5's model | The removal made too, after the count of what it touches |
 | 13 | `apply --prune` of a reference | Only labels of the reference's kinds removed; `good first issue` kept |
 | 14 | `apply` renaming an option of a template | The option list sent with every ID; the option renamed on each copy, under its old name |
-| 15 | `apply` with a template the account lacks | The template made, its fields and views, marked a template |
-| 16 | `apply` with a team lacking its Triage project | The project copied from the template, linked to the team, the team's write role on it |
+| 15 | `apply` with a template the account lacks | The template made with its model's fields and views alone, GitHub's Status options, View 1 and built-in workflows gone, then marked a template; a project copied from it keeps what the template gave it, and loses its built-in workflows |
+| 16 | `apply` with a team lacking its Triage project | The project copied from the template, linked to the team, the team's write role on it; its built-in workflows gone, and nothing else of it deleted |
 | 17 | `apply` with a team project drifted from its template | Brought back; its rows, schedule options and iterations untouched |
-| 18 | `apply` of the reference to a new organization | Its types, fields, templates and teams' projects; its `.github` files by pull request, the source account's name in them its own, `model.yaml` not among them; each repository's workflow by pull request, and its variable; the App's secrets, missing, named as steps by hand |
+| 18 | `apply` of the reference to a new organization | Its types, fields, templates and teams' projects; its `.github` files by pull request, the source account's name in them its own, `model.yaml` not among them; each repository's workflow by pull request, and its variable; the App's secrets, missing, named as steps by hand; each template made holding the reference's parts alone, no project made or copied keeping a built-in workflow, and each one's record naming what its views need by hand |
 | 18a | `apply` of another organization's model to an organization with three teams | No team made or deleted, no role changed, no label written; each team that maintains a repository gets one project for each template |
 | 18b | `apply --prune` of another organization's model, and of the account's own backup lacking a team and a role | No team deleted, no role removed or lowered |
 | 19 | `apply` of the user reference to a new user account, with no `--token` and then `--token env:<NAME>` | First the missing secret named as a step by hand, the rest made; then the secret set on each repository from the variable, its record showing the token's fingerprint and never the token |

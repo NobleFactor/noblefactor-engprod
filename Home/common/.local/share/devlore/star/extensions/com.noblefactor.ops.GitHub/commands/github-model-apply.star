@@ -7,8 +7,9 @@
 #
 # docs/plans/feature/437-model-diff-apply-restore.md, Requirement 4. The model is a file, the form get returns, another
 # account's, a backup, or a reference named by its path; the account is always named. apply reconciles (apply.star): it
-# creates what is missing and changes what differs, and deletes only with --prune. The owner runs it; a session writes
-# the command and hands it over (ruled 2026-11-09). Afterward, star github model backup records the account's new model.
+# creates what is missing and changes what differs, and deletes what the account holds only with --prune; a project it
+# has just made, it brings to its template exactly (ruled 2026-11-11). The owner runs it; a session writes the command
+# and hands it over (ruled 2026-11-09). Afterward, star github model backup records the account's new model.
 
 load("commands/access.star", "check_access")
 load("commands/apply.star", "apply_model")

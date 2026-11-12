@@ -22,8 +22,9 @@ Ruled 2026-11-09 (#426): GitHub is the model. A command reads an account's model
 model file in the account's `.github` repository is a backup, written by `backup` and read only by `restore`. Five
 commands, each naming its account, with no default account, no `--asset` and no `--check`: `get`, `diff`, `apply`,
 `backup` and `restore` (§ GitHub is the model). That supersedes the rulings above on `pull`'s options and that the model
-is a cache. Ruled 2026-11-10: `apply` and `restore` delete nothing without `--prune`, which replaces the `--delete` of
-2026-10-22 (§ GitHub is the model).
+is a cache. Ruled 2026-11-10: `apply` and `restore` delete nothing of the account's without `--prune`, which replaces
+the `--delete` of 2026-10-22. Ruled 2026-11-11: a project `apply` has just made is brought to its template exactly,
+GitHub's default Status options, View 1 and built-in workflows deleted without it (§ GitHub is the model).
 
 Ruled 2026-11-10 with #437 (§ GitHub is the model). `diff` compares every attribute, color among them, and a reference
 names every attribute. `apply` never deletes a team, a project or a template, nor removes or lowers a team's role, even

@@ -11,10 +11,14 @@
 # .github files and each participating repository's Triage workflow, variable and secrets (participation.star, decision
 # 12), the variable naming a Triage project made first. It reconciles; it never deletes something to make it again
 # (ruled 2026-11-09). On the same account a rename is made in place, by ID; an option list is sent whole, each
-# option with its ID, so that no issue or row loses its value. Nothing is deleted without --prune, and with it each
-# deletion first counts what it touches; a team, its roles, a project and a template are never deleted (the owner,
-# 2026-11-10). What GitHub's API cannot write, a type's pinned fields, a view's grouping and sort, is a step by hand,
-# named in the record.
+# option with its ID, so that no issue or row loses its value. Nothing of the account's is deleted without --prune, and
+# with it each deletion first counts what it touches; a team, its roles, a project and a template are never deleted
+# (the owner, 2026-11-10). A project apply has itself just made holds nothing of the account's, only what GitHub gives
+# every new project, so apply brings it to its template exactly, with or without --prune (ruled 2026-11-11): a template
+# just made loses GitHub's Status options and its View 1 where the model names neither, and it and every project just
+# copied from a template lose GitHub's built-in workflows, which no project has (ruled 2026-11-03). What GitHub's API
+# cannot write, a type's pinned fields, a view's grouping and sort, is a step by hand, named in the record; the steps
+# for the parts of a template or project just made are on its own record.
 #
 # Issue types and issue fields are written through GitHub's REST calls, which take the database IDs get records; the
 # rest through GraphQL, each mutation's input written as literals, so that every value is in the call star narrates.
@@ -358,7 +362,7 @@ def converge(c, project_id, gp, mt, prefix, kinds, renames, done, copy = False):
         view_id = (gp.get("_view_ids") or {}).get(name)
         if mv == None:
             if c["prune"] and view_id:
-                mutate("mutation starDeleteView { r: deleteProjectV2View(input: {viewId: " + _s(view_id) + "}) { deletedViewId } }")
+                mutate("mutation starDeleteView { r: deleteProjectV2View(input: {viewId: " + _s(view_id) + "}) { projectV2View { id } } }")
                 _done(done, view_kind, path, "deleted", {"touches": None})
             continue
         steps = _view_steps(mv, gv, path)
@@ -387,10 +391,29 @@ def _attributes(project_id, mt, gp):
            "}) { projectV2 { id } } }")
     return True
 
+def _steps(done, kinds, prefix):
+    """The steps by hand recorded for the parts of a project just made, which its own record carries: it has no other."""
+    steps = []
+    for key, value in done.items():
+        kind, _, path = key.partition(" ")
+        if kind in kinds and path.startswith(prefix + "/"):
+            steps.extend(value[1].get("steps") or [])
+    return steps
+
+def _no_workflows(project_id):
+    """Deletes the built-in workflows GitHub gives a project just made or copied: no project has one (ruled 2026-11-03)."""
+    data = graphql("query starWorkflows { node(id: " + _s(project_id) + ") { ... on ProjectV2 { workflows(first: 50) { nodes { id } } } } }")
+    for w in ((data.get("node") or {}).get("workflows") or {}).get("nodes") or []:
+        mutate("mutation starDeleteWorkflow { r: deleteProjectV2Workflow(input: {workflowId: " + _s(w["id"]) + "}) { deletedWorkflowId } }")
+
 # ── templates, and each team's projects of a kind ───────────────────────────
 
 def _templates(c, records, done):
-    """Each template: made when the account lacks it, then brought to the model; never deleted."""
+    """Each template: made when the account lacks it, then brought to the model; never deleted.
+
+    One made here is brought to the model exactly, GitHub's own options, view and workflows gone: nothing in it is the
+    account's.
+    """
     existing = [p for p in templates_of(c["projects"], c["kind"])]
     renamed = {r["path"]: True for r in records if r["kind"] == "template" and r["change"] == "renamed"}
     for mt, gt in match(c["model"].get("projects") or [], existing, c["same"]):
@@ -402,11 +425,16 @@ def _templates(c, records, done):
                                 _s(mt["name"]) + "}) { projectV2 { id } } }")
             project = read_project(project_id)
             _attributes(project_id, mt, project)
-            converge(c, project_id, project, mt, mt["name"], _TEMPLATE_KINDS, {}, done)
+
+            # It holds nothing of the account's yet, only what GitHub gives every new project, so it is brought to the
+            # model exactly: GitHub's Status options and View 1 go where the model names neither, and its workflows.
+            converge(dict(c, prune = True), project_id, project, mt, mt["name"], _TEMPLATE_KINDS, {}, done)
+            _no_workflows(project_id)
             if c["kind"] == "organization":
                 mutate("mutation starMarkTemplate { r: markProjectV2AsTemplate(input: {projectId: " + _s(project_id) + "}) { projectV2 { id } } }")
             c["template_ids"][mt["name"]] = project_id
-            _done(done, "template", mt["name"], "created")
+            steps = _steps(done, _TEMPLATE_KINDS, mt["name"])
+            _done(done, "template", mt["name"], "created", {"steps": steps} if steps else {})
             continue
         c["template_ids"][mt["name"]] = gt["id"]
         name = gt["name"]
@@ -418,8 +446,8 @@ def _templates(c, records, done):
 def _kind_projects(c, records, done):
     """Each team's projects of a kind, or a user account's, held to their templates.
 
-    A missing one is copied from its template and linked to its team with the team's write role; a drifted one is
-    brought back; none is ever deleted.
+    A missing one is copied from its template and linked to its team with the team's write role, and loses the built-in
+    workflows GitHub gives it; a drifted one is brought back; none is ever deleted.
     """
     templates = {t["name"]: t for t in c["model"].get("projects") or []}
     teams = {t["slug"]: t for t in c["github"].get("teams") or []}
@@ -441,7 +469,9 @@ def _kind_projects(c, records, done):
         made = read_project(project_id)
         c["made"][r["path"]] = made["number"]
         converge(c, project_id, made, templates[template], r["path"], _PROJECT_KINDS, {}, done, copy = True)
-        _done(done, "project", r["path"], "created")
+        _no_workflows(project_id)
+        steps = _steps(done, _PROJECT_KINDS, r["path"])
+        _done(done, "project", r["path"], "created", {"steps": steps} if steps else {})
     by_name = {p["name"]: p for p in c["projects"] if not p.get("template")}
     drifted = []
     for r in records:

@@ -726,21 +726,33 @@ case ${operation} in
             if [[ -n "${jq_program}" ]]; then jq -r -c "${jq_program}"; else cat; fi
         ;;
     starProject)
-        # A project apply has just made or copied: GitHub's own fields, Status with its three options, and View 1.
-        jq -cn 'def names($list): {nodes: [$list[] | {name: .}]};
+        # A project apply has just made or copied: GitHub's own fields, Status with its three options, and View 1. The
+        # IDs of a project made begin N and those of a copy C, so that a case can tell whose part a write names.
+        prefix=N
+        [[ "${query}" == *NEW_starCopyProject* ]] && prefix=C
+        jq -cn --arg p "${prefix}" 'def names($list): {nodes: [$list[] | {name: .}]};
             {data: {node: {id: "NEW", number: 99, title: "new", template: false, closed: false, shortDescription: "", readme: "",
             public: false, teams: {nodes: []}, repositories: {nodes: []}, fields: {nodes: [
-                {id: "NF_title", name: "Title", dataType: "TITLE"}, {id: "NF_assignees", name: "Assignees", dataType: "ASSIGNEES"},
-                {id: "NF_status", name: "Status", dataType: "SINGLE_SELECT", options: [
-                    {id: "NO_todo", name: "Todo", color: "GRAY", description: ""},
-                    {id: "NO_progress", name: "In Progress", color: "YELLOW", description: ""},
-                    {id: "NO_done", name: "Done", color: "PURPLE", description: ""}]},
-                {id: "NF_labels", name: "Labels", dataType: "LABELS"},
-                {id: "NF_prs", name: "Linked pull requests", dataType: "LINKED_PULL_REQUESTS"},
-                {id: "NF_subissues", name: "Sub-issues progress", dataType: "SUB_ISSUES_PROGRESS"}]},
-            views: {nodes: [{id: "NV_1", name: "View 1", number: 1, layout: "TABLE_LAYOUT", filter: "",
+                {id: ($p + "F_title"), name: "Title", dataType: "TITLE"},
+                {id: ($p + "F_assignees"), name: "Assignees", dataType: "ASSIGNEES"},
+                {id: ($p + "F_status"), name: "Status", dataType: "SINGLE_SELECT", options: [
+                    {id: ($p + "O_todo"), name: "Todo", color: "GRAY", description: ""},
+                    {id: ($p + "O_progress"), name: "In Progress", color: "YELLOW", description: ""},
+                    {id: ($p + "O_done"), name: "Done", color: "PURPLE", description: ""}]},
+                {id: ($p + "F_labels"), name: "Labels", dataType: "LABELS"},
+                {id: ($p + "F_prs"), name: "Linked pull requests", dataType: "LINKED_PULL_REQUESTS"},
+                {id: ($p + "F_subissues"), name: "Sub-issues progress", dataType: "SUB_ISSUES_PROGRESS"}]},
+            views: {nodes: [{id: ($p + "V_1"), name: "View 1", number: 1, layout: "TABLE_LAYOUT", filter: "",
                 fields: names(["Title", "Assignees", "Status"]), groupByFields: names([]), verticalGroupByFields: names([]),
                 sortByFields: {nodes: []}}]}}}}' |
+            if [[ -n "${jq_program}" ]]; then jq -r -c "${jq_program}"; else cat; fi
+        ;;
+    starWorkflows)
+        # The built-in workflows GitHub gives a project made or copied: two stand for them all, their IDs begun alike.
+        prefix=N
+        [[ "${query}" == *NEW_starCopyProject* ]] && prefix=C
+        jq -cn --arg p "${prefix}" '{data: {node: {workflows: {nodes: [{id: ($p + "W_closed"), name: "Item closed"},
+            {id: ($p + "W_merged"), name: "Pull request merged"}]}}}}' |
             if [[ -n "${jq_program}" ]]; then jq -r -c "${jq_program}"; else cat; fi
         ;;
     starCount)
@@ -753,8 +765,15 @@ case ${operation} in
             if [[ -n "${jq_program}" ]]; then jq -r -c "${jq_program}"; else cat; fi
         ;;
     *)
-        # A mutation the cases need no particular answer from: a new ID, number and URL, for the caller to read.
+        # A mutation the cases need no particular answer from: a new ID, number and URL, for the caller to read. One
+        # that selects what GitHub's schema lacks is refused, as GitHub refuses it: a view's deletion answers the view,
+        # and no deletedViewId (GitHub's GraphQL schema, DeleteProjectV2ViewPayload, read 2026-11-11).
         if [[ "${operation_kind}" == mutation ]]; then
+            if [[ "${query}" == *deletedViewId* ]]; then
+                printf '%s\n' "{\"errors\": [{\"message\": \"Field 'deletedViewId' doesn't exist on type 'DeleteProjectV2ViewPayload'\"}]}"
+                printf '%s\n' "gh: Field 'deletedViewId' doesn't exist on type 'DeleteProjectV2ViewPayload'" >&2
+                exit 1
+            fi
             jq -cn --arg op "${operation}" '{data: {r: {node: {id: ("NEW_" + $op), number: 99,
                 url: ("https://github.com/orgs/new/projects/99")}}}}' |
                 if [[ -n "${jq_program}" ]]; then jq -r -c "${jq_program}"; else cat; fi
@@ -957,8 +976,8 @@ function write_fixtures {
         >"${fixtures}/starUserModel/test-user.json"
     # The projects: NobleFactor's Triage and Schedule templates, Triage with two views; engprod's Triage project lacking
     # the Board view, and its Schedule project with an option for each of its two schedules; devlore with no project of
-    # its own; a closed template. test-user's copies of Triage and Backlog, beside its own Triage project and a project of
-    # no kind. Each project's options have IDs of its own.
+    # its own; a closed template. test-user's copies of Triage and Backlog, beside its own Triage project and a project
+    # of no kind. Each project's options have IDs of its own.
     jq -n 'def status($id): {id: "F_\($id)_status", name: "Status", dataType: "SINGLE_SELECT",
             options: [{id: "O_\($id)_open", name: "Open", color: "GRAY", description: "The issue is open"}]};
         def title($id): {id: "F_\($id)_title", name: "Title", dataType: "TITLE"};
@@ -1288,12 +1307,16 @@ for command in "github labels audit" "github labels sync" "gh labels audit" "gh 
     expect "12: star ${command} is an unknown command" error "" 'unknown command "(labels|gh)"'
 done
 
-# The writes a run made: REST calls with -X, GraphQL mutations, secrets set, repositories made, and pull requests opened,
-# edited, commented on and merged.
+# The writes a run made: REST calls with -X, GraphQL mutations, secrets set, repositories made, and pull requests
+# opened, edited, commented on and merged.
 declare -r writes='def writes: [$calls[] | select((.[0:2] | IN(["secret", "set"], ["repo", "create"], ["pr", "create"],
         ["pr", "edit"], ["pr", "comment"], ["pr", "merge"])) or (index("-X") != null)
     or any(.[]; type == "string" and test("^query=\\s*mutation")))];
-def wrote($pattern): any(writes[]; any(.[]; type == "string" and test($pattern)));'
+def wrote($pattern): any(writes[]; any(.[]; type == "string" and test($pattern)));
+def count($pattern): [writes[] | select(any(.[]; type == "string" and test($pattern)))] | length;
+def before($first; $second): [writes[] | any(.[]; type == "string" and test($first))] as $a
+    | [writes[] | any(.[]; type == "string" and test($second))] as $b
+    | ($a | index(true)) != null and ($b | index(true)) != null and ($a | index(true)) < ($b | index(true));'
 declare -r reference="${data}/devlore/star/extensions/${extension_name}/reference"
 remote NobleFactor
 remote test-user
@@ -1441,6 +1464,16 @@ run_star "${data}" github model apply backlog.json NobleFactor
 expect "26: apply makes a template the account lacks, with its fields and views, and marks it a template" ok "${writes}"'
     any(.[]; .kind == "template" and .path == "Backlog" and .action == "created")
     and wrote("createProjectV2\\(") and wrote("createProjectV2Field") and wrote("createProjectV2View") and wrote("markProjectV2AsTemplate")'
+expect "26: a template apply has just made holds its model's parts alone: GitHub's Status options, View 1 and workflows go" ok "${writes}"'
+    (wrote("NO_todo|NO_progress|NO_done") | not)
+    and count("deleteProjectV2View") == 1 and wrote("deleteProjectV2View.*NV_1")
+    and before("createProjectV2View.*NEW_starCreateProject"; "deleteProjectV2View.*NV_1")
+    and wrote("deleteProjectV2Workflow.*NW_closed") and wrote("deleteProjectV2Workflow.*NW_merged")
+    and before("deleteProjectV2Workflow.*NW_merged"; "markProjectV2AsTemplate")'
+expect "26: a project copied from it keeps what its template gave it, and loses its built-in workflows" ok "${writes}"'
+    wrote("copyProjectV2") and wrote("CO_todo") and (wrote("deleteProjectV2View.*CV_1") | not)
+    and wrote("deleteProjectV2Workflow.*CW_closed") and wrote("deleteProjectV2Workflow.*CW_merged")
+    and count("deleteProjectV2Workflow") == 2 * (count("createProjectV2\\(") + count("copyProjectV2"))'
 
 # 27 and 28. A team lacking a project of a kind gets it, copied from the template and linked to the team; a team's
 # project drifted from its template is brought back, what is its own left alone.
@@ -1450,6 +1483,9 @@ expect "27: a team lacking its Triage project gets one copied from the template,
     and any(writes[]; any(.[]; type == "string" and test("copyProjectV2")) and any(.[]; type == "string" and test("Triage: devlore")))
     and any(writes[]; any(.[]; type == "string" and test("linkProjectV2ToTeam")) and any(.[]; type == "string" and test("T_devlore")))
     and any(writes[]; any(.[]; type == "string" and test("updateProjectV2Collaborators")) and any(.[]; type == "string" and test("WRITER")))'
+expect "27: each project copied loses its built-in workflows, and nothing else of it is deleted" ok "${writes}"'
+    count("copyProjectV2") == 2 and wrote("deleteProjectV2Workflow.*CW_closed") and wrote("deleteProjectV2Workflow.*CW_merged")
+    and count("deleteProjectV2Workflow") == 2 * count("copyProjectV2") and (wrote("deleteProjectV2View|deleteProjectV2Field") | not)'
 expect "28: a team project drifted from its template is brought back, its own schedule options untouched" ok "${writes}"'
     any(.[]; .kind == "project-view" and .path == "Triage: engprod/Board" and .action == "created")
     and any(writes[]; any(.[]; type == "string" and test("createProjectV2View")) and any(.[]; type == "string" and test("PVT_triage_engprod")))
@@ -1461,8 +1497,8 @@ org_template=$'name: Triage\napp-id: ${{ secrets.NOBLEFACTOR_AUTOMATION_APP_ID }
 user_template=$'name: Triage\ntoken: ${{ secrets.ADD_TO_PROJECT_PAT }}'
 
 # 29. A new organization joins through apply: the model, its teams' projects, its .github repository's files from the
-# reference account's as it stands, NobleFactor's name in them its own, and its repository's Triage workflow and variable;
-# the App's secrets, which it has none of, named as steps by hand.
+# reference account's as it stands, NobleFactor's name in them its own, and its repository's Triage workflow and
+# variable; the App's secrets, which it has none of, named as steps by hand.
 repository NobleFactor/.github ".github/ISSUE_TEMPLATE/task.yml=name: Task" "workflow-templates/triage.yml=${org_template}" \
     "CONTRIBUTING.md=# Contributing to NobleFactor" "model.yaml=version: 1" ".github/workflows/triage.yml=${org_template}"
 repository Acme/site
@@ -1479,6 +1515,20 @@ expect "29: apply of the reference brings a new organization into the model" ok 
     and any(.[]; .kind == "workflow" and .path == "Acme/site" and .action == "created" and (.pull_request | test("Acme/site/pull/")))
     and any(.[]; .kind == "variable" and .path == "Acme/site/TRIAGE_PROJECT_URL" and .action == "created"
         and .value == "https://github.com/orgs/Acme/projects/99")'
+expect "29: each template made holds the reference's parts alone, and no project made or copied keeps a built-in workflow" ok "${writes}"'
+    (wrote("NO_todo|NO_progress|NO_done") | not)
+    and count("deleteProjectV2View") == 1 and wrote("deleteProjectV2View.*NV_1")
+    and before("createProjectV2View.*NEW_starCreateProject.*By schedule"; "deleteProjectV2View.*NV_1")
+    and count("createProjectV2\\(") == 4 and count("copyProjectV2") == 12
+    and count("deleteProjectV2Workflow") == 2 * (count("createProjectV2\\(") + count("copyProjectV2"))'
+expect "29: a template or project made says on its own record what its views still need by hand" ok '
+    def steps($kind; $path): first(.[] | select(.kind == $kind and .path == $path and .action == "created")) | .steps // [];
+    (steps("template"; "Schedule") | length == 1 and (.[0] | test("^set the Schedule/By schedule view.s group by to \\[\"Schedule\"\\] in GitHub")))
+    and (steps("template"; "Scenario") | length == 1 and (.[0] | test("^set the Scenario/By scenario view.s group by to ")))
+    and (steps("template"; "Backlog") | length == 1 and (.[0] | test("^set the Backlog/By priority view.s sort by to ")))
+    and steps("template"; "Triage") == []
+    and (steps("project"; "Schedule: web") | length == 1 and (.[0] | test("^set the Schedule: web/By schedule view.s group by to ")))
+    and steps("project"; "Triage: web") == []'
 expect "29: the App's secrets, missing, are steps by hand, set on the organization" ok '
     ([.[] | select(.kind == "secret") | {path, action}] | sort_by(.path)) == [
         {path: "Acme/NOBLEFACTOR_AUTOMATION_APP_ID", action: "by-hand"},
@@ -1508,7 +1558,7 @@ expect "29b: a secret the template does not use is refused, and nothing written"
     'ADD_TO_PROJECT_PAT, which .* does not use' text
 
 # 30. A new user account joins through apply: with no --token, it names the missing secret to set by hand, and makes the
-# rest; with --token env:<NAME>, it sets the secret on each repository, showing the token's fingerprint, never the token.
+# rest; with --token env:<NAME>, it sets the secret on each repository, showing the token's fingerprint, not the token.
 repository David-Noble-at-work/.github ".github/ISSUE_TEMPLATE/task.yml=name: Task" "workflow-templates/triage.yml=${user_template}" \
     "README.md=# David-Noble-at-work's .github"
 repository test-user/personal
@@ -1601,8 +1651,8 @@ run_star "${data}" github model apply fewer-teams.json NobleFactor --prune
 expect "37: with --prune, the account's own backup lacking a team and a role deletes neither" ok "${writes}"'
     (any(writes[]; any(.[]; type == "string" and (test("teams/devlore") or test("teams/engprod/repos/NobleFactor/beta"))))) | not'
 
-# 38. On the account's own model, diff compares no .github file, which is the account's own, and holds each participating
-# repository's workflow to the template and its variable to its team's Triage project.
+# 38. On the account's own model, diff compares no .github file, which is the account's own, and holds each
+# participating repository's workflow to the template and its variable to its team's Triage project.
 repository NobleFactor/.github "workflow-templates/triage.yml=${org_template}"
 repository NobleFactor/alpha ".github/workflows/triage.yml=name: An older Triage"
 printf 'variable NobleFactor/alpha TRIAGE_PROJECT_URL https://github.com/orgs/NobleFactor/projects/6\n' >>"${run_directory}/remotes/variables"

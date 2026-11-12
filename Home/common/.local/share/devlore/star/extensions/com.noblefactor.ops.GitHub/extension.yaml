@@ -43,7 +43,7 @@ commands:
         help: "The account, an organization or a user; required"
 
   - name: github.model.apply
-    help: "Make a model the account's: every difference diff finds made in GitHub, renames in place, nothing deleted without --prune; one record for each difference, with what was done"
+    help: "Make a model the account's: every difference diff finds made in GitHub, renames in place, nothing of the account's deleted without --prune; one record for each difference, with what was done"
     implementation: commands/github-model-apply.star
     args:
       - name: model

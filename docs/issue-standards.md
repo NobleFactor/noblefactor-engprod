@@ -813,11 +813,13 @@ from GitHub when it runs, and the model file in the account's `.github` reposito
 reads. `star github model get <account>` reads the model of any account, ours or not, and `backup <account>` lands it in
 the account's `.github` repository through a pull request (#426). `diff <model> <account>`, `apply <model> <account>`
 and `restore <account> [<revision>]` compare a model with an account's, make a model the account's, and restore a
-backup, `main`'s when no revision is named (#437); neither `apply` nor `restore` deletes anything without `--prune`
-(ruled 2026-11-10), and neither ever deletes a team, a project or a template. `apply` also brings a new account in: its
-`.github` files, and in each participating repository the Triage workflow, its `TRIAGE_PROJECT_URL` and the secrets it
-signs in with, each from the source `--token` names, `env:` or `file:`, never its value. Each names its account, and
-no account is a default. `star github labels audit` and `labels sync`, which still enforced the label
+backup, `main`'s when no revision is named (#437); neither `apply` nor `restore` deletes anything of the account's
+without `--prune` (ruled 2026-11-10), and neither ever deletes a team, a project or a template. A project `apply` has
+just made is brought to its template exactly: GitHub's default Status options, View 1 and built-in workflows go, with or
+without `--prune` (ruled 2026-11-11). `apply` also brings a new account in: its `.github` files, and in each
+participating repository the Triage workflow, its `TRIAGE_PROJECT_URL` and the secrets it signs in with, each from the
+source `--token` names, `env:` or `file:`, never its value. Each names its account, and no account is a default.
+`star github labels audit` and `labels sync`, which still enforced the label
 scheme retired on 2026-11-03, were removed with #437 on 2026-11-10. Until 2026-11-09, `pull` read the whole model into
 the file `--asset` named, its `--account` defaulting to NobleFactor, and `push` was to write a model back (ruled
 2026-11-02 and 2026-11-03).

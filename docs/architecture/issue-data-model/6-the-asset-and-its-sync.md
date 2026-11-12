@@ -36,8 +36,8 @@ star github model restore <account> [<revision>] [--prune] [--token <sources>]
 | `get` | Reads the account's model from GitHub and returns it as one record; `-o yaml` renders it as the model file | #426 |
 | `backup` | Writes `get`'s record to `model.yaml` in the account's `.github` repository through a pull request, when `main`'s differs | #426 |
 | `diff` | Compares a model, a file, with the account's model in GitHub, and returns one record for each difference; writes nothing | #437 |
-| `apply` | Makes the account's model in GitHub the model given: a reference, another account's, or a backup; and gives the account what it needs beyond its model, its `.github` files and each participating repository's Triage workflow, variable and secrets; deletes nothing without `--prune` | #437 |
-| `restore` | Applies the account's backup as it stood at `<revision>` of its `.github` repository, `main` when none is named; deletes nothing without `--prune` | #437 |
+| `apply` | Makes the account's model in GitHub the model given: a reference, another account's, or a backup; and gives the account what it needs beyond its model, its `.github` files and each participating repository's Triage workflow, variable and secrets; deletes nothing of the account's without `--prune` | #437 |
+| `restore` | Applies the account's backup as it stood at `<revision>` of its `.github` repository, `main` when none is named; deletes nothing of the account's without `--prune` | #437 |
 
 - **`get` returns data.** `show` would be for people; star's `--output`, `--filter` and `--jq` serve them. There is no
   `--asset`: the model's file is wherever `get`'s output is redirected. There is no `--check`: a preview is `diff`, or
@@ -53,25 +53,29 @@ star github model restore <account> [<revision>] [--prune] [--token <sources>]
   input, `-`, waits on star's command provider, which gives an extension's commands standard input
   ([NobleFactor/devlore-cli#1136](https://github.com/NobleFactor/devlore-cli/issues/1136)).
 - **`apply` reconciles; it never deletes and recreates.** It creates what is missing and changes what differs, and
-  deletes what the model lacks only with `--prune`. On the same account it matches by id, so a rename is a rename;
-  across accounts, by name. `apply` takes any model, so it is also how a new account is set up. It writes in an order
-  that keeps every reference whole, and returns `diff`'s records, each with what it did: `created`, `changed`,
-  `renamed`, `deleted`, `kept` or `by-hand`, with the step to take. Built on 2026-11-10 (#437):
+  deletes what the account holds that the model lacks only with `--prune`. On the same account it matches by id, so a
+  rename is a rename; across accounts, by name. `apply` takes any model, so it is also how a new account is set up. It
+  writes in an order that keeps every reference whole, and returns `diff`'s records, each with what it did: `created`,
+  `changed`, `renamed`, `deleted`, `kept` or `by-hand`, with the step to take. Built on 2026-11-10 (#437):
   - Issue types and issue fields, through GitHub's REST calls; an option list is sent whole, each option with its id,
     so that no issue loses its value.
   - Labels, on each participating repository, from the account's own backup or a reference; another account's labels
     are never carried, since its repositories are its own. With a reference, `--prune` removes only labels of the
     kinds it names, and `good first issue` is left to GitHub.
   - The templates, a missing one made with its fields and views and marked a template; in a user account, the copy.
+    One just made holds nothing of the account's, only what GitHub gives every new project, so it is brought to the
+    model exactly, with or without `--prune` (ruled 2026-11-11): GitHub's Status options and its View 1 go where the
+    model names neither, and its built-in workflows, which no project has (§ One model per account).
   - Each project of a kind held to its template: every team that maintains a repository gets one project for each
     template, `<Kind>: <team>`, copied from the template, linked to the team and given the team's write role; in a user
-    account, `<Kind>: <account>`. A drifted one is brought back. Its rows, its Schedule or Scenario options, one per
-    schedule or scenario, and its iterations are its own, and left alone. An option renamed on a template is renamed on
-    each copy under its old name. No project or template is ever deleted, even with `--prune`.
+    account, `<Kind>: <account>`. One just copied loses whatever built-in workflows it came with, and keeps what its
+    template gave it (ruled 2026-11-11). A drifted one is brought back. Its rows, its Schedule or Scenario options, one
+    per schedule or scenario, and its iterations are its own, and left alone. An option renamed on a template is
+    renamed on each copy under its old name. No project or template is ever deleted, even with `--prune`.
   - Teams, from the account's own backup alone: their attributes set and their roles added or raised. No team is
     deleted, and no role removed or lowered, even with `--prune` (the owner, 2026-11-10).
   - What GitHub's API cannot write, a view's grouping and sort and a type's pinned fields, is a step by hand, each
-    value named.
+    value named. The steps for the views of a template or project just made are on its own record.
 - **A new account joins through `apply`** (#437, the owner, 2026-11-10). Beyond the model, an account needs its
   `.github` repository's files, and in each participating repository the Triage workflow, the `TRIAGE_PROJECT_URL`
   variable naming its team's Triage project, and the secrets the workflow signs in with:
@@ -95,13 +99,15 @@ star github model restore <account> [<revision>] [--prune] [--token <sources>]
   does not use, before anything is written; star calls no other tool for a secret. The value goes from its source to
   `gh secret set` through one shell pipeline, so it never enters Starlark or a record; the record shows the first 12
   hexadecimal digits of its SHA-256. Without `--token`, a secret already set is kept; with it, the secret is replaced.
-- **Nothing is deleted without `--prune`** (ruled 2026-11-10). With `--prune`, `apply` and `restore` also delete what
-  the model lacks, and first list each deletion and how many issues and rows it touches; once devlore's TUI can ask,
-  they ask about each one, and `--unattended --prune` deletes without asking. Without it, `restore` puts back what
-  changed or vanished, leaves what was added since the revision, and lists what it left. A deletion is the one change a
-  restore cannot undo: GitHub strips a deleted label from every issue that carries it, and blanks every row's value in a
-  deleted field or option. The name is `kubectl apply --prune`'s and `git push --prune`'s, the tools that apply a model
-  to a remote; it replaces the `--delete` of 2026-10-22, which followed rsync when the verbs were `push` and `pull`.
+- **Nothing of the account's is deleted without `--prune`** (ruled 2026-11-10). With `--prune`, `apply` and `restore`
+  also delete what the model lacks, and first list each deletion and how many issues and rows it touches; once devlore's
+  TUI can ask, they ask about each one, and `--unattended --prune` deletes without asking. Without it, `restore` puts
+  back what changed or vanished, leaves what was added since the revision, and lists what it left. A deletion is the one
+  change a restore cannot undo: GitHub strips a deleted label from every issue that carries it, and blanks every row's
+  value in a deleted field or option. What GitHub puts in a project `apply` has just made is not the account's, and no
+  issue or row holds it, so it goes without `--prune` (ruled 2026-11-11; above). The name is `kubectl apply --prune`'s
+  and `git push --prune`'s, the tools that apply a model to a remote; it replaces the `--delete` of 2026-10-22, which
+  followed rsync when the verbs were `push` and `pull`.
 - **Interactive by default; star's `--unattended` skips every prompt.** There is no `--force`. For now nothing asks: an
   extension cannot ask until devlore's TUI can
   ([NobleFactor/devlore-cli#1219](https://github.com/NobleFactor/devlore-cli/issues/1219)), so each place a question
@@ -150,7 +156,8 @@ holds:
   default labels. Ruled 2026-11-03: labels are held per repository, and a project's built-in workflows are fixed GitHub
   functions with arguments. Since 2026-11-03 no template or copy, and none of each team's and the user account's four
   projects, has one: GitHub's API can't make one or turn one on, so the projects of a kind match only with none
-  ([section 3](3-collections.md#triage-and-the-backlog)). Also ruled 2026-11-03: GitHub's built-in
+  ([section 3](3-collections.md#triage-and-the-backlog)), and `apply` deletes those GitHub gives a project it has just
+  made or copied (#437, 2026-11-11). Also ruled 2026-11-03: GitHub's built-in
   auto-add workflow is not used; a new issue reaches its team's Triage project through a GitHub Actions workflow in
   its repository, run when an issue is opened or transferred, using `actions/add-to-project`. GitHub Actions cannot run
   a workflow when a project row changes: `projects_v2_item` is a webhook event for organization webhooks and GitHub
@@ -697,7 +704,7 @@ What it restores, and what it cannot:
 | A type, a label, a field or an option renamed or given the wrong description or color | `restore` from the last good commit | none: these are held by id, and the restore corrects them in place |
 | A label deleted | `restore` recreates it | the issues that carried it do not get it back; GitHub stripped it on deletion. The report's last rows say which issues had it |
 | A field or an option deleted | `restore` recreates it | with a new id, so the backup's id is updated by the next `backup`, and every row's value in that field or option is gone; GitHub cleared it on deletion |
-| A template deleted | `restore` recreates it from the backup with its fields, options and views, each view's name, layout, filter and fields; its grouping and sort are steps by hand (#437). No template has had a built-in workflow since 2026-11-03, so there is none to restore (§ One model per account) | with new ids, so the backup's ids are updated by the next `backup` |
+| A template deleted | `restore` recreates it from the backup with its fields, options and views, each view's name, layout, filter and fields; its grouping and sort are steps by hand (#437). No template has had a built-in workflow since 2026-11-03, so there is none to restore, and those GitHub gives the new one are deleted (§ One model per account) | with new ids, so the backup's ids are updated by the next `backup` |
 | A team's Triage, Backlog, Schedule or Scenario project deleted | `restore` and `apply` copy it again from its template and link it to its team, since every team that maintains a repository has one of each (#437) | its rows are gone: the issues exist, their membership and their Schedule, Scenario, Step, Beat and Iteration values do not. The blocked-by links between its steps live on the issues and survive. A Schedule or Scenario issue's body holds no step or beat table, only a line naming its board and option |
 | The asset itself damaged | git | a commit before the damage, or a `backup` from GitHub if GitHub is right |
 
