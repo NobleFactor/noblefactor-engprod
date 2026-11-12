@@ -1,7 +1,7 @@
 ---
 title: "git close-branch deletes only what is verified merged; star reads whole accounts, in any case"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/482
-status: active
+status: complete
 created: 2026-11-11
 updated: 2026-11-11
 ---
@@ -46,7 +46,7 @@ Read on 2026-11-11 from develop at `32d773e`:
 | `git-close-branch`, `survey_branch` | A branch with no local ref returns with no refusal whenever origin has it; `remove_branch` then runs `git push origin --delete`. Neither of `delete_flag`'s two signals, GitHub reporting the pull request merged and the target carrying its squash commit, is asked for |
 | `git-close-branch`, `delete_flag` | Once GitHub reports the pull request merged, it compares the local tip with origin's only while `refs/remotes/origin/<branch>` exists; with origin's branch gone it answers `-D` |
 | `tests/Test-GitCloseBranch` | Its stand-in `gh` answers every pull request merged, number 1, and nothing else; no case has a remote-only branch or a commit after the squash merge |
-| The extension's `commands/model.star` | 16 GraphQL connections read with a fixed `first:` and no `pageInfo`: an account's projects (50); each project's teams (20), repositories (50), fields (50) and views (25), and each view's fields (50), grouping (10), vertical grouping (10) and sort (10); an organization's issue fields (50), issue types (50), teams (100) and each team's repositories (100); a user's repositories (100), and each one's topics (20) and labels (100). And each repository's labels over REST, 100 a page, one page read |
+| The extension's `commands/model.star` | 16 GraphQL connections read with a fixed `first:` and no `pageInfo`: an account's projects (50); each project's teams (20), repositories (50), fields (50) and views (25), and each view's fields (50), grouping (10), vertical grouping (10) and sort (10); an organization's issue fields (50), issue types (50), teams (100) and each team's repositories (100); a user's repositories (100), and each one's topics (20) and labels (100). And two lists over REST, one page of each read: each repository's labels, 100 a page, and an organization's issue types, at GitHub's default |
 | The extension's `commands/apply.star` | A project just made has its built-in workflows read 50 at a time, one page |
 | The extension's `commands/scheme.star` | `models_for` keys each model by the account as the caller spelled it; `model_for` looks one up by a repository's owner as GitHub spells it, and fails, "no model was read for NobleFactor" |
 | `tests/Test-StarGitHub` | No fixture has a second page; no case names an account in another case |
@@ -75,8 +75,9 @@ commits made after the pull request's head.
 Each GraphQL connection listed under Current State also selects `pageInfo { hasNextPage }`, and a next page fails the
 read, naming the account and the connection, for example "NobleFactor has more than 50 projects, and star reads one
 page of them (#484)". `get`, `diff`, `apply`, `backup` and `restore` all read before they write, so each stops before
-writing anything. The REST read of a repository's labels fails the same way when its `Link` header names a next page,
-and so does `apply`'s read of a new project's built-in workflows.
+writing anything. The REST reads of a repository's labels and an organization's issue types fail the same way when
+GitHub's `Link` header names a next page, and so does `apply`'s read of a new project's built-in workflows: 19 reads in
+all.
 
 ### Requirement 4: an account is found in any case (#485)
 
@@ -97,7 +98,7 @@ logins ignore case. `noblefactor/alpha` and `NobleFactor/alpha` both find NobleF
 | 8 | Every existing case of `tests/Test-GitCloseBranch` | Passes, its stand-in's answers per case: the state, the number and the head |
 | 9 | `get`, `diff` and `apply` of an account whose projects have a second page | Each fails, naming the projects and the account; nothing written |
 | 10 | A project's fields, and an organization's teams, each with a second page | Each fails, naming the connection |
-| 11 | A repository's labels over REST with a next page | Fails, naming the repository's labels |
+| 11 | A repository's labels, and an organization's issue types, over REST with a next page | Each fails, naming what it read |
 | 12 | The report and the sweep given `noblefactor/alpha` | NobleFactor's model read once; its issues placed as for `NobleFactor/alpha` |
 | 13 | Every existing case of `tests/Test-StarGitHub` | Passes |
 
@@ -125,11 +126,16 @@ both; they hold the fix to closing what it should.
 
 ### Phase 3: star, test first (#484, #485)
 
-- [ ] Cases 9 to 12, failing against develop; then Requirements 3 and 4; cases 9 to 13 pass; `make check` passes
+- [x] Cases 9 to 12, written first as Test-StarGitHub's cases 41 to 45, its stand-in finding a login in any case and
+      sending a `Link` header for a REST fixture of more than one page, as GitHub does: against develop at `32d773e`
+      all nine checks failed, 41 to 44 reading one page without a word and 45 stopping on "no model was read for
+      NobleFactor". Then Requirements 3 and 4: `page` checks each of `model.star`'s 16 connections and `apply`'s read
+      of a new project's built-in workflows, and `conditional_get` its two REST lists; models are keyed and looked up
+      lowercased, the sweep's and the report's parent chain's among them. 145 of 145 cases pass; `make check` passes
 
 ### Phase 4: merge
 
-- [ ] The pull request script written, shown and handed over. It opens the pull request, closing #482, #483, #484 and
+- [x] The pull request script written, shown and handed over. It opens the pull request, closing #482, #483, #484 and
       #485, waits for CI, merges, comments on each issue with its evidence of completion, sets each row Closed with the
       pull request as its Worktree, and runs `git close-branch`
 
@@ -144,6 +150,8 @@ both; they hold the fix to closing what it should.
 | `Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/model.star` | Modify | Requirement 3 |
 | `Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/apply.star` | Modify | Requirement 3, the built-in workflows' read |
 | `Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/scheme.star` | Modify | Requirement 4 |
+| `Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/records.star` | Modify | Requirement 4: a parent's model looked up as `model_of` does |
+| `Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/github-triage-sweep.star` | Modify | Requirement 4: the sweep's model looked up through `model_of` |
 | `tests/Test-StarGitHub` | Modify | Cases 9 to 13 |
 
 ## Related Documents

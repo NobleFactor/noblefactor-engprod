@@ -331,11 +331,13 @@ function check {
 # finds it.
 #
 # A fixture may be the data directory's own, under ${XDG_DATA_HOME}/fixtures, which a case gives it with override; it
-# is answered before the run's. An account's .github repository is a bare repository under ${GH_REMOTES}, which `repo
-# view`, `repo create` and `repo clone` answer from, and a pull request opened on it is merged by moving its main to the
-# pull request's branch: the git side of `star github model backup` (#426). Its pull requests are remembered in
-# ${GH_REMOTES}/pulls, across runs, so that a backup run again finds the one an earlier run left open; its main's rules,
-# its head commit's workflow runs and its checks are as the case's ci set them.
+# is answered before the run's. A login in a fixture's path matches in any case, as GitHub's logins do (#485), and a
+# REST fixture of more than one page answers its first with a Link header naming the next, as GitHub does (#484). An
+# account's .github repository is a bare repository under ${GH_REMOTES}, which `repo view`, `repo create` and `repo
+# clone` answer from, and a pull request opened on it is merged by moving its main to the pull request's branch: the
+# git side of `star github model backup` (#426). Its pull requests are remembered in ${GH_REMOTES}/pulls, across runs,
+# so that a backup run again finds the one an earlier run left open; its main's rules, its head commit's workflow runs
+# and its checks are as the case's ci set them.
 #
 # The stand-in for sleep records how long it was asked to wait, among gh's calls, and returns at once.
 #
@@ -374,9 +376,23 @@ function answer {
     done
 }
 
+# cased names a file under a fixtures directory as given, or, since GitHub's logins ignore case, the file whose path
+# matches it in another case (#485); as given when neither is there.
+function cased {
+    local root="$1" relative="$2" found=""
+    if [[ -e "${root}/${relative}" ]]; then
+        printf '%s' "${root}/${relative}"
+        return 0
+    fi
+    [[ -d "${root}" ]] && found="$(find "${root}" -ipath "${root}/${relative}" -print -quit 2>/dev/null)"
+    printf '%s' "${found:-${root}/${relative}}"
+}
+
 # fixture names a fixture: the data directory's own, which a case may give it, before the run's.
 function fixture {
-    if [[ -r "${XDG_DATA_HOME}/fixtures/$1" ]]; then printf '%s' "${XDG_DATA_HOME}/fixtures/$1"; else printf '%s' "${GH_FIXTURES}/$1"; fi
+    local own
+    own="$(cased "${XDG_DATA_HOME}/fixtures" "$1")"
+    if [[ -r "${own}" ]]; then printf '%s' "${own}"; else cased "${GH_FIXTURES}" "$1"; fi
 }
 
 # ci_mode prints how a repository's CI behaves, as the case's ci set it: none, pass, fail or never.
@@ -679,7 +695,12 @@ if [[ "${rest_path}" != graphql ]]; then
         exit 0
     fi
     [[ -r "${file}" ]] || { printf 'HTTP/2.0 404 Not Found\n\n{}\n'; exit 1; }
-    printf 'HTTP/2.0 200 OK\nEtag: "e-%s"\n\n' "${rest_path//[^a-z]/}"
+    printf 'HTTP/2.0 200 OK\nEtag: "e-%s"\n' "${rest_path//[^a-z]/}"
+    # A fixture of more than one page says so as GitHub does, in a Link header naming the next (#484).
+    if [[ "$(jq length "${file}")" -gt 1 ]]; then
+        printf 'Link: <https://api.github.com/%s&page=2>; rel="next"\n' "${rest_path}"
+    fi
+    printf '\n'
     jq -c '.[0]' "${file}"
     exit 0
 fi
@@ -695,18 +716,18 @@ case ${operation} in
     starIssues)
         filter=.
         [[ "${query}" == *"states: [OPEN]"* ]] && filter='.data.repository.issues.nodes |= map(select(.state == "OPEN"))'
-        answer "${GH_FIXTURES}/issues/${owner}/${name}.json" "${filter}"
+        answer "$(cased "${GH_FIXTURES}" "issues/${owner}/${name}.json")" "${filter}"
         ;;
     starSearchCount | starSearch)
         [[ "${vars[q]:-}" =~ repo:([^/[:space:]]+)/([^[:space:]\)]+) ]] || { printf 'stand-in gh: no repo: in %s\n' "${vars[q]:-}" >&2; exit 1; }
-        answer "${GH_FIXTURES}/search/${BASH_REMATCH[1]}/${BASH_REMATCH[2]}.json"
+        answer "$(cased "${GH_FIXTURES}" "search/${BASH_REMATCH[1]}/${BASH_REMATCH[2]}.json")"
         ;;
     starOwner | starOrganizationModel | starUserModel | starProjects)
         answer "$(fixture "${operation}/${login}.json")"
         ;;
     starTriage)
         [[ "${query}" =~ query:[[:space:]]*\"Triage:[[:space:]]*([^\"]+)\" ]] || { printf 'stand-in gh: no Triage title in %s\n' "${query}" >&2; exit 1; }
-        answer "${GH_FIXTURES}/starTriage/${login}/${BASH_REMATCH[1]}.json"
+        answer "$(cased "${GH_FIXTURES}" "starTriage/${login}/${BASH_REMATCH[1]}.json")"
         ;;
     starTriageItems)
         [[ "${query}" =~ node\(id:[[:space:]]*\"([^\"]+)\" ]] || exit 1
@@ -1753,6 +1774,62 @@ expect "40: an Iteration field that matches the model is left alone, its iterati
     (wrote("updateProjectV2Field.*iterationConfiguration") | not)
     and (any(.[]; .path == "Schedule/Iteration" or .path == "Schedule: engprod/Iteration") | not)
     and (any($calls[]; any(.[]; type == "string" and test("starIterations"))) | not)'
+
+# 41 to 44. Star reads each of GitHub's connections one page deep, and a second page stops it, naming what it could not
+# read whole, rather than read part of an account: get, diff and apply each stop, apply writing nothing (#484).
+make_extension "${run_directory}/data-pages-projects"
+jq '.[0].data.organization.projectsV2.pageInfo = {hasNextPage: true}' "${run_directory}/fixtures/starProjects/NobleFactor.json" |
+    override "${run_directory}/data-pages-projects" starProjects/NobleFactor.json
+run_star "${run_directory}/data-pages-projects" github model get NobleFactor
+expect "41: get stops at a second page of an account's projects, naming them and the account" error "" \
+    'more projects of NobleFactor than star reads in one page'
+run_star "${run_directory}/data-pages-projects" github model diff noblefactor.json NobleFactor
+expect "41: so does diff" error "" 'more projects of NobleFactor than star reads in one page'
+run_star "${run_directory}/data-pages-projects" github model apply noblefactor.json NobleFactor
+expect "41: and apply, which writes nothing" error "${writes}"'(writes | length) == 0' \
+    'more projects of NobleFactor than star reads in one page' text
+
+make_extension "${run_directory}/data-pages-fields"
+jq '.[0].data.organization.projectsV2.nodes |= map(if .id == "PVT_template_triage" then .fields.pageInfo = {hasNextPage: true}
+        else . end)' "${run_directory}/fixtures/starProjects/NobleFactor.json" |
+    override "${run_directory}/data-pages-fields" starProjects/NobleFactor.json
+run_star "${run_directory}/data-pages-fields" github model get NobleFactor
+expect "42: get stops at a second page of a project's fields, naming the project and the account" error "" \
+    'more fields of the project Triage of NobleFactor than star reads in one page'
+
+make_extension "${run_directory}/data-pages-teams"
+jq '.[0].data.organization.teams.pageInfo = {hasNextPage: true}' "${run_directory}/fixtures/starOrganizationModel/NobleFactor.json" |
+    override "${run_directory}/data-pages-teams" starOrganizationModel/NobleFactor.json
+run_star "${run_directory}/data-pages-teams" github model get NobleFactor
+expect "43: get stops at a second page of an organization's teams, naming them" error "" \
+    'more teams of NobleFactor than star reads in one page'
+
+make_extension "${run_directory}/data-pages-labels"
+jq '. + .' "${run_directory}/fixtures/rest/repos/NobleFactor/alpha/labels_per_page_100.json" |
+    override "${run_directory}/data-pages-labels" rest/repos/NobleFactor/alpha/labels_per_page_100.json
+run_star "${run_directory}/data-pages-labels" github model get NobleFactor
+expect "44: get stops at a repository's labels when GitHub's Link header names a next page" error "" \
+    'more labels of NobleFactor/alpha than star reads in one page'
+make_extension "${run_directory}/data-pages-types"
+jq '. + .' "${run_directory}/fixtures/rest/orgs/NobleFactor/issue-types.json" |
+    override "${run_directory}/data-pages-types" rest/orgs/NobleFactor/issue-types.json
+run_star "${run_directory}/data-pages-types" github model get NobleFactor
+expect "44: and at an organization's issue types" error "" 'more issue types of NobleFactor than star reads in one page'
+
+# 45. GitHub's logins ignore case, and so does star: the report and the sweep, given an account spelled otherwise than
+# GitHub spells it, place its issues as they do for the account as GitHub spells it, its model read as often (#485).
+run_star "${data}" github schedule report NobleFactor/alpha
+spelled="$(jq -c '[.[].issue | ascii_downcase] | sort' <<<"${output}")"
+spelled_reads="$(grep -c starOrganizationModel "${run_directory}/calls.jsonl" || true)"
+run_star "${data}" github schedule report noblefactor/alpha
+expect "45: the report given noblefactor/alpha places its issues as for NobleFactor/alpha, its model read as often" ok \
+    '([.[].issue | ascii_downcase] | sort) == '"${spelled}"' and ([$calls[] | select(any(.[]; type == "string"
+        and test("starOrganizationModel")))] | length) == '"${spelled_reads}"
+run_star "${data}" github triage sweep NobleFactor
+swept="$(jq -c '[.[].issue | ascii_downcase] | sort' <<<"${output}")"
+run_star "${data}" github triage sweep noblefactor
+expect "45: the sweep given noblefactor sweeps NobleFactor's issues as for NobleFactor" ok \
+    '([.[].issue | ascii_downcase] | sort) == '"${swept}"
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"

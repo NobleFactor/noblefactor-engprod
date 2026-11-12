@@ -25,7 +25,7 @@
 # Issue types and issue fields are written through GitHub's REST calls, which take the database IDs get records; the
 # rest through GraphQL, each mutation's input written as literals, so that every value is in the call star narrates.
 
-load("commands/model.star", "escape", "graphql", "owner_id", "quote", "read_project", "rest", "sh", "templates_of")
+load("commands/model.star", "escape", "graphql", "owner_id", "page", "quote", "read_project", "rest", "sh", "templates_of")
 load("commands/participation.star", "TEMPLATE", "token_records", participation_apply = "apply")
 load("commands/reconcile.star", "differs", "every_difference", "match", "own_options", "prepare", "template_renames")
 load("commands/tokens.star", "for_secrets")
@@ -464,8 +464,9 @@ def _steps(done, kinds, prefix):
 
 def _no_workflows(project_id):
     """Deletes the built-in workflows GitHub gives a project just made or copied: no project has one (ruled 2026-11-03)."""
-    data = graphql("query starWorkflows { node(id: " + _s(project_id) + ") { ... on ProjectV2 { workflows(first: 50) { nodes { id } } } } }")
-    for w in ((data.get("node") or {}).get("workflows") or {}).get("nodes") or []:
+    data = graphql("query starWorkflows { node(id: " + _s(project_id) + ") { ... on ProjectV2 { workflows(first: 50) { nodes { id } " +
+                   "pageInfo { hasNextPage } } } } }")
+    for w in page((data.get("node") or {}).get("workflows"), "built-in workflows of the project " + project_id):
         mutate("mutation starDeleteWorkflow { r: deleteProjectV2Workflow(input: {workflowId: " + _s(w["id"]) + "}) { deletedWorkflowId } }")
 
 # ── templates, and each team's projects of a kind ───────────────────────────

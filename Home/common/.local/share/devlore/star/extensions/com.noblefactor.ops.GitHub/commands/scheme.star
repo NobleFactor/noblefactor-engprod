@@ -172,18 +172,22 @@ def derive(model):
     }
 
 def models_for(accounts):
-    """Each account's model, read from GitHub now and derived, by account: one read for each account named, once."""
+    """Each account's model, read from GitHub now and derived, by account: one read for each account named, once.
+
+    GitHub's logins ignore case, so each model is keyed by its account lowercased, and model_of looks one up the same way:
+    an account found however it is spelled, by the caller or by GitHub (#485).
+    """
     models = {}
     for account in accounts:
-        if account not in models:
-            models[account] = derive(read_model(account))
+        if account.lower() not in models:
+            models[account.lower()] = derive(read_model(account))
     return models
 
 def model_of(models, account):
-    """The account's model among those read; fails, naming the account, when it was not read."""
-    if account not in models:
+    """The account's model among those read, however it is spelled; fails, naming the account, when it was not read."""
+    if account.lower() not in models:
         fail("no model was read for " + account)
-    return models[account]
+    return models[account.lower()]
 
 def model_for(models, repo):
     """The model of the account that owns repo, owner/name, among those read."""
