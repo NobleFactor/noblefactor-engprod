@@ -161,8 +161,10 @@ can't know whose word it acted on, only who ran it:
 
 ### add
 
-`add <schedule> <issue>... [--after <step>] [--blocked-by <issue>]... [--assignee <login>] --reason <text>` puts each
-issue on the schedule, in the order given (#438):
+`add <schedule> <issue>... [--after <step>] [--blocked-by <issue>[,<issue>...]] [--assignee <login>] --reason <text>`
+puts each issue on the schedule, in the order given. Built on 2026-11-12 (#438) and proved that day in
+NobleFactor-sandbox ([section 6](6-the-asset-and-its-sync.md#where-star-githubs-proofs-run)); a user account's
+half waits on David-Noble-at-home. `--blocked-by` takes a comma-separated list, since no star flag repeats.
 
 - Without `--after`, each takes the next step. With `--after <step>`, they take the steps after that one, and every
   later step moves down, the steps staying consecutive whole numbers (ruled 2026-11-11, #438).
@@ -177,6 +179,13 @@ issue on the schedule, in the order given (#438):
 `add` refuses, writing nothing, an issue that is closed, already on this schedule, of a type other than Task or Bug,
 or of another account; a `--blocked-by` issue of another account; and a `--after` step the schedule doesn't have.
 Iteration is left for sprint planning to set.
+
+**How a run that stops is finished, as built.** `add` writes its amendment line first, ending "(in progress)", and
+settles it last, dropping the marker. The line is the change's record as it was planned, so a run that stops partway
+leaves one a reader sees is unfinished, and the same command run again finishes it, keeping the steps the first run
+moved among it. Any other issue already on the schedule is refused: most steps went onto their schedules by hand,
+before `add`, and no amendment names them, so an issue on the schedule with no amendment is not a sign of a run that
+stopped. The later rows move from the highest down, which keeps their order should a run stop between them.
 
 ### move
 

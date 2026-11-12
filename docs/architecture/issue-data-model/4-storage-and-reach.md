@@ -354,7 +354,8 @@ leaves. Out of Triage, declined work is closed as completed with Resolution Decl
 the Backlog with their Priority or onto a schedule. From the Backlog, work goes onto a schedule highest Priority first,
 with the schedule's option, the next step or the step the schedule's owner gives it, Status Open and its blocked-by
 links. A committed schedule takes it only by its owner's amendment, recorded in the Schedule issue.
-`star github schedule add` (#438) will make that move in one command. An issue on another team's project is assigned to
+`star github schedule add` (#438), built on 2026-11-12, makes that move in one command. An issue on another team's
+project is assigned to
 an accountable member of that team: GitHub allows up to 10 assignees on an issue, any organization member who can read
 the repository among them (GitHub's documentation on assigning issues, read 2026-11-04), and all five of NobleFactor's
 participating repositories are public. The person whose name is on an issue moves it to another team the way any move is

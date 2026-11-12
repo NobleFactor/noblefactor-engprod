@@ -29,7 +29,8 @@ forms, and the 17 open issues under NobleFactor/devlore-cli#463, which the repor
 
 - [x] Questions 1 to 8 ruled, 2026-11-11 and 2026-11-12
 - [x] The design approved by the owner, 2026-11-12 (#439)
-- [ ] `add` built, with `--after` (#438)
+- [x] `add` built, with `--after`, on 2026-11-12, and proved that day in NobleFactor-sandbox; a user account's half
+  waits on David-Noble-at-home (#438)
 - [ ] `new` built, and Start-Claude's `--schedule new` retired with it (#509)
 - [ ] `get` and `list` built (#510)
 - [ ] `move` and `remove` built (#511)

@@ -104,7 +104,8 @@ leaves. Out of Triage, accepted tasks and bugs go to the Backlog with their Prio
 an issue's Triage row as part of its decision, and the sweep (#436) removes none: an issue someone closes outside triage
 stays in its Triage project until triage decides its disposition. Work goes from the Backlog onto a schedule highest
 Priority first, and a committed schedule takes it only by its owner's amendment, recorded in the Schedule issue;
-`star github schedule add` (#438) will make that move in one command. A task or a bug found while walking a scenario
+`star github schedule add` (#438), built on 2026-11-12, makes that move in one command. A task or a bug found while
+walking a scenario
 waits in the scenario until it moves to Triage or straight onto a schedule (below). The sweep will return an issue that
 is a row of more than one of its account's projects, Scenario included, or is on more than one schedule or scenario, to
 its team's Triage project.

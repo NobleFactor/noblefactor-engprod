@@ -8,15 +8,17 @@ title: "6. The asset and its sync — Status"
 **Feature:** [NobleFactor/noblefactor-engprod#332](https://github.com/NobleFactor/noblefactor-engprod/issues/332)
 **Work:** [NobleFactor/noblefactor-engprod#303](https://github.com/NobleFactor/noblefactor-engprod/issues/303)
 **State:** Ruled 2026-10-22, from the owner's words of 2026-10-21 and 2026-10-22; the syntax and the file's shape were
-proposed and accepted that day, and have since been revised. Ruled 2026-11-02 and 2026-11-03: the option is
-`--account`, not `--org`, and `pull`'s `--account` defaults from star configuration, `github.account`, which defaults
-to NobleFactor; `pull` takes the whole model, every repository the account owns, and has no `--repo`; the model file
-is named by `--asset`. The model holds an account's issue types (type labels in a user account), its issue fields,
-each repository's labels, its teams, and its four project templates, Triage, Backlog, Schedule and Scenario (copies of
-them in a user account), with their custom fields, options and views, among them the Schedule and Scenario fields and
-Iteration. It leaves out issues, the projects made from templates, any project's built-in workflows and an
-organization's default labels. Ruled 2026-11-03: Thread is renamed Scenario, and each team, and each user account, has
-one Triage, Backlog, Schedule and Scenario project, with no project per schedule or per scenario.
+proposed and accepted that day, and have since been revised. Ruled 2026-11-02 and 2026-11-03: the option is `--account`,
+not `--org`, and `pull`'s `--account` defaults from star configuration, `github.account`, which defaults to NobleFactor;
+`pull` takes the whole model, every repository the account owns, and has no `--repo`; the model file is named by
+`--asset`. The model holds an account's issue types (type labels in a user account), its issue fields, each repository's
+labels, its teams, and its four project templates, Triage, Backlog, Schedule and Scenario (copies of them in a user
+account), with their custom fields, options and views, among them the Schedule and Scenario fields and Iteration. It
+leaves out issues, the projects made from templates, any project's built-in workflows and an organization's default
+labels. Ruled 2026-11-03: Thread is renamed Scenario, and each team, and each user account, has one Triage, Backlog,
+Schedule and Scenario project, with no project per schedule or per scenario. Ruled 2026-11-12, on #438's plan: an
+organization's half of a star github command is proved live in NobleFactor-sandbox, made that day to last and built from
+NobleFactor's model by `apply`; a user account's half waits on David-Noble-at-home (§ Where star github's proofs run).
 
 Ruled 2026-11-09 (#426): GitHub is the model. A command reads an account's model from GitHub when it needs it, and the
 model file in the account's `.github` repository is a backup, written by `backup` and read only by `restore`. Five

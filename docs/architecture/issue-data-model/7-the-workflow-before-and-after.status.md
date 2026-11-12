@@ -120,8 +120,9 @@ each value means.
   without the section, and set Severity N/A at filing on an issue of a type other than Bug. Ruled 2026-11-03, the plan's
   question 18: a repository takes part when a team has the maintain role on it, or, in a user account, when it has the
   topic issue-model.
-- [ ] `star github schedule add` gives a row its step number and its blocked-by links and writes its amendment, in one
-  act (#438).
+- [x] `star github schedule add` gives a row its step number and its blocked-by links and writes its amendment, in one
+  act (#438): built on 2026-11-12 and proved that day in NobleFactor-sandbox; a user account's half waits on
+  David-Noble-at-home.
 - [ ] The report and the audit read the type and the link first (#379), and the rows of the team's projects (#427).
 - [ ] Retired from the guidance, in [issue-standards.md](../../issue-standards.md) on this branch under #303: Chore
   and its `**Chore:**` marker, and the `Epic:` and `Thread:` label conventions, with the `Epic:Ops:Process` hub; and,

@@ -135,10 +135,12 @@ restores it (§ Rulings).
 
 ### Phase 5: documents and merge
 
-- [ ] Sections 3, 7 and 8 and their status pages, the index, issue-standards.md and agent-rules.md brought to `add` as
-      built, where they say it will come; NobleFactor-sandbox recorded in section 6 as where star github proofs
-      run; the pull request script written, shown and handed over. It leaves #438 open, as the ruling of 2026-11-12
-      has it, and links the pull request in step 28's Worktree column
+- [x] Sections 1, 3, 4, 5, 7 and 8 of the issue data model, the status pages of 6, 7 and 8, the index,
+      issue-standards.md and development-process.md brought to `add` as built, where they said it would come;
+      agent-rules.md names it nowhere. Section 8's § add gains the comma-separated `--blocked-by` and how a run that
+      stops is finished. NobleFactor-sandbox recorded in section 6 as where star github's proofs run. The pull request
+      script written, shown and handed over. It leaves #438 open, as the ruling of 2026-11-12 has it, and links the pull
+      request in step 28's Worktree column
 
 ## Files to Create/Modify
 
@@ -150,8 +152,8 @@ restores it (§ Rulings).
 | `.../templates/amendment.md.template` | Create | The amendment line |
 | `.../extension.yaml` | Modify | `github.schedule.add` |
 | `tests/Test-StarGitHub` | Modify | The stand-in's new operations, `templates/` in each case's extension, cases 46 on |
-| `docs/architecture/issue-data-model/` sections 3, 7 and 8, their status pages, and `index.md` | Modify | `add` as built |
-| `docs/issue-standards.md`, `docs/guides/agent-rules.md` | Modify | Where they say `add` will come |
+| `docs/architecture/issue-data-model/` sections 1, 3, 4, 5, 6, 7 and 8, the status pages of 6, 7 and 8, and `index.md` | Modify | `add` as built; NobleFactor-sandbox, in section 6 |
+| `docs/issue-standards.md`, `docs/guides/development-process.md` | Modify | Where they said `add` would come |
 
 ## Related Documents
 
