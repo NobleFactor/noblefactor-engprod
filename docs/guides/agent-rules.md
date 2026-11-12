@@ -57,9 +57,15 @@ by #183.
 guide pass that will catch the documents up is devlore-cli#849. Ruled 2026-11-03: the Epic: labels are removed
 from both accounts, and sub-issue parent links replace them.
 
-Open in #439, the design of the `star github schedule` commands: what command lists the open ruling issues under
-devlore-cli#463 now that the Epic: labels are gone. The question was left open on #303 and went to #439 on 2026-11-04,
-because it is about star's options, which that design will decide.
+The open ruling issues under devlore-cli#463 are listed by the report as built, run from noblefactor-engprod:
+
+```bash
+star github schedule report NobleFactor/devlore-cli --search is:open --filter parent=NobleFactor/devlore-cli#463 -o table
+```
+
+Ruled 2026-11-11 in #439, the design of the `star github schedule` commands, where #303 had left the question on
+2026-11-04 ([section 8](../architecture/issue-data-model/8-the-schedule-commands.md#reading-list-get-and-report)). Run
+that day, it listed the 17 open issues GitHub shows under #463.
 
 ## 3. A question about issues is answered by the report
 

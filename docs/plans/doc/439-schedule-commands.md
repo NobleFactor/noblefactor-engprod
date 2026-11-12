@@ -1,9 +1,9 @@
 ---
 title: "The star github schedule commands, designed before any is built"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/439
-status: draft
+status: complete
 created: 2026-11-11
-updated: 2026-11-11
+updated: 2026-11-12
 ---
 
 # Plan: The star github schedule commands, designed before any is built
@@ -37,6 +37,8 @@ with its status page, listed in the index.
 - 2026-11-08 (#379): the report returns every issue as one flat record, narrowed by star's `--filter` and `--jq` and
   rendered by `--output`; `--epic`, `--thread`, `--by` and the audit are gone. The sweep checks classification (#436).
 - 2026-11-11 (#438): `add --after <step>` takes a step, and every later step moves down one, consecutive whole numbers.
+- 2026-11-11, on this plan: the design covers schedules, and the scenario commands follow it in a design of their own,
+  Task #507, step 43, blocked by #439. The plan was approved the same day.
 
 ## Current State
 
@@ -81,21 +83,23 @@ The design, section 8, states:
 
 ### Phase 1: the plan
 
-- [ ] Written and committed on `doc/439-schedule-commands` by the worktree's first script, which opens the branch with
+- [x] Written and committed on `doc/439-schedule-commands` by the worktree's first script, which opens the branch with
       `git open-branch 439 -T doc`, pushes it, and sets step 27's row In progress with the branch in its Worktree
       column, read back (agent-rules.md, rule 19); reviewed with the owner
 
 ### Phase 2: the design
 
-- [ ] Section 8 drafted, with its status page and its index entry; each question it raises ruled by the owner; approved
+- [x] Section 8 drafted, with its status page and its index entry; each question it raises ruled by the owner; approved
+      on 2026-11-12. Its eight questions were ruled on 2026-11-11 and 2026-11-12; the scenario commands went to #507,
+      the `Closes` line to #508, and the verbs not yet built to #509 to #512
 
 ### Phase 3: the issues
 
-- [ ] #439's and #438's bodies brought to the design, on the owner's go
+- [x] #439's and #438's bodies brought to the design, on the owner's go of 2026-11-12, and read back
 
 ### Phase 4: merge
 
-- [ ] The pull request script written, shown and handed over. It closes #439, comments on it with the merged design and
+- [x] The pull request script written, shown and handed over. It closes #439, comments on it with the merged design and
       the owner's approval and its date, and sets step 27's row Closed with the pull request as its Worktree
 
 ## Files to Create/Modify
@@ -106,6 +110,8 @@ The design, section 8, states:
 | `docs/architecture/issue-data-model/8-the-schedule-commands.md` | Create | The design |
 | `docs/architecture/issue-data-model/8-the-schedule-commands.status.md` | Create | Its status |
 | `docs/architecture/issue-data-model/index.md` | Modify | Section 8 listed |
+| `docs/guides/agent-rules.md` | Modify | Rule 2's open question answered: the report lists the ruling issues |
+| `docs/architecture/issue-data-model/3-collections.md` and its status page | Modify | Closed steps move with the open ones, ruled 2026-11-11 (section 8, question 5) |
 
 ## Related Documents
 
@@ -115,5 +121,4 @@ The design, section 8, states:
 
 ## Open Questions
 
-- Does the design cover scenarios too? The same model holds a Scenario issue, its option and its beats. Proposed:
-  schedules alone, with scenarios noted for a design of their own.
+None. Ruled 2026-11-11: the design covers schedules alone, and the scenario commands are Task #507 (§ Rulings).
