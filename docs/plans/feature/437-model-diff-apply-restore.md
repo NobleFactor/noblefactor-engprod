@@ -1,7 +1,7 @@
 ---
 title: "star github model diff, apply and restore"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/437
-status: active
+status: complete
 created: 2026-11-10
 updated: 2026-11-11
 ---
@@ -447,13 +447,18 @@ The rulings settle the commands and the scope. The owner approved these on 2026-
       and the App's two secrets, and no project kept a built-in workflow. Not yet seen on GitHub: a field with
       iterations set, NobleFactor-test's two holding none and no field of NobleFactor's differing from the model. 136 of
       136 cases pass; `make check` passes
-- [ ] For a new organization: `apply` of the reference, then `diff` showing nothing left, in a temporary organization
+- [x] For a new organization: `apply` of the reference, then `diff` showing nothing left, in a temporary organization
       made for the proof, deleted when the proof passes and kept for troubleshooting when it does not. A comment on #437
-      shows it. The owner runs every `apply`
+      shows it. The owner runs every `apply`. Run by the owner on 2026-11-11 in NobleFactor-test, which the owner made
+      that day, the proof script making a repository and a team that maintains it. The first run, at `abb6289`, made
+      all 35 differences and found the Iteration fault above; the second, at `3e4e51b`, set both Iteration fields and
+      left nothing `apply` can write: six view settings, which GitHub's API cannot write, and no built-in workflow on
+      any of the eight projects. The owner deleted NobleFactor-test without setting the six. Shown on #437:
+      https://github.com/NobleFactor/noblefactor-engprod/issues/437#issuecomment-6812213965
 
 ### Phase 11: merge
 
-- [ ] The pull request script written, shown and handed over; it closes #437
+- [x] The pull request script written, shown and handed over; it closes #437
 
 ## Test Plan
 
