@@ -186,6 +186,89 @@ function landed_on_target {
     [[ -n "$(git log "${search_ref}" --fixed-strings --grep="(#${number})" --max-count=1 --format='%H' 2>/dev/null)" ]]
 }
 
+# pull_request prints what GitHub says of a branch's pull request, for the checks a delete rests on: its state, its
+# number and its head commit, space-separated; "none" when the branch has no pull request; "unknown" when gh is not
+# installed or cannot answer. One query, so that the three come from the same moment.
+#
+# Parameters:
+#   - `$1`: the branch.
+#
+# Returns:
+#   - stdout: `<state> <number> <head>`, `none` or `unknown`.
+function pull_request {
+    local branch="$1" answer="" status=0
+
+    if ((gh_usable == 0)); then
+        printf 'unknown\n'
+        return 0
+    fi
+
+    answer="$(gh pr view "${branch}" --json state,number,headRefOid \
+        --jq '"\(.state) \(.number) \(.headRefOid)"' 2>/dev/null)" || status=$?
+
+    # gh exits non-zero both for "no pull request found" and for a genuine failure. gh auth status tells them apart:
+    # signed in, the branch has no pull request; not, gh could not ask.
+    if ((status != 0)) || [[ -z "${answer}" ]]; then
+        if gh auth status >/dev/null 2>&1; then
+            printf 'none\n'
+        else
+            printf 'unknown\n'
+        fi
+        return 0
+    fi
+
+    printf '%s\n' "${answer}"
+}
+
+# commits_after_head reports whether the local branch holds a commit its pull request's head lacks: a commit made after
+# the head was pushed, which the squash never carried and, once origin's branch is gone, nothing else holds (#483).
+# When GitHub gave no head, or the head is not in this repository, nothing here can show what the local tip adds to it,
+# so any other tip counts.
+#
+# Parameters:
+#   - `$1`: the local branch's tip.
+#   - `$2`: the pull request's head, or nothing.
+#
+# Returns:
+#   - 0 when the local branch has, or may have, commits the head lacks; 1 when it has none.
+function commits_after_head {
+    local local_tip="$1" head="$2"
+
+    [[ "${local_tip}" != "${head}" ]] || return 1
+
+    if [[ -z "${head}" ]] || ! git cat-file -e "${head}^{commit}" 2>/dev/null; then
+        return 0
+    fi
+
+    [[ "$(git rev-list --count "${head}..${local_tip}")" != 0 ]]
+}
+
+# remote_unverified prints why a branch on origin alone is not shown merged, worded to follow "it exists only on
+# origin, and", or nothing when GitHub reports its pull request merged and the target carries its squash commit: the
+# two signals delete_flag forces a delete on (#482).
+#
+# Parameters:
+#   - `$1`: the branch.
+#
+# Returns:
+#   - stdout: the reason, or nothing.
+function remote_unverified {
+    local branch="$1" state number
+
+    read -r state number _ <<<"$(pull_request "${branch}")"
+
+    case ${state} in
+        MERGED)
+            if [[ -z "${number}" ]] || ! landed_on_target "${number}"; then
+                printf "GitHub reports its pull request merged, but '%s' has no commit for it" "${target_branch}"
+            fi
+            ;;
+        none) printf 'it has no pull request' ;;
+        unknown) printf 'gh could not say whether its pull request merged' ;;
+        *) printf 'its pull request is %s, not merged' "${state}" ;;
+    esac
+}
+
 # forced_cost describes what --force would discard for a branch delete_flag refused, in that branch's own
 # terms. The refusal exists because something is about to be lost; force changes who decides, never whether
 # it is said. Reasons match delete_flag's return codes.
@@ -197,14 +280,23 @@ function landed_on_target {
 # Returns:
 #   - stdout: one clause naming the cost.
 function forced_cost {
-    local branch="$1" reason="$2" ahead
+    local branch="$1" reason="$2" ahead head
 
     if ((reason == 2)); then
         printf 'GitHub reports it merged and %s carries no commit for its pull request' "${target_branch}"
         return 0
     fi
 
+    # With origin's branch gone, the commits only here are those made after the pull request's head (#483).
     if ! git rev-parse --verify --quiet "refs/remotes/origin/${branch}" >/dev/null; then
+        read -r _ _ head <<<"$(pull_request "${branch}")"
+
+        if [[ -n "${head}" ]] && git cat-file -e "${head}^{commit}" 2>/dev/null; then
+            ahead="$(git rev-list --count "${head}..refs/heads/${branch}" 2>/dev/null || echo '?')"
+            printf "discards %s commit(s) made after its pull request's head, which exist only here" "${ahead}"
+            return 0
+        fi
+
         printf 'the remote has no branch, so every commit here is the only copy'
         return 0
     fi
@@ -264,10 +356,11 @@ function scripts_beside {
 #
 #   1. GitHub reports the pull request MERGED, and the target's history carries that pull request's squash
 #      commit. A stale or misresolved gh answer cannot force a delete on its own.
-#   2. Nothing exists only locally: the tip matches origin's, or origin's branch is already gone. Otherwise
-#      forcing discards the only copy of commits the remote never received.
+#   2. Nothing exists only locally: the tip matches origin's while origin has the branch, and the pull request's
+#      head holds every commit the local branch does, whether or not origin has it (#483). Otherwise forcing
+#      discards the only copy of commits the remote never received, or received and lost with its branch.
 function delete_flag {
-    local branch="$1" local_tip remote_tip state number
+    local branch="$1" local_tip remote_tip state number head
 
     local_tip="$(git rev-parse --verify --quiet "refs/heads/${branch}")" || return 1
     remote_tip="$(git rev-parse --verify --quiet "refs/remotes/origin/${branch}" || true)"
@@ -277,28 +370,13 @@ function delete_flag {
     # rate-limited, offline -- looked exactly like a branch nobody had opened a pull request for,
     # and the verification #124 and #126 built simply vanished without a word.
 
-    if ((gh_usable)); then
+    read -r state number head <<<"$(pull_request "${branch}")"
 
-        local status=0
-        state="$(gh pr view "${branch}" --json state --jq '.state' 2>/dev/null)" || status=$?
-
-        # gh exits non-zero both for "no pull request found" and for a genuine failure. An empty
-        # stdout with a non-zero status and anything on stderr is the failure; no pull request
-        # prints nothing and is expected.
-
-        if ((status != 0)) && gh auth status >/dev/null 2>&1; then
-            state=""
-        elif ((status != 0)); then
-            error 0 "'${branch}': gh could not be queried; closing without GitHub verification."
-            state=""
-        fi
-
-        if [[ -n "${state}" ]]; then
-            number="$(gh pr view "${branch}" --json number --jq '.number' 2>/dev/null || true)"
-        fi
+    if [[ "${state}" == unknown ]] && ((gh_usable)); then
+        error 0 "'${branch}': gh could not be queried; closing without GitHub verification."
     fi
 
-    if [[ "${state:-}" == "MERGED" ]]; then
+    if [[ "${state}" == "MERGED" ]]; then
 
         if [[ -z "${number:-}" ]] || ! landed_on_target "${number}"; then
             return 2 # GitHub says merged, the target's history does not agree
@@ -306,6 +384,10 @@ function delete_flag {
 
         if [[ -n "${remote_tip}" && "${local_tip}" != "${remote_tip}" ]]; then
             return 1 # commits exist only locally
+        fi
+
+        if commits_after_head "${local_tip}" "${head}"; then
+            return 1 # commits made after the pull request's head exist only locally (#483)
         fi
 
         printf -- '-D\n'
@@ -351,7 +433,7 @@ function survey_branch {
     # shellcheck disable=SC2178
     local -n rec="$2"
     local blocked_flag="${3:-}"
-    local reason=0 flag=""
+    local reason=0 flag="" unverified=""
 
     rec["local_branch"]=""
     rec["remote_branch"]=""
@@ -386,11 +468,25 @@ function survey_branch {
     fi
 
     # A branch with no local ref is remote-only: CI opened it, pushed it, and nothing here ever checked it
-    # out. delete_flag cannot judge it -- it opens by resolving refs/heads -- so it is decided here.
+    # out. delete_flag cannot judge it -- it opens by resolving refs/heads -- so it is decided here, on the same
+    # two signals: GitHub reports its pull request merged, and the target carries its squash commit (#482).
+    # Nothing else can vouch for a branch with no local copy, so without them it is refused, --force overriding.
     if [[ -z "${rec["local_branch"]}" ]]; then
         if [[ -z "${rec["remote_branch"]}" ]]; then
             rec["refusal"]="no local branch and no branch on origin"
+            return 0
         fi
+
+        unverified="$(remote_unverified "${branch}")"
+
+        if [[ -n "${unverified}" && -n "${force}" ]]; then
+            rec["forced"]="yes"
+            rec["cost"]="deletes a branch that exists only on origin, though ${unverified}"
+        elif [[ -n "${unverified}" ]]; then
+            rec["refusal"]="it exists only on origin, and ${unverified}"
+            rec["hint"]="Pass --force to override."
+        fi
+
         return 0
     fi
 
@@ -549,7 +645,7 @@ function preview_line {
     fi
 
     if [[ -z "${rec["local_branch"]}" ]]; then
-        what="-D (remote only)"
+        what="-D (remote only${rec["cost"]:+, forced: ${rec["cost"]}})"
     elif [[ -n "${rec["cost"]}" ]]; then
         what="${rec["branch_flag"]} (forced: ${rec["cost"]})"
     elif [[ -n "${rec["forced"]}" ]]; then

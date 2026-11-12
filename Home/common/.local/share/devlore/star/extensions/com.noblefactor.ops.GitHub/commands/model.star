@@ -73,8 +73,12 @@ def read_text(path):
 
 # ── reading GitHub ──────────────────────────────────────────────────────────
 
-def conditional_get(path, etag):
-    """GET a REST path, sending etag as If-None-Match when there is one: {"status", "etag", "body"}; body is None on 304."""
+def conditional_get(path, etag, what = ""):
+    """GET a REST path, sending etag as If-None-Match when there is one: {"status", "etag", "body"}; body is None on 304.
+
+    A list GitHub holds more of than the one page read, as its Link header names a next, fails, naming what, or the path,
+    star could not read whole (#484).
+    """
     header = ("-H " + quote("If-None-Match: " + etag) + " ") if etag else ""
 
     # gh exits 1 on a 304, and prints its headers on standard output with -i either way.
@@ -88,13 +92,19 @@ def conditional_get(path, etag):
         fail("gh api " + path + ": no HTTP status in its answer: " + lines[0])
     status = int(parts[1])
     new_etag = etag
+    more = False
     for line in lines[1:]:
-        if line.lower().startswith("etag:"):
+        lowered = line.lower()
+        if lowered.startswith("etag:"):
             new_etag = line[len("etag:"):].strip()
+        elif lowered.startswith("link:") and "rel=\"next\"" in lowered:
+            more = True
     if status == 304:
         return {"status": 304, "etag": etag, "body": None}
     if status != 200:
         fail("gh api " + path + ": HTTP " + str(status) + ": " + body.strip())
+    if more:
+        fail(_more(what or "at " + path))
     return {"status": 200, "etag": new_etag, "body": json.decode(data = body)}
 
 def graphql(query):
@@ -103,6 +113,24 @@ def graphql(query):
     if out.get("errors"):
         fail("GitHub refused a query: " + json.encode(out["errors"]))
     return out.get("data") or {}
+
+# Whether GitHub holds another page of a connection: star reads each one page deep, and stops at a second (#484).
+_PAGE_INFO = " pageInfo { hasNextPage }"
+
+def _more(what):
+    """The failure a second page makes, naming what star could not read whole."""
+    return "GitHub holds more " + what + " than star reads in one page; star reads an account whole or not at all (#484)"
+
+def page(connection, what, key = "nodes"):
+    """A connection's nodes, or its edges; fails, naming what, when GitHub holds more than the one page star reads.
+
+    A model read short is no model of the account: diff would report what it never read as missing, and apply would make
+    it again (#484).
+    """
+    connection = connection or {}
+    if (connection.get("pageInfo") or {}).get("hasNextPage"):
+        fail(_more(what))
+    return connection.get(key) or []
 
 def rest(method, path, body = None):
     """A REST write; its body goes to gh as JSON through a pipe within the one command. Returns the answer, decoded."""
@@ -148,15 +176,16 @@ def owner_kind(login):
 VIEW_LAYOUTS = {"TABLE_LAYOUT": "table", "BOARD_LAYOUT": "board", "ROADMAP_LAYOUT": "roadmap"}
 
 # The names of the fields in a connection of a view's fields.
-_FIELD_NAMES = "nodes { ... on ProjectV2FieldCommon { name } }"
+_FIELD_NAMES = "nodes { ... on ProjectV2FieldCommon { name } }" + _PAGE_INFO
 
-# What is read of a project: its own attributes and links, its fields with their options, and its views.
+# What is read of a project: its own attributes and links, its fields with their options, and its views; of each
+# connection, whether GitHub holds another page (#484).
 _PROJECT_SELECTION = (
     "id number title template closed shortDescription readme public teams(first: 20) { nodes { " +
-    "slug } } repositories(first: 50) { nodes { nameWithOwner } } fields(first: 50) { nodes { " +
+    "slug }" + _PAGE_INFO + " } repositories(first: 50) { nodes { nameWithOwner }" + _PAGE_INFO + " } fields(first: 50) { nodes { " +
     "... on ProjectV2FieldCommon { id name dataType isIssueField } ... on " +
     "ProjectV2SingleSelectField { options { id name color description } } ... on " +
-    "ProjectV2IterationField { configuration { duration startDay } } } } views(first: 25) { " +
+    "ProjectV2IterationField { configuration { duration startDay } } }" + _PAGE_INFO + " } views(first: 25) { " +
     "nodes { id name number layout filter fields(first: 50) { " +
     _FIELD_NAMES +
     "} groupByFields(first: 10) { " +
@@ -164,7 +193,7 @@ _PROJECT_SELECTION = (
     "} verticalGroupByFields(first: 10) { " +
     _FIELD_NAMES +
     "} sortByFields(first: 10) { nodes { direction field { ... on ProjectV2FieldCommon { name } " +
-    "} } } } }"
+    "} }" + _PAGE_INFO + " } }" + _PAGE_INFO + " }"
 )
 
 def _template_names():
@@ -172,24 +201,28 @@ def _template_names():
     ref = yaml.decode(data = read_text(extension_dir() + "/reference/templates.yaml")) or {}
     return [p["name"] for p in (ref.get("templates") or []) if type(p) == "dict" and p.get("name")]
 
-def _names(connection):
-    """The names of the fields in a connection, in its order."""
-    return [n["name"] for n in (connection or {}).get("nodes") or [] if type(n) == "dict" and n.get("name")]
+def _names(connection, what):
+    """The names of the fields in a connection, in its order; what names the connection, for a failure to name."""
+    return [n["name"] for n in page(connection, what) if type(n) == "dict" and n.get("name")]
 
-def _view(node):
-    """One view as the model records it: its name, number, layout and filter, and the fields it shows, groups and sorts by."""
+def _view(node, project):
+    """One view as the model records it: its name, number, layout and filter, and the fields it shows, groups and sorts by.
+
+    project names the view's project and account, for a failure to name (#484).
+    """
     layout = node.get("layout") or ""
+    where = " of the view " + node["name"] + " of " + project
     return {
         "name": node["name"],
         "number": int(node["number"]),
         "layout": VIEW_LAYOUTS.get(layout, layout.lower()),
         "filter": node.get("filter") or "",
-        "fields": _names(node.get("fields")),
-        "group_by": _names(node.get("groupByFields")),
-        "vertical_group_by": _names(node.get("verticalGroupByFields")),
+        "fields": _names(node.get("fields"), "fields shown" + where),
+        "group_by": _names(node.get("groupByFields"), "grouping fields" + where),
+        "vertical_group_by": _names(node.get("verticalGroupByFields"), "vertical grouping fields" + where),
         "sort_by": [
             {"field": (s.get("field") or {}).get("name"), "direction": (s.get("direction") or "").lower()}
-            for s in (node.get("sortByFields") or {}).get("nodes") or []
+            for s in page(node.get("sortByFields"), "sort fields" + where)
         ],
     }
 
@@ -199,7 +232,7 @@ def read_all_projects(login, kind):
     The templates are the model's; diff and apply read the projects made from them too, to hold each to its template.
     """
     query = ("query starProjects { " + kind + "(login: \"" + login + "\") { projectsV2(first: 50) { nodes { " + _PROJECT_SELECTION +
-             " } } } }")
+             " }" + _PAGE_INFO + " } } }")
     out = sh("gh api graphql -f query=" + quote(query) + " 2>/dev/null; true")
     if not out.strip().startswith("{"):
         return None
@@ -207,19 +240,21 @@ def read_all_projects(login, kind):
     if data.get("errors") or not data.get("data") or not data["data"].get(kind):
         return None
     projects = []
-    for node in data["data"][kind]["projectsV2"]["nodes"]:
+    for node in page(data["data"][kind]["projectsV2"], "projects of " + login):
         if node.get("closed"):
             continue
-        projects.append(_project(node))
+        projects.append(_project(node, login))
     return sorted(projects, key = lambda p: p["number"])
 
-def _project(node):
+def _project(node, login = ""):
     """One project as the model records it, with the IDs of all its fields and views.
 
-    The IDs are apply's alone, under names that begin with an underscore, and never reach a record.
+    The IDs are apply's alone, under names that begin with an underscore, and never reach a record. login, when it is
+    known, names the project's account in a failure to read it whole (#484).
     """
+    project = "the project " + node["title"] + (" of " + login if login else "")
     fields = []
-    for f in node["fields"]["nodes"]:
+    for f in page(node["fields"], "fields of " + project):
         field_type = FIELD_TYPES.get(f.get("dataType", ""))
         if field_type == None:
             continue
@@ -234,10 +269,10 @@ def _project(node):
         if field_type == "iteration" and f.get("configuration"):
             field["configuration"] = {"duration": f["configuration"].get("duration"), "start_day": f["configuration"].get("startDay")}
         fields.append(field)
-    views = sorted([_view(v) for v in (node.get("views") or {}).get("nodes") or []], key = lambda v: v["number"])
+    views = sorted([_view(v, project) for v in page(node.get("views"), "views of " + project)], key = lambda v: v["number"])
     return {
-        "_field_ids": {f["name"]: f["id"] for f in node["fields"]["nodes"] if type(f) == "dict" and f.get("name") and f.get("id")},
-        "_view_ids": {v["name"]: v.get("id") for v in (node.get("views") or {}).get("nodes") or [] if type(v) == "dict" and v.get("name")},
+        "_field_ids": {f["name"]: f["id"] for f in page(node["fields"], "fields of " + project) if type(f) == "dict" and f.get("name") and f.get("id")},
+        "_view_ids": {v["name"]: v.get("id") for v in page(node.get("views"), "views of " + project) if type(v) == "dict" and v.get("name")},
         "name": node["title"],
         "id": node["id"],
         "number": int(node["number"]),
@@ -245,8 +280,8 @@ def _project(node):
         "short_description": node.get("shortDescription") or "",
         "readme": node.get("readme") or "",
         "public": bool(node.get("public")),
-        "teams": sorted([n["slug"] for n in (node.get("teams") or {}).get("nodes") or []]),
-        "repositories": sorted([n["nameWithOwner"] for n in (node.get("repositories") or {}).get("nodes") or []]),
+        "teams": sorted([n["slug"] for n in page(node.get("teams"), "teams linked to " + project)]),
+        "repositories": sorted([n["nameWithOwner"] for n in page(node.get("repositories"), "repositories linked to " + project)]),
         "fields": fields,
         "views": views,
     }
@@ -286,13 +321,13 @@ def read_organization(org):
     query = ("query starOrganizationModel { organization(login: \"" + org + "\") { " +
              "issueFields(first: 50) { nodes { __typename ... on IssueFieldCommon { name dataType description visibility fullDatabaseId } " +
              "... on IssueFieldSingleSelect { id options { id databaseId name color description priority } } ... on IssueFieldText { id } " +
-             "... on IssueFieldNumber { id } ... on IssueFieldDate { id } } } " +
-             "issueTypes(first: 50) { nodes { name pinnedFields { ... on IssueFieldCommon { name } } } } " +
+             "... on IssueFieldNumber { id } ... on IssueFieldDate { id } }" + _PAGE_INFO + " } " +
+             "issueTypes(first: 50) { nodes { name pinnedFields { ... on IssueFieldCommon { name } } }" + _PAGE_INFO + " } " +
              "teams(first: 100) { nodes { name slug id description privacy notificationSetting parentTeam { slug } " +
-             "repositories(first: 100) { edges { permission node { nameWithOwner } } } } } } }")
+             "repositories(first: 100) { edges { permission node { nameWithOwner } }" + _PAGE_INFO + " } }" + _PAGE_INFO + " } } }")
     node = graphql(query).get("organization") or {}
     fields = []
-    for f in (node.get("issueFields") or {}).get("nodes") or []:
+    for f in page(node.get("issueFields"), "issue fields of " + org):
         field_type = ISSUE_FIELD_TYPES.get(f.get("dataType", ""))
         if field_type == None:
             continue
@@ -318,8 +353,8 @@ def read_organization(org):
             ]
         fields.append(field)
     teams = []
-    for t in (node.get("teams") or {}).get("nodes") or []:
-        edges = (t.get("repositories") or {}).get("edges") or []
+    for t in page(node.get("teams"), "teams of " + org):
+        edges = page(t.get("repositories"), "repositories of the team " + t["slug"] + " of " + org, key = "edges")
         maintained = [e["node"]["nameWithOwner"] for e in edges if e.get("permission") == "MAINTAIN"]
         teams.append({
             "name": t["name"],
@@ -333,7 +368,7 @@ def read_organization(org):
             "repositories": sorted(maintained),
         })
     pinned = {}
-    for it in (node.get("issueTypes") or {}).get("nodes") or []:
+    for it in page(node.get("issueTypes"), "issue types of " + org):
         pinned[it["name"]] = [f["name"] for f in it.get("pinnedFields") or [] if type(f) == "dict" and f.get("name")]
     return fields, sorted(teams, key = lambda t: t["slug"]), pinned
 
@@ -363,18 +398,19 @@ def read_user(login):
     stands for a label several carry.
     """
     query = ("query starUserModel { user(login: \"" + login + "\") { repositories(first: 100, ownerAffiliations: OWNER) { nodes { " +
-             "nameWithOwner repositoryTopics(first: 20) { nodes { topic { name } } } labels(first: 100) { nodes { id name color description } } } } } }")
+             "nameWithOwner repositoryTopics(first: 20) { nodes { topic { name } }" + _PAGE_INFO + " } labels(first: 100) { nodes { " +
+             "id name color description }" + _PAGE_INFO + " } }" + _PAGE_INFO + " } } }")
     node = graphql(query).get("user") or {}
     repos = []
-    for r in (node.get("repositories") or {}).get("nodes") or []:
-        if TOPIC in [t["topic"]["name"] for t in (r.get("repositoryTopics") or {}).get("nodes") or []]:
+    for r in page(node.get("repositories"), "repositories of " + login):
+        if TOPIC in [t["topic"]["name"] for t in page(r.get("repositoryTopics"), "topics of " + r["nameWithOwner"])]:
             repos.append(r)
     repos = sorted(repos, key = lambda r: r["nameWithOwner"])
     reference = _reference_types()
     types = []
     seen = {}
     for r in repos:
-        for label in (r.get("labels") or {}).get("nodes") or []:
+        for label in page(r.get("labels"), "labels of " + r["nameWithOwner"]):
             description = label.get("description") or ""
             if label["name"] in seen or (level_of(description) == None and not description.startswith(COLLECTION)):
                 continue
@@ -391,7 +427,8 @@ def read_user(login):
             })
     repositories = {}
     for r in repos:
-        repositories[r["nameWithOwner"]] = sorted([label_entry(g) for g in (r.get("labels") or {}).get("nodes") or []], key = lambda g: g["name"].lower())
+        labels_of = page(r.get("labels"), "labels of " + r["nameWithOwner"])
+        repositories[r["nameWithOwner"]] = sorted([label_entry(g) for g in labels_of], key = lambda g: g["name"].lower())
     labels = {"organization": [], "teams": {}, "repositories": repositories}
     return sorted(types, key = lambda t: t["order"]), labels
 
@@ -466,7 +503,7 @@ def repository_labels(repos):
     """The labels of each repository named, read over REST, each sorted by name."""
     out = {}
     for repo in repos:
-        body = conditional_get("repos/" + repo + "/labels?per_page=100", "")["body"]
+        body = conditional_get("repos/" + repo + "/labels?per_page=100", "", "labels of " + repo)["body"]
         out[repo] = sorted([label_entry(g) for g in body], key = lambda g: g["name"].lower())
     return out
 
@@ -498,7 +535,7 @@ def read_account(account, strict = True):
     conflicts = []
     pinned = {}
     if kind == "organization":
-        github_types = conditional_get("orgs/" + account + "/issue-types", "")["body"]
+        github_types = conditional_get("orgs/" + account + "/issue-types", "", "issue types of " + account)["body"]
         fields, teams, pinned = read_organization(account)
         maintained = sorted({r: True for t in teams for r in t["repositories"]}.keys())
         labels = {"organization": [], "teams": {}, "repositories": repository_labels(maintained)}

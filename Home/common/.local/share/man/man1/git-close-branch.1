@@ -124,19 +124,29 @@ GitHub appends when it squashes. A stale or misresolved
 answer cannot force a delete by itself.
 .IP 2. 3
 Nothing exists only locally: the tip matches
-.IR origin/<branch> ,
-or the remote branch is already gone. If the remote exists and differs, the local branch holds commits origin
-never received, and forcing would discard the only copy.
+.I origin/<branch>
+while the remote has it, and the pull request's head holds every commit the local branch does, whether or not
+the remote branch still exists. A commit made after the head was pushed never reached the squash, and once the
+remote branch is gone the local branch holds the only copy; forcing would discard it.
 .PP
 A branch failing either signal is refused and reported, with the reason distinguishing the two cases, and the
 run continues to the next branch.
+.PP
+A branch on the remote alone, with no local branch, is deleted only when the first signal holds:
+.B gh
+reports its pull request
+.B MERGED
+and the target's history carries its squash commit. With no pull request, one not merged, or
+.B gh
+unable to answer, it is refused, since nothing else can vouch for a branch with no local copy.
 .TP
 .BR \-f ", " \-\-force
 Close a branch the safety checks refuse. The flag is read once, while the branch is surveyed, so every
 refusal it overrides is resolved before anything is removed. With this flag the branch is deleted with
 .BR "git branch \-D" ,
-unconditionally: it overrides the command's own refusals \(en commits that exist only here, or a pull
-request GitHub reports merged that the target branch carries no commit for \(en and it also overrides
+unconditionally: it overrides the command's own refusals \(en commits that exist only here, a pull
+request GitHub reports merged that the target branch carries no commit for, or a branch on the remote alone that
+nothing shows merged \(en and it also overrides
 .BR "git branch \-d" 's
 refusal of a branch not merged into HEAD, which is every branch whose work reached the target by
 cherry-pick or squash rather than by merge. The run says what it discards before it does. Without the flag

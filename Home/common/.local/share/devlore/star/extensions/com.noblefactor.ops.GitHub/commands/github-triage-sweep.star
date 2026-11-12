@@ -23,6 +23,7 @@ load(
     "TRIAGE_KIND",
     "USER_ATTRIBUTES",
     "leaf_level",
+    "model_of",
     "models_for",
     "owners_of",
     "team_of",
@@ -219,7 +220,7 @@ def _sweep(account, models, dry_run):
     The records, by project and then by repository and number: each issue added, or under --dry-run to be added; each
     already in Triage with a fault; and each other row of the Triage project, with no fault.
     """
-    model = models[account]
+    model = model_of(models, account)
     checked = pairs(fetch(model["repositories"], models, open_only = True, with_body = True), models)
     by_key = {p[0]["issue"]: p[0] for p in checked}
     found = {}

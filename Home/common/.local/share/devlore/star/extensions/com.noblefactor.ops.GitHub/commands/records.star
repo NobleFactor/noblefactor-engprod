@@ -208,7 +208,9 @@ def record(node, models):
         if cur == None:
             break
         owner = canonical_repo(cur["repository"]["nameWithOwner"]).split("/")[0]
-        t = type_of(models.get(owner) or model, cur.get("issueType"), [label["name"] for label in _nodes(cur.get("labels"))])
+
+        # Models are keyed by their account lowercased, as GitHub's logins ignore case (#485).
+        t = type_of(models.get(owner.lower()) or model, cur.get("issueType"), [label["name"] for label in _nodes(cur.get("labels"))])
         if t != None and key_of(t) in model["ancestor_keys"] and r[key_of(t)] == None:
             r[key_of(t)] = _key(cur)
         cur = cur.get("parent")
