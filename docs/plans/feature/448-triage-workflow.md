@@ -83,7 +83,7 @@ David-Noble-at-work, and its rows are removed.
 
 ### Phase 2: NobleFactor's template
 
-- [ ] Both steps in NobleFactor/.github's template, on `feature/448-triage-workflow`, its worktree made by hand as
+- [x] Both steps in NobleFactor/.github's template, on `feature/448-triage-workflow`, its worktree made by hand as
       #447's was, since `git open-branch` reads only the clone's own issues; merged; `apply` on NobleFactor; `diff`
       shows no difference
 
