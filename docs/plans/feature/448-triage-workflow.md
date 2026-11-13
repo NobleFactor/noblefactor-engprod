@@ -1,17 +1,17 @@
 ---
-title: "The Triage workflow sets a new issue's Severity and puts a scenario's finds in the scenario"
+title: "The Triage workflow sets a new issue's Severity and puts a scenario's findings in the scenario"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/448
-status: draft
+status: active
 created: 2026-11-12
 updated: 2026-11-12
 ---
 
-# Plan: The Triage workflow sets a new issue's Severity and puts a scenario's finds in the scenario
+# Plan: The Triage workflow sets a new issue's Severity and puts a scenario's findings in the scenario
 
 Step 35 of issue tracking, iteration 1 (#346). Half of #448 is done: #437's proof on GitHub landed the Triage
 workflow in NobleFactor's five participating repositories, and it adds every new issue to its team's Triage project
 and copies the form's Area. Two things are left, in both accounts' templates: the Severity a new issue starts with,
-which David-Noble-at-work's template already sets and NobleFactor's doesn't, and a scenario's finds, which neither
+which David-Noble-at-work's template already sets and NobleFactor's doesn't, and a scenario's findings, which neither
 template routes. `star github model apply` then carries each template to its account's repositories, and the
 documents that say the workflow "will" do these things say it does.
 
@@ -48,7 +48,7 @@ Read on 2026-11-12:
    Otherwise an issue of type Bug gets Medium and any other gets N/A, in the Severity issue field. The type is read
    from the issue when the step runs. A bug typed only after it is opened gets N/A, and the sweep's `severity` rule
    returns it to Triage.
-2. **A scenario's finds, in both templates.** A step before the Triage step reads the body for "Found while walking
+2. **A scenario's findings, in both templates.** A step before the Triage step reads the body for "Found while walking
    #N", or "Found while walking owner/repository#N". When it names an open issue of the same account whose own row on
    a project titled "Scenario: …" has a Scenario option, the new issue gets a row on that project with that option,
    and no Triage row. Otherwise it goes to Triage as before, and the run's log says why. The walker sets the Beat.
@@ -70,7 +70,7 @@ David-Noble-at-work, and its rows are removed.
 | 2 | In noblefactor-engprod, a bug from the bug form | Severity Medium |
 | 3 | In noblefactor-engprod, a task found while walking #152, the portable tooling scenario | A row of Scenario: engprod under its option, and no Triage row |
 | 4 | In noblefactor-engprod, a task found while walking an issue that is not a scenario | A row of Triage: engprod; the log says why |
-| 5 | In personal, a task from the task form, a bug from the bug form, and a task found while walking a personal scenario | `severity:n/a`; `severity:medium`; a row of Scenario: David-Noble-at-work under its option |
+| 5 | In personal, a task from the task form, a bug from the bug form, and a task found while walking #316, the placeholder scenario, which has no row of its own: given one under its option for the test, and the row removed after | `severity:n/a`; `severity:medium`; a row of Scenario: David-Noble-at-work under its option |
 | 6 | `star github model diff` on both accounts, after `apply` | No difference |
 | 7 | shellcheck on each template's run steps | Clean |
 
@@ -78,8 +78,8 @@ David-Noble-at-work, and its rows are removed.
 
 ### Phase 1: the plan
 
-- [ ] Committed on `feature/448-triage-workflow` by the worktree's first script, which also sets step 35 In progress
-      with the branch linked; reviewed with the owner
+- [x] Committed on `feature/448-triage-workflow` by the worktree's first script, which also sets step 35 In progress
+      with the branch linked; reviewed with the owner and approved on 2026-11-12
 
 ### Phase 2: NobleFactor's template
 
