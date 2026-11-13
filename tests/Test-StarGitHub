@@ -1527,6 +1527,11 @@ expect "11.1: backup opens a pull request on doc/model-<date> and merges it" ok 
 expect "11.1: the pull request's comments record the checks and the merge" ok '
     [$calls[] | select(.[0:2] == ["pr", "comment"]) | .[index("--body") + 1]]
     | length == 2 and (.[0] | test("^Checks passed")) and (.[1] | test("^Merged") and test("reads back as the model"))'
+expect "11.1: the pull request says AI assisted and ends with both trailers, and its squash merge takes it as the commit's message (#536)" ok '
+    [$calls[] | select(.[0:2] == ["pr", "create"]) | .[index("--body") + 1]] as $bodies
+    | [$calls[] | select(.[0:2] == ["pr", "merge"]) | .[(index("--body") // -2) + 1]] as $merged
+    | ($bodies | length) == 1 and $merged == $bodies
+    and ($bodies[0] | test("\\n\\nWritten with AI assistance\\.\\n\\nSigned-off-by: [^\\n]+ <[^>]+>\\nAssisted-by: Claude Code$"))'
 expect "11.1: backup waits for the head commit's workflow run to start and to finish, then merges" ok '
     ($calls | map((.[1] // "") | test("/actions/runs\\?head_sha=")) | indices(true)) as $runs
     | ($calls | map(.[0:2] == ["pr", "merge"]) | index(true)) as $merge
@@ -1819,6 +1824,11 @@ expect "29: every branch apply opens has a prefix NobleFactor's ruleset allows, 
     [$calls[] | select(.[0:2] == ["pr", "create"]) | .[index("--head") + 1]] as $heads
     | ($heads | length) == 4 and ($heads | map(select(. == "doc/issue-model-files")) | length) == 1
     and ($heads | map(select(. == "feature/triage-workflow")) | length) == 3'
+expect "29: every pull request apply opens says AI assisted and ends with both trailers, and its squash merge takes it as the commit's message (#536)" ok '
+    [$calls[] | select(.[0:2] == ["pr", "create"]) | .[index("--body") + 1]] as $bodies
+    | [$calls[] | select(.[0:2] == ["pr", "merge"]) | .[(index("--body") // -2) + 1]] as $merged
+    | ($bodies | length) == 4 and ($merged | sort) == ($bodies | sort)
+    and ($bodies | all(test("\\n\\nWritten with AI assistance\\.\\n\\nSigned-off-by: [^\\n]+ <[^>]+>\\nAssisted-by: Claude Code$")))'
 check "29: Acme/.github holds NobleFactor/.github's issue form" shows Acme/.github .github/ISSUE_TEMPLATE/task.yml "name: Task"
 check "29: Acme/.github's files name Acme where NobleFactor's name NobleFactor" shows Acme/.github CONTRIBUTING.md "# Contributing to Acme"
 check "29: Acme/.github holds no copy of NobleFactor's model" lacks Acme/.github model.yaml

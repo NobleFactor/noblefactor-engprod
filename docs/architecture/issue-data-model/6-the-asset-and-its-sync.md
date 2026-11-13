@@ -119,13 +119,16 @@ star github model restore <account> [<revision>] [--prune] [--token <sources>]
 - **A backup follows our process.** `backup` creates the account's `.github` repository if it has none, and clones or
   updates `~/Workspace/<account>/.github`. When `main`'s `model.yaml` differs from GitHub's model, it branches
   `doc/model-<date>`, with no issue, writes `model.yaml`, commits, pushes, and opens a pull request whose description
-  shows the change and ends with the owner's `Signed-off-by:`. It merges only once every workflow run on the pull
-  request's head commit has finished and every check `main` requires has passed (ruled 2026-11-10): a job that needs
-  another is not listed until that one finishes, so the runs, not the checks, say when the checks are all there. A run
-  that has not started within 60 seconds, or a check that fails, stops it unmerged, and a backup run again reuses the
-  pull request it left open. It removes the branch and leaves the clone on `main`, and the pull request's comments
-  record each step and its outcome. When `main`'s file already matches, it says so and stops. `apply` lands its pull
-  requests through the same gate, on each repository's default branch (#437).
+  shows the change, says AI assisted, and ends with the owner's `Signed-off-by:` and `Assisted-by: Claude Code`. It
+  merges only once every workflow run on the pull request's head commit has finished and every check `main` requires
+  has passed (ruled 2026-11-10): a job that needs another is not listed until that one finishes, so the runs, not the
+  checks, say when the checks are all there. A run that has not started within 60 seconds, or a check that fails, stops
+  it unmerged, and a backup run again reuses the pull request it left open. The squash merge takes the description as
+  the commit's message, so the commit that lands carries both trailers, as every pull request's does (#536;
+  [pr-script-template.md, rule 2](../../guides/pr-script-template.md#rules)). It removes the branch and leaves the clone
+  on `main`, and the pull request's comments record each step and its outcome. When `main`'s file already matches, it
+  says so and stops. `apply` lands its pull requests through the same gate, described and merged the same way, on each
+  repository's default branch (#437).
 - **The model is read when a command runs, not when the extension loads,** so `--help` and the commands that need no
   model read nothing, and a model that cannot be read stops only the command that needs it. The report and the sweep
   read the model of each account whose repositories they read.

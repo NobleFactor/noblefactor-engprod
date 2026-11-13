@@ -86,6 +86,22 @@ def signer():
     """The Signed-off-by line's name and address: git's identity, as a commit would carry it."""
     return sh("git config user.name").strip() + " <" + sh("git config user.email").strip() + ">"
 
+def disclose(body, signed_off_by):
+    """A pull request's description, ended as every one is: AI assistance disclosed, then the two trailers.
+
+    pr-script-template.md, rule 2: a pull request says AI assisted and ends with Signed-off-by and Assisted-by, and its
+    squash merge writes the description into the commit that lands, which land does (#536).
+
+    Args:
+      body: the description's own text.
+      signed_off_by: the signer's name and address, as signer gives them.
+
+    Returns:
+      The description, ended with the disclosure and the trailers.
+    """
+    return (body.rstrip("\n") + "\n\nWritten with AI assistance.\n\nSigned-off-by: " + signed_off_by +
+            "\nAssisted-by: Claude Code")
+
 def land(repository, base, branch, title, body, sha, what):
     """Opens a pull request from branch into base, or updates the one open on it, gates it on its checks, and merges it.
 
@@ -94,7 +110,7 @@ def land(repository, base, branch, title, body, sha, what):
       base: the branch it merges into.
       branch: the branch holding the change, already pushed.
       title: the pull request's title, and the squash commit's subject with its number.
-      body: its description.
+      body: its description, as disclose ends it, and the squash commit's message, so the commit carries the trailers.
       sha: the branch's head commit, whose workflow runs are the checks.
       what: what the comments call the change when it stops: "the backup", "the change".
 
@@ -112,7 +128,8 @@ def land(repository, base, branch, title, body, sha, what):
     _gate(repository, number, url, sha, base, what)
 
     # TODO(NobleFactor/devlore-cli#1219): ask before merging, defaulting to yes (#470).
-    sh("gh pr merge " + number + " --repo " + quote(repository) + " --squash --admin --subject " + quote(title + " (#" + number + ")"))
+    sh("gh pr merge " + number + " --repo " + quote(repository) + " --squash --admin --subject " + quote(title + " (#" + number + ")") +
+       " --body " + quote(body))
     return url, number
 
 def commit_files(repository, base, branch, files, message):
