@@ -34,10 +34,21 @@ def default_branch(repository):
     return sh("gh api " + quote("repos/" + repository) + " --jq .default_branch").strip()
 
 def _required(repository, branch):
-    """The checks the branch requires, by name; none for a branch without rules."""
-    names = sh("gh api " + quote("repos/" + repository + "/rules/branches/" + escape(branch)) + " --jq " +
-               quote("[.[] | select(.type == \"required_status_checks\") | .parameters.required_status_checks[].context] | unique | .[]"))
-    return [n for n in names.split("\n") if n.strip() != ""]
+    """The checks the branch requires, by name; none for a branch without rules, or of a repository that can have none.
+
+    GitHub's free plan gives a user account's private repository neither rulesets nor branch protection, and answers a
+    read of its rules with a 403: nothing can be required of it (#538). Any other failure stops the command, saying what
+    GitHub said, which shell.exec's own error does not.
+    """
+    rules = "repos/" + repository + "/rules/branches/" + escape(branch)
+    program = "[.[] | select(.type == \"required_status_checks\") | .parameters.required_status_checks[].context] | unique | .[]"
+    status, _, text = sh("if out=$(gh api " + quote(rules) + " --jq " + quote(program) + " 2>&1); then printf 'ok\\n%s' \"$out\"; " +
+                         "else printf 'failed\\n%s' \"$out\"; fi").partition("\n")
+    if status == "ok":
+        return [n for n in text.split("\n") if n.strip() != ""]
+    if "(HTTP 403)" in text and sh("gh api " + quote("repos/" + repository) + " --jq .private").strip() == "true":
+        return []
+    fail("the checks " + repository + "'s " + branch + " requires could not be read: " + " ".join(text.split()))
 
 def _runs(repository, sha, program):
     """A gh call reading the head commit's workflow runs through a jq program."""
