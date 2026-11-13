@@ -18,7 +18,7 @@
 
 load("commands/access.star", "check_access")
 load("commands/model.star", "quote", "refuse_dry_run", "sh")
-load("commands/pull.star", "comment", "land")
+load("commands/pull.star", "comment", "disclose", "land")
 
 def _ok(command):
     """Whether a shell command exits 0, its output and errors discarded."""
@@ -68,9 +68,11 @@ def run(_command, ctx):
     sh(git + "add model.yaml && " + git + "commit --quiet -m " + quote(title) + " && " + git + "push --quiet --force origin " + quote(branch))
     changed = sh(git + "diff --stat origin/main " + quote(branch) + " -- model.yaml").strip()
     signer = sh(git + "config user.name").strip() + " <" + sh(git + "config user.email").strip() + ">"
-    body = ("## Summary\n\n`star github model backup " + account + "`: " + account + "'s issue data model as GitHub holds it on " + day +
-            ", read by `star github model get`, replacing the checkpoint on `main`.\n\n```text\n" + changed + "\n```\n\n" +
-            "Signed-off-by: " + signer)
+    body = disclose(
+        "## Summary\n\n`star github model backup " + account + "`: " + account + "'s issue data model as GitHub holds it on " +
+        day + ", read by `star github model get`, replacing the checkpoint on `main`.\n\n```text\n" + changed + "\n```",
+        signer,
+    )
     sha = sh(git + "rev-parse " + quote(branch)).strip()
     url, number = land(repository, "main", branch, title, body, sha, "the backup")
     sh(git + "fetch --quiet origin && " + git + "checkout --quiet main && " + git + "merge --quiet --ff-only origin/main && " +
