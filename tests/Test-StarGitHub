@@ -123,11 +123,13 @@ function main_holds_model {
 # ci sets how the CI of an account's .github repository behaves on the stand-in's GitHub. With none, the default, main
 # requires no check and no workflow runs. With pass or fail, main requires quality-gate, and the head commit's workflow
 # run appears on the third read of its runs, is in progress on the fourth, and has finished on the fifth, its check
-# passing or failing. With never, main requires quality-gate and no run starts.
+# passing or failing. With never, main requires quality-gate and no run starts. With private or refused, GitHub refuses
+# to read the branch's rules, with the 403 it gives a private repository of a free user account (#538); the repository
+# is private with private, public with refused.
 #
 # Parameters:
 #   - `$1`: the account.
-#   - `$2`: none, pass, fail or never.
+#   - `$2`: none, pass, fail, never, private or refused.
 #
 # Returns:
 #   - 0, the setting written.
@@ -592,7 +594,7 @@ function fixture {
     if [[ -r "${own}" ]]; then printf '%s' "${own}"; else cased "${GH_FIXTURES}" "$1"; fi
 }
 
-# ci_mode prints how a repository's CI behaves, as the case's ci set it: none, pass, fail or never.
+# ci_mode prints how a repository's CI behaves, as the case's ci set it: none, pass, fail, never, private or refused.
 function ci_mode {
     cat "${GH_REMOTES}/$1.ci" 2>/dev/null || echo none
 }
@@ -758,6 +760,12 @@ if [[ "${rest_path}" =~ ${ci_path} ]]; then
     repo="${BASH_REMATCH[1]}" kind="${BASH_REMATCH[2]}"
     mode="$(ci_mode "${repo}")"
     if [[ "${kind}" == rules/* ]]; then
+        if [[ "${mode}" == private || "${mode}" == refused ]]; then
+            refusal='Upgrade to GitHub Pro or make this repository public to enable this feature.'
+            jq -cn --arg m "${refusal}" '{message: $m, status: "403"}'
+            printf 'gh: %s (HTTP 403)\n' "${refusal}" >&2
+            exit 1
+        fi
         body='[]'
         [[ "${mode}" == none ]] ||
             body='[{"type": "pull_request"}, {"type": "required_status_checks", "parameters": {"required_status_checks": [{"context": "quality-gate"}]}}]'
@@ -803,7 +811,8 @@ if [[ "${rest_path}" =~ ${repo_path} ]]; then
     case "${method} ${part}" in
         "GET ")
             [[ -d "${git_dir}" ]] || respond "404 Not Found" "${not_found}"
-            respond "200 OK" "$(jq -cn --arg r "${repo}" '{full_name: $r, default_branch: "main"}')"
+            respond "200 OK" "$(jq -cn --arg r "${repo}" --arg m "$(ci_mode "${repo}")" \
+                '{full_name: $r, default_branch: "main", private: ($m == "private")}')"
             ;;
         "GET contents/"*)
             path="${part#contents/}" ref=main
@@ -1527,6 +1536,11 @@ expect "11.1: backup opens a pull request on doc/model-<date> and merges it" ok 
 expect "11.1: the pull request's comments record the checks and the merge" ok '
     [$calls[] | select(.[0:2] == ["pr", "comment"]) | .[index("--body") + 1]]
     | length == 2 and (.[0] | test("^Checks passed")) and (.[1] | test("^Merged") and test("reads back as the model"))'
+expect "11.1: the pull request says AI assisted and ends with both trailers, and its squash merge takes it as the commit's message (#536)" ok '
+    [$calls[] | select(.[0:2] == ["pr", "create"]) | .[index("--body") + 1]] as $bodies
+    | [$calls[] | select(.[0:2] == ["pr", "merge"]) | .[(index("--body") // -2) + 1]] as $merged
+    | ($bodies | length) == 1 and $merged == $bodies
+    and ($bodies[0] | test("\\n\\nWritten with AI assistance\\.\\n\\nSigned-off-by: [^\\n]+ <[^>]+>\\nAssisted-by: Claude Code$"))'
 expect "11.1: backup waits for the head commit's workflow run to start and to finish, then merges" ok '
     ($calls | map((.[1] // "") | test("/actions/runs\\?head_sha=")) | indices(true)) as $runs
     | ($calls | map(.[0:2] == ["pr", "merge"]) | index(true)) as $merge
@@ -1569,6 +1583,22 @@ expect "11.6: run again, backup merges the pull request the earlier runs left op
 run_star "${data}" github model get NobleFactor --output yaml
 get_yaml="${output}"
 check "11.6: NobleFactor/.github's main holds the model get returns" main_holds_model NobleFactor
+
+# 11.7. GitHub's free plan gives a user account's private repository no branch rules, and refuses to read them with a
+# 403: nothing can be required of it, and backup merges without waiting (#538). The same 403 on a public repository is
+# not that, and stops the backup, unmerged, saying what GitHub said.
+remote test-user "old: true"
+ci test-user private
+run_star "${data}" github model backup test-user
+expect "11.7: a private repository whose rules GitHub refuses to read requires no check: backup merges without waiting (#538)" ok '
+    (any($calls[]; (.[1] // "") | test("/actions/runs")) | not)
+    and ([$calls[] | select(.[0:2] == ["pr", "merge"])] | length == 1)
+    and ([$calls[] | select(.[0:2] == ["pr", "comment"]) | .[index("--body") + 1]] | .[0] | test("^No check is required"))'
+remote test-user "old: true"
+ci test-user refused
+run_star "${data}" github model backup test-user
+expect "11.8: the same 403 on a public repository stops the backup, unmerged, saying what GitHub said (#538)" error '
+    [$calls[] | select(.[0:2] == ["pr", "merge"])] | length == 0' 'could not be read: .*HTTP 403' text
 
 # 12. The label commands, which enforced the label scheme retired on 2026-11-03, are gone, and their names before #378
 # with them; diff and apply take their place (#437).
@@ -1819,6 +1849,11 @@ expect "29: every branch apply opens has a prefix NobleFactor's ruleset allows, 
     [$calls[] | select(.[0:2] == ["pr", "create"]) | .[index("--head") + 1]] as $heads
     | ($heads | length) == 4 and ($heads | map(select(. == "doc/issue-model-files")) | length) == 1
     and ($heads | map(select(. == "feature/triage-workflow")) | length) == 3'
+expect "29: every pull request apply opens says AI assisted and ends with both trailers, and its squash merge takes it as the commit's message (#536)" ok '
+    [$calls[] | select(.[0:2] == ["pr", "create"]) | .[index("--body") + 1]] as $bodies
+    | [$calls[] | select(.[0:2] == ["pr", "merge"]) | .[(index("--body") // -2) + 1]] as $merged
+    | ($bodies | length) == 4 and ($merged | sort) == ($bodies | sort)
+    and ($bodies | all(test("\\n\\nWritten with AI assistance\\.\\n\\nSigned-off-by: [^\\n]+ <[^>]+>\\nAssisted-by: Claude Code$")))'
 check "29: Acme/.github holds NobleFactor/.github's issue form" shows Acme/.github .github/ISSUE_TEMPLATE/task.yml "name: Task"
 check "29: Acme/.github's files name Acme where NobleFactor's name NobleFactor" shows Acme/.github CONTRIBUTING.md "# Contributing to Acme"
 check "29: Acme/.github holds no copy of NobleFactor's model" lacks Acme/.github model.yaml
