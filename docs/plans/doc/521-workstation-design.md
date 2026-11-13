@@ -1,9 +1,9 @@
 ---
 title: "Plan: Workstation architecture and planner handoff"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/521
-status: approved
+status: complete
 created: 2026-11-12
-updated: 2026-11-12
+updated: 2026-11-13
 ---
 
 # Plan: Workstation architecture and planner handoff
@@ -32,6 +32,27 @@ The documentation approach is approved. Commit this approved plan before design
 edits, then verify that the committed version matches the approved text.
 Git commands remain subject to their separate, named authorization requirement.
 
+On 2026-11-13 the owner clarified the access boundary: developer connections go
+through VS Code or another compatible editor that can connect to the environment
+and start a shell from a profile. Profiles launch the role views inside SBX;
+developer devices do not connect directly to a role's native agent host.
+The architecture, diagrams, workflow, and roadmap qualification reflect this
+clarification. The common role-view launcher remains independent of the editor.
+
+On 2026-11-13 the owner approved explicit replacement when a role's original
+native session cannot be restored, then identified disaster recovery, including
+self-inflicted loss, as the scenario that drives it: "doc that and add it as a
+scenario." Document restoration before replacement, owner approval, sole
+authoritative succession, evidence-based reconstruction, and visible context
+gaps. Ordinary disconnect, sleep, process restart, and repairable resume failures
+preserve the original session identity. Add the disaster-recovery narrative to
+the roadmap's proposed scenario catalog without filing a tracker record.
+
+On 2026-11-13 the owner requested: "Please commit and do a PR. I will review your
+documents on github." Publication for review is authorized; merge and acceptance
+of the design baseline remain pending that review. The PR script follows the
+owner-run process and stops with the pull request open.
+
 ## Goals
 
 1. Give the developer and planner one consistent description of the intended system.
@@ -39,8 +60,9 @@ Git commands remain subject to their separate, named authorization requirement.
    across changing steps, frequent commits, and frequent merges.
 3. Separate persistent role execution from device connections, editor instances,
    terminal views, assignments, and PR worktrees.
-4. Explain access from desktop VS Code and an iPad, including simultaneous editor
-   instances inside the same sandbox and views of the same role session.
+4. Explain access through compatible editors and shell/terminal profiles from
+   desktop VS Code and an iPad, including simultaneous editor instances inside the
+   same sandbox and views of the same role session.
 5. Preserve existing ownership for roles/hosts, evidence, handbook/rules/skills,
    integration, and DevLore lifecycle management.
 6. Hand the planner a hosted-model-first route from proof of concept to accepted operation.
@@ -49,7 +71,8 @@ Git commands remain subject to their separate, named authorization requirement.
 
 ## Current State
 
-The repository has a draft architecture and roadmap. They emphasize local
+At the start of this work, the repository had a draft architecture and roadmap
+that emphasized local
 inference, hardware qualification, and an OpenCode target workflow more strongly
 than the owner's current starting point. The discussion establishes hosted models
 on existing hardware first; local inference and hardware acquisition are a
@@ -145,6 +168,14 @@ closing review, exact-snapshot commit checks, unknown-outcome reconciliation, an
 source-linked checkpoints. Browser disconnection, host-process failure, sandbox
 replacement, and machine failure must have separately stated behavior.
 
+The disaster-recovery scenario starts with loss of native session state while
+the schedule, worktree, and shared evidence survive. Attempt restoration from
+native state and available backups first. If restoration is exhausted, require
+owner approval and prevent the old session from acting before authorizing a
+successor. Preserve the approval, original/successor identities, recovery
+evidence, and context gaps. The archive supports reconstruction without
+promising a complete native backup or lossless recovery.
+
 ### Roadmap
 
 Describe dependency-oriented increments, not a fixed schedule or implementation
@@ -199,38 +230,85 @@ GitHub remains authoritative for schedules, source, PRs, and accepted artifacts.
 - [x] Open `doc/521-workstation-design` using the existing branch workflow. The owner ran the command after the agent's shell could not reach GitHub.
 - [x] Install this proposal as the repository plan, with the proposal-location paragraph removed.
 - [x] Review the plan with the owner and record its approved status before work.
-- [ ] Commit the approved plan before design edits, with explicit authorization for any agent-run Git commands.
-- [ ] Verify that the committed plan matches the owner-approved text before work.
+- [x] Commit the approved plan before design edits. The owner committed it as `934c695` on 2026-11-13.
+- [x] Verify that the committed plan matches the owner-approved text before work. Read the commit/tree/blob objects and compared the plan bytes with the working file; they match.
 
 ### Phase 2: Revise the architecture
 
-- [ ] Read the complete existing architecture and relevant source records.
-- [ ] Rewrite the architecture to meet the requested structure and requirements above.
-- [ ] Add the complete system and multi-device attachment diagrams.
-- [ ] Reconcile obsolete initial hardware/inference assumptions and preserve relevant engineering requirements.
-- [ ] Update revision metadata and distinguish proposed behavior from qualified capability.
+- [x] Read the complete existing architecture and relevant source records.
+- [x] Rewrite the architecture to meet the requested structure and requirements above.
+- [x] Add the complete system and multi-device attachment diagrams.
+- [x] Reconcile obsolete initial hardware/inference assumptions and preserve relevant engineering requirements.
+- [x] Update revision metadata and distinguish proposed behavior from qualified capability.
+- [x] Document the approved disaster-recovery policy and distinguish it from routine session recovery.
 
 ### Phase 3: Produce the planner handoff
 
-- [ ] Rewrite the existing roadmap with outcomes, dependencies, owners, and acceptance gates.
-- [ ] Make the first implementation increment actionable without implementing it here.
-- [ ] Include a host capability matrix and explicit qualification obligations for all three hosts.
-- [ ] Include planner responsibilities for task decomposition, native issue links, schedule amendments,
+- [x] Rewrite the existing roadmap with outcomes, dependencies, owners, and acceptance gates.
+- [x] Make the first implementation increment actionable without implementing it here.
+- [x] Include a host capability matrix and explicit qualification obligations for all three hosts.
+- [x] Include planner responsibilities for task decomposition, native issue links, schedule amendments,
       implementation plans, and owner review; do not create or amend schedules in this task.
-- [ ] Explain pre-schedule design, one-to-many roadmap-to-schedule decomposition,
+- [x] Explain pre-schedule design, one-to-many roadmap-to-schedule decomposition,
       scenario walkthroughs, and the reviewed development methodology they produce.
-- [ ] Define completion of the hosted-model environment separately from optional local inference work.
+- [x] Define completion of the hosted-model environment separately from optional local inference work.
+- [x] Add a disaster-recovery scenario with owner-approved succession, retained evidence, and acceptance criteria.
 
 ### Phase 4: Verify and deliver for review
 
-- [ ] Check architecture/roadmap consistency, requirement coverage, ownership, and lifecycle terminology.
-- [ ] Run applicable documentation gates and verify relative links, anchors, and diagram syntax.
-- [ ] Record verification results and remaining unqualified deployment choices accurately.
-- [ ] Present both changed documents to the owner. Leave issue #521 open until its accepted-baseline evidence exists.
+- [x] Check architecture/roadmap consistency, requirement coverage, ownership, and lifecycle terminology.
+- [x] Run applicable documentation gates and verify relative links, anchors, and diagram syntax.
+- [x] Record verification results and remaining unqualified deployment choices accurately.
+- [x] Present both changed documents to the owner. Leave issue #521 open until its accepted-baseline evidence exists.
 
 Update phase status in the same authorized commit that completes each phase.
 No design commit, push, pull request, deployment, purchase, issue mutation, or
 schedule amendment is included in the plan-commit authorization.
+
+## Verification and Review Status
+
+The approved plan was committed by the owner as `934c695` before design edits.
+The committed plan blob matched the working file when work began on 2026-11-13.
+
+The revised architecture is revision 0.5 and the roadmap revision 0.6. Both remain
+`Draft` for owner review. The original draft's relevant workspace, evidence,
+review, authorization, and recovery requirements are retained; initial local
+inference and hardware qualification are moved to the existing optional track.
+
+Completed checks:
+
+- Codespell passed for the architecture, roadmap, and plan using the repository's
+  `clear,rare,en-GB_to_en-US` dictionaries and ignore list.
+- Frontmatter was checked against the documented catalog/working families.
+- Nine relative file/anchor links passed; the externally referenced
+  `4.1 Persistent specialists` anchor is retained.
+- The ten architecture requirements and six decision IDs are reflected in the
+  roadmap's scenarios, ownership, delivery gates, and decision table.
+- Three Mermaid blocks received fence/block-structure checks and syntax review.
+  They were not rendered or checked by a Mermaid runtime locally.
+- The editor-profile clarification was checked across the workflow, component
+  and sequence diagrams, qualification gates, scenarios, and attachment contract.
+  Diagram edges do not connect developer devices directly to native role hosts.
+- The disaster-recovery refinement was checked across the workflow, identity and
+  driver contracts, archive responsibilities, recovery event table, G3 gate, S8
+  walkthrough, host matrix, and planner handoff. S6 retains original-session
+  recovery; S8 requires restoration attempts, explicit approval, fencing,
+  recorded succession, and visible context gaps. The proposed catalog contains
+  S1 through S8 without renumbering existing scenarios. The three Mermaid blocks
+  are unchanged by this refinement.
+- Current core epic/feature descriptions and primary host/editor/SBX documentation
+  were read. No live Scenarios-project row readback is claimed.
+
+These are documentation checks on the changed files, not a full repository gate
+run or a deployed-system qualification. No host, editor topology, iPad workflow,
+or recovery behavior was implemented or tested by this documentation change.
+
+The drafts have been presented to the owner, who requested publication for review
+on GitHub. The documentation work is complete for its final authorized commit;
+the architecture and roadmap remain Draft during owner review. Workstation
+architecture and delivery plan (#521) remains open pending its accepted-baseline
+evidence on develop. Publishing this pull request neither accepts the baseline
+nor authorizes a merge, tracker amendments, or deployment.
 
 ## Migration Path
 
