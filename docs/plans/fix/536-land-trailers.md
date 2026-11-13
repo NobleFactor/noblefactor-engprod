@@ -1,9 +1,9 @@
 ---
 title: "star github model apply and backup land their pull requests with the AI disclosure and the trailers"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/536
-status: active
+status: complete
 created: 2026-11-12
-updated: 2026-11-12
+updated: 2026-11-13
 ---
 
 # Plan: star github model apply and backup land their pull requests with the AI disclosure and the trailers
@@ -37,7 +37,7 @@ neither caller's description said AI assisted or carried `Assisted-by:`. One pul
       `disclose`; the two cases; section 6 and its status page. 185 cases pass; against the old code the two new cases
       fail and no other does
 - [x] The pull request script: merged, the deployed extension checked, step 36 In progress with the pull request linked
-- [ ] #536 closed with its evidence once #448's `apply` on David-Noble-at-work lands personal's workflow, its commit
+- [x] #536 closed with its evidence once #448's `apply` on David-Noble-at-work lands personal's workflow, its commit
       carrying both trailers; step 36 Closed
 
 ## Files to Create/Modify

@@ -3,7 +3,7 @@ title: "The Triage workflow sets a new issue's Severity and puts a scenario's fi
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/448
 status: active
 created: 2026-11-12
-updated: 2026-11-12
+updated: 2026-11-13
 ---
 
 # Plan: The Triage workflow sets a new issue's Severity and puts a scenario's findings in the scenario
@@ -89,7 +89,7 @@ David-Noble-at-work, and its rows are removed.
 
 ### Phase 3: David-Noble-at-work's template
 
-- [ ] The scenario step in David-Noble-at-work/.github's template, the same way; merged; `apply` on David-Noble-at-work
+- [x] The scenario step in David-Noble-at-work/.github's template, the same way; merged; `apply` on David-Noble-at-work
       lands it in personal; `diff` shows no difference
 
 ### Phase 4: the evidence
