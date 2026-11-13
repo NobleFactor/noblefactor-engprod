@@ -21,7 +21,9 @@ models, read on demand, in section 6). Revised the same day: each participating 
 schedule's rows are numbered by Step, not Lane, and its own issue's row has none; Lane renamed Step in GitHub the same
 day, on the template and the nine schedules (§ The Schedule and Scenario fields). Ruled 2026-11-11 on #439: closed steps
 move with the open ones, so a step inserted, moved or taken off renumbers every later step, closed or open, in place of
-the rule that a closed step keeps its number (§ The Schedule and Scenario fields; section 8, question 5).
+the rule that a closed step keeps its number (§ The Schedule and Scenario fields; section 8, question 5). Built on
+2026-11-12 (#427): the sweep's `no-step` rule returns a task or bug whose row on a Schedule project names a schedule and
+has no step; a Schedule issue's own row is left alone.
 
 Ruled 2026-11-02 and 2026-11-03, with the cutover. Chore is retired, so a scenario's rows no longer include chores.
 The collection's own issue is typed Schedule or Scenario, not Epic, from 2026-11-03, and labeled schedule or scenario

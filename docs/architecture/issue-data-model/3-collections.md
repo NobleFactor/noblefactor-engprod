@@ -199,9 +199,9 @@ for compliance and an agent has reviewed its code, with the team lead's sign-off
   every row of a schedule, other than the Schedule issue's own, gets its step number and its dependencies, GitHub
   blocked-by links, when it is added. A GitHub project has no number that counts by itself, so whoever adds a row sets
   its step; a working issue tracking system on GitHub comes first and tooling follows (ruled 2026-11-02). The sweep
-  (#436) will return an issue whose row has no step to its team's Triage project (ruled 2026-11-04). The Lane field,
-  numbered from the lane tables on 2026-11-01, was renamed Step on 2026-11-02, so steps 1 to N are the old lane numbers.
-  The plan's question 6.
+  (#436) returns a task or bug whose row has no step to its team's Triage project, by its `no-step` rule (ruled
+  2026-11-04, built in #427). The Lane field, numbered from the lane tables on 2026-11-01, was renamed Step on
+  2026-11-02, so steps 1 to N are the old lane numbers. The plan's question 6.
 - A Schedule issue's own row has no step (ruled 2026-11-02 and 2026-11-03): it tracks the schedule, with its exit
   criteria, and is not a step of its work.
 - Beat orders a scenario's rows (ruled 2026-11-03). Ruled 2026-11-04: those rows are the tasks and bugs found while
