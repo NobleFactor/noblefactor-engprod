@@ -49,7 +49,9 @@ _EVIDENCE_EXEMPT = ["Scenario"]
 # A Scenario project's rows meet the two structural rules alone, until an item moves out (section 6, `projects`).
 _SCENARIO_KIND = "Scenario"
 
-# A Schedule project's row names its schedule and its step; a Triage row's Status starts Open.
+# A Schedule project's row names its schedule and its step; a Triage row's Status starts Open. A Schedule issue's own
+# row has no step (section 3), and the rule that every other row has one is a task's or a bug's, never a collection's.
+_SCHEDULE_KIND = "Schedule"
 _SCHEDULE = "schedule"
 _STEP = "step"
 _STATUS_FIELD = "Status"
@@ -82,6 +84,10 @@ def faults(r, node, model, by_key):
     if len([h for h in r["home"] if (h["project"] or "").startswith(_SCENARIO_KIND + ": ")]) > 0:
         return out
 
+    # A step on a schedule has its step number (section 3; #427).
+    for h in r["home"]:
+        if level == leaf and (h["project"] or "").startswith(_SCHEDULE_KIND + ": ") and h.get(_SCHEDULE) != None and h.get(_STEP) == None:
+            out.append(_fault("no-step", "a row of " + h["project"] + " on schedule " + h[_SCHEDULE] + " with no step"))
     if r.get(_AREA) == None:
         out.append(_fault("no-area", "no Area"))
     severity = r.get(_SEVERITY)

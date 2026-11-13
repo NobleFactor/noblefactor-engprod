@@ -1128,7 +1128,11 @@ function write_fixtures {
                 rows: [["PVT_scenario", 8, "Scenario: engprod", {Scenario: "walk", Beat: 1}]]}),
             node("NobleFactor/alpha"; 10; {type: "Task", parent: feature, fields: {Area: "Product", Severity: "High"}}),
             node("NobleFactor/alpha"; 11; {type: "Task", parent: feature, fields: {Area: "Product", Severity: "N/A"},
-                rows: [schedule(11; 5)], blocked: [["NobleFactor/beta", 1, "OPEN"]]})
+                rows: [schedule(11; 5)], blocked: [["NobleFactor/beta", 1, "OPEN"]]}),
+            node("NobleFactor/alpha"; 12; {type: "Task", parent: feature, fields: {Area: "Product", Severity: "N/A"},
+                rows: [["PVT_schedule", 26, "Schedule: engprod", {Schedule: "s1", Status: "Open"}]]}),
+            node("NobleFactor/alpha"; 13; {type: "Schedule", title: "Schedule: s1", fields: {Area: "Engineering", Severity: "N/A"},
+                rows: [["PVT_schedule", 26, "Schedule: engprod", {Schedule: "s1", Status: "Open"}]]})
         ]; false)]' >"${fixtures}/issues/NobleFactor/alpha.json"
 
     jq -n "${library}"'
@@ -1334,7 +1338,7 @@ run_star "${run_directory}/data-chore" github schedule report NobleFactor/alpha
 quiet="--silent"
 expect "1: a type with no level and no Collection: description is refused, named" error "" "type Chore"
 run_star "${data}" github schedule report NobleFactor/alpha
-expect "1: a model with collection types loads, and the report runs" ok 'type == "array" and length == 11'
+expect "1: a model with collection types loads, and the report runs" ok 'type == "array" and length == 13'
 
 # 1a. get returns an organization's model as GitHub holds it: its types with their levels, the collection types without
 # one, its fields, its teams with the repositories each maintains, and its open templates with their fields and views,
@@ -1411,8 +1415,9 @@ expect "3c: every issue of the repository, open and closed, across three pages" 
 # 3d. Every key the model names is at the top level: --filter selects on it, and CSV gives it a column.
 run_star "${data}" github schedule report NobleFactor/alpha --filter epic=NobleFactor/alpha#1
 expect "3d: --filter epic=<issue> selects everything under the epic" ok '
-    (map(.issue) | sort) == (["NobleFactor/alpha#10", "NobleFactor/alpha#11", "NobleFactor/alpha#2", "NobleFactor/alpha#3",
-        "NobleFactor/alpha#4", "NobleFactor/alpha#6", "NobleFactor/alpha#7", "NobleFactor/alpha#8", "NobleFactor/alpha#9"] | sort)'
+    (map(.issue) | sort) == (["NobleFactor/alpha#10", "NobleFactor/alpha#11", "NobleFactor/alpha#12", "NobleFactor/alpha#2",
+        "NobleFactor/alpha#3", "NobleFactor/alpha#4", "NobleFactor/alpha#6", "NobleFactor/alpha#7", "NobleFactor/alpha#8",
+        "NobleFactor/alpha#9"] | sort)'
 run_star "${data}" github schedule report NobleFactor/alpha --filter issue=NobleFactor/alpha#3 \
     --jq 'map({issue, area, epic, severity})' --output csv
 expect "3d: --output csv gives each model key a column holding one value" ok \
@@ -1456,6 +1461,8 @@ expect "5: an issue the sweep adds gets a comment naming the rule it broke" ok '
     any($calls[]; index("s=I_NobleFactor_alpha_3") != null and any(.[]; startswith("query=mutation starComment"))
         and any(.[]; startswith("b=") and test("Triage: engprod") and test("`step-order`")))'
 expect "6: a scenario row meets the structural rules alone" ok "${entry}"'absent("NobleFactor/alpha#9")'
+expect "6: a task's row on a schedule with no step is a fault; a Schedule issue's own row, which has none, is not (#427)" ok \
+    "${entry} ${faulted}"'faulted("NobleFactor/alpha#12"; "no-step") and absent("NobleFactor/alpha#13")'
 expect "7: an issue already in Triage is not added again, nor commented on" ok "${entry}"'
     (any($calls[]; any(.[]; type == "string" and test("contentId: \"I_NobleFactor_alpha_7\""))) | not)
     and (any($calls[]; index("s=I_NobleFactor_alpha_7") != null) | not)
@@ -1474,7 +1481,7 @@ expect "4: one flat record per issue, each with every key, a Triage row with no 
 
 run_star "${data}" github triage sweep NobleFactor --filter action=added --jq 'map({issue, project, rules})' --output csv
 expect "4: --filter action=added and CSV give what the run sent to Triage, one row each" ok '
-    split("\n") | .[0] == "issue,project,rules" and (.[1:] | map(select(. != "")) | length) == 5
+    split("\n") | .[0] == "issue,project,rules" and (.[1:] | map(select(. != "")) | length) == 6
     and (.[1:] | map(select(test("^NobleFactor/alpha#3,Triage: engprod,step-order$"))) | length) == 1' "" text
 
 # Under star's --dry-run every shell.exec is skipped, reads with writes, until NobleFactor/devlore-cli#1170: the sweep
