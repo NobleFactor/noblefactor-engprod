@@ -16,7 +16,7 @@
 # different; apply lands files through pull requests, and sets the variable and the secrets.
 
 load("commands/model.star", "escape", "quote", "rest", "sh")
-load("commands/pull.star", "comment", "commit_files", "default_branch", "land", "signer")
+load("commands/pull.star", "comment", "commit_files", "default_branch", "disclose", "land", "signer")
 load("commands/tokens.star", "fingerprint", "set_secret")
 
 # Where a repository's Triage workflow lives, the template it is copied from, and the variable naming its project.
@@ -220,7 +220,7 @@ def compare(state, kind, account):
 def _land(repository, base, branch, files, title, summary, done, records):
     """Commits files on a branch, lands them through a pull request, removes the branch, and records each record's action."""
     sha = commit_files(repository, base, branch, files, title)
-    body = "## Summary\n\n" + summary + "\n\nSigned-off-by: " + signer()
+    body = disclose("## Summary\n\n" + summary, signer())
     url, number = land(repository, base, branch, title, body, sha, "the change")
     rest("DELETE", "repos/" + repository + "/git/refs/heads/" + branch)
     comment(repository, number, "Merged; " + branch + " is removed.")

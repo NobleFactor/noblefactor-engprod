@@ -50,7 +50,10 @@ among the rest, and `backup`, and the report and the sweep on the model GitHub h
 the read before every operation retired with it. Built 2026-11-10 in #437: `diff`, `apply` and `restore`, a new
 account's `.github` files, Triage workflows, variables and secrets through `apply`, and `backup`'s pull-request gate
 shared with `apply`; `labels sync` and `labels audit` removed. `model audit` is not among the five commands ruled
-2026-11-09.
+2026-11-09. Fixed 2026-11-12 in #536: `backup`'s and `apply`'s pull requests say AI assisted and end with both trailers,
+and each is merged with its description as the commit's message, so the commit that lands carries them. Fixed
+2026-11-13 in #538: a private repository of a free user account, whose rules GitHub refuses to read with a 403, requires
+no check, and any other failure to read the rules says what GitHub said.
 
 Pulled again 2026-11-02, Chore retired: the four types and projects 4 to 22. Of those, only the Schedule and Thread
 templates, projects 7 and 8, belong in the model as ruled 2026-11-03, the Thread template now being the Scenario
