@@ -94,7 +94,7 @@ David-Noble-at-work, and its rows are removed.
 
 ### Phase 4: the evidence
 
-- [ ] The test issues filed, their rows, fields and runs read back, each closed with Resolution Invalid and its rows
+- [x] The test issues filed, their rows, fields and runs read back, each closed with Resolution Invalid and its rows
       removed
 
 ### Phase 5: the documents and the merge
