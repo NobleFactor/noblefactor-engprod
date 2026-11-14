@@ -263,6 +263,14 @@ product work and engineering work each cover, tests among engineering's, and wha
 of what engineering covers, and the sentence that product readiness and release management epics hold both kinds of
 work is gone, superseded on 2026-11-05.
 
+Built 2026-11-13 in #448: NobleFactor's five participating repositories run the Triage workflow, landed from
+NobleFactor/.github's template by `star github model apply` (#437); its first run, on 2026-11-11, set the Area field
+and proved the noblefactor-automation app's permissions for projects and issue fields; David-Noble-at-work/.github,
+which has run its own with an `ADD_TO_PROJECT_PAT` of its own since 2026-11-09 (#441), was brought to the template on
+2026-11-13 (David-Noble-at-work/.github#8); and in both accounts it gives an issue whose body says "Found while walking
+#N", where #N is an open scenario of the account, its row on that scenario's Scenario project in place of a Triage row
+(§ An organization's account and § Triage in section 4).
+
 ## Completion
 
 - [x] The plan's questions 1 and 13 ruled: where Type lives and where the parent link lives -- 2026-10-22

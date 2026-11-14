@@ -1,7 +1,7 @@
 ---
 title: "star github model apply lands in a private repository of a free user account"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/538
-status: active
+status: complete
 created: 2026-11-13
 updated: 2026-11-13
 ---
@@ -37,7 +37,7 @@ make this repository public to enable this feature." One pull request from `fix/
 - [x] `_required` in `pull.star`; the stand-in's private and refused modes and cases 11.7 and 11.8; section 6 and its
       status page. 187 cases pass; against the old code the two new cases fail and no other does
 - [x] The pull request script: merged, the deployed extension checked, step 37 In progress with the pull request linked
-- [ ] #538 closed with its evidence once #448's phase 3, run again, has `apply` merge David-Noble-at-work/personal#325;
+- [x] #538 closed with its evidence once #448's phase 3, run again, has `apply` merge David-Noble-at-work/personal#325;
       step 37 Closed
 
 ## Files to Create/Modify

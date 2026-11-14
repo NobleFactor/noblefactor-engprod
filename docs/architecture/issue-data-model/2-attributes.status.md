@@ -83,8 +83,10 @@ in GitHub that day. The Severity field's N/A option, the `severity:n/a` label an
 by the script of #303's closing pull request, which also sets N/A on every open issue of a type other than Bug when it
 runs; read on 2026-11-04, before #452 and #453 were filed, there were 414 in NobleFactor's five participating
 repositories and 33 in personal. An issue with no type gets none and waits for triage, which sets N/A when it gives the
-issue a type other than Bug. The Triage workflow will set N/A on an issue of another type filed from a form, and Medium
-on a bug filed from the bug form, when the issue is opened (#448). The script of #303's closing pull request also shows
+issue a type other than Bug. Built 2026-11-13 in #448: the Triage workflow sets the Severity when an issue is opened,
+keeping one already set, Medium on a bug, N/A on an issue of another type and none on an issue with no type, and
+NobleFactor's sets the Area field, as it has since its first run, on 2026-11-11. An issue typed only after it is opened
+gets no Severity from the workflow, and triage gives it one. The script of #303's closing pull request also shows
 the Area field in every Triage view, the Priority field in every view of NobleFactor's Backlog projects, and the Labels
 field in David-Noble-at-work's Triage and Backlog views; read 2026-11-04, no such view showed any of them. #452 will
 give every open issue an Area before the sweep runs, and #436 waits on it: read 2026-11-04, before #452 and #453 were

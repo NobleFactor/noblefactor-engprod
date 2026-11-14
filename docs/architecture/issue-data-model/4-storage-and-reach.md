@@ -163,7 +163,7 @@ whose story its Scenario issue told: the team's Scenario project holds its scena
 row. The Scenario issue summarizes an end-user goal and names in its body the features the scenario exercises, and the
 scenario's other rows are the tasks and bugs logged while walking it, each with its Beat, the point in the walk where it
 turned up, until it moves to its team's Triage project or onto a schedule. A logged item names its scenario in its body,
-as "Found while walking #N", and the Triage workflow will add it to the scenario instead of to the team's Triage project
+as "Found while walking #N", and the Triage workflow adds it to the scenario instead of to the team's Triage project
 (#448; [section 3](3-collections.md#the-schedule-and-scenario-fields)). A Scenario issue states no evidence of
 completion, since a scenario never ends (§ Where each part lives, below).
 
@@ -323,7 +323,7 @@ devlore (NobleFactor project 6) and Triage: David-Noble-at-work (David-Noble-at-
 goes into its team's Triage project, or in a user account the account's. The triage epics
 NobleFactor/noblefactor-engprod#142, NobleFactor/devlore-cli#1188 and David-Noble-at-work/personal#313 are retired.
 Ruled 2026-11-04: a task or a bug logged while walking a scenario goes into the scenario whose walk found it instead of
-into Triage, and the Triage workflow will put it there (#448; § An organization's account, above).
+into Triage, and the Triage workflow puts it there (#448; § An organization's account, above).
 
 Ruled 2026-11-03: the Triage project is where every issue is reviewed and a triage decision made. The decision either
 declines the work or moves the issue to the team's Backlog, Schedule or Scenario project. A declined issue is closed as
@@ -396,8 +396,8 @@ fields read, and issues read and write, beside contents write, metadata read and
 NobleFactor's repositories. GitHub's [list of GitHub App permissions](
 https://docs.github.com/en/rest/authentication/permissions-required-for-github-apps) puts an organization's projects
 under the organization permission Projects, its issue fields under the organization permission Issue Fields, and an
-issue's field values under the repository permission Issues. Nothing has used the new permissions yet: the first Triage
-workflow run in a NobleFactor repository will prove them.
+issue's field values under the repository permission Issues. The Triage workflow's first run in a NobleFactor
+repository, on 2026-11-11, proved the app's permissions for projects and issue fields.
 
 In a user account, the workflow adds the issue to the Triage project with a personal access token kept in the
 repository secret `ADD_TO_PROJECT_PAT`, and adds the area label with the workflow's own `GITHUB_TOKEN`, which the job
@@ -430,15 +430,16 @@ and David-Noble-at-work/.github. On 2026-11-03 none of the seven had `.github/wo
 David-Noble-at-work/personal#321, became a row of Triage: David-Noble-at-work and got `area:engineering` from
 `github-actions[bot]`. The same change made David-Noble-at-work's template drop carriage returns before reading the
 Area, stop looping forever on a body that ends at the Area heading, and stop its job after five minutes.
-NobleFactor's template still has the reader that loops. [This section's status](4-storage-and-reach.status.md)
+Since #447 (NobleFactor/.github#5, merged 2026-11-10), NobleFactor's template has the same reader, which stops at the
+end of the body. [This section's status](4-storage-and-reach.status.md)
 records where each repository stands.
 
 Ruled 2026-11-03: an issue with a blank Area is an error, and it is caught at three points:
 
 - **At filing.** `star github issue` will refuse to file an issue without an Area (#338). Each issue form in the
   account's `.github` repository has a required Area dropdown, and the Triage workflow copies its answer into the issue
-  when the issue is opened: personal's adds the area:product or area:engineering label today, and NobleFactor's will set
-  the Area field once #447 and #448 land. The form checks the Area in a public repository; GitHub enforces a form's
+  when the issue is opened: personal's adds the area:product or area:engineering label, and NobleFactor's sets the
+  Area field (#447, #448). The form checks the Area in a public repository; GitHub enforces a form's
   required fields only there (GitHub's form schema documentation, read 2026-11-04). In a private repository, which today
   is only personal, nothing checks it at filing until `star github issue` does.
 - **At triage.** Each Triage project has the Area field (in a user account, the area: labels, in its Labels column) and
@@ -533,7 +534,7 @@ still open, and so is David-Noble-at-work/personal#309, which gives personal its
 | Why an issue was closed | the issue field Resolution, a single select: Declined, Duplicate or Invalid (ruled 2026-11-03), only on a closed issue | the field's type, and one value | a label named `resolution:<name>`: resolution:declined, resolution:duplicate or resolution:invalid, only on a closed issue. GitHub enforces nothing |
 | `good first issue` | the label `good first issue`, held per repository, on tasks and bugs only (ruled 2026-11-04): it tells a newcomer they can pick the issue up, and only a task or a bug is a single piece of work | nothing | the same. personal gets the label from the script of #303's closing pull request, so both accounts hold it |
 | The other labels | labels, held per repository | nothing | the same |
-| A new issue, until its triage decision | a row of the team's Triage project, added by each repository's Triage workflow (ruled 2026-11-03), but for a task or a bug logged while walking a scenario, which the Triage workflow will add to that scenario in the team's Scenario project instead (ruled 2026-11-04; #448) | nothing | the same, in Triage: David-Noble-at-work, or for a logged item in Scenario: David-Noble-at-work |
+| A new issue, until its triage decision | a row of the team's Triage project, added by each repository's Triage workflow (ruled 2026-11-03), but for a task or a bug logged while walking a scenario, which the Triage workflow adds to that scenario in the team's Scenario project instead (ruled 2026-11-04; #448) | nothing | the same, in Triage: David-Noble-at-work, or for a logged item in Scenario: David-Noble-at-work |
 | Accepted work not yet scheduled | a row of the team's Backlog project, ordered by priority (ruled 2026-11-03), which its view By priority shows sorted by Priority; the script of #303's closing pull request makes the view (ruled 2026-11-04) | nothing | the same, in Backlog: David-Noble-at-work, which has no Priority field to sort by |
 | A schedule's rows, steps, sprints and status | the team's one Schedule project (ruled 2026-11-03), which holds its committed tasks and bugs: Status on every row, Schedule, a single select naming the row's schedule, Step, a number, Iteration, GitHub's iteration field, and Worktree, a link to the branch the step's work is on | the field's type | the same, in Schedule: David-Noble-at-work |
 | A scenario's rows, beats and status | the team's one Scenario project (ruled 2026-11-03), which holds its Scenario issues and the tasks and bugs found while walking them, and no feature (ruled 2026-11-04): Status on every row, Scenario, a single select naming the row's scenario, and Beat, the point in the walk where a row turned up | the field's type | the same, in Scenario: David-Noble-at-work |

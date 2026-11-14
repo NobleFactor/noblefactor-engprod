@@ -141,9 +141,9 @@ project (below).
   issue with no Type, or below level 0 with no parent, is untriaged, and waits in its team's Triage project, or its
   account's in a user account, or in the scenario whose walk found it, until triage classifies it.
 - New issues reach their team's Triage project through a GitHub Actions workflow in each repository, run when an issue
-  is opened or transferred, using `actions/add-to-project`; GitHub's built-in auto-add workflow is not used. Today only
-  personal runs it: NobleFactor's five participating repositories will once #448 lands, and David-Noble-at-work/.github
-  once David-Noble-at-work/personal#311 does. Each repository's `TRIAGE_PROJECT_URL` variable names its team's Triage
+  is opened or transferred, using `actions/add-to-project`; GitHub's built-in auto-add workflow is not used. personal,
+  David-Noble-at-work/.github (#441) and NobleFactor's five participating repositories (#448) run it.
+  Each repository's `TRIAGE_PROJECT_URL` variable names its team's Triage
   project, from the team mapping: the team with the maintain role on a repository owns it. A Triage workflow template in
   each account's `.github` repository offers the workflow (ruled 2026-11-03; [section 6](6-the-asset-and-its-sync.md)
   § One model per account). GitHub's documentation describes workflow templates in an organization's `.github`
@@ -158,8 +158,8 @@ project (below).
 - A blank Area is an error, caught at three points (ruled 2026-11-03). At filing, `star github issue` will refuse an
   issue without an Area (#338), and the issue forms in each account's `.github` repository have a required Area dropdown
   ([section 6](6-the-asset-and-its-sync.md) § One model per account), whose answer the repository's Triage workflow
-  copies into the Area field or label when the issue is opened: personal's adds the `area:` label today, and
-  NobleFactor's will set the Area field once #447 and #448 land. The form checks the Area in a public repository; GitHub
+  copies into the Area field or label when the issue is opened: personal's adds the `area:` label, and
+  NobleFactor's sets the Area field (#447, #448). The form checks the Area in a public repository; GitHub
   enforces a form's required fields only there (GitHub's form schema documentation, read 2026-11-04). In a private
   repository that takes part, today only personal, nothing checks it at filing until `star github issue` does. At
   triage, each Triage project has the Area field (in a user account, the `area:` labels in its Labels field) and a
@@ -230,7 +230,7 @@ project (below).
   scenario is structurally like a schedule that starts with no tasks or bugs: they are found with time. Someone opens
   the scenario and walks it, logging work items as they go, each a task or a bug and a row of the team's Scenario
   project under the scenario's option, its Beat the point in the walk where it turned up. A logged item names its
-  scenario in its body, as "Found while walking #N", and the Triage workflow will add it to the scenario instead of to
+  scenario in its body, as "Found while walking #N", and the Triage workflow adds it to the scenario instead of to
   the team's Triage project (#448); every other new issue goes to Triage. Each item later moves to its team's Triage
   project or straight onto a schedule, and leaves the scenario; the item's body and a comment on the Scenario issue
   record the move. The sweep will leave a scenario's rows alone but for two structural rules: it will return an epic or

@@ -140,9 +140,11 @@ priorities:
 # has severity:critical, severity:high, severity:medium or severity:low, never severity:n/a. An issue with no type label
 # yet gets no severity label and waits for triage, which adds severity:n/a when it gives the issue a type label other
 # than bug; the sweep, noblefactor-engprod#436, will catch a miss. The bug form asks no severity, so the Triage workflow
-# will give a bug filed from it severity:medium, the owner's default, and an issue of another type filed from a form
-# severity:n/a (noblefactor-engprod#448); triage changes a bug's severity when its harm is greater or less. star github
-# issue will add severity:n/a at filing (noblefactor-engprod#338).
+# gives an issue with the bug label severity:medium, the owner's default, an issue with another type label (task, epic,
+# feature, schedule or scenario) severity:n/a, and an issue with no type label yet none, keeping a severity label
+# already set (noblefactor-engprod#448); triage changes a bug's severity when its harm is greater or less. An issue
+# given its type label only after it is opened gets no severity label from the workflow, and triage gives it one. star
+# github issue will add severity:n/a at filing (noblefactor-engprod#338).
 severities:
   - name: "Critical"
     label: "severity:critical"
@@ -285,7 +287,7 @@ labels:
 # it exercises. A scenario is structurally like a schedule that starts with no tasks or bugs: they are found with time.
 # Someone opens the scenario and walks it, logging work items as they go, each a task or a bug and a row of the
 # account's Scenario project under the scenario's option, its Beat the point in the walk where it turned up. A logged
-# item names its scenario in its body, as "Found while walking #N", and the Triage workflow will add it to the scenario
+# item names its scenario in its body, as "Found while walking #N", and the Triage workflow adds it to the scenario
 # instead of to the account's Triage project (noblefactor-engprod#448). Each item later moves to the account's Triage
 # project or straight onto a schedule, and leaves the scenario; the item's body and a comment on the scenario issue
 # record the move. The sweep will leave a scenario's rows alone but for two structural rules: it will return an epic or
