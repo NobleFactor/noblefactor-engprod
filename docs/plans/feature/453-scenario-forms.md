@@ -72,7 +72,7 @@ Read on 2026-11-14:
 
 ### Phase 2: the forms and the descriptions
 
-- [ ] NobleFactor/.github's form, merged; NobleFactor's Scenario type described by `apply`; `backup`
+- [x] NobleFactor/.github's form, merged; NobleFactor's Scenario type described by `apply`; `backup`
 - [ ] David-Noble-at-work/.github's form, merged; the `scenario` label described by `apply`; `backup`
 
 ### Phase 3: the evidence, the documents and the merge
