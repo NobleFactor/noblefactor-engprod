@@ -10,7 +10,7 @@ updated: 2026-11-13
 
 | Document control | Value |
 | --- | --- |
-| Revision | 0.6 — disaster-recovery scenario and approved session succession |
+| Revision | 0.8 — concrete interaction acceptance cases |
 | Owner | NobleFactor Engineering Productivity |
 | Handoff | Designer to planner, for owner review and schedule proposals |
 | Architecture | [System architecture and development workflow](../architecture/agentic-developer-workstation.md) |
@@ -76,7 +76,9 @@ ownership map. Editor-server work and UI attachment integrate through A1/A4, wit
 and workspace obligations through A2; they do not create another host-driver implementation.
 Compatible editors launch the same guest-side role-view entry point through their profile
 formats and connection backends. Developer devices connect to editors; native role-host
-listeners stay private to SBX.
+listeners stay private to SBX. The native servers manage their assigned sessions and internal
+execution processes; the control plane manages server lifecycle and authoritative role bindings.
+Roles are created on demand through start-or-attach, independently of editor/view lifetimes.
 
 | Feature | Deliverable in this roadmap | Principal integration |
 | --- | --- | --- |
@@ -120,8 +122,8 @@ committed schedules as findings change their scope.
 | Wave | Useful increment and owners | Exit evidence |
 | --- | --- | --- |
 | **0 — Review and hand off** | A5: accept problem/goals, architecture, scenarios, open decisions, and the first implementation increment; identify the pre-schedule transition | **G0:** owner-reviewed baseline, responsibilities, walkthrough scope, and actionable work for the planner |
-| **1 — Prove agents in SBX** | #459/#460/#458 with A1/A2/A4: one schedule environment, five separate role contexts, all three host paths through editor-launched SBX profiles, durable work, current required reading, minimal capture/checkpoint, and supervision | **G1:** versioned session/binding manifest; bounded work on each host; detach/reattach to the same session; permanent work survives an ordinary restart; gaps and unsupported capabilities are explicit |
-| **2 — Prove multi-device views** | A1/A2/A4: launcher outside the stopped sandbox; independent editor servers and role shell profiles inside it; authenticated desktop and iPad editor connections | **G2:** simultaneous editor clients launch profiles for the same roles; client/editor failure preserves agent lifetime; native host endpoints stay private; approvals, input, interruption, clipboard, resizing, and browser suspension have demonstrated behavior |
+| **1 — Prove agents in SBX** | #459/#460/#458 with A1/A2/A4: one schedule environment, five separate role contexts, all three host paths through editor-launched SBX profiles, durable work, current required reading, minimal capture/checkpoint, and supervision | **G1:** versioned server/session/binding manifest; bounded work on each host; first-use role creation and later detach/reattach to the same session; host-managed agent execution; permanent work survives an ordinary restart; gaps and unsupported capabilities are explicit |
+| **2 — Prove multi-device views** | A1/A2/A4: launcher outside the stopped sandbox; independent editor servers and role shell profiles inside it; authenticated desktop and iPad editor connections | **G2:** all eight stable startup combinations and I1–I4 interaction outcomes; concurrent opens converge on the same roles; uncertain creation/submission outcomes are reconciled; scoped view/editor/host controls preserve unaffected work; cross-view approvals resolve consistently; native endpoints stay private; clipboard, resizing, and browser suspension have demonstrated behavior |
 | **3 — Integrate evidence and role continuity** | #491–#496/#528 with A1/A4: PostgreSQL catalog, scoped retrieval, citation expansion, reviewed reading sets, pre-compaction consultation, and recoverable checkpoints | **G3:** retrieve a rejected approach and its original result; correct a checkpoint using earlier evidence; restore unfinished work; qualify startup/post-compaction reading on each supported host; prove scoped access, idempotency, citation-preserving restore, and owner-approved session succession after exhausted restoration |
 | **4 — Qualify iterative delivery** | A1/A2/A3 and #456/#457/#526: changing steps, short PR cycles, independent role work, findings/correction, exact-snapshot gates, and closing review | **G4:** a real assignment proceeds through amendments and multiple merges without a global session reset; stale evidence is rejected; repair effort is measured; a Feature receives independent audit/review and owner sign-off |
 | **5 — Adopt DevLore lifecycle** | DevLore lifecycle owner with A1/A4 and archive operations: replace prototype lifecycle operations with reviewed DevLore resources/contracts | **G5:** create, attach, stop, resume, replace, and recover an environment through DevLore; preserve schedule/role/evidence identity and pending-operation state; demonstrate upgrade recovery or rollback |
@@ -156,9 +158,11 @@ packages into issues under their existing Feature owners, with plans and owner r
 
 1. Qualify one existing host and a pinned SBX setup; provision permanent private work storage
    with protected canonical clones and basic service supervision.
-2. Establish stable schedule/environment/role bindings. Start five independent role sessions
-   using a host assignment that exercises Claude, Codex, and OpenCode. Record exact versions,
-   model access, instructions, permissions, session IDs, and outcomes.
+2. Establish stable schedule/environment/role bindings and selected native host servers.
+   Open profiles to create five independent role sessions on demand, using an assignment
+   that exercises Claude, Codex, and OpenCode. Let the hosts manage their session execution.
+   Record exact versions, server and session identities, model access, instructions,
+   permissions, and outcomes.
 3. Exercise each host's attachment/capture path from an editor-launched shell profile inside
    SBX. The profile calls the common role-view launcher and resolves the existing role binding.
    Disconnect a view and reattach to that same session while preserving bounded work and
@@ -184,8 +188,8 @@ holds the team's scenarios; the following are proposed narratives, not filed Sce
 | Proposed scenario | Walk and evidence to retain | Main requirements |
 | --- | --- | --- |
 | S1 — Design becomes scheduled work | Start without a schedule; review design/roadmap; planner proposes issues/plans and one or several schedules; demonstrate the environment transition without duplicate planning authority | R1, R2, R10 |
-| S2 — Five roles use three hosts | Create one schedule sandbox, open its role shell profiles in the editor, inspect bindings, perform bounded work, detach and resume; record each host's actual capabilities and failures | R2, R3, R6, R9 |
-| S3 — Leave the desktop for an iPad | Open two role shell profiles on the desktop; connect another editor instance from the iPad and launch the same profiles against the existing sessions; exercise pending approval and connection loss | R1, R2, R4 |
+| S2 — Five roles use three hosts | Create one schedule sandbox and selected host servers; open profiles to create roles on demand, inspect server/session bindings, perform bounded work, detach and resume; qualify shared-server session separation and host-managed execution | R2, R3, R6, R9 |
+| S3 — Leave the desktop for an iPad | Walk the eight stable editor/server/binding startup combinations; open two profiles on the desktop and corresponding iPad views; exercise concurrent opens, uncertain responses, pending approval, last-view detach, and connection loss against the same sessions | R1, R2, R4 |
 | S4 — The schedule changes during delivery | Discover a dependency, propose an amendment, update the owner-approved steps, merge increments, retain useful contexts, and complete independent closing review | R1, R2, R7, R10 |
 | S5 — Evidence changes the next decision | Retrieve original reasons/results for a rejected approach, detect a checkpoint omission before compaction, reload role instructions, and resume with citations and uncertainty intact | R5, R6 |
 | S6 — An interruption is recovered | Exercise viewing-device disconnect/sleep, SBX-machine sleep/reboot, editor/agent failure, sandbox recreation, repairable resume failure, archive outage, disk pressure, and an uncertain remote write; preserve original session identity and reconcile interrupted work | R1, R2, R5, R9 |
@@ -259,12 +263,42 @@ also produces reviewed recovery procedures under Engineering handbook, agent rul
 skills (#526). Add its bounded Tasks/Bugs to an owner-reviewed schedule when its prerequisites
 are available; the Scenario itself remains a persistent record.
 
+### Interaction acceptance cases
+
+The [architecture's interaction lifecycle](../architecture/agentic-developer-workstation.md#58-interaction-lifecycle)
+defines the state model, eight stable startup combinations, activity diagrams, durable
+operation/ownership contracts, and concrete I1–I7 walkthroughs. These are design case IDs,
+not filed issues or additional Scenario records. The planner decomposes bounded walks
+under the existing scenario and Feature owners:
+
+| Interaction | Scenario and delivery coverage | Observable acceptance result |
+| --- | --- | --- |
+| [I1 — Prepare environment and editor](../architecture/agentic-developer-workstation.md#i1-prepare-the-environment-and-editor) | S1/S2/S3; minimal G1, complete G2 | Repeated/concurrent opens reuse one authoritative environment and intended editor backend; failed authentication/storage readiness reports a specific state without starting roles |
+| [I2 — Create or resume role](../architecture/agentic-developer-workstation.md#i2-create-or-resume-a-role-including-concurrent-opens) | S2/S3; first-use G1, concurrent/unknown paths G2 | Two simultaneous first opens create one role conversation; later opens/resume keep its native ID; lost creation or binding-write outcomes reconcile or remain blocked without duplicate creation |
+| [I3 — Attach/reconnect/detach](../architecture/agentic-developer-workstation.md#i3-attach-reconnect-and-release-terminal-views) | S3/S6; G2 | Desktop/iPad views resolve the same conversation and pending state; last-view closure preserves role identity/work; reconnect reconciles history and uncertain submissions |
+| [I4 — Work and approvals](../architecture/agentic-developer-workstation.md#i4-work-and-approvals-across-views) | S3/S4; G2 | Input receives an identified native ordering/result; one approval answer resolves the exact request across views; late/stale answers cannot authorize another action; unknown submission/approval outcomes are not blindly replayed |
+| [I5 — Scoped stop/resume](../architecture/agentic-developer-workstation.md#i5-stop-suspend-and-resume-at-the-intended-scope) | S3/S6/S7; prototype controls G2, DevLore adoption G5 | View, editor, role, host-server, and SBX stops affect their declared scope; other resources continue; stale reconnects cannot reverse a deliberate stop; retained conversations resume under their original IDs |
+| [I6 — Failure recovery](../architecture/agentic-developer-workstation.md#i6-recover-failures-while-preserving-identity) | S5/S6/S8; evidence/restore G3, deployment failures G6 | Storage/archive/provider/authentication faults expose the affected capability; spool replay preserves evidence identity; interrupted effects are reconciled; unresolved binding/native loss follows the recorded recovery path |
+| [I7 — Configuration and delegation](../architecture/agentic-developer-workstation.md#i7-configuration-native-session-controls-and-delegation) | S2/S4/S5; managed views G2, delivery G4 | Conflicting configuration and native session-switch requests preserve the role binding; the managed attachment enforces its native identity; delegated children have parent identities/evidence and cannot replace a top-level role |
+
+Record initial environment/editor/server/binding/view states, actor and authority scope,
+operation ID, requested action, expected binding revision, observed transition, native
+identities, and supporting evidence. Exercise refusal and unresolved-outcome cases alongside
+successful paths. Starting or unknown states require reconciliation; a stopped session is
+not a never-created role.
+
+A walkthrough that correctly reports an intentionally injected unresolved outcome can
+satisfy that refusal case. An unsupported required capability remains a gap and does not
+satisfy its deployment gate. Keep the capability record for each pinned host/editor path.
+
 ### Host capability matrix the planner must obtain
 
 | Capability | Claude | Codex | OpenCode |
 | --- | --- | --- | --- |
 | Separate execution from views | Owner-reported behavior and documented remote access; qualify native SBX attachment | Documented app-server foundation; qualify retained thread/runtime | Documented shared server foundation; qualify the pinned deployment |
+| Shared server with independent role sessions | Documented multi-session server mode; qualify separate contexts/configuration and host-managed execution | Documented multi-thread server; qualify separate contexts/configuration and host-managed execution | Documented shared server; qualify separate contexts/configuration and host-managed execution |
 | Multiple views of one live session | Demonstrate profile-launched native views | Demonstrate simultaneous profile-launched TUIs; protocol subscriptions alone are insufficient evidence | Demonstrate profile clients bound to the same native session |
+| Startup and start-or-attach reconciliation | Demonstrate applicable eight-state cases, concurrent first opens, and lost creation-response recovery | Demonstrate the same cases with native thread discovery and persisted IDs | Demonstrate the same cases with native session discovery and persisted IDs |
 | No-view continuity and input/approvals | Test disconnection and pending questions | Test subscription/idle-unload strategy, approval routing, input ordering, and disconnection | Test server/session lifetime, input ordering, approvals, and disconnection |
 | Reading/capture/checkpoint/recovery | Qualify startup and post-compaction reading, capture coverage, supported hooks, and restoration | Qualify the same contracts on its own APIs and supported hooks | Qualify the same contracts on its own APIs and supported hooks |
 | Disaster recovery and approved succession | Demonstrate S8: restore first, approval, fencing, successor, retained history and gaps | Demonstrate S8 with native thread IDs and reconciled creation outcomes | Demonstrate S8 with native session IDs and reconciled creation outcomes |
@@ -290,13 +324,14 @@ each gets its own environment while sharing authorized policy and evidence servi
 
 | Contract | Minimum information and invariant | Owner |
 | --- | --- | --- |
-| Environment/role binding | Schedule/environment/role identity; host/session; binding revision; assignment; outcome; one authoritative session; approved and fenced disaster-recovery succession | A1 with #459 |
-| Editor/view attachment | Client/editor identity and endpoint; profile and guest launcher; authenticated scope; resolved role binding; independent presentation; reconnect and no-view behavior | A1/A4 with #459 |
+| Environment/role binding | Schedule/environment/role identity; host-server instance and native session ID; binding revision; creation intent/outcome; assignment; one authoritative session; approved and fenced disaster-recovery succession | A1 with #459 |
+| Editor/view attachment | Separate client/editor-server/view states; identity/endpoint; profile and guest launcher; authenticated scope; native ID and binding revision; independent presentation; I1–I4 startup, reconnect, history/submission reconciliation, and no-view behavior | A1/A4 with #459 |
+| Runtime operation receipt | Operation/target identity; actor and authority reference; expected binding revision; requested action; pending/unknown/completed result; observed native outcome and evidence references | A1/A4 with #459 |
 | Workspace/review input | Repository/base/snapshot; writer authority; permanent storage; identified checks and integrated content | A2 with #458 |
 | Reading set | Approved common/role requirements, versions, measured size, scope, and startup/post-compaction load evidence | #526/#528; role authority from #460 |
 | Evidence/checkpoint | Original locators, capture watermarks/gaps, policy/source identity, decisions/uncertainty, pending operations, next action, and recovery approval/original-successor trace | #490/#494, integrated by A1 |
 | Compliance receipt | Snapshot/base, policy/check environment, coverage, verdict, findings, correction and supersession | A3; closing review remains #456/#457 |
-| Lifecycle/recovery | Runtime resources, retained state, intent/outcome reconciliation, compatible restore manifests, restore-before-replace policy, owner approval, fencing, succession records, and release rules | A4 with DevLore and #496 |
+| Lifecycle/recovery | Environment/host-server desired and observed states; native host ownership of execution; I5 target scope and stale-request fencing; retained state; I6 outcome reconciliation; compatible restore manifests; restore-before-replace policy, approval, succession records, and release rules | A4 with DevLore and #496 |
 | Methodology change | Scenario evidence, proposed procedure/rule/skill, authoritative home, review and adoption | #526 with #456 |
 
 Existing process governs issue classification, plan commits and owner review, Git commands,
@@ -311,8 +346,8 @@ Use the architecture's D1–D6 decision IDs when decomposing work:
 | Decision | Resolve by | Required result |
 | --- | --- | --- |
 | D1 — Pre-schedule runtime and transition | Wave 0 / S1 | Reviewed representation and adoption/split behavior; no artificial schedule prerequisite or silent exception to schedule isolation |
-| D2 — Editor and transport | Before G2 | Pinned editor/backend, role shell profiles and guest launcher, independent instance state/routing, authenticated desktop/iPad path, private native host endpoints, and demonstrated coexistence/resource budget |
-| D3 — Host capability and input/approval behavior | Wave 1, completed for each claimed capability before its gate | Evidence matrix, supported lifecycle hooks, session discovery, subscription policy, explicit failures, and S8 succession enforcement |
+| D2 — Editor and transport | Before G2 | Pinned editor/backend, role profiles and guest launcher, independent instance/client/view state, authenticated desktop/iPad path, private native endpoints, all eight startup combinations, and demonstrated coexistence/resource budget |
+| D3 — Host capability and input/approval behavior | Wave 1, completed for each claimed capability before its gate | Evidence matrix; shared-server role configuration; supported lifecycle hooks; native session discovery and switch handling; creation/submission reconciliation; subscription policy; explicit failures and S8 succession enforcement |
 | D4 — Archive layout and recovery | Minimal durability in Wave 1; full contract before G3 | Original/catalog boundary, authorization, retention, capture acknowledgments, native restore versus evidence reconstruction, and S8 evidence/gap trace |
 | D5 — Placement and resource budgets | First deployment, rechecked at G6 | Existing-machine support, shared logging headroom, quotas, backup destination, and agreed acceptance thresholds |
 | D6 — DevLore interface and adoption | Interface discovery early; adoption before G5 | Reviewed lifecycle contract, product-side owners/dependencies, migration and recovery evidence |
@@ -336,6 +371,13 @@ scenario walkthroughs to develop the methodology. Existing Feature ownership is 
 On 2026-11-13 the owner approved explicit replacement after original-session restoration is
 exhausted and identified disaster recovery, including self-inflicted loss, as its driving
 scenario. S8 records that decision; S6 retains routine recovery of the original session.
+
+During owner review of design PR #544, the owner approved depicting shared native host
+servers managing sessions and internal execution, then requested the complete interaction
+lifecycle. The owner then requested filling those gaps with concrete interactions. This
+revision defines I1–I7 actor/action/outcome walkthroughs, ownership and operation receipts,
+concurrent startup, reconnect, approval and host lifecycle diagrams, scoped stop/resume,
+and observable acceptance results. It does not select a local capture-spool storage engine.
 
 Acceptance of the architecture baseline closes A5 only through its normal owner-reviewed
 evidence on develop. Acceptance of later waves and cooperating Features is separate.

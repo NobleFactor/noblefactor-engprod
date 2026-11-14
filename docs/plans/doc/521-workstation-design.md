@@ -53,6 +53,35 @@ documents on github." Publication for review is authorized; merge and acceptance
 of the design baseline remain pending that review. The PR script follows the
 owner-run process and stops with the pull request open.
 
+During review of the design pull request (#544) on 2026-11-13, the owner explicitly
+approved editing this existing branch while that PR remains open.
+This is the requested exception to agent rule 7 for these review revisions only.
+Show the native host servers owning their assigned sessions, primary agents,
+sub-agents, and helper processes. The control plane manages the servers and role
+bindings; each native host manages its internal execution.
+
+The owner also requested a full interaction section, starting from editor,
+daemon, and role-session startup states. Cover the eight stable combinations,
+distinguish editor clients from servers and terminal attachments, and separate
+never-created sessions from stopped, unavailable, and unrecoverable sessions.
+Include sandbox readiness, startup in progress, concurrent opens, unknown
+outcomes, reconnect/detach, pending work and approvals, and recovery. Session
+creation is on demand; later views use the same authoritative role binding.
+This authorization covers design-document edits, not Git commands or publication.
+
+The owner then requested filling the interaction gaps, rather than leaving them
+as suggested additions. Specify concrete actor/action/outcome walkthroughs for
+environment/editor preparation, concurrent role startup, attachment/reconnect,
+work and approvals, scoped shutdown, failure recovery, and native session controls.
+Record the durable operation and binding information each path needs. Add sequence
+and lifecycle diagrams and map the paths to bounded roadmap acceptance cases.
+
+The owner then requested publication of these revisions: "Let's push those
+changes," and will review them on GitHub. The owner-run workflow commits and
+pushes this branch, refreshes the existing PR #544 description and review links,
+and waits for the new head's CI. The PR remains open; merge and baseline
+acceptance are outside this publication request.
+
 ## Goals
 
 1. Give the developer and planner one consistent description of the intended system.
@@ -261,6 +290,18 @@ GitHub remains authoritative for schedules, source, PRs, and accepted artifacts.
 - [x] Record verification results and remaining unqualified deployment choices accurately.
 - [x] Present both changed documents to the owner. Leave issue #521 open until its accepted-baseline evidence exists.
 
+### Phase 5: Address owner review of host servers and interactions
+
+- [x] Apply the reviewed component diagram and explain server/session/process ownership.
+- [x] Add the interaction state model, eight stable startup combinations, lifecycle walkthroughs, and startup/recovery activity diagram.
+- [x] Align the roadmap's host qualification, scenarios, gates, and planner contracts.
+- [x] Verify the revised documents and present the review changes to the owner.
+- [x] Specify the concrete I1–I7 interaction walkthroughs and durable operation/ownership contracts.
+- [x] Add concurrency, reconnect, approval, and host-server lifecycle diagrams.
+- [x] Map the detailed interactions to scenario walks and observable acceptance results.
+- [x] Verify the completed interaction detail and present it to the owner.
+- [x] Finalize the review documents and prepare the owner-run commit/push workflow for PR #544; leave the PR open for review.
+
 Update phase status in the same authorized commit that completes each phase.
 No design commit, push, pull request, deployment, purchase, issue mutation, or
 schedule amendment is included in the plan-commit authorization.
@@ -270,21 +311,27 @@ schedule amendment is included in the plan-commit authorization.
 The approved plan was committed by the owner as `934c695` before design edits.
 The committed plan blob matched the working file when work began on 2026-11-13.
 
-The revised architecture is revision 0.5 and the roadmap revision 0.6. Both remain
+The revised architecture is revision 0.7 and the roadmap revision 0.8. Both remain
 `Draft` for owner review. The original draft's relevant workspace, evidence,
 review, authorization, and recovery requirements are retained; initial local
 inference and hardware qualification are moved to the existing optional track.
+
+Initial publication: the owner ran the PR script, committed the design as
+`afaa404`, integrated develop by merge commit `b03b69b`, and opened design PR #544.
+The owner-run repository gate succeeded. GitHub reported all four CI checks
+successful for `b03b69b01d586e4723b6e626a808526945880e66` on 2026-11-13.
+Those results apply to the published head, not the subsequent local review edits.
 
 Completed checks:
 
 - Codespell passed for the architecture, roadmap, and plan using the repository's
   `clear,rare,en-GB_to_en-US` dictionaries and ignore list.
 - Frontmatter was checked against the documented catalog/working families.
-- Nine relative file/anchor links passed; the externally referenced
+- Twenty-four relative file/anchor links passed; the externally referenced
   `4.1 Persistent specialists` anchor is retained.
 - The ten architecture requirements and six decision IDs are reflected in the
   roadmap's scenarios, ownership, delivery gates, and decision table.
-- Three Mermaid blocks received fence/block-structure checks and syntax review.
+- Eight Mermaid blocks received fence/block-structure checks and syntax review.
   They were not rendered or checked by a Mermaid runtime locally.
 - The editor-profile clarification was checked across the workflow, component
   and sequence diagrams, qualification gates, scenarios, and attachment contract.
@@ -296,18 +343,44 @@ Completed checks:
   recorded succession, and visible context gaps. The proposed catalog contains
   S1 through S8 without renumbering existing scenarios. The three Mermaid blocks
   are unchanged by this refinement.
+- The server/interactions review revision shows each selected host server owning
+  its assigned sessions (1:N), with primary agents and optional sub-agents/helper
+  processes. The original attachment sequence and roadmap dependency graph are
+  unchanged. The new activity diagram's node references and four component
+  subgraphs passed structural checks.
+- All eight E/D/B startup combinations occur exactly once. The state model
+  distinguishes environment readiness, editor backend, client connection, host
+  server, durable role binding, execution, and terminal views. S2/S3/S6/S8,
+  G1/G2, the host matrix, D2/D3, and planner contracts reflect those distinctions.
+- Installed Claude Code 2.1.325 help and current primary host documentation were
+  consulted for shared-server capabilities. These are documented foundations,
+  not demonstrations of the proposed SBX/editor integration.
+- The interaction-gap revision specifies I1–I7 actor/action/outcome paths and
+  durable ownership/operation records. Its concurrent-start, reconnect, approval,
+  and server-lifecycle diagrams have balanced sequence blocks and valid local
+  participant/node references. Approval resolution is distinct from action
+  completion, deliberate stop survives stale reconnects, and uncertain effects
+  require reconciliation before replay.
+- Every I1–I7 walkthrough has a linked roadmap acceptance case under the existing
+  scenarios/gates. Markdown table column counts and all eight stable startup
+  combinations passed checks. Existing component, attachment, startup-activity,
+  and delivery dependency diagrams are retained by this detail revision.
 - Current core epic/feature descriptions and primary host/editor/SBX documentation
   were read. No live Scenarios-project row readback is claimed.
 
-These are documentation checks on the changed files, not a full repository gate
-run or a deployed-system qualification. No host, editor topology, iPad workflow,
-or recovery behavior was implemented or tested by this documentation change.
+The agent checked this review revision with standalone documentation checks.
+The owner-run publication workflow runs the full repository gate before its
+commit and reruns it if integrating develop changes the candidate. It verifies
+the published head and description, waits for that head's CI jobs, and leaves
+the PR open. No host, editor topology, iPad workflow, or recovery behavior was
+implemented or tested by this documentation change.
 
-The drafts have been presented to the owner, who requested publication for review
-on GitHub. The documentation work is complete for its final authorized commit;
-the architecture and roadmap remain Draft during owner review. Workstation
-architecture and delivery plan (#521) remains open pending its accepted-baseline
-evidence on develop. Publishing this pull request neither accepts the baseline
+The first drafts were published for owner review on GitHub. The owner requested
+publication of the completed server/interactions revision through the updated
+worktree script. This plan records completed documentation work in the final
+review commit; the architecture and roadmap remain Draft during owner review.
+Workstation architecture and delivery plan (#521) remains open pending its
+accepted-baseline evidence on develop. Publication neither accepts the baseline
 nor authorizes a merge, tracker amendments, or deployment.
 
 ## Migration Path
@@ -346,6 +419,7 @@ inference work instead of carrying a second delivery sequence in the architectur
 - Codex native simultaneous views, approval routing, and retained subscriptions; qualify the pinned release.
 - Initial physical placement and resource budget; retain the Minisforum's shared logging constraint.
 - Final original-artifact storage, capture acknowledgments, and restoration contract under the archive epic.
+- Local capture-spool storage engine: deferred by the owner, with a preference for one stack end-to-end.
 - DevLore product-side lifecycle integration surface and dependency tasks, to be resolved by the planner with its owner.
 - Pre-schedule design environment and its binding/adoption into schedule-based
   execution; resolve the chicken-and-egg lifecycle without silently weakening the
