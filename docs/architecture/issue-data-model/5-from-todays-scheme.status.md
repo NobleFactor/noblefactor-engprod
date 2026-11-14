@@ -72,7 +72,10 @@ is a collaborator on each participating repository, personal and David-Noble-at-
 [issue-standards.md § Product and engineering](../../issue-standards.md#product-and-engineering), which says what
 product work and engineering work each cover, tests among engineering's, and what each may hold, in place of the list
 of what engineering covers, and the sentence that the product readiness and release management epics hold both kinds
-is gone, superseded on 2026-11-05.
+is gone, superseded on 2026-11-05. Built 2026-11-13 in #448: NobleFactor's five participating repositories run the
+Triage workflow, which has set the Area field since its first run, on 2026-11-11, and adds an issue whose body says
+"Found while walking #N", where #N is an open scenario of the account, to that scenario instead of to Triage; § The
+deltas and stage 3 say so.
 
 ## Completion
 

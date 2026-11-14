@@ -61,8 +61,9 @@ copies are named for their kind alone, such as Backlog.
 
 Both `.github` repositories take part in triage from 2026-11-03, so the table lists seven repositories. On 2026-11-03
 none of them had `.github/workflows/triage.yml`; personal got it on 2026-11-04, in David-Noble-at-work/personal#320 for
-David-Noble-at-work/personal#315, and of the other six, NobleFactor's five wait on #448 and David-Noble-at-work/.github
-on David-Noble-at-work/personal#311 ([section 4](4-storage-and-reach.md#triage)).
+David-Noble-at-work/personal#315, and of the other six, NobleFactor's five got it from NobleFactor/.github's template
+through `star github model apply` (#437) on 2026-11-11, with #448's steps by 2026-11-13, and
+David-Noble-at-work/.github got it on 2026-11-09 (#441) ([section 4](4-storage-and-reach.md#triage)).
 
 Triage: engprod was made on 2026-10-26 and Triage: devlore on 2026-11-01, both before the Triage template, and both were
 brought to it on 2026-11-02. Triage: David-Noble-at-work was made on 2026-11-02, and the account's copy named Triage,
@@ -165,7 +166,7 @@ testing finds, and names in its body the features it exercises. A scenario is st
 with no tasks or bugs: they are found with time. Someone opens the scenario and walks it, logging work items as they go,
 each a task or a bug and a row of the team's Scenario project under the scenario's option, its Beat the point in the
 walk where it turned up. A logged item names its scenario in its body, as "Found while walking #N", and the Triage
-workflow will add it to the scenario instead of to the team's Triage project (#448). Each item later moves to its team's
+workflow adds it to the scenario instead of to the team's Triage project (#448). Each item later moves to its team's
 Triage project or straight onto a schedule, and leaves the scenario; the item's body and a comment on the Scenario issue
 record the move. The sweep (#436) will leave a scenario's rows alone but for two structural rules: it will return an
 epic or a feature that is a row of a Scenario project, as it will return one on a Backlog or Schedule project, and an
@@ -270,7 +271,7 @@ user account's, and whether GitHub offers David-Noble-at-work/.github's template
 either way, David-Noble-at-work/personal#315 copies personal's `triage.yml` from it. How the workflow signs in, with a
 token from the noblefactor-automation GitHub App in NobleFactor and a classic personal access token in a user account,
 is in [section 4](4-storage-and-reach.md) § Triage. Ruled 2026-11-04: a work item logged while walking a scenario names
-the scenario in its body, as "Found while walking #N", and the Triage workflow will add it to that scenario instead
+the scenario in its body, as "Found while walking #N", and the Triage workflow adds it to that scenario instead
 (#448; § The Schedule and Scenario fields).
 
 Every project of a kind is configured the same way (ruled 2026-11-03; § Four projects per team), and GitHub's GraphQL
@@ -302,8 +303,8 @@ longer has star remove an issue once it is classified or closed, as its comment 
 **A blank Area is an error.** Ruled 2026-11-03: an issue without an Area is caught at three points. At filing,
 `star github issue` will refuse an issue without an Area (#338), and the issue forms in each account's `.github`
 repository ([section 6](6-the-asset-and-its-sync.md) § One model per account) have a required Area dropdown. The Triage
-workflow copies its answer into the Area field or label when the issue is opened: personal's adds the `area:` label
-today, and NobleFactor's will set the Area field once #447 and #448 land. The form checks the Area in a public
+workflow copies its answer into the Area field or label when the issue is opened: personal's adds the `area:` label,
+and NobleFactor's sets the Area field (#447, #448). The form checks the Area in a public
 repository; GitHub enforces a form's required fields only there (GitHub's form schema documentation, read 2026-11-04).
 In a private repository, which today is only personal, nothing checks it at filing until `star github issue` does. At
 triage, each Triage project has the Area field, made 2026-11-03, or in a user account the `area:` labels in its Labels

@@ -1,7 +1,7 @@
 ---
 title: "The Triage workflow sets a new issue's Severity and puts a scenario's findings in the scenario"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/448
-status: active
+status: complete
 created: 2026-11-12
 updated: 2026-11-13
 ---
@@ -28,6 +28,8 @@ in the six repositories, and last this repository's, from `feature/448-triage-wo
   new issue goes to Triage as before.
 - 2026-11-10 (#437): `star github model apply` lands each participating repository's workflow from its account's
   template, through a pull request on its default branch.
+- 2026-11-13, on #448: the 2026-11-04 ruling stands for an issue with no type yet: it gets no Severity and waits for
+  triage, which sets it with the type. Both templates had given it N/A, and are brought to the ruling.
 
 ## Current State
 
@@ -45,9 +47,10 @@ Read on 2026-11-12:
 ## Requirements
 
 1. **Severity, in NobleFactor's template.** A step after the Area step. An issue that has a Severity keeps it.
-   Otherwise an issue of type Bug gets Medium and any other gets N/A, in the Severity issue field. The type is read
-   from the issue when the step runs. A bug typed only after it is opened gets N/A, and the sweep's `severity` rule
-   returns it to Triage.
+   Otherwise an issue of type Bug gets Medium, an issue of another type N/A, and an issue with no type yet none: it
+   waits for triage, which sets it with the type (ruled 2026-11-04, kept 2026-11-13). The type is read from the issue
+   when the step runs. In David-Noble-at-work's template, which set the `severity:` label already, an issue with no
+   type label likewise gets none.
 2. **A scenario's findings, in both templates.** A step before the Triage step reads the body for "Found while walking
    #N", or "Found while walking owner/repository#N". When it names an open issue of the same account whose own row on
    a project titled "Scenario: …" has a Scenario option, the new issue gets a row on that project with that option,
@@ -73,6 +76,7 @@ David-Noble-at-work, and its rows are removed.
 | 5 | In personal, a task from the task form, a bug from the bug form, and a task found while walking #316, the placeholder scenario, which has no row of its own: given one under its option for the test, and the row removed after | `severity:n/a`; `severity:medium`; a row of Scenario: David-Noble-at-work under its option |
 | 6 | `star github model diff` on both accounts, after `apply` | No difference |
 | 7 | shellcheck on each template's run steps | Clean |
+| 8 | In noblefactor-engprod, an issue with no type, and in personal, one with no type label, after both templates are brought to the ruling of 2026-11-13 | A Triage row and its Area, and no Severity; the log says it waits for triage |
 
 ## Implementation Phases
 
@@ -99,7 +103,9 @@ David-Noble-at-work, and its rows are removed.
 
 ### Phase 5: the documents and the merge
 
-- [ ] The documents brought to what the workflow does; this repository's pull request merged, closing #448 with the
+- [x] Both templates' Severity step brought to the ruling of 2026-11-13: an issue with no type yet gets none and
+      waits for triage; merged, and `apply` on both accounts, `diff` then finding nothing; test case 8 run and passed
+- [x] The documents brought to what the workflow does; this repository's pull request merged, closing #448 with the
       evidence; step 35 Closed
 
 ## Files to Create/Modify

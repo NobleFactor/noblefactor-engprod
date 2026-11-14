@@ -53,7 +53,12 @@ shared with `apply`; `labels sync` and `labels audit` removed. `model audit` is 
 2026-11-09. Fixed 2026-11-12 in #536: `backup`'s and `apply`'s pull requests say AI assisted and end with both trailers,
 and each is merged with its description as the commit's message, so the commit that lands carries them. Fixed
 2026-11-13 in #538: a private repository of a free user account, whose rules GitHub refuses to read with a 403, requires
-no check, and any other failure to read the rules says what GitHub said.
+no check, and any other failure to read the rules says what GitHub said. Built 2026-11-13 in #448: NobleFactor/.github's
+Triage workflow template sets the Severity issue field and adds an issue whose body says "Found while walking #N", where
+#N is an open scenario of the account, to that scenario instead of to Triage (NobleFactor/.github#10), as
+David-Noble-at-work/.github's now does; `apply` landed NobleFactor's in its five participating repositories, where it
+has set the Area field since its first run, on 2026-11-11, and carried David-Noble-at-work/.github's to personal and to
+David-Noble-at-work/.github's own workflow (David-Noble-at-work/.github#7 and #8, David-Noble-at-work/personal#325).
 
 Pulled again 2026-11-02, Chore retired: the four types and projects 4 to 22. Of those, only the Schedule and Thread
 templates, projects 7 and 8, belong in the model as ruled 2026-11-03, the Thread template now being the Scenario

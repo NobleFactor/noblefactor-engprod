@@ -99,8 +99,8 @@ types:
 #
 # A blank Area is an error, caught at three points (ruled 2026-11-03). At filing, star github issue will refuse an issue
 # without an Area (noblefactor-engprod#338), and the issue forms in the account's .github repository have a required
-# Area dropdown. The Triage workflow copies its answer into the Area field when the issue is opened; in NobleFactor's
-# repositories it will once noblefactor-engprod#447 and #448 land. GitHub enforces a form's required fields only in a
+# Area dropdown. The Triage workflow copies its answer into the Area field when the issue is opened
+# (noblefactor-engprod#447, #448). GitHub enforces a form's required fields only in a
 # public repository (GitHub's form schema documentation, read 2026-11-04), and each of NobleFactor's five participating
 # repositories is public, NobleFactor/devlore.noblefactor.com since 2026-11-04. At triage, each Triage project has the
 # Area field and a "Missing Area" view, both made 2026-11-03, and nothing leaves Triage without an Area; read
@@ -116,9 +116,11 @@ types:
 # the script of noblefactor-engprod#303's closing pull request adds. A bug has Critical, High, Medium or Low, never N/A.
 # An issue with no type yet gets no Severity and waits for triage, which sets N/A when it gives the issue a type other
 # than Bug; the sweep, noblefactor-engprod#436, will catch a miss. An issue field can't have a default, so the Triage
-# workflow will set N/A on an issue of another type filed from a form, and will give a bug filed from the bug form,
-# which asks no severity, Severity Medium, the owner's default (noblefactor-engprod#448); triage changes it when the
-# bug's harm is greater or less. star github issue will set N/A at filing (noblefactor-engprod#338). GitHub's GraphQL
+# workflow sets the Severity when an issue is opened, and an issue that has one keeps it: a bug, whose form asks no
+# severity, gets Medium, the owner's default, an issue of another type N/A, and an issue with no type yet none
+# (noblefactor-engprod#448); triage changes a bug's Severity when its harm is greater or less. An issue typed only after
+# it is opened gets no Severity from the workflow, and triage gives it one. star github issue will set N/A at filing
+# (noblefactor-engprod#338). GitHub's GraphQL
 # call updateIssueField takes no option ids, but its REST call, PATCH /orgs/{org}/issue-fields/{issue_field_id}, does,
 # and GitHub's REST documentation warns that options sent without an id may be deleted and recreated. So the script adds
 # N/A through the REST call, sending each existing option with its id, and push will send every option with the id its
@@ -276,7 +278,7 @@ teams: []
 # exercises. A scenario is structurally like a schedule that starts with no tasks or bugs: they are found with time.
 # Someone opens the scenario and walks it, logging work items as they go, each a task or a bug and a row of the team's
 # Scenario project under the scenario's option, its Beat the point in the walk where it turned up. A logged item names
-# its scenario in its body, as "Found while walking #N", and the Triage workflow will add it to the scenario instead of
+# its scenario in its body, as "Found while walking #N", and the Triage workflow adds it to the scenario instead of
 # to the team's Triage project (noblefactor-engprod#448). Each item later moves to its team's Triage project or straight
 # onto a schedule, and leaves the scenario; the item's body and a comment on the Scenario issue record the move. The
 # sweep will leave a scenario's rows alone but for two structural rules: it will return an epic or a feature that is a
