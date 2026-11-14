@@ -41,9 +41,9 @@ Each type's description in GitHub begins with its level, "Level N:". Schedule's 
 instead, so they have no level. Schedule and Scenario each have an issue form in their account's `.github` repository
 (ruled 2026-11-03). Read from GitHub on 2026-11-03, NobleFactor/.github and David-Noble-at-work/.github each hold six
 issue forms, one for each type in the table above ([section 6](6-the-asset-and-its-sync.md) § One model per account).
-Read 2026-11-04, the Scenario type's description in NobleFactor, and the `scenario` label's in personal and
-David-Noble-at-work/.github, still read "Collection: describes a scenario, the story its features tell", the scenario as
-it was before that day's ruling; #453 will bring all three to the ruling, with both accounts' Scenario forms.
+Since #453, on 2026-11-14, the Scenario type's description in NobleFactor, and the `scenario` label's in personal and
+David-Noble-at-work/.github, read "Collection: what someone wants to do, how to walk through it, and the features it
+uses", which fits the ruling of 2026-11-04, and both accounts' Scenario forms ask for those three things.
 
 A triaged issue has exactly one Type. A task or a bug, never both: planned work against unplanned, the split drawn by
 the write-up by Gemini the owner shared on 2026-10-21. That write-up's other split, product value against engineering
@@ -239,8 +239,8 @@ project (below).
   until an item moves out: it gets its type and parent then, and moving straight onto a schedule means classifying it
   first. A scenario never ends: it is kept, updated or removed as the product changes, since it has value before, during
   and after a release. Its Scenario issue never closes, so it states no evidence of completion (§ How long a level
-  lives, below). #453 will bring both accounts' Scenario forms to this, and with them the Scenario type's description
-  and the `scenario` label's in personal and David-Noble-at-work/.github (§ Type, above).
+  lives, below). #453 brought both accounts' Scenario forms to this on 2026-11-14, and with them the Scenario type's
+  description and the `scenario` label's in personal and David-Noble-at-work/.github (§ Type, above).
 - Triage gives an issue its Type, its parent and its Area and, for a bug, its severity, and N/A on any other type
   ([section 2](2-attributes.md)). Ruled 2026-11-04: an issue that arrives with no type gets no Severity; when triage
   gives it a type other than Bug, triage sets its Severity to N/A, and the sweep (#436) will catch a miss.
@@ -282,11 +282,11 @@ project (below).
 
 Every issue states its evidence of completion (ruled 2026-11-02). Superseded in part on 2026-11-04: every issue but a
 Scenario issue states its evidence of completion. A scenario never ends, so its Scenario issue never closes and has
-nothing to evidence. On both accounts' Scenario forms, #453 will put how to walk it, the example the Scenario issue
-gives, in place of the Evidence of completion section, and the sweep's rule on a missing Evidence of completion section
-will skip a Scenario issue ([section 2](2-attributes.md#the-attributes)). An epic closes when its features ship. Its one
-exception, `Epic:Ops:Process`, which never closed ([issue-standards.md](../../issue-standards.md) § The process epic),
-ended on 2026-11-03, when its label was removed and #142 was retired.
+nothing to evidence. Since #453, on 2026-11-14, both accounts' Scenario forms ask how to walk through it, the example
+the Scenario issue gives, in place of the Evidence of completion section, and the sweep's rule on a missing Evidence of
+completion section will skip a Scenario issue ([section 2](2-attributes.md#the-attributes)). An epic closes when its
+features ship. Its one exception, `Epic:Ops:Process`, which never closed ([issue-standards.md](../../issue-standards.md)
+§ The process epic), ended on 2026-11-03, when its label was removed and #142 was retired.
 
 - **Long-lived level 1,** from the Gemini write-up, considered and not taken on 2026-11-03: a feature stays open for
   the life of what it delivers, and a bug found in shipped work is parented to the original, so that a capability's

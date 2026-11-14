@@ -40,10 +40,10 @@ files_from: David-Noble-at-work
 # that describes a scenario, the story it tells (ruled 2026-11-03). The scenario label was named thread until
 # 2026-11-03. Each is the namesake of an option of its project's Schedule or Scenario field, and each has an issue form
 # in the account's .github repository, which is not part of the model.
-# Ruled 2026-11-04: a scenario issue summarizes an end-user goal instead (see projects, below). Read from GitHub on
-# 2026-11-04, the scenario label in David-Noble-at-work/personal and David-Noble-at-work/.github is still described
-# "Collection: describes a scenario, the story its features tell". The record below gives the ruling;
-# noblefactor-engprod#453 will bring both labels' descriptions to it, with the Scenario forms.
+# Ruled 2026-11-04: a scenario issue summarizes an end-user goal instead (see projects, below). Since 2026-11-14
+# (noblefactor-engprod#453), the scenario label in David-Noble-at-work/personal and David-Noble-at-work/.github is
+# described as the record below gives it, and the account's Scenario form asks what the person wants to do, how to walk
+# through it, and the features it uses.
 # Ruled 2026-11-03: a schedule or scenario issue has no parent. Epic is at the top of the hierarchy, and schedule and
 # scenario are its two peers there.
 types:
@@ -75,7 +75,7 @@ types:
   - name: "Scenario"
     label: "scenario"
     color: "8a63d2"
-    description: "Collection: describes a scenario, the story its features tell"
+    description: "Collection: what someone wants to do, how to walk through it, and the features it uses"
 
 # Labels that stand in for issue fields. A user's account has no issue fields: GitHub's GraphQL schema says
 # createIssueField makes a field in an organization, and its User type has no issue fields. So a label stands in for
@@ -295,7 +295,7 @@ labels:
 # is a row of a scenario and of another of the account's projects. Every other rule waits until an item moves out: it
 # gets its type label and parent then, and moving straight onto a schedule means classifying it first. A scenario never
 # ends: it is kept, updated or removed as the product changes, since it has value before, during and after a release.
-# Both accounts' Scenario forms will be brought to this in noblefactor-engprod#453.
+# Both accounts' Scenario forms were brought to this in noblefactor-engprod#453, on 2026-11-14.
 # Its single-select Scenario field names the scenario each row belongs to, with one option per scenario, named for its
 # scenario issue; a reference names no scenario, so it lists no option. Likewise, a Scenario field is made with its
 # first option and comes with a project's first scenario. David-Noble-at-work's Scenario copy (its project 2) got its

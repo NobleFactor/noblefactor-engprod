@@ -1,7 +1,7 @@
 ---
 title: "Both accounts' Scenario forms ask for the end-user goal, how to walk it and the features it exercises"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/453
-status: draft
+status: complete
 created: 2026-11-14
 updated: 2026-11-14
 ---
@@ -23,6 +23,8 @@ last this repository's, from `feature/453-scenario-forms`, which closes #453; th
 - 2026-11-04, on #453: a Scenario issue states no evidence of completion, since a scenario never ends, so each form
   asks for how to walk it, the example, where it asked for the evidence of completion.
 - 2026-11-04, on #453: the descriptions keep the "Collection:" prefix every collection type's has.
+- 2026-11-14, on this plan: approved, with the wording in plain spoken English, not the dense wording proposed;
+  Requirements 1 and 2 give the wording used.
 
 ## Current State
 
@@ -39,15 +41,15 @@ Read on 2026-11-14:
 ## Requirements
 
 1. **The forms,** both: the Area, then three questions, each required, in place of the story and the evidence of
-   completion, then the plan and design documents as now. Proposed:
-   - *The end-user goal*: "What a person wants to get done, in a feature, a workflow or a real-life situation."
-   - *How to walk it*: "The example, for a demo or an ad-hoc test: the steps a person takes and what they see. It
-     takes the place of evidence of completion, since a scenario never ends."
-   - *The features it exercises*: "Each feature the walk uses, by its issue."
+   completion, then the plan and design documents as now:
+   - *What the person wants to do*: "Say it the way they would."
+   - *How to walk through it*: "The steps, and what you should see. Use it for a demo or a quick test." It takes the
+     place of evidence of completion, since a scenario never ends.
+   - *The features it uses*: "List each one by its issue."
 
-   The form's own description, proposed: "Summarizes an end-user goal: how to walk it and the features it exercises".
-2. **The descriptions,** the type's and the label's, and the reference models', proposed: "Collection: summarizes an
-   end-user goal, how to walk it, and the features it exercises", 86 characters.
+   The form's own description: "A scenario: what someone wants to do, how to walk through it, and the features it uses".
+2. **The descriptions,** the type's and the label's, and the reference models': "Collection: what someone wants to do,
+   how to walk through it, and the features it uses", 86 characters.
 3. **Each account's model** written by `apply` from its own model, read by `get`, with that one description changed;
    `diff` then finds nothing; `backup` lands the model in the account's `.github` repository.
 4. **The documents** that say the descriptions still read the old way, or that #453 will change them, say what they
@@ -67,8 +69,8 @@ Read on 2026-11-14:
 
 ### Phase 1: the plan
 
-- [ ] Committed on `feature/453-scenario-forms` by the worktree's first script, with the template's first-script step;
-      reviewed with the owner, the wording ruled
+- [x] Committed on `feature/453-scenario-forms` by the worktree's first script, with the template's first-script step;
+      reviewed with the owner, the wording ruled, on 2026-11-14
 
 ### Phase 2: the forms and the descriptions
 
@@ -77,7 +79,7 @@ Read on 2026-11-14:
 
 ### Phase 3: the evidence, the documents and the merge
 
-- [ ] The two test Scenario issues; the reference models and the documents; this pull request merged, closing #453 with
+- [x] The two test Scenario issues; the reference models and the documents; this pull request merged, closing #453 with
       its evidence, by the template's schedule step; step 40 Closed
 
 ## Files to Create/Modify
@@ -93,4 +95,4 @@ Read on 2026-11-14:
 
 ## Open Questions
 
-- **The wording,** in Requirements 1 and 2, for the owner to rule.
+- **The wording,** ruled 2026-11-14: plain spoken English, as Requirements 1 and 2 give it.

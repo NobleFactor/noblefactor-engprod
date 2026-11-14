@@ -271,6 +271,10 @@ which has run its own with an `ADD_TO_PROJECT_PAT` of its own since 2026-11-09 (
 #N", where #N is an open scenario of the account, its row on that scenario's Scenario project in place of a Triage row
 (§ An organization's account and § Triage in section 4).
 
+Done 2026-11-14 in #453: both accounts' Scenario forms ask what the person wants to do, how to walk through it, and the
+features it uses, with how to walk through it, the example for a demo or a quick test, in place of the Evidence of
+completion section, as § Where each part lives in section 4 now says.
+
 ## Completion
 
 - [x] The plan's questions 1 and 13 ruled: where Type lives and where the parent link lives -- 2026-10-22
