@@ -294,10 +294,10 @@ searched for without finding the other, and the issue number is visible in both.
 
 Ruled 2026-11-03: the `chore/` branch type is removed from the branch ruleset and from `git open-branch`. The plans
 already filed under `docs/plans/chore/` stay where they are. The ruleset changed on 2026-11-03, when the script of the
-issue data model design's worktree (#303) ran, so no branch named `chore/...` can be pushed. `git open-branch` still
-accepts `chore`, in the script, its man page and its bash and zsh completions; the ruling removes it from all of them.
-That change is #449, and it has not been made yet. Approved 2026-11-04, #449 will also have `git open-branch` take the
-branch type from the issue's type, or from its type label in a user account
+issue data model design's worktree (#303) ran, so no branch named `chore/...` can be pushed. Since #449,
+`git open-branch` offers no `chore` in the script, its man page or its bash and zsh completions, and, as approved on
+2026-11-04, it takes the branch type from the issue's type, or from its type label in a user account: a bug opens as
+`fix/`, an issue labeled `documentation` as `doc/`, and any other as `feature/`
 ([github-branch-protection.md](../github-branch-protection.md#12515090--restrict-branch-names)).
 
 A plan named for its subject rather than its issue — `reconciliation.md`, `cli-output-conventions.md` —
