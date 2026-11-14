@@ -75,7 +75,9 @@ of what engineering covers, and the sentence that the product readiness and rele
 is gone, superseded on 2026-11-05. Built 2026-11-13 in #448: NobleFactor's five participating repositories run the
 Triage workflow, which has set the Area field since its first run, on 2026-11-11, and adds an issue whose body says
 "Found while walking #N", where #N is an open scenario of the account, to that scenario instead of to Triage; § The
-deltas and stage 3 say so.
+deltas and stage 3 say so. Done 2026-11-14 in #453: the Scenario type's description and the `scenario` labels' read
+"Collection: what someone wants to do, how to walk through it, and the features it uses", and both accounts' Scenario
+forms ask for those three things; § The deltas says so.
 
 ## Completion
 

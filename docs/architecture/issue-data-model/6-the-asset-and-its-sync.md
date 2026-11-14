@@ -408,9 +408,10 @@ projects:                             # the account's four project templates
   2026-11-03). Ruled 2026-11-03: a Schedule issue holds a schedule's deliverable and exit criteria, and the Schedule
   field of its team's Schedule project has an option named for it; a Scenario issue tells a scenario's story, and the
   Scenario field of its team's Scenario project has an option named for it. Ruled 2026-11-04: a Scenario issue
-  summarizes an end-user goal instead (below, under `projects`). Read that day, the Scenario type's description is still
-  "Collection: describes a scenario, the story its features tell", as are the `scenario` labels' in personal and
-  David-Noble-at-work/.github, and #453 will bring all three to the ruling, with the Scenario forms. Issues are
+  summarizes an end-user goal instead (below, under `projects`). Since #453, on 2026-11-14, the Scenario type's
+  description, and the `scenario` labels' in personal and David-Noble-at-work/.github, read "Collection: what someone
+  wants to do, how to walk through it, and the features it uses": `star github model apply` set them, and
+  `star github model backup` recorded each account's model in its `.github` repository. Issues are
   classified by issue type, in the hierarchy epic, feature, then task or bug; enforcement is lax and there are no
   compliance checks, a ruling superseded in part on 2026-11-04: the sweep (#436) will be the one check, and it will
   block no filing and correct nothing by itself. From the levels the extension will derive the rest of the hierarchy
@@ -527,8 +528,8 @@ projects:                             # the account's four project templates
   Backlog or Schedule project, and an issue that is a row of a scenario and of another of its account's projects,
   whichever team owns them. Every other rule waits until an item moves out: it gets its type and parent then, and moving
   straight onto a schedule means classifying it first. A scenario never ends: it is kept, updated or removed as the
-  product changes, since it has value before, during and after a release. Both accounts' Scenario forms will be brought
-  to this in #453.
+  product changes, since it has value before, during and after a release. Both accounts' Scenario forms were brought
+  to this in #453, on 2026-11-14.
 
   Ruled 2026-11-04: accepted tasks and bugs go out of Triage to the Backlog with their Priority or onto a schedule, and
   from the Backlog onto a schedule highest Priority first; a committed schedule takes one only by its owner's amendment,

@@ -34,10 +34,9 @@ files_from: NobleFactor
 # (ruled 2026-11-03). Scenario was named Thread until 2026-11-03. Each is the namesake of an option of its project's
 # Schedule or Scenario field, and each has an issue form in the account's .github repository, which is not part of the
 # model.
-# Ruled 2026-11-04: a Scenario issue summarizes an end-user goal instead (see projects, below). Read from GitHub on
-# 2026-11-04, NobleFactor's Scenario type is still described "Collection: describes a scenario, the story its features
-# tell". The record below gives the ruling, and noblefactor-engprod#453 will bring GitHub's description to it, with both
-# accounts' Scenario forms.
+# Ruled 2026-11-04: a Scenario issue summarizes an end-user goal instead (see projects, below). Since 2026-11-14
+# (noblefactor-engprod#453), GitHub describes the type as the record below does, and both accounts' Scenario forms
+# ask what the person wants to do, how to walk through it, and the features it uses.
 # Ruled 2026-11-03: a Schedule or Scenario issue has no parent. Epic is at the top of the hierarchy, and Schedule and
 # Scenario are its two peers there.
 types:
@@ -72,7 +71,7 @@ types:
     enabled: true
     pinned_fields: []
   - name: "Scenario"
-    description: "Collection: describes a scenario, the story its features tell"
+    description: "Collection: what someone wants to do, how to walk through it, and the features it uses"
     color: "purple"
     enabled: true
     pinned_fields: []
@@ -286,7 +285,7 @@ teams: []
 # and of another of the account's projects, whichever team owns them. Every other rule waits until an item moves out: it
 # gets its type and parent then, and moving straight onto a schedule means classifying it first. A scenario never ends:
 # it is kept, updated or removed as the product changes, since it has value before, during and after a release. Both
-# accounts' Scenario forms will be brought to this in noblefactor-engprod#453.
+# accounts' Scenario forms were brought to this in noblefactor-engprod#453, on 2026-11-14.
 # Its single-select Scenario field names the scenario each row belongs to, with one option per scenario, named for its
 # Scenario issue; a reference names no scenario, so it lists no option. Likewise, a Scenario field is made with its
 # first option and comes with a project's first scenario. The Scenario template (project 8) got its Scenario field the

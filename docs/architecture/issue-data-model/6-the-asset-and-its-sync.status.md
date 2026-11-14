@@ -60,6 +60,10 @@ Triage workflow template sets the Severity issue field and adds an issue whose b
 David-Noble-at-work/.github's now does; `apply` landed NobleFactor's in its five participating repositories, where it
 has set the Area field since its first run, on 2026-11-11, and carried David-Noble-at-work/.github's to personal and to
 David-Noble-at-work/.github's own workflow (David-Noble-at-work/.github#7 and #8, David-Noble-at-work/personal#325).
+Done 2026-11-14 in #453: `star github model apply` set the Scenario type's description, and the `scenario` label's in
+personal and David-Noble-at-work/.github, to "Collection: what someone wants to do, how to walk through it, and the
+features it uses", and `star github model backup` recorded each account's model in its `.github` repository (§ The
+asset, under `types`).
 
 Pulled again 2026-11-02, Chore retired: the four types and projects 4 to 22. Of those, only the Schedule and Thread
 templates, projects 7 and 8, belong in the model as ruled 2026-11-03, the Thread template now being the Scenario

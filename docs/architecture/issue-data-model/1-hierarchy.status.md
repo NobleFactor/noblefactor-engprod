@@ -83,7 +83,10 @@ superseded on 2026-11-05; and the pointer to the retired § The Ops axis points 
 #448: personal, David-Noble-at-work/.github and NobleFactor's five participating repositories run the Triage workflow,
 which gives an issue whose body says "Found while walking #N", where #N is an open scenario of the account, its row in
 that scenario instead of in Triage, and NobleFactor's has set the Area field since its first run, on
-2026-11-11 (§ Triage).
+2026-11-11 (§ Triage). Done 2026-11-14 in #453: the Scenario type's description in NobleFactor, and the `scenario`
+label's in personal and David-Noble-at-work/.github, read "Collection: what someone wants to do, how to walk through it,
+and the features it uses", and both accounts' Scenario forms ask for those three things in place of the story and the
+evidence of completion (§ Type).
 
 ## Completion
 

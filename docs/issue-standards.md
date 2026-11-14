@@ -492,12 +492,13 @@ epic take issues away from the epic that owns their machinery?* If it would, the
 `Thread:<Name>` label (§ What has no parent). Its scenario's option in the Scenario field is named for it, and its
 account's `.github` repository holds an issue form for it. Its body summarizes the end-user goal, gives the example and
 names the features the scenario exercises; it states no evidence of completion, since a scenario never ends (§ Evidence
-of completion). Read on 2026-11-04, each account's Scenario form asks only for the Area, the story and the evidence of
-completion. The Scenario type's description, and the `scenario` label's in personal and David-Noble-at-work/.github,
-still read "Collection: describes a scenario, the story its features tell", the model of 2026-11-03. #453 will bring the
-forms, the type's description and both labels' descriptions to this, and will put "how to walk it", the example, where
-each form's Evidence of completion section is, as its comments of 2026-11-04 record. **The order is the walk's; the
-ownership is the epics'.** Beat, the point in the walk where an item turned up, gives the order; issue numbers do not.
+of completion). Since #453, on 2026-11-14, each account's Scenario form asks, after the Area, what the person wants to
+do, how to walk through it, and the features it uses, then for the plan and design documents. How to walk through it is
+the example, for a demo or a quick test, and it takes the place of an evidence of completion; the form no longer asks
+for the story. The Scenario type's description, and the `scenario` label's in personal and David-Noble-at-work/.github,
+now read "Collection: what someone wants to do, how to walk through it, and the features it uses". **The order is the
+walk's; the ownership is the epics'.** Beat, the point in the walk where an item turned up, gives the order; issue
+numbers do not.
 
 Its type tells the scenario issue apart from its members, which share no label with it. Today the report
 still finds a scenario issue by its title beginning `Thread:`. Under the old scheme it read the order from a
@@ -714,16 +715,16 @@ none, and every chore's type changed when Chore was retired.
 Ruled 2026-11-02: every issue states its evidence of completion, what will show it is done; for a Schedule issue that is
 its exit criteria. Ruled 2026-11-04, superseding what that ruling said of a Scenario issue: every issue but a Scenario
 issue states its evidence of completion. A scenario never ends, so its Scenario issue never closes and has nothing to
-evidence (§ Scenarios), and #453 will put "how to walk it", the example the Scenario issue gives, where the Evidence of
-completion section is on both accounts' Scenario forms.
+evidence (§ Scenarios). Since #453, on 2026-11-14, both accounts' Scenario forms ask how to walk through it, the example
+the Scenario issue gives, in place of the Evidence of completion section.
 
 Ruled 2026-11-04: an issue states its evidence of completion in its Evidence of completion section. Read from GitHub on
 2026-11-04, each of the six issue forms in each account's `.github` repository, NobleFactor/.github and
-David-Noble-at-work/.github, has that section and requires it, the Scenario form until #453 changes it. At filing, the
-form checks it in a public repository; GitHub enforces a form's required fields only there (GitHub's form schema
-documentation, read 2026-11-04). In a private repository, which today is only personal, nothing checks it at filing
-until `star github issue` does (#338). Afterward, the sweep (#436) will return an issue other than a Scenario issue with
-no Evidence of completion section to its team's Triage project (§ Well classified).
+David-Noble-at-work/.github, had that section and required it; #453 took it out of both Scenario forms on 2026-11-14. At
+filing, the form checks it in a public repository; GitHub enforces a form's required fields only there (GitHub's form
+schema documentation, read 2026-11-04). In a private repository, which today is only personal, nothing checks it at
+filing until `star github issue` does (#338). Afterward, the sweep (#436) will return an issue other than a Scenario
+issue with no Evidence of completion section to its team's Triage project (§ Well classified).
 
 ## Well classified
 

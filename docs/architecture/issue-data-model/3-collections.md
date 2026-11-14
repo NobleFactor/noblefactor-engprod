@@ -174,8 +174,8 @@ issue that is a row of a scenario and of another of the account's projects, whic
 Backlog). Every other rule will wait until an item moves out: it gets its type and parent then, and moving straight onto
 a schedule means classifying it first. A scenario never ends: it is kept, updated or removed as the product changes,
 since it has value before, during and after a release. So its Scenario issue never closes, and it is the one kind of
-issue that states no evidence of completion (ruled 2026-11-04). #453 will bring both accounts' Scenario forms to this,
-each putting how to walk it, the example the Scenario issue gives, in place of its Evidence of completion section.
+issue that states no evidence of completion (ruled 2026-11-04). Since #453, on 2026-11-14, both accounts' Scenario
+forms ask how to walk through it, the example the Scenario issue gives, in place of an Evidence of completion section.
 
 GitHub won't make a single-select project field without at least one option (GitHub's GraphQL schema,
 `CreateProjectV2FieldInput`). So a project's Schedule field comes with its first schedule, and its Scenario field with
@@ -434,14 +434,13 @@ type Scenario. In a user account they carry the labels schedule and scenario. Th
 repository: read from GitHub on 2026-11-03, NobleFactor/.github and David-Noble-at-work/.github each hold six issue
 forms, one for each type ([section 6](6-the-asset-and-its-sync.md) § One model per account). Ruled 2026-11-04: a
 Scenario issue summarizes its scenario's end-user goal, in place of the story the ruling of 2026-11-03 had it tell (§
-The Schedule and Scenario fields). Read from GitHub that day, the Scenario type's description, and the scenario label's
-in personal and David-Noble-at-work/.github, are still "Collection: describes a scenario, the story its features tell",
-the scenario as it was before that ruling; #453 will bring all three to it, with the forms, keeping the "Collection:"
-prefix, as its comments of 2026-11-04 record. NobleFactor/.github gets a quality-gate check of its own, so that it
-follows the organization's ruleset like every other repository (ruled 2026-11-03), and it holds
-`.github/workflows/quality-gate.yml`. Like every issue, a Schedule or Scenario issue carries Priority and Area: issue
-fields in NobleFactor, the priority: and area: labels in David-Noble-at-work (ruled 2026-11-03). A Triage project has no
-issue of its own.
+The Schedule and Scenario fields). Since #453, on 2026-11-14, the Scenario type's description, and the scenario label's
+in personal and David-Noble-at-work/.github, read "Collection: what someone wants to do, how to walk through it, and the
+features it uses", and both accounts' Scenario forms ask for those three things. NobleFactor/.github gets a quality-gate
+check of its own, so that it follows the organization's ruleset like every other repository (ruled 2026-11-03), and it
+holds `.github/workflows/quality-gate.yml`. Like every issue, a Schedule or Scenario issue carries Priority and Area:
+issue fields in NobleFactor, the priority: and area: labels in David-Noble-at-work (ruled 2026-11-03). A Triage project
+has no issue of its own.
 
 On 2026-10-22 the collection's own issue was ruled an Epic, and the ruling of 2026-11-03 supersedes it. The Schedule
 type was ruled out then because the hierarchy had no level for it, and it is now the ruling. Chore, the other type

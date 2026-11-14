@@ -242,13 +242,13 @@ design.
   (ruled 2026-11-03), and it will refuse an issue without an Area (#338; ruled 2026-11-03).
 - **Evidence of completion:** what an issue states will show that it is done. Every issue states it (ruled 2026-11-02)
   but a Scenario issue, which states none: a scenario never ends, so its issue never closes and has nothing to evidence
-  (ruled 2026-11-04). It goes in the issue's Evidence of completion section, which each of the six issue forms in each
-  account's `.github` repository has (ruled 2026-11-04); #453 will put "how to walk it", the example the Scenario issue
-  gives, in its place on both accounts' Scenario forms. At filing, the form checks the section in a public repository;
-  GitHub enforces a form's required fields only there (GitHub's form schema documentation, read 2026-11-04). In a
-  private repository, which today is only personal, nothing checks it at filing until `star github issue` does (#338).
-  Afterward, the sweep (#436) will return an issue with no Evidence of completion section, a Scenario issue excepted, to
-  its team's Triage project.
+  (ruled 2026-11-04). It goes in the issue's Evidence of completion section, which each issue form in each account's
+  `.github` repository has but the Scenario form (ruled 2026-11-04). Since #453, on 2026-11-14, both accounts' Scenario
+  forms ask how to walk through it, the example the Scenario issue gives, in its place. At filing, the form checks the
+  section in a public repository; GitHub enforces a form's required fields only there (GitHub's form schema
+  documentation, read 2026-11-04). In a private repository, which today is only personal, nothing checks it at filing
+  until `star github issue` does (#338). Afterward, the sweep (#436) will return an issue with no Evidence of completion
+  section, a Scenario issue excepted, to its team's Triage project.
 - **Attribute:** something an issue has on its own, outside any collection: its severity, its priority, its area.
   All three are issue fields in NobleFactor and labels in David-Noble-at-work (ruled 2026-11-03). Every typed issue
   has exactly one Severity value: a bug's is Critical, High, Medium or Low, and an issue of any other type has N/A.
@@ -339,11 +339,11 @@ design.
   for all four. Every other rule waits until an item moves out: an item gets its type and parent then, and moving
   straight onto a schedule means classifying it first. A scenario never ends: it is kept, updated or removed as the
   product changes, since it has value before, during and after a release. Its Scenario issue never closes, so it states
-  no evidence of completion (§ Terms, under Evidence of completion). Both accounts' Scenario forms will be brought to
-  this in #453, with the Scenario type's description and the `scenario` labels' in personal and
-  David-Noble-at-work/.github, which still read "Collection: describes a scenario, the story its features tell" (read
-  2026-11-04). The project's single-select Scenario field names the scenario each row belongs to, with an option named
-  for each Scenario issue. There is no project per scenario. Scenarios were called threads until 2026-11-03, and a
+  no evidence of completion (§ Terms, under Evidence of completion). Both accounts' Scenario forms were brought to this
+  in #453, on 2026-11-14, with the Scenario type's description and the `scenario` labels' in personal and
+  David-Noble-at-work/.github, which now read "Collection: what someone wants to do, how to walk through it, and the
+  features it uses". The project's single-select Scenario field names the scenario each row belongs to, with an option
+  named for each Scenario issue. There is no project per scenario. Scenarios were called threads until 2026-11-03, and a
   thread had a project of its own (ruled 2026-11-03).
 - **Schedule:** a set of tasks and bugs in the order they are worked, described by an issue of type Schedule, labeled
   `schedule` in a user account; that issue holds the schedule's deliverable and exit criteria. The team's Schedule
