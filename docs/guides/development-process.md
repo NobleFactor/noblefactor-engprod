@@ -224,10 +224,11 @@ write, issue fields read, and issues read and write, beside contents write, meta
 all of NobleFactor's repositories. GitHub's
 [list of GitHub App permissions](https://docs.github.com/en/rest/authentication/permissions-required-for-github-apps)
 puts an organization's projects under the organization permission Projects, its issue fields under the organization
-permission Issue Fields, and an issue's field values under the repository permission Issues. Nothing has used the
-projects, issue fields and issues permissions yet: the first Triage workflow run in a NobleFactor repository will prove
-them. NobleFactor's five repositories with `TRIAGE_PROJECT_URL` set, NobleFactor/.github included since 2026-11-03, now
-wait only on their own `.github/workflows/triage.yml`, which #448 will add once #447 lands.
+permission Issue Fields, and an issue's field values under the repository permission Issues. The Triage workflow's first
+run in a NobleFactor repository, on 2026-11-11, proved the app's permissions for projects and issue fields.
+NobleFactor's five repositories with `TRIAGE_PROJECT_URL` set, NobleFactor/.github included since 2026-11-03, each run
+their own `.github/workflows/triage.yml` (#448), which `star github model apply` (#437) landed from
+NobleFactor/.github's template.
 
 **Then decide, immediately, where it will be resolved.** There are exactly two answers, and deferring the
 choice is not one of them:

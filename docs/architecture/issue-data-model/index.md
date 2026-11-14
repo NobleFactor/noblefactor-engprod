@@ -21,8 +21,9 @@ title: "Issue data model — one hierarchy, its attributes, and the collections 
 > linked from #303's row on Schedule: engprod, NobleFactor has its Severity field, and devlore-cli's `Severity:` and
 > `Priority:` labels became field values and were deleted. Read from GitHub that evening, the noblefactor-automation
 > app's installation on NobleFactor has organization projects read and write, issue fields read, and issues read and
-> write; nothing has used them yet, and the first Triage workflow run in a NobleFactor repository proves them
-> ([section 4](4-storage-and-reach.md) § Triage). GitHub makes no single-select project field without an option, so
+> write; nothing had used them yet, and the Triage workflow's first run in a NobleFactor repository, on 2026-11-11,
+> proved the app's permissions for projects and issue fields ([section 4](4-storage-and-reach.md) § Triage). GitHub
+> makes no single-select project field without an option, so
 > placeholder issues gave the new Scenario fields, and the Schedule fields of the Schedule template and its copy, their
 > first option: the scenarios NobleFactor/noblefactor-engprod#442 and David-Noble-at-work/personal#316, and the
 > schedules #443 and personal#319. So every Schedule and Scenario project and template in both accounts has its field
@@ -46,8 +47,8 @@ title: "Issue data model — one hierarchy, its attributes, and the collections 
 > template. Both take part in triage from that day, so seven repositories have `TRIAGE_PROJECT_URL` set, and none of the
 > seven has the Triage workflow yet ([section 4](4-storage-and-reach.md) § Triage). Read 2026-11-04, personal runs it:
 > its first run succeeded at 8:29 a.m. Pacific that day, and David-Noble-at-work/personal#315, which brought it there,
-> closed at 8:30. NobleFactor's five participating repositories wait on #448, after #447, and
-> David-Noble-at-work/.github on David-Noble-at-work/personal#311. `git open-branch` still accepts `chore`, in the
+> closed at 8:30. NobleFactor's five participating repositories have run it since 2026-11-11 (#437), after #447, and
+> David-Noble-at-work/.github since 2026-11-09 (#441). `git open-branch` still accepts `chore`, in the
 > script, its man page and its completions; #449 will take it out and take the branch type from the issue's type, or its
 > type label in a user account (approved 2026-11-04). The PR script template still records lanes in schedule tables that
 > were retired on 2026-11-03, and has nothing yet for what a worktree's first script records; #450 will bring its rule
@@ -100,7 +101,7 @@ product and engineering: the options Product and Engineering of NobleFactor's Ar
 issue is filed in a public repository, at triage, and afterward by a scheduled sweep. Each team, and each user account,
 has four GitHub projects: Triage, Backlog, Schedule and Scenario (ruled 2026-11-03). Every new issue reaches its team's
 Triage project, or its own account's in a user account, through a GitHub Actions workflow in its repository, apart from
-a task or a bug logged while walking a scenario, which the workflow will add to the scenario (#448). A triage decision
+a task or a bug logged while walking a scenario, which the workflow adds to the scenario (#448). A triage decision
 is made in the Triage project: the work is declined, or the issue moves to the team's Backlog, Schedule or Scenario
 project. Every move is one act: the issue gets its row in the project it goes to and loses its row in the one it leaves,
 and triage removes an issue's Triage row as part of its decision. An issue is a row of at most one of its account's
@@ -138,11 +139,12 @@ Ruled 2026-11-04: a task has no severity; it has a priority. Severity applies to
 type has Severity N/A: in NobleFactor, a new option N/A of the Severity issue field; in a user account, a new label
 `severity:n/a`. Both are made by the script of #303's closing pull request. A bug has Critical, High, Medium or Low,
 never N/A. An issue with no type yet gets no Severity and waits for triage, which sets N/A when it gives the issue a
-type other than Bug, and the sweep (#436) will catch a miss. The Triage workflow will set N/A on an issue of another
-type filed from a form, and will give a bug filed from the bug form, which asks no severity, Severity Medium, the
-owner's default, which GitHub's field can't hold (#448); triage changes it when the bug's harm is greater or less.
-`star github issue` will set N/A at filing (#338). So every typed issue has exactly one Severity value
-([section 2](2-attributes.md) § The attributes).
+type other than Bug, and the sweep (#436) will catch a miss. The Triage workflow sets the Severity when an issue is
+opened, and an issue that has one keeps it: a bug, whose form asks no severity, gets Medium, the owner's default, which
+GitHub's field can't hold, an issue of another type N/A, and an issue with no type yet none (#448); triage changes a
+bug's Severity when its harm is greater or less. An issue typed only after it is opened gets no Severity from the
+workflow, and triage gives it one. `star github issue` will set N/A at filing (#338). So every typed issue has exactly
+one Severity value ([section 2](2-attributes.md) § The attributes).
 
 Ruled 2026-11-03: a user account and an organization have exactly the same data model, apart from what GitHub offers
 organizations only, so in a user account, which has no issue fields, a label stands in for each option of a
@@ -262,8 +264,8 @@ design.
   2026-11-03, and the hierarchy carries those distinctions ([section 1](1-hierarchy.md) § Type). A blank Area is an
   error, caught at three points (ruled 2026-11-03). At filing, `star github issue` will refuse an issue without an Area
   (#338), and the issue forms in each account's `.github` repository have a required Area dropdown. The Triage workflow
-  copies its answer into the Area field or label when the issue is opened: personal's adds the `area:` label today, and
-  NobleFactor's will set the Area field once #447 and #448 land. GitHub enforces the dropdown only in a public
+  copies its answer into the Area field or label when the issue is opened: personal's adds the `area:` label, and
+  NobleFactor's sets the Area field (#447, #448). GitHub enforces the dropdown only in a public
   repository, so in a private one, which today is only personal, nothing checks the Area at filing until
   `star github issue` does (ruled 2026-11-04). At triage, each Triage project has the Area field (in a user account, the
   `area:` labels, in its Labels column) and a Missing Area view, both made 2026-11-03, and nothing leaves Triage without
@@ -328,7 +330,7 @@ design.
   body the features it exercises. A scenario is structurally like a schedule that starts with no tasks or bugs: they are
   found with time. Someone opens the scenario and walks it, logging work items as they go, each a task or a bug and a
   row of the team's Scenario project under the scenario's option, its Beat the point in the walk where it turned up. A
-  logged item names its scenario in its body, as "Found while walking #N", and the Triage workflow will add it to the
+  logged item names its scenario in its body, as "Found while walking #N", and the Triage workflow adds it to the
   scenario instead of to the team's Triage project (#448). Each item later moves to its team's Triage project or
   straight onto a schedule, and leaves the scenario; the item's body and a comment on the Scenario issue record the
   move. The sweep (#436) will leave a scenario's rows alone but for two structural rules: it will return an epic or a

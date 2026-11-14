@@ -49,7 +49,11 @@ and engineering points to [issue-standards.md § Product and engineering](../../
 which says what product work and engineering work each cover, tests among engineering's, and what each may hold, in
 place of the list of what engineering covers; the sentence that the product readiness and release management epics
 hold both kinds is gone, superseded on 2026-11-05; and the table row on the area sends the reader there to learn what
-each value means.
+each value means. Built 2026-11-13 in #448: personal, David-Noble-at-work/.github and NobleFactor's five participating
+repositories run the Triage workflow, which sets the Severity when an issue is opened, keeping one already set and
+leaving an issue with no type yet to triage, and adds an issue whose body says "Found while walking #N", where #N is an
+open scenario of the account, to that scenario instead of to Triage; NobleFactor's has set the Area field since its
+first run, on 2026-11-11, and section 7 states each as done.
 
 ## Completion
 
@@ -93,7 +97,7 @@ each value means.
   ([the plan](../../plans/chore/303-issue-data-model.md) § The cutover, from 2026-11-02); that closing missed
   NobleFactor project 4, "Thread: the model follows a rename", the thread project made on 2026-10-24 as #377's write
   test, which the owner closed on 2026-11-04 ([section 3's status](3-collections.status.md))
-- [ ] The Triage workflow in each repository, ruled 2026-11-03: a GitHub Actions workflow, run when an issue is opened
+- [x] The Triage workflow in each repository, ruled 2026-11-03: a GitHub Actions workflow, run when an issue is opened
   or transferred, that adds it to its team's Triage project with `actions/add-to-project`; each repository's
   `TRIAGE_PROJECT_URL` variable, from the team mapping; a Triage workflow template in each account's `.github`
   repository; and, ruled 2026-11-03, the workflow's copying of the answer to an issue form's Area dropdown into the Area
@@ -102,11 +106,14 @@ each value means.
   ([section 6](6-the-asset-and-its-sync.md#one-model-per-account)); where the workflow itself stands is in
   [section 4's status](4-storage-and-reach.status.md). Ruled 2026-11-04: the workflow will set Severity N/A on an issue
   of another type filed from a form, will give a bug filed from the bug form Severity Medium, and will add an item that
-  names its scenario in its body, as "Found while walking #N", to the scenario instead of to Triage. #448 will make it
-  so in both accounts' Triage workflow templates and personal's workflow, and will put the workflow in
-  noblefactor-engprod, .github, devlore-cli, devlore-registry and devlore.noblefactor.com, after #447. How a triage
-  decision is carried out, and how an issue is kept in one project at a time, were ruled the same day (§ Filing an
-  issue, under Triage, in section 7).
+  names its scenario in its body, as "Found while walking #N", to the scenario instead of to Triage. #448 made it so in
+  both accounts' Triage workflow templates, personal's workflow and David-Noble-at-work/.github's on 2026-11-13
+  (David-Noble-at-work/.github#8), and the workflow runs in noblefactor-engprod, .github, devlore-cli, devlore-registry
+  and devlore.noblefactor.com, landed by `star github model apply` (#437) after #447. How a triage decision is carried
+  out, and how an issue is kept in one project at a time, were ruled the same day (§ Filing an issue, under Triage, in
+  section 7). -- 2026-11-13: the workflow runs in NobleFactor's five participating repositories, personal and
+  David-Noble-at-work/.github, copies the Area, sets the Severity and adds an item found while walking an open scenario
+  to that scenario (#441, #448)
 - [x] The Schedule and Scenario issue forms in NobleFactor/.github and David-Noble-at-work/.github, each with a required
   Area dropdown, as every issue form in each account's `.github` repository has (ruled 2026-11-03) -- 2026-11-03: read
   from GitHub, the schedule and scenario forms in both `.github` repositories each have a required Area dropdown, as

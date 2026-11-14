@@ -79,7 +79,11 @@ long a level lives). Revised 2026-11-05 for #446: § Type's paragraph on enginee
 [issue-standards.md § Product and engineering](../../issue-standards.md#product-and-engineering), which says what
 product work and engineering work each cover, tests among engineering's, and what each may hold, in place of the list
 of what engineering covers; the sentence that product readiness and release management epics hold both kinds is gone,
-superseded on 2026-11-05; and the pointer to the retired § The Ops axis points to the new section.
+superseded on 2026-11-05; and the pointer to the retired § The Ops axis points to the new section. Built 2026-11-13 in
+#448: personal, David-Noble-at-work/.github and NobleFactor's five participating repositories run the Triage workflow,
+which gives an issue whose body says "Found while walking #N", where #N is an open scenario of the account, its row in
+that scenario instead of in Triage, and NobleFactor's has set the Area field since its first run, on
+2026-11-11 (§ Triage).
 
 ## Completion
 

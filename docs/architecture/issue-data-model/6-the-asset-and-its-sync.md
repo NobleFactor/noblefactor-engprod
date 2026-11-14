@@ -189,7 +189,7 @@ forms for Schedule and Scenario issues are kept there too, and so is the Triage 
 Each repository's Triage workflow, which adds its new issues to its team's Triage project, is made from it. Ruled
 2026-11-03: the issue forms in each account's `.github` repository have a required Area dropdown, and the Triage
 workflow copies its answer into the Area issue field, or in a user account the `area:` label, when the issue is opened:
-personal's adds the `area:` label today, and NobleFactor's will set the Area field once #447 and #448 land. Both
+personal's adds the `area:` label, and NobleFactor's sets the Area field (#447, #448). Both
 repositories exist. NobleFactor's `model.yaml`, which lay beside the extension before the ruling, moved to
 NobleFactor/.github with #431 on 2026-11-09 (NobleFactor/.github#3), and David-Noble-at-work's, which lay beside it
 as `model.David-Noble-at-work.yaml`, moved to David-Noble-at-work/.github with #441 the same day
@@ -227,7 +227,8 @@ Since 2026-11-09 David-Noble-at-work/.github holds the same, worded for the acco
 David-Noble-at-work/.github#1): its model file, its pull request template, `CONTRIBUTING.md`, `SECURITY.md` and
 `SUPPORT.md`, the documents table on every issue form, and NobleFactor/.github's quality gate, which a ruleset on
 `main` requires along with a pull request. Its Triage workflow template sets the Severity a new issue starts with,
-ruled 2026-11-04: `severity:medium` on a bug from the bug form and `severity:n/a` on anything else. It runs a copy of
+ruled 2026-11-04: `severity:medium` on an issue with the bug label, `severity:n/a` on one with another type label, and
+none on one with no type label, which waits for triage. It runs a copy of
 that template with an `ADD_TO_PROJECT_PAT` of its own, and personal's `triage.yml` is the template again
 (David-Noble-at-work/personal#323). Private vulnerability reporting is on for the account's public repositories.
 
@@ -519,7 +520,7 @@ projects:                             # the account's four project templates
   like a schedule that starts with no tasks or bugs: they are found with time. Someone opens the scenario and walks it,
   logging work items as they go, each a task or a bug and a row of the team's Scenario project under the scenario's
   option, its Beat the point in the walk where it turned up. A logged item names its scenario in its body, as "Found
-  while walking #N", and the Triage workflow will add it to the scenario instead of to the team's Triage project (#448).
+  while walking #N", and the Triage workflow adds it to the scenario instead of to the team's Triage project (#448).
   Each item later moves to its team's Triage project or straight onto a schedule, and leaves the scenario; the item's
   body and a comment on the Scenario issue record the move. The sweep (#436) will leave a scenario's rows alone but for
   two structural rules: it will return an epic or a feature that is a row of the Scenario project, as it will one on a
