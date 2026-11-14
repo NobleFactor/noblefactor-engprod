@@ -1,9 +1,9 @@
 ---
 title: "star github schedule add puts issues on a schedule, with their steps, links and amendment, in one act"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/438
-status: active
+status: complete
 created: 2026-11-12
-updated: 2026-11-12
+updated: 2026-11-13
 ---
 
 # Plan: star github schedule add puts issues on a schedule, with their steps, links and amendment, in one act
@@ -29,6 +29,8 @@ Its code for reading a schedule's steps and renumbering them is shared, so that 
   proof. NobleFactor-test, deleted after #437's proof, can't be restored or its name reused yet. A user account's
   half can't be proven live: David-Noble-at-home, the one user account that could stand in for one, is unavailable
   until the owner restores it. So it will not be proven by any other means, and #438 stays open until it is.
+- 2026-11-13: David-Noble-at-home can't be restored. The owner made David-Noble-at-work-sandbox, a user account, to
+  last, for every user-account proof, and a user account's half of `add` is proven there.
 
 ## Current State
 
@@ -105,14 +107,14 @@ Against the stand-in `gh` in `tests/Test-StarGitHub`, each case reading back the
 | 11 | The template | Rendered from fixed data, byte for byte |
 | 12 | `make check` | Passes |
 
-Then the evidence #438 asks for, run live: in NobleFactor-sandbox now, and in David-Noble-at-home once the owner
-restores it (§ Rulings).
+Then the evidence #438 asks for, run live: in NobleFactor-sandbox now, and in David-Noble-at-work-sandbox, made
+for it on 2026-11-13 (§ Rulings).
 
 ## Implementation Phases
 
 ### Phase 1: the plan
 
-- [ ] Written and committed on `feature/438-schedule-add` by the worktree's first script, which opens the branch with
+- [x] Written and committed on `feature/438-schedule-add` by the worktree's first script, which opens the branch with
       `git open-branch 438 -T feature`, pushes it, and sets step 28's row In progress with the branch in its Worktree
       column, read back (agent-rules.md, rule 19); reviewed with the owner
 
@@ -131,7 +133,7 @@ restores it (§ Rulings).
 
 - [x] NobleFactor-sandbox made by the owner and built with `star github model apply`; `add` run there, as #438's
       Evidence of completion lists, and the comment written for #438
-- [ ] `add` run in David-Noble-at-home, once the owner restores it, and #438 closed then, not before
+- [x] `add` run in David-Noble-at-work-sandbox, the user account made for proofs on 2026-11-13, and #438 closed then
 
 ### Phase 5: documents and merge
 
@@ -162,6 +164,6 @@ restores it (§ Rulings).
 
 ## Open Questions
 
-None. Ruled 2026-11-12: the live evidence runs in NobleFactor-sandbox, and in David-Noble-at-home once restored
-(§ Rulings). The wait on David-Noble-at-work/personal#309 that #438's body names gives way to that one: the user
-account's half is proven in David-Noble-at-home, not on personal's schedules.
+None. Ruled 2026-11-12 and 2026-11-13: the live evidence runs in NobleFactor-sandbox and in
+David-Noble-at-work-sandbox (§ Rulings). The wait on David-Noble-at-work/personal#309 that #438's body names gives way
+to that one: the user account's half is proven in David-Noble-at-work-sandbox, not on personal's schedules.

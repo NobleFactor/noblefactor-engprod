@@ -18,7 +18,7 @@ the directory `git-open-branch` made, `<clone>.<issue>-<name>`. The script for
 worktree each script lands; and `git close-branch` removes the two together when the pull request merges. Ruled
 2026-10-21 (#366), retiring `go-<repo>` one level above the repository: a script named for the clone outlived every
 worktree it served, and the bare `go` belonged to whichever repository last used it. Each script is self-contained:
-stage, commit, push, create PR, verify CI, verify mergeability, squash merge, record its time and its lanes, clean up.
+stage, commit, push, create PR, verify CI, verify mergeability, squash merge, record its time and its steps, clean up.
 
 A script is read before it is overwritten, whatever it is called: its `cd` says which worktree it serves, and one
 whose `cd` names another worktree is the wrong file. Only a script that is not there is written from nothing.
@@ -58,6 +58,90 @@ This step exists because a hand-rolled subset of the gate will differ from it ev
 2026-08-30 a `personal` PR pre-flighted with `shellcheck` alone and failed CI on `shfmt`, after the
 issue, branch, commit and PR already existed. The remedy is not a longer checklist; it is to stop
 maintaining a second copy of the gate.
+
+---
+
+## A worktree's first script
+
+A worktree's first script opens the branch, commits the plan and pushes it, then records where each of its steps' work
+is: In progress, its row on its team's Schedule project linking the branch in its Worktree column
+([agent-rules.md](agent-rules.md), rule 19). The link waits for the push, since a link to a branch GitHub doesn't have
+leads nowhere. Like the merge script's schedule step, it finds each row by its issue and the project's title, and the
+fields and options by name, so no ID is pasted into a script and none goes stale (rule 13).
+
+```bash
+# The schedule's helpers (agent-rules.md, rule 19). A step's row is found by its issue and its team's Schedule project,
+# by title, and the project's fields and options by name, so no ID is pasted into a script and none goes stale.
+repository=<owner>/<repo>
+schedule_project="Schedule: <team>"
+
+# step_row prints a step's row on the team's Schedule project, as {project, item, schedule, status, worktree}, or
+# nothing when the issue has no row there. fieldValueByName answers null for a field a project lacks, so every project
+# the issue is a row of can be read in the one query.
+step_row() {
+    gh api graphql -F n="$1" -f o="${repository%%/*}" -f r="${repository#*/}" -f query='query($o: String!, $r: String!,
+        $n: Int!) { repository(owner: $o, name: $r) { issue(number: $n) { projectItems(first: 20) { nodes { id
+        project { id title }
+        schedule: fieldValueByName(name: "Schedule") { ... on ProjectV2ItemFieldSingleSelectValue { name } }
+        status: fieldValueByName(name: "Status") { ... on ProjectV2ItemFieldSingleSelectValue { name } }
+        worktree: fieldValueByName(name: "Worktree") { ... on ProjectV2ItemFieldTextValue { text } } } } } } }' |
+        jq -c --arg t "${schedule_project}" '.data.repository.issue.projectItems.nodes[] | select(.project.title == $t)
+            | {project: .project.id, item: .id, schedule: .schedule.name, status: .status.name, worktree: (.worktree.text // "")}'
+}
+
+# set_row sets a row's Status, by the option's name, and its Worktree, the project's fields found by name.
+set_row() {
+    local project="$1" item="$2" status="$3" link="$4" fields
+    fields="$(gh api graphql -f p="${project}" -f query='query($p: ID!) { node(id: $p) { ... on ProjectV2 { fields(first: 50) {
+        nodes { ... on ProjectV2FieldCommon { id name } ... on ProjectV2SingleSelectField { options { id name } } } } } } }' |
+        jq -c '[.data.node.fields.nodes[] | select(.name == "Status" or .name == "Worktree")] | INDEX(.name)')"
+    gh api graphql -f p="${project}" -f i="${item}" -f f="$(jq -r '.Status.id' <<<"${fields}")" \
+        -f o="$(jq -r --arg s "${status}" '.Status.options[] | select(.name == $s) | .id' <<<"${fields}")" \
+        -f query='mutation($p: ID!, $i: ID!, $f: ID!, $o: String!) { updateProjectV2ItemFieldValue(input: {projectId: $p,
+        itemId: $i, fieldId: $f, value: {singleSelectOptionId: $o}}) { projectV2Item { id } } }' >/dev/null
+    gh api graphql -f p="${project}" -f i="${item}" -f f="$(jq -r '.Worktree.id' <<<"${fields}")" -f v="${link}" \
+        -f query='mutation($p: ID!, $i: ID!, $f: ID!, $v: String!) { updateProjectV2ItemFieldValue(input: {projectId: $p,
+        itemId: $i, fieldId: $f, value: {text: $v}}) { projectV2Item { id } } }' >/dev/null
+}
+
+# --- The steps: each one's row In progress, its Worktree linking the branch (rule 13; agent-rules.md, rule 19) ---
+#
+# After the push, since a link to a branch GitHub doesn't have leads nowhere. Guarded on what each row holds (ruled
+# 2026-11-13): it must be on a schedule, Open or In progress, and link no other branch; otherwise another worktree holds
+# the step, and the script stops, naming it. Each row is read back.
+steps=(<issue>)
+link="https://github.com/${repository}/tree/<branch>"
+for step in "${steps[@]}"; do
+    row="$(step_row "${step}")"
+    [[ -n "${row}" ]] || {
+        echo "#${step} has no row on ${schedule_project}"
+        exit 1
+    }
+    [[ -n "$(jq -r '.schedule // ""' <<<"${row}")" ]] || {
+        echo "#${step}'s row on ${schedule_project} names no schedule"
+        exit 1
+    }
+    case "$(jq -r '.status // ""' <<<"${row}")" in
+        Open | "In progress") ;;
+        *)
+            echo "#${step}'s row is $(jq -r '.status // "without a Status"' <<<"${row}"), not Open or In progress"
+            exit 1
+            ;;
+    esac
+    held="$(jq -r .worktree <<<"${row}")"
+    [[ -z "${held}" || "${held}" == "${link}" ]] || {
+        echo "#${step}'s row links ${held}: another worktree holds the step"
+        exit 1
+    }
+    set_row "$(jq -r .project <<<"${row}")" "$(jq -r .item <<<"${row}")" "In progress" "${link}"
+    after="$(step_row "${step}")"
+    [[ "$(jq -r '"\(.status) \(.worktree)"' <<<"${after}")" == "In progress ${link}" ]] || {
+        echo "#${step}'s row reads: $(jq -c 'del(.project, .item)' <<<"${after}")"
+        exit 1
+    }
+    echo "#${step}: $(jq -r '"\(.schedule), \(.status), \(.worktree)"' <<<"${after}")"
+done
+```
 
 ---
 
@@ -209,53 +293,78 @@ gh pr view "${pr_number}" --json body --jq .body | grep -q '^## Time' || {
 }
 printf '%s\n' "${span}"
 
-# --- The schedule: the lanes this pull request lands, recorded as it lands (rule 13) ---
-#
-# Out of date since 2026-11-03 (rule 13): the tables this step rewrites were retired that day, so it would find no
-# row and stop the script. It waits on #450, which carries what agent-rules.md, rule 19, leaves open: what each record
-# is guarded on.
-#
-# A lane's row says where its work is (agent-rules.md, rule 19), and once the merge lands, that is the merge. AFTER
-# the merge, since a row names the squash commit. Each row is written with the script, whole, as the schedule's table
-# has it, with {pr} and {merged} filled in here from GitHub; it replaces the row whose first cell is its lane number,
-# and the step stops unless that row occurs exactly once. The write is guarded on the schedule's updatedAt as this
-# script last saw it, so an edit made since stops the script instead of being overwritten, and each row is read back.
-# Leave the step out only when the pull request lands no lane.
-schedule_repo=<owner>/<repo>
-schedule=<n>
-schedule_seen_at=<updatedAt>
-rows=$(cat <<'EOF'
-| <lane> | [<owner>/<repo>#<issue>](https://github.com/<owner>/<repo>/issues/<issue>) — <title> | <repo>, merged as [<owner>/<repo>#{pr}](https://github.com/<owner>/<repo>/pull/{pr}), {merged} | — |
-EOF
-)
-merged=$(gh pr view "${pr_number}" --json mergeCommit,mergedAt --jq '"\(.mergeCommit.oid[0:7]), \(.mergedAt[0:10]) UTC"')
-rows=${rows//\{pr\}/${pr_number}}
-rows=${rows//\{merged\}/${merged}}
-seen=$(gh issue view "${schedule}" --repo "${schedule_repo}" --json updatedAt --jq .updatedAt)
-[[ "${seen}" == "${schedule_seen_at}" ]] || {
-    echo "#${schedule} changed at ${seen}, since this script last read it; its lanes are not recorded"
-    exit 1
+# The schedule's helpers (agent-rules.md, rule 19). A step's row is found by its issue and its team's Schedule project,
+# by title, and the project's fields and options by name, so no ID is pasted into a script and none goes stale.
+repository=<owner>/<repo>
+schedule_project="Schedule: <team>"
+
+# step_row prints a step's row on the team's Schedule project, as {project, item, schedule, status, worktree}, or
+# nothing when the issue has no row there. fieldValueByName answers null for a field a project lacks, so every project
+# the issue is a row of can be read in the one query.
+step_row() {
+    gh api graphql -F n="$1" -f o="${repository%%/*}" -f r="${repository#*/}" -f query='query($o: String!, $r: String!,
+        $n: Int!) { repository(owner: $o, name: $r) { issue(number: $n) { projectItems(first: 20) { nodes { id
+        project { id title }
+        schedule: fieldValueByName(name: "Schedule") { ... on ProjectV2ItemFieldSingleSelectValue { name } }
+        status: fieldValueByName(name: "Status") { ... on ProjectV2ItemFieldSingleSelectValue { name } }
+        worktree: fieldValueByName(name: "Worktree") { ... on ProjectV2ItemFieldTextValue { text } } } } } } }' |
+        jq -c --arg t "${schedule_project}" '.data.repository.issue.projectItems.nodes[] | select(.project.title == $t)
+            | {project: .project.id, item: .id, schedule: .schedule.name, status: .status.name, worktree: (.worktree.text // "")}'
 }
-gh issue view "${schedule}" --repo "${schedule_repo}" --json body --jq .body |
-    ROWS="${rows}" python3 -c '
-import os, sys
-body = sys.stdin.read().split("\n")
-for row in os.environ["ROWS"].split("\n"):
-    lane = row.split(" | ")[0] + " | "
-    at = [i for i, line in enumerate(body) if line.startswith(lane)]
-    if len(at) != 1:
-        sys.exit(f"the row for lane {lane!r} occurs {len(at)} times")
-    body[at[0]] = row
-sys.stdout.write("\n".join(body))
-' > "${message_file}"
-gh issue edit "${schedule}" --repo "${schedule_repo}" --body-file "${message_file}" >/dev/null
-landed_rows=$(gh issue view "${schedule}" --repo "${schedule_repo}" --json body --jq .body)
-while IFS= read -r row; do
-    grep -qxF -- "${row}" <<<"${landed_rows}" || {
-        echo "#${schedule} does not show the row: ${row}"
+
+# set_row sets a row's Status, by the option's name, and its Worktree, the project's fields found by name.
+set_row() {
+    local project="$1" item="$2" status="$3" link="$4" fields
+    fields="$(gh api graphql -f p="${project}" -f query='query($p: ID!) { node(id: $p) { ... on ProjectV2 { fields(first: 50) {
+        nodes { ... on ProjectV2FieldCommon { id name } ... on ProjectV2SingleSelectField { options { id name } } } } } } }' |
+        jq -c '[.data.node.fields.nodes[] | select(.name == "Status" or .name == "Worktree")] | INDEX(.name)')"
+    gh api graphql -f p="${project}" -f i="${item}" -f f="$(jq -r '.Status.id' <<<"${fields}")" \
+        -f o="$(jq -r --arg s "${status}" '.Status.options[] | select(.name == $s) | .id' <<<"${fields}")" \
+        -f query='mutation($p: ID!, $i: ID!, $f: ID!, $o: String!) { updateProjectV2ItemFieldValue(input: {projectId: $p,
+        itemId: $i, fieldId: $f, value: {singleSelectOptionId: $o}}) { projectV2Item { id } } }' >/dev/null
+    gh api graphql -f p="${project}" -f i="${item}" -f f="$(jq -r '.Worktree.id' <<<"${fields}")" -f v="${link}" \
+        -f query='mutation($p: ID!, $i: ID!, $f: ID!, $v: String!) { updateProjectV2ItemFieldValue(input: {projectId: $p,
+        itemId: $i, fieldId: $f, value: {text: $v}}) { projectV2Item { id } } }' >/dev/null
+}
+
+# --- The steps: each one's issue records the merge, and its row closes (rule 13; agent-rules.md, rule 19) ---
+#
+# AFTER the merge and its span, since the records name the squash commit. Guarded on what each record holds (ruled
+# 2026-11-13): the step's row must link this branch, or this pull request when the script runs again; otherwise the
+# step has moved to another worktree, and the script stops. The issue's comment is posted once, and the issue closed
+# only while it is open. Each record is read back. A step that moves to another worktree, or closes without a merge,
+# is recorded by this script before git close-branch, its row linking where the work went. Leave the step out only
+# when the pull request lands no step.
+steps=(<issue>)
+link="https://github.com/${repository}/tree/<branch>"
+pr_url="https://github.com/${repository}/pull/${pr_number}"
+merged=$(gh pr view "${pr_number}" --repo "${repository}" --json mergeCommit,mergedAt --jq '"\(.mergeCommit.oid[0:7]) \(.mergedAt[0:10])"')
+for step in "${steps[@]}"; do
+    row="$(step_row "${step}")"
+    [[ -n "${row}" ]] || {
+        echo "#${step} has no row on ${schedule_project}"
         exit 1
     }
-done <<<"${rows}"
+    held="$(jq -r .worktree <<<"${row}")"
+    [[ "${held}" == "${link}" || "${held}" == "${pr_url}" ]] || {
+        echo "#${step}'s row links ${held:-nothing}, not ${link} or ${pr_url}: the step has moved"
+        exit 1
+    }
+    record="Merged in #${pr_number} as \`${merged% *}\` on ${merged#* } (UTC)."
+    gh api "repos/${repository}/issues/${step}/comments" --paginate --jq '.[].body' | grep -qxF -- "${record}" ||
+        gh issue comment "${step}" --repo "${repository}" --body "${record}" >/dev/null
+    [[ "$(gh issue view "${step}" --repo "${repository}" --json state --jq .state)" == CLOSED ]] ||
+        gh issue close "${step}" --repo "${repository}" --reason completed >/dev/null
+    set_row "$(jq -r .project <<<"${row}")" "$(jq -r .item <<<"${row}")" Closed "${pr_url}"
+    after="$(step_row "${step}")"
+    if ! gh api "repos/${repository}/issues/${step}/comments" --paginate --jq '.[].body' | grep -qxF -- "${record}" ||
+        [[ "$(gh issue view "${step}" --repo "${repository}" --json state --jq .state)" != CLOSED ]] ||
+        [[ "$(jq -r '"\(.status) \(.worktree)"' <<<"${after}")" != "Closed ${pr_url}" ]]; then
+        echo "#${step} does not read back as merged: its row reads $(jq -c 'del(.project, .item)' <<<"${after}")"
+        exit 1
+    fi
+    echo "#${step}: closed, its comment posted, its row $(jq -r '"\(.status), \(.worktree)"' <<<"${after}")"
+done
 
 # Clean up (works from both worktrees and regular branches)
 git close-branch
@@ -346,22 +455,19 @@ git status --short
     (#306); the script's `git pull --ff-only` then confirms it, finding the clone current. Every script
     written on 2026-09-24 had to add both pulls by hand; the template owes them.
 
-13. **Every pull request records its lanes as it lands.** Ruled 2026-10-25 (#401). After the merge and its span,
-    the script writes the rows of the lanes it lands on their schedule: each whole, naming the pull request and its
-    squash commit, replacing the row whose first cell is its lane number, guarded on the schedule's `updatedAt`
-    and read back. A merge that leaves its lanes reading "in progress" keeps the owner in the dark on progress, and
-    every session that reads the schedule with them, this one too once its context is compacted
-    ([agent-rules.md](agent-rules.md), rule 19). #396 merged that way: its lanes on #301 kept reading "in progress"
-    in a worktree `git close-branch` had removed.
-
-    This rule and the schedule step, in both forms, are out of date. They record a lane by rewriting its row in a table
-    in the schedule issue's body. Those tables were retired on 2026-11-03, when a line naming the issue's project
-    replaced them, so the step would find no row and stop the script. #450 will bring this rule and the step, in both
-    forms, in line with [agent-rules.md](agent-rules.md), rule 19, which says how a pull request's script records its
-    steps now. It carries the question rule 19 leaves open, what each record is guarded on, which moved from #303 to
-    #450 on 2026-11-04. The template has no step yet for the record a worktree's first script makes: pushing the branch,
-    then linking it in the Worktree column of each of its steps' rows ([agent-rules.md](agent-rules.md), rule 19). #450
-    will add that step too, in both forms.
+13. **Every pull request records its steps as it lands.** Ruled 2026-10-25 (#401), and brought to the Schedule
+    project on 2026-11-13 (#450). After the merge and its span, the script records each step it lands: a comment on the
+    step's issue naming the pull request and its squash commit, the issue closed, and the step's row on its team's
+    Schedule project set Closed, its Worktree linking the pull request. A worktree's first script, once its branch is
+    pushed, sets each of its steps' rows In progress with the branch's link
+    ([§ A worktree's first script](#a-worktrees-first-script)). Each row is found by its issue and the project's title,
+    and the fields and options by name, so no ID is pasted in. Ruled 2026-11-13: each record is guarded on what it holds
+    just before it is written. The first script writes only to a row that is on a schedule, Open or In progress, and
+    links no other branch; the merge script writes only to a row that links its branch, or its pull request when it runs
+    again; the comment is posted once, and the issue closed only while it is open. Each record is read back. A merge
+    that leaves its steps reading In progress keeps the owner in the dark on progress, and every session that reads the
+    schedule with them, this one too once its context is compacted ([agent-rules.md](agent-rules.md), rule 19). #396
+    merged that way: its lanes on #301 kept reading "in progress" in a worktree `git close-branch` had removed.
 
 ---
 
@@ -401,7 +507,7 @@ template does, in the same order. The rules above hold; these are the ones Power
 
 .DESCRIPTION
     Opens the pull request for <branch>, waits for CI, checks the merge state, squash-merges, records the pull
-    request's time span and the lanes it lands, and closes the branch. Every commit is made and pushed; there is
+    request's time span and the steps it lands, and closes the branch. Every commit is made and pushed; there is
     nothing to stage.
 
 .EXAMPLE
@@ -419,10 +525,93 @@ $branch = '<branch>'
 $repository = '<owner>/<repo>'
 $worktree = Join-Path -Path $HOME -ChildPath 'Workspace' -AdditionalChildPath '<org>', '<clone>.<n>-<name>'
 $mainClone = Join-Path -Path $HOME -ChildPath 'Workspace' -AdditionalChildPath '<org>', '<clone>'
+$scheduleProject = 'Schedule: <team>'
 
 ###########
 # Helper functions
 ###########
+
+function Get-StepRow {
+    # A step's row on the team's Schedule project, found by its issue and the project's title, or $null when the issue
+    # has no row there. fieldValueByName answers null for a field a project lacks, so every project the issue is a
+    # row of can be read in the one query.
+    [CmdletBinding()]
+    [OutputType([pscustomobject])]
+    param(
+        [Parameter(Mandatory)]
+        [int]
+        $Issue
+    )
+
+    $owner, $name = $repository -split '/', 2
+    $query = @'
+query($o: String!, $r: String!, $n: Int!) { repository(owner: $o, name: $r) { issue(number: $n) { projectItems(first: 20) {
+nodes { id project { id title }
+schedule: fieldValueByName(name: "Schedule") { ... on ProjectV2ItemFieldSingleSelectValue { name } }
+status: fieldValueByName(name: "Status") { ... on ProjectV2ItemFieldSingleSelectValue { name } }
+worktree: fieldValueByName(name: "Worktree") { ... on ProjectV2ItemFieldTextValue { text } } } } } } }
+'@
+    $json = (gh api graphql -F "n=$Issue" -f "o=$owner" -f "r=$name" -f "query=$query") -join "`n"
+    Assert-NativeSuccess 'gh api graphql (step row)'
+    $node = ($json | ConvertFrom-Json).data.repository.issue.projectItems.nodes |
+        Where-Object { $_.project.title -eq $scheduleProject } | Select-Object -First 1
+
+    if (-not $node) {
+        return $null
+    }
+
+    [pscustomobject]@{
+        Project  = $node.project.id
+        Item     = $node.id
+        Schedule = [string]$node.schedule.name
+        Status   = [string]$node.status.name
+        Worktree = [string]$node.worktree.text
+    }
+}
+
+function Set-StepRow {
+    # Sets a row's Status, by the option's name, and its Worktree, the project's fields found by name.
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [pscustomobject]
+        $Row,
+
+        [Parameter(Mandatory)]
+        [string]
+        $Status,
+
+        [Parameter(Mandatory)]
+        [string]
+        $Link
+    )
+
+    $query = @'
+query($p: ID!) { node(id: $p) { ... on ProjectV2 { fields(first: 50) { nodes {
+... on ProjectV2FieldCommon { id name } ... on ProjectV2SingleSelectField { options { id name } } } } } } }
+'@
+    $fields = ((gh api graphql -f "p=$($Row.Project)" -f "query=$query") -join "`n" | ConvertFrom-Json).data.node.fields.nodes
+    Assert-NativeSuccess 'gh api graphql (fields)'
+    $statusField = $fields | Where-Object { $_.name -eq 'Status' }
+    $worktreeField = $fields | Where-Object { $_.name -eq 'Worktree' }
+    $option = $statusField.options | Where-Object { $_.name -eq $Status }
+
+    $setOption = @'
+mutation($p: ID!, $i: ID!, $f: ID!, $o: String!) { updateProjectV2ItemFieldValue(input: {projectId: $p, itemId: $i,
+fieldId: $f, value: {singleSelectOptionId: $o}}) { projectV2Item { id } } }
+'@
+    gh api graphql -f "p=$($Row.Project)" -f "i=$($Row.Item)" -f "f=$($statusField.id)" -f "o=$($option.id)" -f "query=$setOption" |
+        Out-Null
+    Assert-NativeSuccess 'gh api graphql (Status)'
+
+    $setText = @'
+mutation($p: ID!, $i: ID!, $f: ID!, $v: String!) { updateProjectV2ItemFieldValue(input: {projectId: $p, itemId: $i,
+fieldId: $f, value: {text: $v}}) { projectV2Item { id } } }
+'@
+    gh api graphql -f "p=$($Row.Project)" -f "i=$($Row.Item)" -f "f=$($worktreeField.id)" -f "v=$Link" -f "query=$setText" |
+        Out-Null
+    Assert-NativeSuccess 'gh api graphql (Worktree)'
+}
 
 function Assert-NativeSuccess {
     [CmdletBinding()]
@@ -582,62 +771,62 @@ if (((gh pr view $number --json body --jq '.body') -join "`n") -notmatch '(?m)^#
     throw 'The PR body carries no ## Time section.'
 }
 
-# --- The schedule: the lanes this pull request lands, recorded as it lands (rule 13) ---
+# --- The steps: each one's issue records the merge, and its row closes (rule 13; agent-rules.md, rule 19) ---
 #
-# Out of date since 2026-11-03 (rule 13): the tables this step rewrites were retired that day, so it would find no
-# row and stop the script. It waits on #450, which carries what agent-rules.md, rule 19, leaves open: what each record
-# is guarded on.
-#
-# Each row whole, as the schedule's table has it, with {pr} and {merged} filled in from GitHub, and {dash} for the
-# table's em dash, which keeps this file ASCII. It replaces the row whose first cell is its lane number, which must
-# occur exactly once. Guarded on the schedule's updatedAt as this script last saw it, and read back. Left out only when
-# the pull request lands no lane.
+# AFTER the merge and its span, since the records name the squash commit. Guarded on what each record holds (ruled
+# 2026-11-13): the step's row must link this branch, or this pull request when the script runs again; otherwise the
+# step has moved to another worktree, and the script stops. The issue's comment is posted once, and the issue closed
+# only while it is open. Each record is read back. A step that moves to another worktree, or closes without a merge,
+# is recorded by this script before git close-branch, its row linking where the work went. Left out only when the pull
+# request lands no step.
 
-$scheduleRepository = '<owner>/<repo>'
-$schedule = <n>
-$scheduleSeenAt = '<updatedAt>'
-$rows = @'
-| <lane> | [<owner>/<repo>#<issue>](https://github.com/<owner>/<repo>/issues/<issue>) {dash} <title> | <repo>, merged as [<owner>/<repo>#{pr}](https://github.com/<owner>/<repo>/pull/{pr}), {merged} | {dash} |
-'@ -split "`r?`n" | Where-Object { $_ }
-
-$merged = (gh pr view $number --json mergeCommit,mergedAt --jq '"\(.mergeCommit.oid[0:7]), \(.mergedAt[0:10]) UTC"') -join ''
+$steps = @(<issue>)
+$link = "https://github.com/$repository/tree/<branch>"
+$pullRequest = "https://github.com/$repository/pull/$number"
+$merged = (gh pr view $number --repo $repository --json mergeCommit,mergedAt --jq '"\(.mergeCommit.oid[0:7]) \(.mergedAt[0:10])"') -join ''
 Assert-NativeSuccess 'gh pr view (merge commit)'
-$dash = [string][char]0x2014
-$rows = $rows | ForEach-Object { $_.Replace('{pr}', "$number").Replace('{merged}', $merged).Replace('{dash}', $dash) }
+$sha, $day = $merged -split ' ', 2
 
-$seen = (gh issue view $schedule --repo $scheduleRepository --json updatedAt --jq '.updatedAt') -join ''
-Assert-NativeSuccess 'gh issue view (schedule)'
+foreach ($step in $steps) {
+    $row = Get-StepRow -Issue $step
 
-if ($seen -ne $scheduleSeenAt) {
-    throw "#$schedule changed at $seen, since this script last read it; its lanes are not recorded."
-}
-
-$lines = ((gh issue view $schedule --repo $scheduleRepository --json body --jq '.body') -join "`n") -split "`n"
-Assert-NativeSuccess 'gh issue view (schedule body)'
-
-foreach ($row in $rows) {
-    $lane = ($row -split ' \| ')[0] + ' | '
-    $at = @(0..($lines.Count - 1) | Where-Object { $lines[$_].StartsWith($lane, [StringComparison]::Ordinal) })
-
-    if ($at.Count -ne 1) {
-        throw "The row for lane '$lane' occurs $($at.Count) times on #$schedule."
+    if (-not $row) {
+        throw "#$step has no row on $scheduleProject."
     }
 
-    $lines[$at[0]] = $row
-}
-
-$scheduleFile = Join-Path ([System.IO.Path]::GetTempPath()) 'pr-<n>-schedule.md'
-Set-Content -LiteralPath $scheduleFile -Value ($lines -join "`n") -NoNewline
-gh issue edit $schedule --repo $scheduleRepository --body-file $scheduleFile | Out-Null
-Assert-NativeSuccess 'gh issue edit (schedule)'
-
-$landedRows = ((gh issue view $schedule --repo $scheduleRepository --json body --jq '.body') -join "`n") -split "`n"
-Assert-NativeSuccess 'gh issue view (schedule, after)'
-
-foreach ($row in $rows) {
-    if ($landedRows -cnotcontains $row) {
-        throw "#$schedule does not show the row: $row"
+    if ($row.Worktree -ne $link -and $row.Worktree -ne $pullRequest) {
+        throw "#$step's row links $($row.Worktree), not $link or ${pullRequest}: the step has moved."
     }
+
+    $record = "Merged in #$number as ``$sha`` on $day (UTC)."
+    $comments = gh api "repos/$repository/issues/$step/comments" --paginate --jq '.[].body'
+    Assert-NativeSuccess 'gh api (comments)'
+
+    if ($comments -cnotcontains $record) {
+        gh issue comment $step --repo $repository --body $record | Out-Null
+        Assert-NativeSuccess 'gh issue comment'
+    }
+
+    $state = (gh issue view $step --repo $repository --json state --jq '.state') -join ''
+    Assert-NativeSuccess 'gh issue view (state)'
+
+    if ($state -ne 'CLOSED') {
+        gh issue close $step --repo $repository --reason completed | Out-Null
+        Assert-NativeSuccess 'gh issue close'
+    }
+
+    Set-StepRow -Row $row -Status 'Closed' -Link $pullRequest
+    $after = Get-StepRow -Issue $step
+    $comments = gh api "repos/$repository/issues/$step/comments" --paginate --jq '.[].body'
+    Assert-NativeSuccess 'gh api (comments, after)'
+    $state = (gh issue view $step --repo $repository --json state --jq '.state') -join ''
+    Assert-NativeSuccess 'gh issue view (state, after)'
+
+    if ($comments -cnotcontains $record -or $state -ne 'CLOSED' -or $after.Status -ne 'Closed' -or $after.Worktree -ne $pullRequest) {
+        throw "#$step does not read back as merged: its row reads $($after.Status), $($after.Worktree)."
+    }
+
+    Write-Output "#${step}: closed, its comment posted, its row $($after.Status), $($after.Worktree)"
 }
 
 # --- Clean up, from the main clone ---
@@ -657,4 +846,49 @@ if ($landed -notmatch '(?m)^Signed-off-by: ' -or $landed -notmatch '(?m)^Assiste
 }
 
 git status --short
+```
+
+### A worktree's first script, in PowerShell
+
+The same step as [the bash form's](#a-worktrees-first-script), after the push, with `Get-StepRow` and `Set-StepRow`
+from the helpers region above and `$scheduleProject` among the script's variables.
+
+```powershell
+# --- The steps: each one's row In progress, its Worktree linking the branch (rule 13; agent-rules.md, rule 19) ---
+#
+# After the push, since a link to a branch GitHub doesn't have leads nowhere. Guarded on what each row holds (ruled
+# 2026-11-13): on a schedule, Open or In progress, and linking no other branch; otherwise another worktree holds the
+# step, and the script stops, naming it. Each row is read back.
+
+$steps = @(<issue>)
+$link = "https://github.com/$repository/tree/<branch>"
+
+foreach ($step in $steps) {
+    $row = Get-StepRow -Issue $step
+
+    if (-not $row) {
+        throw "#$step has no row on $scheduleProject."
+    }
+
+    if (-not $row.Schedule) {
+        throw "#$step's row on $scheduleProject names no schedule."
+    }
+
+    if ($row.Status -notin @('Open', 'In progress')) {
+        throw "#$step's row is $($row.Status), not Open or In progress."
+    }
+
+    if ($row.Worktree -and $row.Worktree -ne $link) {
+        throw "#$step's row links $($row.Worktree): another worktree holds the step."
+    }
+
+    Set-StepRow -Row $row -Status 'In progress' -Link $link
+    $after = Get-StepRow -Issue $step
+
+    if ($after.Status -ne 'In progress' -or $after.Worktree -ne $link) {
+        throw "#$step's row reads $($after.Status), $($after.Worktree)."
+    }
+
+    Write-Output "#${step}: $($after.Schedule), $($after.Status), $($after.Worktree)"
+}
 ```

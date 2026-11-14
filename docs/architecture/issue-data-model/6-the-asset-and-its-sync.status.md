@@ -18,7 +18,8 @@ leaves out issues, the projects made from templates, any project's built-in work
 labels. Ruled 2026-11-03: Thread is renamed Scenario, and each team, and each user account, has one Triage, Backlog,
 Schedule and Scenario project, with no project per schedule or per scenario. Ruled 2026-11-12, on #438's plan: an
 organization's half of a star github command is proved live in NobleFactor-sandbox, made that day to last and built from
-NobleFactor's model by `apply`; a user account's half waits on David-Noble-at-home (§ Where star github's proofs run).
+NobleFactor's model by `apply`; ruled 2026-11-13, a user account's half is proved in David-Noble-at-work-sandbox, made
+that day to last (§ Where star github's proofs run).
 
 Ruled 2026-11-09 (#426): GitHub is the model. A command reads an account's model from GitHub when it needs it, and the
 model file in the account's `.github` repository is a backup, written by `backup` and read only by `restore`. Five

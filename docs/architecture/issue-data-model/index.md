@@ -50,11 +50,11 @@ title: "Issue data model — one hierarchy, its attributes, and the collections 
 > closed at 8:30. NobleFactor's five participating repositories have run it since 2026-11-11 (#437), after #447, and
 > David-Noble-at-work/.github since 2026-11-09 (#441). `git open-branch` offers no `chore`
 > since #449, and takes the branch type from the issue's type, or its type label in a user account (approved
-> 2026-11-04). The PR script template still records lanes in schedule tables that
-> were retired on 2026-11-03, and has nothing yet for what a worktree's first script records; #450 will bring its rule
-> 13 and its schedule step to the Schedule project, where a pull request's script will record its steps, the first
-> script's Worktree link among them. The [plan](../../plans/chore/303-issue-data-model.md) tracks each in § The cutover,
-> from 2026-11-02, and § Closing, from 2026-11-04.
+> 2026-11-04). Since #450, the PR script template records a pull request's steps in the
+> Schedule project: a worktree's first script links each step's row to its branch, and the merge script records the
+> merge on each step's issue and closes its row, each record guarded on what it holds and read back. The
+> [plan](../../plans/chore/303-issue-data-model.md) tracks each in § The cutover, from 2026-11-02, and § Closing, from
+> 2026-11-04.
 
 The owner, 2026-10-21: "the data model goes into the epic around issue tracking. there are two technical sides: the
 GitHub data model and the tooling (star gh). and migration must be managed carefully." This design is the first

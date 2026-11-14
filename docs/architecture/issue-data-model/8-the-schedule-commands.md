@@ -164,7 +164,8 @@ can't know whose word it acted on, only who ran it:
 `add <schedule> <issue>... [--after <step>] [--blocked-by <issue>[,<issue>...]] [--assignee <login>] --reason <text>`
 puts each issue on the schedule, in the order given. Built on 2026-11-12 (#438) and proved that day in
 NobleFactor-sandbox ([section 6](6-the-asset-and-its-sync.md#where-star-githubs-proofs-run)); a user account's
-half waits on David-Noble-at-home. `--blocked-by` takes a comma-separated list, since no star flag repeats.
+half on 2026-11-13, in David-Noble-at-work-sandbox. `--blocked-by` takes a comma-separated list, since no star flag
+repeats.
 
 - Without `--after`, each takes the next step. With `--after <step>`, they take the steps after that one, and every
   later step moves down, the steps staying consecutive whole numbers (ruled 2026-11-11, #438).
