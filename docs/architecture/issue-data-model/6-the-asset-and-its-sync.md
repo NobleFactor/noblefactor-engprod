@@ -843,8 +843,9 @@ which maintains its one repository, NobleFactor-sandbox/sandbox. Left by hand: t
 scenario and By schedule view, which GitHub's API can't set, and the App's two secrets, which no proof has needed.
 Each proof makes its own issues, named for its run, and a proof of `add` adds one option to Schedule: sandbox's
 Schedule field, which holds 50 at most. NobleFactor-test, made for #437's proof and deleted after, can't be restored,
-nor its name reused yet. A user account's half is proved in David-Noble-at-home once the owner restores it, and by
-nothing else until then.
+nor its name reused yet. A user account's half is proved in David-Noble-at-work-sandbox,
+made on 2026-11-13 to last, in place of David-Noble-at-home, which can't be restored (ruled 2026-11-13). It was built
+from the user reference model by `apply`, and its one repository, David-Noble-at-work-sandbox/sandbox, is private.
 
 ## What this changes in the task list
 
