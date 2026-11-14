@@ -413,14 +413,13 @@ step's issue that it merged, as it lands, by
 [pr-script-template.md](pr-script-template.md), rule 13. A step that moves to another worktree, or closes without a
 merge, is recorded by the script of the worktree that held it, before `git close-branch`. Every record is read back.
 
-Open in #450, which will bring the PR script template in line with this rule: what each record is guarded on, now that
-it is a column on a project row and a record on the step's own issue rather than a table in the schedule issue's body.
-The question was left open on #303 and went to #450 on 2026-11-04, because #450 will write the template's steps that
-make these records; the old step was guarded on the schedule issue's `updatedAt`.
-
-Until #450 is done, the PR script template's schedule step and its rule 13 still rewrite a row of the schedule issue's
-table, retired on 2026-11-03, and the template has no step yet for a worktree's first script:
-[pr-script-template.md](pr-script-template.md#rules), rule 13.
+Ruled 2026-11-13 (#450), closing the question left open on #303 and carried to #450 on 2026-11-04: each record is
+guarded on what it holds just before it is written, where the old step was guarded on the schedule issue's `updatedAt`.
+The first script writes only to a row that is on a schedule, Open or In progress, and links no other branch; the merge
+script writes only to a row that links its branch, or its pull request when it runs again; the issue's comment is
+posted once, and the issue closed only while it is open. Both steps are in the PR script template, in its bash and
+PowerShell forms: [pr-script-template.md](pr-script-template.md#a-worktrees-first-script), § A worktree's first
+script, and rule 13.
 
 ---
 

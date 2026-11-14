@@ -1,7 +1,7 @@
 ---
 title: "The PR script template records a pull request's steps in the Schedule project"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/450
-status: draft
+status: complete
 created: 2026-11-13
 updated: 2026-11-13
 ---
@@ -24,6 +24,8 @@ request from `feature/450-schedule-records`.
   rows; a pull request's script records on each step's issue that it merged; a step that moves to another worktree, or
   closes without a merge, is recorded by the script of the worktree that held it, before `git close-branch`. Every
   record is read back.
+- 2026-11-13, on this plan: each record is guarded on what it holds just before it is written, as proposed under Open
+  Questions.
 
 ## Current State
 
@@ -68,12 +70,13 @@ through and prints each write instead of sending it:
 
 ### Phase 1: the plan
 
-- [ ] Committed on `feature/450-schedule-records` by the worktree's first script, written from the new first-script
-      step, which sets step 39 In progress with the branch linked; reviewed with the owner, and the guard ruled
+- [x] Committed on `feature/450-schedule-records` by the worktree's first script, written from the new first-script
+      step, which sets step 39 In progress with the branch linked; reviewed with the owner, and the guard ruled, on
+      2026-11-13
 
 ### Phase 2: the template, the rule and the merge
 
-- [ ] Rule 13, the schedule step and the first-script step, in both forms; rule 19 closed; the documents; the cases
+- [x] Rule 13, the schedule step and the first-script step, in both forms; rule 19 closed; the documents; the cases
       above; `make check`; the pull request merged by a script written from the new schedule step, closing #450 with
       its evidence; step 39 Closed
 
@@ -88,10 +91,11 @@ through and prints each write instead of sending it:
 
 ## Open Questions
 
-- **What is each record guarded on?** The old step was guarded on the schedule issue's `updatedAt`, so an edit made
-  since stopped the script instead of being overwritten. Now each record is one field of one row, and a comment and a
-  close on one issue. Proposed: guard each write on what the record holds just before it, the value it must replace.
-  The first-script step writes only when the row is on a schedule, its Status is Open or In progress, and its Worktree
-  is empty or already this branch; otherwise another worktree holds the step, and it stops, naming it. The schedule
-  step writes only when the row's Worktree links this branch or this pull request; otherwise the step has moved, and
-  it stops. The comment is posted once, the issue closed only while open. Each write is read back.
+- **What is each record guarded on?** Ruled 2026-11-13, as proposed here. The old step was guarded on the schedule
+  issue's `updatedAt`, so an edit made since stopped the script instead of being overwritten. Now each record is one
+  field of one row, and a comment and a close on one issue. Proposed: guard each write on what the record holds just
+  before it, the value it must replace. The first-script step writes only when the row is on a schedule, its Status is
+  Open or In progress, and its Worktree is empty or already this branch; otherwise another worktree holds the step,
+  and it stops, naming it. The schedule step writes only when the row's Worktree links this branch or this pull
+  request; otherwise the step has moved, and it stops. The comment is posted once, the issue closed only while open.
+  Each write is read back.
