@@ -1,7 +1,7 @@
 ---
 title: "git open-branch stops offering chore and takes the branch type from the issue's type"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/449
-status: draft
+status: complete
 created: 2026-11-13
 updated: 2026-11-13
 ---
@@ -58,12 +58,12 @@ Read on 2026-11-13, at `6f1ebc3`:
 
 ### Phase 1: the plan
 
-- [ ] Committed on `feature/449-open-branch-type` by the worktree's first script, which also sets step 38 In progress
-      with the branch linked; reviewed with the owner
+- [x] Committed on `feature/449-open-branch-type` by the worktree's first script, which also sets step 38 In progress
+      with the branch linked; reviewed with the owner and approved on 2026-11-13
 
 ### Phase 2: the work and the merge
 
-- [ ] The script, its man page, its completions, its test and the documents; `make check`; the pull request merged,
+- [x] The script, its man page, its completions, its test and the documents; `make check`; the pull request merged,
       closing #449 with the live cases as its evidence; step 38 Closed
 
 ## Files to Create/Modify

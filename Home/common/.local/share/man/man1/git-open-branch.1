@@ -1,6 +1,6 @@
 .\" SPDX-License-Identifier: Apache-2.0
 .\" Copyright (c) 2025-2026 Noble Factor. All rights reserved.
-.TH GIT-OPEN-BRANCH 1 2026-10-21 "Noble Factor" "User Commands"
+.TH GIT-OPEN-BRANCH 1 2026-11-13 "Noble Factor" "User Commands"
 .SH NAME
 git-open-branch \- open a branch and its worktree for a GitHub issue
 .SH SYNOPSIS
@@ -30,11 +30,11 @@ committed to a branch name.
 .PP
 The command performs the following steps:
 .IP 1. 3
-Reads the issue's title, state, and labels in a single
+Reads the issue's title, state, type, and labels in a single
 .BR gh (1)
 call
 .IP 2. 3
-Derives the branch type from the labels, unless
+Derives the branch type from the issue's type, unless
 .B \-\-type
 names one
 .IP 3. 3
@@ -78,25 +78,27 @@ appended, and the command says so.
 Organization ruleset 12515090 constrains every ref to
 .PP
 .nf
-^(chore|doc|feature|fix|hotfix|refactor|release)/.+$
+^(doc|feature|fix|hotfix|refactor|release)/.+$
 .fi
 .PP
 with no bypass actors, so the prefix is not a preference. A name outside that
 alternation is rejected at push time, which is a long way from here, and the
-mapping from labels exists to make that impossible rather than merely unlikely:
+mapping from the issue's type exists to make that impossible rather than merely
+unlikely. In an organization the type is the issue type; in a user account,
+where no issue has one, the type label stands for it:
 .PP
 .TS
 tab(;);
 l l.
-\fBLabel\fR;\fBType\fR
-bug;fix
-chore;chore
-documentation;doc
-enhancement, feature, epic;feature
+\fBIssue\fR;\fBType\fR
+a Bug, or the bug label in a user account;fix
+the documentation label;doc
 anything else;feature
 .TE
 .PP
-An issue carrying none of these is work whose kind nobody has decided, and
+Hotfix, refactor and release are chosen with
+.BR \-\-type .
+Any other issue is work whose kind nobody has decided, and
 .B feature
 is the honest default rather than a guess dressed up.
 .PP
@@ -132,8 +134,8 @@ through
 .IR origin/HEAD .
 .TP
 .BR \-T ", " \-\-type " " \fItype\fR
-The branch prefix, overriding the one derived from the labels. Must be one of
-.BR chore ,
+The branch prefix, overriding the one derived from the issue's type. Must be
+one of
 .BR doc ,
 .BR feature ,
 .BR fix ,
