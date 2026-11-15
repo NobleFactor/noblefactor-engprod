@@ -1,7 +1,7 @@
 ---
 title: "star github model diff and apply leave a team copy's readme behind its template's"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/555
-status: draft
+status: active
 created: 2026-11-14
 updated: 2026-11-14
 ---
@@ -17,6 +17,7 @@ request from `feature/554-scenario-readme` that closes #554 and #555.
 
 - 2026-11-14: fixed in #554's pull request, since it had not opened yet.
 - 2026-11-14: the reference names each copy's short description too, so `diff` and `apply` hold it like the readme.
+- 2026-11-14, on this plan: approved as written.
 
 ## Current State
 
@@ -39,7 +40,8 @@ Read on 2026-11-14:
    - In the references, `organization.yaml` and `user.yaml`, the texts the copies have now, but the Scenario one:
      "{owner}'s Scenario project: its Scenario issues and the tasks and bugs found while walking them".
    - `get` reads it from the account's copies: the text most of a template's copies share, with the owner's name as
-     `{owner}`; a tie goes to the oldest copy. `backup` records it with the rest of the model.
+     `{owner}`; a tie goes to the oldest copy. A template with no copy records an empty text, as `get` records any
+     text GitHub holds none of, so that `apply` and a later `diff` agree. `backup` records it with the rest of the model.
    - `diff` reports a copy whose short description isn't it, with its owner filled in, and `apply` sets it.
 3. **A copy `apply` makes** gets its template's readme and its own short description, not the template's.
 4. **The extension's files stay where they are:** the fix goes in files that already exist, since `star` reads each
@@ -66,12 +68,12 @@ Read on 2026-11-14:
 
 ### Phase 1: the plan
 
-- [ ] Committed on `feature/554-scenario-readme`, with the template's first-script step for #555; reviewed with the
-      owner
+- [x] Committed on `feature/554-scenario-readme`, with the template's first-script step for #555; reviewed with the
+      owner and approved on 2026-11-14
 
 ### Phase 2: the fix
 
-- [ ] `diff`, `apply` and `get`, the references and the documents; cases 1 to 7
+- [x] `diff`, `apply` and `get`, the references and the documents; cases 1 to 7
 
 ### Phase 3: the merge and the live run
 

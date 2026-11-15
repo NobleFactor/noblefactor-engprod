@@ -10,7 +10,9 @@
 # labels, the templates, each team's projects of a kind, and teams; then what the account needs beyond its model, its
 # .github files and each participating repository's Triage workflow, variable and secrets (participation.star, decision
 # 12), the variable naming a Triage project made first. It reconciles; it never deletes something to make it again
-# (ruled 2026-11-09). On the same account a rename is made in place, by ID; an option list is sent whole, each
+# (ruled 2026-11-09). Each team's project of a kind, or a user account's, is held to its template's fields, options and
+# views, its README, and the short description the template names for a copy, its owner's name for {owner} (#555,
+# 2026-11-14). On the same account a rename is made in place, by ID; an option list is sent whole, each
 # option with its ID, so that no issue or row loses its value. Nothing of the account's is deleted without --prune, and
 # with it each deletion first counts what it touches; a team, its roles, a project and a template are never deleted
 # (the owner, 2026-11-10). A project apply has itself just made holds nothing of the account's, only what GitHub gives
@@ -437,21 +439,31 @@ def converge(c, project_id, gp, mt, prefix, kinds, renames, done, copy = False):
         elif steps:
             _done(done, view_kind, path, "by-hand", {"steps": steps})
 
-def _attributes(project_id, mt, gp):
-    """A project's own attributes, its name, short description, README and public flag, brought to the template's."""
+def _texts(want, gp):
+    """What of a project's short description and README differs from what is wanted, as updateProjectV2's input takes it."""
     parts = []
-    if gp != None and mt["name"] != gp.get("name"):
-        parts.append("title: " + _s(mt["name"]))
     for attribute, field in [("short_description", "shortDescription"), ("readme", "readme")]:
-        if mt.get(attribute) != None and mt.get(attribute) != (gp or {}).get(attribute):
-            parts.append(field + ": " + _s(mt[attribute]))
-    if mt.get("public") != None and bool(mt["public"]) != bool((gp or {}).get("public")):
-        parts.append("public: " + ("true" if mt["public"] else "false"))
+        if want.get(attribute) != None and want.get(attribute) != (gp or {}).get(attribute):
+            parts.append(field + ": " + _s(want[attribute]))
+    return parts
+
+def _update_project(project_id, parts):
+    """Writes a project's own attributes, the parts of updateProjectV2's input given; whether there were any to write."""
     if not parts:
         return False
     mutate("mutation starUpdateProject { r: updateProjectV2(input: {projectId: " + _s(project_id) + ", " + ", ".join(parts) +
            "}) { projectV2 { id } } }")
     return True
+
+def _attributes(project_id, mt, gp):
+    """A project's own attributes, its name, short description, README and public flag, brought to the template's."""
+    parts = []
+    if gp != None and mt["name"] != gp.get("name"):
+        parts.append("title: " + _s(mt["name"]))
+    parts.extend(_texts(mt, gp))
+    if mt.get("public") != None and bool(mt["public"]) != bool((gp or {}).get("public")):
+        parts.append("public: " + ("true" if mt["public"] else "false"))
+    return _update_project(project_id, parts)
 
 def _steps(done, kinds, prefix):
     """The steps by hand recorded for the parts of a project just made, which its own record carries: it has no other."""
@@ -509,8 +521,10 @@ def _templates(c, records, done):
 def _kind_projects(c, records, done):
     """Each team's projects of a kind, or a user account's, held to their templates.
 
-    A missing one is copied from its template and linked to its team with the team's write role, and loses the built-in
-    workflows GitHub gives it; a drifted one is brought back; none is ever deleted.
+    A missing one is copied from its template and linked to its team with the team's write role, given its template's
+    README and the short description its template names for a copy, its owner's name for {owner}, since GitHub gives a
+    copy the template's own (#555); and it loses the built-in workflows GitHub gives it. A drifted one is brought back,
+    its README and short description among it. None is ever deleted.
     """
     templates = {t["name"]: t for t in c["model"].get("projects") or []}
     teams = {t["slug"]: t for t in c["github"].get("teams") or []}
@@ -531,11 +545,16 @@ def _kind_projects(c, records, done):
                    ", collaborators: [{teamId: " + _s(team["id"]) + ", role: WRITER}]}) { collaborators { totalCount } } }")
         made = read_project(project_id)
         c["made"][r["path"]] = made["number"]
+        _update_project(project_id, _texts(r["model"], made))
         converge(c, project_id, made, templates[template], r["path"], _PROJECT_KINDS, {}, done, copy = True)
         _no_workflows(project_id)
         steps = _steps(done, _PROJECT_KINDS, r["path"])
         _done(done, "project", r["path"], "created", {"steps": steps} if steps else {})
     by_name = {p["name"]: p for p in c["projects"] if not p.get("template")}
+    for r in [r for r in records if r["kind"] == "project" and r["change"] == "different"]:
+        project = by_name.get(r["path"])
+        if project != None and _update_project(project["id"], _texts(r["model"], project)):
+            _done(done, "project", r["path"], "changed")
     drifted = []
     for r in records:
         if r["kind"] in _PROJECT_KINDS:

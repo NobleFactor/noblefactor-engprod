@@ -8,7 +8,9 @@
 # Area view's filter on the field, and Backlog's By priority view; reference/user.yaml the Labels column, and the
 # Missing Area view's filter on the area labels, since a user account has no issue fields. A view a kind adds replaces
 # the common view of the same name. star github model diff and apply build an account's templates from this set and its
-# kind's additions, and hold each team's projects, or a user account's, to them.
+# kind's additions, and hold each team's projects, or a user account's, to them: to their fields, options, views and
+# readme, and to the short description each kind's reference names for a copy, copy_short_description (#555,
+# 2026-11-14).
 #
 # A field marked own_options holds options that are each project's own, one for each schedule or scenario, named for its
 # issue; a template's one option names a placeholder issue. diff and apply leave those options alone, on the templates

@@ -7,8 +7,9 @@ docs/architecture/issue-data-model/6-the-asset-and-its-sync.md. read_model enume
 piece by piece, when a command needs it: an organization's issue types, issue fields, teams with the repositories each
 maintains, the labels of those repositories and its project templates; a user account's type labels, the labels of the
 repositories it owns that carry the topic issue-model, and its copies of the templates. Each template comes with its
-fields, options and views; the projects made from the templates are not part of the model. The record holds everything
-star github model apply writes (noblefactor-engprod#437). star github model get returns it; scheme.star derives from it
+fields, options and views, and with the short description its copies share, copy_short_description, each copy's owner
+named {owner} (noblefactor-engprod#555); the projects made from the templates are not part of the model otherwise. The
+record holds everything star github model apply writes (noblefactor-engprod#437). star github model get returns it; scheme.star derives from it
 what the report and the sweep place issues by. Nothing here keeps a copy. The pieces are read one at a time; reading them
 in parallel, through a graph, is noblefactor-engprod#471. This module loads nothing, and nothing it reads is a file but
 the extension's reference models.
@@ -34,6 +35,13 @@ TEAM_PRIVACY = {"VISIBLE": "closed", "SECRET": "secret"}
 
 # The issue field types the model records.
 ISSUE_FIELD_TYPES = {"SINGLE_SELECT": "single-select", "TEXT": "text", "NUMBER": "number", "DATE": "date"}
+
+# What a template's copy_short_description says where each copy names its owner, a team or the user account (#555).
+OWNER = "{owner}"
+
+# The characters of a team's slug or an account's login. A copy's text names its owner only as a whole name, with none
+# of them on either side: engprod in "engprod's", but a team named it not in "waiting".
+_NAME = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
 
 # ── the shell ───────────────────────────────────────────────────────────────
 
@@ -316,6 +324,63 @@ def templates_of(projects, kind):
     copies = _template_names()
     return [p for p in projects if p["name"] in copies]
 
+def project_owners(model, kind):
+    """The owners of the account's projects of a kind: each team that maintains a repository, or the user account.
+
+    A team owns projects of each kind when it maintains a repository: a repository takes part when a team maintains it,
+    and its issues reach that team's projects (ruled 2026-11-03). A team that maintains none, an organization's owners,
+    owns none. Each owner's project of a kind is "<template>: <owner>".
+    """
+    if kind != "organization":
+        return [model["account"]]
+    return [t["slug"] for t in model.get("teams") or [] if t.get("repositories")]
+
+def with_owner(text, owner):
+    """A template's copy_short_description for one copy, {owner} its owner's name; any value but a text, as it is."""
+    return text.replace(OWNER, owner) if type(text) == "string" else text
+
+def as_owner(text, owner):
+    """A copy's short description as its template's copy_short_description says it: its owner's name, whole, {owner}."""
+    if not owner:
+        return text
+    out = ""
+    start = 0
+    for _ in range(len(text)):
+        at = text.find(owner, start)
+        if at < 0:
+            break
+        end = at + len(owner)
+        whole = (at == 0 or text[at - 1] not in _NAME) and (end == len(text) or text[end] not in _NAME)
+        out += text[start:at] + (OWNER if whole else owner)
+        start = end
+    return out + text[start:]
+
+def copy_short_description(copies):
+    """The short description most of a template's copies share, each one's owner named {owner} (#555).
+
+    Args:
+      copies: (owner, project) for each copy of the template.
+
+    Returns:
+      The text the most copies share, a tie going to the oldest copy, the one GitHub numbered first; "" when there is no
+      copy, as get records any text GitHub holds none of.
+    """
+    counts = {}
+    oldest = {}
+    for owner, project in copies:
+        text = as_owner(project.get("short_description") or "", owner)
+        counts[text] = counts.get(text, 0) + 1
+        oldest[text] = min(oldest.get(text, project["number"]), project["number"])
+    if not counts:
+        return ""
+    return sorted(counts.keys(), key = lambda t: (-counts[t], oldest[t]))[0]
+
+def _template(template, projects, owners):
+    """A template as the model records it: its own attributes, and the short description its copies share."""
+    by_name = {p["name"]: p for p in projects if not p["template"]}
+    copies = [(o, by_name[template["name"] + ": " + o]) for o in owners if template["name"] + ": " + o in by_name]
+    return dict(public(template), copy_short_description = copy_short_description(copies))
+
 def read_organization(org):
     """An organization's issue fields, each with its options, and its teams, each with the repositories it maintains."""
     query = ("query starOrganizationModel { organization(login: \"" + org + "\") { " +
@@ -555,5 +620,5 @@ def read_account(account, strict = True):
         fail(account + "'s projects cannot be read: the token lacks read:project; run gh auth refresh -s read:project")
     model["types"] = types
     model["labels"] = labels
-    model["projects"] = [public(p) for p in templates_of(projects, kind)]
+    model["projects"] = [_template(p, projects, project_owners(model, kind)) for p in templates_of(projects, kind)]
     return model, projects, kind
