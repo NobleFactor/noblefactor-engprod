@@ -16,7 +16,8 @@ extension. Its one purpose is that every issue traces back to the plans that ser
 the authority, and writes the issue's whole `Plan and design documents` section from them, the plans' links and the
 design documents the plans name. The template's first-script step calls it, in bash and PowerShell alike, and run over
 every plan it brings the issues already filed to the same table. One pull request in this repository, from
-`feature/557-plan-row`, closes #557.
+`feature/557-plan-row`, lands the command, its tests and the template, part of #557; #557 closes when the backfill is
+done, which is its evidence of completion: every issue already filed brought to its plans (Requirement 8).
 
 ## Rulings
 
@@ -73,6 +74,9 @@ every plan it brings the issues already filed to the same table. One pull reques
 - 2026-11-15: style is enforced universally. Every style guide and linter that covers a file this pull request changes
   applies to it in full, and the template's PowerShell is brought to the whole of the PowerShell guide, § 7 among it
   (Requirement 9). A style checker is to run against every change within a month.
+- 2026-11-15: the backfill is #557's evidence of completion. The command's pull request is part of #557, which
+  stays open, step 43 In progress, its row linking the pull request, until the backfill is done; the plans'
+  `documents:` entries it calls for land one pull request per repository, one at a time, each part of #557.
 - The process, already: every issue ends with the table; each row links a committed file; links go to the default
   branch; a plan carries an `## Issue NNN` heading for every issue it serves.
 
@@ -257,13 +261,16 @@ in scratch, are among them.
 
 ### Phase 2: the command and the template
 
-- [ ] `star github plan link`, `--all` and `--check`; the template's first-script step, both forms, and rule 13; the
-      template's PowerShell helpers brought to the style guide (Requirement 9); cases 1 to 15
+- [x] `star github plan link`, `--all` and `--check`; the template's first-script step, both forms, and rule 13; the
+      template's PowerShell helpers brought to the style guide (Requirement 9); cases 1 to 15: built and tested on
+      2026-11-15, `tests/Test-StarGitHub` 252 of 252, 49 mutants each caught, `make check` passing
 
-### Phase 3: the merge and the issues already filed
+### Phase 3: the backfill, #557's evidence of completion
 
-- [ ] This pull request merged; `writ deploy`; case 16, its report reviewed with the owner, and the plans' `documents:`
-      entries it calls for, as the owner rules; case 17; each issue read back and listed on #557; step 43 Closed
+- [ ] The command's pull request merged, part of #557; `writ deploy`; case 16, `--all --check`, its report reviewed with
+      the owner; the plans' `documents:` entries it calls for, one pull request per repository, one at a time, each part
+      of #557; case 17, `--all`, each issue read back, and `--all --check` finding every issue unchanged; the records
+      on #557 as its evidence; #557 and step 43 Closed
 
 ## Files to Create/Modify
 

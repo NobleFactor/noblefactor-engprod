@@ -18,7 +18,7 @@ TEMPLATE INSTRUCTIONS (delete this block when using):
 
 ```yaml
 title: [Plan Title]
-issue: https://github.com/NobleFactor/noblefactor-ops/issues/XX
+issue: https://github.com/NobleFactor/noblefactor-engprod/issues/XX
 status: draft | approved | active | complete | abandoned
 created: YYYY-MM-DD
 updated: YYYY-MM-DD

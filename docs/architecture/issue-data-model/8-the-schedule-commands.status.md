@@ -37,4 +37,5 @@ the plans.
 - [ ] `get` and `list` built (#510)
 - [ ] `move` and `remove` built (#511)
 - [ ] `close` built (#512)
-- [ ] `plan link` built, with `--all` and `--check` (#557)
+- [x] `plan link` built, with `--all` and `--check`, on 2026-11-15 (#557); every issue brought to its plans by it
+  is #557's evidence, still to come

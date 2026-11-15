@@ -53,6 +53,9 @@ def _note(message):
 
 def _list(value):
     """A comma-separated flag's values, each trimmed, the empty ones dropped."""
+
+    # TODO(https://github.com/NobleFactor/noblefactor-engprod/issues/315): take --blocked-by repeated, --blocked-by
+    # <issue> --blocked-by <issue>, once star's extension flags can repeat.
     return [v.strip() for v in (value or "").split(",") if v.strip()]
 
 def _after(value):

@@ -45,6 +45,27 @@ commands:
         default: ""
         help: "Why the schedule changes, written in its amendment; required"
 
+  - name: github.plan.link
+    help: "Write the Plan and design documents section of each issue the plans named serve, from every plan that serves it: a Plan row for each plan, then each plan's documents: entries; the section found by its heading and replaced whole, added at the end when there is none, and nothing written when there are two; return one flat record for each issue, with what was done and the rows the section drops; exits non-zero only on an error; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read, and --check writes nothing"
+    implementation: commands/github-plan-link.star
+    args:
+      - name: plans
+        help: "The plans, each its path relative to docs/plans in the clone or worktree the command runs in, read from its working tree"
+        variadic: true
+    flags:
+      - name: all
+        type: bool
+        default: "false"
+        help: "Every issue a plan under docs/plans on each repository's default branch serves, in place of plans named"
+      - name: repository
+        type: string
+        default: ""
+        help: "The repositories whose default branches' plans are read, owner/name, comma-separated; with --all, writ's layers' when none is named; beside the plans named, writ's layers', these and the clone's"
+      - name: check
+        type: bool
+        default: "false"
+        help: "Write nothing: return the records the command would, so that every issue's section can be checked against its plans"
+
   - name: github.triage.sweep
     help: "Add every open issue that breaks a classification rule to its team's Triage project, commenting on it with the rules it breaks; return one flat record for each issue added, already there with a fault, or a Triage row; adds only, never removes; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
     implementation: commands/github-triage-sweep.star

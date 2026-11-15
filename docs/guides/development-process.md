@@ -346,7 +346,7 @@ a Plan row for each plan that serves it, then each plan's documents. `star githu
 worktree's first script runs once its plan is pushed, finds the section by its heading and replaces it
 whole, and `star github plan link --all --check` checks every issue's section against the plans, writing
 nothing and listing any row the plans would drop. An issue no plan serves keeps the section it was filed
-with. Until #557 builds the command, the first script writes the row by hand.
+with.
 
 ---
 
