@@ -1,9 +1,9 @@
 ---
 title: "The hierarchy is epic, then chore or feature, then bug or task: the standard, the parent marker and the tooling say so"
-issue: https://github.com/NobleFactor/noblefactor-ops/issues/358
+issue: https://github.com/NobleFactor/noblefactor-engprod/issues/358
 status: complete
 created: 2026-10-21
-updated: 2026-10-21
+updated: 2026-11-15
 ---
 
 # Plan: the hierarchy is epic, then chore or feature, then bug or task
@@ -17,6 +17,9 @@ hierarchy is epic, (chore|feature), (bug|task)." Then: "I need this done now." T
 under a chore renders as "unfiled, no parent feature": devlore-cli#679 does, and so do David-Noble-at-work/personal#289
 to #295, which were filed under personal#287 on the ruling. This plan changes the standard, the marker and the
 tooling together, in one pull request, and proves it on those eight issues.
+
+Named for #358, the issue it serves with #360, on 2026-11-15 (#557): it was `344-issue-hierarchy.md`, for #344, the
+issue the branch was opened for, which closed as not planned.
 
 ## Issue 358
 
@@ -144,7 +147,7 @@ phase cannot close inside the pull request, so the plan stays `active` through i
 
 | File | Action | Purpose |
 | --- | --- | --- |
-| `docs/plans/chore/344-issue-hierarchy.md` | Create | This plan |
+| `docs/plans/chore/358-issue-hierarchy.md`, named `344-issue-hierarchy.md` until 2026-11-15 | Create | This plan |
 | `docs/issue-standards.md` | Modify | The three tiers, the two markers, the chore's epic rule |
 | `Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/scheme.star` | Modify | `is_child`, `is_parent`, `parent`, the rows, the faults, the wording |
 | `Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/gh-issues-report.star` | Modify | The tree document's parents and counts |

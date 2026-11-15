@@ -5,7 +5,7 @@ type: Process
 audience: Engineers, Claude Code
 status: Approved
 created: 2026-03-16
-updated: 2026-11-04
+updated: 2026-11-15
 ---
 
 # PR Script Template
@@ -25,7 +25,9 @@ whose `cd` names another worktree is the wrong file. Only a script that is not t
 
 On macOS and Linux the script is bash, [the template below](#template). On Windows it is PowerShell,
 `<worktree>.ps1`, [its own form](#on-windows-powershell). Bash PR scripts are not written on Windows (ruled
-2026-09-21). The owner runs the script: the agent writes it, shows it, and hands over one command.
+2026-09-21). The owner runs the script: the agent writes it, shows it, and hands over one command, which for a
+PowerShell script is `& '<script>.ps1' -Verbose`, since what it is doing shows only on the verbose stream
+([rule 8](#on-windows-powershell) of its form).
 
 ---
 
@@ -67,7 +69,11 @@ A worktree's first script opens the branch, commits the plan and pushes it, then
 is: In progress, its row on its team's Schedule project linking the branch in its Worktree column
 ([agent-rules.md](agent-rules.md), rule 19). The link waits for the push, since a link to a branch GitHub doesn't have
 leads nowhere. Like the merge script's schedule step, it finds each row by its issue and the project's title, and the
-fields and options by name, so no ID is pasted into a script and none goes stale (rule 13).
+fields and options by name, so no ID is pasted into a script and none goes stale (rule 13). Beside the rows, it links
+the plans: `star github plan link`, given each of the worktree's plans by its path relative to `docs/plans`, writes the
+`Plan and design documents` section of every issue they serve from every plan that serves it, and the script stops
+unless it exits 0 (#557). Its records say what it did to each issue; an issue refused, or a row the section drops, is a
+finding for the owner, and exits 0.
 
 ```bash
 # The schedule's helpers (agent-rules.md, rule 19). A step's row is found by its issue and its team's Schedule project,
@@ -141,6 +147,17 @@ for step in "${steps[@]}"; do
     }
     echo "#${step}: $(jq -r '"\(.schedule), \(.status), \(.worktree)"' <<<"${after}")"
 done
+
+# --- The plans: each issue they serve links them in its Plan and design documents section (rule 13; #557) ---
+#
+# After the push, beside the steps' rows. Each plan is named by its path relative to docs/plans, and read from this
+# worktree, since it has not merged; the plans on the default branches of writ's layers that serve the same issues are
+# read with it. A refused issue or a dropped row is in the records and exits 0; any other exit is an error.
+plans=(<type>/<issue>-<name>.md)
+star github plan link "${plans[@]}" --silent --jq 'map({issue, action, reason, dropped})' || {
+    echo "star github plan link failed: the issues' Plan and design documents sections are not known to be written"
+    exit 1
+}
 ```
 
 ---
@@ -460,41 +477,58 @@ git status --short
     step's issue naming the pull request and its squash commit, the issue closed, and the step's row on its team's
     Schedule project set Closed, its Worktree linking the pull request. A worktree's first script, once its branch is
     pushed, sets each of its steps' rows In progress with the branch's link
-    ([§ A worktree's first script](#a-worktrees-first-script)). Each row is found by its issue and the project's title,
-    and the fields and options by name, so no ID is pasted in. Ruled 2026-11-13: each record is guarded on what it holds
-    just before it is written. The first script writes only to a row that is on a schedule, Open or In progress, and
-    links no other branch; the merge script writes only to a row that links its branch, or its pull request when it runs
-    again; the comment is posted once, and the issue closed only while it is open. Each record is read back. A merge
-    that leaves its steps reading In progress keeps the owner in the dark on progress, and every session that reads the
-    schedule with them, this one too once its context is compacted ([agent-rules.md](agent-rules.md), rule 19). #396
-    merged that way: its lanes on #301 kept reading "in progress" in a worktree `git close-branch` had removed.
+    ([§ A worktree's first script](#a-worktrees-first-script)), and runs `star github plan link` for the worktree's
+    plans, each by its path relative to `docs/plans`, which writes the `Plan and design documents` section of every
+    issue they serve from the plans, stopping unless it exits 0 (#557). Each row is found by its issue and the
+    project's title, and the fields and options by name, so no ID is pasted in. Ruled 2026-11-13: each record is
+    guarded on what it holds just before it is written. The first script writes only to a row that is on a schedule,
+    Open or In progress, and links no other branch; the merge script writes only to a row that links its branch, or its
+    pull request when it runs again; the comment is posted once, and the issue closed only while it is open. Each
+    record is read back. A merge that leaves its steps reading In progress keeps the owner in the dark on progress, and
+    every session that reads the schedule with them, this one too once its context is compacted
+    ([agent-rules.md](agent-rules.md), rule 19). #396 merged that way: its lanes on #301 kept reading "in progress" in a
+    worktree `git close-branch` had removed.
 
 ---
 
 ## On Windows: PowerShell
 
 On Windows the PR script is `<worktree>.ps1`, beside the worktree, PowerShell 7, written to the
-[PowerShell style guide](powershell-style-guidelines.md): shebang, header, help, `#Requires`, `[CmdletBinding()]` and
-`param()`, `$ErrorActionPreference = 'Stop'`, a helpers region, then the main operation. It does what the bash
-template does, in the same order. The rules above hold; these are the ones PowerShell changes.
+[PowerShell style guide](powershell-style-guidelines.md), every section of it: shebang, header, help, `#Requires`,
+`[CmdletBinding()]` and `param()`, the caller's error action noted and `$ErrorActionPreference = 'Stop'` set, the
+constants, a helpers region, then the main operation inside `try` and `catch`. It does what the bash template does, in
+the same order. The rules above hold; these are the ones PowerShell changes.
 
-1. **Every native command is checked.** `$ErrorActionPreference = 'Stop'` doesn't cover a native command's exit code,
-   and there is no `set -e`. `Assert-NativeSuccess` runs right after every `git` and `gh` call.
-2. **Bodies are single-quoted here-strings.** The PR body and the jq program are `@'...'@`, so PowerShell expands
+1. **Every native command runs through `Invoke-Native`.** `$ErrorActionPreference = 'Stop'` doesn't cover a native
+   command's exit code, and there is no `set -e`. `Invoke-Native` runs `git`, `gh` and `star` through .NET's `Process`,
+   each argument passed as one and what the program writes read as UTF-8, as the style guide's § 7 asks of a script that
+   reads a native program's output. What the program writes to standard error goes to the verbose stream, and a non-zero
+   exit is a refusal unless the call allows it. Its argument list comes last, so that a long one breaks after a comma.
+2. **Errors are the style guide's § 7.** The script notes its caller's error action, sets `Stop`, and runs its work in
+   `try`. The `catch` puts the caller's error action back, reports the error with `$PSCmdlet.WriteError` and exits 1.
+   The `finally` removes the files the run made and returns the caller to the directory they ran it from (§ 8). Each
+   refusal is an error record of the script's own, with an id and a category, made by `ConvertTo-Refusal` and thrown
+   inside the work: never a thrown string, never `$PSCmdlet.ThrowTerminatingError`.
+3. **What it is doing goes to the verbose stream; its result is objects.** `Write-Verbose` says what the script is
+   doing, and each step it records and the pull request it merged are output objects. Nothing goes to the host or the
+   information stream, and the script sets no preference but `$ErrorActionPreference`.
+4. **Bodies are single-quoted here-strings.** The PR body and the jq program are `@'...'@`, so PowerShell expands
    nothing in them. The body goes to `gh` through a file, `--body-file`.
-3. **The `## Time` section is written through a file,** `gh api -X PATCH repos/<owner>/<repo>/pulls/<n> -F
+5. **The `## Time` section is written through a file,** `gh api -X PATCH repos/<owner>/<repo>/pulls/<n> -F
    body=@<file>`, as every Windows PR script has done. PowerShell has no `printf ... | --body-file -` idiom worth
    copying, and a file keeps the body byte-for-byte.
-4. **Clean-up runs from the main clone.** `Set-Location` to it before `git close-branch`, because Windows won't
+6. **Clean-up runs from the main clone.** `Set-Location` to it before `git close-branch`, because Windows won't
    delete a directory that is a process's current directory. `git close-branch` also removes this script, which
    PowerShell parsed in full before running, so the lines after it still run. Then `git pull --ff-only`, which
    confirms the sync `git close-branch` made of the main clone (rule 12).
-5. **No PATH changes.** The script runs from a pwsh whose `git` is `Git\cmd\git.exe`, Git for Windows' launcher, which
+7. **No PATH changes.** The script runs from a pwsh whose `git` is `Git\cmd\git.exe`, Git for Windows' launcher, which
    gives git's children the `sh` and `bash` they need without putting them on PATH. From a pwsh started by Git Bash,
    `git` resolves to the raw `Git\clangarm64\bin\git.exe`, and an HTTPS push, a credential helper or `git
    close-branch` exits 128 with no message. The fix is where the script runs, never a PATH line in it.
-6. **The owner runs it.** `! C:/Users/<you>/Workspace/<org>/<clone>.<n>-<name>.ps1`, with a full path and forward
-   slashes.
+8. **The owner runs it with `-Verbose`.** The command handed over is
+   `! & 'C:/Users/<you>/Workspace/<org>/<clone>.<n>-<name>.ps1' -Verbose`, the script's full path in single quotes
+   with forward slashes. What the script is doing shows only on the verbose stream (rule 3), so without `-Verbose` a
+   run says nothing until it ends.
 
 ```powershell
 #!/usr/bin/env pwsh
@@ -506,12 +540,17 @@ template does, in the same order. The rules above hold; these are the ones Power
     PR script for <owner>/<repo>, issue #<n>.
 
 .DESCRIPTION
-    Opens the pull request for <branch>, waits for CI, checks the merge state, squash-merges, records the pull
-    request's time span and the steps it lands, and closes the branch. Every commit is made and pushed; there is
-    nothing to stage.
+    Opens the pull request for <branch>, waits for CI, checks the merge state,
+    squash-merges, records the pull request's time span and the steps it lands, and closes the branch. Every commit is
+    made and pushed; there is nothing to stage. What it is doing goes to the verbose stream: run it with -Verbose to see
+    it.
+
+.OUTPUTS
+    PSCustomObject: each step it records, its issue closed and its row Closed; then the pull request merged, its
+    number, link and squash commit.
 
 .EXAMPLE
-    C:/Users/<you>/Workspace/<org>/<clone>.<n>-<name>.ps1
+    & 'C:/Users/<you>/Workspace/<org>/<clone>.<n>-<name>.ps1' -Verbose
 #>
 
 #Requires -Version 7.0
@@ -519,122 +558,150 @@ template does, in the same order. The rules above hold; these are the ones Power
 [CmdletBinding()]
 param()
 
+$callerErrorAction = $ErrorActionPreference
 $ErrorActionPreference = 'Stop'
 
 $branch = '<branch>'
 $repository = '<owner>/<repo>'
-$worktree = Join-Path -Path $HOME -ChildPath 'Workspace' -AdditionalChildPath '<org>', '<clone>.<n>-<name>'
+$worktree = Join-Path -Path $HOME -ChildPath 'Workspace' -AdditionalChildPath '<org>',
+    '<clone>.<n>-<name>'
 $mainClone = Join-Path -Path $HOME -ChildPath 'Workspace' -AdditionalChildPath '<org>', '<clone>'
 $scheduleProject = 'Schedule: <team>'
+
+# The pull request's body and squash message go to gh through files, made and removed within the run.
+$bodyFile = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath 'pr-<n>-body.md'
+$squashFile = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath 'pr-<n>-squash.md'
 
 ###########
 # Helper functions
 ###########
 
+# Get-StepRow gets a step's row on the team's Schedule project, found by its issue and the project's title.
+#
+# fieldValueByName answers null for a field a project lacks, so every project the issue is a row of can be read in the
+# one query.
+#
+# Parameters:
+#   - `Issue`: The step's issue number, in $repository.
+#
+# Returns:
+#   - PSCustomObject: the row's `Project`, `Item`, `Schedule`, `Status` and `Worktree`; $null when the issue has no
+#     row on $scheduleProject.
 function Get-StepRow {
-    # A step's row on the team's Schedule project, found by its issue and the project's title, or $null when the issue
-    # has no row there. fieldValueByName answers null for a field a project lacks, so every project the issue is a
-    # row of can be read in the one query.
     [CmdletBinding()]
-    [OutputType([pscustomobject])]
+    [OutputType([PSCustomObject])]
     param(
         [Parameter(Mandatory)]
-        [int]
+        [Int32]
         $Issue
     )
 
     $owner, $name = $repository -split '/', 2
     $query = @'
-query($o: String!, $r: String!, $n: Int!) { repository(owner: $o, name: $r) { issue(number: $n) { projectItems(first: 20) {
-nodes { id project { id title }
+query($o: String!, $r: String!, $n: Int!) { repository(owner: $o, name: $r) { issue(number: $n) {
+projectItems(first: 20) { nodes { id project { id title }
 schedule: fieldValueByName(name: "Schedule") { ... on ProjectV2ItemFieldSingleSelectValue { name } }
 status: fieldValueByName(name: "Status") { ... on ProjectV2ItemFieldSingleSelectValue { name } }
 worktree: fieldValueByName(name: "Worktree") { ... on ProjectV2ItemFieldTextValue { text } } } } } } }
 '@
-    $json = (gh api graphql -F "n=$Issue" -f "o=$owner" -f "r=$name" -f "query=$query") -join "`n"
-    Assert-NativeSuccess 'gh api graphql (step row)'
-    $node = ($json | ConvertFrom-Json).data.repository.issue.projectItems.nodes |
+    $answer = Invoke-Native -Name gh -Operation "Reading #$Issue's row" -ArgumentList 'api', 'graphql',
+        '-F', "n=$Issue", '-f', "o=$owner", '-f', "r=$name", '-f', "query=$query"
+    $node = (ConvertFrom-Json -InputObject $answer.Output).data.repository.issue.projectItems.nodes |
         Where-Object { $_.project.title -eq $scheduleProject } | Select-Object -First 1
 
     if (-not $node) {
         return $null
     }
 
-    [pscustomobject]@{
+    [PSCustomObject]@{
         Project  = $node.project.id
         Item     = $node.id
-        Schedule = [string]$node.schedule.name
-        Status   = [string]$node.status.name
-        Worktree = [string]$node.worktree.text
+        Schedule = [String]$node.schedule.name
+        Status   = [String]$node.status.name
+        Worktree = [String]$node.worktree.text
     }
 }
 
+# Set-StepRow sets a row's Status, by the option's name, and its Worktree, the project's fields found by name.
+#
+# It changes the row on GitHub, so it supports ShouldProcess: with -WhatIf, it says what it would set and sets nothing.
+# A project that lacks the field or the option is a refusal, naming it.
+#
+# Parameters:
+#   - `Row`: The row, as Get-StepRow gets it.
+#   - `Status`: The name of the Status option to set.
+#   - `Link`: The Worktree's text: the branch's link, or the pull request's.
 function Set-StepRow {
-    # Sets a row's Status, by the option's name, and its Worktree, the project's fields found by name.
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param(
         [Parameter(Mandatory)]
-        [pscustomobject]
+        [PSCustomObject]
         $Row,
 
         [Parameter(Mandatory)]
-        [string]
+        [String]
         $Status,
 
         [Parameter(Mandatory)]
-        [string]
+        [String]
         $Link
     )
+
+    $target = "$($Row.Item) on $scheduleProject"
+
+    if (-not $PSCmdlet.ShouldProcess($target, "Set its Status to $Status and its Worktree to $Link")) {
+        return
+    }
 
     $query = @'
 query($p: ID!) { node(id: $p) { ... on ProjectV2 { fields(first: 50) { nodes {
 ... on ProjectV2FieldCommon { id name } ... on ProjectV2SingleSelectField { options { id name } } } } } } }
 '@
-    $fields = ((gh api graphql -f "p=$($Row.Project)" -f "query=$query") -join "`n" | ConvertFrom-Json).data.node.fields.nodes
-    Assert-NativeSuccess 'gh api graphql (fields)'
+    $answer = Invoke-Native -Name gh -Operation "Reading the fields of $scheduleProject" -ArgumentList 'api', 'graphql',
+        '-f', "p=$($Row.Project)", '-f', "query=$query"
+    $fields = (ConvertFrom-Json -InputObject $answer.Output).data.node.fields.nodes
     $statusField = $fields | Where-Object { $_.name -eq 'Status' }
     $worktreeField = $fields | Where-Object { $_.name -eq 'Worktree' }
     $option = $statusField.options | Where-Object { $_.name -eq $Status }
+
+    if (-not $option -or -not $worktreeField) {
+        $message = "$scheduleProject has no Status option $Status, or no Worktree field."
+        throw (ConvertTo-Refusal -Message $message -Id 'NoScheduleField' -Category ObjectNotFound -Target $Row.Project)
+    }
 
     $setOption = @'
 mutation($p: ID!, $i: ID!, $f: ID!, $o: String!) { updateProjectV2ItemFieldValue(input: {projectId: $p, itemId: $i,
 fieldId: $f, value: {singleSelectOptionId: $o}}) { projectV2Item { id } } }
 '@
-    gh api graphql -f "p=$($Row.Project)" -f "i=$($Row.Item)" -f "f=$($statusField.id)" -f "o=$($option.id)" -f "query=$setOption" |
-        Out-Null
-    Assert-NativeSuccess 'gh api graphql (Status)'
+    $null = Invoke-Native -Name gh -Operation "Setting $target's Status" -ArgumentList 'api', 'graphql',
+        '-f', "p=$($Row.Project)", '-f', "i=$($Row.Item)", '-f', "f=$($statusField.id)", '-f', "o=$($option.id)",
+        '-f', "query=$setOption"
 
     $setText = @'
 mutation($p: ID!, $i: ID!, $f: ID!, $v: String!) { updateProjectV2ItemFieldValue(input: {projectId: $p, itemId: $i,
 fieldId: $f, value: {text: $v}}) { projectV2Item { id } } }
 '@
-    gh api graphql -f "p=$($Row.Project)" -f "i=$($Row.Item)" -f "f=$($worktreeField.id)" -f "v=$Link" -f "query=$setText" |
-        Out-Null
-    Assert-NativeSuccess 'gh api graphql (Worktree)'
+    $null = Invoke-Native -Name gh -Operation "Setting $target's Worktree" -ArgumentList 'api', 'graphql',
+        '-f', "p=$($Row.Project)", '-f', "i=$($Row.Item)", '-f', "f=$($worktreeField.id)", '-f', "v=$Link",
+        '-f', "query=$setText"
 }
 
-function Assert-NativeSuccess {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory)]
-        [string]
-        $Operation
-    )
-
-    if ($LASTEXITCODE -ne 0) {
-        throw "$Operation failed with exit code $LASTEXITCODE."
-    }
-}
-
+# Get-PullRequestBody gets the pull request's description, ending with the two trailers and a Time section to fill.
+#
+# The description says AI assisted and ends with the trailers (rule 2), the sign-off from git's configuration. Its form
+# is kept in the account's pull request template, in its .github repository: NobleFactor's since #431,
+# David-Noble-at-work's since #441 (rule 2). The merge step below fills the Time section.
+#
+# Returns:
+#   - String: the description.
 function Get-PullRequestBody {
     [CmdletBinding()]
-    [OutputType([string])]
+    [OutputType([String])]
     param()
 
-    $name = git config user.name
-    Assert-NativeSuccess 'git config user.name'
-    $email = git config user.email
-    Assert-NativeSuccess 'git config user.email'
+    $name = Invoke-Native -Name git -Operation 'Reading git user.name' -ArgumentList 'config', 'user.name'
+    $email = Invoke-Native -Name git -Operation 'Reading git user.email' -ArgumentList 'config', 'user.email'
+    $signer = "$($name.Output.Trim()) <$($email.Output.Trim())>"
 
     $description = @'
 ## Summary
@@ -650,19 +717,23 @@ Resolves #<n>
 Written with AI assistance.
 '@
 
-    # The description ends with the two trailers (rule 2); the sign-off comes from git's configuration.
-    # The description's form is kept in the account's pull request template, in its .github repository: NobleFactor's
-    # since #431, David-Noble-at-work's since #441 (rule 2).
-    $trailers = "Signed-off-by: $name <$email>`nAssisted-by: Claude Code"
-    return "$description`n`n$trailers`n`n## Time`n`n_Filled by the merge step below._"
+    $trailers = "Signed-off-by: $signer`nAssisted-by: Claude Code"
+    "$description`n`n$trailers`n`n## Time`n`n_Filled by the merge step below._"
 }
 
+# Get-TimeSpanSection gets the pull request's Time section, its three markers from GitHub's own timestamps (rule 11).
+#
+# Parameters:
+#   - `Number`: The pull request's number.
+#
+# Returns:
+#   - String: the section, each marker's time and the hours between them.
 function Get-TimeSpanSection {
     [CmdletBinding()]
-    [OutputType([string])]
+    [OutputType([String])]
     param(
         [Parameter(Mandatory)]
-        [int]
+        [Int32]
         $Number
     )
 
@@ -676,219 +747,448 @@ def hrs(a; b): (((b | fromdate) - (a | fromdate)) / 3600 * 10 | round) / 10;
 "\nComputed by the algorithm of noblefactor-ops#188 at merge."
 '@
 
-    $section = gh pr view $Number --json createdAt,mergedAt,commits --jq $program
-    Assert-NativeSuccess 'gh pr view (time span)'
-    return ($section -join "`n")
+    $answer = Invoke-Native -Name gh -Operation "Reading #$Number's time span" -ArgumentList 'pr', 'view', $Number,
+        '--json', 'createdAt,mergedAt,commits', '--jq', $program
+    $answer.Output.TrimEnd()
+}
+
+# Invoke-Native runs a native program, its output read as UTF-8, and gets what it wrote and how it exited.
+#
+# The program runs through .NET's Process, each argument passed as one and its standard input closed, so that text
+# beyond ASCII survives a Windows console's code page (the style guide's section 7, Native programs). What it writes to
+# standard error, and to standard output with Narrate, goes to the verbose stream. A non-zero exit is a refusal naming
+# the operation, unless AllowFailure lets the caller read it.
+#
+# Parameters:
+#   - `Name`: The program, as the PATH finds it: git, gh or star.
+#   - `Operation`: What the call does, said on the verbose stream and in a refusal.
+#   - `AllowFailure`: Gets a non-zero exit, in place of refusing it.
+#   - `Narrate`: Says what the program writes to standard output on the verbose stream too.
+#   - `ArgumentList`: Its arguments, each one argument.
+#
+# Returns:
+#   - PSCustomObject: `ExitCode`; `Output`, what the program wrote to standard output; `ErrorText`, to standard error.
+function Invoke-Native {
+    [CmdletBinding()]
+    [OutputType([PSCustomObject])]
+    param(
+        [Parameter(Mandatory)]
+        [String]
+        $Name,
+
+        [Parameter(Mandatory)]
+        [String]
+        $Operation,
+
+        [Switch]
+        $AllowFailure,
+
+        [Switch]
+        $Narrate,
+
+        [Parameter(Mandatory)]
+        [String[]]
+        $ArgumentList
+    )
+
+    Write-Verbose $Operation
+    $program = (Get-Command -Name $Name -CommandType Application | Select-Object -First 1).Source
+    $start = [System.Diagnostics.ProcessStartInfo]::new($program)
+
+    foreach ($argument in $ArgumentList) {
+        $start.ArgumentList.Add($argument)
+    }
+
+    $start.WorkingDirectory = (Get-Location -PSProvider FileSystem).ProviderPath
+    $start.UseShellExecute = $false
+    $start.RedirectStandardInput = $true
+    $start.RedirectStandardOutput = $true
+    $start.RedirectStandardError = $true
+    $start.StandardOutputEncoding = [System.Text.UTF8Encoding]::new($false)
+    $start.StandardErrorEncoding = [System.Text.UTF8Encoding]::new($false)
+
+    $process = [System.Diagnostics.Process]::Start($start)
+    $process.StandardInput.Close()
+    $errorRead = $process.StandardError.ReadToEndAsync()
+    $output = $process.StandardOutput.ReadToEnd()
+    $process.WaitForExit()
+    $errorText = $errorRead.GetAwaiter().GetResult()
+    $said = $errorText
+
+    if ($Narrate) {
+        $said = $output + $errorText
+    }
+
+    foreach ($line in ($said -split '\r?\n' | Where-Object { $_ })) {
+        Write-Verbose "  $line"
+    }
+
+    if ($process.ExitCode -ne 0 -and -not $AllowFailure) {
+        $message = "$Operation failed: $Name exited $($process.ExitCode). $($errorText.Trim())"
+        throw (ConvertTo-Refusal -Message $message -Id 'NativeCommandFailed' -Category InvalidResult -Target $Name)
+    }
+
+    [PSCustomObject]@{
+        ExitCode  = $process.ExitCode
+        Output    = $output
+        ErrorText = $errorText
+    }
+}
+
+# ConvertTo-Refusal makes a refusal of the script's own, an error record with an id and a category, for it to throw.
+#
+# The script's catch reports it with $PSCmdlet.WriteError, so the caller sees the script's name, the id and the
+# category (the style guide's section 7).
+#
+# Parameters:
+#   - `Message`: What was refused and why.
+#   - `Id`: The refusal's id.
+#   - `Category`: Its category (default: InvalidOperation).
+#   - `Target`: What it was refused for (default: none).
+#
+# Returns:
+#   - ErrorRecord: the refusal.
+function ConvertTo-Refusal {
+    [CmdletBinding()]
+    [OutputType([System.Management.Automation.ErrorRecord])]
+    param(
+        [Parameter(Mandatory)]
+        [String]
+        $Message,
+
+        [Parameter(Mandatory)]
+        [String]
+        $Id,
+
+        [System.Management.Automation.ErrorCategory]
+        $Category = [System.Management.Automation.ErrorCategory]::InvalidOperation,
+
+        [Object]
+        $Target = $null
+    )
+
+    [System.Management.Automation.ErrorRecord]::new(
+        [System.InvalidOperationException]::new($Message),
+        $Id,
+        $Category,
+        $Target)
 }
 
 ###########
 # Main
 ###########
 
-Set-Location $worktree
+try {
+    Push-Location -LiteralPath $worktree
 
-# --- Pre-flight: nothing left behind, then the repository's own gate where it runs here ---
+    # --- Pre-flight: nothing left behind, then the target merged in and the branch pushed ---
 
-git diff --quiet
-$unstaged = $LASTEXITCODE
-git diff --cached --quiet
-$staged = $LASTEXITCODE
+    $unstaged = Invoke-Native -Name git -Operation 'Looking for unstaged changes' -AllowFailure -ArgumentList 'diff',
+        '--quiet'
+    $staged = Invoke-Native -Name git -Operation 'Looking for staged changes' -AllowFailure -ArgumentList 'diff',
+        '--cached', '--quiet'
 
-if ($unstaged -ne 0 -or $staged -ne 0) {
-    git status --short
-    throw 'The worktree is not clean; nothing should be left behind.'
-}
+    if ($unstaged.ExitCode -ne 0 -or $staged.ExitCode -ne 0) {
+        $status = Invoke-Native -Name git -Operation 'Reading the worktree status' -ArgumentList 'status', '--short'
+        $message = "The worktree is not clean; nothing should be left behind:`n$($status.Output)"
+        throw (ConvertTo-Refusal -Message $message -Id 'WorktreeNotClean' -Target $worktree)
+    }
 
-git pull --no-rebase --no-edit origin <default-branch>
-Assert-NativeSuccess 'git pull'
+    $null = Invoke-Native -Name git -Operation 'Merging <default-branch> into the branch' -Narrate -ArgumentList 'pull',
+        '--no-rebase', '--no-edit', 'origin', '<default-branch>'
+    $null = Invoke-Native -Name git -Operation "Pushing $branch" -Narrate -ArgumentList 'push', '-u', 'origin', $branch
 
-git push -u origin $branch
-Assert-NativeSuccess 'git push'
+    # --- Create the PR ---
 
-# --- Create the PR ---
+    Set-Content -LiteralPath $bodyFile -Value (Get-PullRequestBody) -NoNewline
+    $null = Invoke-Native -Name gh -Operation 'Opening the pull request' -Narrate -ArgumentList 'pr', 'create',
+        '--base', '<default-branch>', '--head', $branch, '--body-file', $bodyFile,
+        '--title', '<type>(<scope>): <summary>'
+    $opened = Invoke-Native -Name gh -Operation "Reading $branch's pull request" -ArgumentList 'pr', 'view', $branch,
+        '--json', 'number', '--jq', '.number'
+    $number = [Int32]$opened.Output.Trim()
 
-$bodyFile = Join-Path ([System.IO.Path]::GetTempPath()) 'pr-<n>-body.md'
-Set-Content -LiteralPath $bodyFile -Value (Get-PullRequestBody) -NoNewline
+    # --- CI gate ---
 
-gh pr create --base '<default-branch>' --head $branch --body-file $bodyFile --title '<type>(<scope>): <summary>'
-Assert-NativeSuccess 'gh pr create'
+    Start-Sleep -Seconds 5
+    $operation = "Waiting for #$number's checks"
+    $watched = Invoke-Native -Name gh -Operation $operation -AllowFailure -Narrate -ArgumentList 'pr', 'checks',
+        $number, '--watch'
 
-$number = [int](gh pr view $branch --json number --jq '.number')
-Assert-NativeSuccess 'gh pr view'
+    if ($watched.ExitCode -ne 0) {
+        $operation = "Reading #$number's checks"
+        $checks = Invoke-Native -Name gh -Operation $operation -AllowFailure -ArgumentList 'pr', 'checks', $number
 
-# --- CI gate ---
+        if (($checks.Output + $checks.ErrorText) -notmatch 'no checks reported') {
+            $message = "#$number's CI checks failed:`n$($checks.Output)"
+            throw (ConvertTo-Refusal -Message $message -Id 'ChecksFailed' -Category InvalidResult -Target $number)
+        }
 
-Start-Sleep -Seconds 5
-gh pr checks $number --watch
+        Write-Verbose 'No CI checks are configured; proceeding.'
+    }
 
-if ($LASTEXITCODE -ne 0) {
-    $checks = gh pr checks $number 2>&1 | Out-String
+    # --- Merge gate ---
 
-    if ($checks -notmatch 'no checks reported') {
-        throw "CI checks failed:`n$checks"
+    $state = Invoke-Native -Name gh -Operation "Reading #$number's merge state" -ArgumentList 'pr', 'view', $number,
+        '--json', 'mergeStateStatus', '--jq', '.mergeStateStatus'
+    $mergeState = $state.Output.Trim()
+
+    switch ($mergeState) {
+        { $_ -in 'CLEAN', 'HAS_HOOKS', 'UNSTABLE', 'BLOCKED' } {
+            break
+        }
+        { $_ -in 'DIRTY', 'BEHIND' } {
+            $message = "#$number is not mergeable: its merge state is $mergeState."
+            throw (ConvertTo-Refusal -Message $message -Id 'NotMergeable' -Target $number)
+        }
+        default {
+            $message = "#$number's merge state is $mergeState, which this script does not know."
+            throw (ConvertTo-Refusal -Message $message -Id 'UnknownMergeState' -Category InvalidResult -Target $number)
+        }
+    }
+
+    # --- Squash merge: the message is the title and the description up to ## Time (rule 2) ---
+
+    $title = (Invoke-Native -Name gh -Operation "Reading #$number's title" -ArgumentList 'pr', 'view', $number,
+            '--json', 'title', '--jq', '.title').Output.Trim()
+    $description = (Invoke-Native -Name gh -Operation "Reading #$number's description" -ArgumentList 'pr', 'view',
+            $number, '--json', 'body', '--jq', '.body').Output
+    Set-Content -LiteralPath $squashFile -Value ($description -replace '(?s)## Time.*$', '').TrimEnd() -NoNewline
+    $null = Invoke-Native -Name gh -Operation "Merging #$number" -Narrate -ArgumentList 'pr', 'merge', $number,
+        '--squash', '--admin', '--subject', "$title (#$number)", '--body-file', $squashFile
+
+    # --- The span (rule 11) ---
+
+    $section = Get-TimeSpanSection -Number $number
+    $body = (Invoke-Native -Name gh -Operation "Reading #$number's body" -ArgumentList 'pr', 'view', $number,
+            '--json', 'body', '--jq', '.body').Output -replace '(?s)## Time.*$', ''
+    Set-Content -LiteralPath $bodyFile -Value ($body.TrimEnd() + "`n`n" + $section) -NoNewline
+    $null = Invoke-Native -Name gh -Operation "Writing #$number's Time section" -ArgumentList 'api', '-X', 'PATCH',
+        "repos/$repository/pulls/$number", '-F', "body=@$bodyFile"
+    $written = (Invoke-Native -Name gh -Operation "Reading #$number's body back" -ArgumentList 'pr', 'view', $number,
+            '--json', 'body', '--jq', '.body').Output
+
+    if ($written -notmatch '(?m)^## Time') {
+        $message = "#$number's body carries no ## Time section."
+        throw (ConvertTo-Refusal -Message $message -Id 'NoTimeSection' -Category InvalidResult -Target $number)
+    }
+
+    # --- The steps: each one's issue records the merge, and its row closes (rule 13; agent-rules.md, rule 19) ---
+    #
+    # AFTER the merge and its span, since the records name the squash commit. Guarded on what each record holds (ruled
+    # 2026-11-13): the step's row must link this branch, or this pull request when the script runs again; otherwise the
+    # step has moved to another worktree, and the script stops. The issue's comment is posted once, and the issue closed
+    # only while it is open. Each record is read back. A step that moves to another worktree, or closes without a merge,
+    # is recorded by this script before git close-branch, its row linking where the work went. Left out only when the
+    # pull request lands no step.
+
+    $steps = @(<issue>)
+    $link = "https://github.com/$repository/tree/<branch>"
+    $pullRequest = "https://github.com/$repository/pull/$number"
+    $squash = Invoke-Native -Name gh -Operation "Reading #$number's squash commit" -ArgumentList 'pr', 'view', $number,
+        '--repo', $repository, '--json', 'mergeCommit,mergedAt', '--jq', '"\(.mergeCommit.oid[0:7]) \(.mergedAt[0:10])"'
+    $sha, $day = $squash.Output.Trim() -split ' ', 2
+
+    foreach ($step in $steps) {
+        $row = Get-StepRow -Issue $step
+
+        if (-not $row) {
+            $message = "#$step has no row on $scheduleProject."
+            throw (ConvertTo-Refusal -Message $message -Id 'StepHasNoRow' -Category ObjectNotFound -Target $step)
+        }
+
+        if ($row.Worktree -ne $link -and $row.Worktree -ne $pullRequest) {
+            $message = "#$step's row links $($row.Worktree), not $link or ${pullRequest}: the step has moved."
+            throw (ConvertTo-Refusal -Message $message -Id 'StepMoved' -Target $step)
+        }
+
+        $record = "Merged in #$number as ``$sha`` on $day (UTC)."
+        $comments = (Invoke-Native -Name gh -Operation "Reading #$step's comments" -ArgumentList 'api',
+            "repos/$repository/issues/$step/comments", '--paginate', '--jq', '.[].body').Output -split '\r?\n'
+
+        if ($comments -cnotcontains $record) {
+            $null = Invoke-Native -Name gh -Operation "Recording the merge on #$step" -ArgumentList 'issue', 'comment',
+                $step, '--repo', $repository, '--body', $record
+        }
+
+        $state = (Invoke-Native -Name gh -Operation "Reading #$step's state" -ArgumentList 'issue', 'view', $step,
+                '--repo', $repository, '--json', 'state', '--jq', '.state').Output.Trim()
+
+        if ($state -ne 'CLOSED') {
+            $null = Invoke-Native -Name gh -Operation "Closing #$step" -ArgumentList 'issue', 'close', $step,
+                '--repo', $repository, '--reason', 'completed'
+        }
+
+        Set-StepRow -Row $row -Status 'Closed' -Link $pullRequest
+        $after = Get-StepRow -Issue $step
+        $comments = (Invoke-Native -Name gh -Operation "Reading #$step's comments back" -ArgumentList 'api',
+            "repos/$repository/issues/$step/comments", '--paginate', '--jq', '.[].body').Output -split '\r?\n'
+        $state = (Invoke-Native -Name gh -Operation "Reading #$step's state back" -ArgumentList 'issue', 'view', $step,
+                '--repo', $repository, '--json', 'state', '--jq', '.state').Output.Trim()
+        $issueRecorded = $comments -ccontains $record -and $state -eq 'CLOSED'
+        $rowRecorded = $after.Status -eq 'Closed' -and $after.Worktree -eq $pullRequest
+
+        if (-not $issueRecorded -or -not $rowRecorded) {
+            $message = "#$step does not read back as merged: its row reads $($after.Status), $($after.Worktree)."
+            throw (ConvertTo-Refusal -Message $message -Id 'StepNotRecorded' -Category InvalidResult -Target $step)
+        }
+
+        [PSCustomObject]@{
+            Step     = $step
+            State    = $state
+            Status   = $after.Status
+            Worktree = $after.Worktree
+        }
+    }
+
+    # --- Clean up, from the main clone ---
+
+    Set-Location -LiteralPath $mainClone
+    $null = Invoke-Native -Name git -Operation "Closing $branch" -Narrate -ArgumentList 'close-branch', $branch
+    $null = Invoke-Native -Name git -Operation 'Confirming the main clone is current' -Narrate -ArgumentList 'pull',
+        '--ff-only', 'origin', '<default-branch>'
+
+    # The commit that landed carries both trailers (rule 2), or the script says so and fails.
+    $landed = (Invoke-Native -Name git -Operation 'Reading the commit that landed' -ArgumentList 'log', '--max-count=1',
+            '--format=%B').Output
+
+    if ($landed -notmatch '(?m)^Signed-off-by: ' -or $landed -notmatch '(?m)^Assisted-by: ') {
+        $message = 'The squash commit lacks Signed-off-by or Assisted-by.'
+        throw (ConvertTo-Refusal -Message $message -Id 'TrailersMissing' -Category InvalidResult -Target $sha)
+    }
+
+    $null = Invoke-Native -Name git -Operation 'Reading the clone status' -Narrate -ArgumentList 'status', '--short'
+
+    [PSCustomObject]@{
+        PullRequest = $number
+        Link        = $pullRequest
+        Commit      = $sha
+        Merged      = $day
     }
 }
-
-# --- Merge gate ---
-
-$mergeState = gh pr view $number --json mergeStateStatus --jq '.mergeStateStatus'
-Assert-NativeSuccess 'gh pr view (merge state)'
-
-switch ($mergeState) {
-    { $_ -in 'CLEAN', 'HAS_HOOKS', 'UNSTABLE', 'BLOCKED' } {
-        break
-    }
-    { $_ -in 'DIRTY', 'BEHIND' } {
-        throw "PR is not mergeable (state: $mergeState)."
-    }
-    default {
-        throw "Unknown merge state: $mergeState -- check the PR manually."
-    }
+catch {
+    $caught = $_
+    $ErrorActionPreference = $callerErrorAction
+    $PSCmdlet.WriteError($caught)
+    exit 1
 }
-
-# --- Squash merge: the message is the title and the description up to ## Time (rule 2) ---
-
-$title = (gh pr view $number --json title --jq '.title') -join "`n"
-Assert-NativeSuccess 'gh pr view (title)'
-$description = (gh pr view $number --json body --jq '.body') -join "`n"
-Assert-NativeSuccess 'gh pr view (description)'
-$squashFile = Join-Path ([System.IO.Path]::GetTempPath()) 'pr-<n>-squash.md'
-Set-Content -LiteralPath $squashFile -Value ($description -replace '(?s)## Time.*$', '').TrimEnd() -NoNewline
-gh pr merge $number --squash --admin --subject "$title (#$number)" --body-file $squashFile
-Assert-NativeSuccess 'gh pr merge'
-
-# --- The span (rule 11) ---
-
-$section = Get-TimeSpanSection -Number $number
-$body = (gh pr view $number --json body --jq '.body') -join "`n"
-Assert-NativeSuccess 'gh pr view (body)'
-$body = $body -replace '(?s)## Time.*$', ''
-Set-Content -LiteralPath $bodyFile -Value ($body.TrimEnd() + "`n`n" + $section) -NoNewline
-gh api -X PATCH "repos/$repository/pulls/$number" -F "body=@$bodyFile" | Out-Null
-Assert-NativeSuccess 'gh api (body)'
-
-if (((gh pr view $number --json body --jq '.body') -join "`n") -notmatch '(?m)^## Time') {
-    throw 'The PR body carries no ## Time section.'
+finally {
+    Remove-Item -LiteralPath $bodyFile, $squashFile -ErrorAction Ignore
+    Pop-Location
 }
-
-# --- The steps: each one's issue records the merge, and its row closes (rule 13; agent-rules.md, rule 19) ---
-#
-# AFTER the merge and its span, since the records name the squash commit. Guarded on what each record holds (ruled
-# 2026-11-13): the step's row must link this branch, or this pull request when the script runs again; otherwise the
-# step has moved to another worktree, and the script stops. The issue's comment is posted once, and the issue closed
-# only while it is open. Each record is read back. A step that moves to another worktree, or closes without a merge,
-# is recorded by this script before git close-branch, its row linking where the work went. Left out only when the pull
-# request lands no step.
-
-$steps = @(<issue>)
-$link = "https://github.com/$repository/tree/<branch>"
-$pullRequest = "https://github.com/$repository/pull/$number"
-$merged = (gh pr view $number --repo $repository --json mergeCommit,mergedAt --jq '"\(.mergeCommit.oid[0:7]) \(.mergedAt[0:10])"') -join ''
-Assert-NativeSuccess 'gh pr view (merge commit)'
-$sha, $day = $merged -split ' ', 2
-
-foreach ($step in $steps) {
-    $row = Get-StepRow -Issue $step
-
-    if (-not $row) {
-        throw "#$step has no row on $scheduleProject."
-    }
-
-    if ($row.Worktree -ne $link -and $row.Worktree -ne $pullRequest) {
-        throw "#$step's row links $($row.Worktree), not $link or ${pullRequest}: the step has moved."
-    }
-
-    $record = "Merged in #$number as ``$sha`` on $day (UTC)."
-    $comments = gh api "repos/$repository/issues/$step/comments" --paginate --jq '.[].body'
-    Assert-NativeSuccess 'gh api (comments)'
-
-    if ($comments -cnotcontains $record) {
-        gh issue comment $step --repo $repository --body $record | Out-Null
-        Assert-NativeSuccess 'gh issue comment'
-    }
-
-    $state = (gh issue view $step --repo $repository --json state --jq '.state') -join ''
-    Assert-NativeSuccess 'gh issue view (state)'
-
-    if ($state -ne 'CLOSED') {
-        gh issue close $step --repo $repository --reason completed | Out-Null
-        Assert-NativeSuccess 'gh issue close'
-    }
-
-    Set-StepRow -Row $row -Status 'Closed' -Link $pullRequest
-    $after = Get-StepRow -Issue $step
-    $comments = gh api "repos/$repository/issues/$step/comments" --paginate --jq '.[].body'
-    Assert-NativeSuccess 'gh api (comments, after)'
-    $state = (gh issue view $step --repo $repository --json state --jq '.state') -join ''
-    Assert-NativeSuccess 'gh issue view (state, after)'
-
-    if ($comments -cnotcontains $record -or $state -ne 'CLOSED' -or $after.Status -ne 'Closed' -or $after.Worktree -ne $pullRequest) {
-        throw "#$step does not read back as merged: its row reads $($after.Status), $($after.Worktree)."
-    }
-
-    Write-Output "#${step}: closed, its comment posted, its row $($after.Status), $($after.Worktree)"
-}
-
-# --- Clean up, from the main clone ---
-
-Set-Location $mainClone
-git close-branch $branch
-Assert-NativeSuccess 'git close-branch'
-git pull --ff-only origin <default-branch>
-Assert-NativeSuccess 'git pull'
-
-# The commit that landed carries both trailers (rule 2), or the script says so and fails.
-$landed = (git log --max-count=1 --format=%B) -join "`n"
-Assert-NativeSuccess 'git log'
-
-if ($landed -notmatch '(?m)^Signed-off-by: ' -or $landed -notmatch '(?m)^Assisted-by: ') {
-    throw 'The squash commit lacks Signed-off-by or Assisted-by.'
-}
-
-git status --short
 ```
 
 ### A worktree's first script, in PowerShell
 
-The same step as [the bash form's](#a-worktrees-first-script), after the push, with `Get-StepRow` and `Set-StepRow`
-from the helpers region above and `$scheduleProject` among the script's variables.
+The same steps as [the bash form's](#a-worktrees-first-script), in a script of its own. Its preamble and helpers region
+are the merge script's above, less `$mainClone`, which only the merge script's clean-up uses, and less the two files
+only the merge script makes. Its help says what it does:
 
 ```powershell
-# --- The steps: each one's row In progress, its Worktree linking the branch (rule 13; agent-rules.md, rule 19) ---
-#
-# After the push, since a link to a branch GitHub doesn't have leads nowhere. Guarded on what each row holds (ruled
-# 2026-11-13): on a schedule, Open or In progress, and linking no other branch; otherwise another worktree holds the
-# step, and the script stops, naming it. Each row is read back.
+<#
+.SYNOPSIS
+    First script for <owner>/<repo>, issue #<n>.
 
-$steps = @(<issue>)
-$link = "https://github.com/$repository/tree/<branch>"
+.DESCRIPTION
+    Commits <branch>'s plan and pushes the branch,
+    then sets each step's row In progress, its Worktree linking the branch, and links the plans in the Plan and design
+    documents section of every issue they serve. What it is doing goes to the verbose stream: run it with -Verbose to
+    see it.
 
-foreach ($step in $steps) {
-    $row = Get-StepRow -Issue $step
+.OUTPUTS
+    PSCustomObject: each step's row, In progress; then each issue star github plan link wrote, with what it did.
 
-    if (-not $row) {
-        throw "#$step has no row on $scheduleProject."
+.EXAMPLE
+    & 'C:/Users/<you>/Workspace/<org>/<clone>.<n>-<name>.ps1' -Verbose
+#>
+```
+
+Its main operation commits the plan, pushes the branch, and then, after the push, records the steps and links the
+plans. `star github plan link` refuses nothing by its exit: an issue refused, or a row the section drops, is in its
+records and exits 0, and any other exit stops the script (#557).
+
+```powershell
+###########
+# Main
+###########
+
+try {
+    Push-Location -LiteralPath $worktree
+
+    # --- The plan, committed, and the branch pushed ---
+
+    $null = Invoke-Native -Name git -Operation 'Staging the plan' -ArgumentList 'add', '--',
+        'docs/plans/<type>/<issue>-<name>.md'
+    $null = Invoke-Native -Name git -Operation 'Committing the plan' -Narrate -ArgumentList 'commit', '--message',
+        'docs(plans): the plan for #<issue>'
+    $null = Invoke-Native -Name git -Operation "Pushing $branch" -Narrate -ArgumentList 'push', '-u', 'origin', $branch
+
+    # --- The steps: each one's row In progress, its Worktree linking the branch (rule 13; agent-rules.md, rule 19) ---
+    #
+    # After the push, since a link to a branch GitHub doesn't have leads nowhere. Guarded on what each row holds (ruled
+    # 2026-11-13): on a schedule, Open or In progress, and linking no other branch; otherwise another worktree holds the
+    # step, and the script stops, naming it. Each row is read back.
+
+    $steps = @(<issue>)
+    $link = "https://github.com/$repository/tree/<branch>"
+
+    foreach ($step in $steps) {
+        $row = Get-StepRow -Issue $step
+
+        if (-not $row) {
+            $message = "#$step has no row on $scheduleProject."
+            throw (ConvertTo-Refusal -Message $message -Id 'StepHasNoRow' -Category ObjectNotFound -Target $step)
+        }
+
+        if (-not $row.Schedule) {
+            $message = "#$step's row on $scheduleProject names no schedule."
+            throw (ConvertTo-Refusal -Message $message -Id 'StepOnNoSchedule' -Target $step)
+        }
+
+        if ($row.Status -notin @('Open', 'In progress')) {
+            $message = "#$step's row is $($row.Status), not Open or In progress."
+            throw (ConvertTo-Refusal -Message $message -Id 'StepNotOpen' -Target $step)
+        }
+
+        if ($row.Worktree -and $row.Worktree -ne $link) {
+            $message = "#$step's row links $($row.Worktree): another worktree holds the step."
+            throw (ConvertTo-Refusal -Message $message -Id 'StepHeldElsewhere' -Category ResourceBusy -Target $step)
+        }
+
+        Set-StepRow -Row $row -Status 'In progress' -Link $link
+        $after = Get-StepRow -Issue $step
+
+        if ($after.Status -ne 'In progress' -or $after.Worktree -ne $link) {
+            $message = "#$step's row reads $($after.Status), $($after.Worktree)."
+            throw (ConvertTo-Refusal -Message $message -Id 'StepNotRecorded' -Category InvalidResult -Target $step)
+        }
+
+        [PSCustomObject]@{
+            Step     = $step
+            Schedule = $after.Schedule
+            Status   = $after.Status
+            Worktree = $after.Worktree
+        }
     }
 
-    if (-not $row.Schedule) {
-        throw "#$step's row on $scheduleProject names no schedule."
-    }
+    # --- The plans: each issue they serve links them in its Plan and design documents section (rule 13; #557) ---
+    #
+    # After the push, beside the steps' rows. Each plan is named by its path relative to docs/plans, and read from this
+    # worktree, since it has not merged; the plans on the default branches of writ's layers that serve the same issues
+    # are read with it.
 
-    if ($row.Status -notin @('Open', 'In progress')) {
-        throw "#$step's row is $($row.Status), not Open or In progress."
-    }
-
-    if ($row.Worktree -and $row.Worktree -ne $link) {
-        throw "#$step's row links $($row.Worktree): another worktree holds the step."
-    }
-
-    Set-StepRow -Row $row -Status 'In progress' -Link $link
-    $after = Get-StepRow -Issue $step
-
-    if ($after.Status -ne 'In progress' -or $after.Worktree -ne $link) {
-        throw "#$step's row reads $($after.Status), $($after.Worktree)."
-    }
-
-    Write-Output "#${step}: $($after.Schedule), $($after.Status), $($after.Worktree)"
+    $plans = @('<type>/<issue>-<name>.md')
+    $arguments = @('github', 'plan', 'link') + $plans + @('--silent', '--jq', 'map({issue, action, reason, dropped})')
+    $linked = Invoke-Native -Name star -Operation 'Linking the plans in their issues' -ArgumentList $arguments
+    ConvertFrom-Json -InputObject $linked.Output
+}
+catch {
+    $caught = $_
+    $ErrorActionPreference = $callerErrorAction
+    $PSCmdlet.WriteError($caught)
+    exit 1
+}
+finally {
+    Pop-Location
 }
 ```

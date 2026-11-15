@@ -7,9 +7,10 @@
 # selection (#379) and the triage sweep (#436), as docs/plans/feature/436-triage-sweep.md's test plan lists them; and
 # each account's model read from GitHub when a command needs it, star github model get and backup, and the sweep's
 # two-types rule (#426), as docs/plans/feature/426-model-pull-to-dot-github.md's test plan lists them; star github
-# schedule add (#438), as docs/plans/feature/438-schedule-add.md's test plan lists them; and each team's project of a
+# schedule add (#438), as docs/plans/feature/438-schedule-add.md's test plan lists them; each team's project of a
 # kind held to its template's README and to the short description the template names for a copy (#555), as
-# docs/plans/fix/555-copy-readme.md's test plan lists them
+# docs/plans/fix/555-copy-readme.md's test plan lists them; and star github plan link (#557), as
+# docs/plans/feature/557-plan-row.md's test plan lists them
 
 [[ -r "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" ]] || {
     printf '%s: cannot find Declare-BashScript in %s\n' "${0##*/}" "$(dirname "$0")/../Home/common/.local/bin" >&2
@@ -166,6 +167,49 @@ function repository {
     rm -rf -- "${seed}"
 }
 
+# todo_beside succeeds when one of the three lines before the line of an extension command's file that splits a flag's
+# comma-separated value carries the TODO naming noblefactor-engprod#315 by its URL, and the TODO names the flag (#557).
+#
+# Parameters:
+#   - `$1`: the file, under the extension's commands.
+#   - `$2`: the flag, as the TODO names it.
+#   - `$3`: the text of the line that splits the flag's value.
+#
+# Returns:
+#   - 0 when the TODO is beside the split; 1 otherwise.
+function todo_beside {
+    awk -v flag="$2" -v text="$3" '
+        index($0, text) {
+            window = before3 "\n" before2 "\n" before1
+            if (index(window, "TODO(https://github.com/NobleFactor/noblefactor-engprod/issues/315)") && index(window, flag)) found = 1
+        }
+        { before3 = before2; before2 = before1; before1 = $0 }
+        END { exit found ? 0 : 1 }' "${extension_source}/commands/$1"
+}
+
+# move_file moves a file on a repository's main on the stand-in's GitHub, in a commit of its own, and prints the commit:
+# a plan moved after the merge that closed its issue (#557).
+#
+# Parameters:
+#   - `$1`: the repository, owner/name.
+#   - `$2`: the file's path now.
+#   - `$3`: its path after.
+#
+# Returns:
+#   - 0, the commit made.
+function move_file {
+    local bare="${run_directory}/remotes/$1.git" seed="${run_directory}/seed-move-${1//\//-}"
+
+    rm -rf -- "${seed}"
+    git clone --quiet "${bare}" "${seed}"
+    mkdir -p -- "$(dirname "${seed}/$3")"
+    git -C "${seed}" mv -- "$2" "$3"
+    HOME="${run_directory}/home" git -C "${seed}" commit --quiet -m "move $2"
+    git -C "${seed}" push --quiet origin main
+    git -C "${seed}" rev-parse HEAD
+    rm -rf -- "${seed}"
+}
+
 # commit_model commits a model.yaml to an account's .github repository's main on the stand-in's GitHub, and prints the
 # commit.
 #
@@ -233,7 +277,8 @@ function no_model_cached {
 }
 
 # run_star runs one star command against a case's extension and the stand-in gh, outside any git tree, so that no
-# project-local extension or configuration reaches it.
+# project-local extension or configuration reaches it; or, when `star_directory` is set, in that directory, a clone the
+# case made, as star github plan link runs in one (#557).
 #
 # Sets `output`, `errors` and `status`, and empties the calls the stand-in recorded before it runs. star runs with
 # --silent unless `quiet` is set empty: an extension that fails to load says why only in star's narration. Its cache is
@@ -253,7 +298,7 @@ function run_star {
     : >"${run_directory}/state"
     status=0
     output="$(
-        cd "${run_directory}/work" &&
+        cd "${star_directory:-${run_directory}/work}" &&
             HOME="${run_directory}/home" PATH="${run_directory}/bin:${PATH}" XDG_DATA_HOME="${data}" \
                 XDG_CACHE_HOME="${cache_home}" XDG_CONFIG_HOME="${run_directory}/config" \
                 XDG_STATE_HOME="${run_directory}/state-home" GH_FIXTURES="${run_directory}/fixtures" \
@@ -442,6 +487,50 @@ function calls_hold {
     [[ "$(jq --slurp "$1" "${run_directory}/calls.jsonl")" == true ]]
 }
 
+# plan_world gives one of plan link's cases its issues (#557), ${run_directory}/remotes/plan-issues.json, which the
+# stand-in's starPlan operations answer from and its writes change: each issue of a JSON object on standard input, by
+# its key, owner/name#N, with its body, and its kind, Issue unless it says PullRequest; its node ID and URL made from
+# its key. The plans are files on the default branches of the repositories the case makes with repository.
+#
+# Parameters:
+#   - standard input: the issues, as a JSON object.
+#   - `$1`: true to make each write answer as done while the body stays as it was; optional, false by default.
+#
+# Returns:
+#   - 0, the issues written.
+function plan_world {
+    jq -c --argjson drop "${1:-false}" '{drop_write: $drop, issues: (with_entries(.key as $k | .value |= ({kind: "Issue", body: ""}
+        + . + {id: ("I_" + ($k | split("/")[1] | gsub("[#.-]"; "_"))), url: ("https://github.com/" + ($k | sub("#"; "/issues/")))})))}' \
+        >"${run_directory}/remotes/plan-issues.json"
+}
+
+# plan_holds succeeds when a jq program over the issues, as the last run left them, prints true. It is given the
+# library plan_library defines.
+#
+# Parameters:
+#   - `$1`: the jq program.
+#
+# Returns:
+#   - 0 when it prints true; 1 otherwise.
+function plan_holds {
+    [[ "$(jq "${plan_library}$1" "${run_directory}/remotes/plan-issues.json")" == true ]]
+}
+
+# plan_text prints a plan as the repositories hold them: its frontmatter, with a title carrying an unquoted colon, which
+# is no YAML, so that a case reads only the keys the command decodes; its issue: line; the lines of frontmatter given;
+# and its body.
+#
+# Parameters:
+#   - `$1`: what the issue: line says, as YAML.
+#   - `$2`: more frontmatter, each line ending in a newline; optional, none by default.
+#   - `$3`: the plan's body; optional, none by default.
+#
+# Returns:
+#   - 0, the plan printed.
+function plan_text {
+    printf -- '---\ntitle: Plan: a plan for a test\nissue: %s\nstatus: active\n%s---\n\n# Plan\n\n%s' "$1" "${2:-}" "${3:-}"
+}
+
 # write_stand_in writes the stand-in for gh to the run's bin directory.
 #
 # It records each call as a JSON array of its arguments, one per line of ${GH_CALLS}, and answers from ${GH_FIXTURES}:
@@ -473,6 +562,14 @@ function calls_hold {
 # ${GH_REMOTES}/world.json, which a case writes with world and its writes change, through world.jq beside the
 # stand-in, so that a read after a write finds it, as GitHub's would. The world may name an operation to fail once,
 # fail_on, and another writer's change to make after an operation's first answer, change.
+#
+# star github plan link's operations (#557): starPlanBlobs and starPlanAt answer each aliased object(expression:
+# "<revision>:<path>") with the file's text from the repository's bare repository under ${GH_REMOTES}, or null;
+# starPlanIssues answers each aliased issueOrPullRequest from ${GH_REMOTES}/plan-issues.json, which plan_world writes,
+# with the issue's state, its state reason, its last ClosedEvent's closer, its type, its labels and its issue fields, as
+# the issue gives them, and a number it lacks with null and a NOT_FOUND error, gh's exit 1 with it, as GitHub and gh
+# answer; starPlanWrite sets an issue's body there, unless the case asked that writes not stick, drop_write; and
+# starPlanBody reads it back.
 #
 # Returns:
 #   - 0, the stand-ins written and executable.
@@ -947,6 +1044,53 @@ if [[ "${operation}" == starViewer || "${operation}" == starStep* ]]; then
 fi
 
 case ${operation} in
+    starPlanBlobs | starPlanAt)
+        git_dir="${GH_REMOTES}/${owner}/${name}.git" blobs='{}' rest="${query}"
+        blob='(f[0-9]+): object\(expression: "([^"]*)"\)'
+        while [[ "${rest}" =~ ${blob} ]]; do
+            field="${BASH_REMATCH[1]}" expression="${BASH_REMATCH[2]}"
+            rest="${rest#*"${BASH_REMATCH[0]}"}"
+            if text="$(git --git-dir="${git_dir}" show "${expression}" 2>/dev/null && printf x)"; then
+                blobs="$(jq -c --arg f "${field}" --arg t "${text%x}" '.[$f] = {__typename: "Blob", text: $t, isTruncated: false}' <<<"${blobs}")"
+            else
+                blobs="$(jq -c --arg f "${field}" '.[$f] = null' <<<"${blobs}")"
+            fi
+        done
+        jq -c '{data: {repository: .}}' <<<"${blobs}"
+        exit 0
+        ;;
+    starPlanIssues)
+        answer="$(jq -c --arg repo "${owner}/${name}" --arg q "${query}" '
+            [$q | scan("i([0-9]+): issueOrPullRequest") | .[0]] as $numbers | .issues as $issues
+            | {data: {repository: (reduce $numbers[] as $n ({}; .["i" + $n] = ($issues[$repo + "#" + $n]
+                | if . == null then null elif .kind == "PullRequest" then {__typename: "PullRequest", url}
+                  else {__typename: "Issue", id, url, body, state: (.state // "OPEN"), stateReason: (.stateReason // null),
+                      timelineItems: {nodes: (if .closer then [{closer: .closer}] else [] end)},
+                      issueType: (if .type then {name: .type} else null end), labels: {nodes: [(.labels // [])[] | {name: .}]},
+                      issueFieldValues: {nodes: [(.fields // {}) | to_entries[] | {field: {name: .key}, name: .value}]}} end)))},
+              errors: [$numbers[] | select($issues[$repo + "#" + .] == null) | {type: "NOT_FOUND", path: ["repository", ("i" + .)],
+                message: ("Could not resolve to an issue or pull request with the number of " + . + ".")}]}
+            | if .errors == [] then del(.errors) else . end' "${GH_REMOTES}/plan-issues.json")" || exit 1
+        printf '%s\n' "${answer}"
+        if jq -e 'has("errors")' <<<"${answer}" >/dev/null; then
+            printf 'gh: %s\n' "$(jq -r '.errors[0].message' <<<"${answer}")" >&2
+            exit 1
+        fi
+        exit 0
+        ;;
+    starPlanWrite)
+        world="${GH_REMOTES}/plan-issues.json"
+        jq --arg i "${vars[i]:-}" --arg b "${vars[b]:-}" \
+            'if .drop_write then . else .issues |= map_values(if .id == $i then .body = $b else . end) end' "${world}" >"${world}.next" &&
+            mv -- "${world}.next" "${world}"
+        jq -cn --arg i "${vars[i]:-}" '{data: {updateIssue: {issue: {id: $i}}}}'
+        exit 0
+        ;;
+    starPlanBody)
+        [[ "${query}" =~ node\(id:[[:space:]]*\"([^\"]+)\" ]] || exit 1
+        jq -c --arg i "${BASH_REMATCH[1]}" '{data: {node: (first(.issues[] | select(.id == $i)) | {body})}}' "${GH_REMOTES}/plan-issues.json"
+        exit 0
+        ;;
     starIssues)
         filter=.
         [[ "${query}" == *"states: [OPEN]"* ]] && filter='.data.repository.issues.nodes |= map(select(.state == "OPEN"))'
@@ -2372,6 +2516,505 @@ run_star "${data}" github model diff "${reference}/user.yaml" test-user
 expect "61: and a user account's project to the user reference's, the account filled in" ok '
     any(.[]; .kind == "project" and .path == "Triage: test-user" and .change == "different"
         and (.model.short_description | test("^test-user.s Triage project: the account.s queue of issues waiting to be classified\\.$")))'
+
+# 62 to 74: star github plan link (#557), docs/plans/feature/557-plan-row.md's cases 1 to 13, each named with its number
+# there. Each case makes the repositories whose default branch, main, holds its plans, with repository, and the issues
+# they serve, with plan_world; then it checks the records, the exit, the writes the stand-in logged, and every byte of
+# each body the run left.
+data_plan="${run_directory}/data-plan"
+make_extension "${data_plan}"
+declare -r plan_library='
+    def link($repo; $path): "https://github.com/\($repo)/blob/main/\($path)";
+    def plan_row($repo; $path): "| Plan | [\($path)](\(link($repo; $path))) |";
+    def alpha($path): plan_row("NobleFactor/alpha"; $path);
+    def table($hashes; $rows; $eol): ([$hashes + " Plan and design documents", "", "| Kind | Document |", "| --- | --- |"] + $rows) | join($eol);
+    def section($rows): table("##"; $rows; "\n");
+    def body($k): .issues[$k].body;
+    def placeholder: "| Plan | Not yet opened |";
+'
+declare -r plan_writes='[$calls[] | select(any(.[]; type == "string" and test("^query=mutation starPlanWrite")))]'
+declare -r written_ids="${plan_writes}"' | map(.[] | select(type == "string" and startswith("i=")) | ltrimstr("i=")) | sort'
+declare -r plan_reads='[$calls[] | select(any(.[]; type == "string" and test("^query=query starPlanBody")))]'
+
+# 62 (plan 1). The section at ##, followed by another section, and at ###, as a form writes it, with no last newline:
+# each written, its heading's level kept, and read back.
+repository NobleFactor/alpha \
+    "docs/plans/feature/1-first.md=$(plan_text https://github.com/NobleFactor/alpha/issues/1)" \
+    "docs/plans/feature/2-second.md=$(plan_text https://github.com/NobleFactor/alpha/issues/2)"
+jq -n "${plan_library}"'{
+    "NobleFactor/alpha#1": {body: ("Problem.\n\n" + section([placeholder]) + "\n\n## Notes\n\nKeep.\n")},
+    "NobleFactor/alpha#2": {body: ("### Problem\n\nA form.\n\n" + table("###"; ["| Plan | _No response_ |"]; "\n"))}}' | plan_world
+run_star "${data_plan}" github plan link --all --repository NobleFactor/alpha
+expect "62 (plan 1): plan link writes the section at ## and at ###, each read back" ok "${plan_library}"'
+    map({issue, action, dropped}) == [{issue: "NobleFactor/alpha#1", action: "written", dropped: [placeholder]},
+        {issue: "NobleFactor/alpha#2", action: "written", dropped: ["| Plan | _No response_ |"]}]
+    and .[0].plans == ["NobleFactor/alpha:docs/plans/feature/1-first.md"] and .[0].url == "https://github.com/NobleFactor/alpha/issues/1"
+    and .[0].before == section([placeholder]) + "\n\n" and .[0].after == section([alpha("docs/plans/feature/1-first.md")]) + "\n\n"
+    and ('"${written_ids}"') == ["I_alpha_1", "I_alpha_2"] and ('"${plan_reads}"' | length) == 2'
+check "62 (plan 1): each body is its old bytes outside the section, and the plans' section within it, at its level" plan_holds '
+    body("NobleFactor/alpha#1") == "Problem.\n\n" + section([alpha("docs/plans/feature/1-first.md")]) + "\n\n## Notes\n\nKeep.\n"
+    and body("NobleFactor/alpha#2") == "### Problem\n\nA form.\n\n" + table("###"; [alpha("docs/plans/feature/2-second.md")]; "\n")'
+
+# 63 (plan 2). The section already what the plans give: unchanged, nothing written, and the body as it was.
+jq -n "${plan_library}"'{
+    "NobleFactor/alpha#1": {body: ("Problem.\n\n" + section([alpha("docs/plans/feature/1-first.md")]) + "\n")},
+    "NobleFactor/alpha#2": {body: table("###"; [alpha("docs/plans/feature/2-second.md")]; "\n")}}' | plan_world
+before_plan="$(<"${run_directory}/remotes/plan-issues.json")"
+run_star "${data_plan}" github plan link --all --repository NobleFactor/alpha
+expect "63 (plan 2): a section that already is the plans' is unchanged, and nothing is written" ok "${plan_library}"'
+    map(.action) == ["unchanged", "unchanged"] and all(.[]; .before == .after and .dropped == []) and ('"${plan_writes}"') == []'
+check "63 (plan 2): every byte of both bodies is as it was" same_text "${before_plan}" "$(<"${run_directory}/remotes/plan-issues.json")"
+
+# 64 (plan 3). No section: with a last newline, without one, and an empty body; each appended, after a blank line. A
+# Plan and design documents heading at level 4 is not the section, which is appended after it.
+repository NobleFactor/alpha \
+    "docs/plans/feature/1-first.md=$(plan_text https://github.com/NobleFactor/alpha/issues/1)" \
+    "docs/plans/feature/2-second.md=$(plan_text https://github.com/NobleFactor/alpha/issues/2)" \
+    "docs/plans/fix/3-third.md=$(plan_text https://github.com/NobleFactor/alpha/issues/3)" \
+    "docs/plans/fix/4-fourth.md=$(plan_text https://github.com/NobleFactor/alpha/issues/4)"
+jq -n '{"NobleFactor/alpha#1": {body: "Problem.\n"}, "NobleFactor/alpha#2": {body: "Problem."}, "NobleFactor/alpha#3": {body: ""},
+    "NobleFactor/alpha#4": {body: "#### Plan and design documents\n\nNot the section.\n"}}' | plan_world
+run_star "${data_plan}" github plan link --all --repository NobleFactor/alpha
+expect "64 (plan 3): an issue with no section has it appended" ok "${plan_library}"'
+    map({issue, action, before}) == [{issue: "NobleFactor/alpha#1", action: "appended", before: null},
+        {issue: "NobleFactor/alpha#2", action: "appended", before: null}, {issue: "NobleFactor/alpha#3", action: "appended", before: null},
+        {issue: "NobleFactor/alpha#4", action: "appended", before: null}]
+    and ('"${written_ids}"') == ["I_alpha_1", "I_alpha_2", "I_alpha_3", "I_alpha_4"]'
+check "64 (plan 3): every byte before the section is kept, one blank line before it, none in an empty body" plan_holds '
+    body("NobleFactor/alpha#1") == "Problem.\n\n" + section([alpha("docs/plans/feature/1-first.md")]) + "\n"
+    and body("NobleFactor/alpha#2") == "Problem.\n\n" + section([alpha("docs/plans/feature/2-second.md")]) + "\n"
+    and body("NobleFactor/alpha#3") == section([alpha("docs/plans/fix/3-third.md")]) + "\n"
+    and body("NobleFactor/alpha#4") == "#### Plan and design documents\n\nNot the section.\n\n" + section([alpha("docs/plans/fix/4-fourth.md")]) + "\n"'
+
+# 65 (plan 4). Two sections, at ## and at ###: refused, its reason named, nothing written.
+repository NobleFactor/alpha "docs/plans/feature/1-first.md=$(plan_text https://github.com/NobleFactor/alpha/issues/1)"
+jq -n "${plan_library}"'{"NobleFactor/alpha#1": {body: (section([placeholder]) + "\n\n### Plan and design documents\n\nA second.\n")}}' | plan_world
+before_plan="$(<"${run_directory}/remotes/plan-issues.json")"
+run_star "${data_plan}" github plan link --all --repository NobleFactor/alpha
+expect "65 (plan 4): an issue with two sections is refused, and nothing is written" ok '
+    map({issue, action}) == [{issue: "NobleFactor/alpha#1", action: "refused"}]
+    and (.[0].reason | test("has 2 Plan and design documents sections")) and ('"${plan_writes}"') == []'
+check "65 (plan 4): its body is as it was" same_text "${before_plan}" "$(<"${run_directory}/remotes/plan-issues.json")"
+
+# 66 (plan 5). The section ends at the next heading at its level or above: a lower heading inside it is replaced with
+# it, and one at its level or above, with every byte after it, kept.
+repository NobleFactor/alpha \
+    "docs/plans/feature/1-first.md=$(plan_text https://github.com/NobleFactor/alpha/issues/1)" \
+    "docs/plans/feature/2-second.md=$(plan_text https://github.com/NobleFactor/alpha/issues/2)"
+jq -n "${plan_library}"'{
+    "NobleFactor/alpha#1": {body: (section([placeholder]) + "\n\n### Notes on the plan\n\nA note.\n\n## Evidence\n\nShown.\n")},
+    "NobleFactor/alpha#2": {body: (table("###"; [placeholder]; "\n") + "\n#### Detail\nZ\n## Next\n\nY")}}' | plan_world
+run_star "${data_plan}" github plan link --all --repository NobleFactor/alpha
+expect "66 (plan 5): the section runs to the next heading at its level or above, the lower ones inside it dropped" ok "${plan_library}"'
+    map({issue, action, dropped}) == [{issue: "NobleFactor/alpha#1", action: "written", dropped: [placeholder, "### Notes on the plan", "A note."]},
+        {issue: "NobleFactor/alpha#2", action: "written", dropped: [placeholder, "#### Detail", "Z"]}]'
+check "66 (plan 5): each body keeps the heading that ends its section and every byte after it" plan_holds '
+    body("NobleFactor/alpha#1") == section([alpha("docs/plans/feature/1-first.md")]) + "\n\n## Evidence\n\nShown.\n"
+    and body("NobleFactor/alpha#2") == table("###"; [alpha("docs/plans/feature/2-second.md")]; "\n") + "\n\n## Next\n\nY"'
+
+# 67 (plan 6). Rows the plans don't give: devlore-cli#1179's columns, Document and Role, a row for another plan, and a
+# note. The section is written, and each is in dropped; the thematic break and the signature after it, as #321's body
+# ends, are not the section's (ruled 2026-11-15), and are kept byte for byte.
+repository NobleFactor/alpha "docs/plans/feature/1-first.md=$(plan_text https://github.com/NobleFactor/alpha/issues/1)"
+role='| [design.md](https://github.com/NobleFactor/devlore-cli/blob/develop/docs/design.md) | the design |'
+other='| Plan | [docs/plans/chore/303-issue-data-model.md](https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/plans/chore/303-issue-data-model.md) |'
+jq -n --arg role "${role}" --arg other "${other}" '{"NobleFactor/alpha#1": {body: ("## Plan and design documents\n\n| Document | Role |\n| --- | --- |\n" +
+    $role + "\n" + $other + "\n\nNote: the plan arrives with the branch.\n\n---\n\nDavid Noble, assisted by Claude Code (Anthropic).\n")}}' | plan_world
+run_star "${data_plan}" github plan link --all --repository NobleFactor/alpha
+expect "67 (plan 6): rows the plans don't give are dropped, each listed" ok '
+    map({issue, action, dropped}) == [{issue: "NobleFactor/alpha#1", action: "written", dropped: ["| Document | Role |", "'"${role}"'",
+        "'"${other}"'", "Note: the plan arrives with the branch."]}]
+    and ('"${written_ids}"') == ["I_alpha_1"]'
+check "67 (plan 6): the body is the plans' section, then the break and the signature as they were" plan_holds '
+    body("NobleFactor/alpha#1") == section([alpha("docs/plans/feature/1-first.md")]) + "\n\n---\n\nDavid Noble, assisted by Claude Code (Anthropic).\n"'
+
+# 68 (plan 7). In a clone of alpha, a plan not yet on main serves #12 by its issue: line and #13 by an ## Issue heading;
+# beta, a writ layer, holds on main a plan that serves #12 too, read before the clone's, whose path comes first. Both
+# issues are written, #12 with both plans' rows, by path; #1, which no plan named serves, and #14, whose heading is in a
+# fenced code block, are not touched. Then --all reads main alone, never the working tree.
+repository NobleFactor/alpha "docs/plans/feature/1-first.md=$(plan_text https://github.com/NobleFactor/alpha/issues/1)"
+repository NobleFactor/beta "docs/beta.md=# Beta" \
+    "docs/plans/feature/12-the-other.md=$(plan_text https://github.com/NobleFactor/alpha/issues/12 $'documents:\n  - kind: "Design: beta"\n    path: docs/beta.md\n')"
+rm -rf -- "${run_directory}/work/alpha" "${data_plan}/devlore/writ"
+git clone --quiet "${run_directory}/remotes/NobleFactor/alpha.git" "${run_directory}/work/alpha"
+mkdir -p -- "${run_directory}/work/alpha/docs/plans/feature" "${data_plan}/devlore/writ/layers"
+plan_text https://github.com/NobleFactor/alpha/issues/12 "" $'## Issue 12\n\nThis one.\n\n## Issue 13\n\nThat one too.\n\n```\n## Issue 14\n```\n' \
+    >"${run_directory}/work/alpha/docs/plans/feature/12-both.md"
+git clone --quiet "${run_directory}/remotes/NobleFactor/beta.git" "${data_plan}/devlore/writ/layers/base"
+jq -n "${plan_library}"'{"NobleFactor/alpha#1": {body: "Untouched."}, "NobleFactor/alpha#12": {body: (section([placeholder]) + "\n")},
+    "NobleFactor/alpha#13": {body: "Problem.\n"}, "NobleFactor/alpha#14": {body: "In a code block."}}' | plan_world
+star_directory="${run_directory}/work/alpha"
+run_star "${data_plan}" github plan link feature/12-both.md
+star_directory=""
+expect "68 (plan 7): a plan serving two issues writes both, and #12 carries the other repository's plan" ok '
+    map({issue, action, plans}) == [
+        {issue: "NobleFactor/alpha#12", action: "written",
+            plans: ["NobleFactor/alpha:docs/plans/feature/12-both.md", "NobleFactor/beta:docs/plans/feature/12-the-other.md"]},
+        {issue: "NobleFactor/alpha#13", action: "appended", plans: ["NobleFactor/alpha:docs/plans/feature/12-both.md"]}]
+    and ('"${written_ids}"') == ["I_alpha_12", "I_alpha_13"]'
+check "68 (plan 7): #12's table is both plans, by path, then the other's document; #13's is the one plan; #1 and #14 as they were" plan_holds '
+    body("NobleFactor/alpha#12") == section([alpha("docs/plans/feature/12-both.md"), plan_row("NobleFactor/beta"; "docs/plans/feature/12-the-other.md"),
+        "| Design: beta | [docs/beta.md](" + link("NobleFactor/beta"; "docs/beta.md") + ") |"]) + "\n"
+    and body("NobleFactor/alpha#13") == "Problem.\n\n" + section([alpha("docs/plans/feature/12-both.md")]) + "\n"
+    and body("NobleFactor/alpha#1") == "Untouched." and body("NobleFactor/alpha#14") == "In a code block."'
+run_star "${data_plan}" github plan link --all --repository NobleFactor/alpha,NobleFactor/beta
+expect "68 (plan 7): --all --repository A,B reads the plans on both repositories' main, not the clone's working tree" ok '
+    map({issue, action, plans}) == [
+        {issue: "NobleFactor/alpha#1", action: "appended", plans: ["NobleFactor/alpha:docs/plans/feature/1-first.md"]},
+        {issue: "NobleFactor/alpha#12", action: "written", plans: ["NobleFactor/beta:docs/plans/feature/12-the-other.md"]}]'
+check "68 (plan 7): and #13, which no plan on main serves, keeps its section" plan_holds '
+    body("NobleFactor/alpha#13") == "Problem.\n\n" + section([alpha("docs/plans/feature/12-both.md")]) + "\n"'
+
+# 69 (plan 8). A plan's documents: by path, by url, with text, a list written at column 0 too, and a document two plans
+# serving one issue name: each a row, in each plan's order, the shared one once.
+repository NobleFactor/alpha "docs/design/collections.md=# Collections" "docs/design/model.md=# Model" \
+    "docs/plans/feature/1-first.md=$(plan_text https://github.com/NobleFactor/alpha/issues/1 $'documents:\n  - kind: "Design: collections"\n    path: docs/design/collections.md\n  - kind: Where this is listed\n    url: https://github.com/NobleFactor/alpha/blob/main/docs/plans/feature/2-second.md\n    text: "the plan of #2"\n')" \
+    "docs/plans/feature/1-review.md=$(plan_text 1 $'documents:\n- kind: "Design: collections"\n  path: docs/design/collections.md\n- kind: "Design: model"\n  path: docs/design/model.md\n  text: the model\n' $'## Issue 1\n')"
+jq -n '{"NobleFactor/alpha#1": {body: ""}}' | plan_world
+run_star "${data_plan}" github plan link --all --repository NobleFactor/alpha
+expect "69 (plan 8): each document is a row, in order, and the one both plans name comes once" ok '
+    map({issue, action, plans}) == [{issue: "NobleFactor/alpha#1", action: "appended",
+        plans: ["NobleFactor/alpha:docs/plans/feature/1-first.md", "NobleFactor/alpha:docs/plans/feature/1-review.md"]}]'
+check "69 (plan 8): the table is the two Plan rows, then the documents by path, by url with its text, and by path with its text" plan_holds '
+    body("NobleFactor/alpha#1") == section([alpha("docs/plans/feature/1-first.md"), alpha("docs/plans/feature/1-review.md"),
+        "| Design: collections | [docs/design/collections.md](" + link("NobleFactor/alpha"; "docs/design/collections.md") + ") |",
+        "| Where this is listed | [the plan of #2](https://github.com/NobleFactor/alpha/blob/main/docs/plans/feature/2-second.md) |",
+        "| Design: model | [the model](" + link("NobleFactor/alpha"; "docs/design/model.md") + ") |"]) + "\n"'
+
+# 70 (plan 9). A plan naming no issue; a bare number and #N, the plan's own repository's; a file name whose number is
+# not its issue: line's; a pull request; an issue GitHub has none of; a path not on the default branch; and an issue:
+# line through noblefactor-ops, the old name, which serves noblefactor-engprod's issue. Each refusal is a finding with
+# its reason, exit 0, and nothing is written for it. docs/plans/TEMPLATE.md, the template plans are written from, names
+# no issue and is no plan, and has no record.
+repository NobleFactor/noblefactor-engprod
+repository NobleFactor/alpha "docs/design/collections.md=# Collections" \
+    "docs/plans/TEMPLATE.md="$'---\ntitle: "Plan Template"\ndescription: "Template for creating new plan documents"\n---\n\n# Plan: [Title]\n' \
+    "docs/plans/tbd.md=$(plan_text TBD)" \
+    "docs/plans/fix/5-bare.md=$(plan_text 5)" \
+    "docs/plans/fix/6-hash.md=$(plan_text '"#6"')" \
+    "docs/plans/fix/7-mismatch.md=$(plan_text https://github.com/NobleFactor/alpha/issues/8)" \
+    "docs/plans/fix/9-pull.md=$(plan_text https://github.com/NobleFactor/alpha/issues/9)" \
+    "docs/plans/fix/10-missing-doc.md=$(plan_text https://github.com/NobleFactor/alpha/issues/10 $'documents:\n  - kind: Design\n    path: docs/design/none.md\n')" \
+    "docs/plans/fix/11-no-issue.md=$(plan_text https://github.com/NobleFactor/alpha/issues/11)" \
+    "docs/plans/fix/7-old-name.md=$(plan_text https://github.com/NobleFactor/noblefactor-ops/issues/7)"
+jq -n "${plan_library}"'{"NobleFactor/alpha#5": {body: (section([placeholder]) + "\n")}, "NobleFactor/alpha#6": {body: ""},
+    "NobleFactor/alpha#8": {body: (section([placeholder]) + "\n")}, "NobleFactor/alpha#9": {kind: "PullRequest"},
+    "NobleFactor/alpha#10": {body: (section([placeholder]) + "\n")}, "NobleFactor/noblefactor-engprod#7": {body: "Problem."}}' | plan_world
+before_plan="$(jq -c '.issues | with_entries(select(.key | test("#(8|9|10)$")))' "${run_directory}/remotes/plan-issues.json")"
+run_star "${data_plan}" github plan link --all --repository NobleFactor/alpha
+expect "70 (plan 9): each plan's fault refuses the issue it names, with its reason, and the rest are written, exit 0" ok '
+    map([.issue, .action]) == [["NobleFactor/alpha#5", "written"], ["NobleFactor/alpha#6", "appended"], ["NobleFactor/alpha#8", "refused"],
+        ["NobleFactor/alpha#9", "refused"], ["NobleFactor/alpha#10", "refused"], ["NobleFactor/alpha#11", "refused"],
+        ["NobleFactor/noblefactor-engprod#7", "appended"], [null, "refused"]]
+    and (.[2].reason | test("fix/7-mismatch.md.s file name says 7, but its issue: line names NobleFactor/alpha#8"))
+    and (.[3].reason | test("NobleFactor/alpha#9 is a pull request"))
+    and (.[4].reason | test("path docs/design/none.md is not on NobleFactor/alpha.s main"))
+    and (.[5].reason | test("NobleFactor/alpha#11 is no issue or pull request GitHub has"))
+    and .[7].plans == ["NobleFactor/alpha:docs/plans/tbd.md"] and (.[7].reason | test("names no issue: its issue: line reads \"TBD\""))
+    and ('"${written_ids}"') == ["I_alpha_5", "I_alpha_6", "I_noblefactor_engprod_7"]'
+check "70 (plan 9): #5 and #6 link their plans, the old name's issue links its plan, and the refused bodies are as they were" plan_holds '
+    body("NobleFactor/alpha#5") == section([alpha("docs/plans/fix/5-bare.md")]) + "\n"
+    and body("NobleFactor/alpha#6") == section([alpha("docs/plans/fix/6-hash.md")]) + "\n"
+    and body("NobleFactor/noblefactor-engprod#7") == "Problem.\n\n" + section([alpha("docs/plans/fix/7-old-name.md")]) + "\n"
+    and (.issues | with_entries(select(.key | test("#(8|9|10)$")))) == '"${before_plan}"
+
+# 71 (plan 10). \r\n bodies: the section's lines end \r\n, and every other byte is kept, a section replaced before
+# another and one appended alike.
+repository NobleFactor/alpha \
+    "docs/plans/feature/1-first.md=$(plan_text https://github.com/NobleFactor/alpha/issues/1)" \
+    "docs/plans/feature/2-second.md=$(plan_text https://github.com/NobleFactor/alpha/issues/2)"
+jq -n "${plan_library}"'{"NobleFactor/alpha#1": {body: ("Problem.\r\n\r\n" + table("##"; [placeholder]; "\r\n") + "\r\n\r\n## Evidence\r\n\r\nShown.")},
+    "NobleFactor/alpha#2": {body: "Problem.\r\n\r\nMore."}}' | plan_world
+run_star "${data_plan}" github plan link --all --repository NobleFactor/alpha
+expect "71 (plan 10): a \\r\\n body's section is written, and appended" ok 'map(.action) == ["written", "appended"]'
+check "71 (plan 10): the section's lines end \\r\\n, and every other byte is kept" plan_holds '
+    body("NobleFactor/alpha#1") == "Problem.\r\n\r\n" + table("##"; [alpha("docs/plans/feature/1-first.md")]; "\r\n") + "\r\n\r\n## Evidence\r\n\r\nShown."
+    and body("NobleFactor/alpha#2") == "Problem.\r\n\r\nMore.\r\n\r\n" + table("##"; [alpha("docs/plans/feature/2-second.md")]; "\r\n") + "\r\n"'
+
+# 72 (plan 11). A write that does not read back is an error, after every other issue; plans and --all together are an
+# error, read before anything; a path outside docs/plans is refused, exit 0; and star's --dry-run is refused.
+repository NobleFactor/alpha \
+    "docs/plans/feature/1-first.md=$(plan_text https://github.com/NobleFactor/alpha/issues/1)" \
+    "docs/plans/feature/2-second.md=$(plan_text https://github.com/NobleFactor/alpha/issues/2)"
+jq -n "${plan_library}"'{"NobleFactor/alpha#1": {body: (section([placeholder]) + "\n")}, "NobleFactor/alpha#2": {body: "Problem."}}' | plan_world true
+run_star "${data_plan}" github plan link --all --repository NobleFactor/alpha
+expect "72 (plan 11): a write that does not read back exits non-zero, naming each issue, after writing every one" error \
+    '('"${written_ids}"') == ["I_alpha_1", "I_alpha_2"]' \
+    "NobleFactor/alpha#1's Plan and design documents section does not read back as written" text
+run_star "${data_plan}" github plan link feature/1-first.md --all
+expect "72 (plan 11): plans and --all together are an error, and nothing is read" error '$calls == []' \
+    "takes plans or --all, not both" text
+star_directory="${run_directory}/work/alpha"
+run_star "${data_plan}" github plan link ../README.md
+star_directory=""
+expect "72 (plan 11): a path outside docs/plans is refused, exit 0, and nothing is written" ok '
+    map({issue, action, plans}) == [{issue: null, action: "refused", plans: ["NobleFactor/alpha:../README.md"]}]
+    and (.[0].reason | test("is not a plan under docs/plans")) and ('"${plan_writes}"') == []'
+run_star "${data_plan}" github plan link --all --repository NobleFactor/alpha --dry-run
+expect "72 (plan 11): and star's --dry-run, until devlore-cli#1170" error '$calls == []' "1170" text
+
+# 73 and 74 (plans 13 and 12). The rehearsal's 22 bodies, each served by a plan of its own on main, and a 23rd, #123,
+# which no plan serves (docs/plans/feature/557-plan-row.md, § Test Plan): --check writes nothing and returns what --all
+# then does; --all writes every body as it says, byte for byte, and leaves #123 alone; and --all run again finds every
+# issue unchanged.
+declare -r rehearsal='
+    def standards: "| Design | [issue-standards.md](https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/issue-standards.md) |";
+    def branch: "| Plan | [docs/plans/feature/557-plan-row.md](https://github.com/NobleFactor/noblefactor-engprod/blob/feature/557-plan-row/docs/plans/feature/557-plan-row.md), on its branch |";
+    def linked: "| Plan | [docs/plans/feature/557-plan-row.md](https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/plans/feature/557-plan-row.md) |";
+    def variant: "| Plan | [`docs/plans/feature/557-plan-row.md`](https://github.com/NobleFactor/noblefactor-ops/blob/develop/docs/plans/feature/557-plan-row.md#issue-557), on feature/557-plan-row until it merges |";
+    def other_repository: "| Plan | [docs/plans/feature/557-plan-row.md](https://github.com/NobleFactor/devlore-cli/blob/develop/docs/plans/feature/557-plan-row.md) |";
+    def other_plan: "| Plan | [docs/plans/chore/303-issue-data-model.md](https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/plans/chore/303-issue-data-model.md), iteration 1 |";
+    def wording: "| Plan | _not yet — the plan arrives when the branch does_ |";
+    def first: "| Plan | `docs/plans/feature/557-plan-row.md` on `feature/557-plan-row` |";
+    def old($rows): section($rows) + "\n";
+    def new($n): alpha("docs/plans/feature/\($n)-rehearsal.md");
+    [
+        {n: 101, name: "1-first-of-two", body: old([first, "| Plan | arrives with the branch |"]), after: (section([new(101)]) + "\n"),
+            action: "written", dropped: [first, "| Plan | arrives with the branch |"]},
+        {n: 102, name: "1-placeholder", body: ("Problem.\n\n" + old([placeholder, standards])),
+            after: ("Problem.\n\n" + section([new(102)]) + "\n"), action: "written", dropped: [placeholder, standards]},
+        {n: 103, name: "1-wordings", body: ("Ruled — 2026-11-14, café.\n\n" + old([wording])),
+            after: ("Ruled — 2026-11-14, café.\n\n" + section([new(103)]) + "\n"), action: "written", dropped: [wording]},
+        {n: 104, name: "2-branch-before-placeholder", body: old([placeholder, branch]), after: (section([new(104)]) + "\n"),
+            action: "written", dropped: [placeholder, branch]},
+        {n: 105, name: "2-linked", body: ("Problem.\n\n" + old([linked])), after: ("Problem.\n\n" + section([new(105)]) + "\n"),
+            action: "written", dropped: [linked]},
+        {n: 106, name: "2-linked-variants", body: old([variant]), after: (section([new(106)]) + "\n"), action: "written", dropped: [variant]},
+        {n: 107, name: "2-other-branch", body: old([branch, standards]), after: (section([new(107)]) + "\n"), action: "written",
+            dropped: [branch, standards]},
+        {n: 108, name: "3-blank-end", body: "Problem.\n\n", after: ("Problem.\n\n" + section([new(108)]) + "\n"), action: "appended", dropped: []},
+        {n: 109, name: "3-empty", body: "", after: (section([new(109)]) + "\n"), action: "appended", dropped: []},
+        {n: 110, name: "3-no-newline", body: "Problem.", after: ("Problem.\n\n" + section([new(110)]) + "\n"), action: "appended", dropped: []},
+        {n: 111, name: "3-no-table", body: "Problem.\n\nEvidence.\n", after: ("Problem.\n\nEvidence.\n\n" + section([new(111)]) + "\n"),
+            action: "appended", dropped: []},
+        {n: 112, name: "4-other-plan", body: ("Problem.\n\n" + old([other_plan, standards])),
+            after: ("Problem.\n\n" + section([new(112)]) + "\n"), action: "written", dropped: [other_plan, standards]},
+        {n: 113, name: "4-other-repository", body: old([other_repository]), after: (section([new(113)]) + "\n"), action: "written",
+            dropped: [other_repository]},
+        {n: 114, name: "5-heading", body: ("Problem.\n\n" + old([standards])), after: ("Problem.\n\n" + section([new(114)]) + "\n"),
+            action: "written", dropped: [standards]},
+        {n: 115, name: "5-heading-no-rows", body: ("Problem.\n\n" + section([])), after: ("Problem.\n\n" + section([new(115)])),
+            action: "written", dropped: []},
+        {n: 116, name: "5-heading-no-table", body: "## Plan and design documents\n\nTo come.\n", after: (section([new(116)]) + "\n"),
+            action: "written", dropped: ["To come."]},
+        {n: 117, name: "crlf-no-table", body: "Problem.\r\n\r\nMore.",
+            after: ("Problem.\r\n\r\nMore.\r\n\r\n" + table("##"; [new(117)]; "\r\n") + "\r\n"), action: "appended", dropped: []},
+        {n: 118, name: "crlf-other-plan-last", body: table("##"; [other_plan]; "\r\n"), after: table("##"; [new(118)]; "\r\n"),
+            action: "written", dropped: [other_plan]},
+        {n: 119, name: "crlf-placeholder", body: ("Problem.\r\n\r\n" + table("##"; [placeholder, standards]; "\r\n") + "\r"),
+            after: ("Problem.\r\n\r\n" + table("##"; [new(119)]; "\r\n") + "\r"), action: "written", dropped: [placeholder, standards]},
+        {n: 120, name: "readback", body: old([placeholder]), after: (section([new(120)]) + "\n"), action: "written", dropped: [placeholder]},
+        {n: 121, name: "two-steps 557", body: old([placeholder]), after: (section([new(121)]) + "\n"), action: "written", dropped: [placeholder]},
+        {n: 122, name: "two-steps 558", body: "Problem.\n", after: ("Problem.\n\n" + section([new(122)]) + "\n"), action: "appended", dropped: []},
+        {n: 123, name: "no-plan", body: old([placeholder]), after: old([placeholder]), action: null, dropped: []}
+    ]'
+rehearsal_plans=()
+for n in {101..122}; do
+    rehearsal_plans+=("docs/plans/feature/${n}-rehearsal.md=$(plan_text "https://github.com/NobleFactor/alpha/issues/${n}")")
+done
+repository NobleFactor/alpha "${rehearsal_plans[@]}"
+jq -n "${plan_library}${rehearsal}"' | map({key: "NobleFactor/alpha#\(.n)", value: {body}}) | from_entries' | plan_world
+before_plan="$(<"${run_directory}/remotes/plan-issues.json")"
+run_star "${data_plan}" github plan link --all --check --repository NobleFactor/alpha
+checked="${output}"
+expect "73 (plan 13): --check writes nothing, and returns a record for each of the 22 issues the plans serve" ok "${plan_library}${rehearsal}"' as $want
+    | ('"${plan_writes}"') == [] and ('"${plan_reads}"') == []
+    and ([$want[] | select(.action != null)] | map({issue: "NobleFactor/alpha#\(.n)", action, dropped})) == map({issue, action, dropped})'
+check "73 (plan 13): and leaves every body as it was" same_text "${before_plan}" "$(<"${run_directory}/remotes/plan-issues.json")"
+run_star "${data_plan}" github plan link --all --repository NobleFactor/alpha
+expect "73 (plan 13): --all writes the 22 issues the plans serve, and #123 not" ok \
+    '('"${written_ids}"') == ([range(101; 123) | "I_alpha_\(.)"] | sort)'
+check "73 (plan 13): --all returns the records --check did, byte for byte" same_text "${checked}" "${output}"
+check "73 (plan 13): every byte of each of the 23 bodies is as the rehearsal case says, #123 untouched" plan_holds "${rehearsal}"' as $want
+    | . as $world | all($want[]; . as $w | $world | body("NobleFactor/alpha#\($w.n)") == $w.after)'
+run_star "${data_plan}" github plan link --all --repository NobleFactor/alpha
+expect "74 (plan 12): --all run again finds every issue unchanged, and writes nothing" ok '
+    length == 22 and all(.[]; .action == "unchanged") and ('"${plan_writes}"') == []'
+
+# 75 to 80: where each link points, by the issue's state (ruled 2026-11-15, #557): an issue closed by a merged pull
+# request links each file at that pull request's merge commit, and any other the default branch. alpha's main has two
+# commits: the first, A, holds docs/design/a.md and the plans of #20 to #25, each naming it; the second, B, moves #23's
+# plan from feature/ to fix/. #20 is open; #21 was closed by pull request #121, merged as A; #22 closed as not planned,
+# though its closer names a merged pull request; #23 closed by #123, merged as A, its plan moved since; #24 closed by
+# the commit A, the squash merge of #124, among the commit's pull requests one merged as B; and #25 closed by hand, its
+# last ClosedEvent naming no closer.
+design=$'documents:\n  - kind: Design\n    path: docs/design/a.md\n'
+repository NobleFactor/alpha "docs/design/a.md=# A" \
+    "docs/plans/feature/20-open.md=$(plan_text https://github.com/NobleFactor/alpha/issues/20 "${design}")" \
+    "docs/plans/feature/21-merged.md=$(plan_text https://github.com/NobleFactor/alpha/issues/21 "${design}")" \
+    "docs/plans/feature/22-not-planned.md=$(plan_text https://github.com/NobleFactor/alpha/issues/22 "${design}")" \
+    "docs/plans/feature/23-moved.md=$(plan_text https://github.com/NobleFactor/alpha/issues/23 "${design}")" \
+    "docs/plans/feature/24-squash.md=$(plan_text https://github.com/NobleFactor/alpha/issues/24 "${design}")" \
+    "docs/plans/feature/25-by-hand.md=$(plan_text https://github.com/NobleFactor/alpha/issues/25 "${design}")"
+merged_a="$(git --git-dir="${run_directory}/remotes/NobleFactor/alpha.git" rev-parse main)"
+merged_b="$(move_file NobleFactor/alpha docs/plans/feature/23-moved.md docs/plans/fix/23-moved.md)"
+declare -r closings='
+    def pull($n; $oid): {__typename: "PullRequest", number: $n, mergedAt: "2026-11-15T00:00:00Z", mergeCommit: {oid: $oid},
+        repository: {nameWithOwner: "NobleFactor/alpha"}};
+    def closed($closer): {state: "CLOSED", stateReason: "COMPLETED", closer: $closer};
+'
+jq -n --arg a "${merged_a}" --arg b "${merged_b}" "${plan_library}${closings}"'{
+    "NobleFactor/alpha#20": {body: (section([placeholder]) + "\n")},
+    "NobleFactor/alpha#21": ({body: ""} + closed(pull(121; $a))),
+    "NobleFactor/alpha#22": {body: "", state: "CLOSED", stateReason: "NOT_PLANNED", closer: pull(122; $a)},
+    "NobleFactor/alpha#23": ({body: ""} + closed(pull(123; $a))),
+    "NobleFactor/alpha#24": ({body: ""} + closed({__typename: "Commit", oid: $a, associatedPullRequests: {nodes: [pull(999; $b), pull(124; $a)]}})),
+    "NobleFactor/alpha#25": {body: "", state: "CLOSED", stateReason: "COMPLETED"}}' | plan_world
+declare -r placed="${plan_library}"'
+    def at($oid; $path): "https://github.com/NobleFactor/alpha/blob/\($oid)/\($path)";
+    def design($link): "| Design | [docs/design/a.md](\($link)) |";
+    def a: "'"${merged_a}"'"; def b: "'"${merged_b}"'";
+'
+run_star "${data_plan}" github plan link --all --repository NobleFactor/alpha
+expect "75 (links): an open issue and five closed ones are written, each by its state" ok "${placed}"'
+    map([.issue, .action]) == [["NobleFactor/alpha#20", "written"], ["NobleFactor/alpha#21", "appended"],
+        ["NobleFactor/alpha#22", "appended"], ["NobleFactor/alpha#23", "appended"], ["NobleFactor/alpha#24", "appended"],
+        ["NobleFactor/alpha#25", "appended"]]
+    and ([$calls[] | select(any(.[]; type == "string" and test("^query=query starPlanAt")))] | length) == 1'
+check "75 (links): an open issue links the default branch, its plan and its document alike" plan_holds "${placed}"'
+    body("NobleFactor/alpha#20") == section([alpha("docs/plans/feature/20-open.md"), design(link("NobleFactor/alpha"; "docs/design/a.md"))]) + "\n"'
+check "76 (links): an issue a merged pull request closed links every file at its merge commit" plan_holds "${placed}"'
+    body("NobleFactor/alpha#21") == section(["| Plan | [docs/plans/feature/21-merged.md](" + at(a; "docs/plans/feature/21-merged.md") + ") |",
+        design(at(a; "docs/design/a.md"))]) + "\n"'
+check "76 (links): and one a squash merge's commit closed, at the merge commit of that commit's pull request, not another's" plan_holds "${placed}"'
+    body("NobleFactor/alpha#24") == section(["| Plan | [docs/plans/feature/24-squash.md](" + at(a; "docs/plans/feature/24-squash.md") + ") |",
+        design(at(a; "docs/design/a.md"))]) + "\n"'
+check "77 (links): an issue closed as not planned, and one closed by hand, link the default branch" plan_holds "${placed}"'
+    body("NobleFactor/alpha#22") == section([alpha("docs/plans/feature/22-not-planned.md"), design(link("NobleFactor/alpha"; "docs/design/a.md"))]) + "\n"
+    and body("NobleFactor/alpha#25") == section([alpha("docs/plans/feature/25-by-hand.md"), design(link("NobleFactor/alpha"; "docs/design/a.md"))]) + "\n"'
+check "78 (links): a plan moved after the merge links the default branch, its document still the merge commit" plan_holds "${placed}"'
+    body("NobleFactor/alpha#23") == section([alpha("docs/plans/fix/23-moved.md"), design(at(a; "docs/design/a.md"))]) + "\n"'
+expect "78 (links): and its record says so, a finding, the only reason among them" ok '
+    [.[] | select(.reason != null) | [.issue, .reason]] == [["NobleFactor/alpha#23",
+        "docs/plans/fix/23-moved.md is not in NobleFactor/alpha at '"${merged_a:0:7}"', where NobleFactor/alpha#123 merged: linked on main"]]'
+
+# 79 (links). An issue that closes: the next --all rewrites its links at the merge commit, and the run after it finds
+# every issue unchanged.
+jq --arg b "${merged_b}" "${closings}"'.issues["NobleFactor/alpha#20"] += closed(pull(120; $b))' "${run_directory}/remotes/plan-issues.json" \
+    >"${run_directory}/remotes/plan-issues.json.next"
+mv -- "${run_directory}/remotes/plan-issues.json.next" "${run_directory}/remotes/plan-issues.json"
+run_star "${data_plan}" github plan link --all --repository NobleFactor/alpha
+expect "79 (links): an issue that closes is written again, its links at its merge commit, and no other" ok '
+    [.[] | select(.action != "unchanged") | [.issue, .action]] == [["NobleFactor/alpha#20", "written"]] and ('"${written_ids}"') == ["I_alpha_20"]'
+check "79 (links): #20 links its plan and its document at the merge commit" plan_holds "${placed}"'
+    body("NobleFactor/alpha#20") == section(["| Plan | [docs/plans/feature/20-open.md](" + at(b; "docs/plans/feature/20-open.md") + ") |",
+        design(at(b; "docs/design/a.md"))]) + "\n"'
+run_star "${data_plan}" github plan link --all --repository NobleFactor/alpha
+expect "79 (links): the run after it finds every issue unchanged, and writes nothing" ok \
+    'length == 6 and all(.[]; .action == "unchanged") and ('"${plan_writes}"') == []'
+
+# 80 (links). In <plan> mode, a documents: path the same pull request adds is in the clone's working tree, not yet on
+# main: the open issue it serves links it on the default branch, where it lands with the merge. A path in neither is
+# refused.
+rm -rf -- "${run_directory}/work/alpha-new"
+git clone --quiet "${run_directory}/remotes/NobleFactor/alpha.git" "${run_directory}/work/alpha-new"
+mkdir -p -- "${run_directory}/work/alpha-new/docs/design" "${run_directory}/work/alpha-new/docs/plans/feature"
+printf '# New\n' >"${run_directory}/work/alpha-new/docs/design/new.md"
+plan_text https://github.com/NobleFactor/alpha/issues/26 $'documents:\n  - kind: Design\n    path: docs/design/new.md\n' \
+    >"${run_directory}/work/alpha-new/docs/plans/feature/26-new-doc.md"
+plan_text https://github.com/NobleFactor/alpha/issues/27 $'documents:\n  - kind: Design\n    path: docs/design/none.md\n' \
+    >"${run_directory}/work/alpha-new/docs/plans/feature/27-missing-doc.md"
+jq -n '{"NobleFactor/alpha#26": {body: ""}, "NobleFactor/alpha#27": {body: ""}}' | plan_world
+star_directory="${run_directory}/work/alpha-new"
+run_star "${data_plan}" github plan link feature/26-new-doc.md feature/27-missing-doc.md
+star_directory=""
+expect "80 (links): a document the pull request adds is linked; one in neither its working tree nor main is refused" ok '
+    map([.issue, .action]) == [["NobleFactor/alpha#26", "appended"], ["NobleFactor/alpha#27", "refused"]]
+    and (.[1].reason | test("document path docs/design/none.md is not on NobleFactor/alpha.s main or in .*/work/alpha-new$"))
+    and ('"${written_ids}"') == ["I_alpha_26"]'
+check "80 (links): #26 links its plan and the new document on the default branch" plan_holds '
+    body("NobleFactor/alpha#26") == section([alpha("docs/plans/feature/26-new-doc.md"),
+        "| Design | [docs/design/new.md](" + link("NobleFactor/alpha"; "docs/design/new.md") + ") |"]) + "\n"'
+
+# 81 (break). The section ends at the next heading at its level or above, or at a thematic break, whichever comes first
+# (ruled 2026-11-15); the break and everything after it are kept byte for byte. In #1, a --- in a fenced block and the
+# table's delimiter row are no break, and *** is, a signature after it. In #2, ___ follows the last row of a ### section
+# with no blank line, which the section gains. Run again, both are unchanged.
+repository NobleFactor/alpha \
+    "docs/plans/feature/1-first.md=$(plan_text https://github.com/NobleFactor/alpha/issues/1)" \
+    "docs/plans/feature/2-second.md=$(plan_text https://github.com/NobleFactor/alpha/issues/2)"
+jq -n "${plan_library}"'{
+    "NobleFactor/alpha#1": {body: (section([placeholder]) + "\n\n```\n---\n```\n\n***\n\nSigned.\n")},
+    "NobleFactor/alpha#2": {body: (table("###"; ["| Plan | x |"]; "\n") + "\n___\nchore")}}' | plan_world
+run_star "${data_plan}" github plan link --all --repository NobleFactor/alpha
+expect "81 (break): a section ends at a thematic break, not at a --- in a fenced block or a table's delimiter row" ok "${plan_library}"'
+    map({issue, action, dropped}) == [{issue: "NobleFactor/alpha#1", action: "written", dropped: [placeholder, "```", "---"]},
+        {issue: "NobleFactor/alpha#2", action: "written", dropped: ["| Plan | x |"]}]'
+check "81 (break): the break and everything after it are kept byte for byte, a signature among them" plan_holds '
+    body("NobleFactor/alpha#1") == section([alpha("docs/plans/feature/1-first.md")]) + "\n\n***\n\nSigned.\n"
+    and body("NobleFactor/alpha#2") == table("###"; [alpha("docs/plans/feature/2-second.md")]; "\n") + "\n\n___\nchore"'
+run_star "${data_plan}" github plan link --all --repository NobleFactor/alpha
+expect "81 (break): run again, both are unchanged" ok 'map(.action) == ["unchanged", "unchanged"] and ('"${plan_writes}"') == []'
+
+# 82 (#315). Each flag that takes a comma-separated list, since star's extension flags cannot repeat, carries a TODO
+# beside its split naming https://github.com/NobleFactor/noblefactor-engprod/issues/315 by its URL, to take the repeated
+# form once they can (ruled 2026-11-15): --blocked-by, --token and --repository.
+check "82 (#315): --blocked-by's split carries the #315 TODO" todo_beside github-schedule-add.star --blocked-by '(value or "").split(",")'
+check "82 (#315): --token's split carries the #315 TODO" todo_beside tokens.star --token 'spec.split(",")'
+check "82 (#315): --repository's split carries the #315 TODO" todo_beside github-plan-link.star --repository '(value or "").split(",")'
+
+# 83 (file name). The number a plan's file name begins with must be its issue: line's only for a plan directly in a type
+# directory, docs/plans/<type>/ (ruled 2026-11-15). A step's file in a subject directory, a numbered plan directly under
+# docs/plans and one nested deeper in feature/ are written; misnumbered plans in task/ and in feature/ are refused.
+repository NobleFactor/alpha \
+    "docs/plans/extract-starlark-from-op/phase-8/steps/58-a-step.md=$(plan_text https://github.com/NobleFactor/alpha/issues/30)" \
+    "docs/plans/40-at-the-top.md=$(plan_text https://github.com/NobleFactor/alpha/issues/31)" \
+    "docs/plans/feature/deeper/50-nested.md=$(plan_text https://github.com/NobleFactor/alpha/issues/32)" \
+    "docs/plans/task/36-in-task.md=$(plan_text https://github.com/NobleFactor/alpha/issues/33)" \
+    "docs/plans/feature/35-misnumbered.md=$(plan_text https://github.com/NobleFactor/alpha/issues/34)"
+jq -n '{"NobleFactor/alpha#30": {body: ""}, "NobleFactor/alpha#31": {body: ""}, "NobleFactor/alpha#32": {body: ""},
+    "NobleFactor/alpha#33": {body: ""}, "NobleFactor/alpha#34": {body: ""}}' | plan_world
+run_star "${data_plan}" github plan link --all --repository NobleFactor/alpha
+expect "83 (file name): only a plan directly in a type directory has its file name's number checked against its issue" ok '
+    map([.issue, .action]) == [["NobleFactor/alpha#30", "appended"], ["NobleFactor/alpha#31", "appended"],
+        ["NobleFactor/alpha#32", "appended"], ["NobleFactor/alpha#33", "refused"], ["NobleFactor/alpha#34", "refused"]]
+    and (.[3].reason | test("task/36-in-task.md.s file name says 36, but its issue: line names NobleFactor/alpha#33"))
+    and (.[4].reason | test("feature/35-misnumbered.md.s file name says 35, but its issue: line names NobleFactor/alpha#34"))
+    and ('"${written_ids}"') == ["I_alpha_30", "I_alpha_31", "I_alpha_32"]'
+
+# 84 (area and type). Each record carries its issue's Area and type, read with the issue and placed by its account's
+# model (ruled 2026-11-15): in NobleFactor its Area issue field and its issue type; in a user account, test-user, its
+# area: label, named as the user reference names it, and its type label; null where the issue has none. A plan's own
+# record has neither: a plan is classified through its issue alone. star's --filter selects by them.
+repository NobleFactor/alpha \
+    "docs/plans/feature/1-first.md=$(plan_text https://github.com/NobleFactor/alpha/issues/1)" \
+    "docs/plans/feature/2-second.md=$(plan_text https://github.com/NobleFactor/alpha/issues/2)" \
+    "docs/plans/tbd.md=$(plan_text TBD)"
+repository test-user/personal "docs/plans/feature/60-user.md=$(plan_text https://github.com/test-user/personal/issues/60)"
+jq -n '{"NobleFactor/alpha#1": {body: "", type: "Task", fields: {Area: "Engineering", Severity: "N/A"}},
+    "NobleFactor/alpha#2": {body: ""}, "test-user/personal#60": {body: "", labels: ["task", "area:product"]}}' | plan_world
+run_star "${data_plan}" github plan link --all --check --repository NobleFactor/alpha,test-user/personal
+expect "84 (area and type): each issue's record carries its Area and type, in an organization and a user account" ok '
+    map({issue, area, type}) == [{issue: "NobleFactor/alpha#1", area: "Engineering", type: "Task"},
+        {issue: "NobleFactor/alpha#2", area: null, type: null}, {issue: "test-user/personal#60", area: "Product", type: "Task"},
+        {issue: null, area: null, type: null}]'
+run_star "${data_plan}" github plan link --all --check --repository NobleFactor/alpha,test-user/personal --filter area=Engineering
+expect "84 (area and type): and --filter area=Engineering selects by its Area" ok 'map(.issue) == ["NobleFactor/alpha#1"]'
+
+# 85 (heading case). The section's heading is matched without regard to case, an ATX heading at ## or ### (ruled
+# 2026-11-15): #1's "Plan And Design Documents" and #2's "plan and design documents" are the section, each written with
+# the heading in its own case replaced, and given no second one. A setext heading of the same words, #3's, is not the
+# section, which is appended after it. Run again, all three are unchanged.
+repository NobleFactor/alpha \
+    "docs/plans/feature/1-first.md=$(plan_text https://github.com/NobleFactor/alpha/issues/1)" \
+    "docs/plans/feature/2-second.md=$(plan_text https://github.com/NobleFactor/alpha/issues/2)" \
+    "docs/plans/fix/3-third.md=$(plan_text https://github.com/NobleFactor/alpha/issues/3)"
+declare -r headings='def setext: "Plan and design documents\n-------------------------\n\n| Kind | Document |\n| --- | --- |\n| Plan | Not yet opened |\n";'
+jq -n "${plan_library}${headings}"'{
+    "NobleFactor/alpha#1": {body: "Problem.\n\n## Plan And Design Documents\n\n| Kind | Document |\n| --- | --- |\n| Plan | Not yet opened |\n"},
+    "NobleFactor/alpha#2": {body: "### plan and design documents\n\n| Kind | Document |\n| --- | --- |\n| Plan | Not yet opened |\n"},
+    "NobleFactor/alpha#3": {body: setext}}' | plan_world
+run_star "${data_plan}" github plan link --all --repository NobleFactor/alpha
+expect "85 (heading case): a heading in other capitals is the section; a setext heading of its words is not" ok "${plan_library}"'
+    map({issue, action, dropped}) == [{issue: "NobleFactor/alpha#1", action: "written", dropped: [placeholder]},
+        {issue: "NobleFactor/alpha#2", action: "written", dropped: [placeholder]},
+        {issue: "NobleFactor/alpha#3", action: "appended", dropped: []}]'
+check "85 (heading case): each body holds one section, at its heading's level, the setext heading kept above #3's" plan_holds "${headings}"'
+    body("NobleFactor/alpha#1") == "Problem.\n\n" + section([alpha("docs/plans/feature/1-first.md")]) + "\n"
+    and body("NobleFactor/alpha#2") == table("###"; [alpha("docs/plans/feature/2-second.md")]; "\n") + "\n"
+    and body("NobleFactor/alpha#3") == setext + "\n" + section([alpha("docs/plans/fix/3-third.md")]) + "\n"'
+run_star "${data_plan}" github plan link --all --repository NobleFactor/alpha
+expect "85 (heading case): run again, all three are unchanged" ok 'map(.action) == ["unchanged", "unchanged", "unchanged"]'
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"

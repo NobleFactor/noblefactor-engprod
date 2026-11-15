@@ -56,6 +56,9 @@ def _refuse_value(source):
 def parse(spec):
     """The sources --token names: [(secret, source)], the secret "" for a bare source. Reads nothing."""
     out = []
+
+    # TODO(https://github.com/NobleFactor/noblefactor-engprod/issues/315): take --token repeated, one source each,
+    # --token <SECRET>=env:<NAME> --token <SECRET>=file:<path>, once star's extension flags can repeat.
     for entry in spec.split(","):
         entry = entry.strip()
         if entry == "":

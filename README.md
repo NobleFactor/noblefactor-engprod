@@ -50,7 +50,7 @@ is not a distinction one sentence can carry.
 
 Anything about `star` belongs in devlore-cli. What stays here is
 `docs/plans/feature/140-star-report-epics.md`, which designs the extension this layer ships, and
-`docs/plans/remove-go-code.md`, which charters the CI gate this repository still runs.
+`docs/plans/feature/566-remove-go-code.md`, which charters the CI gate this repository still runs.
 
 ### Tools
 

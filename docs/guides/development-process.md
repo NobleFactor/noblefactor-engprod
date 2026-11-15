@@ -5,7 +5,7 @@ type: Process
 audience: Engineers
 status: Approved
 created: 2026-09-01
-updated: 2026-11-04
+updated: 2026-11-15
 ---
 
 # Development Process
@@ -327,7 +327,9 @@ issue that touches none carries the plan row alone — but where they exist they
 title is something the reader has to go and find.
 
 Links go to the **default branch**, `main` or `develop`. Such a link is dead until the branch merges
-and correct forever after. A link to the feature branch is the other way round: correct while the
+and correct forever after. Once the issue is closed by a merged pull request, they go to that pull
+request's merge commit instead, a fixed record of what landed, which no later move or deletion can
+break; `star github plan link` writes them so (ruled 2026-11-15, #557). A link to the feature branch is the other way round: correct while the
 work is open, then dead when `git-close-branch` deletes the branch — which is the moment the issue
 closes and becomes most likely to be read.
 
@@ -335,6 +337,16 @@ An issue whose branch has not opened has no plan yet, and its plan row says so r
 omitted. The plan arrives when the branch does, as the order above already places it, and the row is
 completed then. Every issue carries the table from the day it is filed; the plan link is the one row
 that is expected to start empty.
+
+**The plans are the authority for the table** (ruled 2026-11-15, #557). A plan names the issues it
+serves: the one it is named for, in its `issue:` line, and each other in an `## Issue NNN` heading. It
+names the design documents it bears on in its frontmatter, `documents:`, each a kind and a path or a
+link. An issue has zero or more plans, and its `Plan and design documents` section is written from them:
+a Plan row for each plan that serves it, then each plan's documents. `star github plan link`, which a
+worktree's first script runs once its plan is pushed, finds the section by its heading and replaces it
+whole, and `star github plan link --all --check` checks every issue's section against the plans, writing
+nothing and listing any row the plans would drop. An issue no plan serves keeps the section it was filed
+with.
 
 ---
 
