@@ -44,6 +44,10 @@ issues already filed. One pull request in this repository, from `feature/557-pla
   development-process.md § Plans, section 7's row for the documents table, and section 8, with a section for
   `plan link`, each with its status. The command exits non-zero only on an error, as section 8 rules for every
   command; `refused` and `unbacked` are findings, in its records.
+- 2026-11-15, on Requirement 9: the template's merge step keeps its `mktemp` and `GetTempPath()` files. The rule
+  against temporary directories is for work that must outlive the run, which an agent has lost there; a real temporary
+  file, made and removed within one run, is not what it forbids. The template's PowerShell helpers are brought to the
+  PowerShell style guide here, in this pull request.
 - The process, already: every issue ends with the table; each row links a committed file; links go to the default
   branch; a plan carries an `## Issue NNN` heading for every issue it serves.
 
@@ -118,11 +122,13 @@ row names another repository's plan without a link.
    - devlore-cli#935: its row given the link by hand, its note that it is Phase 4 of noblefactor-engprod's
      `docs/plans/fix/234-prose-is-not-checked-for.md` kept after it;
    - the 48 plans with `TBD`, `pending` or nothing: added to NobleFactor/devlore-cli#1228's scope, by a comment on it.
-9. **Found beside the work,** proposed for the owner's ruling at this review: the template's merge step writes its
-   message and body files with `mktemp` and `GetTempPath()`, against the rule that a script handed to the owner
-   writes nothing to a temporary directory; fixed here, the files in the worktree's scratch directory. The template's
-   PowerShell helpers break the PowerShell style guide, `Set-StepRow` flagged by PSScriptAnalyzer and `[int]` where the
-   guide asks `[Int32]`: logged as one Task, in Triage: engprod.
+9. **Found beside the work,** ruled 2026-11-15: the template's PowerShell helpers, `Get-StepRow`, `Set-StepRow` and
+   the rest of its PowerShell form, brought to the
+   [PowerShell style guide](../../guides/powershell-style-guidelines.md) here: `[Int32]` and `[String]` where they say
+   `[int]` and `[string]`, a header above each function in place of comments inside it, and nothing PSScriptAnalyzer
+   flags with the organization's settings, `Set-StepRow`'s state-changing without `ShouldProcess` among them; the
+   composed first and merge scripts parsed and analyzed. The template's merge step keeps its `mktemp` and
+   `GetTempPath()` files, which are made and removed within one run.
 10. **The comment that closes #557** lists every issue written, by repository, with what its row said before, and the
     `unbacked` rows.
 11. **The design documents:** [development-process.md § Plans](../../guides/development-process.md#plans), the plans
@@ -167,8 +173,8 @@ expected results are those of the rehearsal's 22 cases, in scratch.
 
 ### Phase 2: the command and the template
 
-- [ ] `star github plan link`, `--all` and `--check`; the template's first-script step, both forms, and rule 13; what
-      the owner rules on in Requirement 9; cases 1 to 14
+- [ ] `star github plan link`, `--all` and `--check`; the template's first-script step, both forms, and rule 13; the
+      template's PowerShell helpers brought to the style guide (Requirement 9); cases 1 to 14
 
 ### Phase 3: the merge and the issues already filed
 
@@ -192,7 +198,6 @@ expected results are those of the rehearsal's 22 cases, in scratch.
 
 ## Open Questions
 
-- **Requirement 9's two proposals,** the template's temporary files fixed here and its PowerShell style logged as a
-  Task: for the owner's ruling before Phase 2.
+- **Requirement 9's two proposals,** ruled 2026-11-15: the temporary files stay; the PowerShell style is fixed here.
 - **Requirement 8's three proposals,** devlore-cli#1179 and #935 by hand and the 48 unnamed plans to #1228: for the
   owner's ruling before Phase 3, with `--all --check`'s report.
