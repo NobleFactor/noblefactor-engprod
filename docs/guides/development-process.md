@@ -5,7 +5,7 @@ type: Process
 audience: Engineers
 status: Approved
 created: 2026-09-01
-updated: 2026-11-04
+updated: 2026-11-15
 ---
 
 # Development Process
@@ -335,6 +335,15 @@ An issue whose branch has not opened has no plan yet, and its plan row says so r
 omitted. The plan arrives when the branch does, as the order above already places it, and the row is
 completed then. Every issue carries the table from the day it is filed; the plan link is the one row
 that is expected to start empty.
+
+**The plans are the authority for an issue's Plan rows** (ruled 2026-11-15, #557). A plan names the
+issues it serves: the one it is named for, in its `issue:` line, and each other in an `## Issue NNN`
+heading. An issue has zero or more plans, and its Plan rows are built from them, one for each plan that
+serves it, never the other way. `star github plan link`, which a worktree's first script runs once its
+plan is pushed, writes them, and `star github plan link --all --check` checks every issue's rows against
+the plans, writing nothing. A Plan row that no plan backs is reported, and settled by the plan, with an
+`## Issue NNN` heading, or by the row. Until #557 builds the command, the first script writes the row by
+hand.
 
 ---
 

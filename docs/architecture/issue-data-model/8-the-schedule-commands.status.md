@@ -23,7 +23,8 @@ steps it closed, rendered from a template. Ruled the same day, question 7: Start
 `--schedule new` in the pull request that builds `new`. Ruled the same day, question 8: the verbs not yet built are
 #509 to #512, in Backlog: engprod with Priority Medium. The owner approved the design on 2026-11-12. Read
 from GitHub on 2026-11-11: the Schedule options of Schedule: engprod, the 15 Schedule issues, both accounts' Schedule
-forms, and the 17 open issues under NobleFactor/devlore-cli#463, which the report as built lists.
+forms, and the 17 open issues under NobleFactor/devlore-cli#463, which the report as built lists. Ruled 2026-11-15
+(#557): `plan link`, beside the schedule verbs, which builds each issue's Plan rows from the plans.
 
 ## Completion
 
@@ -35,3 +36,4 @@ forms, and the 17 open issues under NobleFactor/devlore-cli#463, which the repor
 - [ ] `get` and `list` built (#510)
 - [ ] `move` and `remove` built (#511)
 - [ ] `close` built (#512)
+- [ ] `plan link` built, with `--all` and `--check` (#557)

@@ -40,6 +40,10 @@ issues already filed. One pull request in this repository, from `feature/557-pla
   [--repository <owner/name>]... [--check]`, one or the other; a plan named by its path relative to `docs/plans`, in
   the clone the command runs in. The first live run is `--all --check`, its report reviewed with the owner before `--all`
   writes anything; many inconsistencies are expected.
+- 2026-11-15: the design documents brought to the design with this plan, before the command is built:
+  development-process.md § Plans, section 7's row for the documents table, and section 8, with a section for
+  `plan link`, each with its status. The command exits non-zero only on an error, as section 8 rules for every
+  command; `refused` and `unbacked` are findings, in its records.
 - The process, already: every issue ends with the table; each row links a committed file; links go to the default
   branch; a plan carries an `## Issue NNN` heading for every issue it serves.
 
@@ -94,8 +98,9 @@ row names another repository's plan without a link.
    tables at any time; `star`'s own `--dry-run` refuses until NobleFactor/devlore-cli#1170 lets a dry run read. Each
    issue's closing pull request is reported too, when it merged none of the plans that serve the issue.
 5. **Its result** is one record for each issue and plan: the issue, the plan, the action, the row before and after,
-   and the issue's URL, with a `reason` on `refused` and `unbacked`. It exits 0 when every row was right or was written
-   and read back, and non-zero otherwise, after every record under `--all`.
+   and the issue's URL, with a `reason` on `refused` and `unbacked`. It exits non-zero only on an error: a plan or an
+   issue it cannot read, or a write that does not read back, after every record under `--all`. `refused` and
+   `unbacked` are findings, and it exits 0 on them, as section 8 rules for every `star github` command.
 6. **`remove-go-code.md`,** whose work landed in #130 on 2026-08-27, which closed no issue: Task #566 filed for it and
    closed as done in #130; the plan moved to `docs/plans/feature/566-remove-go-code.md`, its `issue:` line naming #566,
    its status complete and its boxes ticked from what #130 and #228 did; the README and plans #228 and #229, which cite
@@ -120,6 +125,10 @@ row names another repository's plan without a link.
    guide asks `[Int32]`: logged as one Task, in Triage: engprod.
 10. **The comment that closes #557** lists every issue written, by repository, with what its row said before, and the
     `unbacked` rows.
+11. **The design documents:** [development-process.md § Plans](../../guides/development-process.md#plans), the plans
+    the authority for an issue's Plan rows; [section 7](../../architecture/issue-data-model/7-the-workflow-before-and-after.md)'s
+    row for the documents table; and [section 8](../../architecture/issue-data-model/8-the-schedule-commands.md#linking-plans-plan-link),
+    a section for `plan link`. Each status gains a box for the command, left open until it is built.
 
 ## Test Plan
 
@@ -134,7 +143,7 @@ row names another repository's plan without a link.
 | 7 | `\r\n` bodies | Line endings kept |
 | 8 | A plan serving two issues, by its `issue:` line and an `## Issue NNN` heading | Both issues get the row |
 | 9 | A plan naming no issue; a bare number; a file name whose number is not its `issue:` line's; a pull request | `refused`, with its reason; the plan's own repository; `refused`; `refused` |
-| 10 | The write not read back; plans and `--all` together; a path outside `docs/plans` | Non-zero; an error; `refused` |
+| 10 | The write not read back; plans and `--all` together; a path outside `docs/plans` | Non-zero; an error, non-zero; `refused`, exit 0 |
 | 11 | `--all`: an issue two plans serve; a row no plan backs; run again | Both rows; `unbacked`, the row kept; nothing written |
 | 12 | `--check` | Nothing written; the records `--all` would return |
 | 13 | Each behavior taken out in turn | A case fails |
@@ -154,6 +163,7 @@ expected results are those of the rehearsal's 22 cases, in scratch.
 - [x] `remove-go-code.md` named for Task #566, and its citations (Requirement 6), committed by the first script after
       the plan
 - [x] Amended for `star github plan link`, ruled 2026-11-14 and 2026-11-15; reviewed with the owner on 2026-11-15
+- [x] The design documents brought to the design (Requirement 11), 2026-11-15
 
 ### Phase 2: the command and the template
 
@@ -175,6 +185,9 @@ expected results are those of the rehearsal's 22 cases, in scratch.
 | `docs/guides/pr-script-template.md` | Modify |
 | `docs/plans/remove-go-code.md`, to `docs/plans/feature/566-remove-go-code.md` | Move and modify |
 | `README.md`, `docs/plans/chore/228-star-record-is-three-different.md`, `docs/plans/chore/229-agent-rules-gains-rule-12-a.md` | Modify |
+| `docs/guides/development-process.md` | Modify: § Plans |
+| `docs/architecture/issue-data-model/7-the-workflow-before-and-after.md` and its status | Modify |
+| `docs/architecture/issue-data-model/8-the-schedule-commands.md` and its status | Modify |
 | `docs/plans/feature/557-plan-row.md` | Create |
 
 ## Open Questions

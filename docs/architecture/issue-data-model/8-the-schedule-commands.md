@@ -280,6 +280,25 @@ is built, in the same pull request, and refuse it with the command to run instea
 The two forms differ only in how they set the kind: `type: Schedule` in NobleFactor's, the label `schedule` in
 David-Noble-at-work's (read 2026-11-11).
 
+## Linking plans: plan link
+
+**Ruled 2026-11-15 (#557):** beside the schedule verbs, `star github plan link`, whose one purpose is that our issues
+trace back to the plans that reference them.
+
+| Command | Does | Writes to GitHub |
+| --- | --- | --- |
+| `plan link <plan>... [--check]` | Brings the Plan rows of the issues the plans named serve to the plans, each plan a path relative to `docs/plans` in the clone it runs in | The issues' bodies |
+| `plan link --all [--repository <owner/name>]... [--check]` | The same for every plan under `docs/plans` on each repository's default branch, writ's layers when none is named, reporting the Plan rows no plan backs | The issues' bodies |
+
+The plans are the authority. A plan names the issues it serves, the one it is named for in its `issue:` line and each
+other in an `## Issue NNN` heading, and an issue's Plan rows are built from them, never the other way; no command
+writes a plan from its issues. `--check` writes nothing, and returns the records the command would. Each record is an
+issue and a plan: what was done, `linked`, `repointed`, `replaced`, `added`, `inserted` or `appended`, or found,
+`refused` or `unbacked`, with the row before and after. Like every command here, it exits non-zero only on an error: a
+plan or an issue it cannot read, or a write that does not read back. Until `star` has a Markdown provider
+(NobleFactor/devlore-cli#1229), it reads the issue's body by its lines. #557 builds it, and its plan,
+[557-plan-row.md](../../plans/feature/557-plan-row.md), says what it does in each case.
+
 ## Building it
 
 `add` is #438, step 28 of issue tracking, iteration 1. **Ruled 2026-11-12, question 8:** the other verbs are four
