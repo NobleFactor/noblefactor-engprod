@@ -36,6 +36,10 @@ issues already filed. One pull request in this repository, from `feature/557-pla
   that works in both accounts and links a file: issue fields are NobleFactor's alone and hold no link; an issue's
   Development links name pull requests, not plans; project fields belong to a project's row. The table is a copy the
   command rebuilds and checks, so its format does not make it fragile.
+- 2026-11-15, on its syntax: `star github plan link <plan>... [--check]`, or `star github plan link --all
+  [--repository <owner/name>]... [--check]`, one or the other; a plan named by its path relative to `docs/plans`, in
+  the clone the command runs in. The first live run is `--all --check`, its report reviewed with the owner before `--all`
+  writes anything; many inconsistencies are expected.
 - The process, already: every issue ends with the table; each row links a committed file; links go to the default
   branch; a plan carries an `## Issue NNN` heading for every issue it serves.
 
@@ -69,7 +73,8 @@ row names another repository's plan without a link.
 2. **What an issue's Plan rows should be.** One row for each plan that serves the issue:
    `| Plan | [<path>](https://github.com/<repository>/blob/<default branch>/<path>) |`, the repository's name now, so a
    link through an old name such as `noblefactor-ops` is the same repository.
-3. **`star github plan link [<plan> ...]`,** run in a clone or worktree, for each issue the plans named serve, reads the
+3. **`star github plan link <plan>...`,** run in a clone or worktree, each plan its path relative to `docs/plans`, such
+   as `feature/557-plan-row.md`, its repository the clone's `origin`. For each issue the plans named serve, it reads the
    issue's body exactly and, for each of those plans, of the lines that start `| Plan |`, does the first that applies:
    one already links the plan on the default branch, another link text, an anchor or a note after it too: nothing,
    `linked`; one links the plan on another branch: that row replaced, `repointed`; one has no link, whatever its words:
@@ -81,8 +86,9 @@ row names another repository's plan without a link.
 
    It reads the body by its lines, with a TODO naming https://github.com/NobleFactor/devlore-cli/issues/1229, the
    Markdown provider that will let it read the table as values.
-4. **`--all [<repository> ...]`** does the same for every plan on the default branch of each repository named, or of
-   writ's layers, read after a fetch, never from a working tree; and reports, without changing them, the issues' Plan
+4. **`--all [--repository <owner/name>]...`** does the same for every plan under `docs/plans` on the default branch of
+   each repository named, or of writ's layers, read after a fetch, never from a working tree; plans and `--all` together
+   are an error; and reports, without changing them, the issues' Plan
    rows that no plan serving the issue backs, `unbacked`, for a person to settle by the plan, with an `## Issue NNN`
    heading, or by the row. **`--check`** reads and writes nothing, returning what each would do, so that it verifies the
    tables at any time; `star`'s own `--dry-run` refuses until NobleFactor/devlore-cli#1170 lets a dry run read. Each
@@ -95,10 +101,12 @@ row names another repository's plan without a link.
    its status complete and its boxes ticked from what #130 and #228 did; the README and plans #228 and #229, which cite
    it, citing it there. Committed by the first script, after the plan.
 7. **The template's first-script step,** in bash and PowerShell, after the push and beside each step's row, runs
-   `star github plan link <plan>` for the worktree's plans and stops unless it exits 0. § A worktree's first script, its
+   `star github plan link <plan>...` for the worktree's plans, each relative to `docs/plans`, and stops unless it exits
+   0. § A worktree's first script, its
    PowerShell form and rule 13 say so.
-8. **The issues already filed,** in the four repositories: after the merge and `writ deploy`, `--all --check` and then
-   `--all`, each issue read back, and the `unbacked` rows listed for the owner. Proposed, for the owner's ruling at this
+8. **The issues already filed,** in the four repositories: after the merge and `writ deploy`, `--all --check`, its
+   report reviewed with the owner, then `--all`, each issue read back; the `unbacked` rows, and whatever else needs a
+   person, listed for the owner, each settled by a plan's own pull request or by the row. Proposed, for the owner's ruling at this
    review:
    - devlore-cli#1179, its table Document and Role: left out of the fill, its one branch link pointed at `develop` by
      hand;
@@ -126,7 +134,7 @@ row names another repository's plan without a link.
 | 7 | `\r\n` bodies | Line endings kept |
 | 8 | A plan serving two issues, by its `issue:` line and an `## Issue NNN` heading | Both issues get the row |
 | 9 | A plan naming no issue; a bare number; a file name whose number is not its `issue:` line's; a pull request | `refused`, with its reason; the plan's own repository; `refused`; `refused` |
-| 10 | The write not read back | Non-zero |
+| 10 | The write not read back; plans and `--all` together; a path outside `docs/plans` | Non-zero; an error; `refused` |
 | 11 | `--all`: an issue two plans serve; a row no plan backs; run again | Both rows; `unbacked`, the row kept; nothing written |
 | 12 | `--check` | Nothing written; the records `--all` would return |
 | 13 | Each behavior taken out in turn | A case fails |
@@ -145,7 +153,7 @@ expected results are those of the rehearsal's 22 cases, in scratch.
       reviewed with the owner and approved on 2026-11-14
 - [x] `remove-go-code.md` named for Task #566, and its citations (Requirement 6), committed by the first script after
       the plan
-- [ ] Amended for `star github plan link`, ruled 2026-11-14 and 2026-11-15; reviewed with the owner
+- [x] Amended for `star github plan link`, ruled 2026-11-14 and 2026-11-15; reviewed with the owner on 2026-11-15
 
 ### Phase 2: the command and the template
 
@@ -154,8 +162,8 @@ expected results are those of the rehearsal's 22 cases, in scratch.
 
 ### Phase 3: the merge and the issues already filed
 
-- [ ] This pull request merged; `writ deploy`; cases 15 and 16, with what the owner rules in Requirement 8; each issue
-      read back and listed on #557, with the `unbacked` rows; step 43 Closed
+- [ ] This pull request merged; `writ deploy`; case 15, its report reviewed with the owner; case 16, with what the
+      owner rules in Requirement 8; each issue read back and listed on #557, with the `unbacked` rows; step 43 Closed
 
 ## Files to Create/Modify
 
@@ -171,4 +179,7 @@ expected results are those of the rehearsal's 22 cases, in scratch.
 
 ## Open Questions
 
-- **Requirement 8's three proposals and Requirement 9's two,** for the owner's ruling at this review.
+- **Requirement 9's two proposals,** the template's temporary files fixed here and its PowerShell style logged as a
+  Task: for the owner's ruling before Phase 2.
+- **Requirement 8's three proposals,** devlore-cli#1179 and #935 by hand and the 48 unnamed plans to #1228: for the
+  owner's ruling before Phase 3, with `--all --check`'s report.
