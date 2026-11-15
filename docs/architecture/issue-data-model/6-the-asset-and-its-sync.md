@@ -71,8 +71,12 @@ star github model restore <account> [<revision>] [--prune] [--token <sources>]
   - Each project of a kind held to its template: every team that maintains a repository gets one project for each
     template, `<Kind>: <team>`, copied from the template, linked to the team and given the team's write role; in a user
     account, `<Kind>: <account>`. One just copied loses whatever built-in workflows it came with, and keeps what its
-    template gave it (ruled 2026-11-11). A drifted one is brought back, an Iteration field's start day and duration
-    among it. Its rows, its Schedule or Scenario options, one per schedule or scenario, and its iterations are its own,
+    template gave it (ruled 2026-11-11) but its short description, below. A drifted one is brought back, an Iteration
+    field's start day and duration among it. Since 2026-11-14 (#555), each is held to its template's README too, and to
+    the short description the template names for a copy, `copy_short_description`, in which `{owner}` stands for the
+    team's slug, or for the account in a user account: `diff` reports a project whose README or short description
+    differs as `project <name> different`, and `apply` sets both, on a project it has just copied as well, since GitHub
+    gives a copy its template's own short description. Its rows, its Schedule or Scenario options, one per schedule or scenario, and its iterations are its own,
     and left alone: setting an Iteration field's start day sends each of its iterations back with its ID, so that no row
     loses its sprint (ruled 2026-11-11). An option renamed on a template is
     renamed on each copy under its old name. No project or template is ever deleted, even with `--prune`.
@@ -494,7 +498,11 @@ projects:                             # the account's four project templates
   in the model, nor are any project's built-in workflows. As built through #426's Phase 6, `get`, as `pull` before it,
   read every open project and no views; since 2026-11-10 it reads the templates alone, an organization's marked ones and
   a user account's copies of those the user reference names, and each view's name, number, layout, filter, and the
-  fields it shows, groups and sorts by. Ruled 2026-11-02 and 2026-11-03: a template's description says nothing about
+  fields it shows, groups and sorts by. Since 2026-11-14 (#555), each template also carries `copy_short_description`,
+  the short description of a team's project copied from it, which `get` reads from the account's projects of its kind:
+  the text most of them share, each one's owner, the team's slug or the account, written `{owner}`. A tie goes to the
+  oldest, the one GitHub numbered first, and a template with no such project has an empty one. Each reference names it
+  on each template, and `backup` records it with the rest. Ruled 2026-11-02 and 2026-11-03: a template's description says nothing about
   star, Status is a field on a project row that anyone may set, and a Schedule project has no Next column. Ruled
   2026-11-03: a team's Schedule project holds its committed tasks and bugs; its single-select Schedule field names the
   schedule each row belongs to, one option per schedule, named for its Schedule issue; Step orders the rows within a

@@ -32,7 +32,9 @@ GitHub's default Status options, View 1 and built-in workflows deleted without i
 Ruled 2026-11-10 with #437 (§ GitHub is the model). `diff` compares every attribute, color among them, and a reference
 names every attribute. `apply` never deletes a team, a project or a template, nor removes or lowers a team's role, even
 with `--prune`; it writes a team only from the account's own backup, and labels only from the account's own backup or a
-reference, never another account's. Every team that maintains a repository gets one project of each kind. A new
+reference, never another account's. Every team that maintains a repository gets one project of each kind. Ruled
+2026-11-14 (#555): each reference names the short description of a project copied from each template, and `diff` and
+`apply` hold every project of a kind to it, as to its template's README. A new
 account joins through `apply`, which gives it its `.github` files and, in each participating repository, the Triage
 workflow, its variable and the secrets the workflow signs in with, read from the template: an organization's GitHub
 App's, a user account's token. `--token` names where each secret comes from, `env:` or `file:`, never its value.
@@ -63,7 +65,10 @@ David-Noble-at-work/.github's own workflow (David-Noble-at-work/.github#7 and #8
 Done 2026-11-14 in #453: `star github model apply` set the Scenario type's description, and the `scenario` label's in
 personal and David-Noble-at-work/.github, to "Collection: what someone wants to do, how to walk through it, and the
 features it uses", and `star github model backup` recorded each account's model in its `.github` repository (§ The
-asset, under `types`).
+asset, under `types`). Fixed 2026-11-14 in #555: `diff` and `apply` hold each project of a kind to its template's README
+and to the short description the template names for a copy, `copy_short_description`, which each reference names and
+`get` reads from the account's projects of the kind, and a project `apply` copies gets both (§ GitHub is the model, and
+§ The asset, under `projects`).
 
 Pulled again 2026-11-02, Chore retired: the four types and projects 4 to 22. Of those, only the Schedule and Thread
 templates, projects 7 and 8, belong in the model as ruled 2026-11-03, the Thread template now being the Scenario

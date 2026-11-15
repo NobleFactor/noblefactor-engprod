@@ -6,8 +6,10 @@
 # Test-StarGitHub - Tests the com.noblefactor.ops.GitHub star extension against a stand-in gh: the report's records and
 # selection (#379) and the triage sweep (#436), as docs/plans/feature/436-triage-sweep.md's test plan lists them; and
 # each account's model read from GitHub when a command needs it, star github model get and backup, and the sweep's
-# two-types rule (#426), as docs/plans/feature/426-model-pull-to-dot-github.md's test plan lists them; and star github
-# schedule add (#438), as docs/plans/feature/438-schedule-add.md's test plan lists them
+# two-types rule (#426), as docs/plans/feature/426-model-pull-to-dot-github.md's test plan lists them; star github
+# schedule add (#438), as docs/plans/feature/438-schedule-add.md's test plan lists them; and each team's project of a
+# kind held to its template's README and to the short description the template names for a copy (#555), as
+# docs/plans/fix/555-copy-readme.md's test plan lists them
 
 [[ -r "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" ]] || {
     printf '%s: cannot find Declare-BashScript in %s\n' "${0##*/}" "$(dirname "$0")/../Home/common/.local/bin" >&2
@@ -1644,9 +1646,10 @@ expect "14: get records each template option's color and description" ok '
 expect "14: get records each type's pinned fields" ok '
     (.types[] | select(.name == "Bug") | .pinned_fields) == ["Severity", "Area"]
     and (.types[] | select(.name == "Feature") | .pinned_fields) == []'
-expect "14: get records each template's short description, README, public flag, and the teams and repositories linked to it" ok '
-    (.projects[] | select(.name == "Triage") | {short_description, readme, public, teams, repositories})
-        == {short_description: "The Triage project", readme: "# Triage", public: false, teams: [], repositories: []}'
+expect "14: get records each template's short description, its copies', README, public flag, and the teams and repositories linked to it" ok '
+    (.projects[] | select(.name == "Triage") | {short_description, copy_short_description, readme, public, teams, repositories})
+        == {short_description: "The Triage project", copy_short_description: "The Triage: {owner} project", readme: "# Triage",
+            public: false, teams: [], repositories: []}'
 expect "14: get records each team's description, privacy, notification setting, parent, and its role on every repository" ok '
     (.teams[] | select(.slug == "engprod") | {description, privacy, notification_setting, parent, roles})
         == {description: "Engineering productivity", privacy: "closed", notification_setting: "notifications_enabled",
@@ -2245,6 +2248,130 @@ check "55: its row has u1, Status Open and step 2, and test-user/personal#10 is 
     "${amendments}"' (.projects.PVT_s_user.items[] | select(.content == "I_personal_12") | .values) == {Schedule: "u1", Status: "Open", Step: 2}
         and amendments("I_personal_10")[-1] == "- '"${today}"', by stand-in: step 2 was added, Task test-user/personal#12, a " +
         "personal task. Personal work."'
+
+# 56 to 61. Each team's project of a kind is held to its template's README, and to the short description the template
+# names for a copy, copy_short_description, the team's slug, or the user account, written {owner} (#555), as
+# docs/plans/fix/555-copy-readme.md's test plan lists them. Here NobleFactor has a Backlog template, and a third team,
+# it, which maintains NobleFactor/gamma: its slug is part of a word, waiting, in its Triage project's short description.
+# Each project's README is its template's but Schedule: engprod's, and their short descriptions are:
+#
+#   Triage: engprod (project 5), the oldest copy of Triage, a text of its own; Triage: devlore (13) and Triage: it (14)
+#   one text, each naming its team.
+#   Schedule: engprod (12) and Schedule: devlore (15) one text, each naming its team; it has no Schedule project.
+#   Backlog: engprod (16) and Backlog: devlore (17) a text each; it has no Backlog project.
+make_extension "${run_directory}/data-copies"
+jq '.[0].data.organization.teams.nodes += [{name: "IT", slug: "it", id: "T_it", description: "", privacy: "VISIBLE",
+        notificationSetting: "NOTIFICATIONS_ENABLED", parentTeam: null,
+        repositories: {edges: [{permission: "MAINTAIN", node: {nameWithOwner: "NobleFactor/gamma"}}]}}]' \
+    "${run_directory}/fixtures/starOrganizationModel/NobleFactor.json" |
+    override "${run_directory}/data-copies" starOrganizationModel/NobleFactor.json
+jq -n '[[]]' | override "${run_directory}/data-copies" rest/repos/NobleFactor/gamma/labels_per_page_100.json
+jq 'def copy($id; $n; $title; $short; $readme): .id as $from | walk(if type == "string" then gsub($from; $id) else . end)
+        | .number = $n | .title = $title | .template = false | .shortDescription = $short | .readme = $readme;
+    def queue($team): "Triage for \($team): the queue of issues waiting to be classified";
+    def committed($team): "Schedule of \($team): its committed tasks and bugs";
+    .[0].data.organization.projectsV2.nodes |= (first(.[] | select(.id == "PVT_template_triage")) as $triage
+        | first(.[] | select(.id == "PVT_template_schedule")) as $schedule
+        | ($triage | copy("PVT_template_backlog"; 25; "Backlog"; "The Backlog project"; "# Backlog") | .template = true) as $backlog
+        | map(if .id == "PVT_triage_engprod" then .shortDescription = "Triage for engprod, before" | .readme = "# Triage"
+            elif .id == "PVT_schedule_engprod" then .shortDescription = committed("engprod") | .readme = "# Schedule, before"
+            else . end)
+        + [$backlog,
+            ($triage | copy("PVT_triage_devlore"; 13; "Triage: devlore"; queue("devlore"); "# Triage")),
+            ($triage | copy("PVT_triage_it"; 14; "Triage: it"; queue("it"); "# Triage")),
+            ($schedule | copy("PVT_schedule_devlore"; 15; "Schedule: devlore"; committed("devlore"); "# Schedule")),
+            ($backlog | copy("PVT_backlog_engprod"; 16; "Backlog: engprod"; "Backlog of engprod: its accepted work not yet scheduled";
+                "# Backlog")),
+            ($backlog | copy("PVT_backlog_devlore"; 17; "Backlog: devlore"; "Backlog of devlore: accepted work"; "# Backlog"))])' \
+    "${run_directory}/fixtures/starProjects/NobleFactor.json" | override "${run_directory}/data-copies" starProjects/NobleFactor.json
+
+# 56. get gives each template the short description most of its copies share, each one's team as {owner}: Schedule's
+# two agree; two of Triage's three outvote the oldest, it's text naming it in "Triage for it" and not in "waiting"; and
+# Backlog's two tie, and the oldest's wins, though the other's comes first in the alphabet. A template with no copy has
+# an empty one, as test-user's Backlog does.
+run_star "${run_directory}/data-copies" github model get NobleFactor
+model_copies="${output}"
+expect "56: get gives each template the text most of its copies share, each one's team as {owner}, a tie to the oldest" ok '
+    (.projects | map({key: .name, value: .copy_short_description}) | from_entries) == {
+        Triage: "Triage for {owner}: the queue of issues waiting to be classified",
+        Schedule: "Schedule of {owner}: its committed tasks and bugs",
+        Backlog: "Backlog of {owner}: its accepted work not yet scheduled"}'
+run_star "${data}" github model get test-user
+expect "56: a template with no copy has an empty copy_short_description" ok '
+    (.projects[] | select(.name == "Backlog") | has("copy_short_description") and .copy_short_description == "")'
+
+# 57 and 58. diff reports a team's project whose README is not its template's, or whose short description is not the
+# template's copy_short_description with its team's slug for {owner}, as one record, project <name> different; a project
+# that matches its template in both has none.
+printf '%s\n' "${model_copies}" >"${run_directory}/work/copies.json"
+run_star "${run_directory}/data-copies" github model diff copies.json NobleFactor
+expect "57: diff reports a team's project whose README is not its template's" ok '
+    [.[] | select(.kind == "project" and .change == "different")] as $different
+    | any($different[]; .path == "Schedule: engprod" and .github.readme == "# Schedule, before" and .model.readme == "# Schedule"
+        and .github.short_description == .model.short_description)
+    and (any($different[]; .path == "Schedule: devlore") | not)'
+expect "58: diff reports a team's project whose short description is not its template's for a copy, its team's slug filled in" ok '
+    [.[] | select(.kind == "project" and .change == "different")] as $different
+    | any($different[]; .path == "Triage: engprod" and .github.short_description == "Triage for engprod, before"
+        and .model.short_description == "Triage for engprod: the queue of issues waiting to be classified"
+        and .github.readme == .model.readme)
+    and any($different[]; .path == "Backlog: devlore" and .github.short_description == "Backlog of devlore: accepted work"
+        and .model.short_description == "Backlog of devlore: its accepted work not yet scheduled")
+    and (any($different[]; .path == "Triage: devlore" or .path == "Triage: it" or .path == "Backlog: engprod") | not)'
+
+# 59. apply writes each drifted project's README and short description, what differs alone; written back into GitHub's
+# projects, what it wrote leaves diff nothing to report of any of them.
+run_star "${run_directory}/data-copies" github model apply copies.json NobleFactor
+expect "59: apply sets a team's project's README and short description where they differ, each project recorded as changed" ok "${writes}"'
+    def updates($id): [writes[] | .[] | select(type == "string" and test("updateProjectV2\\(input: \\{projectId: \"\($id)\""))];
+    ([.[] | select(.kind == "project" and .action == "changed") | .path] | sort) == ["Backlog: devlore", "Schedule: engprod", "Triage: engprod"]
+    and (updates("PVT_schedule_engprod") | length == 1 and (.[0] | test("readme: \"# Schedule\"") and (test("shortDescription") | not)))
+    and (updates("PVT_triage_engprod") | length == 1 and (.[0] | test("shortDescription: \"Triage for engprod: the queue of issues waiting to be classified\"")
+        and (test("readme") | not)))
+    and (updates("PVT_backlog_devlore") | length == 1
+        and (.[0] | test("shortDescription: \"Backlog of devlore: its accepted work not yet scheduled\"")))
+    and ([updates("PVT_triage_devlore", "PVT_triage_it", "PVT_schedule_devlore", "PVT_backlog_engprod")[]] == [])'
+
+# 60. A project apply copies gets its template's README, and the short description its template names for a copy, its
+# team's slug filled in, written once the copy is made.
+expect "60: a project apply copies gets its template's README and the short description its template names for a copy" ok "${writes}"'
+    any(.[]; .kind == "project" and .path == "Schedule: it" and .action == "created")
+    and any(.[]; .kind == "project" and .path == "Backlog: it" and .action == "created")
+    and wrote("updateProjectV2\\(input: \\{projectId: \"NEW_starCopyProject\", shortDescription: \"Schedule of it: its committed tasks and bugs\", readme: \"# Schedule\"\\}")
+    and wrote("updateProjectV2\\(input: \\{projectId: \"NEW_starCopyProject\", shortDescription: \"Backlog of it: its accepted work not yet scheduled\", readme: \"# Backlog\"\\}")
+    and before("copyProjectV2.*Schedule: it"; "updateProjectV2.*Schedule of it")'
+
+# What apply wrote with updateProjectV2, each project's ID with the short description and README it was given, written
+# back into data-copies' projects, so that diff reads them as GitHub would after the run.
+jq --slurpfile calls "${run_directory}/calls.jsonl" 'def text($name): [capture($name + ": (?<v>\"([^\"\\\\]|\\\\.)*\")").v][0] | if . then fromjson else null end;
+    [$calls[] | .[] | select(type == "string" and startswith("query=mutation starUpdateProject"))
+        | {id: capture("projectId: \"(?<id>[^\"]+)\"").id, short: text("shortDescription"), readme: text("readme")}] as $updates
+    | reduce $updates[] as $u (.; .[0].data.organization.projectsV2.nodes |= map(if .id == $u.id
+        then (if $u.short != null then .shortDescription = $u.short else . end) | (if $u.readme != null then .readme = $u.readme else . end)
+        else . end))' "${run_directory}/data-copies/fixtures/starProjects/NobleFactor.json" >"${run_directory}/work/copies-after.json"
+override "${run_directory}/data-copies" starProjects/NobleFactor.json <"${run_directory}/work/copies-after.json"
+run_star "${run_directory}/data-copies" github model diff copies.json NobleFactor
+expect "59: then diff finds no team's project whose README or short description differs from its template's" ok '
+    [.[] | select(.kind == "project" and .change == "different")] == []'
+
+# 61. A reference names each template's copy_short_description, refused without it, and diff holds each team's project
+# to the reference's text, its team's slug for {owner}, or the account's in a user account; a missing project's record
+# carries it too.
+jq -n '{version: 1, account: "user", types: [], templates: [{name: "Triage", short_description: "A copy of the Triage template"}]}' \
+    >"${run_directory}/work/no-copy-text.json"
+run_star "${data}" github model diff no-copy-text.json test-user
+expect "61: a reference whose template names no copy_short_description is refused, the template named" error "" \
+    'Triage names no copy_short_description' text
+run_star "${run_directory}/data-copies" github model diff "${reference}/organization.yaml" NobleFactor
+expect "61: diff holds each team's project to the organization reference's text for a copy, its team's slug filled in" ok '
+    any(.[]; .kind == "project" and .path == "Triage: engprod" and .change == "different"
+        and (.model.short_description | test("^engprod.s Triage project: the team.s queue of issues waiting to be classified\\.$")))
+    and any(.[]; .kind == "project" and .path == "Scenario: it" and .change == "missing"
+        and (.model.short_description | test("^it.s Scenario project: its Scenario issues and the tasks and bugs found while walking them$")))'
+run_star "${data}" github model diff "${reference}/user.yaml" test-user
+expect "61: and a user account's project to the user reference's, the account filled in" ok '
+    any(.[]; .kind == "project" and .path == "Triage: test-user" and .change == "different"
+        and (.model.short_description | test("^test-user.s Triage project: the account.s queue of issues waiting to be classified\\.$")))'
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"

@@ -308,9 +308,17 @@ teams: []
 # (noblefactor-engprod#437, decision 14). Below is what an organization adds to them, from its issue fields: the Area
 # field on Triage, shown in both its views, and the Missing Area view's filter on it; the Priority field on Backlog,
 # shown in both its views, and the By priority view, sorted on it. Read from NobleFactor's templates on 2026-11-10.
+#
+# Each template also names the short description of a team's project made from it, copy_short_description, the team's
+# slug written {owner} (#555, 2026-11-14). star github model diff holds each team's project of a kind to that text and
+# to its template's readme, as to its fields, options and views, and apply sets both, on a project it copies too, since
+# GitHub gives a copy its template's own short description. The texts are those engprod's and devlore's projects held
+# on 2026-11-14, read from GitHub, but Scenario's. Their Scenario projects' said each held the team's features, from
+# before the ruling of 2026-11-04; the text below says what a Scenario project holds since.
 templates:
   - name: "Triage"
     short_description: "The organization's Triage template: copy it to make a team's Triage project"
+    copy_short_description: "{owner}'s Triage project: the team's queue of issues waiting to be classified."
     fields:
       - { name: "Area", type: single-select, issue_field: true }
     views:
@@ -330,6 +338,7 @@ templates:
         sort_by: []
   - name: "Backlog"
     short_description: "The organization's Backlog template: copy it to make a team's Backlog project"
+    copy_short_description: "{owner}'s Backlog project: its accepted work not yet scheduled"
     fields:
       - { name: "Priority", type: single-select, issue_field: true }
     views:
@@ -349,5 +358,7 @@ templates:
         sort_by: [{ field: "Priority", direction: "asc" }]
   - name: "Schedule"
     short_description: "The organization's Schedule template: copy it to make a team's Schedule project"
+    copy_short_description: "{owner}'s Schedule project: its committed tasks and bugs"
   - name: "Scenario"
     short_description: "The organization's Scenario template: copy it to make a team's Scenario project"
+    copy_short_description: "{owner}'s Scenario project: its Scenario issues and the tasks and bugs found while walking them"

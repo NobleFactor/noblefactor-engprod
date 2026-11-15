@@ -319,9 +319,17 @@ labels:
 # (noblefactor-engprod#437, decision 14). Below is what a user account adds to them, having no issue fields: the Labels
 # column in Triage's and Backlog's views, and the Missing Area view's filter on the area labels. Read from
 # David-Noble-at-work's copies on 2026-11-10.
+#
+# Each copy also names the short description of the account's project made from it, copy_short_description, the account
+# written {owner} (#555, 2026-11-14). star github model diff holds each of the account's projects of a kind to that text
+# and to its copy's readme, as to its fields, options and views, and apply sets both, on a project it copies too, since
+# GitHub gives a project copied from another that one's short description. The texts are those David-Noble-at-work's
+# projects held on 2026-11-14, read from GitHub, but Scenario's. Its project's said it held the account's features, from
+# before the ruling of 2026-11-04; the text below says what a Scenario project holds since.
 templates:
   - name: "Triage"
     short_description: "{account}'s copy of NobleFactor's Triage template. A user account can't have templates, so a Triage project is copied from this one."
+    copy_short_description: "{owner}'s Triage project: the account's queue of issues waiting to be classified."
     views:
       - name: "View 1"
         layout: table
@@ -339,6 +347,7 @@ templates:
         sort_by: []
   - name: "Backlog"
     short_description: "{account}'s copy of NobleFactor's Backlog template. A user account can't have templates, so a Backlog project is copied from this one."
+    copy_short_description: "{owner}'s Backlog project: its accepted work not yet scheduled"
     views:
       - name: "View 1"
         layout: table
@@ -349,5 +358,7 @@ templates:
         sort_by: []
   - name: "Schedule"
     short_description: "{account}'s copy of NobleFactor's Schedule template. A user account can't have templates, so a Schedule project is copied from this one."
+    copy_short_description: "{owner}'s Schedule project: its committed tasks and bugs"
   - name: "Scenario"
     short_description: "{account}'s copy of NobleFactor's Scenario template. A user account can't have templates, so a Scenario project is copied from this one."
+    copy_short_description: "{owner}'s Scenario project: its Scenario issues and the tasks and bugs found while walking them"

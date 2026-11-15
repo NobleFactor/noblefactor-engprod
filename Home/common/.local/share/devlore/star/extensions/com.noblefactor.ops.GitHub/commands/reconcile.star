@@ -10,7 +10,8 @@
 # repository that takes part, and its templates are reference/templates.yaml's with its kind's additions (decision 14).
 # The account's model is read from GitHub with the code get reads it with, leniently, so that a type that fits no model
 # is a difference rather than a stop, with every open project of the account, to hold each project of a kind to its
-# template (decision 7).
+# template (decision 7): its fields, options and views, its README, and the short description the template names for a
+# copy, copy_short_description, its owner's name for {owner} (#555, 2026-11-14).
 #
 # On the same account a thing matches by its ID, so a rename is a rename; across accounts, and against a reference,
 # which holds no IDs, by name. Every attribute is compared, whether the model names it or not: a value the model lacks is
@@ -22,7 +23,7 @@
 # GitHub's API cannot make the change, a view's grouping or sort. The .github files, and each participating
 # repository's Triage workflow, variable and secrets, come last, from participation.star (decision 12).
 
-load("commands/model.star", "extension_dir", "read_account", "read_text")
+load("commands/model.star", "extension_dir", "project_owners", "public", "read_account", "read_text", "with_owner")
 load("commands/participation.star", participation_compare = "compare", participation_read = "read")
 
 # The order the records come in, which is the order apply makes them in: each kind after what it depends on.
@@ -57,6 +58,7 @@ _VIEW = ["layout", "filter", "fields"]
 _VIEW_BY_HAND = ["group_by", "vertical_group_by", "sort_by"]
 _TEMPLATE = ["short_description", "readme", "public"]
 _TEMPLATE_LINKS = ["teams", "repositories"]
+_COPY = ["short_description", "readme"]
 _TEAM = ["name", "description", "privacy", "notification_setting", "parent", "roles", "repositories"]
 
 # What every reference entry names, a deliberate none written as one, null (the owner, 2026-11-10): an attribute left out
@@ -67,7 +69,7 @@ _REQUIRED = {
     "field": ["name", "type", "description", "visibility"],
     "field option": ["name", "color", "description", "priority"],
     "label": ["name", "label", "color", "description"],
-    "template": ["name", "short_description", "readme", "public"],
+    "template": ["name", "short_description", "copy_short_description", "readme", "public"],
     "template field": ["name", "type"],
     "template option": ["name", "color", "description"],
     "view": ["name", "layout", "filter", "fields", "group_by", "vertical_group_by", "sort_by"],
@@ -133,7 +135,7 @@ def templates_for(additions):
                 order.append(v["name"])
             views[v["name"]] = v
         merged = {"name": t["name"], "fields": list(t.get("fields") or []) + list(a.get("fields") or []), "views": [views[n] for n in order]}
-        for attribute in ["short_description", "readme", "public"]:
+        for attribute in ["short_description", "copy_short_description", "readme", "public"]:
             if attribute in a:
                 merged[attribute] = a[attribute]
             elif attribute in t:
@@ -176,7 +178,8 @@ def from_reference(ref, github):
     """A reference brought to the form get returns against the account it is compared with.
 
     Its labels go on each repository of the account that takes part; its templates are the common set with its kind's
-    additions.
+    additions. Its texts say {account} where they name the account; a copy's short description keeps {owner}, which diff
+    fills in for each copy.
     """
     user = ref.get("account") == "user"
     source = "the " + ("user" if user else "organization") + " reference"
@@ -206,7 +209,13 @@ def from_reference(ref, github):
     m["label_kinds"] = _label_kinds(wanted)
     account = github["account"]
     m["projects"] = [
-        dict(t, template = not user, short_description = _for(t["short_description"], account), readme = _for(t["readme"], account))
+        dict(
+            t,
+            template = not user,
+            short_description = _for(t["short_description"], account),
+            copy_short_description = _for(t["copy_short_description"], account),
+            readme = _for(t["readme"], account),
+        )
         for t in templates_for(ref.get("templates"))
     ]
     return m
@@ -415,19 +424,23 @@ def compare(model, github, projects, kind):
 
     renames = template_renames(out)
 
-    # A team owns projects of each kind when it maintains a repository: a repository takes part when a team maintains
-    # it, and its issues reach that team's projects (ruled 2026-11-03). A team that maintains none, an organization's
-    # owners, owns none.
-    owners = [t["slug"] for t in github.get("teams") or [] if t.get("repositories")] if kind == "organization" else [github["account"]]
+    # Each owner's project of a kind, a team's or the user account's, is held to its template: its fields, options and
+    # views, its README, and the short description the template names for a copy, the owner's name for {owner} (#555).
     by_name = {p["name"]: p for p in projects if not p.get("template")}
     for mt in templates:
-        for owner in owners:
+        for owner in project_owners(github, kind):
             name = mt["name"] + ": " + owner
             gp = by_name.get(name)
-            if gp == None:
-                out.append(record("project", name, "missing", None, {"name": name, "template": mt["name"], "owner": owner}))
-                continue
-            _project(out, name, mt, gp, False, own, renames, ("project-field", "project-option", "project-view"))
+            m = {
+                "name": name,
+                "template": mt["name"],
+                "owner": owner,
+                "short_description": with_owner(mt.get("copy_short_description"), owner),
+                "readme": mt.get("readme"),
+            }
+            _compare(out, "project", name, m, public(gp) if gp != None else None, _COPY, False, drop = ["fields", "views"])
+            if gp != None:
+                _project(out, name, mt, gp, False, own, renames, ("project-field", "project-option", "project-view"))
 
     if kind == "organization" and same and "teams" in model:
         for mt, gt in match(model.get("teams") or [], github.get("teams") or [], same, key = "slug"):
