@@ -83,7 +83,7 @@ write, bash run by bash and PowerShell parsed by PowerShell's own parser and run
 
 - [ ] Committed on `feature/557-plan-row` by the worktree's first script, with the template's first-script step;
       reviewed with the owner
-- [ ] `remove-go-code.md` named for Task #566, and its citations (Requirement 3), committed by the first script after
+- [x] `remove-go-code.md` named for Task #566, and its citations (Requirement 3), committed by the first script after
       the plan
 
 ### Phase 2: the template's step

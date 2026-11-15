@@ -3,7 +3,7 @@ title: "The star record is three different things: the rest goes"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/228
 status: active
 created: 2026-09-24
-updated: 2026-09-24
+updated: 2026-11-14
 ---
 
 # Plan: the rest of the star record goes
@@ -41,7 +41,7 @@ devlore-cli. This removes what is left.
 
 **Two root drafts:** `PLAN-starlark-extensions.md` — "Starlark Extension Model for **nf-ops**",
 commit #4, a tool the README says was never built — and `draft-star-lint-deadcode.md`. #130's open
-question at `remove-go-code.md:108`, *"archive under `docs/`, or delete?"*, is answered here.
+question at `566-remove-go-code.md:113`, *"archive under `docs/`, or delete?"*, is answered here.
 
 **Two guides:** `writing-extensions.md` and `configuration.md`, both wholly star-authoring and both
 orphaned from the README's standards table.
@@ -53,7 +53,7 @@ only from `writing-extensions.md`.
 
 ## What stays, and why
 
-**`docs/plans/remove-go-code.md`.** Its subject is star-era, but it is the charter for the CI gate
+**`docs/plans/feature/566-remove-go-code.md`.** Its subject is star-era, but it is the charter for the CI gate
 this repository runs today: the `quality-gate` job name required by ruleset 12426847, the frontmatter
 and codespell steps, and `.github/frontmatter-exempt` itself.
 
@@ -90,7 +90,7 @@ noblefactor-ops pull request through, which is where #199 says it closes.
 ### Phase 2: The deletions and their pointers, one commit
 
 - [x] Six architecture documents, nine plans, two root drafts, two guides, the schema, the example — 26 files
-- [x] The six pointers above, in the same commit — rule 12. Plus `remove-go-code.md`, whose two open questions this answers
+- [x] The six pointers above, in the same commit — rule 12. Plus `566-remove-go-code.md`, whose two open questions this answers
 
 ### Phase 3: #234 closes
 
