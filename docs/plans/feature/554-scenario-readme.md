@@ -1,7 +1,7 @@
 ---
 title: "The Scenario projects' readme says they hold the scenarios and the tasks and bugs found while walking them"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/554
-status: active
+status: complete
 created: 2026-11-14
 updated: 2026-11-14
 ---
@@ -75,7 +75,7 @@ Read on 2026-11-14:
 
 ### Phase 3: the merge
 
-- [ ] This pull request merged, closing #554 and #555; after #555's live run, every Scenario project read back and
+- [x] This pull request merged, closing #554 and #555; after #555's live run, every Scenario project read back and
       both models recorded by `backup`; #554's evidence, by the template's schedule step; step 41 Closed
 
 ## Files to Create/Modify

@@ -1,7 +1,7 @@
 ---
 title: "star github model diff and apply leave a team copy's readme behind its template's"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/555
-status: active
+status: complete
 created: 2026-11-14
 updated: 2026-11-14
 ---
@@ -77,7 +77,7 @@ Read on 2026-11-14:
 
 ### Phase 3: the merge and the live run
 
-- [ ] The pull request merged, closing #554 and #555; cases 8 and 9 run on both accounts with the code merged; #555's
+- [x] The pull request merged, closing #554 and #555; cases 8 and 9 run on both accounts with the code merged; #555's
       evidence; step 42 Closed
 
 ## Files to Create/Modify
