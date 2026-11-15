@@ -336,14 +336,15 @@ omitted. The plan arrives when the branch does, as the order above already place
 completed then. Every issue carries the table from the day it is filed; the plan link is the one row
 that is expected to start empty.
 
-**The plans are the authority for an issue's Plan rows** (ruled 2026-11-15, #557). A plan names the
-issues it serves: the one it is named for, in its `issue:` line, and each other in an `## Issue NNN`
-heading. An issue has zero or more plans, and its Plan rows are built from them, one for each plan that
-serves it, never the other way. `star github plan link`, which a worktree's first script runs once its
-plan is pushed, writes them, and `star github plan link --all --check` checks every issue's rows against
-the plans, writing nothing. A Plan row that no plan backs is reported, and settled by the plan, with an
-`## Issue NNN` heading, or by the row. Until #557 builds the command, the first script writes the row by
-hand.
+**The plans are the authority for the table** (ruled 2026-11-15, #557). A plan names the issues it
+serves: the one it is named for, in its `issue:` line, and each other in an `## Issue NNN` heading. It
+names the design documents it bears on in its frontmatter, `documents:`, each a kind and a path or a
+link. An issue has zero or more plans, and its `Plan and design documents` section is written from them:
+a Plan row for each plan that serves it, then each plan's documents. `star github plan link`, which a
+worktree's first script runs once its plan is pushed, finds the section by its heading and replaces it
+whole, and `star github plan link --all --check` checks every issue's section against the plans, writing
+nothing and listing any row the plans would drop. An issue no plan serves keeps the section it was filed
+with. Until #557 builds the command, the first script writes the row by hand.
 
 ---
 

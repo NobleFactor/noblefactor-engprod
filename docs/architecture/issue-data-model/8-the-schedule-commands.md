@@ -287,17 +287,20 @@ trace back to the plans that reference them.
 
 | Command | Does | Writes to GitHub |
 | --- | --- | --- |
-| `plan link <plan>... [--check]` | Brings the Plan rows of the issues the plans named serve to the plans, each plan a path relative to `docs/plans` in the clone it runs in | The issues' bodies |
-| `plan link --all [--repository <owner/name>]... [--check]` | The same for every plan under `docs/plans` on each repository's default branch, writ's layers when none is named, reporting the Plan rows no plan backs | The issues' bodies |
+| `plan link <plan>... [--check]` | Writes the `Plan and design documents` section of each issue the plans named serve, from every plan that serves it, each plan a path relative to `docs/plans` in the clone it runs in | The issues' bodies |
+| `plan link --all [--repository <owner/name>]... [--check]` | The same for every issue a plan under `docs/plans` on each repository's default branch serves, writ's layers when none is named | The issues' bodies |
 
 The plans are the authority. A plan names the issues it serves, the one it is named for in its `issue:` line and each
-other in an `## Issue NNN` heading, and an issue's Plan rows are built from them, never the other way; no command
-writes a plan from its issues. `--check` writes nothing, and returns the records the command would. Each record is an
-issue and a plan: what was done, `linked`, `repointed`, `replaced`, `added`, `inserted` or `appended`, or found,
-`refused` or `unbacked`, with the row before and after. Like every command here, it exits non-zero only on an error: a
-plan or an issue it cannot read, or a write that does not read back. Until `star` has a Markdown provider
-(NobleFactor/devlore-cli#1229), it reads the issue's body by its lines. #557 builds it, and its plan,
-[557-plan-row.md](../../plans/feature/557-plan-row.md), says what it does in each case.
+other in an `## Issue NNN` heading, and the design documents it bears on, in its frontmatter's `documents:`. An
+issue's section is written from them: a Plan row for each plan that serves it, then each plan's documents. The command
+finds the section by its heading, `Plan and design documents` at level 2 or 3, and replaces it whole, reading none of
+its rows; with no such heading it adds the section, and with two it writes nothing. An issue no plan serves is not
+touched, and no command writes a plan from its issues. `--check` writes nothing, and returns the records the command
+would. Each record is an issue: the plans that serve it, what was done, `written`, `unchanged` or `appended`, or
+`refused`, the section before and after, and the rows the new section drops. Like every command here, it exits
+non-zero only on an error: a plan or an issue it cannot read, or a write that does not read back. Until `star` has a
+Markdown provider (NobleFactor/devlore-cli#1229), it finds the heading by the body's lines. #557 builds it, and its
+plan, [557-plan-row.md](../../plans/feature/557-plan-row.md), says what it does in each case.
 
 ## Building it
 
