@@ -288,7 +288,7 @@ trace back to the plans that reference them.
 | Command | Does | Writes to GitHub |
 | --- | --- | --- |
 | `plan link <plan>... [--check]` | Writes the `Plan and design documents` section of each issue the plans named serve, from every plan that serves it, each plan a path relative to `docs/plans` in the clone it runs in | The issues' bodies |
-| `plan link --all [--repository <owner/name>]... [--check]` | The same for every issue a plan under `docs/plans` on each repository's default branch serves, writ's layers when none is named | The issues' bodies |
+| `plan link --all [--repository <owner/name>,...] [--check]` | The same for every issue a plan under `docs/plans` on each repository's default branch serves, writ's layers when none is named | The issues' bodies |
 
 The plans are the authority. A plan names the issues it serves, the one it is named for in its `issue:` line and each
 other in an `## Issue NNN` heading, and the design documents it bears on, in its frontmatter's `documents:`. An
@@ -298,7 +298,10 @@ its rows; with no such heading it adds the section, and with two it writes nothi
 touched, and no command writes a plan from its issues. `--check` writes nothing, and returns the records the command
 would. Each record is an issue: the plans that serve it, what was done, `written`, `unchanged` or `appended`, or
 `refused`, the section before and after, and the rows the new section drops. Like every command here, it exits
-non-zero only on an error: a plan or an issue it cannot read, or a write that does not read back. Until `star` has a
+non-zero only on an error: a plan or an issue it cannot read, or a write that does not read back; under `--all` it does
+every other issue first, then fails naming each error. A link points by the issue's state: an open issue's to the
+default branch, and one closed by a merged pull request to that pull request's merge commit, a fixed record of what
+landed. `--repository` takes a comma-separated list, as `--blocked-by` does. Until `star` has a
 Markdown provider (NobleFactor/devlore-cli#1229), it finds the heading by the body's lines. #557 builds it, and its
 plan, [557-plan-row.md](../../plans/feature/557-plan-row.md), says what it does in each case.
 

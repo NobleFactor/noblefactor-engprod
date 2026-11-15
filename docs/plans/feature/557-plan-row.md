@@ -35,7 +35,7 @@ every plan it brings the issues already filed to the same table. One pull reques
   that works in both accounts and links a file: issue fields are NobleFactor's alone and hold no link; an issue's
   Development links name pull requests, not plans; project fields belong to a project's row.
 - 2026-11-15, on its syntax: `star github plan link <plan>... [--check]`, or `star github plan link --all
-  [--repository <owner/name>]... [--check]`, one or the other; a plan named by its path relative to `docs/plans`, in
+  [--repository <owner/name>,...] [--check]`, one or the other; a plan named by its path relative to `docs/plans`, in
   the clone the command runs in. The first live run is `--all --check`, its report reviewed with the owner before `--all`
   writes anything; many inconsistencies are expected.
 - 2026-11-15: the command exits non-zero only on an error, as section 8 rules for every command; what it finds is in its
@@ -50,6 +50,29 @@ every plan it brings the issues already filed to the same table. One pull reques
   plans give. It reads none of the section's rows. So the plans are the authority for the whole table: a plan names, in
   its frontmatter, the design documents it bears on, and the table is the issue's plans and their documents. An issue
   no plan serves keeps the section it was filed with.
+- 2026-11-15: `--repository` takes a comma-separated list, `--repository A,B`, as `--blocked-by` does, since `star`'s
+  extension flags cannot repeat. Every flag that takes such a list, `--blocked-by`, `--token` and `--repository`,
+  carries a TODO naming Task #315 by its URL, to take the repeated form once they can. Under `--all`, an error on one
+  issue does not stop the run: every other issue is still done, and then the command fails with a message naming each
+  error and listing every issue's outcome; a following `--all --check` gives the records, since `star` prints no
+  records from a command that fails.
+- 2026-11-15: a link in an issue's section points by the issue's state: an open issue's, and one closed without a merged
+  pull request, to the default branch; one closed by a merged pull request, to that pull request's merge commit, a fixed
+  record of what landed (Requirement 2).
+- 2026-11-15: the section ends at the next heading at its level or above, or at a thematic break line, `---`, `***` or
+  `___` alone, whichever comes first; the break and everything after it are kept. Ten issues end their table with
+  `---` and a signature or a word after it, which a section running to the end of the body would delete.
+- 2026-11-15: a plan is classified through its issue, by the issue's Area and type, which GitHub holds and triage
+  changes; never by its path or its frontmatter, where a copy would go stale. Each record carries its issue's Area and
+  type. A plan's directory is its branch's type, as the process says, for finding it, not classifying it; so the check
+  that a file's name begins with its issue's number applies only to files directly in a type directory. devlore-cli's
+  directories named for subjects, and its `task` directory, which the branch ruleset does not name, are a finding for
+  NobleFactor/devlore-cli#1228.
+- 2026-11-15: the heading is matched without regard to case, so a heading typed with other capitals is the section and
+  gets no second one; only a heading written with `#` counts, not an underlined one.
+- 2026-11-15: style is enforced universally. Every style guide and linter that covers a file this pull request changes
+  applies to it in full, and the template's PowerShell is brought to the whole of the PowerShell guide, § 7 among it
+  (Requirement 9). A style checker is to run against every change within a month.
 - The process, already: every issue ends with the table; each row links a committed file; links go to the default
   branch; a plan carries an `## Issue NNN` heading for every issue it serves.
 
@@ -86,8 +109,12 @@ devlore-cli and devlore.noblefactor.com.
      of the path.
 
    The command checks that each issue named is a real issue, not a pull request, `TBD` or `XX`; that the number in the
-   plan's file name, where it has one, is its `issue:` line's; and that each document's `path` is on the default
-   branch. A plan that fails a check is `refused`, with its reason, and nothing is written for it.
+   file name of a plan directly in a type directory, `docs/plans/<type>/<issue>-<name>.md`, its type one of the branch
+   ruleset's, `doc`, `feature`, `fix`, `hotfix`, `refactor` and `release`, or `chore`, from before it was retired, or
+   devlore-cli's `task`, is its `issue:` line's, a file elsewhere under `docs/plans` not checked by its name; and that each document's `path` exists where its link
+   points (Requirement 2): for an open issue, on the default branch or, in `<plan>` mode, in the clone's working tree,
+   where it lands with the merge as the plan's own link does; for an issue closed by a merged pull request, at that
+   pull request's merge commit. A plan that fails a check is `refused`, with its reason, and nothing is written for it.
 2. **The section an issue should have,** from every plan that serves it:
 
    ```markdown
@@ -95,19 +122,31 @@ devlore-cli and devlore.noblefactor.com.
 
    | Kind | Document |
    | --- | --- |
-   | Plan | [<plan path>](https://github.com/<repository>/blob/<default branch>/<plan path>) |
+   | Plan | [<plan path>](https://github.com/<repository>/blob/<ref>/<plan path>) |
    | <kind> | [<text or path>](<the document's link>) |
    ```
 
    One Plan row for each plan, by path; then each plan's documents, in the order it lists them, a document two plans
-   name once. Each link is to the default branch, its repository under its name now, so a link through an old name such
-   as `noblefactor-ops` is the same repository. The heading keeps the issue's own level, `##` or `###`.
+   name once. Each link's repository is under its name now, so a link through an old name such as `noblefactor-ops` is
+   the same repository. The heading keeps the issue's own level, `##` or `###`. Ruled 2026-11-15, `<ref>` follows the
+   issue's state, for the Plan rows and the documents' paths alike; a document by `url` keeps its URL:
+
+   | The issue | `<ref>` | Why |
+   | --- | --- | --- |
+   | Open | the default branch | It follows the plan as the work changes it |
+   | Closed by a merged pull request | that pull request's merge commit | A fixed record of what landed, which cannot break |
+   | Closed without one: not planned, or by hand | the default branch | There is no commit to fix it to |
+
+   When an issue closes, the next `--all` writes its links at the merge commit, and they do not change after. A path
+   not in that merge commit, a file moved after the merge, is linked on the default branch instead, the record saying
+   so; it is a finding, not a refusal.
 3. **`star github plan link <plan>...`,** run in a clone or worktree, each plan its path relative to `docs/plans`: for
    each issue the plans named serve, it writes that issue's section from every plan that serves it. It reads every plan
-   on the default branch of writ's layers and of each `--repository` named, so that a plan of another repository serving
+   on the default branch of writ's layers and of each `--repository` named, comma-separated, so that a plan of another repository serving
    the same issue is in the table, and takes the plans named from the working tree, since the first script runs it
    before they merge. It finds the section by its heading, `Plan and design documents` at level 2 or 3, running to the
-   next heading at that level or above, or to the end of the body:
+   next heading at that level or above, or to a thematic break line, `---`, `***` or `___` alone outside a table or a
+   fenced block, which it keeps with all after it, or to the end of the body:
    - one such heading: the section replaced, `written`, or nothing when it already is the section the plans give,
      `unchanged`;
    - none: the section added at the end of the body, after a blank line, `appended`;
@@ -117,15 +156,18 @@ devlore-cli and devlore.noblefactor.com.
    once and reads it back, failing unless the section reads as written. It finds the heading by the body's lines, with a
    TODO naming https://github.com/NobleFactor/devlore-cli/issues/1229, the Markdown provider that will let it read the
    body's sections as values.
-4. **`--all [--repository <owner/name>]...`** does the same for every issue that a plan under `docs/plans` on the default
+4. **`--all [--repository <owner/name>,...]`** does the same for every issue that a plan under `docs/plans` on the default
    branch of each repository named, or of writ's layers, serves, read after a fetch, never from a working tree; plans and
    `--all` together are an error. An issue no plan serves is not touched. **`--check`** reads and writes nothing,
    returning what each would do, so that it verifies every issue's section at any time; `star`'s own `--dry-run` refuses
    until NobleFactor/devlore-cli#1170 lets a dry run read.
-5. **Its result** is one record for each issue: the issue, the plans that serve it, the action, the section before and
-   after, the rows of the section before that the section after does not hold, `dropped`, and the issue's URL, with a
+5. **Its result** is one record for each issue: the issue, its Area and type, read from GitHub with it, the plans that
+   serve it, the action, the section before and after, the rows of the section before that the section after does not hold, `dropped`, and the issue's URL, with a
    `reason` on `refused`. It exits non-zero only on an error: a plan or an issue it cannot read, or a write that does not
-   read back, after every record under `--all`. `refused` and `dropped` are findings, and it exits 0 on them.
+   read back. Under `--all` an error on one issue does not stop the run: every other issue is still done, and then the
+   command fails with a message naming each error and listing every issue's outcome; a following `--all --check` gives
+   the records, since `star` prints no records from a command that fails. `refused` and `dropped` are findings, and it
+   exits 0 on them.
 6. **`remove-go-code.md`,** whose work landed in #130 on 2026-08-27, which closed no issue: Task #566 filed for it and
    closed as done in #130; the plan moved to `docs/plans/feature/566-remove-go-code.md`, its `issue:` line naming #566,
    its status complete and its boxes ticked from what #130 and #228 did; the README and plans #228 and #229, which cite
@@ -137,15 +179,28 @@ devlore-cli and devlore.noblefactor.com.
 8. **The issues already filed,** in the four repositories: after the merge and `writ deploy`, `--all --check`, its
    report reviewed with the owner before `--all` writes anything. Its `dropped` rows say which plans need `documents:`
    entries first, so that no design document an issue links is lost; how the plans in each repository gain them is
-   ruled with the report. Proposed: the 48 plans with `TBD`, `pending` or nothing added to NobleFactor/devlore-cli#1228's
-   scope, by a comment on it.
+   ruled with the report. Ruled 2026-11-15: every file under `docs/plans` with frontmatter is a plan, and one naming no
+   issue is `refused`, a finding, as is a file with no frontmatter; read in the rehearsal, 130 plans with no `issue:`
+   line, 77 of them for finished work, 129 in devlore-cli, and 58 files with no frontmatter. NobleFactor/devlore-cli#1228's
+   scope grows, by a comment on it, to all of them: the plans with no `issue:` line, the files with no frontmatter, the
+   48 whose line reads `TBD`, `pending` or nothing, devlore-cli 974's plan naming a pull request, the 74 whose `status:`
+   is prose rather than one of the five values, and devlore-cli's subject directories and its `task` directory. The
+   refusals shrink as #1228 fixes those plans.
 9. **Found beside the work,** ruled 2026-11-15: the template's PowerShell helpers, `Get-StepRow`, `Set-StepRow` and
    the rest of its PowerShell form, brought to the
    [PowerShell style guide](../../guides/powershell-style-guidelines.md) here: `[Int32]` and `[String]` where they say
    `[int]` and `[string]`, a header above each function in place of comments inside it, and nothing PSScriptAnalyzer
    flags with the organization's settings, `Set-StepRow`'s state-changing without `ShouldProcess` among them; the
    composed first and merge scripts parsed and analyzed. The template's merge step keeps its `mktemp` and
-   `GetTempPath()` files, which are made and removed within one run.
+   `GetTempPath()` files, which are made and removed within one run. Ruled later on 2026-11-15, the whole of the guide,
+   § 7 among it: the script notes its caller's error action, sets `Stop`, and runs its work in `try` and `catch`, the
+   `catch` restoring the caller's error action, reporting with `$PSCmdlet.WriteError` and exiting 1; each refusal an
+   error record of its own, with an id and a category, not a thrown string; what it is doing on the verbose stream,
+   with `Write-Verbose`, a result an output object, nothing on the host or the information stream. Since its progress
+   then shows only with `-Verbose`, the template's Windows section hands a PowerShell script over as
+   `& '<script>.ps1' -Verbose`. Every style guide and linter that covers a file this pull request changes applies to it
+   in full: buildifier for the Starlark, shellcheck and shfmt for the bash, the documentation standards for the
+   Markdown, and the PowerShell guide with PSScriptAnalyzer.
 10. **The comment that closes #557** lists every issue written, by repository, with its section before, and the
     `dropped` rows.
 11. **The design documents:** [development-process.md § Plans](../../guides/development-process.md#plans), the plans the
@@ -169,7 +224,15 @@ devlore-cli and devlore.noblefactor.com.
 | 9 | A plan naming no issue; a bare number; a file name whose number is not its `issue:` line's; a pull request; a `path` not on the default branch | `refused`, with its reason; the plan's own repository; `refused`; `refused`; `refused` |
 | 10 | `\r\n` bodies | The section's lines end `\r\n`; every other byte kept |
 | 11 | The write not read back; plans and `--all` together; a path outside `docs/plans` | Non-zero; an error, non-zero; `refused`, exit 0 |
-| 12 | `--all`, run again | Every issue `unchanged` |
+| 12 | `--all`, run again; `--all` with one issue that cannot be read | Every issue `unchanged`; every other issue done, then a failure naming the one and listing every outcome |
+| 12a | Links by state: an open issue; one closed by a merged pull request; one closed as not planned; a plan moved after its merge; a `documents:` path the same pull request adds, in `<plan>` mode | The default branch; the merge commit; the default branch; the default branch, with its reason; accepted, linked on the default branch |
+| 12b | An issue that closes, then `--all` twice | Its links rewritten at the merge commit; then `unchanged` |
+| 12c | `--repository A,B`; the TODO naming Task #315 beside each comma-separated flag's split | Both repositories read; the TODOs present |
+| 12d | A table, then `---` and a signature; a `---` inside a fenced block or a table | The signature kept, not in `dropped`; the section not ended there |
+| 12e | A step-numbered file in a subject directory; a misnumbered file in `feature/` | Accepted; `refused` |
+| 12f | A record's Area and type, in an organization and in a user account | The issue field and type; the `area:` and type labels |
+| 12g | A heading with other capitals; a setext heading of the same words | The section, written, no second one added; not the section |
+| 12h | The template's PowerShell first and merge scripts, composed | No parser error, no analyzer finding; § 7's `try` and `catch`, error records and verbose stream |
 | 13 | `--check` | Nothing written; the records `--all` would return |
 | 14 | Each behavior taken out in turn | A case fails |
 | 15 | `tests/Test-StarGitHub` and `make check` | Pass |
@@ -189,8 +252,8 @@ in scratch, are among them.
       the plan
 - [x] Amended for `star github plan link`, ruled 2026-11-14 and 2026-11-15; reviewed with the owner on 2026-11-15
 - [x] The design documents brought to that design, 2026-11-15
-- [ ] Amended for the whole section written from the plans, ruled 2026-11-15, with the design documents and the plan
-      template; reviewed with the owner
+- [x] Amended for the whole section written from the plans, ruled 2026-11-15, with the design documents and the plan
+      template; reviewed with the owner and approved on 2026-11-15
 
 ### Phase 2: the command and the template
 

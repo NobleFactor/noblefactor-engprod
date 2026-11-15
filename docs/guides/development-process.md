@@ -327,7 +327,9 @@ issue that touches none carries the plan row alone — but where they exist they
 title is something the reader has to go and find.
 
 Links go to the **default branch**, `main` or `develop`. Such a link is dead until the branch merges
-and correct forever after. A link to the feature branch is the other way round: correct while the
+and correct forever after. Once the issue is closed by a merged pull request, they go to that pull
+request's merge commit instead, a fixed record of what landed, which no later move or deletion can
+break; `star github plan link` writes them so (ruled 2026-11-15, #557). A link to the feature branch is the other way round: correct while the
 work is open, then dead when `git-close-branch` deletes the branch — which is the moment the issue
 closes and becomes most likely to be read.
 

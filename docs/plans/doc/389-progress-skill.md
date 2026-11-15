@@ -3,7 +3,7 @@ title: "The schedule progress skill checks star's build through GitHub, with no 
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/389
 status: complete
 created: 2026-11-11
-updated: 2026-11-11
+updated: 2026-11-15
 ---
 
 # Plan: The schedule progress skill checks star's build through GitHub, with no git command
@@ -16,7 +16,8 @@ One pull request from `doc/489-progress-skill`, resolving Bug #389. The branch w
 three faults in the skill: invocations with flags the report no longer takes, the audit, and the lane tables. Reading
 the skill on the branch showed none of them there: #379 rewrote it on 2026-11-08, and #489 was filed against a copy of
 the skill loaded into the session before that. #489 was closed as not planned on 2026-11-11, and the owner kept the
-branch for #389 the same day.
+branch for #389 the same day. Named for #389, the issue it serves, on 2026-11-15 (#557): it was
+`489-progress-skill.md`.
 
 ## Current State
 
@@ -65,7 +66,7 @@ does not have, is another session's work in progress: used read-only, never repl
 
 | File | Action | Purpose |
 | --- | --- | --- |
-| `docs/plans/doc/489-progress-skill.md` | Create | This plan |
+| `docs/plans/doc/389-progress-skill.md`, named `489-progress-skill.md` until 2026-11-15 | Create | This plan |
 | `Home/common/.claude/skills/star-github-schedule-progress/SKILL.md` | Modify | Requirement 1 |
 
 ## Related Documents
