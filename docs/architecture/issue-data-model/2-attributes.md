@@ -79,9 +79,11 @@ severity, and the task takes its priority from that bug.
 has Severity N/A: in NobleFactor, the new option N/A of the Severity issue field (above), and in a user account, the new
 label `severity:n/a`. Both are made by the script of #303's closing pull request. A bug has Critical, High, Medium or
 Low, never N/A. An issue that arrives with no type gets no Severity and waits for triage; when triage gives it a type
-other than Bug, triage sets its Severity to N/A. The Triage workflow will set N/A on an issue of another type filed from
-a form, and will give a bug filed from the bug form, which asks no severity, Severity Medium, the owner's default, which
-GitHub's field can't hold (above); triage changes it when the bug's harm is greater or less (#448). `star github issue`
+other than Bug, triage sets its Severity to N/A. The Triage workflow sets the Severity when an issue is opened, and an
+issue that has one keeps it: a bug, whose form asks no severity, gets Medium, the owner's default, which GitHub's field
+can't hold (above), an issue of another type N/A, and an issue that arrives with no type none; triage changes a bug's
+Severity when its harm is greater or less (#448). An issue typed only after it is opened gets no Severity from the
+workflow, and triage gives it one. `star github issue`
 will set N/A at filing (#338). So every typed issue has exactly one Severity value, and the sweep (#436) will catch a
 miss: it will return to its team's Triage project a bug whose Severity is N/A or blank, and an issue of another type
 whose Severity isn't N/A.
@@ -114,8 +116,8 @@ isn't filed against the architecture; an architecture task is logged to address 
 
 - **At filing.** `star github issue` will refuse an issue without an Area (#338). The issue forms in each account's
   `.github` repository have a required Area dropdown, and when the issue is opened, the repository's Triage workflow
-  copies the answer into the Area issue field or the `area:` label: personal's adds the `area:` label today, and
-  NobleFactor's will set the Area field once #447 and #448 land ([section 4](4-storage-and-reach.md#triage)). The form
+  copies the answer into the Area issue field or the `area:` label: personal's adds the `area:` label, and
+  NobleFactor's sets the Area field (#447, #448; [section 4](4-storage-and-reach.md#triage)). The form
   checks the Area in a public repository; GitHub enforces a form's required fields only there (GitHub's form schema
   documentation, read 2026-11-04). In a private repository that takes part, today only personal, nothing checks it at
   filing until `star github issue` does.

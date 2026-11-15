@@ -57,39 +57,44 @@ by #183.
 guide pass that will catch the documents up is devlore-cli#849. Ruled 2026-11-03: the Epic: labels are removed
 from both accounts, and sub-issue parent links replace them.
 
-Open in #439, the design of the `star github schedule` commands: what command lists the open ruling issues under
-devlore-cli#463 now that the Epic: labels are gone. The question was left open on #303 and went to #439 on 2026-11-04,
-because it is about star's options, which that design will decide.
+The open ruling issues under devlore-cli#463 are listed by the report as built, run from noblefactor-engprod:
+
+```bash
+star github schedule report NobleFactor/devlore-cli --search is:open --filter parent=NobleFactor/devlore-cli#463 -o table
+```
+
+Ruled 2026-11-11 in #439, the design of the `star github schedule` commands, where #303 had left the question on
+2026-11-04 ([section 8](../architecture/issue-data-model/8-the-schedule-commands.md#reading-list-get-and-report)). Run
+that day, it listed the 17 open issues GitHub shows under #463.
 
 ## 3. A question about issues is answered by the report
 
 **The rule.** What exists, what is open, what covers a symptom, what a feature holds: `star github schedule
-report` and `star github schedule audit`, never an ad-hoc `gh issue list --search`. `gh issue view` is for
-reading one body once the report has named it.
+report`, never an ad-hoc `gh issue list --search`; what breaks a classification rule: `star github triage sweep`.
+`gh issue view` is for reading one body once the report has named it.
 
 **The breakage.** 2026-09-07: ten searches to answer "which bugs cover this command line", against a
 tool built for exactly that. "You should be running a `star gh` command to get the issues list." Then:
 "it is our tool and we spent significant resources to write that command. USE IT." The report's first
 run found three of the agent's own filings missing their parent feature.
 
-**Compliance.** From any directory: the report reads the repositories of writ's layers, and a schedule report
-also reads every repository its steps name (#253):
+**Compliance.** From any directory: the report reads every issue, open and closed, of the repositories of writ's
+layers, or of the repositories named as its arguments, and returns each as one flat record. star's own `--filter` and
+`--jq` narrow the records and `--output` renders them; `--search` narrows what is read, in GitHub's issue-search syntax
+(ruled 2026-11-08, #379):
 
 ```bash
-star github schedule report --epic <Name> --view table --state open --markdown -o value --silent
-star github schedule report --by feature --epic <Name>     # or --by thread --thread <Name>, --by schedule
-star github schedule audit                                 # and --unthreaded
+star github schedule report --silent --output table --filter epic=<owner>/<repository>#<number> --jq 'map({issue, type, state, title})'
+star github schedule report --silent --output table --filter type=Bug --filter state=open --jq 'map({issue, severity, title})'
+star github triage sweep                                   # the open issues that break a rule, to their Triage projects
 ```
 
-`--epic <Name>` and `--thread <Name>` name the Epic: and Thread: labels. Ruled 2026-11-03: those labels are removed from
-both accounts, and sub-issue parent links and project rows replace them. Ruled the same day: threads are renamed
-scenarios, and each team's one Scenario project holds its features, its Scenario field naming the scenario each row
-belongs to. Ruled 2026-11-04: a scenario's rows are no longer features but its Scenario issue and the tasks and bugs
-found while walking it ([issue-standards.md § Scenarios](../issue-standards.md#scenarios)).
-
-Open in #439, the design of the `star github schedule` commands: what `--epic` and `--thread` take now that those labels
-are gone. Like rule 2's question, it was left open on #303 and went to #439 on 2026-11-04, because it is about star's
-options, which that design will decide.
+The star-github-schedule-progress skill gives the schedule's own invocation. Ruled 2026-11-03: the Epic: and Thread:
+labels are removed from both accounts, and sub-issue parent links and project rows replace them; threads are renamed
+scenarios. Ruled 2026-11-04: a scenario's rows are its Scenario issue and the tasks and bugs found while walking it
+([issue-standards.md § Scenarios](../issue-standards.md#scenarios)). Ruled 2026-11-08 (#379): `--epic`, `--thread`,
+`--by` and the audit are gone; a record names its epic and its feature, read up its parent chain, and `--filter`
+selects on either. What #439 held open of this rule, what `--epic` and `--thread` take, is settled so.
 
 What `--unthreaded` checks is part of what the audit compares against, which #426 and #437 will decide with the tooling.
 
@@ -266,9 +271,10 @@ the disclosure and both trailers, the merge step writes the squash message from 
 commit that landed is checked for both: [pr-script-template.md](pr-script-template.md), rule 2.
 
 Ruled 2026-11-03: the description's form is to be kept in the account's pull request template, stored in its
-`.github` repository with its other file templates; neither account has one yet
+`.github` repository with its other file templates
 ([section 6](../architecture/issue-data-model/6-the-asset-and-its-sync.md#one-model-per-account) of the issue data
-model design).
+model design). Each account's is its `.github` repository's `.github/pull_request_template.md`, since 2026-11-09:
+NobleFactor's with #431 and David-Noble-at-work's with #441.
 
 ## 14. A claim says how it is known
 
@@ -395,20 +401,25 @@ pushed, and a link to a branch GitHub doesn't have leads nowhere. The worktree's
 links it and reads the row back. It ran on 2026-11-03: `doc/303-model-cutover` is on GitHub, at `60828ac`, and the
 row has read back the link in its Worktree column since.
 
+And 2026-11-10, a third: making the worktree of #447 by hand, `~/Workspace/NobleFactor/.github.447-area-reader`, the
+session set the Worktree column of #447's row to `fix/447-area-reader` before the branch was on GitHub, the same link
+to nowhere as #303's. It reported it, cleared the link, and wrote the push and then the link, read back, into the
+worktree's script, `~/Workspace/NobleFactor/.github.447-area-reader.bash`. The owner acknowledged the report the same
+day.
+
 **Compliance.** The Worktree column holds a link to the branch on GitHub, so a worktree's first script pushes its
 branch, then links it in the Worktree column of each of its steps' rows. The pull request's script records on each
 step's issue that it merged, as it lands, by
 [pr-script-template.md](pr-script-template.md), rule 13. A step that moves to another worktree, or closes without a
 merge, is recorded by the script of the worktree that held it, before `git close-branch`. Every record is read back.
 
-Open in #450, which will bring the PR script template in line with this rule: what each record is guarded on, now that
-it is a column on a project row and a record on the step's own issue rather than a table in the schedule issue's body.
-The question was left open on #303 and went to #450 on 2026-11-04, because #450 will write the template's steps that
-make these records; the old step was guarded on the schedule issue's `updatedAt`.
-
-Until #450 is done, the PR script template's schedule step and its rule 13 still rewrite a row of the schedule issue's
-table, retired on 2026-11-03, and the template has no step yet for a worktree's first script:
-[pr-script-template.md](pr-script-template.md#rules), rule 13.
+Ruled 2026-11-13 (#450), closing the question left open on #303 and carried to #450 on 2026-11-04: each record is
+guarded on what it holds just before it is written, where the old step was guarded on the schedule issue's `updatedAt`.
+The first script writes only to a row that is on a schedule, Open or In progress, and links no other branch; the merge
+script writes only to a row that links its branch, or its pull request when it runs again; the issue's comment is
+posted once, and the issue closed only while it is open. Both steps are in the PR script template, in its bash and
+PowerShell forms: [pr-script-template.md](pr-script-template.md#a-worktrees-first-script), § A worktree's first
+script, and rule 13.
 
 ---
 

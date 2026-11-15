@@ -1,12 +1,14 @@
 ---
 title: "Clear-Claude leaves nothing of a cleared conversation"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/414
-status: draft
+status: abandoned
 created: 2026-10-27
-updated: 2026-10-28
+updated: 2026-11-12
 ---
 
 # Plan: Clear-Claude leaves nothing of a cleared conversation
+
+Abandoned on 2026-11-12, on the owner's word: Clear-Claude is removed (#529), and #414 is declined.
 
 Clear-Claude's clear leaves records of the conversation behind, the job's timeline and the paste cache among them,
 and its first version removed memories before the clear was confirmed, could lose other sessions' prompts, and

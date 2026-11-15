@@ -25,11 +25,14 @@ _Start-Claude() {
         schedule)
             # new, and the open schedules of the repository Start-Claude will read a bare number in: the one
             # --directory names earlier on the line, or else the one holding the working directory (#415). Silent
-            # when gh is missing or unauthenticated, or the directory does not exist.
+            # when gh is missing or unauthenticated, or the directory does not exist. A schedule is an issue of type
+            # Schedule, or, in a user account, which has no issue types, one labeled schedule (issue-standards.md
+            # § Schedules); each search finds nothing in the other kind of account.
             local directory="${opt_args[--directory]:-${opt_args[-C]:-.}}"
-            schedules=(new ${(f)"$(cd -- ${~directory} 2>/dev/null &&
-                gh issue list --state open --label chore --limit 50 --json number,title \
-                    --jq '.[] | select(.title | startswith("Schedule:")) | .number' 2>/dev/null)"})
+            schedules=(new ${(f)"$(cd -- ${~directory} 2>/dev/null && {
+                gh issue list --state open --search 'type:Schedule' --limit 50 --json number --jq '.[].number'
+                gh issue list --state open --label schedule --limit 50 --json number --jq '.[].number'
+            } 2>/dev/null)"})
             compadd -a schedules
             ;;
     esac

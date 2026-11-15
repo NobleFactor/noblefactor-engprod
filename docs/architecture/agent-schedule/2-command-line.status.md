@@ -16,6 +16,9 @@ NobleFactor/noblefactor-ops#321, 2026-10-20.
 § Clear-Claude's records say what `f0211f4` removes and what it leaves, the job timeline and the paste cache, and name
 the plan, a draft set aside, for the rest.
 
+**Amended 2026-11-12** (#529): Clear-Claude is removed, on the owner's word: its command, man page, completions
+and test. § Clear-Claude says so; the plan of 2026-10-28 is abandoned.
+
 ## Completion
 
 - [x] Start-Claude: `--schedule`, `--resume`, `--continue`, `--detach`, `--no-remote-control`, `--directory` and
@@ -39,6 +42,6 @@ the plan, a draft set aside, for the rest.
   personal in David-Noble-at-work/personal#285.
 - [x] Clear-Claude, on macOS and Linux: `--schedule`, `--directory`, `--clear` and `--retire`, with Clear-Claude(1),
   its bash and zsh completions, and `tests/Test-ClearClaude` (NobleFactor/noblefactor-engprod#411), 2026-10-27. No
-  Windows counterpart: the owner, 2026-10-27, "Clear-Claude.ps1 is not in this PR."
+  Windows counterpart: the owner, 2026-10-27, "Clear-Claude.ps1 is not in this PR." Removed on 2026-11-12 (#529).
 
 [plan-259]: https://github.com/David-Noble-at-work/personal/blob/main/docs/plans/chore/259-start-claude-documents-claude.md

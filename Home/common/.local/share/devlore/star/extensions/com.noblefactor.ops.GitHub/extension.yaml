@@ -2,284 +2,121 @@
 # Copyright Noble Factor. All rights reserved.
 
 extension: com.noblefactor.ops.GitHub
-description: GitHub under the NobleFactor classification scheme -- the issue report and audit, the label set, and the model's pull
+description: GitHub under the NobleFactor issue data model -- every issue as a record, the triage sweep, and each account's model as GitHub holds it
 
 commands:
   - name: github.schedule.report
-    help: Render the epic, feature, lane tree from GitHub issues, by epic, across the repositories of writ's layers
+    help: "Every issue, open and closed, of the repositories named, or of writ's layers, as one flat record each; narrow the result with --filter and --jq, render it with --output"
     implementation: commands/github-schedule-report.star
+    args:
+      - name: repositories
+        help: "The repositories to read, owner/name; default: the repositories of writ's layers"
+        variadic: true
     flags:
-      - name: by
-        type: string
-        default: "epic"
-        help: Section the report by epic, by feature (one row per feature with its counts and state), by thread, or by schedule (lanes in declared order, progress derived)
-      - name: view
-        type: string
-        default: "table"
-        help: tree or table
-      - name: epic
+      - name: search
         type: string
         default: ""
-        help: Report one epic, by the Name in its Epic:<Name> label
-      - name: thread
-        type: string
-        default: ""
-        help: Report one thread, by the Name in its Thread:<Name> label
+        help: "Read only what GitHub's issue search finds, in its syntax, passed unchanged and run once for each repository as (<search>) repo:<repository> is:issue; an error when it matches more than 1,000 issues in one"
+
+  - name: github.schedule.add
+    help: "Put issues on a schedule, each with its step, its schedule's option and Status Open, placed in step order, and leaving the project it was on, then write one amendment line in the Schedule issue naming the date, who ran it and why; with --after, after that step, every later step moving down, closed or open; return one flat record for each row it added, moved or took off; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    implementation: commands/github-schedule-add.star
+    args:
       - name: schedule
-        type: string
-        default: ""
-        help: Report one schedule, by its issue, <owner>/<repository>#<number>, or a bare <number> when one schedule has it
-      - name: state
-        type: string
-        default: ""
-        help: open, closed, or all; defaults to open by epic and to all by feature, thread, and schedule
-      - name: limit
-        type: int
-        default: "500"
-        help: Most issues to fetch
-      - name: repo
-        type: string
-        default: ""
-        help: "Repositories to report on, owner/name, comma-separated; default: the repositories of writ's layers, and with --by schedule, every repository its lanes name"
-      - name: directory
-        type: string
-        default: ""
-        help: A working tree; the report targets the repository its origin names
-      - name: markdown
-        type: bool
-        default: "false"
-        help: Return the markdown document Get-EpicReport prints, as one string (render with -o value)
-
-  - name: github.schedule.audit
-    help: Every open issue the classification scheme cannot place, with the fault
-    implementation: commands/github-schedule-audit.star
+        help: "The schedule's own issue, <owner>/<repository>#<number>, as a session's NFEP_AGENT_SCHEDULE names it"
+      - name: issues
+        help: "The tasks and bugs to put on it, <owner>/<repository>#<number>, in the order their steps take"
+        variadic: true
     flags:
-      - name: unthreaded
-        type: bool
-        default: "false"
-        help: "Instead of the classification audit, list open tasks and bugs carrying no Thread: label, grouped by epic and parent; a question, not a fault"
-      - name: epic
+      - name: after
         type: string
         default: ""
-        help: "With --unthreaded, narrow to one epic by the Name in its Epic:<Name> label"
-      - name: limit
-        type: int
-        default: "500"
-        help: Most issues to fetch
-      - name: repo
+        help: "The step to put them after, every later step moving down; 0 puts them first; default: after the last"
+      - name: blocked-by
         type: string
         default: ""
-        help: "Repositories to audit, owner/name, comma-separated; default: the repositories of writ's layers"
-      - name: directory
+        help: "The issues each is blocked by, <owner>/<repository>#<number>, comma-separated; links the issues already have are kept"
+      - name: assignee
         type: string
         default: ""
-        help: A working tree; the audit targets the repository its origin names
-      - name: markdown
-        type: bool
-        default: "false"
-        help: Return the audit section Get-EpicReport prints, as one string (render with -o value)
+        help: "The member of the schedule's team who answers for an issue of another team's repository, which then needs one"
+      - name: reason
+        type: string
+        default: ""
+        help: "Why the schedule changes, written in its amendment; required"
 
-  - name: github.labels.audit
-    help: Which repositories lack a kind, Epic:Ops:Process, or a thread label, and which carry one that has drifted
-    implementation: commands/github-labels-audit.star
+  - name: github.triage.sweep
+    help: "Add every open issue that breaks a classification rule to its team's Triage project, commenting on it with the rules it breaks; return one flat record for each issue added, already there with a fault, or a Triage row; adds only, never removes; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    implementation: commands/github-triage-sweep.star
+    args:
+      - name: accounts
+        help: "The accounts to sweep, NobleFactor or David-Noble-at-work; default: star's default account and the owner of each of writ's layer repositories"
+        variadic: true
+
+  - name: github.model.get
+    help: "An account's issue data model as GitHub holds it now: its issue types or type labels, its issue fields, its teams, its labels, and its project templates with their fields and views, as one record; -o yaml gives the form a backup keeps"
+    implementation: commands/github-model-get.star
+    args:
+      - name: account
+        help: "The account, an organization or a user; required"
+
+  - name: github.model.diff
+    help: "What differs between a model and an account's, as GitHub holds it now: one record for each difference; writes nothing"
+    implementation: commands/github-model-diff.star
+    args:
+      - name: model
+        help: "The model: a file in the form get returns, another account's, a backup, or a reference, by its path"
+      - name: account
+        help: "The account, an organization or a user; required"
+
+  - name: github.model.apply
+    help: "Make a model the account's: every difference diff finds made in GitHub, renames in place, nothing of the account's deleted without --prune; one record for each difference, with what was done"
+    implementation: commands/github-model-apply.star
+    args:
+      - name: model
+        help: "The model: a file in the form get returns, another account's, a backup, or a reference, by its path"
+      - name: account
+        help: "The account, an organization or a user; required"
     flags:
-      - name: repo
-        type: string
-        default: ""
-        help: "Repositories to audit, owner/name, comma-separated; default: the repositories of writ's layers"
-      - name: directory
-        type: string
-        default: ""
-        help: A working tree; the audit targets the repository its origin names
-      - name: markdown
+      - name: prune
         type: bool
         default: "false"
-        help: Return the audit as a document, one string (render with -o value)
+        help: "Delete what the model lacks too, each deletion first counted; never a team, its roles, a project or a template"
+      - name: token
+        type: string
+        default: ""
+        help: "Where each secret the Triage workflow signs in with comes from: <SECRET>=env:<NAME> or <SECRET>=file:<path>, comma-separated, or a bare env:<NAME> or file:<path> when the workflow uses one; never a secret's value"
 
-  - name: github.labels.sync
-    help: Create the labels the audit reports missing and align the ones that drifted; never deletes; honors --dry-run
-    implementation: commands/github-labels-sync.star
+  - name: github.model.restore
+    help: "Apply an account's backup to it: model.yaml from its .github repository, at the revision named or main, applied as apply applies a model"
+    implementation: commands/github-model-restore.star
+    args:
+      - name: account
+        help: "The account, an organization or a user; required"
+      - name: revision
+        default: "main"
+        help: "The backup's revision in the account's .github repository: a commit, a tag or a branch; main when none is named"
     flags:
-      - name: repo
-        type: string
-        default: ""
-        help: "Repositories to sync, owner/name, comma-separated; default: the repositories of writ's layers"
-      - name: directory
-        type: string
-        default: ""
-        help: A working tree; the sync targets the repository its origin names
-
-  - name: github.model.pull
-    help: Pull the organization's issue types, the hub's labels and the projects into model.yaml, read by ETag, and print the diff; --check previews
-    implementation: commands/github-model-pull.star
-    flags:
-      - name: org
-        type: string
-        default: "NobleFactor"
-        help: The organization whose record is pulled
-      - name: asset
-        type: string
-        default: ""
-        help: "The model.yaml to write; default: the one beside this extension. A real pull writes only an asset on a branch, so name a worktree's"
-      - name: check
+      - name: prune
         type: bool
         default: "false"
-        help: "Print what would change and write nothing. A workaround for NobleFactor/devlore-cli#1170: star's --dry-run skips the reads a preview needs, so this command refuses it"
+        help: "Delete what the backup lacks too, each deletion first counted; never a team, its roles, a project or a template"
+      - name: token
+        type: string
+        default: ""
+        help: "Where each secret the Triage workflow signs in with comes from, as apply takes it; never a secret's value"
 
-  - name: github.model.digest
-    help: Re-sign a deliberately hand-edited model.yaml, its digest over the file with its own line excluded; --check previews
-    implementation: commands/github-model-digest.star
-    flags:
-      - name: asset
-        type: string
-        default: ""
-        help: "The model.yaml to re-sign; default: the one beside this extension"
-      - name: check
-        type: bool
-        default: "false"
-        help: "Print what would change and write nothing. A workaround for NobleFactor/devlore-cli#1170: star's --dry-run skips the reads a preview needs, so this command refuses it"
-
-  # The names before #378, kept so that what sessions run today still works; each runs the new command's code and
-  # its help names the new command. A later task removes them once no skill, document or session names them.
-
-  - name: gh.issues.report
-    help: "Renamed: star github schedule report. Render the epic, feature, lane tree from GitHub issues, by epic, across the repositories of writ's layers"
-    implementation: commands/github-schedule-report.star
-    flags:
-      - name: by
-        type: string
-        default: "epic"
-        help: Section the report by epic, by feature (one row per feature with its counts and state), by thread, or by schedule (lanes in declared order, progress derived)
-      - name: view
-        type: string
-        default: "table"
-        help: tree or table
-      - name: epic
-        type: string
-        default: ""
-        help: Report one epic, by the Name in its Epic:<Name> label
-      - name: thread
-        type: string
-        default: ""
-        help: Report one thread, by the Name in its Thread:<Name> label
-      - name: schedule
-        type: string
-        default: ""
-        help: Report one schedule, by its issue, <owner>/<repository>#<number>, or a bare <number> when one schedule has it
-      - name: state
-        type: string
-        default: ""
-        help: open, closed, or all; defaults to open by epic and to all by feature, thread, and schedule
-      - name: limit
-        type: int
-        default: "500"
-        help: Most issues to fetch
-      - name: repo
-        type: string
-        default: ""
-        help: "Repositories to report on, owner/name, comma-separated; default: the repositories of writ's layers, and with --by schedule, every repository its lanes name"
-      - name: directory
-        type: string
-        default: ""
-        help: A working tree; the report targets the repository its origin names
-      - name: markdown
-        type: bool
-        default: "false"
-        help: Return the markdown document Get-EpicReport prints, as one string (render with -o value)
-
-  - name: gh.issues.audit
-    help: "Renamed: star github schedule audit. Every open issue the classification scheme cannot place, with the fault"
-    implementation: commands/github-schedule-audit.star
-    flags:
-      - name: unthreaded
-        type: bool
-        default: "false"
-        help: "Instead of the classification audit, list open tasks and bugs carrying no Thread: label, grouped by epic and parent; a question, not a fault"
-      - name: epic
-        type: string
-        default: ""
-        help: "With --unthreaded, narrow to one epic by the Name in its Epic:<Name> label"
-      - name: limit
-        type: int
-        default: "500"
-        help: Most issues to fetch
-      - name: repo
-        type: string
-        default: ""
-        help: "Repositories to audit, owner/name, comma-separated; default: the repositories of writ's layers"
-      - name: directory
-        type: string
-        default: ""
-        help: A working tree; the audit targets the repository its origin names
-      - name: markdown
-        type: bool
-        default: "false"
-        help: Return the audit section Get-EpicReport prints, as one string (render with -o value)
-
-  - name: gh.labels.audit
-    help: "Renamed: star github labels audit. Which repositories lack a kind, Epic:Ops:Process, or a thread label, and which carry one that has drifted"
-    implementation: commands/github-labels-audit.star
-    flags:
-      - name: repo
-        type: string
-        default: ""
-        help: "Repositories to audit, owner/name, comma-separated; default: the repositories of writ's layers"
-      - name: directory
-        type: string
-        default: ""
-        help: A working tree; the audit targets the repository its origin names
-      - name: markdown
-        type: bool
-        default: "false"
-        help: Return the audit as a document, one string (render with -o value)
-
-  - name: gh.labels.sync
-    help: "Renamed: star github labels sync. Create the labels the audit reports missing and align the ones that drifted; never deletes; honors --dry-run"
-    implementation: commands/github-labels-sync.star
-    flags:
-      - name: repo
-        type: string
-        default: ""
-        help: "Repositories to sync, owner/name, comma-separated; default: the repositories of writ's layers"
-      - name: directory
-        type: string
-        default: ""
-        help: A working tree; the sync targets the repository its origin names
-
-  - name: gh.model.pull
-    help: "Renamed: star github model pull. Pull the organization's issue types, the hub's labels and the projects into model.yaml, read by ETag, and print the diff; --check previews"
-    implementation: commands/github-model-pull.star
-    flags:
-      - name: org
-        type: string
-        default: "NobleFactor"
-        help: The organization whose record is pulled
-      - name: asset
-        type: string
-        default: ""
-        help: "The model.yaml to write; default: the one beside this extension. A real pull writes only an asset on a branch, so name a worktree's"
-      - name: check
-        type: bool
-        default: "false"
-        help: "Print what would change and write nothing. A workaround for NobleFactor/devlore-cli#1170: star's --dry-run skips the reads a preview needs, so this command refuses it"
-
-  - name: gh.model.digest
-    help: "Renamed: star github model digest. Re-sign a deliberately hand-edited model.yaml, its digest over the file with its own line excluded; --check previews"
-    implementation: commands/github-model-digest.star
-    flags:
-      - name: asset
-        type: string
-        default: ""
-        help: "The model.yaml to re-sign; default: the one beside this extension"
-      - name: check
-        type: bool
-        default: "false"
-        help: "Print what would change and write nothing. A workaround for NobleFactor/devlore-cli#1170: star's --dry-run skips the reads a preview needs, so this command refuses it"
+  - name: github.model.backup
+    help: "Checkpoint an account's model, as GitHub holds it now, in its .github repository: written on a doc/model-<date> branch and landed by a pull request, asking nothing yet"
+    implementation: commands/github-model-backup.star
+    args:
+      - name: account
+        help: "The account, an organization or a user; required"
 
 config:
   path: github
   type: GitHubConfig
   fields:
-    exempt: "[]int"
+    account: "string"
   defaults:
-    exempt: []
+    account: "NobleFactor"

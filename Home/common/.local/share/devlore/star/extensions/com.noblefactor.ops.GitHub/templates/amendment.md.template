@@ -1,0 +1,24 @@
+{{- /*
+SPDX-License-Identifier: Apache-2.0
+Copyright Noble Factor. All rights reserved.
+
+amendment.md.template: the line a change to a schedule's steps writes at the end of its Schedule issue's Amendments
+section (section 8 of the issue data model, question 4, ruled 2026-11-11): the date, who ran the command, what was
+added or taken off at which step, the steps that moved, and why. Rendered by steps.star's amendment with star's
+template module; its whitespace is folded to single spaces and the line wrapped at 120 columns after.
+
+  .date, .login, .reason   strings
+  .added                   steps added: {step, type, issue, title}
+  .taken                   steps taken off: {step, type, issue, title, to}, to the schedule or project it went to
+  .moved                   the steps that moved, or none: {first, last, by, direction, to_first, to_last};
+                           by is 0 when they did not all move alike
+*/ -}}
+- {{.date}}, by {{.login}}:
+{{- range $i, $a := .added}}{{if $i}};{{end}} step {{$a.step}} was added, {{$a.type}} {{$a.issue}}, {{$a.title}}{{end}}
+{{- range $i, $t := .taken}}{{if or $i $.added}};{{end}} step {{$t.step}}, {{$t.type}} {{$t.issue}}, {{$t.title}}, was taken off
+{{- if $t.to}}, for {{$t.to}}{{end}}{{end}}.
+{{- with .moved}}
+{{- if eq .first .last}} Step {{.first}} moved {{.direction}} {{.by}}, to {{.to_first}}.
+{{- else if .by}} Steps {{.first}} to {{.last}} moved {{.direction}} {{.by}}, to {{.to_first}} to {{.to_last}}.
+{{- else}} Steps {{.first}} to {{.last}} were renumbered {{.to_first}} to {{.to_last}}.{{end}}
+{{- end}} {{.reason}}

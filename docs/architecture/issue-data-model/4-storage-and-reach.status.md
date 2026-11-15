@@ -17,6 +17,13 @@ model read on demand from two reference models (§ Reference models, read on dem
 day: each account keeps its model in its own `.github` repository (#431,
 David-Noble-at-work/personal#311), which section 6 states with #431.
 
+Ruled 2026-11-09 (#426): GitHub is the model. star reads an account's model from GitHub when a command needs it, and the
+file in its `.github` repository is a backup; `get`, `diff`, `apply`, `backup` and `restore`, each naming its account,
+replace pull and push. That supersedes the rulings below that the model is a cache and on pull's options, and section 4
+says so where it names them ([section 6](6-the-asset-and-its-sync.md#github-is-the-model)). Ruled 2026-11-10 with #437,
+which built `diff`, `apply` and `restore`: `apply` writes a repository's labels only from its account's own backup or
+a reference, never another account's, and a reference names labels only for a user account (§ Labels).
+
 Brought up to date on 2026-11-03 with the rulings of 2026-11-02 and 2026-11-03. Section 4 now states each of these:
 
 - 2026-11-02: no project, sub-issue link or blocked-by link crosses accounts. Work that waits on another account
@@ -255,6 +262,18 @@ Revised 2026-11-05 for #446: the paragraph on Area in § Where each part lives p
 product work and engineering work each cover, tests among engineering's, and what each may hold, in place of the list
 of what engineering covers, and the sentence that product readiness and release management epics hold both kinds of
 work is gone, superseded on 2026-11-05.
+
+Built 2026-11-13 in #448: NobleFactor's five participating repositories run the Triage workflow, landed from
+NobleFactor/.github's template by `star github model apply` (#437); its first run, on 2026-11-11, set the Area field
+and proved the noblefactor-automation app's permissions for projects and issue fields; David-Noble-at-work/.github,
+which has run its own with an `ADD_TO_PROJECT_PAT` of its own since 2026-11-09 (#441), was brought to the template on
+2026-11-13 (David-Noble-at-work/.github#8); and in both accounts it gives an issue whose body says "Found while walking
+#N", where #N is an open scenario of the account, its row on that scenario's Scenario project in place of a Triage row
+(§ An organization's account and § Triage in section 4).
+
+Done 2026-11-14 in #453: both accounts' Scenario forms ask what the person wants to do, how to walk through it, and the
+features it uses, with how to walk through it, the example for a demo or a quick test, in place of the Evidence of
+completion section, as § Where each part lives in section 4 now says.
 
 ## Completion
 

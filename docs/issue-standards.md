@@ -127,7 +127,7 @@ personal repository exists only for personal productivity, and no `area:product`
 **Engineering is work on things outside the deliverables a repository releases,** the work that doesn't ship. Ruled
 2026-11-05. It covers build orchestration, Makefile changes, CI pipelines, tests, tools that don't release with a
 product, design work, planning work, and documentation that doesn't release with a product. Ruled 2026-11-04: a bug in
-a test is an engineering issue, not a product issue, as the Test-ClearClaude bug (#445) is.
+a test is an engineering issue, not a product issue, as the Test-ClearClaude bug (#445) was.
 
 **An issue's Area describes its own work, not its parent's.** Ruled 2026-11-05: an epic is a product epic or an
 engineering epic, never both, and a feature is the same. Product work may hold engineering work, and engineering work
@@ -208,7 +208,7 @@ queue, and today the audit exempts an issue while it waits there. Each team owns
 David-Noble-at-work (David-Noble-at-work project 3). There is no triage epic and no Triage issue type. The triage epics
 NobleFactor/noblefactor-engprod#142, NobleFactor/devlore-cli#1188 and David-Noble-at-work/personal#313 are retired.
 Ruled 2026-11-03. Ruled 2026-11-04: a task or a bug logged while walking a scenario goes to the scenario instead of to
-Triage, and the Triage workflow will add it there (#448; § Scenarios). Ruled the same day: triage removes an issue's
+Triage, and the Triage workflow adds it there (#448; § Scenarios). Ruled the same day: triage removes an issue's
 Triage row as part of its decision, and the sweep (#436) removes none: an issue someone closes outside triage stays in
 its Triage project until triage decides its disposition. Read on 2026-11-04, 78 of Triage: engprod's 178 rows were
 closed issues, and they are triage's to decide.
@@ -222,7 +222,10 @@ repository and says nothing about a user account's; whether GitHub offers David-
 personal has not been checked, and either way the task that added personal's Triage workflow on 2026-11-04,
 David-Noble-at-work/personal#315, copied personal's `triage.yml` from it. How the workflow signs in, with a token from
 the noblefactor-automation GitHub App in NobleFactor and a classic personal access token in a user account, is
-[section 4](architecture/issue-data-model/4-storage-and-reach.md#triage) of the design.
+[section 4](architecture/issue-data-model/4-storage-and-reach.md#triage) of the design. Since #437,
+`star github model apply` lands the workflow in each participating repository from its account's template, through a
+pull request, sets the variable, and sets the secrets the template signs in with from `--token`, or names each missing
+one as a step by hand.
 
 **The team that owns a project is accountable for it**, and GitHub's link between the project and its
 team is the record. A user account's projects are its owner's. Ruled 2026-11-03.
@@ -233,7 +236,7 @@ classify an issue as it is made. Ruled 2026-11-03.
 **A blank Area is an error, caught at three points.** Ruled 2026-11-03. At filing, `star github issue` will refuse an
 issue without an Area (#338), and the issue forms in each account's `.github` repository have a required Area dropdown.
 The Triage workflow copies its answer into the Area field or label when the issue is opened: personal's adds the `area:`
-label today, and NobleFactor's will set the Area field once #447 and #448 land. GitHub enforces a form's required fields
+label, and NobleFactor's sets the Area field (#447, #448). GitHub enforces a form's required fields
 only in a public repository (GitHub's form schema documentation, read 2026-11-04), so in a private one, which today is
 only personal, nothing checks the Area at filing until `star github issue` does. At triage, each Triage project has the
 Area field (in a user account, the Labels field, which holds the `area:` labels) and a "Missing Area" view, both made
@@ -321,8 +324,8 @@ between any two.
 | Filing | Opens the issue, from one of its account's six issue forms, with `gh issue create`, or later with `star github issue` (#338) | read on the repository, which a public repository gives everyone, and all five that take part are public, devlore.noblefactor.com since 2026-11-04 | a collaborator, on personal, which is private; anyone, on a public repository such as David-Noble-at-work/.github, which gives everyone read | [Creating an issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/creating-an-issue); [Permission levels for a personal account repository](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/repository-access-and-collaboration/permission-levels-for-a-personal-account-repository#collaborator-access-for-a-repository-owned-by-a-personal-account) |
 | Filing | Sets its type. Each form sets it: NobleFactor's through the form's `type` key, and David-Noble-at-work's as the type label in the form's `labels` key. `gh issue create --type`, and later `star github issue`, set it through GitHub's API | read, through a form, which adds the type itself; write, through GitHub's REST API, which silently drops the type from anyone with less | read, through a form, which adds the label itself; a collaborator, to add the label any other way | [Syntax for issue forms](https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-issue-forms#top-level-syntax); [Create an issue](https://docs.github.com/en/rest/issues/issues#create-an-issue); [Permission levels for a personal account repository](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/repository-access-and-collaboration/permission-levels-for-a-personal-account-repository#collaborator-access-for-a-repository-owned-by-a-personal-account) |
 | Filing | Sets its parent, the sub-issue link, with `gh issue create --parent`, or later with `star github issue` | triage on the issue's repository and, by GitHub's REST documentation, on its parent's | not stated | [Adding sub-issues](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/adding-sub-issues); [Create an issue](https://docs.github.com/en/rest/issues/issues#create-an-issue) |
-| Filing | Sets its Area, from the form's Area dropdown, which GitHub requires only in a public repository, and its Severity: N/A on an issue of a type other than Bug, and Medium on a bug filed from the bug form. A form can't set an issue field, so the Triage workflow copies the Area: personal's adds the `area:` label today, and NobleFactor's will set the Area field once #447 and #448 land. Both accounts' Triage workflows will set the Severity (#448), and `star github issue` will set the Area and Severity N/A at filing (#338) | none of the filer's, where the Triage workflow sets them with its own token; triage, or write through GitHub's REST API, where the filer sets them | none of the filer's, where personal's Triage workflow adds the labels; a collaborator, to add them by hand | [Syntax for GitHub's form schema](https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-githubs-form-schema); [Adding and managing issue fields](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/adding-and-managing-issue-fields); [Set issue field values for an issue](https://docs.github.com/en/rest/issues/issue-field-values#set-issue-field-values-for-an-issue); [section 4](architecture/issue-data-model/4-storage-and-reach.md#triage) of the design |
-| Filing | Adds the issue's row to its team's Triage project, which the Triage workflow does when the issue is opened or transferred. The workflow will give a task or a bug logged while walking a scenario its row in the Scenario project instead, under the scenario's option (#448) | none of the filer's once #448 puts the workflow in NobleFactor's five participating repositories, none of which has it yet; it adds the row with the noblefactor-automation app's token. Until then the row is added by hand, which takes write on the Triage project, or on the Scenario project for an item found while walking a scenario | none of the filer's in personal, whose workflow adds the row with the classic token in `ADD_TO_PROJECT_PAT`; in David-Noble-at-work/.github, which has no Triage workflow yet (David-Noble-at-work/personal#311), write on the Triage project, to add the row by hand; write on the Scenario project, to give an item found while walking a scenario its row there until #448 | [section 4](architecture/issue-data-model/4-storage-and-reach.md#triage) of the design; [Managing access to your projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects/managing-your-project/managing-access-to-your-projects#managing-access-for-teams-and-individual-members-of-your-organization); [the same, for a user account's projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects/managing-your-project/managing-access-to-your-projects#managing-access-for-user-level-projects) |
+| Filing | Sets its Area, from the form's Area dropdown, which GitHub requires only in a public repository, and its Severity: N/A on an issue of a type other than Bug, and Medium on a bug filed from the bug form. A form can't set an issue field, so the Triage workflow copies the Area: personal's adds the `area:` label, and NobleFactor's sets the Area field (#447, #448). Both accounts' Triage workflows set the Severity (#448), and `star github issue` will set the Area and Severity N/A at filing (#338) | none of the filer's, where the Triage workflow sets them with its own token; triage, or write through GitHub's REST API, where the filer sets them | none of the filer's, where personal's Triage workflow adds the labels; a collaborator, to add them by hand | [Syntax for GitHub's form schema](https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-githubs-form-schema); [Adding and managing issue fields](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/adding-and-managing-issue-fields); [Set issue field values for an issue](https://docs.github.com/en/rest/issues/issue-field-values#set-issue-field-values-for-an-issue); [section 4](architecture/issue-data-model/4-storage-and-reach.md#triage) of the design |
+| Filing | Adds the issue's row to its team's Triage project, which the Triage workflow does when the issue is opened or transferred. The workflow gives a task or a bug logged while walking a scenario its row in the Scenario project instead, under the scenario's option (#448) | none of the filer's: the workflow in each of NobleFactor's five participating repositories adds the row with the noblefactor-automation app's token (#448) | none of the filer's in personal and David-Noble-at-work/.github, whose workflows add the row with the classic token in each repository's `ADD_TO_PROJECT_PAT` | [section 4](architecture/issue-data-model/4-storage-and-reach.md#triage) of the design; [Managing access to your projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects/managing-your-project/managing-access-to-your-projects#managing-access-for-teams-and-individual-members-of-your-organization); [the same, for a user account's projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects/managing-your-project/managing-access-to-your-projects#managing-access-for-user-level-projects) |
 | Triage | Sets or changes the issue's type; in a user account, its type label | write on the repository, since GitHub's REST API silently drops a type change from anyone with less | a collaborator | [Editing an issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/editing-an-issue#adding-or-changing-the-issue-type); [Update an issue](https://docs.github.com/en/rest/issues/issues#update-an-issue); [Permission levels for a personal account repository](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/repository-access-and-collaboration/permission-levels-for-a-personal-account-repository#collaborator-access-for-a-repository-owned-by-a-personal-account) |
 | Triage | Sets or changes its parent, the sub-issue link | triage on the issue's repository and, by GitHub's REST documentation, on its parent's | not stated | [Adding sub-issues](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/adding-sub-issues); [Create an issue](https://docs.github.com/en/rest/issues/issues#create-an-issue) |
 | Triage | Sets the Area, Priority and Severity issue fields, and Resolution on declined work; in a user account, the `area:`, `priority:`, `severity:` and `resolution:` labels that stand in for them | triage, on GitHub's issue page; write, through GitHub's REST API | a collaborator | [Adding and managing issue fields](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/adding-and-managing-issue-fields); [Set issue field values for an issue](https://docs.github.com/en/rest/issues/issue-field-values#set-issue-field-values-for-an-issue); [Permission levels for a personal account repository](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/repository-access-and-collaboration/permission-levels-for-a-personal-account-repository#collaborator-access-for-a-repository-owned-by-a-personal-account) |
@@ -332,14 +335,14 @@ between any two.
 | Triage | Moves an issue to another team's Triage project, in one act, by the person whose name is on it: the issue gets its row there and loses its row in the Triage project it leaves, and is assigned to an accountable member of that team | write on both Triage projects; triage on the issue's repository, to assign it, or write through GitHub's REST API | does not arise: a user account has no teams | [Managing access to your projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects/managing-your-project/managing-access-to-your-projects#managing-access-for-teams-and-individual-members-of-your-organization); [Assigning issues and pull requests to other GitHub users](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/assigning-issues-and-pull-requests-to-other-github-users); [Repository roles for an organization](https://docs.github.com/en/organizations/managing-user-access-to-your-organizations-repositories/managing-repository-roles/repository-roles-for-an-organization#permissions-for-each-role); [Update an issue](https://docs.github.com/en/rest/issues/issues#update-an-issue) |
 | Triage | The sweep (#436) will return an open issue that breaks a rule to its team's Triage project, and comment on it naming the rule (§ Well classified) | none: it will run every day as a scheduled GitHub Actions workflow in the account's `.github` repository, with the credentials the Triage workflow uses | none, the same way | § Well classified; [section 4](architecture/issue-data-model/4-storage-and-reach.md#triage) of the design |
 | The backlog | Holds accepted tasks and bugs: the issue's row in the Backlog project, with its Status, and its Priority, which orders the Backlog in the By priority view that the script of #303's closing pull request makes, with the Priority column shown. David-Noble-at-work's Backlog has no Priority field to sort by; there an issue's `priority:` label holds its priority | write on the Backlog project, for the row; triage, or write through GitHub's REST API, for Priority | write on the Backlog project, for the row; a collaborator, for the label | [Managing access to your projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects/managing-your-project/managing-access-to-your-projects#managing-access-for-teams-and-individual-members-of-your-organization); [the same, for a user account's projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects/managing-your-project/managing-access-to-your-projects#managing-access-for-user-level-projects); [Adding and managing issue fields](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/adding-and-managing-issue-fields) |
-| Scheduling | Puts work on a schedule, highest Priority first: the issue gets its row in the Schedule project, with the schedule's option in Schedule, the next step or the step the schedule's owner gives it in Step, and Status Open, and loses its row in the project it leaves, the Backlog, Triage or, for an item found while walking a scenario, the Scenario project. `star github schedule add` (#438) will make the move in one command | write on both projects | write on both projects | [Managing access to your projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects/managing-your-project/managing-access-to-your-projects#managing-access-for-teams-and-individual-members-of-your-organization); [the same, for a user account's projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects/managing-your-project/managing-access-to-your-projects#managing-access-for-user-level-projects) |
+| Scheduling | Puts work on a schedule, highest Priority first: the issue gets its row in the Schedule project, with the schedule's option in Schedule, the next step or the step the schedule's owner gives it in Step, and Status Open, and loses its row in the project it leaves, the Backlog, Triage or, for an item found while walking a scenario, the Scenario project. `star github schedule add` (#438) makes the move in one command | write on both projects | write on both projects | [Managing access to your projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects/managing-your-project/managing-access-to-your-projects#managing-access-for-teams-and-individual-members-of-your-organization); [the same, for a user account's projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects/managing-your-project/managing-access-to-your-projects#managing-access-for-user-level-projects) |
 | Scheduling | Moves a step to another team's schedule, in one act, by the person whose name is on it: the issue gets its row in that team's Schedule project, with that project's fields set, and loses its row in the Schedule project it leaves, and is assigned to an accountable member of that team | write on both Schedule projects; triage on the issue's repository, to assign it, or write through GitHub's REST API | does not arise: a user account has no teams | [Managing access to your projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects/managing-your-project/managing-access-to-your-projects#managing-access-for-teams-and-individual-members-of-your-organization); [Assigning issues and pull requests to other GitHub users](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/assigning-issues-and-pull-requests-to-other-github-users); [Repository roles for an organization](https://docs.github.com/en/organizations/managing-user-access-to-your-organizations-repositories/managing-repository-roles/repository-roles-for-an-organization#permissions-for-each-role); [Update an issue](https://docs.github.com/en/rest/issues/issues#update-an-issue) |
 | Scheduling | Adds the step's blocked-by links | triage on the step's repository; on the blocking issue's, not stated | not stated | [Creating issue dependencies](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/creating-issue-dependencies) |
 | Scheduling | Keeps the step's row current: its Worktree link to the branch its work is on, and its Status as the work moves | write on the Schedule project | write on the Schedule project | [Managing access to your projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects/managing-your-project/managing-access-to-your-projects#managing-access-for-teams-and-individual-members-of-your-organization); [the same, for a user account's projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects/managing-your-project/managing-access-to-your-projects#managing-access-for-user-level-projects) |
 | Scheduling | Records the owner's amendment of a committed schedule in its Schedule issue | write on the repository, or being the Schedule issue's author, to edit its body | a collaborator | [Editing an issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/editing-an-issue) |
 | Scheduling | Opens a schedule: files its Schedule issue from the Schedule form, assigns the issue to the schedule's owner ([section 3](architecture/issue-data-model/3-collections.md#ownership) of the design), adds the schedule's option, named for the issue, to the Schedule field, and gives the issue its own row, with that option and no step | read, to file the issue; triage, to assign it, or write through GitHub's REST API; write on the Schedule project, for the option and the row | as for filing; a collaborator, to assign it; write on the Schedule project | [Creating an issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/creating-an-issue); [Repository roles for an organization](https://docs.github.com/en/organizations/managing-user-access-to-your-organizations-repositories/managing-repository-roles/repository-roles-for-an-organization#permissions-for-each-role); [Update an issue](https://docs.github.com/en/rest/issues/issues#update-an-issue); [Managing access to your projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects/managing-your-project/managing-access-to-your-projects#managing-access-for-teams-and-individual-members-of-your-organization) |
 | Scenarios | Opens a scenario: files its Scenario issue from the Scenario form, assigns the issue to the scenario's owner, adds the scenario's option, named for the issue, to the Scenario field, and gives the issue its own row, with that option | read, to file the issue; triage, to assign it, or write through GitHub's REST API; write on the Scenario project, for the option and the row | as for filing; a collaborator, to assign it; write on the Scenario project | [Creating an issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/creating-an-issue); [Repository roles for an organization](https://docs.github.com/en/organizations/managing-user-access-to-your-organizations-repositories/managing-repository-roles/repository-roles-for-an-organization#permissions-for-each-role); [Update an issue](https://docs.github.com/en/rest/issues/issues#update-an-issue); [Managing access to your projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects/managing-your-project/managing-access-to-your-projects#managing-access-for-teams-and-individual-members-of-your-organization) |
-| Scenarios | Walks a scenario and logs each work item found, a task or a bug whose body names its scenario, as "Found while walking #N": the item gets its row in the Scenario project, with the scenario's option in Scenario and, in Beat, the point in the walk where it turned up. The Triage workflow will add the row in place of a Triage row (#448) | read, to file the item; write on the Scenario project, for its Beat, and for its row until #448 | as for filing; write on the Scenario project, for its Beat, and for its row until #448 | [Creating an issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/creating-an-issue); [Managing access to your projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects/managing-your-project/managing-access-to-your-projects#managing-access-for-teams-and-individual-members-of-your-organization); [the same, for a user account's projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects/managing-your-project/managing-access-to-your-projects#managing-access-for-user-level-projects) |
+| Scenarios | Walks a scenario and logs each work item found, a task or a bug whose body names its scenario, as "Found while walking #N": the item gets its row in the Scenario project, with the scenario's option in Scenario and, in Beat, the point in the walk where it turned up. The Triage workflow adds the row in place of a Triage row (#448), and the walker sets the Beat by hand | read, to file the item; write on the Scenario project, for its Beat | as for filing; write on the Scenario project, for its Beat | [Creating an issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/creating-an-issue); [Managing access to your projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects/managing-your-project/managing-access-to-your-projects#managing-access-for-teams-and-individual-members-of-your-organization); [the same, for a user account's projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects/managing-your-project/managing-access-to-your-projects#managing-access-for-user-level-projects) |
 | Scenarios | Moves an item out of its scenario, to its team's Triage project or straight onto a schedule, which means classifying it first: the item gets its row there, with that project's fields set, and loses its Scenario row, and its body and a comment on the Scenario issue record the move | write on both projects; to classify it first, the roles the Triage rows above name; to edit its body, write on the repository, or being its author; to comment on the Scenario issue, not stated | write on both projects; a collaborator, to classify it, edit its body and comment | [Managing access to your projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects/managing-your-project/managing-access-to-your-projects#managing-access-for-teams-and-individual-members-of-your-organization); [the same, for a user account's projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects/managing-your-project/managing-access-to-your-projects#managing-access-for-user-level-projects); [Editing an issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/editing-an-issue); [Permission levels for a personal account repository](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/repository-access-and-collaboration/permission-levels-for-a-personal-account-repository#collaborator-access-for-a-repository-owned-by-a-personal-account) |
 
 A project's row shows only to someone who can read the repository its issue is in, whatever their role on the project
@@ -432,8 +435,9 @@ projects.
 
 A work item (a feature, a task or a bug) rolls up to exactly one epic through its parent links. Ruled 2026-11-04: a task
 or a bug may be a row of a Backlog project, of a schedule (§ Schedules) or of a scenario (§ Scenarios), and an epic or a
-feature is a row of none of them (§ What has no parent). Today the report renders each slice as `--by epic`,
-`--by thread` and `--by schedule`; its thread slice is the scenario slice under its old name.
+feature is a row of none of them (§ What has no parent). Since #379 (ruled 2026-11-08) the report returns every issue
+as one flat record, and star's `--filter` and `--jq` give each slice: an epic's on the record's `epic`, a schedule's
+and a scenario's on the rows in its `home`.
 
 ## Scenarios
 
@@ -446,8 +450,8 @@ a schedule that starts with no tasks or bugs: they are found with time. Ruled 20
 
 **Walking a scenario.** Ruled 2026-11-04: someone opens the scenario and walks it, logging work items as they go, each a
 task or a bug and a row of the team's Scenario project under the scenario's option, its Beat the point in the walk where
-it turned up. A logged item names its scenario in its body, as "Found while walking #N", and the Triage workflow will
-add it to the scenario instead of to the team's Triage project (#448). Each item later moves to its team's Triage
+it turned up. A logged item names its scenario in its body, as "Found while walking #N", and the Triage workflow adds
+it to the scenario instead of to the team's Triage project (#448). Each item later moves to its team's Triage
 project or straight onto a schedule, and leaves the scenario; the item's body and a comment on the Scenario issue record
 the move. The sweep (#436) will leave a scenario's rows alone but for two structural rules: it will return an epic or a
 feature that is a row of a Scenario project, as it will one on a Backlog or Schedule project, and an issue that is a row
@@ -488,12 +492,13 @@ epic take issues away from the epic that owns their machinery?* If it would, the
 `Thread:<Name>` label (§ What has no parent). Its scenario's option in the Scenario field is named for it, and its
 account's `.github` repository holds an issue form for it. Its body summarizes the end-user goal, gives the example and
 names the features the scenario exercises; it states no evidence of completion, since a scenario never ends (§ Evidence
-of completion). Read on 2026-11-04, each account's Scenario form asks only for the Area, the story and the evidence of
-completion. The Scenario type's description, and the `scenario` label's in personal and David-Noble-at-work/.github,
-still read "Collection: describes a scenario, the story its features tell", the model of 2026-11-03. #453 will bring the
-forms, the type's description and both labels' descriptions to this, and will put "how to walk it", the example, where
-each form's Evidence of completion section is, as its comments of 2026-11-04 record. **The order is the walk's; the
-ownership is the epics'.** Beat, the point in the walk where an item turned up, gives the order; issue numbers do not.
+of completion). Since #453, on 2026-11-14, each account's Scenario form asks, after the Area, what the person wants to
+do, how to walk through it, and the features it uses, then for the plan and design documents. How to walk through it is
+the example, for a demo or a quick test, and it takes the place of an evidence of completion; the form no longer asks
+for the story. The Scenario type's description, and the `scenario` label's in personal and David-Noble-at-work/.github,
+now read "Collection: what someone wants to do, how to walk through it, and the features it uses". **The order is the
+walk's; the ownership is the epics'.** Beat, the point in the walk where an item turned up, gives the order; issue
+numbers do not.
 
 Its type tells the scenario issue apart from its members, which share no label with it. Today the report
 still finds a scenario issue by its title beginning `Thread:`. Under the old scheme it read the order from a
@@ -505,8 +510,8 @@ Since 2026-11-03 that line links the issue's own rows (§ Schedules).
 Scenario field, so no label has to agree with a table. Ruled 2026-11-03, there are no compliance checks; superseded in
 part on 2026-11-04, the sweep (#436) will be the one check, and it will leave a scenario's rows alone but for the two
 structural rules above, on an epic or a feature in a scenario and on an issue that is also a row of another of its
-account's projects (§ Well classified). Today `star github schedule audit --unthreaded` lists open work in no thread as
-a question rather than a fault; it still reads the removed `Thread:` labels until the tooling follows.
+account's projects (§ Well classified). The audit, and with it `--unthreaded`, which read the removed `Thread:` labels,
+retired with #436 on 2026-11-08; the sweep holds a scenario's rows to those two rules.
 
 ## Schedules
 
@@ -537,8 +542,9 @@ as a step is a fault, not a shorthand.
 **The schedule issue** has the issue type Schedule (the label `schedule`, in a user account). It holds its schedule's
 deliverable and exit criteria (§ What has no parent), its schedule's option in the Schedule field is named for it, and
 its account's `.github` repository holds an issue form for it. The steps are the rows with that option, with their step
-numbers. Today the report still finds a schedule issue by its title beginning `Schedule:`. Under the old scheme it read
-the steps from a step table in the schedule issue's body. Ruled 2026-11-03, and done in GitHub the same day: those
+numbers. Since #379 (2026-11-08) the report finds a schedule's steps in its records' `home`, by the Schedule option of
+their rows, and Start-Claude knows a schedule issue by its type, or in a user account its `schedule` label, never by its
+title. Under the old scheme the report read the steps from a step table in the schedule issue's body. Ruled 2026-11-03, and done in GitHub the same day: those
 tables gave way to a line naming the issue's board and option (§ Scenarios).
 
 On 2026-11-03 that line, `The steps are on [<project>](...), under Schedule "<option>"` or, in a Scenario issue,
@@ -564,7 +570,7 @@ is added, in the order the project's rows are kept in
 with the schedule's option in its Schedule field, the next step or the step the schedule's owner gives it, Status Open
 and its blocked-by links, and it loses its Backlog row in the same act (§ What has no parent). A committed schedule
 takes it only by its owner's amendment, recorded in the Schedule issue (§ What a schedule commits to).
-`star github schedule add` (#438) will make that move in one command.
+`star github schedule add` (#438), built on 2026-11-12, makes that move in one command.
 
 **Schedules have no Next column.** Ruled 2026-11-02: it was deleted from the Schedule template and from
 every schedule project. A step's state shows in its row's Status, a field on a project row that anyone may
@@ -601,8 +607,9 @@ A schedule's members are the rows of its team's Schedule project with its option
 members are found down its sub-issue links, not by label. Ruled 2026-11-03, there are no compliance checks; superseded
 in part on 2026-11-04, the sweep (#436) will be the one check, and it will return an issue that breaks a rule to its
 team's Triage project (§ Well classified). Under the old scheme `star github schedule report --by schedule` read the
-schedule issue's step table and rendered each step's state; that table is gone (§ Schedules). What the audit compares
-against will be decided with the tooling, #426 and #437.
+schedule issue's step table and rendered each step's state; that table is gone (§ Schedules). Since #436 (2026-11-08) a
+record's `home` gives each step's schedule, step and Status from its row, and the sweep checks each account against its
+own model, the part of #426 it needs having come with it; `push`'s side stays with #426 and #437.
 
 ## What an empty level means
 
@@ -623,7 +630,14 @@ state, and the report should say so.
 
 An issue of any type, or of none, waits in its team's Triage project until a triage decision declines it or moves it on
 (§ What has no parent), but for an item found while walking a scenario, which waits in the scenario until it moves out
-(§ Scenarios). An issue moved on leaves with its type and its parent. Triage also sets and revises its attributes:
+(§ Scenarios). An issue moved on leaves with its type and its parent.
+
+Ruled 2026-11-08, recorded on #436: a Triage row sits beside an issue's home. An issue's home is at most one of its
+account's Backlog, Schedule and Scenario projects; when the sweep finds a fault, it adds the issue to its team's Triage
+project beside that home, and it never takes an issue off a schedule or a scenario, nor removes a row from any project.
+Triage fixes the fault, or declines or moves the issue, and removes the Triage row as part of that decision.
+
+Triage also sets and revises its attributes:
 
 | Attribute | Answers | In NobleFactor | In David-Noble-at-work |
 | --- | --- | --- | --- |
@@ -675,10 +689,12 @@ David-Noble-at-work and on the account's Backlog copy was deleted on 2026-11-03;
 every issue of another type has Severity N/A: in NobleFactor, a new option N/A of the Severity issue field, and in a
 user account, a new label, `severity:n/a`. A bug has Critical, High, Medium or Low, never N/A. An issue with no type yet
 gets no Severity and waits for triage; when triage gives it a type other than Bug, triage sets its Severity to N/A, and
-the sweep (#436) will catch a miss (§ Well classified). The Triage workflow will set N/A on an issue of another type
-filed from a form, and will give a bug filed from the bug form, which asks no severity, Severity Medium, the owner's
-default, which GitHub's field can't hold; triage changes it when the bug's harm is greater or less (#448).
-`star github issue` will set N/A at filing (#338). So every typed issue has exactly one Severity value.
+the sweep (#436) will catch a miss (§ Well classified). The Triage workflow sets the Severity when an issue is opened,
+and an issue that has one keeps it: a bug, whose form asks no severity, gets Medium, the owner's default, which GitHub's
+field can't hold, an issue of another type N/A, and an issue with no type yet none; triage changes a bug's Severity when
+its harm is greater or less (#448). An issue typed only after it is opened gets no Severity from the workflow, and
+triage gives it one. `star github issue` will set N/A at filing (#338). So every typed issue has exactly one Severity
+value.
 
 The N/A option, and the `severity:n/a` label in personal and David-Noble-at-work/.github, are made by the script of
 #303's closing pull request. It adds N/A through GitHub's REST call,
@@ -699,16 +715,16 @@ none, and every chore's type changed when Chore was retired.
 Ruled 2026-11-02: every issue states its evidence of completion, what will show it is done; for a Schedule issue that is
 its exit criteria. Ruled 2026-11-04, superseding what that ruling said of a Scenario issue: every issue but a Scenario
 issue states its evidence of completion. A scenario never ends, so its Scenario issue never closes and has nothing to
-evidence (§ Scenarios), and #453 will put "how to walk it", the example the Scenario issue gives, where the Evidence of
-completion section is on both accounts' Scenario forms.
+evidence (§ Scenarios). Since #453, on 2026-11-14, both accounts' Scenario forms ask how to walk through it, the example
+the Scenario issue gives, in place of the Evidence of completion section.
 
 Ruled 2026-11-04: an issue states its evidence of completion in its Evidence of completion section. Read from GitHub on
 2026-11-04, each of the six issue forms in each account's `.github` repository, NobleFactor/.github and
-David-Noble-at-work/.github, has that section and requires it, the Scenario form until #453 changes it. At filing, the
-form checks it in a public repository; GitHub enforces a form's required fields only there (GitHub's form schema
-documentation, read 2026-11-04). In a private repository, which today is only personal, nothing checks it at filing
-until `star github issue` does (#338). Afterward, the sweep (#436) will return an issue other than a Scenario issue with
-no Evidence of completion section to its team's Triage project (§ Well classified).
+David-Noble-at-work/.github, had that section and required it; #453 took it out of both Scenario forms on 2026-11-14. At
+filing, the form checks it in a public repository; GitHub enforces a form's required fields only there (GitHub's form
+schema documentation, read 2026-11-04). In a private repository, which today is only personal, nothing checks it at
+filing until `star github issue` does (#338). Afterward, the sweep (#436) will return an issue other than a Scenario
+issue with no Evidence of completion section to its team's Triage project (§ Well classified).
 
 ## Well classified
 
@@ -750,8 +766,8 @@ sweep blocks no filing and corrects nothing by itself: triage fixes each issue i
 row either: triage removes an issue's row as part of its decision, and an issue someone closes outside triage stays in
 its Triage project until triage decides its disposition. It waits on #452, which will give every open issue an Area
 first (§ What has no parent). A hierarchy type whose description names no level is a fault of the model, not of an
-issue, and `star github model pull` and `push` will check it (#426 and #437). #361, which held the audit's faults, was
-closed on 2026-11-04 as completed with Resolution Declined.
+issue: `star github model get` stops on it, naming the type (#426), and `diff` and `apply` report it as a difference
+from the model they are given (#437). #361, which held the audit's faults, was closed on 2026-11-04 as completed with Resolution Declined.
 
 Only **open** issues are checked: the rules apply to open work, and a closed issue keeps the classification it was left
 with. Closed issues were not skipped in the cutover: the chore label was removed from every repository in both accounts,
@@ -795,14 +811,21 @@ not done is closed as completed, with its Resolution, or in a user account its `
 The model holds an account's issue fields, as it holds its issue types and labels: in NobleFactor,
 Priority, Effort, Target date, Resolution, Area and Severity. A user account has none. Ruled 2026-11-03.
 
-**The model's two verbs.** `star github model pull` reads the whole model of any account, ours or not: every repository
-the account owns. Pull has no `--repo` option. `--account` names the account and defaults from star configuration's
-`github.account`, which defaults to NobleFactor; `--asset` names the model file. `star github model push` will write a
-model to an account (#437), and that model will become the account's data model. Pull comes first, then push, and their
-account option is `--account`, not `--org`. Ruled 2026-11-02 and 2026-11-03. What push will write (views, `--repo`, the
-default of its `--account`) and the default of `--asset` will be decided with the tooling, #426 and #437. Until the
-tooling follows, the extension still ships `star github labels audit` and `star github labels sync`, it has no push yet,
-and pull still takes `--org`.
+**The model's commands.** GitHub is the model, ruled 2026-11-09 (#426): a command that needs an account's model reads it
+from GitHub when it runs, and the model file in the account's `.github` repository is a backup that only a restore
+reads. `star github model get <account>` reads the model of any account, ours or not, and `backup <account>` lands it in
+the account's `.github` repository through a pull request (#426). `diff <model> <account>`, `apply <model> <account>`
+and `restore <account> [<revision>]` compare a model with an account's, make a model the account's, and restore a
+backup, `main`'s when no revision is named (#437); neither `apply` nor `restore` deletes anything of the account's
+without `--prune` (ruled 2026-11-10), and neither ever deletes a team, a project or a template. A project `apply` has
+just made is brought to its template exactly: GitHub's default Status options, View 1 and built-in workflows go, with or
+without `--prune` (ruled 2026-11-11). `apply` also brings a new account in: its `.github` files, and in each
+participating repository the Triage workflow, its `TRIAGE_PROJECT_URL` and the secrets it signs in with, each from the
+source `--token` names, `env:` or `file:`, never its value. Each names its account, and no account is a default.
+`star github labels audit` and `labels sync`, which still enforced the label
+scheme retired on 2026-11-03, were removed with #437 on 2026-11-10. Until 2026-11-09, `pull` read the whole model into
+the file `--asset` named, its `--account` defaulting to NobleFactor, and `push` was to write a model back (ruled
+2026-11-02 and 2026-11-03).
 
 GitHub's default labels `enhancement`, `documentation`, `good first issue`, `help wanted` and `question`
 are **not types**. They look reasonable at filing time and place nothing. `enhancement` in particular is
@@ -815,8 +838,10 @@ it, with the color and description David-Noble-at-work/.github's has, from the s
 that every repository that takes part, in both accounts, holds it. The sweep (#436) will return an issue that carries it
 and isn't a task or a bug to its team's Triage project (§ Well classified).
 
-## What the audit is for
+## What the sweep is for
 
-Today `star github schedule audit` is the classification audit, and `star github schedule report --view
-tree` opens with it before any section. That order is the point: a report that renders a tidy hierarchy while
-silently omitting the issues it could not place is worse than no report, because it looks complete.
+`star github triage sweep` (#436) is the classification check since the audit retired on 2026-11-08. The audit's point
+stands: a report that renders a tidy hierarchy while silently omitting the issues it could not place is worse than no
+report, because it looks complete. The report now omits nothing, since every issue is a record and one with no type or
+no parent says so in its keys, and the sweep sends each open issue that breaks a rule (§ Well classified) to its team's
+Triage project, beside its home and never in place of it.

@@ -95,23 +95,27 @@ issue="${issue#\#}"
 # Functions
 ###########
 
-# branch_type_for maps an issue's labels onto the prefix the branch must carry.
+# branch_type_for maps an issue's type onto the prefix the branch must carry: a bug is a fix, an issue labeled
+# documentation is a doc, and every other issue is a feature. In an organization the type is the issue type; in a
+# user account, where no issue has one, its type label stands for it, so there the bug label makes a fix (ruled
+# 2026-11-04, #449).
 #
-# Organization ruleset 12515090 constrains every ref to ^(chore|doc|feature|fix|hotfix|refactor|release)/.+$
-# with no bypass actors, so the prefix is not a preference — a name outside that alternation is rejected at
-# push time, which is a long way from here. The mapping is deliberately small: an issue that is none of these
-# is work whose kind nobody has decided, and `feature` is the honest default rather than a guess dressed up.
+# Organization ruleset 12515090 constrains every ref to ^(doc|feature|fix|hotfix|refactor|release)/.+$ with no
+# bypass actors, so the prefix is not a preference — a name outside that alternation is rejected at push time, which
+# is a long way from here. chore left it on 2026-11-03. The mapping is deliberately small: hotfix, refactor and
+# release are chosen with -T, and an issue whose kind nobody has decided gets `feature`, the honest default rather
+# than a guess dressed up.
 function branch_type_for {
 
-    local labels="$1"
+    local type="$1" labels="$2"
 
-    case ",${labels}," in
-        *,bug,*) printf 'fix' ;;
-        *,chore,*) printf 'chore' ;;
-        *,documentation,*) printf 'doc' ;;
-        *,enhancement,* | *,feature,* | *,epic,*) printf 'feature' ;;
-        *) printf 'feature' ;;
-    esac
+    if [[ "${type}" == Bug || (-z "${type}" && ",${labels}," == *,bug,*) ]]; then
+        printf 'fix'
+    elif [[ ",${labels}," == *,documentation,* ]]; then
+        printf 'doc'
+    else
+        printf 'feature'
+    fi
 }
 
 # name_from reduces an issue title to the readable half of a branch name.
@@ -151,22 +155,23 @@ function name_from {
 
 command -v gh >/dev/null 2>&1 || error $EX_UNAVAILABLE "gh is required to read issue #${issue}."
 
-# One call, three facts, taken through gh's own --jq so no second dependency is introduced. A closed issue
-# is the interesting refusal: the branch would be opened for work already finished, and the mistake is
-# nearly always a transposed number.
-issue_facts="$(gh issue view "${issue}" --json title,state,labels \
-    --jq '[.title, .state, ([.labels[].name] | join(","))] | @tsv' 2>/dev/null)" ||
+# One call, four facts, taken through gh's own --jq so no second dependency is introduced. They are joined by the
+# unit separator, which no title holds and which read does not collapse as it collapses tabs, so an issue with no type
+# or no labels keeps each fact in its place. A closed issue is the interesting refusal: the branch would be opened for
+# work already finished, and the mistake is nearly always a transposed number.
+issue_facts="$(gh issue view "${issue}" --json title,state,issueType,labels \
+    --jq '[.title, .state, (.issueType.name // ""), ([.labels[].name] | join(","))] | join("\u001f")' 2>/dev/null)" ||
     error $EX_NOINPUT "No issue #${issue} in this repository."
 
-IFS=$'\t' read -r issue_title issue_state issue_labels <<<"${issue_facts}"
+IFS=$'\x1f' read -r issue_title issue_state issue_type issue_labels <<<"${issue_facts}"
 
 [[ "${issue_state}" == "OPEN" ]] ||
     error $EX_USAGE "Issue #${issue} is ${issue_state}. Re-open it, or name the issue this work belongs to."
 
-[[ -n "${branch_type}" ]] || branch_type="$(branch_type_for "${issue_labels}")"
+[[ -n "${branch_type}" ]] || branch_type="$(branch_type_for "${issue_type}" "${issue_labels}")"
 
-[[ "${branch_type}" =~ ^(chore|doc|feature|fix|hotfix|refactor|release)$ ]] ||
-    error $EX_USAGE "Type '${branch_type}' is outside ruleset 12515090: chore, doc, feature, fix, hotfix, refactor, release."
+[[ "${branch_type}" =~ ^(doc|feature|fix|hotfix|refactor|release)$ ]] ||
+    error $EX_USAGE "Type '${branch_type}' is outside ruleset 12515090: doc, feature, fix, hotfix, refactor, release."
 
 # --name wins: the caller has read the issue and knows what the work is called. Falling back to the title is
 # for when they have not bothered, which is most of the time and fine.

@@ -191,11 +191,33 @@ CLAUDE
 
     cat >"${directory}/bin/gh" <<'GH'
 #!/usr/bin/env bash
-# Schedule 7 of the startup repository's origin, as Start-Claude reads it: its title, link and labels, separated by
-# tabs, as gh's --jq gives them.
-if [[ $1 == issue && $2 == view && $3 == 7 && $4 == --repo && $5 == example/start-claude-test ]]; then
-    printf 'Schedule: probe\thttps://github.com/example/start-claude-test/issues/7\tchore\n'
-    exit 0
+# Issues of the startup repository's origin, as Start-Claude reads them through GraphQL: title, link, issue type and
+# labels, separated by the unit separator, as gh's --jq gives them. 7 is an organization's schedule, of type Schedule;
+# 8 a user account's, labeled schedule; 9 is titled "Schedule:" and labeled chore, the scheme retired on 2026-11-03.
+number="" owner="" name=""
+if [[ $1 == api && $2 == graphql ]]; then
+    shift 2
+    while (($#)); do
+        case $1 in
+            -F | -f)
+                case $2 in
+                    number=*) number="${2#number=}" ;;
+                    owner=*) owner="${2#owner=}" ;;
+                    name=*) name="${2#name=}" ;;
+                esac
+                shift
+                ;;
+        esac
+        shift
+    done
+fi
+if [[ ${owner}/${name} == example/start-claude-test ]]; then
+    url="https://github.com/example/start-claude-test/issues/${number}"
+    case ${number} in
+        7) printf '%s\x1f%s\x1f%s\x1f%s\n' "Schedule: probe" "${url}" Schedule "" && exit 0 ;;
+        8) printf '%s\x1f%s\x1f%s\x1f%s\n' "Schedule: personal probe" "${url}" "" "schedule,area:engineering" && exit 0 ;;
+        9) printf '%s\x1f%s\x1f%s\x1f%s\n' "Schedule: the old scheme" "${url}" "" chore && exit 0 ;;
+    esac
 fi
 printf 'stand-in gh: not handled: %s\n' "$*" >&2
 exit 1
@@ -598,6 +620,14 @@ STAND_IN_CWD="${run_directory}/elsewhere"
 run_store_case "--continue with --schedule, claude listing none here: refused, nothing started" "${repository}" "" \
     not-found --detach --continue --schedule 7
 STAND_IN_CWD="${repository}"
+
+# What a schedule is (ruled 2026-11-03, issue-standards.md § Schedules): an issue of type Schedule, as schedule 7 is, or, in a user account, which has no issue
+# types, one labeled schedule, as 8 is. 9 is titled "Schedule:" and labeled chore, the scheme retired on 2026-11-03,
+# and is not one.
+clear_store
+run_case "--schedule naming a user account's schedule, labeled schedule: a new conversation" fedc4321 --detach --schedule 8
+clear_store
+run_case "--schedule naming an issue labeled chore, not of type Schedule: refused" data-error --detach --schedule 9
 
 # Row 2 of personal#259's plan: the conversation --schedule with --directory resumes in another clone, which claude
 # then lists there, is the one --continue finds there, and not the newest transcript in that clone's project folder,

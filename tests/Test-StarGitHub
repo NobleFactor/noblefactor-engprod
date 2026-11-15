@@ -1,0 +1,2377 @@
+#!/usr/bin/env bash
+
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Noble Factor. All rights reserved.
+
+# Test-StarGitHub - Tests the com.noblefactor.ops.GitHub star extension against a stand-in gh: the report's records and
+# selection (#379) and the triage sweep (#436), as docs/plans/feature/436-triage-sweep.md's test plan lists them; and
+# each account's model read from GitHub when a command needs it, star github model get and backup, and the sweep's
+# two-types rule (#426), as docs/plans/feature/426-model-pull-to-dot-github.md's test plan lists them; star github
+# schedule add (#438), as docs/plans/feature/438-schedule-add.md's test plan lists them; and each team's project of a
+# kind held to its template's README and to the short description the template names for a copy (#555), as
+# docs/plans/fix/555-copy-readme.md's test plan lists them
+
+[[ -r "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" ]] || {
+    printf '%s: cannot find Declare-BashScript in %s\n' "${0##*/}" "$(dirname "$0")/../Home/common/.local/bin" >&2
+    exit 72 # EX_OSFILE
+}
+
+# The helper sources Set-Environment from ${XDG_DATA_HOME:-$HOME/.local/share}/shell/functions. This checkout's is the
+# file under review, so the test points XDG_DATA_HOME at it while the helper loads; each star the test runs gets an
+# XDG_DATA_HOME of its own, holding a copy of this checkout's extension.
+XDG_DATA_HOME="$(cd "$(dirname "$0")/../Home/common/.local/share" && pwd)" || exit 72 # EX_OSFILE
+export XDG_DATA_HOME
+
+# shellcheck source=Declare-BashScript
+source "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" "$0" "help" "h" "$@"
+require_command git jq mktemp star
+
+declare -r extension_name=com.noblefactor.ops.GitHub
+extension_source="${XDG_DATA_HOME}/devlore/star/extensions/${extension_name}"
+declare -r extension_source
+
+###########
+# Functions
+###########
+
+# cleanup removes the run's directory, which holds every case's extension, fixtures and calls, however the run ends;
+# with TEST_STAR_GITHUB_KEEP set, it keeps the directory and names it, for a failing case's calls to be read.
+#
+# Returns:
+#   - 0, the run's directory gone, or kept and named.
+function cleanup {
+    if [[ -n "${run_directory:-}" && -d "${run_directory}" ]]; then
+        if [[ -n "${TEST_STAR_GITHUB_KEEP:-}" ]]; then
+            printf 'kept: %s\n' "${run_directory}" >&2
+            return 0
+        fi
+        rm -rf -- "${run_directory}"
+    fi
+}
+
+# make_extension lays out an extension directory as writ deploys one: this checkout's manifest, commands, reference
+# models and templates, linked, and no model file: an account's model is what GitHub holds, which the stand-in serves (#426).
+#
+# Parameters:
+#   - `$1`: the data directory to make, which star is given as XDG_DATA_HOME.
+#
+# Returns:
+#   - 0, with `$1`/devlore/star/extensions/com.noblefactor.ops.GitHub laid out.
+function make_extension {
+    local directory="$1/devlore/star/extensions/${extension_name}"
+
+    mkdir -p -- "${directory}"
+    ln -s -- "${extension_source}/extension.yaml" "${directory}/extension.yaml"
+    ln -s -- "${extension_source}/commands" "${directory}/commands"
+    ln -s -- "${extension_source}/reference" "${directory}/reference"
+    ln -s -- "${extension_source}/templates" "${directory}/templates"
+}
+
+# override gives one data directory's GitHub a piece of its own: the stand-in answers `$1`/fixtures/`$2` before the
+# run's fixture of the same path, so that a case may change what GitHub holds.
+#
+# Parameters:
+#   - `$1`: the data directory make_extension made.
+#   - `$2`: the fixture's path under fixtures, as the stand-in looks it up.
+#   - standard input: the fixture.
+#
+# Returns:
+#   - 0, the fixture written.
+function override {
+    mkdir -p -- "$(dirname "$1/fixtures/$2")"
+    cat >"$1/fixtures/$2"
+}
+
+# remote makes an account's .github repository on the stand-in's GitHub: a bare repository under
+# ${run_directory}/remotes whose main holds a README and, when given, model.yaml. Whatever an earlier one of the same
+# name left goes with it: its pull requests, its CI's setting, and the clone a backup left in the run's home.
+#
+# Parameters:
+#   - `$1`: the account.
+#   - `$2`: model.yaml's content; optional, none by default.
+#
+# Returns:
+#   - 0, the repository made.
+function remote {
+    local bare="${run_directory}/remotes/$1/.github.git" seed="${run_directory}/seed-$1" pulls="${run_directory}/remotes/pulls"
+
+    rm -rf -- "${bare}" "${seed}" "${run_directory}/remotes/$1/.github.ci" "${run_directory}/home/Workspace/$1/.github"
+    if [[ -f "${pulls}" ]]; then
+        grep -v "^pr $1/.github " "${pulls}" >"${pulls}.kept" || true
+        mv -- "${pulls}.kept" "${pulls}"
+    fi
+    git init --quiet --bare --initial-branch=main "${bare}"
+    git init --quiet --initial-branch=main "${seed}"
+    printf '# .github\n' >"${seed}/README.md"
+    [[ -z "${2:-}" ]] || printf '%s\n' "$2" >"${seed}/model.yaml"
+    HOME="${run_directory}/home" git -C "${seed}" add --all
+    HOME="${run_directory}/home" git -C "${seed}" commit --quiet -m "seed"
+    git -C "${seed}" push --quiet "${bare}" main
+    rm -rf -- "${seed}"
+}
+
+# main_holds_model succeeds when an account's .github repository's main holds, as model.yaml, what get returns for it
+# as YAML, in `get_yaml`.
+#
+# Parameters:
+#   - `$1`: the account.
+#
+# Returns:
+#   - 0 when they match; 1 otherwise.
+function main_holds_model {
+    [[ -n "${get_yaml}" && "$(git --git-dir="${run_directory}/remotes/$1/.github.git" show main:model.yaml 2>/dev/null)" == "${get_yaml}" ]]
+}
+
+# ci sets how the CI of an account's .github repository behaves on the stand-in's GitHub. With none, the default, main
+# requires no check and no workflow runs. With pass or fail, main requires quality-gate, and the head commit's workflow
+# run appears on the third read of its runs, is in progress on the fourth, and has finished on the fifth, its check
+# passing or failing. With never, main requires quality-gate and no run starts. With private or refused, GitHub refuses
+# to read the branch's rules, with the 403 it gives a private repository of a free user account (#538); the repository
+# is private with private, public with refused.
+#
+# Parameters:
+#   - `$1`: the account.
+#   - `$2`: none, pass, fail, never, private or refused.
+#
+# Returns:
+#   - 0, the setting written.
+function ci {
+    printf '%s\n' "$2" >"${run_directory}/remotes/$1/.github.ci"
+}
+
+# repository makes a repository on the stand-in's GitHub, a bare repository under ${run_directory}/remotes whose main
+# holds a README and the files given; one made before goes first, with the clone of it left in the run's home.
+#
+# Parameters:
+#   - `$1`: the repository, owner/name.
+#   - `${@:2}`: the files, each path=content.
+#
+# Returns:
+#   - 0, the repository made.
+function repository {
+    local name="$1" bare="${run_directory}/remotes/$1.git" seed="${run_directory}/seed-${1//\//-}" file
+    shift 1
+
+    rm -rf -- "${bare}" "${seed}" "${run_directory}/home/Workspace/${name}"
+    git init --quiet --bare --initial-branch=main "${bare}"
+    git init --quiet --initial-branch=main "${seed}"
+    printf '# %s\n' "${name#*/}" >"${seed}/README.md"
+    for file in "$@"; do
+        mkdir -p -- "$(dirname "${seed}/${file%%=*}")"
+        printf '%s\n' "${file#*=}" >"${seed}/${file%%=*}"
+    done
+    HOME="${run_directory}/home" git -C "${seed}" add --all
+    HOME="${run_directory}/home" git -C "${seed}" commit --quiet -m "seed"
+    git -C "${seed}" push --quiet "${bare}" main
+    rm -rf -- "${seed}"
+}
+
+# commit_model commits a model.yaml to an account's .github repository's main on the stand-in's GitHub, and prints the
+# commit.
+#
+# Parameters:
+#   - `$1`: the account.
+#   - `$2`: model.yaml's content.
+#
+# Returns:
+#   - 0, the commit made.
+function commit_model {
+    local bare="${run_directory}/remotes/$1/.github.git" seed="${run_directory}/seed-commit-$1"
+
+    rm -rf -- "${seed}"
+    git clone --quiet "${bare}" "${seed}"
+    printf '%s\n' "$2" >"${seed}/model.yaml"
+    HOME="${run_directory}/home" git -C "${seed}" add model.yaml
+    HOME="${run_directory}/home" git -C "${seed}" commit --quiet -m "a backup"
+    git -C "${seed}" push --quiet origin main
+    git -C "${seed}" rev-parse HEAD
+    rm -rf -- "${seed}"
+}
+
+# shows succeeds when a repository's main on the stand-in's GitHub holds a file with the content given.
+#
+# Parameters:
+#   - `$1`: the repository, owner/name.
+#   - `$2`: the file's path.
+#   - `$3`: its content.
+#
+# Returns:
+#   - 0 when it does; 1 otherwise.
+function shows {
+    [[ "$(git --git-dir="${run_directory}/remotes/$1.git" show "main:$2" 2>/dev/null)" == "$3" ]]
+}
+
+# lacks succeeds when a repository's main on the stand-in's GitHub holds no file at the path given.
+#
+# Parameters:
+#   - `$1`: the repository, owner/name.
+#   - `$2`: the file's path.
+#
+# Returns:
+#   - 0 when it does not; 1 when it does.
+function lacks {
+    ! git --git-dir="${run_directory}/remotes/$1.git" cat-file -e "main:$2" 2>/dev/null
+}
+
+# same_text succeeds when two texts are the same and not empty.
+#
+# Parameters:
+#   - `$1`, `$2`: the texts.
+#
+# Returns:
+#   - 0 when they match; 1 otherwise.
+function same_text {
+    [[ -n "$1" && "$1" == "$2" ]]
+}
+
+# no_model_cached succeeds when star's cache holds no copy of a model.
+#
+# Returns:
+#   - 0 when none is there; 1 otherwise.
+function no_model_cached {
+    [[ -z "$(find "${cache_home}" -name '*model*' 2>/dev/null)" ]]
+}
+
+# run_star runs one star command against a case's extension and the stand-in gh, outside any git tree, so that no
+# project-local extension or configuration reaches it.
+#
+# Sets `output`, `errors` and `status`, and empties the calls the stand-in recorded before it runs. star runs with
+# --silent unless `quiet` is set empty: an extension that fails to load says why only in star's narration. Its cache is
+# `cache_home`; its home is the run's own, so that a clone goes under its Workspace and a commit names its identity.
+#
+# Parameters:
+#   - `$1`: the data directory make_extension made.
+#   - `${@:2}`: star's arguments.
+#
+# Returns:
+#   - 0.
+function run_star {
+    local data="$1"
+    shift 1
+
+    : >"${run_directory}/calls.jsonl"
+    : >"${run_directory}/state"
+    status=0
+    output="$(
+        cd "${run_directory}/work" &&
+            HOME="${run_directory}/home" PATH="${run_directory}/bin:${PATH}" XDG_DATA_HOME="${data}" \
+                XDG_CACHE_HOME="${cache_home}" XDG_CONFIG_HOME="${run_directory}/config" \
+                XDG_STATE_HOME="${run_directory}/state-home" GH_FIXTURES="${run_directory}/fixtures" \
+                GH_REMOTES="${run_directory}/remotes" GH_CALLS="${run_directory}/calls.jsonl" GH_STATE="${run_directory}/state" \
+                star "$@" ${quiet} 2>"${run_directory}/errors"
+    )" || status=$?
+    errors="$(<"${run_directory}/errors")"
+}
+
+# expect checks the last run_star: its status, and a jq program over its output that must print true.
+#
+# Parameters:
+#   - `$1`: the case's name.
+#   - `$2`: `ok` for a zero status, `error` for any other, `any` for either.
+#   - `$3`: a jq program run over the output, which must print true; empty to check nothing. It sees the calls the
+#     stand-in recorded as `$calls`, an array of argument arrays.
+#   - `$4`: an extended regular expression a line of the errors must match; optional, empty to check nothing.
+#   - `$5`: `json`, the default, when the output is JSON; `text` to give the program the output as one string.
+#
+# Returns:
+#   - 0, the case counted as passed or failed.
+function expect {
+    local name="$1" want="$2" program="$3" pattern="${4:-}" input="${5:-json}" problem="" verdict
+    local -a read_as=()
+
+    case_count=$((case_count + 1))
+    if [[ "${want}" == ok && ${status} -ne 0 ]]; then
+        problem+="its status was ${status}, not 0; "
+    elif [[ "${want}" == error && ${status} -eq 0 ]]; then
+        problem+="its status was 0, not an error; "
+    fi
+    [[ "${input}" == json ]] || read_as=(--raw-input --slurp)
+    if [[ -n "${program}" ]]; then
+        verdict="$(jq "${read_as[@]}" --raw-output --slurpfile calls "${run_directory}/calls.jsonl" "${program}" \
+            <<<"${output}" 2>&1)" || true
+        [[ "${verdict}" == true ]] || problem+="the output does not satisfy ${program} (${verdict}); "
+    fi
+    if [[ -n "${pattern}" ]] && ! grep --quiet --extended-regexp --regexp="${pattern}" <<<"${errors}"; then
+        problem+="no line of the errors matches '${pattern}'; "
+    fi
+
+    if [[ -z "${problem}" ]]; then
+        success "${name}"
+        return 0
+    fi
+    error 0 "${name}: ${problem%; }:"
+    printf '    output: %s\n' "${output:0:2000}" >&2
+    printf '    errors: %s\n' "${errors:0:2000}" >&2
+    failures=$((failures + 1))
+}
+
+# check counts a case decided by a command rather than by star's output: a file the run left, or what the stand-in
+# answered, as ${run_directory}/state records it.
+#
+# Parameters:
+#   - `$1`: the case's name.
+#   - `${@:2}`: the command, which must succeed.
+#
+# Returns:
+#   - 0, the case counted as passed or failed.
+function check {
+    local name="$1"
+    shift 1
+
+    case_count=$((case_count + 1))
+    if "$@"; then
+        success "${name}"
+        return 0
+    fi
+    error 0 "${name}: this did not hold: $*"
+    printf '    errors: %s\n' "${errors:0:2000}" >&2
+    failures=$((failures + 1))
+}
+
+# base_world prints the world add's cases start from (#438), the GitHub the stand-in's schedule operations answer from.
+#
+#   Schedule: engprod: s1, NobleFactor/alpha#20's, steps 1 to 4: #21 closed, #22, #23 a closed bug, #24, which #20's
+#   Amendments name; and s2, #30's, steps 1 to 3: #31, #32, #33. Backlog: engprod holds #25, Triage: engprod #26, and
+#   Scenario: engprod's scenario walk, #40's, #27 at beat 1. #25 is also a row, step 11, of a closed per-schedule
+#   project of 2026-11-01, as #438 itself is. #28 is an epic, #29 a closed task, #41 a task on no project, blocked by #22.
+#   Schedule: devlore: d1, NobleFactor/beta#50's, steps 1 and 2: beta#51 and beta#52; beta#53 is a devlore task on no
+#   project. Schedule: test-user: u1, test-user/personal#10's, step 1: personal#11; personal#12 a task on no project.
+#   engprod's members are stand-in and member; devlore's, other. gh runs as stand-in.
+function base_world {
+    jq -n '
+        def id($repo; $n): "I_" + ($repo | split("/")[1]) + "_" + ($n | tostring);
+        def issue($repo; $n; $type; $title; $extra):
+            {(id($repo; $n)): ({id: id($repo; $n), repo: $repo, number: $n, title: $title, state: "OPEN", type: $type,
+                labels: [], assignees: [], blockedBy: [], body: ""} + $extra)};
+        def item($repo; $n; $values): {id: ("IT_" + ($repo | split("/")[1]) + "_" + ($n | tostring)), content: id($repo; $n), values: $values};
+        def status: {id: "F_status", name: "Status", dataType: "SINGLE_SELECT", options: [{id: "O_open", name: "Open", description: ""},
+            {id: "O_progress", name: "In progress", description: ""}, {id: "O_closed", name: "Closed", description: ""}]};
+        def schedule_fields($options): [{id: "F_schedule", name: "Schedule", dataType: "SINGLE_SELECT", options: $options},
+            {id: "F_step", name: "Step", dataType: "NUMBER"}, status];
+        def body($option; $amendments): "## Deliverable\n\nWhat \($option) delivers.\n\n## Steps\n\nThe steps are the rows under \($option).\n\n## Amendments\n\n" + $amendments;
+        def step($s; $n; $status): {Schedule: $s, Step: $n, Status: $status};
+        {viewer: "stand-in", teams: {engprod: ["stand-in", "member"], devlore: ["other"]},
+        issues: (
+            issue("NobleFactor/alpha"; 20; "Schedule"; "Schedule: s1"; {body: body("s1"; "- 2026-11-01, on the owner'"'"'s word: step 4 was added, Task NobleFactor/alpha#24.\n")})
+            + issue("NobleFactor/alpha"; 21; "Task"; "the first step"; {state: "CLOSED"})
+            + issue("NobleFactor/alpha"; 22; "Task"; "the second step"; {})
+            + issue("NobleFactor/alpha"; 23; "Bug"; "the third step"; {state: "CLOSED"})
+            + issue("NobleFactor/alpha"; 24; "Task"; "the fourth step"; {})
+            + issue("NobleFactor/alpha"; 25; "Task"; "a task from the backlog"; {})
+            + issue("NobleFactor/alpha"; 26; "Bug"; "a bug from triage"; {})
+            + issue("NobleFactor/alpha"; 27; "Task"; "a task found walking"; {})
+            + issue("NobleFactor/alpha"; 28; "Epic"; "an epic"; {})
+            + issue("NobleFactor/alpha"; 29; "Task"; "a closed task"; {state: "CLOSED"})
+            + issue("NobleFactor/alpha"; 30; "Schedule"; "Schedule: s2"; {body: body("s2"; "- 2026-11-02, on the owner'"'"'s word: steps 1 to 3 were added.\n")})
+            + issue("NobleFactor/alpha"; 31; "Task"; "s2 first"; {})
+            + issue("NobleFactor/alpha"; 32; "Task"; "s2 second"; {})
+            + issue("NobleFactor/alpha"; 33; "Task"; "s2 third"; {})
+            + issue("NobleFactor/alpha"; 40; "Scenario"; "Scenario: walk"; {})
+            + issue("NobleFactor/alpha"; 41; "Task"; "a spare task"; {blockedBy: [id("NobleFactor/alpha"; 22)]})
+            + issue("NobleFactor/beta"; 50; "Schedule"; "Schedule: d1"; {body: body("d1"; "")})
+            + issue("NobleFactor/beta"; 51; "Task"; "d1 first"; {})
+            + issue("NobleFactor/beta"; 52; "Task"; "d1 second"; {})
+            + issue("NobleFactor/beta"; 53; "Task"; "a devlore task"; {})
+            + issue("test-user/personal"; 10; null; "Schedule: u1"; {labels: ["schedule"], body: body("u1"; "")})
+            + issue("test-user/personal"; 11; null; "u1 first"; {labels: ["task"]})
+            + issue("test-user/personal"; 12; null; "a personal task"; {labels: ["task"]})),
+        projects: {
+            PVT_s_eng: {id: "PVT_s_eng", title: "Schedule: engprod", number: 26,
+                fields: schedule_fields([{id: "O_s1", name: "s1", description: "NobleFactor/alpha#20"},
+                    {id: "O_s2", name: "s2", description: "NobleFactor/alpha#30"}]),
+                items: [item("NobleFactor/alpha"; 20; {Schedule: "s1", Status: "Open"}),
+                    item("NobleFactor/alpha"; 21; step("s1"; 1; "Closed")), item("NobleFactor/alpha"; 22; step("s1"; 2; "Open")),
+                    item("NobleFactor/alpha"; 23; step("s1"; 3; "Closed")), item("NobleFactor/alpha"; 24; step("s1"; 4; "Open")),
+                    item("NobleFactor/alpha"; 30; {Schedule: "s2", Status: "Open"}),
+                    item("NobleFactor/alpha"; 31; step("s2"; 1; "Open")), item("NobleFactor/alpha"; 32; step("s2"; 2; "Open")),
+                    item("NobleFactor/alpha"; 33; step("s2"; 3; "Open"))]},
+            PVT_b_eng: {id: "PVT_b_eng", title: "Backlog: engprod", number: 25, fields: [status],
+                items: [item("NobleFactor/alpha"; 25; {Status: "Open"})]},
+            PVT_t_eng: {id: "PVT_t_eng", title: "Triage: engprod", number: 5, fields: [status],
+                items: [item("NobleFactor/alpha"; 26; {Status: "Open"})]},
+            PVT_c_eng: {id: "PVT_c_eng", title: "Scenario: engprod", number: 27,
+                fields: [{id: "F_scenario", name: "Scenario", dataType: "SINGLE_SELECT",
+                    options: [{id: "O_walk", name: "walk", description: "NobleFactor/alpha#40"}]},
+                    {id: "F_beat", name: "Beat", dataType: "NUMBER"}, status],
+                items: [item("NobleFactor/alpha"; 40; {Scenario: "walk", Status: "Open"}),
+                    item("NobleFactor/alpha"; 27; {Scenario: "walk", Beat: 1, Status: "Open"})]},
+            PVT_old: {id: "PVT_old", title: "Schedule: issue tracking, iteration 1", number: 12, closed: true,
+                fields: [{id: "F_lane", name: "Step", dataType: "NUMBER"}, status],
+                items: [{id: "IT_old_25", content: id("NobleFactor/alpha"; 25), values: {Step: 11, Status: "Open"}}]},
+            PVT_s_dev: {id: "PVT_s_dev", title: "Schedule: devlore", number: 29,
+                fields: schedule_fields([{id: "O_d1", name: "d1", description: "NobleFactor/beta#50"}]),
+                items: [item("NobleFactor/beta"; 50; {Schedule: "d1", Status: "Open"}),
+                    item("NobleFactor/beta"; 51; step("d1"; 1; "Open")), item("NobleFactor/beta"; 52; step("d1"; 2; "Open"))]},
+            PVT_s_user: {id: "PVT_s_user", title: "Schedule: test-user", number: 7,
+                fields: schedule_fields([{id: "O_u1", name: "u1", description: "test-user/personal#10"}]),
+                items: [item("test-user/personal"; 10; {Schedule: "u1", Status: "Open"}),
+                    item("test-user/personal"; 11; step("u1"; 1; "Open"))]}}}'
+}
+
+# world gives one of add's cases its GitHub: base_world, changed by a jq program when one is given, as the world the
+# stand-in's schedule operations answer from.
+#
+# Parameters:
+#   - `$1`: a jq program to change base_world by; optional, none by default.
+#
+# Returns:
+#   - 0, the world written.
+function world {
+    base_world | jq "${1:-.}" >"${run_directory}/remotes/world.json"
+}
+
+# world_holds succeeds when a jq program over the world, as the last run left it, prints true.
+#
+# Parameters:
+#   - `$1`: the jq program.
+#
+# Returns:
+#   - 0 when it prints true; 1 otherwise.
+function world_holds {
+    [[ "$(jq "$1" "${run_directory}/remotes/world.json")" == true ]]
+}
+
+# calls_hold succeeds when a jq program over the calls the last run made, as one array of argument arrays, prints true.
+#
+# Parameters:
+#   - `$1`: the jq program.
+#
+# Returns:
+#   - 0 when it prints true; 1 otherwise.
+function calls_hold {
+    [[ "$(jq --slurp "$1" "${run_directory}/calls.jsonl")" == true ]]
+}
+
+# write_stand_in writes the stand-in for gh to the run's bin directory.
+#
+# It records each call as a JSON array of its arguments, one per line of ${GH_CALLS}, and answers from ${GH_FIXTURES}:
+# a GraphQL request by the operation name the extension gives it, a REST request by its path. Every fixture file is a
+# JSON array of responses, one per page; --paginate answers every page and a request without it the first, and --jq
+# is applied to each, as gh does. An addition to a project is remembered in ${GH_STATE}, so that reading the row back
+# finds it.
+#
+# A fixture may be the data directory's own, under ${XDG_DATA_HOME}/fixtures, which a case gives it with override; it
+# is answered before the run's. A login in a fixture's path matches in any case, as GitHub's logins do (#485), and a
+# REST fixture of more than one page answers its first with a Link header naming the next, as GitHub does (#484). An
+# account's .github repository is a bare repository under ${GH_REMOTES}, which `repo view`, `repo create` and `repo
+# clone` answer from, and a pull request opened on it is merged by moving its main to the pull request's branch: the
+# git side of `star github model backup` (#426). Its pull requests are remembered in ${GH_REMOTES}/pulls, across runs,
+# so that a backup run again finds the one an earlier run left open; its main's rules, its head commit's workflow runs
+# and its checks are as the case's ci set them.
+#
+# The stand-in for sleep records how long it was asked to wait, among gh's calls, and returns at once.
+#
+# A write, a REST call with -X or a GraphQL mutation, is recorded among the calls and answered with a new ID; a secret
+# set is remembered, value and all, a newline written as \n, in ${GH_REMOTES}/secrets, on a repository or an
+# organization, so that a case can read back the token it was given.
+#
+# Any repository under ${GH_REMOTES} answers what apply reads and writes of it (#437): GitHub's record of it, its files
+# raw at a revision, the git data API apply commits through, a ref, a commit, a tree, and its variables, remembered in
+# ${GH_REMOTES}/variables. A body sent with --input - is read from standard input.
+#
+# The schedule commands' operations (#438), starViewer and every starStep one, answer from one world,
+# ${GH_REMOTES}/world.json, which a case writes with world and its writes change, through world.jq beside the
+# stand-in, so that a read after a write finds it, as GitHub's would. The world may name an operation to fail once,
+# fail_on, and another writer's change to make after an operation's first answer, change.
+#
+# Returns:
+#   - 0, the stand-ins written and executable.
+function write_stand_in {
+    mkdir -p -- "${run_directory}/bin"
+    cat >"${run_directory}/bin/sleep" <<'SLEEP'
+#!/usr/bin/env bash
+printf '%s\0' sleep "$@" | jq -c -R -s 'split("\u0000") | .[:-1]' >>"${GH_CALLS}"
+SLEEP
+    chmod +x "${run_directory}/bin/sleep"
+    cat >"${run_directory}/bin/world.jq" <<'JQ'
+# The schedule commands' GitHub: one world that their reads answer from and their writes change. Its issues and its
+# projects are keyed by node ID; a project's items are its rows, in its order, each with its content's ID and its
+# values by field name. The answer is {answer} for a read, {answer, world} for a write.
+def values_of($p; $item):
+    [$item.values | to_entries[] | . as $e | ($p.fields[] | select(.name == $e.key)) as $f |
+        if $f.dataType == "SINGLE_SELECT" then
+            {name: $e.value, optionId: ([$f.options[] | select(.name == $e.value) | .id][0]), field: {name: $e.key}}
+        else {number: $e.value, field: {name: $e.key}} end];
+def content($w; $id):
+    $w.issues[$id] as $i |
+    {id: $i.id, number: $i.number, title: $i.title, state: $i.state,
+        issueType: (if $i.type then {name: $i.type} else null end),
+        labels: {nodes: [($i.labels // [])[] | {name: .}]}, repository: {nameWithOwner: $i.repo}};
+def issue_node($w; $i):
+    content($w; $i.id) + {body: $i.body, url: "https://github.com/\($i.repo)/issues/\($i.number)",
+        assignees: {nodes: [($i.assignees // [])[] | {login: .}]},
+        blockedBy: {nodes: [($i.blockedBy // [])[] | $w.issues[.] | {id, number, repository: {nameWithOwner: .repo}}]},
+        projectItems: {nodes: [$w.projects[] as $p | $p.items[] | select(.content == $i.id) |
+            {id, project: {id: $p.id, title: $p.title, number: $p.number, closed: ($p.closed // false)},
+                fieldValues: {nodes: values_of($p; .)}}]}};
+def field($w; $p; $f): $w.projects[$p].fields[] | select(.id == $f);
+def set_value($w; $p; $i; $name; $value):
+    $w | .projects[$p].items |= map(if .id == $i then .values[$name] = $value else . end);
+
+. as $w |
+(if $op == "starViewer" then {answer: {data: {viewer: {login: $w.viewer}}}}
+elif $op == "starStepIssue" then
+    {answer: {data: {repository: {issue: ([$w.issues[] | select(.repo == $repo and (.number | tostring) == $number)][0]
+        | if . then issue_node($w; .) else null end)}}}}
+elif $op == "starStepProject" then
+    {answer: {data: {node: ($w.projects[$node] | {id, title, number, fields: {nodes: .fields}})}}}
+elif $op == "starStepRows" then
+    {answer: {data: {node: {items: {pageInfo: {hasNextPage: false, endCursor: null}, nodes: [$w.projects[$node] as $p |
+        $p.items[] | {id, content: content($w; .content), fieldValues: {nodes: values_of($p; .)}}]}}}}}
+elif $op == "starStepReadRow" then
+    {answer: {data: {node: ([$w.projects[] as $p | $p.items[] | select(.id == $node) |
+        {project: {id: $p.id}, fieldValues: {nodes: values_of($p; .)}}][0])}}}
+elif $op == "starStepBody" then {answer: {data: {node: {body: $w.issues[$node].body}}}}
+elif $op == "starStepTeam" then
+    {answer: {data: {organization: {team: {members: {nodes: [($w.teams[$slug] // [])[]
+        | select(ascii_downcase | contains($member | ascii_downcase)) | {login: .}]}}}}}}
+elif $op == "starStepUser" then {answer: {data: {user: {id: ("U_" + $user)}}}}
+elif $op == "starStepAddRow" then
+    ([$w.projects[$p].items[] | select(.content == $c) | .id][0]) as $have |
+    if $have then {answer: {data: {addProjectV2ItemById: {item: {id: $have}}}}}
+    else ("PVTI_" + $c) as $id |
+        {world: ($w | .projects[$p].items += [{id: $id, content: $c, values: {}}]),
+            answer: {data: {addProjectV2ItemById: {item: {id: $id}}}}} end
+elif $op == "starStepSetOption" then
+    field($w; $p; $f) as $fd |
+    {world: set_value($w; $p; $i; $fd.name; ([$fd.options[] | select(.id == $o) | .name][0])),
+        answer: {data: {updateProjectV2ItemFieldValue: {projectV2Item: {id: $i}}}}}
+elif $op == "starStepSetStep" then
+    {world: set_value($w; $p; $i; field($w; $p; $f).name; ($v | tonumber)),
+        answer: {data: {updateProjectV2ItemFieldValue: {projectV2Item: {id: $i}}}}}
+elif $op == "starStepPlace" then
+    ($w.projects[$p].items | map(select(.id == $i))[0]) as $it | ($w.projects[$p].items | map(select(.id != $i))) as $rest |
+    ($rest | map(.id) | index($a)) as $at |
+    {world: ($w | .projects[$p].items = ($rest[:($at + 1)] + [$it] + $rest[($at + 1):])),
+        answer: {data: {updateProjectV2ItemPosition: {clientMutationId: null}}}}
+elif $op == "starStepDeleteRow" then
+    {world: ($w | .projects[$p].items |= map(select(.id != $i))), answer: {data: {deleteProjectV2Item: {deletedItemId: $i}}}}
+elif $op == "starStepAmend" then {world: ($w | .issues[$i].body = $b), answer: {data: {updateIssue: {issue: {id: $i}}}}}
+elif $op == "starStepBlock" then
+    {world: ($w | .issues[$i].blockedBy += [$b]), answer: {data: {addBlockedBy: {clientMutationId: null}}}}
+elif $op == "starStepAssign" then
+    {world: ($w | .issues[$a].assignees += [$u | ltrimstr("U_")]), answer: {data: {addAssigneesToAssignable: {clientMutationId: null}}}}
+else error("the world has no answer for " + $op) end) as $r |
+
+# Another writer, as a case may ask: after the first answer to the operation it names, the rows it sets change.
+if ($w.change.on? // "") == $op then
+    $r | .world = ((.world // $w) | reduce $w.change.set[] as $s (.;
+        .projects[$s.project].items |= map(if .id == $s.item then .values[$s.field] = $s.value else . end)) | del(.change))
+else $r end
+JQ
+    cat >"${run_directory}/bin/gh" <<'GH'
+#!/usr/bin/env bash
+set -uo pipefail
+
+# Each argument NUL-terminated, so that jq reads them as data: given them as --args, it parses gh's own options.
+printf '%s\0' "$@" | jq -c -R -s 'split("\u0000") | .[:-1]' >>"${GH_CALLS}"
+
+# answer prints a fixture's responses, every page with --paginate, through --jq when it was given.
+function answer {
+    local file="$1" filter="${2:-.}" count index
+    [[ -r "${file}" ]] || { printf 'stand-in gh: no fixture %s\n' "${file}" >&2; exit 1; }
+    count="$(jq 'length' "${file}")"
+    ((paginate)) || count=1
+    for ((index = 0; index < count; index++)); do
+        jq -c ".[${index}] | ${filter}" "${file}" | if [[ -n "${jq_program}" ]]; then jq -r -c "${jq_program}"; else cat; fi
+    done
+}
+
+# cased names a file under a fixtures directory as given, or, since GitHub's logins ignore case, the file whose path
+# matches it in another case (#485); as given when neither is there.
+function cased {
+    local root="$1" relative="$2" found=""
+    if [[ -e "${root}/${relative}" ]]; then
+        printf '%s' "${root}/${relative}"
+        return 0
+    fi
+    [[ -d "${root}" ]] && found="$(find "${root}" -ipath "${root}/${relative}" -print -quit 2>/dev/null)"
+    printf '%s' "${found:-${root}/${relative}}"
+}
+
+# fixture names a fixture: the data directory's own, which a case may give it, before the run's.
+function fixture {
+    local own
+    own="$(cased "${XDG_DATA_HOME}/fixtures" "$1")"
+    if [[ -r "${own}" ]]; then printf '%s' "${own}"; else cased "${GH_FIXTURES}" "$1"; fi
+}
+
+# ci_mode prints how a repository's CI behaves, as the case's ci set it: none, pass, fail, never, private or refused.
+function ci_mode {
+    cat "${GH_REMOTES}/$1.ci" 2>/dev/null || echo none
+}
+
+# filtered prints standard input through --jq, when the arguments give it, as gh does.
+function filtered {
+    local program
+    program="$(option --jq "$@")"
+    if [[ -n "${program}" ]]; then jq -r "${program}"; else cat; fi
+}
+
+# option prints the value that follows a flag among the arguments, or nothing.
+function option {
+    local flag="$1"
+    shift 1
+    while (($#)); do
+        [[ "$1" == "${flag}" ]] && { printf '%s' "${2:-}"; return 0; }
+        shift 1
+    done
+}
+
+# An account's .github repository is a bare repository under ${GH_REMOTES}; each pull request is remembered in
+# ${GH_REMOTES}/pulls as `pr <repository> <number> <branch> <open|merged>`, and merging one moves main to its branch.
+pulls="${GH_REMOTES}/pulls"
+case "${1:-} ${2:-}" in
+    "repo view" | "repo create" | "repo clone")
+        target="${3:-}"
+        if [[ "$2" == view && (-z "${target}" || "${target}" == -*) ]]; then
+            echo "NobleFactor/alpha"
+            exit 0
+        fi
+        bare="${GH_REMOTES}/${target}.git"
+        case $2 in
+            view)
+                [[ -d "${bare}" ]] || { printf 'GraphQL: Could not resolve to a Repository with the name %s. (repository)\n' "${target}" >&2; exit 1; }
+                printf '%s\n' "${target##*/}"
+                ;;
+            create)
+                seed="${GH_REMOTES}/seed-${target//\//-}"
+                mkdir -p -- "$(dirname "${bare}")"
+                git init --quiet --bare --initial-branch=main "${bare}" && git init --quiet --initial-branch=main "${seed}" &&
+                    printf '# .github\n' >"${seed}/README.md" && git -C "${seed}" add --all &&
+                    git -C "${seed}" commit --quiet -m "Initial commit" && git -C "${seed}" push --quiet "${bare}" main &&
+                    rm -rf -- "${seed}" || exit 1
+                printf 'https://github.com/%s\n' "${target}"
+                ;;
+            clone)
+                [[ -d "${bare}" ]] || { printf 'stand-in gh: no repository %s\n' "${target}" >&2; exit 1; }
+                git clone --quiet "${bare}" "${4:-${target##*/}}" || exit 1
+                ;;
+        esac
+        exit 0
+        ;;
+    "pr create")
+        repo="$(option --repo "$@")" head="$(option --head "$@")"
+        number=$(($(awk '$1 == "pr" && $5 == "open"' "${pulls}" 2>/dev/null | wc -l) + 1))
+        printf 'pr %s %s %s open\n' "${repo}" "${number}" "${head}" >>"${pulls}"
+        printf 'https://github.com/%s/pull/%s\n' "${repo}" "${number}"
+        exit 0
+        ;;
+    "pr list")
+        repo="$(option --repo "$@")" head="$(option --head "$@")"
+        awk -v r="${repo}" -v h="${head}" '$1 == "pr" && $2 == r && $4 == h { state[$3] = $5 }
+            END { for (n in state) if (state[n] == "open") print n }' "${pulls}" 2>/dev/null |
+            jq -R -s -c --arg r "${repo}" '[split("\n")[] | select(. != "") | {number: tonumber, url: ("https://github.com/" + $r + "/pull/" + .)}]' |
+            filtered "$@"
+        exit 0
+        ;;
+    "pr checks")
+        repo="$(option --repo "$@")"
+        case "$(ci_mode "${repo}")" in
+            pass) bucket=pass ;;
+            fail) bucket=fail ;;
+            *)
+                printf "no checks reported on the 'chore' branch\n" >&2
+                exit 1
+                ;;
+        esac
+        jq -cn --arg b "${bucket}" '[{name: "quality-gate", bucket: $b}]' | filtered "$@"
+        exit 0
+        ;;
+    "pr comment" | "pr edit")
+        exit 0
+        ;;
+    "secret set")
+        repo="$(option --repo "$@")" org="$(option --org "$@")" value="$(cat)"
+        printf 'secret %s %s %s\n' "${repo:-${org}}" "$3" "${value//$'\n'/\\n}" >>"${GH_REMOTES}/secrets"
+        exit 0
+        ;;
+    "secret list")
+        repo="$(option --repo "$@")" org="$(option --org "$@")"
+        awk -v r="${repo:-${org}}" '$1 == "secret" && $2 == r { print $3 }' "${GH_REMOTES}/secrets" 2>/dev/null |
+            jq -R -s -c '[split("\n")[] | select(. != "") | {name: ., visibility: "all"}] | unique' | filtered "$@"
+        exit 0
+        ;;
+    "pr merge")
+        repo="$(option --repo "$@")" number="${3:-}"
+        head="$(awk -v r="${repo}" -v n="${number}" '$1 == "pr" && $2 == r && $3 == n { print $4; exit }' "${pulls}")"
+        [[ -n "${head}" ]] || { printf 'stand-in gh: no pull request %s in %s\n' "${number}" "${repo}" >&2; exit 1; }
+        git --git-dir="${GH_REMOTES}/${repo}.git" update-ref refs/heads/main "refs/heads/${head}" || exit 1
+        printf 'pr %s %s %s merged\n' "${repo}" "${number}" "${head}" >>"${pulls}"
+        exit 0
+        ;;
+    "pr view")
+        repo="$(option --repo "$@")" number="${3:-}" state=OPEN
+        grep -q "^pr ${repo} ${number} .* merged$" "${pulls}" 2>/dev/null && state=MERGED
+        jq -cn --arg s "${state}" --arg u "https://github.com/${repo}/pull/${number}" '{state: $s, url: $u}' | filtered "$@"
+        exit 0
+        ;;
+esac
+
+case "${1:-} ${2:-}" in
+    "auth status")
+        printf '%s\n' "github.com" "  ✓ Logged in to github.com account tester (keyring)" "  - Active account: true" \
+            "  - Git operations protocol: https" "  - Token scopes: 'admin:org', 'project', 'read:org', 'repo', 'workflow'"
+        exit 0
+        ;;
+    "api rate_limit")
+        echo "4999 0"
+        exit 0
+        ;;
+esac
+
+declare -A vars=()
+declare -a headers=()
+paginate=0 jq_program="" rest_path="" include=0 method=GET input="" body=""
+shift 1
+while (($#)); do
+    case $1 in
+        graphql) rest_path=graphql ;;
+        -f | -F)
+            vars["${2%%=*}"]="${2#*=}"
+            shift 1
+            ;;
+        --paginate) paginate=1 ;;
+        --jq)
+            jq_program="$2"
+            shift 1
+            ;;
+        -i) include=1 ;;
+        -X)
+            method="$2"
+            shift 1
+            ;;
+        --input)
+            input="$2"
+            shift 1
+            ;;
+        -H)
+            headers+=("$2")
+            shift 1
+            ;;
+        *) rest_path="$1" ;;
+    esac
+    shift 1
+done
+
+[[ "${input}" != - ]] || body="$(cat)"
+
+# The rules on a repository's branch, and its head commit's workflow runs, as the case's ci set them.
+ci_path='^repos/([^/]+/[^/]+)/(rules/branches/[^?]+|actions/runs\?head_sha=)'
+if [[ "${rest_path}" =~ ${ci_path} ]]; then
+    repo="${BASH_REMATCH[1]}" kind="${BASH_REMATCH[2]}"
+    mode="$(ci_mode "${repo}")"
+    if [[ "${kind}" == rules/* ]]; then
+        if [[ "${mode}" == private || "${mode}" == refused ]]; then
+            refusal='Upgrade to GitHub Pro or make this repository public to enable this feature.'
+            jq -cn --arg m "${refusal}" '{message: $m, status: "403"}'
+            printf 'gh: %s (HTTP 403)\n' "${refusal}" >&2
+            exit 1
+        fi
+        body='[]'
+        [[ "${mode}" == none ]] ||
+            body='[{"type": "pull_request"}, {"type": "required_status_checks", "parameters": {"required_status_checks": [{"context": "quality-gate"}]}}]'
+    else
+        printf 'runs %s\n' "${repo}" >>"${GH_STATE}"
+        reads="$(grep -c "^runs ${repo}$" "${GH_STATE}")"
+        if [[ "${mode}" == none || "${mode}" == never ]] || ((reads < 3)); then
+            body='{"workflow_runs": []}'
+        elif ((reads < 5)); then
+            body='{"workflow_runs": [{"id": 1, "status": "in_progress"}]}'
+        else
+            body='{"workflow_runs": [{"id": 1, "status": "completed"}]}'
+        fi
+    fi
+    jq -c . <<<"${body}" | if [[ -n "${jq_program}" ]]; then jq -r "${jq_program}"; else cat; fi
+    exit 0
+fi
+
+# respond prints an answer as gh does: with -i, its status line and headers first; through --jq, a success; and exits 1
+# on an error, its body on standard output.
+function respond {
+    local status="$1" answer="$2"
+    if ((include)); then
+        printf 'HTTP/2.0 %s\r\nContent-Type: application/json\r\n\r\n%s' "${status}" "${answer}"
+    elif [[ "${status}" == 2* && -n "${jq_program}" ]]; then
+        jq -r "${jq_program}" <<<"${answer}"
+    else
+        printf '%s' "${answer}"
+    fi
+    [[ "${status}" == 2* ]] || exit 1
+    exit 0
+}
+
+# A repository on the stand-in's GitHub, a bare repository under ${GH_REMOTES}: what GitHub says of it, its files raw at
+# a revision, its default branch's by default, and the git data API's reads and writes, which apply commits through; and
+# its variables, remembered in ${GH_REMOTES}/variables as `variable <repository> <name> <value>`. A path none of these
+# answers is left to the fixtures below.
+repo_path='^repos/([^/]+/[^/?]+)(/(.*))?$'
+if [[ "${rest_path}" =~ ${repo_path} ]]; then
+    repo="${BASH_REMATCH[1]}" part="${BASH_REMATCH[3]}" git_dir="${GH_REMOTES}/${BASH_REMATCH[1]}.git"
+    not_found='{"message": "Not Found", "status": "404"}'
+    export GIT_AUTHOR_NAME=stand-in GIT_AUTHOR_EMAIL=stand-in@example.com GIT_COMMITTER_NAME=stand-in GIT_COMMITTER_EMAIL=stand-in@example.com
+    case "${method} ${part}" in
+        "GET ")
+            [[ -d "${git_dir}" ]] || respond "404 Not Found" "${not_found}"
+            respond "200 OK" "$(jq -cn --arg r "${repo}" --arg m "$(ci_mode "${repo}")" \
+                '{full_name: $r, default_branch: "main", private: ($m == "private")}')"
+            ;;
+        "GET contents/"*)
+            path="${part#contents/}" ref=main
+            if [[ "${path}" == *"?ref="* ]]; then
+                ref="${path#*\?ref=}" path="${path%%\?*}"
+            fi
+            path="$(printf '%b' "${path//%/\\x}")"
+            if [[ -d "${git_dir}" ]] && content="$(git --git-dir="${git_dir}" show "${ref}:${path}" 2>/dev/null && printf x)"; then
+                respond "200 OK" "${content%x}"
+            fi
+            respond "404 Not Found" "${not_found}"
+            ;;
+        "GET git/ref/heads/"*)
+            ref="refs/heads/${part#git/ref/heads/}"
+            sha="$(git --git-dir="${git_dir}" rev-parse --verify --quiet "${ref}" 2>/dev/null)" || respond "404 Not Found" "${not_found}"
+            respond "200 OK" "$(jq -cn --arg s "${sha}" --arg r "${ref}" '{ref: $r, object: {sha: $s}}')"
+            ;;
+        "GET git/commits/"*)
+            sha="${part#git/commits/}"
+            tree="$(git --git-dir="${git_dir}" rev-parse --verify --quiet "${sha}^{tree}" 2>/dev/null)" || respond "404 Not Found" "${not_found}"
+            respond "200 OK" "$(jq -cn --arg s "${sha}" --arg t "${tree}" '{sha: $s, tree: {sha: $t}}')"
+            ;;
+        "GET git/trees/"*)
+            ref="${part#git/trees/}"
+            listing="$(git --git-dir="${git_dir}" ls-tree -r --name-only "${ref%%\?*}" 2>/dev/null)" || respond "404 Not Found" "${not_found}"
+            respond "200 OK" "$(jq -R -s -c '{tree: [split("\n")[] | select(. != "") | {path: ., type: "blob"}]}' <<<"${listing}")"
+            ;;
+        "POST git/trees")
+            index="${GH_REMOTES}/index-$$"
+            GIT_INDEX_FILE="${index}" git --git-dir="${git_dir}" read-tree "$(jq -r .base_tree <<<"${body}")" || exit 1
+            for ((entry = 0; entry < $(jq '.tree | length' <<<"${body}"); entry++)); do
+                blob="$(jq -j ".tree[${entry}].content" <<<"${body}" | git --git-dir="${git_dir}" hash-object -w --stdin)" || exit 1
+                GIT_INDEX_FILE="${index}" git --git-dir="${git_dir}" update-index --add \
+                    --cacheinfo "100644,${blob},$(jq -r ".tree[${entry}].path" <<<"${body}")" || exit 1
+            done
+            tree="$(GIT_INDEX_FILE="${index}" git --git-dir="${git_dir}" write-tree)" || exit 1
+            rm -f -- "${index}"
+            respond "201 Created" "$(jq -cn --arg t "${tree}" '{sha: $t}')"
+            ;;
+        "POST git/commits")
+            commit="$(git --git-dir="${git_dir}" commit-tree "$(jq -r .tree <<<"${body}")" -p "$(jq -r '.parents[0]' <<<"${body}")" \
+                -m "$(jq -r .message <<<"${body}")")" || exit 1
+            respond "201 Created" "$(jq -cn --arg s "${commit}" '{sha: $s}')"
+            ;;
+        "POST git/refs")
+            ref="$(jq -r .ref <<<"${body}")"
+            ! git --git-dir="${git_dir}" rev-parse --verify --quiet "${ref}" >/dev/null ||
+                respond "422 Unprocessable Entity" '{"message": "Reference already exists"}'
+            git --git-dir="${git_dir}" update-ref "${ref}" "$(jq -r .sha <<<"${body}")" || exit 1
+            respond "201 Created" "$(jq -cn --arg r "${ref}" '{ref: $r}')"
+            ;;
+        "PATCH git/refs/heads/"*)
+            git --git-dir="${git_dir}" update-ref "refs/heads/${part#git/refs/heads/}" "$(jq -r .sha <<<"${body}")" || exit 1
+            respond "200 OK" '{}'
+            ;;
+        "DELETE git/refs/heads/"*)
+            git --git-dir="${git_dir}" update-ref -d "refs/heads/${part#git/refs/heads/}" || exit 1
+            respond "204 No Content" ''
+            ;;
+        "GET actions/variables/"*)
+            name="${part#actions/variables/}"
+            value="$(awk -v r="${repo}" -v n="${name}" '$1 == "variable" && $2 == r && $3 == n { v = $4 } END { print v }' \
+                "${GH_REMOTES}/variables" 2>/dev/null)"
+            [[ -n "${value}" ]] || respond "404 Not Found" "${not_found}"
+            respond "200 OK" "$(jq -cn --arg n "${name}" --arg v "${value}" '{name: $n, value: $v}')"
+            ;;
+        "POST actions/variables" | "PATCH actions/variables/"*)
+            printf 'variable %s %s %s\n' "${repo}" "$(jq -r .name <<<"${body}")" "$(jq -r .value <<<"${body}")" >>"${GH_REMOTES}/variables"
+            respond "201 Created" '{}'
+            ;;
+    esac
+fi
+
+# A REST write: recorded among the calls, and answered with an ID.
+if [[ "${method}" != GET && "${rest_path}" != graphql ]]; then
+    jq -cn --arg p "${rest_path}" '{id: 9000, node_id: ("N_" + $p), html_url: ("https://github.com/" + $p)}' |
+        if [[ -n "${jq_program}" ]]; then jq -r "${jq_program}"; else cat; fi
+    exit 0
+fi
+
+if [[ "${rest_path}" != graphql ]]; then
+    ((include)) || { printf 'stand-in gh: a REST call without -i: %s\n' "${rest_path}" >&2; exit 1; }
+    file="$(fixture "rest/${rest_path//[?=&]/_}.json")"
+    if [[ "${rest_path}" =~ ^orgs/[^/]+$ ]]; then
+        printf 'HTTP/2.0 200 OK\n\n{}\n'
+        exit 0
+    fi
+    [[ -r "${file}" ]] || { printf 'HTTP/2.0 404 Not Found\n\n{}\n'; exit 1; }
+    printf 'HTTP/2.0 200 OK\nEtag: "e-%s"\n' "${rest_path//[^a-z]/}"
+    # A fixture of more than one page says so as GitHub does, in a Link header naming the next (#484).
+    if [[ "$(jq length "${file}")" -gt 1 ]]; then
+        printf 'Link: <https://api.github.com/%s&page=2>; rel="next"\n' "${rest_path}"
+    fi
+    printf '\n'
+    jq -c '.[0]' "${file}"
+    exit 0
+fi
+
+query="${vars[query]:-}"
+[[ "${query}" =~ (query|mutation)[[:space:]]+(star[A-Za-z]+) ]] || { printf 'stand-in gh: no operation name in %s\n' "${query}" >&2; exit 1; }
+operation_kind="${BASH_REMATCH[1]}" operation="${BASH_REMATCH[2]}"
+login="" owner="" name=""
+[[ "${query}" =~ login:[[:space:]]*\"([^\"]+)\" ]] && login="${BASH_REMATCH[1]}"
+[[ "${query}" =~ repository\(owner:[[:space:]]*\"([^\"]+)\",[[:space:]]*name:[[:space:]]*\"([^\"]+)\" ]] && owner="${BASH_REMATCH[1]}" name="${BASH_REMATCH[2]}"
+
+# The schedule commands' GitHub (#438): the world, read and changed through world.jq.
+if [[ "${operation}" == starViewer || "${operation}" == starStep* ]]; then
+    world="${GH_REMOTES}/world.json"
+    [[ -r "${world}" ]] || { printf 'stand-in gh: no world for %s\n' "${operation}" >&2; exit 1; }
+    if [[ "$(jq -r '.fail_on // ""' "${world}")" == "${operation}" ]]; then
+        jq '.fail_on = ""' "${world}" >"${world}.next" && mv -- "${world}.next" "${world}"
+        printf 'gh: %s failed, as the case asked\n' "${operation}" >&2
+        exit 1
+    fi
+    number="" node="" slug="" member="" user=""
+    [[ "${query}" =~ issue\(number:[[:space:]]*([0-9]+)\) ]] && number="${BASH_REMATCH[1]}"
+    [[ "${query}" =~ node\(id:[[:space:]]*\"([^\"]+)\" ]] && node="${BASH_REMATCH[1]}"
+    [[ "${query}" =~ team\(slug:[[:space:]]*\"([^\"]+)\" ]] && slug="${BASH_REMATCH[1]}"
+    [[ "${query}" =~ members\(query:[[:space:]]*\"([^\"]*)\" ]] && member="${BASH_REMATCH[1]}"
+    [[ "${query}" =~ user\(login:[[:space:]]*\"([^\"]+)\" ]] && user="${BASH_REMATCH[1]}"
+    result="$(jq -c --arg op "${operation}" --arg repo "${owner}/${name}" --arg number "${number}" --arg node "${node}" \
+        --arg slug "${slug}" --arg member "${member}" --arg user "${user}" --arg p "${vars[p]:-}" --arg i "${vars[i]:-}" \
+        --arg c "${vars[c]:-}" --arg f "${vars[f]:-}" --arg o "${vars[o]:-}" --arg v "${vars[v]:-}" --arg a "${vars[a]:-}" \
+        --arg b "${vars[b]:-}" --arg u "${vars[u]:-}" -f "${BASH_SOURCE[0]%/*}/world.jq" "${world}")" || exit 1
+    if jq -e 'has("world")' <<<"${result}" >/dev/null; then
+        jq '.world' <<<"${result}" >"${world}.next" && mv -- "${world}.next" "${world}"
+    fi
+    jq -c '.answer' <<<"${result}" | if [[ -n "${jq_program}" ]]; then jq -r -c "${jq_program}"; else cat; fi
+    exit 0
+fi
+
+case ${operation} in
+    starIssues)
+        filter=.
+        [[ "${query}" == *"states: [OPEN]"* ]] && filter='.data.repository.issues.nodes |= map(select(.state == "OPEN"))'
+        answer "$(cased "${GH_FIXTURES}" "issues/${owner}/${name}.json")" "${filter}"
+        ;;
+    starSearchCount | starSearch)
+        [[ "${vars[q]:-}" =~ repo:([^/[:space:]]+)/([^[:space:]\)]+) ]] || { printf 'stand-in gh: no repo: in %s\n' "${vars[q]:-}" >&2; exit 1; }
+        answer "$(cased "${GH_FIXTURES}" "search/${BASH_REMATCH[1]}/${BASH_REMATCH[2]}.json")"
+        ;;
+    starOwner | starOrganizationModel | starUserModel | starProjects)
+        answer "$(fixture "${operation}/${login}.json")"
+        ;;
+    starTriage)
+        [[ "${query}" =~ query:[[:space:]]*\"Triage:[[:space:]]*([^\"]+)\" ]] || { printf 'stand-in gh: no Triage title in %s\n' "${query}" >&2; exit 1; }
+        answer "$(cased "${GH_FIXTURES}" "starTriage/${login}/${BASH_REMATCH[1]}.json")"
+        ;;
+    starTriageItems)
+        [[ "${query}" =~ node\(id:[[:space:]]*\"([^\"]+)\" ]] || exit 1
+        answer "${GH_FIXTURES}/starTriageItems/${BASH_REMATCH[1]}.json"
+        ;;
+    starAddToTriage)
+        [[ "${query}" =~ projectId:[[:space:]]*\"([^\"]+)\",[[:space:]]*contentId:[[:space:]]*\"([^\"]+)\" ]] || exit 1
+        printf 'PVTI_new_%s %s\n' "${BASH_REMATCH[2]}" "${BASH_REMATCH[1]}" >>"${GH_STATE}"
+        jq -cn --arg id "PVTI_new_${BASH_REMATCH[2]}" '{data: {addProjectV2ItemById: {item: {id: $id}}}}' |
+            if [[ -n "${jq_program}" ]]; then jq -r -c "${jq_program}"; else cat; fi
+        ;;
+    starSetStatus)
+        jq -cn '{data: {updateProjectV2ItemFieldValue: {projectV2Item: {id: "set"}}}}'
+        ;;
+    starComment)
+        jq -cn --arg s "${vars[s]:-}" '{data: {addComment: {commentEdge: {node: {id: ("IC_" + $s)}}}}}' |
+            if [[ -n "${jq_program}" ]]; then jq -r -c "${jq_program}"; else cat; fi
+        ;;
+    starProject)
+        # A project apply has just made or copied: GitHub's own fields, Status with its three options, and View 1. The
+        # IDs of a project made begin N and those of a copy C, so that a case can tell whose part a write names.
+        prefix=N
+        [[ "${query}" == *NEW_starCopyProject* ]] && prefix=C
+        jq -cn --arg p "${prefix}" 'def names($list): {nodes: [$list[] | {name: .}]};
+            {data: {node: {id: "NEW", number: 99, title: "new", template: false, closed: false, shortDescription: "", readme: "",
+            public: false, teams: {nodes: []}, repositories: {nodes: []}, fields: {nodes: [
+                {id: ($p + "F_title"), name: "Title", dataType: "TITLE"},
+                {id: ($p + "F_assignees"), name: "Assignees", dataType: "ASSIGNEES"},
+                {id: ($p + "F_status"), name: "Status", dataType: "SINGLE_SELECT", options: [
+                    {id: ($p + "O_todo"), name: "Todo", color: "GRAY", description: ""},
+                    {id: ($p + "O_progress"), name: "In Progress", color: "YELLOW", description: ""},
+                    {id: ($p + "O_done"), name: "Done", color: "PURPLE", description: ""}]},
+                {id: ($p + "F_labels"), name: "Labels", dataType: "LABELS"},
+                {id: ($p + "F_prs"), name: "Linked pull requests", dataType: "LINKED_PULL_REQUESTS"},
+                {id: ($p + "F_subissues"), name: "Sub-issues progress", dataType: "SUB_ISSUES_PROGRESS"}]},
+            views: {nodes: [{id: ($p + "V_1"), name: "View 1", number: 1, layout: "TABLE_LAYOUT", filter: "",
+                fields: names(["Title", "Assignees", "Status"]), groupByFields: names([]), verticalGroupByFields: names([]),
+                sortByFields: {nodes: []}}]}}}}' |
+            if [[ -n "${jq_program}" ]]; then jq -r -c "${jq_program}"; else cat; fi
+        ;;
+    starWorkflows)
+        # The built-in workflows GitHub gives a project made or copied: two stand for them all, their IDs begun alike.
+        prefix=N
+        [[ "${query}" == *NEW_starCopyProject* ]] && prefix=C
+        jq -cn --arg p "${prefix}" '{data: {node: {workflows: {nodes: [{id: ($p + "W_closed"), name: "Item closed"},
+            {id: ($p + "W_merged"), name: "Pull request merged"}]}}}}' |
+            if [[ -n "${jq_program}" ]]; then jq -r -c "${jq_program}"; else cat; fi
+        ;;
+    starIterations)
+        # An Iteration field's iterations, completed ones among them, as the projects' fixture holds them, the data
+        # directory's own first.
+        [[ "${query}" =~ node\(id:[[:space:]]*\"([^\"]+)\" ]] || exit 1
+        field_id="${BASH_REMATCH[1]}" configuration=null
+        for file in "${XDG_DATA_HOME}"/fixtures/starProjects/*.json "${GH_FIXTURES}"/starProjects/*.json; do
+            [[ -r "${file}" && "${configuration}" == null ]] || continue
+            configuration="$(jq -c --arg id "${field_id}" \
+                'first(.[] | .. | objects | select(.id? == $id and has("configuration")) | .configuration) // null' "${file}")"
+        done
+        jq -cn --argjson c "${configuration}" '{data: {node: {configuration: $c}}}' |
+            if [[ -n "${jq_program}" ]]; then jq -r -c "${jq_program}"; else cat; fi
+        ;;
+    starCount)
+        jq -cn '{data: {search: {issueCount: 3}}}' | if [[ -n "${jq_program}" ]]; then jq -r -c "${jq_program}"; else cat; fi
+        ;;
+    starItem)
+        [[ "${query}" =~ node\(id:[[:space:]]*\"([^\"]+)\" ]] || exit 1
+        project="$(awk -v id="${BASH_REMATCH[1]}" '$1 == id { print $2 }' "${GH_STATE}")"
+        jq -cn --arg p "${project}" '{data: {node: {project: {id: $p}, status: {name: "Open"}}}}' |
+            if [[ -n "${jq_program}" ]]; then jq -r -c "${jq_program}"; else cat; fi
+        ;;
+    *)
+        # A mutation the cases need no particular answer from: a new ID, number and URL, for the caller to read. One
+        # that selects what GitHub's schema lacks is refused, as GitHub refuses it: a view's deletion answers the view,
+        # and no deletedViewId (GitHub's GraphQL schema, DeleteProjectV2ViewPayload, read 2026-11-11). So is one that
+        # writes an iteration's duration, an Int in that schema, as a decimal, which a number read from GitHub's JSON
+        # becomes when it is decoded.
+        if [[ "${operation_kind}" == mutation ]]; then
+            if [[ "${query}" == *deletedViewId* ]]; then
+                printf '%s\n' "{\"errors\": [{\"message\": \"Field 'deletedViewId' doesn't exist on type 'DeleteProjectV2ViewPayload'\"}]}"
+                printf '%s\n' "gh: Field 'deletedViewId' doesn't exist on type 'DeleteProjectV2ViewPayload'" >&2
+                exit 1
+            fi
+            if [[ "${query}" =~ duration:[[:space:]]*([0-9]+\.[0-9]+) ]]; then
+                printf '%s\n' "{\"errors\": [{\"message\": \"Argument 'duration' has an invalid value (${BASH_REMATCH[1]}). Expected type 'Int!'.\"}]}"
+                printf '%s\n' "gh: Argument 'duration' has an invalid value (${BASH_REMATCH[1]}). Expected type 'Int!'." >&2
+                exit 1
+            fi
+            jq -cn --arg op "${operation}" '{data: {r: {node: {id: ("NEW_" + $op), number: 99,
+                url: ("https://github.com/orgs/new/projects/99")}}}}' |
+                if [[ -n "${jq_program}" ]]; then jq -r -c "${jq_program}"; else cat; fi
+            exit 0
+        fi
+        printf 'stand-in gh: no answer for %s\n' "${operation}" >&2
+        exit 1
+        ;;
+esac
+GH
+    chmod +x "${run_directory}/bin/gh"
+}
+
+# write_fixtures writes what the stand-in answers: each repository's issues, the searches, the accounts' records as
+# the model's pull reads them, and the Triage projects with their rows.
+#
+# The issues, by what each case reads of them:
+#
+#   NobleFactor/alpha, engprod's: #1 an epic; #2 a feature under it, labeled good first issue; #3 a task under #2 at
+#   step 2 of schedule s1, blocked by #4 at step 3; #4 a task at step 3, blocked by #6, closed; #5 a bug with no
+#   Area, no evidence and Severity N/A, on no project; #6 a closed task; #7 a feature on Backlog: engprod and on
+#   Schedule: engprod, already a row of Triage: engprod; #8 an open task with a Resolution; #9 a task on Scenario:
+#   engprod with no Area and no evidence; #10 a task with Severity High; #11 a task at step 5 of s1, blocked by
+#   NobleFactor/beta#1, on no schedule.
+#   NobleFactor/beta, devlore's: #1 a task under NobleFactor/alpha#2.
+#   test-user/personal: #1 an epic; #2 a task under it with two area: labels; #3 a bug with area:product.
+#   NobleFactor/many: 250 issues over three pages, every fifth closed.
+#
+# Returns:
+#   - 0, with the fixtures under fixtures/.
+function write_fixtures {
+    local fixtures="${run_directory}/fixtures" library
+
+    mkdir -p -- "${fixtures}"/{issues/NobleFactor,issues/test-user,search/NobleFactor,rest/orgs/NobleFactor,rest/repos/NobleFactor/noblefactor-engprod}
+    mkdir -p -- "${fixtures}"/{rest/repos/NobleFactor/alpha,rest/repos/NobleFactor/beta,rest/orgs/Acme,rest/repos/Acme/site}
+    mkdir -p -- "${fixtures}"/{rest/repos/Acme/app,rest/repos/Acme/docs}
+    mkdir -p -- "${fixtures}"/{starOwner,starOrganizationModel,starUserModel,starProjects,starTriageItems}
+    mkdir -p -- "${fixtures}"/starTriage/{NobleFactor,test-user}
+
+    # The jq that builds an issue node as GraphQL returns it, from the few things a fixture says of it.
+    library='
+        def evidence: "## Evidence of completion\n\nShown.";
+        def node($repo; $n; $spec): {
+            id: ("I_" + ($repo | gsub("/"; "_")) + "_" + ($n | tostring)), number: $n, title: ($spec.title // "Issue \($n)"),
+            url: "https://github.com/\($repo)/issues/\($n)", state: ($spec.state // "OPEN"),
+            stateReason: (if ($spec.state // "OPEN") == "CLOSED" then "COMPLETED" else null end),
+            createdAt: "2026-11-01T00:00:00Z", updatedAt: "2026-11-02T00:00:00Z",
+            closedAt: (if ($spec.state // "OPEN") == "CLOSED" then "2026-11-03T00:00:00Z" else null end),
+            body: ($spec.body // evidence), repository: {nameWithOwner: $repo},
+            issueType: (if $spec.type then {name: $spec.type} else null end),
+            labels: {nodes: [($spec.labels // [])[] | {name: .}]}, assignees: {nodes: []},
+            blockedBy: {nodes: [($spec.blocked // [])[] | {number: .[1], state: .[2], repository: {nameWithOwner: .[0]}}]},
+            subIssuesSummary: {total: 0, completed: 0},
+            issueFieldValues: {nodes: [($spec.fields // {}) | to_entries[] | {field: {name: .key}, name: .value}]},
+            projectItems: {nodes: [($spec.rows // [])[] | {id: ("PVTI_" + .[0]), project: {id: .[0], number: .[1], title: .[2]},
+                fieldValues: {nodes: ([{field: {name: "Title", dataType: "TITLE"}, text: "t"}] +
+                    [.[3] | to_entries[] | if (.value | type) == "number" then {field: {name: .key, dataType: "NUMBER"}, number: .value}
+                        else {field: {name: .key, dataType: "SINGLE_SELECT"}, name: .value} end])}}]},
+            parent: $spec.parent
+        };
+        def parent($repo; $n; $type; $grand): {number: $n, repository: {nameWithOwner: $repo},
+            issueType: (if $type then {name: $type} else null end), labels: {nodes: []}, parent: $grand};
+        def uparent($repo; $n; $label; $grand): {number: $n, repository: {nameWithOwner: $repo}, issueType: null,
+            labels: {nodes: [{name: $label}]}, parent: $grand};
+        def page($nodes; $next): {data: {repository: {issues: {pageInfo: {hasNextPage: $next, endCursor: "c"}, nodes: $nodes}}}};
+        def search($count; $nodes): {data: {search: {issueCount: $count, pageInfo: {hasNextPage: false, endCursor: null}, nodes: $nodes}}};
+        def schedule($n; $step): ["PVT_schedule", 26, "Schedule: engprod", {Schedule: "s1", Step: $step, Status: "Open"}];
+    '
+
+    jq -n "${library}"'
+        def epic: parent("NobleFactor/alpha"; 1; "Epic"; null);
+        def feature: parent("NobleFactor/alpha"; 2; "Feature"; epic);
+        [page([
+            node("NobleFactor/alpha"; 1; {type: "Epic", fields: {Area: "Engineering", Severity: "N/A"}}),
+            node("NobleFactor/alpha"; 2; {type: "Feature", parent: epic, labels: ["good first issue"], fields: {Area: "Engineering", Severity: "N/A"}}),
+            node("NobleFactor/alpha"; 3; {type: "Task", parent: feature, fields: {Area: "Product", Severity: "N/A"},
+                rows: [schedule(3; 2)], blocked: [["NobleFactor/alpha", 4, "OPEN"]]}),
+            node("NobleFactor/alpha"; 4; {type: "Task", parent: feature, fields: {Area: "Product", Severity: "N/A"},
+                rows: [schedule(4; 3)], blocked: [["NobleFactor/alpha", 6, "CLOSED"]]}),
+            node("NobleFactor/alpha"; 5; {type: "Bug", fields: {Severity: "N/A"}, body: "A bug."}),
+            node("NobleFactor/alpha"; 6; {type: "Task", parent: feature, state: "CLOSED", fields: {Area: "Product", Severity: "N/A"},
+                rows: [schedule(6; 1)]}),
+            node("NobleFactor/alpha"; 7; {type: "Feature", parent: epic, fields: {Area: "Product", Severity: "N/A"},
+                rows: [["PVT_backlog", 24, "Backlog: engprod", {Status: "Open"}], schedule(7; 4),
+                    ["PVT_triage_engprod", 5, "Triage: engprod", {Status: "Open"}]]}),
+            node("NobleFactor/alpha"; 8; {type: "Task", parent: feature, fields: {Area: "Product", Severity: "N/A", Resolution: "Declined"}}),
+            node("NobleFactor/alpha"; 9; {type: "Task", parent: feature, fields: {Severity: "N/A"}, body: "Found while walking.",
+                rows: [["PVT_scenario", 8, "Scenario: engprod", {Scenario: "walk", Beat: 1}]]}),
+            node("NobleFactor/alpha"; 10; {type: "Task", parent: feature, fields: {Area: "Product", Severity: "High"}}),
+            node("NobleFactor/alpha"; 11; {type: "Task", parent: feature, fields: {Area: "Product", Severity: "N/A"},
+                rows: [schedule(11; 5)], blocked: [["NobleFactor/beta", 1, "OPEN"]]}),
+            node("NobleFactor/alpha"; 12; {type: "Task", parent: feature, fields: {Area: "Product", Severity: "N/A"},
+                rows: [["PVT_schedule", 26, "Schedule: engprod", {Schedule: "s1", Status: "Open"}]]}),
+            node("NobleFactor/alpha"; 13; {type: "Schedule", title: "Schedule: s1", fields: {Area: "Engineering", Severity: "N/A"},
+                rows: [["PVT_schedule", 26, "Schedule: engprod", {Schedule: "s1", Status: "Open"}]]})
+        ]; false)]' >"${fixtures}/issues/NobleFactor/alpha.json"
+
+    jq -n "${library}"'
+        [page([node("NobleFactor/beta"; 1; {type: "Task", fields: {Area: "Engineering", Severity: "N/A"},
+            parent: parent("NobleFactor/alpha"; 2; "Feature"; parent("NobleFactor/alpha"; 1; "Epic"; null))})]; false)]
+    ' >"${fixtures}/issues/NobleFactor/beta.json"
+
+    jq -n "${library}"'
+        [page([
+            node("test-user/personal"; 1; {labels: ["epic", "area:engineering", "severity:n/a"]}),
+            node("test-user/personal"; 2; {labels: ["task", "area:product", "area:engineering", "severity:n/a"],
+                parent: uparent("test-user/personal"; 1; "epic"; null)}),
+            node("test-user/personal"; 3; {labels: ["bug", "area:product", "severity:high"]}),
+            node("test-user/personal"; 4; {labels: ["task", "bug", "area:product", "severity:n/a"]})
+        ]; false)]' >"${fixtures}/issues/test-user/personal.json"
+
+    jq -n "${library}"'
+        [range(0; 3) as $p | page([range($p * 100 + 1; [($p + 1) * 100, 250] | min + 1) as $n |
+            node("NobleFactor/many"; $n; {type: "Task", state: (if $n % 5 == 0 then "CLOSED" else "OPEN" end),
+                fields: {Area: "Product", Severity: "N/A"}})]; $p < 2)]
+    ' >"${fixtures}/issues/NobleFactor/many.json"
+
+    jq -n "${library}"'[search(1; [node("NobleFactor/alpha"; 5; {type: "Bug", fields: {Severity: "N/A"}})])]' \
+        >"${fixtures}/search/NobleFactor/alpha.json"
+    jq -n "${library}"'[search(1001; [])]' >"${fixtures}/search/NobleFactor/huge.json"
+
+    # The records the model's pull and every command's read-first make.
+    jq -n '[{data: {repositoryOwner: {__typename: "Organization", login: "NobleFactor", id: "O_NobleFactor"}}}]' >"${fixtures}/starOwner/NobleFactor.json"
+    jq -n '[{data: {repositoryOwner: {__typename: "User", login: "test-user", id: "U_test_user"}}}]' >"${fixtures}/starOwner/test-user.json"
+    jq -n '[[
+        {id: 1, name: "Epic", description: "Level 0: the root", color: "purple", is_enabled: true},
+        {id: 2, name: "Feature", description: "Level 1: a capability", color: "blue", is_enabled: true},
+        {id: 3, name: "Bug", description: "Level 2: unplanned work", color: "red", is_enabled: true},
+        {id: 4, name: "Task", description: "Level 2: planned work", color: "yellow", is_enabled: true},
+        {id: 5, name: "Schedule", description: "Collection: a schedule", color: "green", is_enabled: true},
+        {id: 6, name: "Scenario", description: "Collection: a scenario", color: "orange", is_enabled: true}
+    ]]' >"${fixtures}/rest/orgs/NobleFactor/issue-types.json"
+    jq -n '[[]]' >"${fixtures}/rest/repos/NobleFactor/noblefactor-engprod/labels_per_page_100.json"
+    # The labels of each repository a team maintains: alpha, engprod's, and beta, devlore's (#437).
+    jq -n '[[{id: 101, node_id: "LA_alpha_gfi", name: "good first issue", color: "7057ff", description: "Good for newcomers"}]]' \
+        >"${fixtures}/rest/repos/NobleFactor/alpha/labels_per_page_100.json"
+    jq -n '[[{id: 201, node_id: "LA_beta_gfi", name: "good first issue", color: "7057ff", description: "Good for newcomers"}]]' \
+        >"${fixtures}/rest/repos/NobleFactor/beta/labels_per_page_100.json"
+    # Acme, an organization new to the model: GitHub's three issue types; three teams, web, b and c, each maintaining a
+    # repository, site, app and docs; GitHub's default labels on each; no issue fields and no projects (#437).
+    jq -n '[{data: {repositoryOwner: {__typename: "Organization", login: "Acme", id: "O_Acme"}}}]' >"${fixtures}/starOwner/Acme.json"
+    jq -n '[[
+        {id: 11, name: "Task", description: "A specific piece of work", color: "yellow", is_enabled: true},
+        {id: 12, name: "Bug", description: "An unexpected problem or behavior", color: "red", is_enabled: true},
+        {id: 13, name: "Feature", description: "A request, idea, or new functionality", color: "blue", is_enabled: true}
+    ]]' >"${fixtures}/rest/orgs/Acme/issue-types.json"
+    jq -n 'def team($slug; $repo): {name: $slug, slug: $slug, id: "T_\($slug)", description: "", privacy: "VISIBLE",
+            notificationSetting: "NOTIFICATIONS_ENABLED", parentTeam: null,
+            repositories: {edges: [{permission: "MAINTAIN", node: {nameWithOwner: $repo}}]}};
+        [{data: {organization: {issueFields: {nodes: []}, issueTypes: {nodes: []},
+            teams: {nodes: [team("web"; "Acme/site"), team("b"; "Acme/app"), team("c"; "Acme/docs")]}}}}]' \
+        >"${fixtures}/starOrganizationModel/Acme.json"
+    jq -n '[[{id: 301, node_id: "LA_site_bug", name: "bug", color: "d73a4a", description: "Something is not working"},
+        {id: 302, node_id: "LA_site_gfi", name: "good first issue", color: "7057ff", description: "Good for newcomers"}]]' \
+        >"${fixtures}/rest/repos/Acme/site/labels_per_page_100.json"
+    for repo in app docs; do
+        jq -n --arg r "${repo}" '[[{id: 401, node_id: "LA_\($r)_bug", name: "bug", color: "d73a4a", description: "Something is not working"},
+            {id: 402, node_id: "LA_\($r)_gfi", name: "good first issue", color: "7057ff", description: "Good for newcomers"}]]' \
+            >"${fixtures}/rest/repos/Acme/${repo}/labels_per_page_100.json"
+    done
+    jq -n '[{data: {organization: {projectsV2: {nodes: []}}}}]' >"${fixtures}/starProjects/Acme.json"
+    jq -n '[{data: {organization: {
+        issueFields: {nodes: [
+            {__typename: "IssueFieldSingleSelect", name: "Area", dataType: "SINGLE_SELECT", id: "IF_area", fullDatabaseId: "71",
+                description: "Product or engineering work", visibility: "ALL",
+                options: [{id: "o_product", databaseId: 711, name: "Product", color: "BLUE", description: "", priority: 1},
+                    {id: "o_engineering", databaseId: 712, name: "Engineering", color: "GREEN", description: "", priority: 2}]},
+            {__typename: "IssueFieldSingleSelect", name: "Severity", dataType: "SINGLE_SELECT", id: "IF_severity",
+                fullDatabaseId: "72", description: "How much harm a bug does", visibility: "ORG_ONLY",
+                options: [{id: "o_critical", databaseId: 721, name: "Critical", color: "RED", description: "Stops the work", priority: 1},
+                    {id: "o_high", databaseId: 722, name: "High", color: "ORANGE", description: "", priority: 2},
+                    {id: "o_medium", databaseId: 723, name: "Medium", color: "YELLOW", description: "", priority: 3},
+                    {id: "o_low", databaseId: 724, name: "Low", color: "GREEN", description: "", priority: 4},
+                    {id: "o_na", databaseId: 725, name: "N/A", color: "GRAY", description: "Not a bug", priority: 5}]},
+            {__typename: "IssueFieldSingleSelect", name: "Resolution", dataType: "SINGLE_SELECT", id: "IF_resolution",
+                options: [{id: "o_declined", name: "Declined"}, {id: "o_duplicate", name: "Duplicate"}, {id: "o_invalid", name: "Invalid"}]},
+            {__typename: "IssueFieldDate", name: "Target date", dataType: "DATE", id: "IF_target"}]},
+        issueTypes: {nodes: [{name: "Bug", pinnedFields: [{name: "Severity"}, {name: "Area"}]},
+            {name: "Task", pinnedFields: [{name: "Area"}]}, {name: "Epic", pinnedFields: []}]},
+        teams: {nodes: [
+            {name: "engprod", slug: "engprod", id: "T_engprod", description: "Engineering productivity", privacy: "VISIBLE",
+                notificationSetting: "NOTIFICATIONS_ENABLED", parentTeam: null,
+                repositories: {edges: [{permission: "MAINTAIN", node: {nameWithOwner: "NobleFactor/alpha"}},
+                    {permission: "READ", node: {nameWithOwner: "NobleFactor/beta"}}]}},
+            {name: "DevLore", slug: "devlore", id: "T_devlore", description: "", privacy: "VISIBLE",
+                notificationSetting: "NOTIFICATIONS_ENABLED", parentTeam: null,
+                repositories: {edges: [{permission: "MAINTAIN", node: {nameWithOwner: "NobleFactor/beta"}}]}},
+            {name: "Owners", slug: "owners", id: "T_owners", description: "", privacy: "SECRET",
+                notificationSetting: "NOTIFICATIONS_DISABLED", parentTeam: null, repositories: {edges: []}}]}}}}]' \
+        >"${fixtures}/starOrganizationModel/NobleFactor.json"
+    jq -n '[{data: {user: {repositories: {nodes: [
+        {nameWithOwner: "test-user/personal", repositoryTopics: {nodes: [{topic: {name: "issue-model"}}]}, labels: {nodes: [
+            {id: "LA_epic", name: "epic", color: "7057ff", description: "Level 0: the root"},
+            {id: "LA_feature", name: "feature", color: "0e8a16", description: "Level 1: a capability"},
+            {id: "LA_bug", name: "bug", color: "d73a4a", description: "Level 2: unplanned work"},
+            {id: "LA_task", name: "task", color: "1d76db", description: "Level 2: planned work"},
+            {id: "LA_schedule", name: "schedule", color: "cccccc", description: "Collection: a schedule"},
+            {id: "LA_scenario", name: "scenario", color: "cccccc", description: "Collection: a scenario"},
+            {id: "LA_area_product", name: "area:product", color: "1d76db", description: "Area"},
+            {id: "LA_area_old", name: "area:old", color: "cccccc", description: "An area no reference names"},
+            {id: "LA_gfi", name: "good first issue", color: "7057ff", description: "Good for newcomers"}]}},
+        {nameWithOwner: "test-user/elsewhere", repositoryTopics: {nodes: []}, labels: {nodes: [
+            {id: "LA_other", name: "epic", color: "000000", description: "Level 0: not in the model"}]}}]}}}}]' \
+        >"${fixtures}/starUserModel/test-user.json"
+    # The projects: NobleFactor's Triage and Schedule templates, Triage with two views; engprod's Triage project lacking
+    # the Board view, and its Schedule project with an option for each of its two schedules; devlore with no project of
+    # its own; a closed template. test-user's copies of Triage and Backlog, beside its own Triage project and a project
+    # of no kind. Each project's options have IDs of its own.
+    jq -n 'def status($id): {id: "F_\($id)_status", name: "Status", dataType: "SINGLE_SELECT",
+            options: [{id: "O_\($id)_open", name: "Open", color: "GRAY", description: "The issue is open"}]};
+        def title($id): {id: "F_\($id)_title", name: "Title", dataType: "TITLE"};
+        def schedule($id; $options): {id: "F_\($id)_schedule", name: "Schedule", dataType: "SINGLE_SELECT",
+            options: [$options[] | {id: "O_\($id)_\(.)", name: ., color: "GRAY", description: ""}]};
+        def project($id; $n; $title; $template; $closed; $fields; $views): {id: $id, number: $n, title: $title,
+            template: $template, closed: $closed, fields: {nodes: $fields}, views: {nodes: $views},
+            shortDescription: "The \($title) project", readme: "# \($title)", public: false, teams: {nodes: []},
+            repositories: {nodes: []}};
+        def names($list): {nodes: [$list[] | {name: .}]};
+        def missing_area: {name: "Missing Area", number: 2, layout: "TABLE_LAYOUT", filter: "-has:area",
+            fields: names(["Title", "Status"]), groupByFields: names([]), verticalGroupByFields: names([]),
+            sortByFields: {nodes: [{direction: "DESC", field: {name: "Title"}}]}};
+        def board: {name: "Board", number: 3, layout: "BOARD_LAYOUT", filter: "", fields: names(["Title"]),
+            groupByFields: names([]), verticalGroupByFields: names(["Status"]), sortByFields: {nodes: []}};
+        [{data: {organization: {projectsV2: {nodes: [
+            project("PVT_triage_engprod"; 5; "Triage: engprod"; false; false; [status("PVT_triage_engprod"),
+                title("PVT_triage_engprod")]; [missing_area]),
+            project("PVT_template_old"; 7; "Old"; true; true; []; []),
+            project("PVT_schedule_engprod"; 12; "Schedule: engprod"; false; false; [status("PVT_schedule_engprod"),
+                schedule("PVT_schedule_engprod"; ["s1", "s2"]), title("PVT_schedule_engprod")]; []),
+            project("PVT_template_triage"; 23; "Triage"; true; false; [status("PVT_template_triage"),
+                title("PVT_template_triage")]; [missing_area, board]),
+            project("PVT_template_schedule"; 24; "Schedule"; true; false; [status("PVT_template_schedule"),
+                schedule("PVT_template_schedule"; ["placeholder"]), title("PVT_template_schedule")]; [])]}}}}]' \
+        >"${fixtures}/starProjects/NobleFactor.json"
+    jq -n 'def project($id; $n; $title): {id: $id, number: $n, title: $title, template: false, closed: false,
+            fields: {nodes: []}, views: {nodes: []}};
+        [{data: {user: {projectsV2: {nodes: [project("PVT_copy_triage"; 4; "Triage"), project("PVT_copy_backlog"; 5; "Backlog"),
+            project("PVT_triage_user"; 9; "Triage: test-user"), project("PVT_notes"; 10; "Notes")]}}}}]' \
+        >"${fixtures}/starProjects/test-user.json"
+
+    # The Triage projects and their rows: Triage: engprod holds NobleFactor/alpha#7 and one closed issue.
+    local status_field='{id: "F_status", name: "Status", options: [{id: "o_open", name: "Open"}, {id: "o_closed", name: "Closed"}]}'
+    jq -n "[{data: {organization: {projectsV2: {nodes: [{id: \"PVT_triage_engprod\", number: 5, title: \"Triage: engprod\",
+        fields: {nodes: [${status_field}]}}]}}}}]" >"${fixtures}/starTriage/NobleFactor/engprod.json"
+    jq -n "[{data: {organization: {projectsV2: {nodes: [{id: \"PVT_triage_devlore\", number: 6, title: \"Triage: devlore\",
+        fields: {nodes: [${status_field}]}}]}}}}]" >"${fixtures}/starTriage/NobleFactor/devlore.json"
+    jq -n "[{data: {user: {projectsV2: {nodes: [{id: \"PVT_triage_user\", number: 9, title: \"Triage: test-user\",
+        fields: {nodes: [${status_field}]}}]}}}}]" >"${fixtures}/starTriage/test-user/test-user.json"
+    jq -n 'def content($n; $state; $type): {number: $n, title: "Issue \($n)", url: "https://github.com/NobleFactor/alpha/issues/\($n)",
+            state: $state, issueType: {name: $type}, labels: {nodes: []}, repository: {nameWithOwner: "NobleFactor/alpha"}};
+        [{data: {node: {items: {pageInfo: {hasNextPage: false, endCursor: null}, nodes: [
+        {id: "PVTI_PVT_triage_engprod", content: content(7; "OPEN"; "Feature"), status: {name: "Open"}},
+        {id: "PVTI_closed", content: content(6; "CLOSED"; "Task"), status: {name: "Closed"}}]}}}}]' \
+        >"${fixtures}/starTriageItems/PVT_triage_engprod.json"
+    jq -n '[{data: {node: {items: {pageInfo: {hasNextPage: false, endCursor: null}, nodes: []}}}}]' \
+        >"${fixtures}/starTriageItems/PVT_triage_devlore.json"
+    jq -n '[{data: {node: {items: {pageInfo: {hasNextPage: false, endCursor: null}, nodes: []}}}}]' \
+        >"${fixtures}/starTriageItems/PVT_triage_user.json"
+}
+
+######
+# Main
+######
+
+case_count=0
+failures=0
+run_directory=""
+output="" errors="" status=0 quiet="--silent"
+
+Set-Traps cleanup
+run_directory="$(mktemp -d)"
+mkdir -p -- "${run_directory}"/{work,cache,config,state-home,home,remotes}
+cache_home="${run_directory}/cache"
+git config --file "${run_directory}/home/.gitconfig" user.name "Test Owner"
+git config --file "${run_directory}/home/.gitconfig" user.email "owner@example.com"
+git config --file "${run_directory}/home/.gitconfig" init.defaultBranch main
+write_stand_in
+write_fixtures
+get_yaml=""
+
+data="${run_directory}/data"
+make_extension "${data}"
+
+# The jq that finds one issue's record in the report's output, or one issue's entry in the sweep's.
+declare -r record='def record($k): first(.[] | select(.issue == $k));'
+declare -r entry='def entry($k): first(.[] | select(.issue == $k and (.action == "added" or .action == "in-triage")));
+    def absent($k): [.[] | select(.issue == $k and .faults != [])] | length == 0;'
+declare -r faulted='def faulted($k; $rule): [entry($k).faults[].rule] | index($rule) != null;'
+
+# 1. The model GitHub holds: a type with neither a level nor a Collection: description stops the command that reads it,
+# named; a collection type loads.
+make_extension "${run_directory}/data-chore"
+jq '.[0] += [{id: 7, name: "Chore", description: "Work of no level", color: "gray", is_enabled: true}]' \
+    "${run_directory}/fixtures/rest/orgs/NobleFactor/issue-types.json" |
+    override "${run_directory}/data-chore" rest/orgs/NobleFactor/issue-types.json
+quiet=""
+run_star "${run_directory}/data-chore" github schedule report NobleFactor/alpha
+quiet="--silent"
+expect "1: a type with no level and no Collection: description is refused, named" error "" "type Chore"
+run_star "${data}" github schedule report NobleFactor/alpha
+expect "1: a model with collection types loads, and the report runs" ok 'type == "array" and length == 13'
+
+# 1a. get returns an organization's model as GitHub holds it: its types with their levels, the collection types without
+# one, its fields, its teams with the repositories each maintains, and its open templates with their fields and views,
+# not the projects made from them (#426).
+run_star "${data}" github model get NobleFactor
+expect "1a: get NobleFactor returns its types, fields, teams and projects" ok '
+    .account == "NobleFactor" and .version == 1 and (has("pulled") | not)
+    and ([.types[] | select(.level != null) | "\(.name):\(.level)"] | sort) == ["Bug:2", "Epic:0", "Feature:1", "Task:2"]
+    and ([.types[] | select(.level == null) | .name] | sort) == ["Scenario", "Schedule"]
+    and ([.fields[].name] | sort) == ["Area", "Resolution", "Severity", "Target date"]
+    and ([.teams[] | {slug, repositories}] | sort_by(.slug))
+        == [{slug: "devlore", repositories: ["NobleFactor/beta"]}, {slug: "engprod", repositories: ["NobleFactor/alpha"]},
+            {slug: "owners", repositories: []}]
+    and [.projects[] | {name, template}] == [{name: "Triage", template: true}, {name: "Schedule", template: true}]
+    and [.projects[0].fields[] | {name, type}] == [{name: "Status", type: "single-select"}]'
+expect "1a: get reads each template's views: layout, filter, and the fields each shows, groups and sorts by" ok '
+    .projects[0].views == [
+        {name: "Missing Area", number: 2, layout: "table", filter: "-has:area", fields: ["Title", "Status"], group_by: [],
+         vertical_group_by: [], sort_by: [{field: "Title", direction: "desc"}]},
+        {name: "Board", number: 3, layout: "board", filter: "", fields: ["Title"], group_by: [], vertical_group_by: ["Status"],
+         sort_by: []}]'
+
+# 1b. get returns a user account's model: its types from its type labels, in its issue-model repositories alone; no
+# fields and no teams; and its copies of the templates the user reference names, not its other projects. The account is
+# required; the YAML is the same every time.
+run_star "${data}" github model get test-user
+expect "1b: get test-user reads its type labels, in its issue-model repositories alone" ok '
+    .account == "test-user"
+    and ([.types[].label] | sort) == ["bug", "epic", "feature", "scenario", "schedule", "task"]
+    and ((.fields // []) | length) == 0 and ((.teams // []) | length) == 0
+    and (tostring | test("test-user/elsewhere") | not)'
+expect "1b: get reads a user account's copies of the templates alone" ok '[.projects[].name] == ["Triage", "Backlog"]'
+run_star "${data}" github model get
+expect "1b: get with no account is refused" error ""
+run_star "${data}" github model get NobleFactor --output yaml
+first_yaml="${output}"
+run_star "${data}" github model get NobleFactor --output yaml
+check "1b: get -o yaml renders the same text twice" same_text "${output}" "${first_yaml}"
+
+# 1c. A record's keys come from its repository owner's model: Area from the field in an organization, from the area:
+# label in a user account, both Product.
+run_star "${data}" github schedule report NobleFactor/alpha test-user/personal --filter area=Product
+expect "1c: --filter area=Product selects in both accounts, from each one's model" ok "${record}"'
+    (map(.issue) | index("NobleFactor/alpha#3") != null and index("test-user/personal#3") != null)
+    and all(.[]; .area == "Product")'
+
+# 2. An issue's epic is its parent chain's level-0 issue, across repositories, in an organization and a user account.
+run_star "${data}" github schedule report NobleFactor/alpha NobleFactor/beta test-user/personal
+expect "2: the epic is the parent chain's root, in both accounts and across repositories" ok "${record}"'
+    record("NobleFactor/alpha#3").epic == "NobleFactor/alpha#1" and record("NobleFactor/alpha#3").feature == "NobleFactor/alpha#2"
+    and record("NobleFactor/beta#1").epic == "NobleFactor/alpha#1" and record("test-user/personal#2").epic == "test-user/personal#1"
+    and record("test-user/personal#2").type == "Task" and record("NobleFactor/alpha#2").epic == "NobleFactor/alpha#1"
+    and record("NobleFactor/alpha#2").feature == null and record("NobleFactor/alpha#1").epic == null'
+
+# 3. The audit is gone.
+run_star "${data}" github schedule audit
+expect "3: star github schedule audit is refused as unknown" error ""
+
+# 3a. --search reaches GraphQL's search as given, once for each repository, scoped by star.
+run_star "${data}" github schedule report NobleFactor/alpha --search 'type:Bug'
+expect "3a: --search is passed as given, as (<expression>) repo:<repository> is:issue" ok '
+    ([$calls[] | .[] | select(type == "string" and startswith("q="))] | unique) == ["q=(type:Bug) repo:NobleFactor/alpha is:issue"]
+    and map(.issue) == ["NobleFactor/alpha#5"]'
+
+# 3b. A search that matches more than 1,000 issues in a repository is an error, the repository named.
+run_star "${data}" github schedule report NobleFactor/huge --search 'is:open'
+expect "3b: a search matching more than 1,000 issues is an error naming the repository" error "" "NobleFactor/huge"
+
+# 3c. Without --search, every issue is read, open and closed, past the first page.
+run_star "${data}" github schedule report NobleFactor/many
+expect "3c: every issue of the repository, open and closed, across three pages" ok '
+    length == 250 and (map(select(.state == "closed")) | length) == 50'
+
+# 3d. Every key the model names is at the top level: --filter selects on it, and CSV gives it a column.
+run_star "${data}" github schedule report NobleFactor/alpha --filter epic=NobleFactor/alpha#1
+expect "3d: --filter epic=<issue> selects everything under the epic" ok '
+    (map(.issue) | sort) == (["NobleFactor/alpha#10", "NobleFactor/alpha#11", "NobleFactor/alpha#12", "NobleFactor/alpha#2",
+        "NobleFactor/alpha#3", "NobleFactor/alpha#4", "NobleFactor/alpha#6", "NobleFactor/alpha#7", "NobleFactor/alpha#8",
+        "NobleFactor/alpha#9"] | sort)'
+run_star "${data}" github schedule report NobleFactor/alpha --filter issue=NobleFactor/alpha#3 \
+    --jq 'map({issue, area, epic, severity})' --output csv
+expect "3d: --output csv gives each model key a column holding one value" ok \
+    '. == "area,epic,issue,severity\nProduct,NobleFactor/alpha#1,NobleFactor/alpha#3,N/A\n"' "" text
+
+# 3e. home is a list and never null: empty with no home, one element for one, two for two.
+run_star "${data}" github schedule report NobleFactor/alpha
+expect "3e: home is a list: empty, one element, two elements" ok "${record}"'
+    record("NobleFactor/alpha#5").home == [] and (record("NobleFactor/alpha#3").home | length) == 1
+    and record("NobleFactor/alpha#3").home[0].schedule == "s1" and record("NobleFactor/alpha#3").home[0].step == 2
+    and record("NobleFactor/alpha#3").home[0].project == "Schedule: engprod" and (record("NobleFactor/alpha#7").home | length) == 2
+    and record("NobleFactor/alpha#7").in_triage == true and record("NobleFactor/alpha#3").in_triage == false
+    and all(.[]; .home | type == "array")'
+
+# 3f. The flags that went are refused.
+for flag in --query --root --state --by --view --markdown --limit --schedule --directory --repo; do
+    run_star "${data}" github schedule report "${flag}" x
+    expect "3f: the report refuses ${flag}" error ""
+done
+run_star "${data}" github triage sweep --account NobleFactor
+expect "3f: the sweep refuses --account" error ""
+
+# 4 to 8. The sweep, over both accounts: each rule catches its fault and passes a clean issue; an issue on a schedule
+# keeps its schedule row; a scenario's row meets the two structural rules alone; an issue already in Triage is not
+# added again; the step order.
+run_star "${data}" github triage sweep NobleFactor test-user
+expect "4: each rule catches its fault" ok "${entry} ${faulted}"'
+    faulted("NobleFactor/alpha#5"; "no-area") and faulted("NobleFactor/alpha#5"; "severity") and faulted("NobleFactor/alpha#5"; "no-evidence")
+    and faulted("NobleFactor/alpha#10"; "severity") and faulted("NobleFactor/alpha#8"; "resolution-open")
+    and faulted("NobleFactor/alpha#2"; "good-first-issue") and faulted("NobleFactor/alpha#7"; "two-homes")
+    and faulted("NobleFactor/alpha#7"; "epic-on-collection") and faulted("NobleFactor/alpha#3"; "step-order")
+    and faulted("test-user/personal#2"; "two-labels")'
+expect "4: a clean issue passes every rule" ok "${entry}"'
+    absent("NobleFactor/alpha#1") and absent("NobleFactor/alpha#4") and absent("NobleFactor/alpha#11")
+    and absent("NobleFactor/beta#1") and absent("test-user/personal#1") and absent("test-user/personal#3")'
+expect "5: an issue on a schedule with a fault gets a Triage row, and no row is removed" ok '
+    ([$calls[] | select(any(.[]; type == "string" and test("addProjectV2ItemById")))] | length) > 0
+    and any($calls[]; any(.[]; type == "string" and test("projectId: \"PVT_triage_engprod\", contentId: \"I_NobleFactor_alpha_3\"")))
+    and (any($calls[]; any(.[]; type == "string" and test("delete|archive|clear"; "i"))) | not)'
+expect "5: an issue the sweep adds gets a comment naming the rule it broke" ok '
+    any($calls[]; index("s=I_NobleFactor_alpha_3") != null and any(.[]; startswith("query=mutation starComment"))
+        and any(.[]; startswith("b=") and test("Triage: engprod") and test("`step-order`")))'
+expect "6: a scenario row meets the structural rules alone" ok "${entry}"'absent("NobleFactor/alpha#9")'
+expect "6: a task's row on a schedule with no step is a fault; a Schedule issue's own row, which has none, is not (#427)" ok \
+    "${entry} ${faulted}"'faulted("NobleFactor/alpha#12"; "no-step") and absent("NobleFactor/alpha#13")'
+expect "7: an issue already in Triage is not added again, nor commented on" ok "${entry}"'
+    (any($calls[]; any(.[]; type == "string" and test("contentId: \"I_NobleFactor_alpha_7\""))) | not)
+    and (any($calls[]; index("s=I_NobleFactor_alpha_7") != null) | not)
+    and entry("NobleFactor/alpha#7").action == "in-triage"'
+expect "8: a step blocked by an open step at the same or a higher step is a fault; by a closed issue or one on no schedule is not" ok \
+    "${entry} ${faulted}"'faulted("NobleFactor/alpha#3"; "step-order") and absent("NobleFactor/alpha#4")
+    and absent("NobleFactor/alpha#11")'
+expect "4: one flat record per issue, each with every key, a Triage row with no fault among them" ok '
+    (map(.account) | unique) == ["NobleFactor", "test-user"]
+    and all(.[]; keys == ["account", "action", "faults", "home", "issue", "project", "rules", "state", "status", "title", "type", "url"])
+    and (map(select(.project == "Triage: engprod") | .issue) | index("NobleFactor/alpha#6") != null)
+    and (first(.[] | select(.issue == "NobleFactor/alpha#6")) as $closed
+        | $closed.action == "row" and $closed.state == "closed" and $closed.faults == [] and $closed.rules == "")
+    and first(.[] | select(.issue == "NobleFactor/alpha#5")).rules == "no-area,severity,no-evidence"
+    and first(.[] | select(.issue == "test-user/personal#2")).project == "Triage: test-user"'
+
+run_star "${data}" github triage sweep NobleFactor --filter action=added --jq 'map({issue, project, rules})' --output csv
+expect "4: --filter action=added and CSV give what the run sent to Triage, one row each" ok '
+    split("\n") | .[0] == "issue,project,rules" and (.[1:] | map(select(. != "")) | length) == 6
+    and (.[1:] | map(select(test("^NobleFactor/alpha#3,Triage: engprod,step-order$"))) | length) == 1' "" text
+
+# Under star's --dry-run every shell.exec is skipped, reads with writes, until NobleFactor/devlore-cli#1170: the sweep
+# cannot read the model then, and says so; what this case holds it to is that it writes nothing.
+run_star "${data}" github triage sweep NobleFactor --dry-run
+expect "7: --dry-run adds nothing, and says why it read nothing" any \
+    '($calls | map(select(any(.[]; type == "string" and test("mutation")))) | length) == 0' 'devlore-cli#1170' text
+
+# 9. No model file is read or kept: the report and the sweep run on the model GitHub holds, read when they need it
+# (#426); --help reads nothing; get and backup are the model's commands, and pull and digest are gone.
+cache_home="${run_directory}/cache-426"
+run_star "${data}" github triage sweep NobleFactor test-user
+expect "9: the sweep asks for no model file" ok \
+    '([$calls[] | select(any(.[]; type == "string" and test("contents/model\\.yaml")))] | length) == 0'
+check "9: star's cache holds no model" no_model_cached
+run_star "${data}" github schedule report --help
+expect "9: --help reads nothing from GitHub" ok '$calls | length == 0' "" text
+quiet=""
+run_star "${data}" github model --help
+quiet="--silent"
+expect "9: the model's commands are get and backup; pull and digest are gone" ok \
+    'test("\\n  get\\s") and test("\\n  backup\\s") and (test("\\n  (pull|digest)\\s") | not)' "" text
+cache_home="${run_directory}/cache"
+
+# 10. A user-account issue carrying two type labels is a fault, both named (#426).
+run_star "${data}" github triage sweep test-user
+expect "10: the two-types fault names both type labels" ok "${entry} ${faulted}"'
+    faulted("test-user/personal#4"; "two-types")
+    and ([entry("test-user/personal#4").faults[] | select(.rule == "two-types") | .message] | .[0] | test("task") and test("bug"))'
+
+# 11. backup writes the model get returns into the account's .github repository through a pull request on
+# doc/model-<date>, merged, with nothing asked, its comments recording the checks and the merge (#426). It merges
+# only once every workflow run on the head commit has finished and every check main requires has passed; a run that
+# never starts, or a check that fails, stops it unmerged, and running it again reuses the pull request it left open. A
+# backup that is current opens none; an account with no .github repository is given one, which requires no check.
+remote NobleFactor "old: true"
+ci NobleFactor pass
+run_star "${data}" github model backup NobleFactor
+expect "11.1: backup opens a pull request on doc/model-<date> and merges it" ok '
+    ([$calls[] | select(.[0:2] == ["pr", "create"]) | .[index("--head") + 1]] | length == 1
+        and (.[0] | test("^doc/model-[0-9]{4}-[0-9]{2}-[0-9]{2}$")))
+    and ([$calls[] | select(.[0:2] == ["pr", "merge"])] | length == 1)'
+expect "11.1: the pull request's comments record the checks and the merge" ok '
+    [$calls[] | select(.[0:2] == ["pr", "comment"]) | .[index("--body") + 1]]
+    | length == 2 and (.[0] | test("^Checks passed")) and (.[1] | test("^Merged") and test("reads back as the model"))'
+expect "11.1: the pull request says AI assisted and ends with both trailers, and its squash merge takes it as the commit's message (#536)" ok '
+    [$calls[] | select(.[0:2] == ["pr", "create"]) | .[index("--body") + 1]] as $bodies
+    | [$calls[] | select(.[0:2] == ["pr", "merge"]) | .[(index("--body") // -2) + 1]] as $merged
+    | ($bodies | length) == 1 and $merged == $bodies
+    and ($bodies[0] | test("\\n\\nWritten with AI assistance\\.\\n\\nSigned-off-by: [^\\n]+ <[^>]+>\\nAssisted-by: Claude Code$"))'
+expect "11.1: backup waits for the head commit's workflow run to start and to finish, then merges" ok '
+    ($calls | map((.[1] // "") | test("/actions/runs\\?head_sha=")) | indices(true)) as $runs
+    | ($calls | map(.[0:2] == ["pr", "merge"]) | index(true)) as $merge
+    | ($runs | length) == 5 and $runs[-1] < $merge and any($calls[]; .[0] == "sleep")'
+run_star "${data}" github model get NobleFactor --output yaml
+get_yaml="${output}"
+check "11.1: NobleFactor/.github's main holds the model get returns" main_holds_model NobleFactor
+check "11.1: the clone is left in the home's Workspace" test -d "${run_directory}/home/Workspace/NobleFactor/.github/.git"
+run_star "${data}" github model backup NobleFactor
+expect "11.2: a backup that is current opens no pull request" ok '([$calls[] | select(.[0] == "pr")] | length) == 0'
+run_star "${data}" github model backup test-user
+expect "11.3: backup creates the account's .github repository when it is missing" ok \
+    'any($calls[]; .[0:2] == ["repo", "create"])'
+expect "11.3: with no check required on main, backup merges without waiting for a run" ok '
+    (any($calls[]; (.[1] // "") | test("/actions/runs")) | not)
+    and ([$calls[] | select(.[0:2] == ["pr", "merge"])] | length == 1)
+    and ([$calls[] | select(.[0:2] == ["pr", "comment"]) | .[index("--body") + 1]] | .[0] | test("^No check is required"))'
+run_star "${data}" github model get test-user --output yaml
+get_yaml="${output}"
+check "11.3: test-user/.github's main holds the model get returns" main_holds_model test-user
+remote NobleFactor "old: true"
+ci NobleFactor never
+run_star "${data}" github model backup NobleFactor
+expect "11.4: a required check whose workflow run never starts stops the backup after 60 seconds, unmerged" error '
+    ([$calls[] | select(.[0:2] == ["pr", "merge"])] | length == 0)
+    and ([$calls[] | select(.[0] == "sleep") | .[1] | tonumber] | add == 60)
+    and ([$calls[] | select(.[0:2] == ["pr", "comment"]) | .[index("--body") + 1]] | length == 1 and (.[0] | test("quality-gate")))' \
+    'quality-gate' text
+ci NobleFactor fail
+run_star "${data}" github model backup NobleFactor
+expect "11.5: a failed check stops the backup unmerged, on the pull request the last run left open" error '
+    ([$calls[] | select(.[0:2] == ["pr", "create"] or .[0:2] == ["pr", "merge"])] | length == 0)
+    and ([$calls[] | select(.[0:2] == ["pr", "comment"]) | .[index("--body") + 1]] | length == 1
+        and (.[0] | test("did not pass") and test("quality-gate")))' 'quality-gate' text
+ci NobleFactor pass
+run_star "${data}" github model backup NobleFactor
+expect "11.6: run again, backup merges the pull request the earlier runs left open" ok '
+    ([$calls[] | select(.[0:2] == ["pr", "create"])] | length == 0)
+    and ([$calls[] | select(.[0:2] == ["pr", "merge"])] | length == 1) and (.pull_request | test("/pull/[0-9]+$"))'
+run_star "${data}" github model get NobleFactor --output yaml
+get_yaml="${output}"
+check "11.6: NobleFactor/.github's main holds the model get returns" main_holds_model NobleFactor
+
+# 11.7. GitHub's free plan gives a user account's private repository no branch rules, and refuses to read them with a
+# 403: nothing can be required of it, and backup merges without waiting (#538). The same 403 on a public repository is
+# not that, and stops the backup, unmerged, saying what GitHub said.
+remote test-user "old: true"
+ci test-user private
+run_star "${data}" github model backup test-user
+expect "11.7: a private repository whose rules GitHub refuses to read requires no check: backup merges without waiting (#538)" ok '
+    (any($calls[]; (.[1] // "") | test("/actions/runs")) | not)
+    and ([$calls[] | select(.[0:2] == ["pr", "merge"])] | length == 1)
+    and ([$calls[] | select(.[0:2] == ["pr", "comment"]) | .[index("--body") + 1]] | .[0] | test("^No check is required"))'
+remote test-user "old: true"
+ci test-user refused
+run_star "${data}" github model backup test-user
+expect "11.8: the same 403 on a public repository stops the backup, unmerged, saying what GitHub said (#538)" error '
+    [$calls[] | select(.[0:2] == ["pr", "merge"])] | length == 0' 'could not be read: .*HTTP 403' text
+
+# 12. The label commands, which enforced the label scheme retired on 2026-11-03, are gone, and their names before #378
+# with them; diff and apply take their place (#437).
+for command in "github labels audit" "github labels sync" "gh labels audit" "gh labels sync"; do
+    read -r -a words <<<"${command}"
+    run_star "${data}" "${words[@]}"
+    expect "12: star ${command} is an unknown command" error "" 'unknown command "(labels|gh)"'
+done
+
+# The writes a run made: REST calls with -X, GraphQL mutations, secrets set, repositories made, and pull requests
+# opened, edited, commented on and merged.
+declare -r writes='def writes: [$calls[] | select((.[0:2] | IN(["secret", "set"], ["repo", "create"], ["pr", "create"],
+        ["pr", "edit"], ["pr", "comment"], ["pr", "merge"])) or (index("-X") != null)
+    or any(.[]; type == "string" and test("^query=\\s*mutation")))];
+def wrote($pattern): any(writes[]; any(.[]; type == "string" and test($pattern)));
+def count($pattern): [writes[] | select(any(.[]; type == "string" and test($pattern)))] | length;
+def before($first; $second): [writes[] | any(.[]; type == "string" and test($first))] as $a
+    | [writes[] | any(.[]; type == "string" and test($second))] as $b
+    | ($a | index(true)) != null and ($b | index(true)) != null and ($a | index(true)) < ($b | index(true));'
+declare -r reference="${data}/devlore/star/extensions/${extension_name}/reference"
+remote NobleFactor
+remote test-user
+remote David-Noble-at-work
+
+# 13. get reads any organization: its labels are those of each repository a team maintains, with no hub (#437).
+run_star "${data}" github model get NobleFactor
+model_nf="${output}"
+expect "13: get reads an organization's labels from each repository a team maintains" ok '
+    (.labels.repositories | keys) == ["NobleFactor/alpha", "NobleFactor/beta"]
+    and (.labels.repositories["NobleFactor/alpha"][0] | {id, name}) == {id: "LA_alpha_gfi", name: "good first issue"}'
+
+# 14. get records everything apply writes (#437).
+expect "14: get records each type's description, color and enabled flag" ok '
+    (.types[] | select(.name == "Epic") | {description, color, enabled})
+        == {description: "Level 0: the root", color: "purple", enabled: true}'
+expect "14: get records each issue field's description and visibility, and each option's color, description and priority" ok '
+    (.fields[] | select(.name == "Severity") | {description, visibility}) == {description: "How much harm a bug does", visibility: "ORG_ONLY"}
+    and (.fields[] | select(.name == "Severity") | .options[0] | {id, name, color, description, priority})
+        == {id: "o_critical", name: "Critical", color: "RED", description: "Stops the work", priority: 1}'
+expect "14: get records each template option's color and description" ok '
+    (.projects[] | select(.name == "Triage") | .fields[] | select(.name == "Status") | .options[0] | {name, color, description})
+        == {name: "Open", color: "GRAY", description: "The issue is open"}'
+expect "14: get records each type's pinned fields" ok '
+    (.types[] | select(.name == "Bug") | .pinned_fields) == ["Severity", "Area"]
+    and (.types[] | select(.name == "Feature") | .pinned_fields) == []'
+expect "14: get records each template's short description, its copies', README, public flag, and the teams and repositories linked to it" ok '
+    (.projects[] | select(.name == "Triage") | {short_description, copy_short_description, readme, public, teams, repositories})
+        == {short_description: "The Triage project", copy_short_description: "The Triage: {owner} project", readme: "# Triage",
+            public: false, teams: [], repositories: []}'
+expect "14: get records each team's description, privacy, notification setting, parent, and its role on every repository" ok '
+    (.teams[] | select(.slug == "engprod") | {description, privacy, notification_setting, parent, roles})
+        == {description: "Engineering productivity", privacy: "closed", notification_setting: "notifications_enabled",
+            parent: null, roles: {"NobleFactor/alpha": "maintain", "NobleFactor/beta": "read"}}'
+
+# 15. diff compares a model with the account's model in GitHub, one record for each difference, and writes nothing.
+printf '%s\n' "${model_nf}" >"${run_directory}/work/noblefactor.json"
+run_star "${data}" github model diff noblefactor.json NobleFactor
+expect "15: diff of the account's own model finds no difference outside the projects of each kind, and writes nothing" ok "${writes}"'
+    type == "array" and ([.[] | select(.kind | startswith("project") | not)] == []) and (writes | length) == 0'
+
+# 16. What a model adds, changes and lacks.
+jq '.types += [{name: "Chore", level: 2, description: "Level 2: housekeeping", color: "gray", enabled: true}]
+    | .labels.repositories["NobleFactor/alpha"] |= ((. // []) | map(if .name == "good first issue" then .color = "000000" else . end))
+    | .fields |= map(if .name == "Severity" then .options |= map(select(.name != "Low")) else . end)' \
+    <<<"${model_nf}" >"${run_directory}/work/changed.json"
+run_star "${data}" github model diff changed.json NobleFactor
+expect "16: diff names what the model adds, what it changes and what it lacks" ok '
+    any(.[]; .kind == "issue-type" and .path == "Chore" and .change == "missing")
+    and any(.[]; .kind == "label" and .path == "NobleFactor/alpha/good first issue" and .change == "different")
+    and any(.[]; .kind == "issue-field-option" and .path == "Severity/Low" and .change == "extra")'
+
+expect "16: a changed color is drift" ok \
+    'any(.[]; .kind == "label" and .path == "NobleFactor/alpha/good first issue" and .github.color == "7057ff" and .model.color == "000000")'
+jq '.types |= map(if .name == "Epic" then del(.color) else . end)' <<<"${model_nf}" >"${run_directory}/work/colorless.json"
+run_star "${data}" github model diff colorless.json NobleFactor
+expect "16: a model that names no color for a type GitHub colors has drifted" ok '
+    any(.[]; .kind == "issue-type" and .path == "Epic" and .change == "different" and .github.color == "purple")'
+
+# 17. On the same account, a rename is a rename, matched by ID.
+jq '.labels.repositories["NobleFactor/alpha"] |= ((. // []) | map(if .name == "good first issue" then .name = "starter" else . end))
+    | .fields |= map(if .name == "Severity" then .options |= map(if .name == "N/A" then .name = "None" else . end) else . end)' \
+    <<<"${model_nf}" >"${run_directory}/work/renamed.json"
+run_star "${data}" github model diff renamed.json NobleFactor
+expect "17: on the same account, diff matches by ID: a label and an option renamed are renamed" ok '
+    any(.[]; .kind == "label" and .path == "NobleFactor/alpha/good first issue" and .change == "renamed" and .model.name == "starter")
+    and any(.[]; .kind == "issue-field-option" and .path == "Severity/N/A" and .change == "renamed" and .model.name == "None")
+    and ([.[] | select(.kind | startswith("project") | not) | select(.change == "missing" or .change == "extra")] == [])'
+
+# 18. Across accounts the IDs differ, and diff matches by name.
+jq '.account = "Other" | walk(if type == "object" and has("id") then .id = "other-\(.id)" else . end)
+    | .fields |= map(if .name == "Severity" then .options |= map(if .name == "N/A" then .name = "None" else . end) else . end)' \
+    <<<"${model_nf}" >"${run_directory}/work/other.json"
+run_star "${data}" github model diff other.json NobleFactor
+expect "18: across accounts diff matches by name, every ID ignored" ok '
+    any(.[]; .kind == "issue-field-option" and .path == "Severity/None" and .change == "missing")
+    and any(.[]; .kind == "issue-field-option" and .path == "Severity/N/A" and .change == "extra")
+    and (any(.[]; .change == "renamed") | not)'
+
+# 19. A reference is brought to the form get returns: the user reference's families become labels on each
+# participating repository, and its templates are the common set.
+run_star "${data}" github model diff "${reference}/user.yaml" test-user
+expect "19: diff reads the user reference: its families as labels, on participating repositories alone; the common templates" ok '
+    any(.[]; .kind == "label" and .path == "test-user/personal/priority:urgent" and .change == "missing")
+    and any(.[]; .kind == "template" and .path == "Schedule" and .change == "missing")
+    and (any(.[]; .path | startswith("test-user/elsewhere")) | not)'
+expect "19: every attribute is compared: a color the reference does not name is drift" ok '
+    any(.[]; .kind == "label" and .path == "test-user/personal/schedule" and .change == "different"
+        and .github.color == "cccccc" and (.model.color // "") != "cccccc")'
+
+# 20. A view's grouping, which GitHub's API cannot write, is a difference to set by hand.
+jq '.projects |= map(if .name == "Triage" then .views |= map(if .name == "Missing Area" then .group_by = ["Status"] else . end)
+    else . end)' <<<"${model_nf}" >"${run_directory}/work/grouped.json"
+run_star "${data}" github model diff grouped.json NobleFactor
+expect "20: a view's grouping is a difference marked to set by hand" ok '
+    any(.[]; .kind == "template-view" and .path == "Triage/Missing Area" and .change == "different" and .by_hand == true)'
+
+# 21. Every project of a kind is held to its template, what is the project's own aside.
+run_star "${data}" github model diff noblefactor.json NobleFactor
+expect "21: diff holds each team's projects to their templates, each project's own schedule options aside" ok '
+    any(.[]; .kind == "project-view" and .path == "Triage: engprod/Board" and .change == "missing")
+    and any(.[]; .kind == "project" and .path == "Triage: devlore" and .change == "missing")
+    and any(.[]; .kind == "project" and .path == "Schedule: devlore" and .change == "missing")
+    and (any(.[]; .path | startswith("Schedule: engprod/Schedule")) | not)'
+expect "21: a team that maintains no repository owns no projects" ok '(any(.[]; .path | test(": owners")) | not)'
+
+# 22. apply makes the model the account's: it creates and changes, and without --prune it keeps what the model lacks.
+run_star "${data}" github model apply changed.json NobleFactor
+expect "22: apply creates what the model adds and changes what differs, and keeps what it lacks" ok "${writes}"'
+    any(.[]; .kind == "issue-type" and .path == "Chore" and .action == "created")
+    and any(.[]; .kind == "label" and .path == "NobleFactor/alpha/good first issue" and .action == "changed")
+    and any(.[]; .kind == "issue-field-option" and .path == "Severity/Low" and .action == "kept")
+    and any(writes[]; index("POST") != null and any(.[]; type == "string" and test("^orgs/NobleFactor/issue-types$")))
+    and any(writes[]; index("PATCH") != null and any(.[]; type == "string" and test("repos/NobleFactor/alpha/labels/")))
+    and (any(writes[]; any(.[]; type == "string" and test("issue-fields"))) | not)'
+
+# 23. With --prune, what the model lacks goes too, each deletion first counted.
+run_star "${data}" github model apply changed.json NobleFactor --prune
+expect "23: with --prune, apply removes what the model lacks, after counting what it touches" ok "${writes}"'
+    any(.[]; .kind == "issue-field-option" and .path == "Severity/Low" and .action == "deleted" and has("touches"))
+    and any(writes[]; index("PATCH") != null and any(.[]; type == "string" and test("orgs/NobleFactor/issue-fields/")))'
+
+# 24. With a reference, --prune removes only labels of the reference's own kinds.
+run_star "${data}" github model apply "${reference}/user.yaml" test-user --prune
+expect "24: with --prune and a reference, apply removes area:old and keeps good first issue" ok "${writes}"'
+    any(writes[]; index("DELETE") != null and any(.[]; type == "string" and test("repos/test-user/personal/labels/area(:|%3A)old")))
+    and (any(writes[]; index("DELETE") != null and any(.[]; type == "string" and test("good"))) | not)'
+
+# 25. A template option renamed by ID is renamed in place, on the template and on each of its copies.
+jq '.projects |= map(if .name == "Triage" then .fields |= map(if .name == "Status" then .options |= map(
+        if .name == "Open" then .name = "Todo" else . end) else . end) else . end)' <<<"${model_nf}" >"${run_directory}/work/todo.json"
+run_star "${data}" github model apply todo.json NobleFactor
+expect "25: a template option renamed is renamed on the template and on each copy, every option sent with its ID" ok "${writes}"'
+    any(writes[]; any(.[]; type == "string" and test("updateProjectV2Field")) and any(.[]; type == "string" and test("O_PVT_template_triage_open"))
+        and any(.[]; type == "string" and test("Todo")))
+    and any(writes[]; any(.[]; type == "string" and test("updateProjectV2Field")) and any(.[]; type == "string" and test("O_PVT_triage_engprod_open"))
+        and any(.[]; type == "string" and test("Todo")))'
+
+# 26. A template the account lacks is made.
+jq '.projects += [{name: "Backlog", template: true,
+        fields: [{name: "Status", type: "single-select", options: [{name: "Open", color: "GRAY", description: "The issue is open"}]},
+            {name: "Step", type: "number"}],
+        views: [{name: "By priority", number: 2, layout: "table", filter: "", fields: ["Title"], group_by: [], vertical_group_by: [],
+            sort_by: []}]}]' <<<"${model_nf}" >"${run_directory}/work/backlog.json"
+run_star "${data}" github model apply backlog.json NobleFactor
+expect "26: apply makes a template the account lacks, with its fields and views, and marks it a template" ok "${writes}"'
+    any(.[]; .kind == "template" and .path == "Backlog" and .action == "created")
+    and wrote("createProjectV2\\(") and wrote("createProjectV2Field") and wrote("createProjectV2View") and wrote("markProjectV2AsTemplate")'
+expect "26: a template apply has just made holds its model's parts alone: GitHub's Status options, View 1 and workflows go" ok "${writes}"'
+    (wrote("NO_todo|NO_progress|NO_done") | not)
+    and count("deleteProjectV2View") == 1 and wrote("deleteProjectV2View.*NV_1")
+    and before("createProjectV2View.*NEW_starCreateProject"; "deleteProjectV2View.*NV_1")
+    and wrote("deleteProjectV2Workflow.*NW_closed") and wrote("deleteProjectV2Workflow.*NW_merged")
+    and before("deleteProjectV2Workflow.*NW_merged"; "markProjectV2AsTemplate")'
+expect "26: a project copied from it keeps what its template gave it, and loses its built-in workflows" ok "${writes}"'
+    wrote("copyProjectV2") and wrote("CO_todo") and (wrote("deleteProjectV2View.*CV_1") | not)
+    and wrote("deleteProjectV2Workflow.*CW_closed") and wrote("deleteProjectV2Workflow.*CW_merged")
+    and count("deleteProjectV2Workflow") == 2 * (count("createProjectV2\\(") + count("copyProjectV2"))'
+
+# 27 and 28. A team lacking a project of a kind gets it, copied from the template and linked to the team; a team's
+# project drifted from its template is brought back, what is its own left alone.
+run_star "${data}" github model apply noblefactor.json NobleFactor
+expect "27: a team lacking its Triage project gets one copied from the template, linked to the team, with its write role" ok "${writes}"'
+    any(.[]; .kind == "project" and .path == "Triage: devlore" and .action == "created")
+    and any(writes[]; any(.[]; type == "string" and test("copyProjectV2")) and any(.[]; type == "string" and test("Triage: devlore")))
+    and any(writes[]; any(.[]; type == "string" and test("linkProjectV2ToTeam")) and any(.[]; type == "string" and test("T_devlore")))
+    and any(writes[]; any(.[]; type == "string" and test("updateProjectV2Collaborators")) and any(.[]; type == "string" and test("WRITER")))'
+expect "27: each project copied loses its built-in workflows, and nothing else of it is deleted" ok "${writes}"'
+    count("copyProjectV2") == 2 and wrote("deleteProjectV2Workflow.*CW_closed") and wrote("deleteProjectV2Workflow.*CW_merged")
+    and count("deleteProjectV2Workflow") == 2 * count("copyProjectV2") and (wrote("deleteProjectV2View|deleteProjectV2Field") | not)'
+expect "28: a team project drifted from its template is brought back, its own schedule options untouched" ok "${writes}"'
+    any(.[]; .kind == "project-view" and .path == "Triage: engprod/Board" and .action == "created")
+    and any(writes[]; any(.[]; type == "string" and test("createProjectV2View")) and any(.[]; type == "string" and test("PVT_triage_engprod")))
+    and (wrote("F_PVT_schedule_engprod_schedule") | not)'
+
+# The Triage workflow templates, as each account's .github repository holds one: an organization's signs in with a
+# GitHub App, through two organization secrets; a user account's with a classic token in a repository secret.
+org_template=$'name: Triage\napp-id: ${{ secrets.NOBLEFACTOR_AUTOMATION_APP_ID }}\nkey: ${{ secrets.NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY }}\nowner: ${{ github.repository_owner }}'
+user_template=$'name: Triage\ntoken: ${{ secrets.ADD_TO_PROJECT_PAT }}'
+
+# 29. A new organization joins through apply: the model, its teams' projects, its .github repository's files from the
+# reference account's as it stands, NobleFactor's name in them its own, and its repository's Triage workflow and
+# variable; the App's secrets, which it has none of, named as steps by hand.
+repository NobleFactor/.github ".github/ISSUE_TEMPLATE/task.yml=name: Task" "workflow-templates/triage.yml=${org_template}" \
+    "CONTRIBUTING.md=# Contributing to NobleFactor" "model.yaml=version: 1" ".github/workflows/triage.yml=${org_template}"
+repository Acme/site
+repository Acme/app
+repository Acme/docs
+run_star "${data}" github model apply "${reference}/organization.yaml" Acme
+expect "29: apply of the reference brings a new organization into the model" ok '
+    any(.[]; .kind == "issue-type" and .path == "Task" and .action == "changed")
+    and any(.[]; .kind == "issue-type" and .path == "Epic" and .action == "created")
+    and any(.[]; .kind == "issue-field" and .path == "Severity" and .action == "created")
+    and any(.[]; .kind == "template" and .path == "Triage" and .action == "created")
+    and any(.[]; .kind == "project" and .path == "Triage: web" and .action == "created")
+    and any(.[]; .kind == "file" and .path == "Acme/.github/CONTRIBUTING.md" and .action == "created" and (.pull_request | test("Acme/.github/pull/")))
+    and any(.[]; .kind == "workflow" and .path == "Acme/site" and .action == "created" and (.pull_request | test("Acme/site/pull/")))
+    and any(.[]; .kind == "variable" and .path == "Acme/site/TRIAGE_PROJECT_URL" and .action == "created"
+        and .value == "https://github.com/orgs/Acme/projects/99")'
+expect "29: each template made holds the reference's parts alone, and no project made or copied keeps a built-in workflow" ok "${writes}"'
+    (wrote("NO_todo|NO_progress|NO_done") | not)
+    and count("deleteProjectV2View") == 1 and wrote("deleteProjectV2View.*NV_1")
+    and before("createProjectV2View.*NEW_starCreateProject.*By schedule"; "deleteProjectV2View.*NV_1")
+    and count("createProjectV2\\(") == 4 and count("copyProjectV2") == 12
+    and count("deleteProjectV2Workflow") == 2 * (count("createProjectV2\\(") + count("copyProjectV2"))'
+# The day of the week of a date written YYYY-MM-DD, Sunday 0 to Saturday 6, as GitHub numbers an Iteration field's
+# start day, Monday 1: Sakamoto's method, which needs no strptime.
+declare -r weekday='def weekday: capture("^(?<y>[0-9]{4})-(?<m>[0-9]{2})-(?<d>[0-9]{2})$") | map_values(tonumber)
+    | (if .m < 3 then .y - 1 else .y end) as $y
+    | ($y + ($y / 4 | floor) - ($y / 100 | floor) + ($y / 400 | floor) + [0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4][.m - 1] + .d) % 7;'
+expect "29: each Iteration field apply makes starts on the reference's start day, the latest on or before today" ok "${writes}${weekday}"'
+    [writes[] | .[] | select(type == "string" and test("createProjectV2Field.*ITERATION"))
+        | capture("startDate: \"(?<day>[0-9-]+)\"").day] as $days
+    | ($days | length) > 0 and ($days | all(weekday == 1))
+    and ($days | all(. <= (now | strflocaltime("%Y-%m-%d")) and . > ((now - 7 * 86400) | strflocaltime("%Y-%m-%d"))))'
+expect "29: a template or project made says on its own record what its views still need by hand" ok '
+    def steps($kind; $path): first(.[] | select(.kind == $kind and .path == $path and .action == "created")) | .steps // [];
+    (steps("template"; "Schedule") | length == 1 and (.[0] | test("^set the Schedule/By schedule view.s group by to \\[\"Schedule\"\\] in GitHub")))
+    and (steps("template"; "Scenario") | length == 1 and (.[0] | test("^set the Scenario/By scenario view.s group by to ")))
+    and (steps("template"; "Backlog") | length == 1 and (.[0] | test("^set the Backlog/By priority view.s sort by to ")))
+    and steps("template"; "Triage") == []
+    and (steps("project"; "Schedule: web") | length == 1 and (.[0] | test("^set the Schedule: web/By schedule view.s group by to ")))
+    and steps("project"; "Triage: web") == []'
+expect "29: the App's secrets, missing, are steps by hand, set on the organization" ok '
+    ([.[] | select(.kind == "secret") | {path, action}] | sort_by(.path)) == [
+        {path: "Acme/NOBLEFACTOR_AUTOMATION_APP_ID", action: "by-hand"},
+        {path: "Acme/NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY", action: "by-hand"}]
+    and ([.[] | select(.kind == "secret") | .steps[0]] | all(test("gh secret set NOBLEFACTOR_AUTOMATION_APP_[A-Z_]+ --org Acme")))'
+expect "29: every branch apply opens has a prefix NobleFactor's ruleset allows, the .github files' doc/, a workflow's feature/" ok '
+    [$calls[] | select(.[0:2] == ["pr", "create"]) | .[index("--head") + 1]] as $heads
+    | ($heads | length) == 4 and ($heads | map(select(. == "doc/issue-model-files")) | length) == 1
+    and ($heads | map(select(. == "feature/triage-workflow")) | length) == 3'
+expect "29: every pull request apply opens says AI assisted and ends with both trailers, and its squash merge takes it as the commit's message (#536)" ok '
+    [$calls[] | select(.[0:2] == ["pr", "create"]) | .[index("--body") + 1]] as $bodies
+    | [$calls[] | select(.[0:2] == ["pr", "merge"]) | .[(index("--body") // -2) + 1]] as $merged
+    | ($bodies | length) == 4 and ($merged | sort) == ($bodies | sort)
+    and ($bodies | all(test("\\n\\nWritten with AI assistance\\.\\n\\nSigned-off-by: [^\\n]+ <[^>]+>\\nAssisted-by: Claude Code$")))'
+check "29: Acme/.github holds NobleFactor/.github's issue form" shows Acme/.github .github/ISSUE_TEMPLATE/task.yml "name: Task"
+check "29: Acme/.github's files name Acme where NobleFactor's name NobleFactor" shows Acme/.github CONTRIBUTING.md "# Contributing to Acme"
+check "29: Acme/.github holds no copy of NobleFactor's model" lacks Acme/.github model.yaml
+check "29: Acme/.github's own Triage workflow is not copied: it takes part only when a team maintains it" lacks Acme/.github .github/workflows/triage.yml
+check "29: Acme/site holds the Triage workflow, NobleFactor/.github's template as it stands" shows Acme/site .github/workflows/triage.yml "${org_template}"
+check "29: apply removes the branches it landed its pull requests from" bash -c \
+    "! git --git-dir='${run_directory}/remotes/Acme/site.git' rev-parse --verify --quiet refs/heads/feature/triage-workflow"
+run_star "${data}" github model diff "${reference}/organization.yaml" Acme
+expect "29: afterward diff finds no file or workflow to change" ok '[.[] | select(.kind == "file" or .kind == "workflow")] == []'
+
+# 29b. --token names a secret the template signs in with, or none: an organization's template uses no token.
+export SITE_TOKEN=token-for-site
+run_star "${data}" github model apply "${reference}/organization.yaml" Acme --token env:SITE_TOKEN
+expect "29b: a bare --token, where the template uses two secrets, is refused, both named, and nothing written" error "${writes}"'
+    (writes | length) == 0' 'NOBLEFACTOR_AUTOMATION_APP_ID, NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY' text
+run_star "${data}" github model apply "${reference}/organization.yaml" Acme --token ADD_TO_PROJECT_PAT=env:SITE_TOKEN
+expect "29b: a secret the template does not use is refused, and nothing written" error "${writes}"'(writes | length) == 0' \
+    'ADD_TO_PROJECT_PAT, which .* does not use' text
+
+# 30. A new user account joins through apply: with no --token, it names the missing secret to set by hand, and makes the
+# rest; with --token env:<NAME>, it sets the secret on each repository, showing the token's fingerprint, not the token.
+repository David-Noble-at-work/.github ".github/ISSUE_TEMPLATE/task.yml=name: Task" "workflow-templates/triage.yml=${user_template}" \
+    "README.md=# David-Noble-at-work's .github"
+repository test-user/personal
+run_star "${data}" github model apply "${reference}/user.yaml" test-user
+expect "30: with no --token, apply names the missing secret to set by hand, and makes the rest" ok '
+    any(.[]; .kind == "secret" and .path == "test-user/personal/ADD_TO_PROJECT_PAT" and .action == "by-hand"
+        and (.steps[0] | test("gh secret set ADD_TO_PROJECT_PAT --repo test-user/personal")))
+    and any(.[]; .kind == "workflow" and .path == "test-user/personal" and .action == "created")
+    and any(.[]; .kind == "file" and .path == "test-user/.github/.github/ISSUE_TEMPLATE/task.yml" and .action == "created")
+    and any(.[]; .kind == "file" and .path == "test-user/.github/README.md" and .action == "changed")'
+check "30: test-user/.github's README names test-user" shows test-user/.github README.md "# test-user's .github"
+check "30: test-user/personal holds the Triage workflow" shows test-user/personal .github/workflows/triage.yml "${user_template}"
+run_star "${data}" github model apply "${reference}/user.yaml" test-user --token env:SITE_TOKEN
+unset SITE_TOKEN
+fingerprint="$(printf %s token-for-site | { sha256sum 2>/dev/null || shasum -a 256; } | cut -c1-12)"
+expect "30: --token env:<NAME> sets the secret, its record showing the token's fingerprint and never the token" ok "
+    any(.[]; .kind == \"secret\" and .path == \"test-user/personal/ADD_TO_PROJECT_PAT\" and .action == \"created\"
+        and .fingerprint == \"${fingerprint}\")
+    and (tostring | test(\"token-for-site\") | not)"
+check "30: test-user/personal's secret is the token --token named" grep -qxF "secret test-user/personal ADD_TO_PROJECT_PAT token-for-site" \
+    "${run_directory}/remotes/secrets"
+check "30: the token appears in none of gh's calls" bash -c "! grep -qF token-for-site '${run_directory}/calls.jsonl'"
+
+# 31. apply refuses star's --dry-run, whose reads are skipped until NobleFactor/devlore-cli#1170.
+run_star "${data}" github model apply noblefactor.json NobleFactor --dry-run
+expect "31: apply refuses --dry-run, naming NobleFactor/devlore-cli#1170, and writes nothing" error "${writes}"'
+    (writes | length) == 0' 'devlore-cli#1170' text
+
+# 32. restore applies the account's backup: main's, or the revision named.
+remote NobleFactor
+first="$(commit_model NobleFactor "$(jq '.types += [{name: "Chore", level: 2, description: "Level 2: housekeeping",
+    color: "gray", enabled: true}]' <<<"${model_nf}")")"
+commit_model NobleFactor "$(jq '.types += [{name: "Spike", level: 2, description: "Level 2: an experiment", color: "gray",
+    enabled: true}]' <<<"${model_nf}")" >/dev/null
+run_star "${data}" github model restore NobleFactor
+expect "32: restore applies main's backup" ok '[.[] | select(.kind == "issue-type" and .action == "created") | .path] == ["Spike"]'
+run_star "${data}" github model restore NobleFactor "${first}"
+expect "32: restore <revision> applies that revision's backup" ok '[.[] | select(.kind == "issue-type" and .action == "created") | .path] == ["Chore"]'
+
+# 33. A token from a file must be readable by its owner alone; --token replaces a secret already set.
+printf 'token-from-file' >"${run_directory}/work/token"
+chmod 644 "${run_directory}/work/token"
+run_star "${data}" github model apply "${reference}/user.yaml" test-user --token file:token
+expect "33: a token file others can read is refused, and nothing written" error "${writes}"'(writes | length) == 0' 'others can read' text
+chmod 600 "${run_directory}/work/token"
+run_star "${data}" github model apply "${reference}/user.yaml" test-user --token file:token
+expect "33: a token file only its owner can read replaces the secret already set" ok '
+    any(.[]; .kind == "secret" and .path == "test-user/personal/ADD_TO_PROJECT_PAT" and .action == "changed")'
+check "33: the secret is the file's token" grep -qxF "secret test-user/personal ADD_TO_PROJECT_PAT token-from-file" "${run_directory}/remotes/secrets"
+run_star "${data}" github model apply "${reference}/user.yaml" test-user --token file:no-such-token
+expect "33: a token file that is not there is refused, and nothing written" error "${writes}"'(writes | length) == 0' 'no-such-token' text
+
+# 34. No token's value is taken on the command line, nor a source but env: and file:.
+for token in ghp_0123456789abcdefghijABCDEFGHIJ012345 vault:kv-acme/site; do
+    run_star "${data}" github model apply "${reference}/organization.yaml" Acme --token "${token}"
+    expect "34: --token ${token%%_*} is refused, and nothing written" error "${writes}"'(writes | length) == 0' 'env:|file:' text
+done
+
+# 35. A reference names every attribute, a deliberate none written as one: an attribute left out is refused, named, and
+# the references the extension ships are accepted.
+jq -n '{version: 1, account: "user", types: [{name: "Epic", label: "epic", description: "Level 0: the root"}], templates: []}' \
+    >"${run_directory}/work/omits.json"
+run_star "${data}" github model diff omits.json test-user
+expect "35: a reference that leaves an attribute out is refused, the entry and the attribute named" error "" 'Epic.*color' text
+run_star "${data}" github model diff "${reference}/organization.yaml" NobleFactor
+expect "35: the organization reference names every attribute" ok 'type == "array"'
+run_star "${data}" github model diff "${reference}/user.yaml" test-user
+expect "35: the user reference names every attribute" ok 'type == "array"'
+
+# 36. Another organization's model applied to an organization with teams of its own: no team made or deleted, no role
+# changed, no label written; every team that maintains a repository gets one project for each template the model holds.
+repository Acme/app
+repository Acme/docs
+run_star "${data}" github model apply noblefactor.json Acme
+expect "36: another organization's model makes no team, deletes none, changes no role, and writes no label" ok "${writes}"'
+    (wrote("orgs/Acme/teams") | not) and (wrote("teams/[^/]+/repos/") | not) and (wrote("repos/Acme/[^/]+/labels") | not)
+    and (any(.[]; .kind == "team" or .kind == "label") | not)'
+expect "36: every team that maintains a repository gets one project for each template the model holds" ok '
+    ([.[] | select(.kind == "project" and .action == "created") | .path] | sort)
+        == ["Schedule: b", "Schedule: c", "Schedule: web", "Triage: b", "Triage: c", "Triage: web"]'
+
+# 37. --prune deletes no team, and removes or lowers no role, from another account's model or the account's own backup.
+run_star "${data}" github model apply noblefactor.json Acme --prune
+expect "37: with --prune, another organization's model deletes no team and changes no role" ok "${writes}"'
+    (any(writes[]; index("DELETE") != null and any(.[]; type == "string" and test("teams")))) | not'
+jq '.teams |= map(select(.slug != "devlore"))
+    | .teams |= map(if .slug == "engprod" then .roles |= del(.["NobleFactor/beta"]) else . end)' \
+    <<<"${model_nf}" >"${run_directory}/work/fewer-teams.json"
+run_star "${data}" github model apply fewer-teams.json NobleFactor --prune
+expect "37: with --prune, the account's own backup lacking a team and a role deletes neither" ok "${writes}"'
+    (any(writes[]; any(.[]; type == "string" and (test("teams/devlore") or test("teams/engprod/repos/NobleFactor/beta"))))) | not'
+
+# 38. On the account's own model, diff compares no .github file, which is the account's own, and holds each
+# participating repository's workflow to the template and its variable to its team's Triage project.
+repository NobleFactor/.github "workflow-templates/triage.yml=${org_template}"
+repository NobleFactor/alpha ".github/workflows/triage.yml=name: An older Triage"
+printf 'variable NobleFactor/alpha TRIAGE_PROJECT_URL https://github.com/orgs/NobleFactor/projects/6\n' >>"${run_directory}/remotes/variables"
+run_star "${data}" github model diff noblefactor.json NobleFactor
+expect "38: diff of the account's own model compares no .github file" ok '[.[] | select(.kind == "file")] == []'
+expect "38: a workflow that differs from the template, and one missing, are each a record" ok '
+    any(.[]; .kind == "workflow" and .path == "NobleFactor/alpha" and .change == "different")
+    and any(.[]; .kind == "workflow" and .path == "NobleFactor/beta" and .change == "missing")'
+expect "38: a variable naming another team's Triage project is a record, the team's own named" ok '
+    any(.[]; .kind == "variable" and .path == "NobleFactor/alpha/TRIAGE_PROJECT_URL" and .change == "different"
+        and .model.value == "https://github.com/orgs/NobleFactor/projects/5" and .model.project == "Triage: engprod")'
+printf 'secret NobleFactor NOBLEFACTOR_AUTOMATION_APP_ID 1\nsecret NobleFactor NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY k\n' \
+    >>"${run_directory}/remotes/secrets"
+run_star "${data}" github model diff noblefactor.json NobleFactor
+expect "38: the organization's secrets, visible to all its repositories, are no difference" ok '[.[] | select(.kind == "secret")] == []'
+
+# 39. An organization's App secrets come from --token, each named: set on the organization, visible to all its
+# repositories, a private key's lines kept.
+export APP_ID=12345
+printf -- '-----BEGIN KEY-----\nabc\n-----END KEY-----\n' >"${run_directory}/work/app.pem"
+chmod 600 "${run_directory}/work/app.pem"
+repository NobleFactor/.github "workflow-templates/triage.yml=${org_template}" "CONTRIBUTING.md=# Contributing to NobleFactor"
+run_star "${data}" github model apply "${reference}/organization.yaml" Acme \
+    --token NOBLEFACTOR_AUTOMATION_APP_ID=env:APP_ID,NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY=file:app.pem
+unset APP_ID
+expect "39: each named secret is set on the organization, its fingerprint shown" ok '
+    ([.[] | select(.kind == "secret") | {path, action, f: (.fingerprint | length)}] | sort_by(.path)) == [
+        {path: "Acme/NOBLEFACTOR_AUTOMATION_APP_ID", action: "created", f: 12},
+        {path: "Acme/NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY", action: "created", f: 12}]'
+check "39: the App's ID is set on the organization" grep -qxF "secret Acme NOBLEFACTOR_AUTOMATION_APP_ID 12345" "${run_directory}/remotes/secrets"
+check "39: the private key keeps its lines, its final newline dropped" \
+    grep -qxF 'secret Acme NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY -----BEGIN KEY-----\nabc\n-----END KEY-----' "${run_directory}/remotes/secrets"
+check "39: the organization secrets were set visible to all its repositories" bash -c \
+    "jq -e 'select(.[0:2] == [\"secret\", \"set\"]) | select(index(\"--org\") != null and index(\"all\") != null)' '${run_directory}/calls.jsonl' >/dev/null"
+
+# 40. An Iteration field whose start day or duration differs from the model's is set to the model's, on a template and
+# on each project made from it, each of its iterations, completed ones among them, sent back with its ID, title, start
+# date and duration, so that none is lost; one that matches the model is left alone (#437).
+make_extension "${run_directory}/data-iteration"
+# NobleFactor/.github without the Triage workflow template case 38 gave it, so that apply writes the projects alone.
+repository NobleFactor/.github
+jq 'def iteration($p): {id: "F_\($p)_iteration", name: "Iteration", dataType: "ITERATION", configuration: {duration: 14,
+        startDay: 3, iterations: [{id: "I_\($p)_2", title: "Sprint 2", startDate: "2026-11-11", duration: 14},
+            {id: "I_\($p)_3", title: "Sprint 3", startDate: "2026-11-25", duration: 14}],
+        completedIterations: [{id: "I_\($p)_1", title: "Sprint 1", startDate: "2026-10-28", duration: 14}]}};
+    .[0].data.organization.projectsV2.nodes |= map(if .id == "PVT_template_schedule" or .id == "PVT_schedule_engprod"
+        then .fields.nodes += [iteration(.id)] else . end)' "${run_directory}/fixtures/starProjects/NobleFactor.json" |
+    override "${run_directory}/data-iteration" starProjects/NobleFactor.json
+jq '.projects |= map(if .name == "Schedule" then .fields += [{name: "Iteration", type: "iteration",
+        configuration: {duration: 14, start_day: 1}}] else . end)' <<<"${model_nf}" >"${run_directory}/work/iteration.json"
+run_star "${run_directory}/data-iteration" github model apply iteration.json NobleFactor
+expect "40: an Iteration field's start day is set to the model's, on the template and on each project made from it" ok "${writes}${weekday}"'
+    any(.[]; .kind == "template-field" and .path == "Schedule/Iteration" and .action == "changed" and (has("steps") | not))
+    and any(.[]; .kind == "project-field" and .path == "Schedule: engprod/Iteration" and .action == "changed" and (has("steps") | not))
+    and ([writes[] | .[] | select(type == "string" and test("updateProjectV2Field.*iterationConfiguration"))
+        | capture("iterationConfiguration: \\{startDate: \"(?<day>[0-9-]+)\"").day] | length == 2 and all(weekday == 1))'
+expect "40: each of its iterations, completed ones among them, is sent back with its ID, title, start date and duration" ok "${writes}"'
+    def sent($p): any(writes[]; any(.[]; type == "string"
+        and test("updateProjectV2Field\\(input: \\{fieldId: \"F_\($p)_iteration\", iterationConfiguration: \\{startDate: \"[0-9-]+\", duration: 14, iterations: \\[")
+        and test("\\{id: \"I_\($p)_1\", title: \"Sprint 1\", startDate: \"2026-10-28\", duration: 14\\}")
+        and test("\\{id: \"I_\($p)_2\", title: \"Sprint 2\", startDate: \"2026-11-11\", duration: 14\\}")
+        and test("\\{id: \"I_\($p)_3\", title: \"Sprint 3\", startDate: \"2026-11-25\", duration: 14\\}")));
+    sent("PVT_template_schedule") and sent("PVT_schedule_engprod")'
+jq '.projects |= map(if .name == "Schedule" then .fields += [{name: "Iteration", type: "iteration",
+        configuration: {duration: 14, start_day: 3}}] else . end)' <<<"${model_nf}" >"${run_directory}/work/iteration-same.json"
+run_star "${run_directory}/data-iteration" github model apply iteration-same.json NobleFactor
+expect "40: an Iteration field that matches the model is left alone, its iterations not read" ok "${writes}"'
+    (wrote("updateProjectV2Field.*iterationConfiguration") | not)
+    and (any(.[]; .path == "Schedule/Iteration" or .path == "Schedule: engprod/Iteration") | not)
+    and (any($calls[]; any(.[]; type == "string" and test("starIterations"))) | not)'
+
+# 41 to 44. Star reads each of GitHub's connections one page deep, and a second page stops it, naming what it could not
+# read whole, rather than read part of an account: get, diff and apply each stop, apply writing nothing (#484).
+make_extension "${run_directory}/data-pages-projects"
+jq '.[0].data.organization.projectsV2.pageInfo = {hasNextPage: true}' "${run_directory}/fixtures/starProjects/NobleFactor.json" |
+    override "${run_directory}/data-pages-projects" starProjects/NobleFactor.json
+run_star "${run_directory}/data-pages-projects" github model get NobleFactor
+expect "41: get stops at a second page of an account's projects, naming them and the account" error "" \
+    'more projects of NobleFactor than star reads in one page'
+run_star "${run_directory}/data-pages-projects" github model diff noblefactor.json NobleFactor
+expect "41: so does diff" error "" 'more projects of NobleFactor than star reads in one page'
+run_star "${run_directory}/data-pages-projects" github model apply noblefactor.json NobleFactor
+expect "41: and apply, which writes nothing" error "${writes}"'(writes | length) == 0' \
+    'more projects of NobleFactor than star reads in one page' text
+
+make_extension "${run_directory}/data-pages-fields"
+jq '.[0].data.organization.projectsV2.nodes |= map(if .id == "PVT_template_triage" then .fields.pageInfo = {hasNextPage: true}
+        else . end)' "${run_directory}/fixtures/starProjects/NobleFactor.json" |
+    override "${run_directory}/data-pages-fields" starProjects/NobleFactor.json
+run_star "${run_directory}/data-pages-fields" github model get NobleFactor
+expect "42: get stops at a second page of a project's fields, naming the project and the account" error "" \
+    'more fields of the project Triage of NobleFactor than star reads in one page'
+
+make_extension "${run_directory}/data-pages-teams"
+jq '.[0].data.organization.teams.pageInfo = {hasNextPage: true}' "${run_directory}/fixtures/starOrganizationModel/NobleFactor.json" |
+    override "${run_directory}/data-pages-teams" starOrganizationModel/NobleFactor.json
+run_star "${run_directory}/data-pages-teams" github model get NobleFactor
+expect "43: get stops at a second page of an organization's teams, naming them" error "" \
+    'more teams of NobleFactor than star reads in one page'
+
+make_extension "${run_directory}/data-pages-labels"
+jq '. + .' "${run_directory}/fixtures/rest/repos/NobleFactor/alpha/labels_per_page_100.json" |
+    override "${run_directory}/data-pages-labels" rest/repos/NobleFactor/alpha/labels_per_page_100.json
+run_star "${run_directory}/data-pages-labels" github model get NobleFactor
+expect "44: get stops at a repository's labels when GitHub's Link header names a next page" error "" \
+    'more labels of NobleFactor/alpha than star reads in one page'
+make_extension "${run_directory}/data-pages-types"
+jq '. + .' "${run_directory}/fixtures/rest/orgs/NobleFactor/issue-types.json" |
+    override "${run_directory}/data-pages-types" rest/orgs/NobleFactor/issue-types.json
+run_star "${run_directory}/data-pages-types" github model get NobleFactor
+expect "44: and at an organization's issue types" error "" 'more issue types of NobleFactor than star reads in one page'
+
+# 45. GitHub's logins ignore case, and so does star: the report and the sweep, given an account spelled otherwise than
+# GitHub spells it, place its issues as they do for the account as GitHub spells it, its model read as often (#485).
+run_star "${data}" github schedule report NobleFactor/alpha
+spelled="$(jq -c '[.[].issue | ascii_downcase] | sort' <<<"${output}")"
+spelled_reads="$(grep -c starOrganizationModel "${run_directory}/calls.jsonl" || true)"
+run_star "${data}" github schedule report noblefactor/alpha
+expect "45: the report given noblefactor/alpha places its issues as for NobleFactor/alpha, its model read as often" ok \
+    '([.[].issue | ascii_downcase] | sort) == '"${spelled}"' and ([$calls[] | select(any(.[]; type == "string"
+        and test("starOrganizationModel")))] | length) == '"${spelled_reads}"
+run_star "${data}" github triage sweep NobleFactor
+swept="$(jq -c '[.[].issue | ascii_downcase] | sort' <<<"${output}")"
+run_star "${data}" github triage sweep noblefactor
+expect "45: the sweep given noblefactor sweeps NobleFactor's issues as for NobleFactor" ok \
+    '([.[].issue | ascii_downcase] | sort) == '"${swept}"
+
+# The schedule commands' cases (#438), as docs/plans/feature/438-schedule-add.md's test plan lists them: each starts
+# from base_world, and reads back what add left in it.
+today="$(date -u +%Y-%m-%d)"
+declare -r amendments='def amendments($id): .issues[$id].body | split("\n") | index("## Amendments") as $at
+    | .[($at + 1):] | reduce .[] as $line ([]; if ($line | startswith("- ")) then . + [$line]
+        elif ($line | startswith("  ")) and length > 0 then .[:-1] + [.[-1] + " " + ($line | ltrimstr("  "))] else . end);'
+declare -r no_writes='([$calls[] | select(any(.[]; type == "string" and test("mutation star")))] | length) == 0'
+declare -r s1_rows='[.projects.PVT_s_eng.items[] | select(.values.Schedule == "s1" and .values.Step != null) | [.content, .values.Step]]'
+
+# 46. add puts an issue from the Backlog on a schedule as its next step: the schedule's option, Status Open and step 5,
+# placed after step 4; its Backlog row gone, its row on a closed per-schedule project left alone; and one amendment
+# line, rendered from its template, naming the date, who ran it and why.
+world
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/alpha#25 --reason "Found in review."
+expect "46: add puts NobleFactor/alpha#25 at step 5 of s1, after the last" ok \
+    '[.[] | select(.action == "added")] == [{schedule: "NobleFactor/alpha#20", issue: "NobleFactor/alpha#25", type: "Task",
+        title: "a task from the backlog", action: "added", step: 5, from_step: null, project: "Schedule: engprod"}]'
+check "46: its row has s1, Status Open and step 5, just after step 4's" world_holds \
+    '.projects.PVT_s_eng.items | (map(.content) | index("I_alpha_25")) as $at
+        | .[$at].values == {Schedule: "s1", Status: "Open", Step: 5} and .[$at - 1].id == "IT_alpha_24"'
+check "46: its Backlog row is gone, and its row on a closed per-schedule project is left alone" world_holds \
+    '(.projects.PVT_b_eng.items | length) == 0 and (.projects.PVT_old.items | length) == 1'
+check "46: #20's last amendment names the date, who ran add, the step and the reason, and is settled" world_holds \
+    "${amendments}"' amendments("I_alpha_20")[-1] == "- '"${today}"', by stand-in: step 5 was added, Task " +
+        "NobleFactor/alpha#25, a task from the backlog. Found in review." and (.issues.I_alpha_20.body | contains("(in progress)") | not)'
+
+# 47. Two issues after step 2: they take steps 3 and 4, and every later step moves down two, the closed bug #23
+# among them (section 8, question 5). The amendment is the template's, byte for byte, wrapped at 120 columns.
+world
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/alpha#26 NobleFactor/alpha#41 --after 2 \
+    --reason "Moved up for review."
+expect "47: add puts #26 and #41 at steps 3 and 4, moving #23 and #24 down two" ok \
+    '[.[] | select(.action == "added") | [.issue, .step]] == [["NobleFactor/alpha#26", 3], ["NobleFactor/alpha#41", 4]]
+        and ([.[] | select(.action == "moved") | [.issue, .from_step, .step]] | sort)
+            == [["NobleFactor/alpha#23", 3, 5], ["NobleFactor/alpha#24", 4, 6]]'
+check "47: s1's rows run 1 to 6, in step order, the closed #23 at 5" world_holds \
+    "${s1_rows}"' == [["I_alpha_21", 1], ["I_alpha_22", 2], ["I_alpha_26", 3], ["I_alpha_41", 4], ["I_alpha_23", 5], ["I_alpha_24", 6]]'
+check "47: #26's Triage row is gone" world_holds '(.projects.PVT_t_eng.items | length) == 0'
+check "47: the amendment is the template's, byte for byte, and no line of #20's body is over 120 columns" world_holds \
+    "${amendments}"' amendments("I_alpha_20")[-1] == "- '"${today}"', by stand-in: step 3 was added, Bug " +
+        "NobleFactor/alpha#26, a bug from triage; step 4 was added, Task NobleFactor/alpha#41, a spare task. Steps 3 to 4 " +
+        "moved down 2, to 5 to 6. Moved up for review." and ([.issues.I_alpha_20.body | split("\n")[] | length] | max) <= 120'
+
+# 48. An issue found walking a scenario leaves it: its Scenario row is deleted, after a comment on the Scenario issue.
+world
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/alpha#27 --reason "Found walking."
+expect "48: add puts #27 on s1, and it leaves Scenario: engprod" ok \
+    '[.[] | select(.issue == "NobleFactor/alpha#27") | [.action, .project]]
+        == [["left", "Scenario: engprod"], ["added", "Schedule: engprod"]]'
+check "48: its Scenario row is gone, the scenario's own row kept" world_holds '[.projects.PVT_c_eng.items[].content] == ["I_alpha_40"]'
+check "48: the Scenario issue, #40, has the comment that #27 left it" calls_hold \
+    '[.[] | select(any(.[]; . == "s=I_alpha_40")) | select(any(.[]; type == "string" and test("^b=NobleFactor/alpha#27 left this scenario")))]
+        | length == 1'
+
+# 49. An issue on another schedule of the same project is taken off it: its row keeps its place on the project and
+# takes s1's option, s2's later step moves up one, and s2's Schedule issue is amended too.
+world
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/alpha#32 --reason "Needed sooner."
+expect "49: add takes #32 off s2 for s1, and #33 moves up on s2" ok \
+    '[.[] | select(.issue == "NobleFactor/alpha#32") | [.schedule, .action, .from_step, .step]]
+        == [["NobleFactor/alpha#30", "taken-off", 2, null], ["NobleFactor/alpha#20", "added", null, 5]]
+        and [.[] | select(.issue == "NobleFactor/alpha#33") | [.schedule, .action, .from_step, .step]]
+            == [["NobleFactor/alpha#30", "moved", 3, 2]]'
+check "49: #32 has one row, on s1 at step 5, and s2 runs 1 and 2" world_holds \
+    '([.projects.PVT_s_eng.items[] | select(.content == "I_alpha_32")] | length) == 1
+        and (.projects.PVT_s_eng.items[] | select(.content == "I_alpha_32") | .values) == {Schedule: "s1", Status: "Open", Step: 5}
+        and [.projects.PVT_s_eng.items[] | select(.values.Schedule == "s2" and .values.Step != null) | [.content, .values.Step]]
+            == [["I_alpha_31", 1], ["I_alpha_33", 2]]'
+check "49: s2's Schedule issue, #30, says #32 was taken off for #20" world_holds \
+    "${amendments}"' amendments("I_alpha_30")[-1] == "- '"${today}"', by stand-in: step 2, Task NobleFactor/alpha#32, s2 " +
+        "second, was taken off, for NobleFactor/alpha#20. Step 3 moved up 1, to 2. Needed sooner."'
+
+# 50. --blocked-by adds each link the issue lacks, and keeps the ones it has.
+world
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/alpha#41 \
+    --blocked-by NobleFactor/alpha#22,NobleFactor/alpha#29 --reason "Waits on both."
+expect "50: add links #41 as blocked by #29 alone, since it is blocked by #22 already" ok \
+    '([$calls[] | select(any(.[]; type == "string" and test("starStepBlock")))] | length) == 1'
+check "50: #41 is blocked by #22 and #29" world_holds '.issues.I_alpha_41.blockedBy == ["I_alpha_22", "I_alpha_29"]'
+
+# 51. Another team's issue needs --assignee, a member of the schedule's team, who answers for it there (ruled
+# 2026-11-04).
+world
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/beta#53 --reason "Engprod's to do."
+expect "51: devlore's issue is refused without --assignee, and nothing written" error "${no_writes}" \
+    "NobleFactor/beta#53 is devlore's: give --assignee, a member of engprod" text
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/beta#53 --assignee other --reason "Engprod's to do."
+expect "51: and with an --assignee who is not a member of engprod" error "${no_writes}" "other is not a member of engprod" text
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/beta#53 --assignee member --reason "Engprod's to do."
+expect "51: and with a member of engprod, it goes on s1" ok '[.[] | select(.action == "added") | .step] == [5]'
+check "51: NobleFactor/beta#53 is assigned to member" world_holds '.issues.I_beta_53.assignees == ["member"]'
+
+# 52. Each refusal names why, and nothing is written.
+world
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/alpha#29 --reason "R."
+expect "52: a closed issue is refused" error "${no_writes}" "NobleFactor/alpha#29 is closed" text
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/alpha#24 --reason "R."
+expect "52: an issue already on the schedule is refused" error "${no_writes}" \
+    "NobleFactor/alpha#24 is already on this schedule, at step 4" text
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/alpha#28 --reason "R."
+expect "52: an epic is refused" error "${no_writes}" "NobleFactor/alpha#28 is of type Epic: a schedule's steps are tasks and bugs" text
+run_star "${data}" github schedule add NobleFactor/alpha#20 test-user/personal#12 --reason "R."
+expect "52: another account's issue is refused" error "${no_writes}" "not in NobleFactor, the schedule's account: test-user/personal#12" text
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/alpha#41 --blocked-by test-user/personal#12 --reason "R."
+expect "52: and so is another account's blocker" error "${no_writes}" "not in NobleFactor, the schedule's account: test-user/personal#12" text
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/alpha#41 --after 9 --reason "R."
+expect "52: a step the schedule doesn't have is refused" error "${no_writes}" "the schedule has no step 9; its steps run 1 to 4" text
+run_star "${data}" github schedule add NobleFactor/alpha#22 NobleFactor/alpha#41 --reason "R."
+expect "52: a schedule that is not a Schedule issue is refused" error "${no_writes}" \
+    "NobleFactor/alpha#22 is not a Schedule issue: its type is Task" text
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/alpha#41
+expect "52: a change with no --reason is refused" error "${no_writes}" "add needs --reason" text
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/alpha#41 --reason "R." --dry-run
+expect "52: and star's --dry-run, until devlore-cli#1170" error "${no_writes}" "1170" text
+
+# 53. One act: the schedule's rows change between add's two reads, and it stops, nothing written.
+world '.change = {on: "starStepRows", set: [{project: "PVT_s_eng", item: "IT_alpha_24", field: "Step", value: 7}]}'
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/alpha#25 --reason "R."
+expect "53: the rows changed while add read them: refused, nothing written" error "${no_writes}" \
+    "changed while add read it; nothing was written" text
+
+# 54. A run that stops partway says what it wrote and leaves its amendment in progress; the same command run again
+# finishes it, as one run would have.
+world '.fail_on = "starStepPlace"'
+quiet=""
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/alpha#26 NobleFactor/alpha#41 --after 2 \
+    --reason "Moved up for review."
+quiet="--silent"
+expect "54: a run that stops partway says what it wrote" error "" "moved NobleFactor/alpha#24 from step 4 to 6"
+check "54: and leaves its amendment in progress" world_holds '.issues.I_alpha_20.body | contains("(in progress)")'
+run_star "${data}" github schedule add NobleFactor/alpha#20 NobleFactor/alpha#26 NobleFactor/alpha#41 --after 2 \
+    --reason "Moved up for review."
+expect "54: the same command run again finishes it" ok ""
+check "54: s1 is as one run leaves it: steps 1 to 6, one row for #26, one amendment for the change, settled" world_holds \
+    "${amendments}${s1_rows}"' == [["I_alpha_21", 1], ["I_alpha_22", 2], ["I_alpha_26", 3], ["I_alpha_41", 4], ["I_alpha_23", 5], ["I_alpha_24", 6]]
+        and ([.projects.PVT_s_eng.items[] | select(.content == "I_alpha_26")] | length) == 1
+        and (.issues.I_alpha_20.body | contains("(in progress)") | not)
+        and ([amendments("I_alpha_20")[] | select(contains("NobleFactor/alpha#26"))] | length) == 1
+        and (amendments("I_alpha_20")[-1] | contains("Steps 3 to 4 moved down 2, to 5 to 6."))'
+
+# 55. A user account's schedule, its types its labels, on Schedule: test-user.
+world
+run_star "${data}" github schedule add test-user/personal#10 test-user/personal#12 --reason "Personal work."
+expect "55: add puts test-user/personal#12, labeled task, at step 2 of u1" ok \
+    '[.[] | select(.action == "added") | [.issue, .type, .step]] == [["test-user/personal#12", "Task", 2]]'
+check "55: its row has u1, Status Open and step 2, and test-user/personal#10 is amended" world_holds \
+    "${amendments}"' (.projects.PVT_s_user.items[] | select(.content == "I_personal_12") | .values) == {Schedule: "u1", Status: "Open", Step: 2}
+        and amendments("I_personal_10")[-1] == "- '"${today}"', by stand-in: step 2 was added, Task test-user/personal#12, a " +
+        "personal task. Personal work."'
+
+# 56 to 61. Each team's project of a kind is held to its template's README, and to the short description the template
+# names for a copy, copy_short_description, the team's slug, or the user account, written {owner} (#555), as
+# docs/plans/fix/555-copy-readme.md's test plan lists them. Here NobleFactor has a Backlog template, and a third team,
+# it, which maintains NobleFactor/gamma: its slug is part of a word, waiting, in its Triage project's short description.
+# Each project's README is its template's but Schedule: engprod's, and their short descriptions are:
+#
+#   Triage: engprod (project 5), the oldest copy of Triage, a text of its own; Triage: devlore (13) and Triage: it (14)
+#   one text, each naming its team.
+#   Schedule: engprod (12) and Schedule: devlore (15) one text, each naming its team; it has no Schedule project.
+#   Backlog: engprod (16) and Backlog: devlore (17) a text each; it has no Backlog project.
+make_extension "${run_directory}/data-copies"
+jq '.[0].data.organization.teams.nodes += [{name: "IT", slug: "it", id: "T_it", description: "", privacy: "VISIBLE",
+        notificationSetting: "NOTIFICATIONS_ENABLED", parentTeam: null,
+        repositories: {edges: [{permission: "MAINTAIN", node: {nameWithOwner: "NobleFactor/gamma"}}]}}]' \
+    "${run_directory}/fixtures/starOrganizationModel/NobleFactor.json" |
+    override "${run_directory}/data-copies" starOrganizationModel/NobleFactor.json
+jq -n '[[]]' | override "${run_directory}/data-copies" rest/repos/NobleFactor/gamma/labels_per_page_100.json
+jq 'def copy($id; $n; $title; $short; $readme): .id as $from | walk(if type == "string" then gsub($from; $id) else . end)
+        | .number = $n | .title = $title | .template = false | .shortDescription = $short | .readme = $readme;
+    def queue($team): "Triage for \($team): the queue of issues waiting to be classified";
+    def committed($team): "Schedule of \($team): its committed tasks and bugs";
+    .[0].data.organization.projectsV2.nodes |= (first(.[] | select(.id == "PVT_template_triage")) as $triage
+        | first(.[] | select(.id == "PVT_template_schedule")) as $schedule
+        | ($triage | copy("PVT_template_backlog"; 25; "Backlog"; "The Backlog project"; "# Backlog") | .template = true) as $backlog
+        | map(if .id == "PVT_triage_engprod" then .shortDescription = "Triage for engprod, before" | .readme = "# Triage"
+            elif .id == "PVT_schedule_engprod" then .shortDescription = committed("engprod") | .readme = "# Schedule, before"
+            else . end)
+        + [$backlog,
+            ($triage | copy("PVT_triage_devlore"; 13; "Triage: devlore"; queue("devlore"); "# Triage")),
+            ($triage | copy("PVT_triage_it"; 14; "Triage: it"; queue("it"); "# Triage")),
+            ($schedule | copy("PVT_schedule_devlore"; 15; "Schedule: devlore"; committed("devlore"); "# Schedule")),
+            ($backlog | copy("PVT_backlog_engprod"; 16; "Backlog: engprod"; "Backlog of engprod: its accepted work not yet scheduled";
+                "# Backlog")),
+            ($backlog | copy("PVT_backlog_devlore"; 17; "Backlog: devlore"; "Backlog of devlore: accepted work"; "# Backlog"))])' \
+    "${run_directory}/fixtures/starProjects/NobleFactor.json" | override "${run_directory}/data-copies" starProjects/NobleFactor.json
+
+# 56. get gives each template the short description most of its copies share, each one's team as {owner}: Schedule's
+# two agree; two of Triage's three outvote the oldest, it's text naming it in "Triage for it" and not in "waiting"; and
+# Backlog's two tie, and the oldest's wins, though the other's comes first in the alphabet. A template with no copy has
+# an empty one, as test-user's Backlog does.
+run_star "${run_directory}/data-copies" github model get NobleFactor
+model_copies="${output}"
+expect "56: get gives each template the text most of its copies share, each one's team as {owner}, a tie to the oldest" ok '
+    (.projects | map({key: .name, value: .copy_short_description}) | from_entries) == {
+        Triage: "Triage for {owner}: the queue of issues waiting to be classified",
+        Schedule: "Schedule of {owner}: its committed tasks and bugs",
+        Backlog: "Backlog of {owner}: its accepted work not yet scheduled"}'
+run_star "${data}" github model get test-user
+expect "56: a template with no copy has an empty copy_short_description" ok '
+    (.projects[] | select(.name == "Backlog") | has("copy_short_description") and .copy_short_description == "")'
+
+# 57 and 58. diff reports a team's project whose README is not its template's, or whose short description is not the
+# template's copy_short_description with its team's slug for {owner}, as one record, project <name> different; a project
+# that matches its template in both has none.
+printf '%s\n' "${model_copies}" >"${run_directory}/work/copies.json"
+run_star "${run_directory}/data-copies" github model diff copies.json NobleFactor
+expect "57: diff reports a team's project whose README is not its template's" ok '
+    [.[] | select(.kind == "project" and .change == "different")] as $different
+    | any($different[]; .path == "Schedule: engprod" and .github.readme == "# Schedule, before" and .model.readme == "# Schedule"
+        and .github.short_description == .model.short_description)
+    and (any($different[]; .path == "Schedule: devlore") | not)'
+expect "58: diff reports a team's project whose short description is not its template's for a copy, its team's slug filled in" ok '
+    [.[] | select(.kind == "project" and .change == "different")] as $different
+    | any($different[]; .path == "Triage: engprod" and .github.short_description == "Triage for engprod, before"
+        and .model.short_description == "Triage for engprod: the queue of issues waiting to be classified"
+        and .github.readme == .model.readme)
+    and any($different[]; .path == "Backlog: devlore" and .github.short_description == "Backlog of devlore: accepted work"
+        and .model.short_description == "Backlog of devlore: its accepted work not yet scheduled")
+    and (any($different[]; .path == "Triage: devlore" or .path == "Triage: it" or .path == "Backlog: engprod") | not)'
+
+# 59. apply writes each drifted project's README and short description, what differs alone; written back into GitHub's
+# projects, what it wrote leaves diff nothing to report of any of them.
+run_star "${run_directory}/data-copies" github model apply copies.json NobleFactor
+expect "59: apply sets a team's project's README and short description where they differ, each project recorded as changed" ok "${writes}"'
+    def updates($id): [writes[] | .[] | select(type == "string" and test("updateProjectV2\\(input: \\{projectId: \"\($id)\""))];
+    ([.[] | select(.kind == "project" and .action == "changed") | .path] | sort) == ["Backlog: devlore", "Schedule: engprod", "Triage: engprod"]
+    and (updates("PVT_schedule_engprod") | length == 1 and (.[0] | test("readme: \"# Schedule\"") and (test("shortDescription") | not)))
+    and (updates("PVT_triage_engprod") | length == 1 and (.[0] | test("shortDescription: \"Triage for engprod: the queue of issues waiting to be classified\"")
+        and (test("readme") | not)))
+    and (updates("PVT_backlog_devlore") | length == 1
+        and (.[0] | test("shortDescription: \"Backlog of devlore: its accepted work not yet scheduled\"")))
+    and ([updates("PVT_triage_devlore", "PVT_triage_it", "PVT_schedule_devlore", "PVT_backlog_engprod")[]] == [])'
+
+# 60. A project apply copies gets its template's README, and the short description its template names for a copy, its
+# team's slug filled in, written once the copy is made.
+expect "60: a project apply copies gets its template's README and the short description its template names for a copy" ok "${writes}"'
+    any(.[]; .kind == "project" and .path == "Schedule: it" and .action == "created")
+    and any(.[]; .kind == "project" and .path == "Backlog: it" and .action == "created")
+    and wrote("updateProjectV2\\(input: \\{projectId: \"NEW_starCopyProject\", shortDescription: \"Schedule of it: its committed tasks and bugs\", readme: \"# Schedule\"\\}")
+    and wrote("updateProjectV2\\(input: \\{projectId: \"NEW_starCopyProject\", shortDescription: \"Backlog of it: its accepted work not yet scheduled\", readme: \"# Backlog\"\\}")
+    and before("copyProjectV2.*Schedule: it"; "updateProjectV2.*Schedule of it")'
+
+# What apply wrote with updateProjectV2, each project's ID with the short description and README it was given, written
+# back into data-copies' projects, so that diff reads them as GitHub would after the run.
+jq --slurpfile calls "${run_directory}/calls.jsonl" 'def text($name): [capture($name + ": (?<v>\"([^\"\\\\]|\\\\.)*\")").v][0] | if . then fromjson else null end;
+    [$calls[] | .[] | select(type == "string" and startswith("query=mutation starUpdateProject"))
+        | {id: capture("projectId: \"(?<id>[^\"]+)\"").id, short: text("shortDescription"), readme: text("readme")}] as $updates
+    | reduce $updates[] as $u (.; .[0].data.organization.projectsV2.nodes |= map(if .id == $u.id
+        then (if $u.short != null then .shortDescription = $u.short else . end) | (if $u.readme != null then .readme = $u.readme else . end)
+        else . end))' "${run_directory}/data-copies/fixtures/starProjects/NobleFactor.json" >"${run_directory}/work/copies-after.json"
+override "${run_directory}/data-copies" starProjects/NobleFactor.json <"${run_directory}/work/copies-after.json"
+run_star "${run_directory}/data-copies" github model diff copies.json NobleFactor
+expect "59: then diff finds no team's project whose README or short description differs from its template's" ok '
+    [.[] | select(.kind == "project" and .change == "different")] == []'
+
+# 61. A reference names each template's copy_short_description, refused without it, and diff holds each team's project
+# to the reference's text, its team's slug for {owner}, or the account's in a user account; a missing project's record
+# carries it too.
+jq -n '{version: 1, account: "user", types: [], templates: [{name: "Triage", short_description: "A copy of the Triage template"}]}' \
+    >"${run_directory}/work/no-copy-text.json"
+run_star "${data}" github model diff no-copy-text.json test-user
+expect "61: a reference whose template names no copy_short_description is refused, the template named" error "" \
+    'Triage names no copy_short_description' text
+run_star "${run_directory}/data-copies" github model diff "${reference}/organization.yaml" NobleFactor
+expect "61: diff holds each team's project to the organization reference's text for a copy, its team's slug filled in" ok '
+    any(.[]; .kind == "project" and .path == "Triage: engprod" and .change == "different"
+        and (.model.short_description | test("^engprod.s Triage project: the team.s queue of issues waiting to be classified\\.$")))
+    and any(.[]; .kind == "project" and .path == "Scenario: it" and .change == "missing"
+        and (.model.short_description | test("^it.s Scenario project: its Scenario issues and the tasks and bugs found while walking them$")))'
+run_star "${data}" github model diff "${reference}/user.yaml" test-user
+expect "61: and a user account's project to the user reference's, the account filled in" ok '
+    any(.[]; .kind == "project" and .path == "Triage: test-user" and .change == "different"
+        and (.model.short_description | test("^test-user.s Triage project: the account.s queue of issues waiting to be classified\\.$")))'
+
+((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
+success "every case passed"

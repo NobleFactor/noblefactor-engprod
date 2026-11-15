@@ -21,8 +21,9 @@ title: "Issue data model — one hierarchy, its attributes, and the collections 
 > linked from #303's row on Schedule: engprod, NobleFactor has its Severity field, and devlore-cli's `Severity:` and
 > `Priority:` labels became field values and were deleted. Read from GitHub that evening, the noblefactor-automation
 > app's installation on NobleFactor has organization projects read and write, issue fields read, and issues read and
-> write; nothing has used them yet, and the first Triage workflow run in a NobleFactor repository proves them
-> ([section 4](4-storage-and-reach.md) § Triage). GitHub makes no single-select project field without an option, so
+> write; nothing had used them yet, and the Triage workflow's first run in a NobleFactor repository, on 2026-11-11,
+> proved the app's permissions for projects and issue fields ([section 4](4-storage-and-reach.md) § Triage). GitHub
+> makes no single-select project field without an option, so
 > placeholder issues gave the new Scenario fields, and the Schedule fields of the Schedule template and its copy, their
 > first option: the scenarios NobleFactor/noblefactor-engprod#442 and David-Noble-at-work/personal#316, and the
 > schedules #443 and personal#319. So every Schedule and Scenario project and template in both accounts has its field
@@ -46,14 +47,14 @@ title: "Issue data model — one hierarchy, its attributes, and the collections 
 > template. Both take part in triage from that day, so seven repositories have `TRIAGE_PROJECT_URL` set, and none of the
 > seven has the Triage workflow yet ([section 4](4-storage-and-reach.md) § Triage). Read 2026-11-04, personal runs it:
 > its first run succeeded at 8:29 a.m. Pacific that day, and David-Noble-at-work/personal#315, which brought it there,
-> closed at 8:30. NobleFactor's five participating repositories wait on #448, after #447, and
-> David-Noble-at-work/.github on David-Noble-at-work/personal#311. `git open-branch` still accepts `chore`, in the
-> script, its man page and its completions; #449 will take it out and take the branch type from the issue's type, or its
-> type label in a user account (approved 2026-11-04). The PR script template still records lanes in schedule tables that
-> were retired on 2026-11-03, and has nothing yet for what a worktree's first script records; #450 will bring its rule
-> 13 and its schedule step to the Schedule project, where a pull request's script will record its steps, the first
-> script's Worktree link among them. The [plan](../../plans/chore/303-issue-data-model.md) tracks each in § The cutover,
-> from 2026-11-02, and § Closing, from 2026-11-04.
+> closed at 8:30. NobleFactor's five participating repositories have run it since 2026-11-11 (#437), after #447, and
+> David-Noble-at-work/.github since 2026-11-09 (#441). `git open-branch` offers no `chore`
+> since #449, and takes the branch type from the issue's type, or its type label in a user account (approved
+> 2026-11-04). Since #450, the PR script template records a pull request's steps in the
+> Schedule project: a worktree's first script links each step's row to its branch, and the merge script records the
+> merge on each step's issue and closes its row, each record guarded on what it holds and read back. The
+> [plan](../../plans/chore/303-issue-data-model.md) tracks each in § The cutover, from 2026-11-02, and § Closing, from
+> 2026-11-04.
 
 The owner, 2026-10-21: "the data model goes into the epic around issue tracking. there are two technical sides: the
 GitHub data model and the tooling (star gh). and migration must be managed carefully." This design is the first
@@ -100,7 +101,7 @@ product and engineering: the options Product and Engineering of NobleFactor's Ar
 issue is filed in a public repository, at triage, and afterward by a scheduled sweep. Each team, and each user account,
 has four GitHub projects: Triage, Backlog, Schedule and Scenario (ruled 2026-11-03). Every new issue reaches its team's
 Triage project, or its own account's in a user account, through a GitHub Actions workflow in its repository, apart from
-a task or a bug logged while walking a scenario, which the workflow will add to the scenario (#448). A triage decision
+a task or a bug logged while walking a scenario, which the workflow adds to the scenario (#448). A triage decision
 is made in the Triage project: the work is declined, or the issue moves to the team's Backlog, Schedule or Scenario
 project. Every move is one act: the issue gets its row in the project it goes to and loses its row in the one it leaves,
 and triage removes an issue's Triage row as part of its decision. An issue is a row of at most one of its account's
@@ -138,11 +139,12 @@ Ruled 2026-11-04: a task has no severity; it has a priority. Severity applies to
 type has Severity N/A: in NobleFactor, a new option N/A of the Severity issue field; in a user account, a new label
 `severity:n/a`. Both are made by the script of #303's closing pull request. A bug has Critical, High, Medium or Low,
 never N/A. An issue with no type yet gets no Severity and waits for triage, which sets N/A when it gives the issue a
-type other than Bug, and the sweep (#436) will catch a miss. The Triage workflow will set N/A on an issue of another
-type filed from a form, and will give a bug filed from the bug form, which asks no severity, Severity Medium, the
-owner's default, which GitHub's field can't hold (#448); triage changes it when the bug's harm is greater or less.
-`star github issue` will set N/A at filing (#338). So every typed issue has exactly one Severity value
-([section 2](2-attributes.md) § The attributes).
+type other than Bug, and the sweep (#436) will catch a miss. The Triage workflow sets the Severity when an issue is
+opened, and an issue that has one keeps it: a bug, whose form asks no severity, gets Medium, the owner's default, which
+GitHub's field can't hold, an issue of another type N/A, and an issue with no type yet none (#448); triage changes a
+bug's Severity when its harm is greater or less. An issue typed only after it is opened gets no Severity from the
+workflow, and triage gives it one. `star github issue` will set N/A at filing (#338). So every typed issue has exactly
+one Severity value ([section 2](2-attributes.md) § The attributes).
 
 Ruled 2026-11-03: a user account and an organization have exactly the same data model, apart from what GitHub offers
 organizations only, so in a user account, which has no issue fields, a label stands in for each option of a
@@ -187,7 +189,8 @@ classified, leaves Triage for no project, since the hierarchy holds it and its t
 and the schedules, from which a work item's parent link leads to its feature and its epic. From the Backlog, work goes
 onto a schedule highest Priority first, with the schedule's option, the next step or the step the schedule's owner gives
 it, Status Open and its blocked-by links. A committed schedule takes it only by its owner's amendment, recorded in the
-Schedule issue. `star github schedule add` (#438) will make that move in one command. The sweep (#436) will return an
+Schedule issue. `star github schedule add` (#438), built on 2026-11-12, makes that move in one command. The sweep
+(#436) will return an
 issue in more than one of its account's projects, the Scenario projects among them, or on more than one schedule or
 scenario, to its team's Triage project, and will remove no Triage row. The Backlog shows its order in a view named By
 priority, sorted by Priority, which the script of #303's closing pull request makes in Backlog: engprod, Backlog:
@@ -209,8 +212,9 @@ design.
 | [3. Collections](3-collections.md) | The four projects of each team and each user account, Triage, Backlog, Schedule and Scenario, as GitHub projects made from the Triage, Backlog, Schedule and Scenario templates: who joins which, the Schedule and Scenario fields, steps, beats and iterations, a schedule's or scenario's own record, an issue of type Schedule or Scenario (a Triage project has none), ownership | [Ruled in part](3-collections.status.md) |
 | [4. Storage and reach](4-storage-and-reach.md) | Where each part lives in GitHub, what enforces it, and which repositories it reaches | [Ruled](4-storage-and-reach.status.md) |
 | [5. From today's scheme](5-from-todays-scheme.md) | The deltas the task list is drawn from, and the order that keeps running work running | [Revised](5-from-todays-scheme.status.md) |
-| [6. The asset and its sync](6-the-asset-and-its-sync.md) | Each account's model, a YAML file stored in the account's `.github` repository; `star github model pull`, which reads a whole account, `--account` defaulting from `github.account` and `--asset` naming the file; then `push`. Whether star reads GitHub by ETag before every operation is decided with #426 and #437 | [Ruled](6-the-asset-and-its-sync.status.md) |
+| [6. The asset and its sync](6-the-asset-and-its-sync.md) | GitHub is each account's model, read when a command needs it; the YAML file in the account's `.github` repository is its backup. `star github model get`, `diff`, `apply`, `backup` and `restore`, each naming its account (#426, #437) | [Ruled](6-the-asset-and-its-sync.status.md) |
 | [7. The workflow, before and after](7-the-workflow-before-and-after.md) | Why this epic: filing an issue, writing a schedule and reporting progress, as a session does them today and once the model is in | [Written](7-the-workflow-before-and-after.status.md) |
+| [8. The schedule commands](8-the-schedule-commands.md) | What `star github schedule` does, verb by verb: `report`, `list`, `get`, `new`, `add`, `move`, `remove` and `close`, for an organization and for a user account (#439) | [Ruled](8-the-schedule-commands.status.md) |
 
 ## Terms
 
@@ -238,13 +242,13 @@ design.
   (ruled 2026-11-03), and it will refuse an issue without an Area (#338; ruled 2026-11-03).
 - **Evidence of completion:** what an issue states will show that it is done. Every issue states it (ruled 2026-11-02)
   but a Scenario issue, which states none: a scenario never ends, so its issue never closes and has nothing to evidence
-  (ruled 2026-11-04). It goes in the issue's Evidence of completion section, which each of the six issue forms in each
-  account's `.github` repository has (ruled 2026-11-04); #453 will put "how to walk it", the example the Scenario issue
-  gives, in its place on both accounts' Scenario forms. At filing, the form checks the section in a public repository;
-  GitHub enforces a form's required fields only there (GitHub's form schema documentation, read 2026-11-04). In a
-  private repository, which today is only personal, nothing checks it at filing until `star github issue` does (#338).
-  Afterward, the sweep (#436) will return an issue with no Evidence of completion section, a Scenario issue excepted, to
-  its team's Triage project.
+  (ruled 2026-11-04). It goes in the issue's Evidence of completion section, which each issue form in each account's
+  `.github` repository has but the Scenario form (ruled 2026-11-04). Since #453, on 2026-11-14, both accounts' Scenario
+  forms ask how to walk through it, the example the Scenario issue gives, in its place. At filing, the form checks the
+  section in a public repository; GitHub enforces a form's required fields only there (GitHub's form schema
+  documentation, read 2026-11-04). In a private repository, which today is only personal, nothing checks it at filing
+  until `star github issue` does (#338). Afterward, the sweep (#436) will return an issue with no Evidence of completion
+  section, a Scenario issue excepted, to its team's Triage project.
 - **Attribute:** something an issue has on its own, outside any collection: its severity, its priority, its area.
   All three are issue fields in NobleFactor and labels in David-Noble-at-work (ruled 2026-11-03). Every typed issue
   has exactly one Severity value: a bug's is Critical, High, Medium or Low, and an issue of any other type has N/A.
@@ -260,8 +264,8 @@ design.
   2026-11-03, and the hierarchy carries those distinctions ([section 1](1-hierarchy.md) § Type). A blank Area is an
   error, caught at three points (ruled 2026-11-03). At filing, `star github issue` will refuse an issue without an Area
   (#338), and the issue forms in each account's `.github` repository have a required Area dropdown. The Triage workflow
-  copies its answer into the Area field or label when the issue is opened: personal's adds the `area:` label today, and
-  NobleFactor's will set the Area field once #447 and #448 land. GitHub enforces the dropdown only in a public
+  copies its answer into the Area field or label when the issue is opened: personal's adds the `area:` label, and
+  NobleFactor's sets the Area field (#447, #448). GitHub enforces the dropdown only in a public
   repository, so in a private one, which today is only personal, nothing checks the Area at filing until
   `star github issue` does (ruled 2026-11-04). At triage, each Triage project has the Area field (in a user account, the
   `area:` labels, in its Labels column) and a Missing Area view, both made 2026-11-03, and nothing leaves Triage without
@@ -326,7 +330,7 @@ design.
   body the features it exercises. A scenario is structurally like a schedule that starts with no tasks or bugs: they are
   found with time. Someone opens the scenario and walks it, logging work items as they go, each a task or a bug and a
   row of the team's Scenario project under the scenario's option, its Beat the point in the walk where it turned up. A
-  logged item names its scenario in its body, as "Found while walking #N", and the Triage workflow will add it to the
+  logged item names its scenario in its body, as "Found while walking #N", and the Triage workflow adds it to the
   scenario instead of to the team's Triage project (#448). Each item later moves to its team's Triage project or
   straight onto a schedule, and leaves the scenario; the item's body and a comment on the Scenario issue record the
   move. The sweep (#436) will leave a scenario's rows alone but for two structural rules: it will return an epic or a
@@ -335,11 +339,11 @@ design.
   for all four. Every other rule waits until an item moves out: an item gets its type and parent then, and moving
   straight onto a schedule means classifying it first. A scenario never ends: it is kept, updated or removed as the
   product changes, since it has value before, during and after a release. Its Scenario issue never closes, so it states
-  no evidence of completion (§ Terms, under Evidence of completion). Both accounts' Scenario forms will be brought to
-  this in #453, with the Scenario type's description and the `scenario` labels' in personal and
-  David-Noble-at-work/.github, which still read "Collection: describes a scenario, the story its features tell" (read
-  2026-11-04). The project's single-select Scenario field names the scenario each row belongs to, with an option named
-  for each Scenario issue. There is no project per scenario. Scenarios were called threads until 2026-11-03, and a
+  no evidence of completion (§ Terms, under Evidence of completion). Both accounts' Scenario forms were brought to this
+  in #453, on 2026-11-14, with the Scenario type's description and the `scenario` labels' in personal and
+  David-Noble-at-work/.github, which now read "Collection: what someone wants to do, how to walk through it, and the
+  features it uses". The project's single-select Scenario field names the scenario each row belongs to, with an option
+  named for each Scenario issue. There is no project per scenario. Scenarios were called threads until 2026-11-03, and a
   thread had a project of its own (ruled 2026-11-03).
 - **Schedule:** a set of tasks and bugs in the order they are worked, described by an issue of type Schedule, labeled
   `schedule` in a user account; that issue holds the schedule's deliverable and exit criteria. The team's Schedule
@@ -370,16 +374,17 @@ design.
 - **The model, or the asset:** a YAML description of an account's data model: its issue types (type labels, in a user
   account), its issue fields, the labels of each of its repositories, its teams, and its project templates with their
   custom fields, options and views. It leaves out issues, the projects made from templates, the projects' built-in
-  workflows and an organization's default labels (ruled 2026-11-03). None of the twenty projects of the four kinds has
-  a built-in workflow: GitHub's API can't make one, so projects of a kind match only with none. The model is a cache:
-  star queries it instead of asking GitHub the same questions again, and builds sensible queries and updates from it.
-  Pull comes first, then push (ruled 2026-11-02). `star github model pull` reads the whole model of any account, ours or
-  not, every repository it owns, and has no `--repo` option. Its `--account` defaults from star's `github.account`
-  setting, NobleFactor unless set, and `--asset` names the model file (ruled 2026-11-03). `star github model push`
-  writes a model to an account, and that model becomes the account's data model. Two reference models ship with the star
-  extension, one for an organization's account and one for a user's. Until 2026-11-02 the model was a single committed
-  `model.yaml` beside the extension ([section 6](6-the-asset-and-its-sync.md)). Whether star reads GitHub by ETag before
-  every operation or answers from the model until the next pull, what push writes, and `--asset`'s default are decided
-  with the tooling, #426 and #437. Ruled 2026-11-03: an account's model holds its issue fields, as it holds its issue
-  types and labels. NobleFactor's are Priority, Effort, Target date, Resolution, Area and Severity, and its Start date
-  field stays unused. A user account has none.
+  workflows and an organization's default labels (ruled 2026-11-03). None of the twenty projects of the four kinds has a
+  built-in workflow: GitHub's API can't make one, so projects of a kind match only with none. GitHub is the model (ruled
+  2026-11-09, #426): star reads an account's model from GitHub when a command needs it, and the YAML file in the
+  account's `.github` repository is a backup of it, written by `star github model backup` and read only by `restore`.
+  `star github model get` reads the model of any account, ours or not; `diff`, `apply` and `restore`, built in #437,
+  compare a model with an account's, make it the account's, and restore a backup, and `apply` brings a new account in,
+  with its `.github` files and each repository's Triage workflow. Each names its account, and no account is a default
+  ([section 6](6-the-asset-and-its-sync.md#github-is-the-model)). Two reference models ship with the star extension,
+  one for an organization's account and one for a user's, beside the project templates they share. Until
+  2026-11-02 the model was a single committed `model.yaml` beside the extension; from #431 and #441 until #426, star
+  read each of our accounts' `model.yaml` from its `.github` repository by ETag as the model, a cache it queried instead
+  of asking GitHub again, and `pull` and `push` were its two verbs. Ruled 2026-11-03: an account's model holds its issue
+  fields, as it holds its issue types and labels. NobleFactor's are Priority, Effort, Target date, Resolution, Area and
+  Severity, and its Start date field stays unused. A user account has none.

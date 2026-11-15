@@ -27,10 +27,11 @@ request template, are stored in its `.github` repository, and every document tha
 there. Read from GitHub on 2026-11-03, NobleFactor/.github and David-Noble-at-work/.github each hold `README.md`, the
 six issue forms in `.github/ISSUE_TEMPLATE` (bug, epic, feature, scenario, schedule and task) and the Triage workflow
 template in `workflow-templates` (`triage.yml` and `triage.properties.json`). NobleFactor/.github also holds
-`.github/workflows/quality-gate.yml`. Neither holds a pull request template yet, nor `CONTRIBUTING.md`, `SECURITY.md`,
-`SUPPORT.md` or its account's model file. The pull request template is part of NobleFactor/noblefactor-engprod#431 for
-NobleFactor/.github and David-Noble-at-work/personal#311 for David-Noble-at-work/.github, the issues that bring each
-account's model file there.
+`.github/workflows/quality-gate.yml`. Since 2026-11-09 NobleFactor/.github also holds NobleFactor's model file,
+`model.yaml`, which star reads from there; its pull request template; and `CONTRIBUTING.md`, `SECURITY.md` and
+`SUPPORT.md` (NobleFactor/noblefactor-engprod#431, NobleFactor/.github#3). David-Noble-at-work/.github holds the same
+for its account since the same day, and runs its own Triage workflow (NobleFactor/noblefactor-engprod#441, which
+stands in for David-Noble-at-work/personal#311; David-Noble-at-work/.github#1).
 
 Ruled 2026-11-03: the model is a YAML description of an account's data model, and it is a cache. star queries the model
 instead of asking GitHub the same questions again. [Section 6](6-the-asset-and-its-sync.md) states what the model holds
@@ -162,7 +163,7 @@ whose story its Scenario issue told: the team's Scenario project holds its scena
 row. The Scenario issue summarizes an end-user goal and names in its body the features the scenario exercises, and the
 scenario's other rows are the tasks and bugs logged while walking it, each with its Beat, the point in the walk where it
 turned up, until it moves to its team's Triage project or onto a schedule. A logged item names its scenario in its body,
-as "Found while walking #N", and the Triage workflow will add it to the scenario instead of to the team's Triage project
+as "Found while walking #N", and the Triage workflow adds it to the scenario instead of to the team's Triage project
 (#448; [section 3](3-collections.md#the-schedule-and-scenario-fields)). A Scenario issue states no evidence of
 completion, since a scenario never ends (§ Where each part lives, below).
 
@@ -322,7 +323,7 @@ devlore (NobleFactor project 6) and Triage: David-Noble-at-work (David-Noble-at-
 goes into its team's Triage project, or in a user account the account's. The triage epics
 NobleFactor/noblefactor-engprod#142, NobleFactor/devlore-cli#1188 and David-Noble-at-work/personal#313 are retired.
 Ruled 2026-11-04: a task or a bug logged while walking a scenario goes into the scenario whose walk found it instead of
-into Triage, and the Triage workflow will put it there (#448; § An organization's account, above).
+into Triage, and the Triage workflow puts it there (#448; § An organization's account, above).
 
 Ruled 2026-11-03: the Triage project is where every issue is reviewed and a triage decision made. The decision either
 declines the work or moves the issue to the team's Backlog, Schedule or Scenario project. A declined issue is closed as
@@ -353,7 +354,8 @@ leaves. Out of Triage, declined work is closed as completed with Resolution Decl
 the Backlog with their Priority or onto a schedule. From the Backlog, work goes onto a schedule highest Priority first,
 with the schedule's option, the next step or the step the schedule's owner gives it, Status Open and its blocked-by
 links. A committed schedule takes it only by its owner's amendment, recorded in the Schedule issue.
-`star github schedule add` (#438) will make that move in one command. An issue on another team's project is assigned to
+`star github schedule add` (#438), built on 2026-11-12, makes that move in one command. An issue on another team's
+project is assigned to
 an accountable member of that team: GitHub allows up to 10 assignees on an issue, any organization member who can read
 the repository among them (GitHub's documentation on assigning issues, read 2026-11-04), and all five of NobleFactor's
 participating repositories are public. The person whose name is on an issue moves it to another team the way any move is
@@ -394,8 +396,8 @@ fields read, and issues read and write, beside contents write, metadata read and
 NobleFactor's repositories. GitHub's [list of GitHub App permissions](
 https://docs.github.com/en/rest/authentication/permissions-required-for-github-apps) puts an organization's projects
 under the organization permission Projects, its issue fields under the organization permission Issue Fields, and an
-issue's field values under the repository permission Issues. Nothing has used the new permissions yet: the first Triage
-workflow run in a NobleFactor repository will prove them.
+issue's field values under the repository permission Issues. The Triage workflow's first run in a NobleFactor
+repository, on 2026-11-11, proved the app's permissions for projects and issue fields.
 
 In a user account, the workflow adds the issue to the Triage project with a personal access token kept in the
 repository secret `ADD_TO_PROJECT_PAT`, and adds the area label with the workflow's own `GITHUB_TOKEN`, which the job
@@ -428,15 +430,16 @@ and David-Noble-at-work/.github. On 2026-11-03 none of the seven had `.github/wo
 David-Noble-at-work/personal#321, became a row of Triage: David-Noble-at-work and got `area:engineering` from
 `github-actions[bot]`. The same change made David-Noble-at-work's template drop carriage returns before reading the
 Area, stop looping forever on a body that ends at the Area heading, and stop its job after five minutes.
-NobleFactor's template still has the reader that loops. [This section's status](4-storage-and-reach.status.md)
+Since #447 (NobleFactor/.github#5, merged 2026-11-10), NobleFactor's template has the same reader, which stops at the
+end of the body. [This section's status](4-storage-and-reach.status.md)
 records where each repository stands.
 
 Ruled 2026-11-03: an issue with a blank Area is an error, and it is caught at three points:
 
 - **At filing.** `star github issue` will refuse to file an issue without an Area (#338). Each issue form in the
   account's `.github` repository has a required Area dropdown, and the Triage workflow copies its answer into the issue
-  when the issue is opened: personal's adds the area:product or area:engineering label today, and NobleFactor's will set
-  the Area field once #447 and #448 land. The form checks the Area in a public repository; GitHub enforces a form's
+  when the issue is opened: personal's adds the area:product or area:engineering label, and NobleFactor's sets the
+  Area field (#447, #448). The form checks the Area in a public repository; GitHub enforces a form's
   required fields only there (GitHub's form schema documentation, read 2026-11-04). In a private repository, which today
   is only personal, nothing checks it at filing until `star github issue` does.
 - **At triage.** Each Triage project has the Area field (in a user account, the area: labels, in its Labels column) and
@@ -531,13 +534,13 @@ still open, and so is David-Noble-at-work/personal#309, which gives personal its
 | Why an issue was closed | the issue field Resolution, a single select: Declined, Duplicate or Invalid (ruled 2026-11-03), only on a closed issue | the field's type, and one value | a label named `resolution:<name>`: resolution:declined, resolution:duplicate or resolution:invalid, only on a closed issue. GitHub enforces nothing |
 | `good first issue` | the label `good first issue`, held per repository, on tasks and bugs only (ruled 2026-11-04): it tells a newcomer they can pick the issue up, and only a task or a bug is a single piece of work | nothing | the same. personal gets the label from the script of #303's closing pull request, so both accounts hold it |
 | The other labels | labels, held per repository | nothing | the same |
-| A new issue, until its triage decision | a row of the team's Triage project, added by each repository's Triage workflow (ruled 2026-11-03), but for a task or a bug logged while walking a scenario, which the Triage workflow will add to that scenario in the team's Scenario project instead (ruled 2026-11-04; #448) | nothing | the same, in Triage: David-Noble-at-work, or for a logged item in Scenario: David-Noble-at-work |
+| A new issue, until its triage decision | a row of the team's Triage project, added by each repository's Triage workflow (ruled 2026-11-03), but for a task or a bug logged while walking a scenario, which the Triage workflow adds to that scenario in the team's Scenario project instead (ruled 2026-11-04; #448) | nothing | the same, in Triage: David-Noble-at-work, or for a logged item in Scenario: David-Noble-at-work |
 | Accepted work not yet scheduled | a row of the team's Backlog project, ordered by priority (ruled 2026-11-03), which its view By priority shows sorted by Priority; the script of #303's closing pull request makes the view (ruled 2026-11-04) | nothing | the same, in Backlog: David-Noble-at-work, which has no Priority field to sort by |
 | A schedule's rows, steps, sprints and status | the team's one Schedule project (ruled 2026-11-03), which holds its committed tasks and bugs: Status on every row, Schedule, a single select naming the row's schedule, Step, a number, Iteration, GitHub's iteration field, and Worktree, a link to the branch the step's work is on | the field's type | the same, in Schedule: David-Noble-at-work |
 | A scenario's rows, beats and status | the team's one Scenario project (ruled 2026-11-03), which holds its Scenario issues and the tasks and bugs found while walking them, and no feature (ruled 2026-11-04): Status on every row, Scenario, a single select naming the row's scenario, and Beat, the point in the walk where a row turned up | the field's type | the same, in Scenario: David-Noble-at-work |
 | Waits on | GitHub's blocked-by link, between the account's own repositories. A step's dependencies are set as blocked-by links when its row is added | the link | the same |
-| A schedule's deliverable and exit criteria, and a scenario's end-user goal, its example and the features it exercises | its own issue's body, the issue typed Schedule or Scenario, with an issue form in the account's `.github` repository; #453 will bring both accounts' Scenario forms to the scenario as ruled 2026-11-04 | nothing | the same, the issue labeled schedule or scenario |
-| Evidence of completion | every issue's own body but a Scenario issue's (ruled 2026-11-02 and 2026-11-04), in its Evidence of completion section, which every issue form in both accounts has today (ruled 2026-11-04). A Scenario issue states none, since a scenario never ends, and #453 will put how to walk it, the example the Scenario issue gives, in place of each Scenario form's Evidence of completion section | a form's required Evidence of completion section, at filing in a public repository only | the same. personal is private, so nothing checks it there at filing until `star github issue` does (#338) |
+| A schedule's deliverable and exit criteria, and a scenario's end-user goal, its example and the features it exercises | its own issue's body, the issue typed Schedule or Scenario, with an issue form in the account's `.github` repository; since #453, on 2026-11-14, both accounts' Scenario forms ask what the person wants to do, how to walk through it, and the features it uses | nothing | the same, the issue labeled schedule or scenario |
+| Evidence of completion | every issue's own body but a Scenario issue's (ruled 2026-11-02 and 2026-11-04), in its Evidence of completion section, which every issue form in both accounts has but the Scenario form (ruled 2026-11-04). A Scenario issue states none, since a scenario never ends; since #453, on 2026-11-14, each Scenario form asks how to walk through it, the example the Scenario issue gives, in its place | a form's required Evidence of completion section, at filing in a public repository only | the same. personal is private, so nothing checks it there at filing until `star github issue` does (#338) |
 | The model | a `model.yaml` in NobleFactor/.github | nothing | a `model.yaml` in David-Noble-at-work/.github |
 
 Ruled 2026-11-03: Area tells engineering work from product work, and it has two values only, product and engineering.
@@ -586,15 +589,17 @@ and hold GitHub's Triage role on a repository. So teams are where ownership and 
 organization home, so they are held per repository (ruled 2026-11-03). The model records each repository's labels as
 pull reads them, and push writes them back.
 
-**Every repository an account owns is in its model.** Ruled 2026-11-03: pull takes the whole model, every repository
-the account owns, and has no `--repo` option. On 2026-10-22 an organization custom property, `issue-model`, was
-proposed to mark the repositories that take part and to version the model. It was set aside the same day: the owner
-judged versioning too complex, and ruled that who takes part is asked only when it needs an answer, when building and
-reporting on schedules and scenarios or filing a new issue. There is one model per account. Pull comes first, then push
-(ruled 2026-11-02), and each names its account with `--account`. Ruled 2026-11-03: pull's `--account` defaults from
-star configuration, `github.account`, whose default is NobleFactor, and the option that names the model file is
-`--asset`. Ruled 2026-11-03: pull reads the data model of any account, ours or not, and push writes a model to an
-account, where that model becomes the account's data model.
+**Every repository an account owns is in its model.** Ruled 2026-11-03: pull takes the whole model, every repository the
+account owns, and has no `--repo` option. On 2026-10-22 an organization custom property, `issue-model`, was proposed to
+mark the repositories that take part and to version the model. It was set aside the same day: the owner judged
+versioning too complex, and ruled that who takes part is asked only when it needs an answer, when building and reporting
+on schedules and scenarios or filing a new issue. There is one model per account. Pull comes first, then push (ruled
+2026-11-02), and each names its account with `--account`. Ruled 2026-11-03: pull's `--account` defaults from star
+configuration, `github.account`, whose default is NobleFactor, and the option that names the model file is `--asset`.
+Ruled 2026-11-03: pull reads the data model of any account, ours or not, and push writes a model to an account, where
+that model becomes the account's data model. Ruled 2026-11-09 (#426): GitHub is the model, and `get`, `diff`, `apply`,
+`backup` and `restore` replace pull and push, each naming its account, with no default account and no `--asset`
+([section 6](6-the-asset-and-its-sync.md#github-is-the-model)).
 
 **Proving that a repository takes part.** On 2026-10-22 the owner asked that the tooling be able to refuse to file an
 issue in a repository, or to make one of its issues a row, when that repository does not take part, and suggested
@@ -609,8 +614,14 @@ with the tooling, noblefactor-engprod#426 and #437.
 ## Labels
 
 A label belongs to one repository. GitHub has no organization label, and an organization's default labels are not part
-of the model (ruled 2026-11-03). Each repository's labels are part of its account's model, stored in the account's
-`.github` repository, and push writes them. Push takes the place of `star github labels sync`.
+of the model (ruled 2026-11-03). Each repository's labels are part of its account's model, which GitHub holds and the
+account's `.github` repository backs up, and `apply` writes them (#437). `apply` takes the place of push and of
+`star github labels sync`, which #437 removed on 2026-11-10. Ruled 2026-11-10: `apply` writes a repository's labels
+from its account's own backup, or from a reference, and never carries another account's, since that account's
+repositories are its own. A reference names labels only for a user account, whose labels stand in for issue fields; an
+organization's issue tracking runs on its issue fields. With a reference, `--prune` removes only labels of the kinds
+the reference names, and `good first issue`, the one label the sweep reads in an organization, is left to GitHub, which
+gives it to every new repository.
 
 Ruled 2026-11-03: labels are lowercase, and issue types are capitalized, as GitHub names them. The labels that remain
 are lowercase: a user account's type labels, and its severity:, priority:, effort: and area: labels, such as

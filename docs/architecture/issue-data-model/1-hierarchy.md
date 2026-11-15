@@ -41,9 +41,9 @@ Each type's description in GitHub begins with its level, "Level N:". Schedule's 
 instead, so they have no level. Schedule and Scenario each have an issue form in their account's `.github` repository
 (ruled 2026-11-03). Read from GitHub on 2026-11-03, NobleFactor/.github and David-Noble-at-work/.github each hold six
 issue forms, one for each type in the table above ([section 6](6-the-asset-and-its-sync.md) § One model per account).
-Read 2026-11-04, the Scenario type's description in NobleFactor, and the `scenario` label's in personal and
-David-Noble-at-work/.github, still read "Collection: describes a scenario, the story its features tell", the scenario as
-it was before that day's ruling; #453 will bring all three to the ruling, with both accounts' Scenario forms.
+Since #453, on 2026-11-14, the Scenario type's description in NobleFactor, and the `scenario` label's in personal and
+David-Noble-at-work/.github, read "Collection: what someone wants to do, how to walk through it, and the features it
+uses", which fits the ruling of 2026-11-04, and both accounts' Scenario forms ask for those three things.
 
 A triaged issue has exactly one Type. A task or a bug, never both: planned work against unplanned, the split drawn by
 the write-up by Gemini the owner shared on 2026-10-21. That write-up's other split, product value against engineering
@@ -141,9 +141,9 @@ project (below).
   issue with no Type, or below level 0 with no parent, is untriaged, and waits in its team's Triage project, or its
   account's in a user account, or in the scenario whose walk found it, until triage classifies it.
 - New issues reach their team's Triage project through a GitHub Actions workflow in each repository, run when an issue
-  is opened or transferred, using `actions/add-to-project`; GitHub's built-in auto-add workflow is not used. Today only
-  personal runs it: NobleFactor's five participating repositories will once #448 lands, and David-Noble-at-work/.github
-  once David-Noble-at-work/personal#311 does. Each repository's `TRIAGE_PROJECT_URL` variable names its team's Triage
+  is opened or transferred, using `actions/add-to-project`; GitHub's built-in auto-add workflow is not used. personal,
+  David-Noble-at-work/.github (#441) and NobleFactor's five participating repositories (#448) run it.
+  Each repository's `TRIAGE_PROJECT_URL` variable names its team's Triage
   project, from the team mapping: the team with the maintain role on a repository owns it. A Triage workflow template in
   each account's `.github` repository offers the workflow (ruled 2026-11-03; [section 6](6-the-asset-and-its-sync.md)
   § One model per account). GitHub's documentation describes workflow templates in an organization's `.github`
@@ -158,8 +158,8 @@ project (below).
 - A blank Area is an error, caught at three points (ruled 2026-11-03). At filing, `star github issue` will refuse an
   issue without an Area (#338), and the issue forms in each account's `.github` repository have a required Area dropdown
   ([section 6](6-the-asset-and-its-sync.md) § One model per account), whose answer the repository's Triage workflow
-  copies into the Area field or label when the issue is opened: personal's adds the `area:` label today, and
-  NobleFactor's will set the Area field once #447 and #448 land. The form checks the Area in a public repository; GitHub
+  copies into the Area field or label when the issue is opened: personal's adds the `area:` label, and
+  NobleFactor's sets the Area field (#447, #448). The form checks the Area in a public repository; GitHub
   enforces a form's required fields only there (GitHub's form schema documentation, read 2026-11-04). In a private
   repository that takes part, today only personal, nothing checks it at filing until `star github issue` does. At
   triage, each Triage project has the Area field (in a user account, the `area:` labels in its Labels field) and a
@@ -192,7 +192,8 @@ project (below).
   fields set, and loses its row in the project it leaves. Out of Triage, declined work is closed as completed with
   Resolution Declined, and accepted tasks and bugs go to the Backlog with their Priority or onto a schedule. From the
   Backlog, work goes onto a schedule highest Priority first, and onto a committed schedule only by its owner's
-  amendment, recorded in the Schedule issue; `star github schedule add` (#438) will make that move in one command
+  amendment, recorded in the Schedule issue; `star github schedule add` (#438), built on 2026-11-12, makes that move
+  in one command
   ([section 3](3-collections.md#triage-and-the-backlog)).
 - Ruled 2026-11-04: epics and features are never rows of a Backlog, Schedule or Scenario project. A new one reaches
   Triage like every new issue and, once classified, leaves Triage for no project: the hierarchy holds it, and its tasks
@@ -229,7 +230,7 @@ project (below).
   scenario is structurally like a schedule that starts with no tasks or bugs: they are found with time. Someone opens
   the scenario and walks it, logging work items as they go, each a task or a bug and a row of the team's Scenario
   project under the scenario's option, its Beat the point in the walk where it turned up. A logged item names its
-  scenario in its body, as "Found while walking #N", and the Triage workflow will add it to the scenario instead of to
+  scenario in its body, as "Found while walking #N", and the Triage workflow adds it to the scenario instead of to
   the team's Triage project (#448); every other new issue goes to Triage. Each item later moves to its team's Triage
   project or straight onto a schedule, and leaves the scenario; the item's body and a comment on the Scenario issue
   record the move. The sweep will leave a scenario's rows alone but for two structural rules: it will return an epic or
@@ -238,8 +239,8 @@ project (below).
   until an item moves out: it gets its type and parent then, and moving straight onto a schedule means classifying it
   first. A scenario never ends: it is kept, updated or removed as the product changes, since it has value before, during
   and after a release. Its Scenario issue never closes, so it states no evidence of completion (§ How long a level
-  lives, below). #453 will bring both accounts' Scenario forms to this, and with them the Scenario type's description
-  and the `scenario` label's in personal and David-Noble-at-work/.github (§ Type, above).
+  lives, below). #453 brought both accounts' Scenario forms to this on 2026-11-14, and with them the Scenario type's
+  description and the `scenario` label's in personal and David-Noble-at-work/.github (§ Type, above).
 - Triage gives an issue its Type, its parent and its Area and, for a bug, its severity, and N/A on any other type
   ([section 2](2-attributes.md)). Ruled 2026-11-04: an issue that arrives with no type gets no Severity; when triage
   gives it a type other than Bug, triage sets its Severity to N/A, and the sweep (#436) will catch a miss.
@@ -281,11 +282,11 @@ project (below).
 
 Every issue states its evidence of completion (ruled 2026-11-02). Superseded in part on 2026-11-04: every issue but a
 Scenario issue states its evidence of completion. A scenario never ends, so its Scenario issue never closes and has
-nothing to evidence. On both accounts' Scenario forms, #453 will put how to walk it, the example the Scenario issue
-gives, in place of the Evidence of completion section, and the sweep's rule on a missing Evidence of completion section
-will skip a Scenario issue ([section 2](2-attributes.md#the-attributes)). An epic closes when its features ship. Its one
-exception, `Epic:Ops:Process`, which never closed ([issue-standards.md](../../issue-standards.md) § The process epic),
-ended on 2026-11-03, when its label was removed and #142 was retired.
+nothing to evidence. Since #453, on 2026-11-14, both accounts' Scenario forms ask how to walk through it, the example
+the Scenario issue gives, in place of the Evidence of completion section, and the sweep's rule on a missing Evidence of
+completion section will skip a Scenario issue ([section 2](2-attributes.md#the-attributes)). An epic closes when its
+features ship. Its one exception, `Epic:Ops:Process`, which never closed ([issue-standards.md](../../issue-standards.md)
+§ The process epic), ended on 2026-11-03, when its label was removed and #142 was retired.
 
 - **Long-lived level 1,** from the Gemini write-up, considered and not taken on 2026-11-03: a feature stays open for
   the life of what it delivers, and a bug found in shipped work is parented to the original, so that a capability's

@@ -70,6 +70,18 @@ function make_repositories {
     fi
 }
 
+# issue_12 sets the stand-in issue's type and labels, as git-open-branch reads them.
+#
+# Parameters:
+#   - `$1`: the issue type, or empty, as for every issue in a user account.
+#   - `$2`: the labels, comma-separated, or empty.
+#
+# Returns:
+#   - 0, the stand-in answering with them.
+function issue_12 {
+    printf '%s\n%s\n' "$1" "$2" >"${run_directory}/issue-12"
+}
+
 # run_case runs git-open-branch in one case's clone, for issue 12, then checks its status, its output, and where the
 # worktree is and what it has checked out.
 #
@@ -151,18 +163,24 @@ run_directory=""
 Set-Traps cleanup
 run_directory="$(mktemp -d)"
 
-# A stand-in for gh on PATH: issue 12 is open, titled "Add the thing", labeled chore.
+# A stand-in for gh on PATH: issue 12 is open and titled "Add the thing", with the type and labels issue_12 last gave
+# it, a Bug with no labels to begin with. It answers with the four facts git-open-branch asks for, joined by the unit
+# separator, as gh's --jq gives them.
 mkdir -p -- "${run_directory}/bin"
 cat >"${run_directory}/bin/gh" <<'GH'
 #!/usr/bin/env bash
 case "$*" in
-    *'issue view 12'*) printf 'Add the thing\tOPEN\tchore\n' ;;
+    *'issue view 12'*)
+        { IFS= read -r type; IFS= read -r labels; } <"$(dirname "$0")/../issue-12"
+        printf 'Add the thing\x1fOPEN\x1f%s\x1f%s\n' "${type}" "${labels}"
+        ;;
     *) exit 1 ;;
 esac
 GH
 chmod +x "${run_directory}/bin/gh"
+issue_12 Bug ""
 
-branch="chore/12-add-the-thing"
+branch="fix/12-add-the-thing"
 placed="home/Workspace/Org/repo.12-add-the-thing"
 opened_at="Opened ${branch} for #12 at .+/${placed}$"
 fallback="Origin is not on GitHub, so the worktree is a sibling of the main worktree"
@@ -182,6 +200,18 @@ Opened ${branch} for #12 at .+/clone\.12-add-the-thing$" "clone.12-add-the-thing
 run_case "--dry-run, ssh origin" "git@github.com:Org/repo.git" 0 "worktree +.+/${placed}$" none --dry-run
 run_case "--dry-run, an origin off GitHub" "" 0 "worktree +.+/clone\.12-add-the-thing$
 placed +${fallback}" none --dry-run
+
+# The branch type is the issue's type: in a user account, where no issue has one, the bug label stands for it; the
+# documentation label gives doc; and chore, which ruleset 12515090 refuses, is refused before anything is made (#449).
+issue_12 "" "bug"
+run_case "--dry-run, a user account's issue labeled bug: fix" "git@github.com:Org/repo.git" 0 \
+    "branch +fix/12-add-the-thing$" none --dry-run
+issue_12 "" "documentation"
+run_case "--dry-run, an issue labeled documentation: doc" "git@github.com:Org/repo.git" 0 \
+    "branch +doc/12-add-the-thing$" none --dry-run
+issue_12 Bug ""
+run_case "-T chore is refused, and nothing is made" "git@github.com:Org/repo.git" 64 \
+    "outside ruleset 12515090: doc, feature, fix, hotfix, refactor, release" none -T chore
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"

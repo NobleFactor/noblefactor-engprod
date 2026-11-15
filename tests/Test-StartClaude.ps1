@@ -230,19 +230,38 @@ switch ($arguments[0]) {
 }
 '@
 
-    # The stand-in for gh: schedule 7 of the startup repository's origin, as Start-Claude.ps1 reads it, and nothing
-    # else. gh.cmd, on PATH, runs it, as claude.cmd runs claude's.
+    # The stand-in for gh: issues of the startup repository's origin, as Start-Claude.ps1 reads them through GraphQL,
+    # the issue as gh's --jq gives it, and nothing else. 7 is an organization's schedule, of type Schedule; 8 a user
+    # account's, labeled schedule; 9 is titled "Schedule:" and labeled chore, the scheme retired on 2026-11-03. gh.cmd,
+    # on PATH, runs it, as claude.cmd runs claude's.
     Set-Content -LiteralPath (Join-Path -Path $bin -ChildPath 'gh.cmd') -Encoding ascii -Value (
         '@pwsh -NoProfile -NonInteractive -File "%~dp0..\stand-in\gh.ps1" %*')
     Set-Content -LiteralPath (Join-Path -Path $standIn -ChildPath 'gh.ps1') -Encoding utf8 -Value @'
 $arguments = @($args)
+$values = @{}
+for ($index = 0; $index -lt $arguments.Count - 1; $index++) {
+    if ($arguments[$index] -ceq '-f' -or $arguments[$index] -ceq '-F') {
+        $key, $value = $arguments[$index + 1].Split('=', 2)
+        $values[$key] = $value
+    }
+}
 
-if ($arguments.Count -ge 5 -and $arguments[0] -ceq 'issue' -and $arguments[1] -ceq 'view' -and
-    $arguments[2] -ceq '7' -and $arguments[3] -ceq '--repo' -and $arguments[4] -ceq 'example/start-claude-test') {
-    $issue = '{"labels":[{"name":"chore"}],"title":"Schedule: probe",'
-    $issue += '"url":"https://github.com/example/start-claude-test/issues/7"}'
-    [Console]::Out.WriteLine($issue)
-    exit 0
+if ($arguments.Count -ge 2 -and $arguments[0] -ceq 'api' -and $arguments[1] -ceq 'graphql' -and
+    $values['owner'] -ceq 'example' -and $values['name'] -ceq 'start-claude-test') {
+    $url = "https://github.com/example/start-claude-test/issues/$($values['number'])"
+    $issue = switch ($values['number']) {
+        '7' { @{ title = 'Schedule: probe'; url = $url; issueType = @{ name = 'Schedule' }; labels = @{ nodes = @() } } }
+        '8' {
+            @{ title = 'Schedule: personal probe'; url = $url; issueType = $null
+                labels = @{ nodes = @(@{ name = 'schedule' }, @{ name = 'area:engineering' }) }
+            }
+        }
+        '9' { @{ title = 'Schedule: the old scheme'; url = $url; issueType = $null; labels = @{ nodes = @(@{ name = 'chore' }) } } }
+    }
+    if ($issue) {
+        [Console]::Out.WriteLine(($issue | ConvertTo-Json -Depth 5 -Compress))
+        exit 0
+    }
 }
 
 [Console]::Error.WriteLine("stand-in gh: not handled: $arguments")
@@ -781,6 +800,17 @@ name nothing records | no such name | not-found | ConversationNotFound
         -Expected 'not-found' -ErrorId 'NoConversationToContinue' -CheckStore `
         -Parameter @{ Continue = $true; Schedule = '7'; Detach = $true }
     $env:STAND_IN_CWD = $script:repository
+
+    # What a schedule is (ruled 2026-11-03, issue-standards.md, Schedules): an issue of type Schedule, as schedule 7 is,
+    # or, in a user account, which has no issue types, one labeled schedule, as 8 is. 9 is titled "Schedule:" and
+    # labeled chore, the scheme retired on 2026-11-03, and is not one.
+    Clear-TestStore
+    $ways += Invoke-StartClaudeCase `
+        -Name "-Schedule naming a user account's schedule, labeled schedule: a new conversation" `
+        -Expected 'fedc4321' -Parameter @{ Schedule = '8'; Detach = $true }
+    Clear-TestStore
+    $ways += Invoke-StartClaudeCase -Name '-Schedule naming an issue labeled chore, not of type Schedule: refused' `
+        -Expected 'data-error' -ErrorId 'NotASchedule' -Parameter @{ Schedule = '9'; Detach = $true }
 
     Clear-TestStore
     Write-TestStoreEntry -Id 'eeee5555-0000-4000-8000-000000000002'

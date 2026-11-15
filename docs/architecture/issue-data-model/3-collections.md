@@ -61,8 +61,9 @@ copies are named for their kind alone, such as Backlog.
 
 Both `.github` repositories take part in triage from 2026-11-03, so the table lists seven repositories. On 2026-11-03
 none of them had `.github/workflows/triage.yml`; personal got it on 2026-11-04, in David-Noble-at-work/personal#320 for
-David-Noble-at-work/personal#315, and of the other six, NobleFactor's five wait on #448 and David-Noble-at-work/.github
-on David-Noble-at-work/personal#311 ([section 4](4-storage-and-reach.md#triage)).
+David-Noble-at-work/personal#315, and of the other six, NobleFactor's five got it from NobleFactor/.github's template
+through `star github model apply` (#437) on 2026-11-11, with #448's steps by 2026-11-13, and
+David-Noble-at-work/.github got it on 2026-11-09 (#441) ([section 4](4-storage-and-reach.md#triage)).
 
 Triage: engprod was made on 2026-10-26 and Triage: devlore on 2026-11-01, both before the Triage template, and both were
 brought to it on 2026-11-02. Triage: David-Noble-at-work was made on 2026-11-02, and the account's copy named Triage,
@@ -165,7 +166,7 @@ testing finds, and names in its body the features it exercises. A scenario is st
 with no tasks or bugs: they are found with time. Someone opens the scenario and walks it, logging work items as they go,
 each a task or a bug and a row of the team's Scenario project under the scenario's option, its Beat the point in the
 walk where it turned up. A logged item names its scenario in its body, as "Found while walking #N", and the Triage
-workflow will add it to the scenario instead of to the team's Triage project (#448). Each item later moves to its team's
+workflow adds it to the scenario instead of to the team's Triage project (#448). Each item later moves to its team's
 Triage project or straight onto a schedule, and leaves the scenario; the item's body and a comment on the Scenario issue
 record the move. The sweep (#436) will leave a scenario's rows alone but for two structural rules: it will return an
 epic or a feature that is a row of a Scenario project, as it will return one on a Backlog or Schedule project, and an
@@ -173,8 +174,8 @@ issue that is a row of a scenario and of another of the account's projects, whic
 Backlog). Every other rule will wait until an item moves out: it gets its type and parent then, and moving straight onto
 a schedule means classifying it first. A scenario never ends: it is kept, updated or removed as the product changes,
 since it has value before, during and after a release. So its Scenario issue never closes, and it is the one kind of
-issue that states no evidence of completion (ruled 2026-11-04). #453 will bring both accounts' Scenario forms to this,
-each putting how to walk it, the example the Scenario issue gives, in place of its Evidence of completion section.
+issue that states no evidence of completion (ruled 2026-11-04). Since #453, on 2026-11-14, both accounts' Scenario
+forms ask how to walk through it, the example the Scenario issue gives, in place of an Evidence of completion section.
 
 GitHub won't make a single-select project field without at least one option (GitHub's GraphQL schema,
 `CreateProjectV2FieldInput`). So a project's Schedule field comes with its first schedule, and its Scenario field with
@@ -199,9 +200,9 @@ for compliance and an agent has reviewed its code, with the team lead's sign-off
   every row of a schedule, other than the Schedule issue's own, gets its step number and its dependencies, GitHub
   blocked-by links, when it is added. A GitHub project has no number that counts by itself, so whoever adds a row sets
   its step; a working issue tracking system on GitHub comes first and tooling follows (ruled 2026-11-02). The sweep
-  (#436) will return an issue whose row has no step to its team's Triage project (ruled 2026-11-04). The Lane field,
-  numbered from the lane tables on 2026-11-01, was renamed Step on 2026-11-02, so steps 1 to N are the old lane numbers.
-  The plan's question 6.
+  (#436) returns a task or bug whose row has no step to its team's Triage project, by its `no-step` rule (ruled
+  2026-11-04, built in #427). The Lane field, numbered from the lane tables on 2026-11-01, was renamed Step on
+  2026-11-02, so steps 1 to N are the old lane numbers. The plan's question 6.
 - A Schedule issue's own row has no step (ruled 2026-11-02 and 2026-11-03): it tracks the schedule, with its exit
   criteria, and is not a step of its work.
 - Beat orders a scenario's rows (ruled 2026-11-03). Ruled 2026-11-04: those rows are the tasks and bugs found while
@@ -219,14 +220,18 @@ for compliance and an agent has reviewed its code, with the team lead's sign-off
   88 rows were put in that order and read back; read the same day, Schedule: devlore (145 rows), Scenario: engprod
   (19), Scenario: devlore (36) and Schedule: David-Noble-at-work (2) were already in it. A row added later has to be
   placed in order when it is added.
-- A closed step keeps its number, as today.
+- Closed steps move with the open ones (ruled 2026-11-11, in place of the rule that a closed step keeps its number).
+  When a step is inserted, moved or taken off, every later step is renumbered, closed or open, so the steps stay
+  consecutive whole numbers. Closed steps already sat among open ones: on issue tracking, iteration 1, steps 29
+  (#440) and 35 (#447) are closed between open steps, and both moved down four when #482 to #485 went in after step
+  22 that day ([section 8](8-the-schedule-commands.md#changing-a-schedule-add-move-and-remove), question 5).
 - One issue in two live collections, the plan's question 9. The owner had doubts about it on 2026-10-20. A project holds
   an issue as one row, and a single-select field holds one value, so within a team's Schedule or Scenario project a row
   belongs to one schedule or one scenario. Ruled 2026-11-04: an issue is a row of at most one of its account's Triage,
   Backlog, Schedule and Scenario projects, whichever team owns them, and is on at most one schedule or scenario, and no
   epic or feature is a row of a Backlog, Schedule or Scenario project (§ Triage and the Backlog).
 - Schedules have no Next column. It was deleted from the Schedule template and every schedule on 2026-11-02.
-  The `model.yaml` beside the extension predates the cutover and still shows it.
+  NobleFactor's model, pulled on 2026-11-08 and NobleFactor/.github's `model.yaml` since #431, no longer shows it.
 - A schedule's Worktree column was ruled 2026-11-03. Each step's row links the branch its work is on, and the step's
   own issue records that the work merged or closed. The column holds a link to the branch on GitHub, so the branch is
   pushed before its row links it: a link to a branch GitHub does not have leads nowhere. Found 2026-11-03: the row of
@@ -266,7 +271,7 @@ user account's, and whether GitHub offers David-Noble-at-work/.github's template
 either way, David-Noble-at-work/personal#315 copies personal's `triage.yml` from it. How the workflow signs in, with a
 token from the noblefactor-automation GitHub App in NobleFactor and a classic personal access token in a user account,
 is in [section 4](4-storage-and-reach.md) § Triage. Ruled 2026-11-04: a work item logged while walking a scenario names
-the scenario in its body, as "Found while walking #N", and the Triage workflow will add it to that scenario instead
+the scenario in its body, as "Found while walking #N", and the Triage workflow adds it to that scenario instead
 (#448; § The Schedule and Scenario fields).
 
 Every project of a kind is configured the same way (ruled 2026-11-03; § Four projects per team), and GitHub's GraphQL
@@ -298,8 +303,8 @@ longer has star remove an issue once it is classified or closed, as its comment 
 **A blank Area is an error.** Ruled 2026-11-03: an issue without an Area is caught at three points. At filing,
 `star github issue` will refuse an issue without an Area (#338), and the issue forms in each account's `.github`
 repository ([section 6](6-the-asset-and-its-sync.md) § One model per account) have a required Area dropdown. The Triage
-workflow copies its answer into the Area field or label when the issue is opened: personal's adds the `area:` label
-today, and NobleFactor's will set the Area field once #447 and #448 land. The form checks the Area in a public
+workflow copies its answer into the Area field or label when the issue is opened: personal's adds the `area:` label,
+and NobleFactor's sets the Area field (#447, #448). The form checks the Area in a public
 repository; GitHub enforces a form's required fields only there (GitHub's form schema documentation, read 2026-11-04).
 In a private repository, which today is only personal, nothing checks it at filing until `star github issue` does. At
 triage, each Triage project has the Area field, made 2026-11-03, or in a user account the `area:` labels in its Labels
@@ -330,7 +335,8 @@ leaves. Out of Triage, declined work is closed as completed with Resolution Decl
 the Backlog with their Priority or onto a schedule. From the Backlog, work goes onto a schedule highest Priority first,
 with the schedule's option, the next step or the step the schedule's owner gives it, Status Open and its blocked-by
 links. A committed schedule takes it only by its owner's amendment, recorded in the Schedule issue (§ A committed
-schedule). `star github schedule add` (#438) will make that move in one command. An issue on another team's project is
+schedule). `star github schedule add` (#438), built on 2026-11-12, makes that move in one command. An issue on another
+team's project is
 assigned to an accountable member of that team: GitHub allows up to 10 assignees on an issue, any organization member
 who can read the repository among them (GitHub's documentation on assigning issues, read 2026-11-04), and all five of
 NobleFactor's participating repositories are public. The person whose name is on an issue moves it to another team the
@@ -428,14 +434,13 @@ type Scenario. In a user account they carry the labels schedule and scenario. Th
 repository: read from GitHub on 2026-11-03, NobleFactor/.github and David-Noble-at-work/.github each hold six issue
 forms, one for each type ([section 6](6-the-asset-and-its-sync.md) § One model per account). Ruled 2026-11-04: a
 Scenario issue summarizes its scenario's end-user goal, in place of the story the ruling of 2026-11-03 had it tell (§
-The Schedule and Scenario fields). Read from GitHub that day, the Scenario type's description, and the scenario label's
-in personal and David-Noble-at-work/.github, are still "Collection: describes a scenario, the story its features tell",
-the scenario as it was before that ruling; #453 will bring all three to it, with the forms, keeping the "Collection:"
-prefix, as its comments of 2026-11-04 record. NobleFactor/.github gets a quality-gate check of its own, so that it
-follows the organization's ruleset like every other repository (ruled 2026-11-03), and it holds
-`.github/workflows/quality-gate.yml`. Like every issue, a Schedule or Scenario issue carries Priority and Area: issue
-fields in NobleFactor, the priority: and area: labels in David-Noble-at-work (ruled 2026-11-03). A Triage project has no
-issue of its own.
+The Schedule and Scenario fields). Since #453, on 2026-11-14, the Scenario type's description, and the scenario label's
+in personal and David-Noble-at-work/.github, read "Collection: what someone wants to do, how to walk through it, and the
+features it uses", and both accounts' Scenario forms ask for those three things. NobleFactor/.github gets a quality-gate
+check of its own, so that it follows the organization's ruleset like every other repository (ruled 2026-11-03), and it
+holds `.github/workflows/quality-gate.yml`. Like every issue, a Schedule or Scenario issue carries Priority and Area:
+issue fields in NobleFactor, the priority: and area: labels in David-Noble-at-work (ruled 2026-11-03). A Triage project
+has no issue of its own.
 
 On 2026-10-22 the collection's own issue was ruled an Epic, and the ruling of 2026-11-03 supersedes it. The Schedule
 type was ruled out then because the hierarchy had no level for it, and it is now the ruling. Chore, the other type
@@ -452,8 +457,8 @@ Scenario are its two peers there.
 The schedule is two records, its rulings on its own issue and its rows in its team's Schedule project, and one ruling
 can change both. When a row is added to a committed schedule, the owner's amendment that adds it is recorded in the
 Schedule issue (the plan's question 8, § A committed schedule, below). A working issue tracking system on GitHub
-comes first, and tooling follows (ruled 2026-11-02), so `star github schedule add` (#438), which will make that move
-in one command, comes later.
+comes first, and tooling follows (ruled 2026-11-02), so `star github schedule add` (#438), which makes that move in
+one command, came after it, on 2026-11-12.
 
 ## Ownership
 
@@ -509,5 +514,5 @@ Today a committed schedule takes no new step except by the owner's amendment
 with write access. Ruled 2026-11-02, the plan's question 8: a row added to a committed schedule gets its step number
 and its blocked-by links when it is added, and adding the row and its amendment by hand in GitHub must work before
 any star command does both. Ruled 2026-11-04: the rule stands, and a committed schedule takes new work only by its
-owner's amendment, recorded in the Schedule issue; `star github schedule add` (#438) will make that move in one
-command (§ Triage and the Backlog).
+owner's amendment, recorded in the Schedule issue; `star github schedule add` (#438), built on 2026-11-12, makes that
+move in one command (§ Triage and the Backlog).

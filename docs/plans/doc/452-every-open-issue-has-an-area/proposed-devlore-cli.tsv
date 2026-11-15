@@ -1,0 +1,391 @@
+64	Product	sure	lore onboard command that sets up a developer machine from a URL
+66	Product	unsure	generate published configuration JSON schemas from Go structs
+70	Product	sure	writ adopt --from-receipt flag is a stub
+71	Product	sure	lore upgrade, decommission and reconcile commands are stubs
+72	Product	sure	lore manifest create, validate, test, show and update commands
+73	Product	sure	lore registry and utility commands are stubs
+83	Product	sure	self install and self upgrade commands for all three CLIs
+91	Product	unsure	Windows support statement, docs, installer and CI coverage audit
+105	Engineering	sure	design of a compensation contract for shell operations
+148	Product	sure	package binding functions and lifecycle phase handlers for extensions
+248	Product	sure	redesign the file provider's WalkTree for Starlark callers
+252	Engineering	unsure	LKG tags so noblefactor-ops pins its devlore-cli dependency
+276	Product	sure	file.Find gains symlink, depth and kind options
+280	Engineering	unsure	codegen tooling moves binding metadata to struct tags
+282	Product	sure	executor preflight check that host matches the graph's target platform
+284	Product	sure	plan-time check of slot value types
+285	Engineering	unsure	validate the resource model design and update architecture docs
+287	Product	unsure	how non-provider value types surface data to Starlark
+332	Product	sure	user troubleshooting and writ-lore integration guides
+333	Product	sure	Starlark authoring how-to guide for package authors
+334	Engineering	unsure	internal command to rotate NobleFactor organization secrets
+335	Product	sure	config package gains O(1) lookup and a tree walker
+336	Product	sure	config package gains generic type-safe value access
+337	Product	sure	star config becomes a builtin command
+338	Product	sure	shared language definitions for star extensions
+339	Product	unsure	star release process, bootstrap installer and self install/upgrade
+340	Product	unsure	star lint commands and git hooks for quality gates PARENT CONFLICT
+341	Product	sure	star command that prints the full command tree
+342	Product	sure	extension options mark arguments required or optional
+343	Product	unsure	star lint line-width check scans whole files
+344	Product	unsure	star lint commands discover files uniformly and batch tool calls
+365	Engineering	sure	audit remediation of nolint reasons, naming, plan statuses and TODOs
+368	Product	sure	lore deploy skips an unloadable manifest and exits 0
+373	Engineering	sure	CI runs the full unit suite on only one platform
+376	Product	sure	Starlark extension loading fails on Windows paths PARENT CONFLICT
+381	Product	unsure	LICENSE, NOTICE, README and SPDX headers disagree on the license
+382	Product	sure	writ symlink deployment leaves SSH private keys 0644
+385	Product	sure	CLI names nonexistent model commands; add lore config model picker
+392	Product	unsure	Unix "/" roots panic on Windows in writ and test fixtures
+405	Product	sure	restrictive file modes are unenforced on Windows
+430	Product	sure	devlore writes files and paths correctly on Windows
+431	Product	sure	every path anchor resolves absolutely on Windows
+432	Product	sure	the execution store works on Windows
+434	Product	sure	route remaining os.* file writes through fsroot
+435	Product	unsure	guard against direct os.* writes and add IsRestricted surface
+436	Product	sure	move writ-only accessors out of the shared devlore package
+437	Product	sure	ConfigDirs and DataDirs return Unix paths on Windows
+438	Product	sure	store's latest.yaml symlink fails for ordinary Windows users
+439	Engineering	sure	network-dependent tests make CI failures ambiguous
+441	Product	sure	one configuration model for the tools
+442	Product	sure	the command runner that spawns and elevates commands
+443	Product	sure	one codec for graph, trace and config documents
+444	Product	sure	the resource model the execution graph reasons about
+445	Product	sure	the Starlark authoring surface and the star CLI
+446	Product	sure	lore packages, manifests, registry and lifecycle commands
+447	Product	sure	writ deploy family, layer model and adoption
+448	Product	sure	writ secret commands, SOPS and key custody
+449	Product	sure	eventing, narration and OpenTelemetry output of a run
+450	Product	sure	writ status drift detection against traces
+451	Product	sure	rename the shipped op package to workflow and partition it
+452	Engineering	sure	test coverage, complexity refactors and lint gates
+453	Product	sure	releases, installers, licensing, self install and completions
+454	Engineering	sure	architecture documents and plan ledger debt
+455	Product	sure	the configuration tree with typed access and set-by tracking
+456	Product	sure	the config command surface in the CLIs
+457	Product	sure	platform targeting and shell compensation when commands run
+458	Product	sure	published schemas for every document devlore reads or writes
+459	Product	sure	provider value types and plan-time type checks
+460	Product	sure	file provider traversal and matching API
+461	Product	sure	star commands and file processing
+462	Product	sure	lore deploy path and honest failure reporting
+463	Product	sure	writ layers, segment grammar and adoption commands
+464	Engineering	unsure	dependency pinning and the LKG tagging workflow
+465	Product	sure	user guides for operators and package authors PARENT CONFLICT
+466	Engineering	unsure	split NobleFactor's dotfiles into base, team and personal repositories
+467	Product	sure	writ deploys layers from multiple repositories PARENT CONFLICT
+468	Engineering	sure	architecture document for writ's layer-source model
+469	Product	sure	writ deploys from base, team and personal sources together
+470	Product	sure	writ reports paths shadowed between layer sources
+471	Product	sure	writ status attributes drift to its layer source
+472	Product	sure	writ records layer commits and upgrades one layer PARENT CONFLICT
+473	Product	sure	writ records the deployed commit of each layer source
+474	Product	sure	writ upgrade advances chosen layers and refuses dirty ones
+475	Engineering	sure	move shared engineering config into the noblefactor-ops base layer
+477	Engineering	unsure	first install of NobleFactor's dev setup without the base layer
+479	Engineering	sure	shared lint, format and git hook configuration from base layer
+480	Engineering	sure	team and personal dotfile layers after the split
+481	Engineering	sure	move team-scoped dotfiles out of the personal repository
+482	Engineering	sure	prove the personal dotfiles still deploy after the split
+483	Engineering	sure	dev scripts declare their base-layer prerequisite
+484	Engineering	sure	devlore-cli dev scripts state they need the base layer
+485	Product	unsure	SPDX headers and license notice for MIT files PARENT CONFLICT
+487	Product	sure	the writ secret command family
+488	Product	sure	writ secret init key ceremony
+489	Product	sure	writ secret decrypt to stdout
+490	Product	sure	writ secret rekey for changed recipients
+491	Product	sure	writ secret list inventory and recipient drift audit
+492	Product	sure	writ secret recover break-glass command
+493	Product	sure	writ deploy decrypts secrets at deploy time
+494	Engineering	sure	specify the transform-suffix grammar and ordering
+495	Product	sure	decrypted secret writes bypass the conflict policy
+497	Product	sure	the engine's hook interface for events
+498	Product	sure	add OnRunStatusChanged to the hook interface
+499	Product	sure	engine emits events only through the hook seam
+500	Product	sure	split event emission out of the control plane
+501	Product	sure	slog becomes the primary logging API
+502	Product	sure	narrator and result pipeline become a tee handler over slog
+503	Product	sure	bridge logs to OpenTelemetry via otelslog
+504	Product	sure	runs emit three OpenTelemetry signals
+505	Product	sure	operational events emitted as OpenTelemetry spans
+506	Product	sure	narration and diagnostics emitted as OpenTelemetry logs
+507	Product	sure	diagnostics API for provider developers
+508	Product	sure	where run events go: tap, Collector and persistence
+509	Product	sure	bounded in-process event tap for console and control plane
+510	Product	sure	telemetry persistence through the Collector file exporter
+516	Product	unsure	prerequisites before renaming the op package
+518	Product	sure	decide keep or delete for each shipped internal/ package
+520	Product	sure	authorization and elevation of commands
+521	Engineering	sure	reconcile the authorization spec with settled designs
+522	Engineering	sure	spec banner cites the wrong plan step
+523	Engineering	sure	rewrite the authorization spec's mechanism design
+524	Engineering	sure	design ruling on per-unit authorization requirements
+525	Engineering	sure	design ruling on elevation strategy interfaces
+526	Product	sure	elevation plumbing has no consumer
+527	Product	sure	pkg/platform's inline sudo -n moves onto the elevation model
+530	Product	sure	the sealed execution graph and its guarantees
+531	Product	sure	execution graph cannot be mutated from outside its package
+533	Product	sure	graph accessors leak mutable catalog and signature
+534	Engineering	sure	test coverage for the execution engine and combinators
+535	Engineering	sure	finish the wait_until test matrix
+536	Product	sure	cmd/ code moves onto the unified platform type
+537	Product	unsure	finishes the resource lifecycle in the framework code
+538	Product	unsure	function-value conversions in the Starlark bridge, and where values live
+539	Engineering	sure	demo milestone, pitch and business case; nothing here ships
+540	Engineering	sure	closing the demo milestone's sixteen engineering criteria
+541	Engineering	sure	re-assessing the demo milestone criteria against the current tree
+542	Engineering	sure	new-hire dogfooding demo of devlore on a fresh machine
+543	Engineering	sure	elevator-pitch demo and technical deep-dive presentation material
+544	Engineering	sure	business model and competitive landscape write-up
+546	Product	sure	platform-neutral resource URIs and native paths in the resource model
+550	Product	sure	who creates the package registry and how long it lives
+551	Product	sure	native package actions use the platform PURL and manager types
+552	Product	sure	reconcile gets a native package manager query
+553	Product	sure	synthesizing a lore package from a native PURL
+554	Product	sure	wire or remove unused native-action batching code
+559	Product	sure	fsroot permission masks disagree, diverging Windows from Unix
+563	Product	sure	planning runtimes expose file and platform, breaking hermeticity
+564	Engineering	sure	three test fixtures never run, one asserting impossible behavior
+571	Engineering	unsure	design ruling on where star's session root is anchored
+574	Engineering	sure	classifying issues and teaching the epic report script the chore kind
+591	Engineering	sure	devlore-test CLI tests pass from a stale Go test cache
+597	Engineering	unsure	design of named roots and (root-name, rel) resource identity
+599	Engineering	unsure	demo lore scenario installing MSYS2 make on Windows ARM64
+625	Product	sure	sealing provider resource types as interfaces
+635	Engineering	sure	unit and functional tests for every provider method
+661	Product	sure	git resource decodes fields it never writes
+663	Product	sure	function.call variadic args receive unresolved promises
+664	Engineering	unsure	devlore-test binary fails fixtures that the Go harness passes
+665	Engineering	sure	devlore-test run leaves output files in the working directory
+671	Engineering	sure	running the developer test matrix on remote machines
+672	Engineering	unsure	repository's shell lint gate moved onto star hooks
+673	Product	sure	writ --config fails when the named file is absent
+674	Product	unsure	package-authoring knowledge base lacks commands and names nonexistent ones
+675	Product	unsure	generated Starlark reference for package authors
+677	Product	unsure	method claims annotations replacing the deleted access directive
+678	Engineering	sure	architecture design docs still call the regex provider regexp
+679	Engineering	unsure	removing the unused elevator stub package and its doc citations
+680	Engineering	sure	provider catalog design doc wrongly calls template pure
+683	Product	sure	template rendering reads the ambient environment, not declared variables
+684	Engineering	sure	test helpers pass NUL as git config on windows-11-arm
+685	Product	sure	renaming fsroot's confinement vocabulary to sandboxed
+689	Product	unsure	deprecated h2c use in the unwired control-plane router
+691	Product	unsure	deciding which provider methods claim idempotent
+694	Product	unsure	supplying configuration to planning instead of the framework reading it
+695	Engineering	unsure	registry CI validate fails, likely a stale star snapshot binary
+698	Product	sure	ui provider replaces Starlark print and fail at root
+703	Product	sure	star code comment states extension precedence backwards
+706	Engineering	sure	unexecuted provider test fixtures and an overstated test plan
+720	Engineering	sure	devlore-test writes the receipt after deleting its workspace
+721	Product	unsure	star lint check that resolves Starlark against the provider surface
+724	Engineering	sure	draft idea to run platform tests on a developer's own host
+730	Product	sure	Starlark tuple, list and set collapse to one Go type
+737	Product	sure	promises in plan.failed messages render as Go structs
+746	Product	sure	writ ignores the documented writ.segments config key
+758	Product	sure	writ cannot read old traces; traces gain a schema version
+761	Product	sure	writ System scope points at the wrong root on Windows
+762	Product	sure	writ lifecycle commands, scopes and vocabulary
+763	Product	sure	CLI environment variables carry the program name twice
+765	Product	sure	writ never reads writ.segments or writ.scopes from config
+777	Product	sure	writ user guide teaches a removed inspect command
+780	Product	sure	self uninstall deletes other programs' man pages
+781	Engineering	sure	repo-local star extension's validate command points at a removed directory
+784	Product	sure	package manifests direct native install scope through purl qualifiers
+785	Product	sure	manifest loader, schema and guide disagree on entry format
+790	Engineering	sure	Makefile cross-build version check runs the stale host binary
+798	Product	sure	install.sh and install.ps1 install all tools and register layers
+799	Product	sure	shell provider's command-execution surface across platforms
+800	Product	sure	shell.exec bypasses pkg/process, losing dry-run and narration
+801	Product	sure	shell provider gains direct argv execution
+802	Product	sure	shell provider gains an exec action that replaces the process
+803	Product	unsure	action interfaces gain a divergent, immediate-only signature
+804	Engineering	sure	revising the 6.3 command-execution design document
+806	Engineering	sure	scenario thread for writ recording deployment origin
+812	Product	sure	writ has no command to refresh a cloned layer
+815	Product	sure	the framework's providers
+816	Product	sure	the pkg provider and its package-manager drivers
+817	Product	sure	winget driver cannot resolve monikers and loses its error output
+818	Engineering	unsure	team layer's own manifest names a winget moniker instead of id
+819	Product	sure	writ checks layer existence on the working tree, plans from HEAD
+820	Product	sure	empty packages-manifest is refused instead of meaning no packages
+823	Product	sure	star extension nested config never reaches Starlark
+824	Product	sure	shell.exec raises on non-zero exit and loses stderr
+825	Product	sure	star renders an empty list as null in JSON
+827	Product	sure	star extension flags cannot declare a short form
+829	Product	sure	star extension loading logs success, narrates only failures
+831	Product	sure	writ stop pre-flight misses occupied directory targets
+836	Product	sure	the file provider
+837	Product	unsure	star's lint provider and its embedded lint commands
+838	Product	unsure	star lint command that validates packages manifests
+840	Product	sure	writ self install creates fake layer registrations
+841	Product	sure	star extensions cannot describe command groups
+842	Product	sure	writ deploy is silent on skipped conflicts and miscounts links
+844	Product	sure	writ upgrade neither pins layers nor records origin
+845	Product	sure	writ upgrade adds, removes and relinks as well as regenerating
+846	Product	sure	writ leaves pinned snapshot worktrees behind
+847	Product	sure	writ per-layer pinned or live link policy PARENT CONFLICT
+849	Engineering	unsure	writ layer-model design document, with guides pointing at it
+851	Product	sure	writ decommission --all and re-convergence after a named removal
+852	Product	sure	writ deploy judges dirtiness across the whole repository
+853	Product	sure	writ deploy --dry-run skips the conflict pre-flight
+854	Product	sure	removing providers' unused resource Unmarshal methods
+855	Engineering	sure	cross-platform integration test of the writ layer journey
+856	Product	sure	the plan provider's workflow-authoring surface
+857	Product	sure	plan.variable drops its default value
+861	Engineering	sure	porting the internal key-vault setup script to a repo-local star command
+868	Engineering	sure	writing the pkg provider's design document
+872	Engineering	unsure	design ruling on package version identity and global versus local installs
+873	Engineering	unsure	design document for what writ lifecycle commands report
+874	Engineering	sure	lifecycle pipeline design doc gains the resolve stage
+877	Product	sure	new devlore provider for package lifecycle operations
+881	Product	sure	writ deploy help text describes a retired path
+886	Engineering	sure	deleting the repo-local star wrapper around devlore-test
+887	Product	sure	schedule delivering one command-line convention across the programs
+888	Engineering	sure	network integration test fails instead of skipping offline
+889	Product	sure	star prints its module inventory on every command
+891	Engineering	sure	scenario thread for writ self install on a clean machine
+892	Engineering	sure	scenario thread for writ repo set and unset
+893	Engineering	sure	scenario thread for writ deploy and upgrade
+894	Product	sure	schedule delivering writ on a fresh machine end to end
+908	Product	sure	the resource catalog a run consults
+909	Product	sure	the resource ledger recorded in a run's trace
+910	Product	sure	timing provider methods and runs in receipts, with a reader
+916	Product	sure	schedule delivering writ's four lifecycle operations over the record
+920	Product	sure	star stops probing the old extension paths
+924	Product	sure	writ reconcile repairs drifted entries
+925	Product	sure	renaming writ's target identifiers and config key to scope
+926	Product	sure	writ --scope option replaces the inert --target
+927	Product	sure	environment variable prefix doubled across the programs
+928	Product	sure	writ upgrade refreshes only stale copies
+929	Product	sure	writ decommission ends the deployment lifetime
+930	Engineering	sure	lifetime-pruning subcommand and retention policy, designed in architecture documents only
+932	Product	sure	star lint markdown's frontmatter check is a stub, short of the standard
+938	Product	sure	star's goast doc-comment styler port unfinished; unknown production fails green
+939	Product	sure	graph holding flow.choose fails to load back through LoadGraph
+945	Product	sure	file provider lacks a link predicate, so walk_tree cannot select broken symlinks
+949	Product	sure	schedule delivering truthful installers, a Windows installer and a fetching self upgrade
+955	Engineering	unsure	devlore-docs, devlore-index, devlore-inventory, unshipped tools, gain shared root and self install
+960	Product	sure	writ deploy leaves removed sources' links dangling and drops them from the record
+963	Product	sure	writ snapshot still links git-crypt key directory into layer snapshots
+964	Engineering	sure	CI runs no markdown, PowerShell, go-style or copyright linting
+966	Product	sure	apt installed check reports removed or unknown packages as installed
+967	Product	sure	lore search labels snap, flatpak, dnf and pacman hits as apt
+968	Product	sure	writ deploy panics on an unknown Linux distribution
+969	Product	sure	lore platform declarations unread; search --platform ignored; guide documents missing flags
+971	Product	sure	writ deploy pins layers by private ref and links into sparse snapshots
+972	Product	sure	writ reconcile reports each entry against its recorded ref, with exit codes
+975	Product	sure	writ template variables ignore the environment and have no flag
+978	Engineering	sure	encryption design document gives the Linux-only age key path for every platform
+990	Product	sure	star self install copies its payload from the caller's working directory
+994	Product	sure	star lint go-style --fix corrupts SPDX headers and writes TODO placeholders
+996	Product	sure	writ help, migrate prompt and docs still call the implicit project all
+997	Product	sure	star lint copyright checker looser than its fixer, so misses stay unfixed
+998	Product	sure	star lint go-style section checks are substring tests
+999	Product	unsure	22 files declare MIT; star lint copyright skips yaml and Makefile
+1000	Product	sure	star lint copyright declares a patterns setting nothing reads
+1004	Product	sure	self install and self uninstall ignore --dry-run
+1006	Engineering	sure	make complexity breaks with GOBIN set; lint tools need pinning
+1007	Product	sure	star lint markdown exceeds the Windows command-line limit
+1009	Product	sure	self install writes per-program config files no program reads
+1010	Product	sure	model flags, environment and file settings never reach lore onboard
+1011	Product	sure	flag-bound settings keep the hyphen, so documented dry_run is never read
+1012	Product	sure	lore's --registry flag is read by nothing
+1013	Product	sure	documented and declared settings that no code reads are removed
+1014	Product	sure	undocumented writ.repo single-source mode; guide teaches unread writ.repos
+1015	Product	sure	lore onboard and writ migrate point users to a nonexistent command
+1016	Product	sure	man pages drop angle-bracket placeholders from help text
+1017	Product	sure	the workflow command group is renamed store on every program
+1018	Product	sure	writ adopt requires a registered repository and no prior deployment
+1019	Product	unsure	monthly updates of CI actions, linter and the Go modules the binaries ship
+1020	Engineering	sure	monthly update of CI workflow actions and the golangci-lint pin
+1021	Product	unsure	monthly update of the Go modules and toolchain compiled into shipped binaries
+1022	Product	sure	lore deploy --dry-run runs every provider method
+1023	Product	sure	--variable flag, environment and config family for runtime variables
+1024	Product	sure	writ scopes and segments config keys become singular
+1025	Product	sure	every user-supplied value read through the config system, not by hand
+1026	Product	sure	every DEVLORE_ variable becomes a config setting, none read by hand
+1027	Engineering	sure	plan frontmatter statuses normalized and enforced by CI
+1033	Engineering	sure	Windows build prerequisites for make and zip unstated and unchecked
+1040	Product	sure	star lint shell finds scripts by shebang and adds a shell -n pass PARENT CONFLICT
+1041	Product	sure	self upgrade should take the release channel by default, not refuse
+1042	Product	sure	skipped nodes leave receipts without unit or action; deploy summary names none
+1043	Product	unsure	shipped install.ps1 narration and errors brought to the PowerShell style guide PARENT CONFLICT
+1052	Engineering	sure	Installers CI checks not required by the develop branch ruleset
+1054	Product	sure	self commands read their flags from cobra, not the settings store
+1058	Engineering	unsure	design ruling owed: 2.5 and lore's planner disagree on phase execution
+1063	Engineering	sure	knowledge-generation star extension for the registry, an internal process tool
+1064	Engineering	sure	knowledge extract tool generates platform information from code
+1065	Product	sure	epic for star, the product, and everything that ships with it
+1066	Product	sure	epic for lore, the package manager, and what ships with it
+1067	Product	sure	epic for writ, the deployment tool, and what ships with it
+1068	Product	sure	star config show command, shipped with star
+1069	Product	sure	star config sync command, shipped with star
+1070	Product	sure	star hook pre-commit command, shipped with star
+1071	Product	sure	star hook pre-push command, shipped with star
+1072	Product	sure	star lint all command, shipped with star
+1073	Product	sure	star lint copyright command, shipped with star
+1074	Product	sure	star lint go command, shipped with star
+1075	Product	sure	star lint go-style command, shipped with star
+1076	Product	sure	star lint markdown command, shipped with star
+1077	Product	sure	star lint shell command, shipped with star
+1078	Product	sure	star lint starlark command, shipped with star
+1079	Product	sure	star lint tools command, shipped with star
+1080	Product	sure	star setup command, shipped with star
+1081	Product	sure	star setup check command, shipped with star
+1082	Product	sure	star setup config command, shipped with star
+1083	Product	sure	star setup hooks command, shipped with star
+1084	Product	sure	star setup tools command, shipped with star
+1085	Product	sure	star's commands provider, shipped with star
+1086	Product	sure	star's config provider, shipped with star
+1087	Product	sure	star's goast provider, shipped with star
+1088	Product	sure	star's setup provider, shipped with star
+1089	Product	sure	star's shellcheck provider, shipped with star
+1090	Product	sure	star's staranalysis provider, shipped with star
+1091	Product	sure	star's starcode provider, shipped with star
+1092	Product	sure	star's starcomplexity provider, shipped with star
+1093	Product	sure	star's starindex provider, shipped with star
+1094	Product	sure	star's starstats provider, shipped with star
+1095	Product	sure	star docs command, shipped with star
+1096	Product	sure	star key command, shipped with star
+1097	Product	sure	star's extension runtime, shipped with star
+1098	Product	sure	star's configuration system, shipped with star
+1099	Product	sure	star's generated provider inventory, shipped with star
+1100	Product	sure	new markdown framework provider for reading and rendering markdown
+1116	Product	sure	authz provider fulfilling unit authorization across substrates
+1118	Product	sure	epic for the DevLore Broker, the execution model's core process
+1124	Engineering	sure	architecture STATUS.md links a renamed design document
+1127	Product	sure	schedule delivering authz and command providers on a broker stub
+1128	Product	sure	broker client interface and in-process stub for writ and providers
+1132	Product	sure	authz provider package types, broker interface and router; elevator removed
+1133	Product	sure	host-escalation broker grants and releases sessions on the broker stub
+1134	Product	sure	two-pass preflight checking authorization offers are declared and configured
+1135	Product	sure	Starlark plan surface names an authorization offer on a unit
+1136	Product	sure	command provider runs through the broker client interface
+1142	Product	sure	writ keeps and narrates a recorded project no layer carries
+1144	Product	sure	writ locates and applies .sops.yaml differently from sops
+1147	Product	unsure	star finds tool configurations from the repository root and passes them by path
+1149	Product	sure	broker served out of process, streaming narration and returning results
+1150	Product	sure	subgraph-runner runs a posted logon subgraph as its account
+1152	Product	sure	writ repo set bypasses the Narrator and folds git stderr into results PARENT CONFLICT
+1153	Product	sure	command provider actions return stdout and raise non-zero exits
+1154	Product	sure	command provider emits exec start and end events
+1155	Product	sure	broker relays subgraph narration live and returns the result at the end
+1156	Product	sure	subgraph-runner executes posted logon subgraphs through the graph executor
+1157	Product	sure	plan.logon combinator with its run-time posting and compensation
+1158	Engineering	sure	design ruling on where logon subgraph traces and recovery stacks live
+1160	Product	sure	broker remotes through ssh with a bundle carrying runner and subgraph
+1162	Engineering	sure	writ secret list plan drops the per-secret format column
+1164	Product	sure	command.options builds command options from Starlark on both surfaces
+1165	Product	sure	running commands get graceful deadlines, tree kill and resource limits
+1166	Product	sure	command.which reports where a program resolves
+1167	Product	unsure	user guide and design section on configuring the broker account to elevate
+1168	Product	sure	platform package and service managers stop choosing their own account
+1169	Product	sure	broker emits its own exec, grant and lifecycle events
+1170	Product	sure	dry runs execute provider methods that declare themselves non-mutating
+1171	Product	sure	command provider sets OpenTelemetry environment variables on child processes
+1172	Product	sure	otel-cli installed with devlore so shell scripts emit spans
+1177	Product	sure	pkg/process Runner writes child stderr unaltered; lineWriter removed
+1179	Product	unsure	team-layer gnutar manifest for builds, and deploy refusing a nil registry
+1181	Engineering	sure	team-layer manifest installs shellcheck for the shell-lint gate
+1183	Engineering	sure	CI distribution job made selective instead of running on every PR
+1185	Product	unsure	published star CLI reference regenerated for the star github rename
