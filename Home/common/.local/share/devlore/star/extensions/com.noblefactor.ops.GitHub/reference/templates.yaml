@@ -87,10 +87,10 @@ templates:
         sort_by: []
   - name: "Scenario"
     readme: |-
-      A team's Scenario project holds its features.
+      A team's Scenario project holds its Scenario issues, and the tasks and bugs found while walking each one.
 
-      - The Scenario field names the scenario each row belongs to: one option per scenario, named for its Scenario issue, which tells the story.
-      - Beat orders the rows within a scenario.
+      - The Scenario field names the scenario each row belongs to: one option per scenario, named for its Scenario issue.
+      - Beat is the point in the walk where a task or bug turned up, and it orders the rows within a scenario.
       - Status is Open, In progress or Closed.
     public: false
     fields:

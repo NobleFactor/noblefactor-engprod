@@ -71,7 +71,7 @@ Read on 2026-11-14:
 
 ### Phase 2: the readme, in both accounts and the reference
 
-- [ ] Both templates set by `apply`; NobleFactor's two copies set; the reference changed
+- [x] Both templates set by `apply`; NobleFactor's two copies set; the reference changed
 
 ### Phase 3: the merge
 
