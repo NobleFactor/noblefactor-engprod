@@ -18,11 +18,21 @@ TEMPLATE INSTRUCTIONS (delete this block when using):
 
 ```yaml
 title: [Plan Title]
-issue: https://github.com/NobleFactor/noblefactor-ops/issues/XX
+issue: https://github.com/NobleFactor/noblefactor-engprod/issues/XX
 status: draft | approved | active | complete | abandoned
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
+documents:                      # the design documents this plan bears on, for its issues' tables
+  - kind: "Design: collections"
+    path: docs/architecture/issue-data-model/3-collections.md
+  - kind: "Where this is listed"
+    url: https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/plans/chore/303-issue-data-model.md
+    text: "#303's plan"
 ```
+
+`documents:` names the design documents the plan bears on, each a `kind` and a `path` in this repository or a `url`,
+with an optional `text` to show. `star github plan link` writes each issue's `Plan and design documents` section from
+its plans: a Plan row for each, then their documents (#557).
 
 ## Summary
 
@@ -96,6 +106,8 @@ How existing repos/users migrate to this new approach.
 | `path/to/existing.go` | Modify | Description |
 
 ## Related Documents
+
+The design documents an issue's table should link go in the frontmatter's `documents:`, not only here.
 
 - [Link to related plan](./other-plan.md)
 - Issue #XX - Related issue

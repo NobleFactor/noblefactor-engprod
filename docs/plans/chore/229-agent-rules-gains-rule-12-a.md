@@ -3,7 +3,7 @@ title: "agent-rules gains rule 12: a document a commit makes stale is corrected 
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/229
 status: complete
 created: 2026-09-23
-updated: 2026-09-23
+updated: 2026-11-14
 ---
 
 # Plan: agent-rules gains rule 12
@@ -67,7 +67,7 @@ Appended after rule 11, before the closing coda:
 - [x] Rule 12 after rule 11, before the coda (Requirement 1)
 - [x] Frontmatter `updated` (Requirement 2)
 - [x] No document states the rule count — the two `eleven` hits are
-      `github-branch-protection.md:172` (CI contexts) and `remove-go-code.md:92` (a historical
+      `github-branch-protection.md:172` (CI contexts) and `566-remove-go-code.md:92` (a historical
       plan's file count). Nothing to correct
 
 ### Phase 3: Verify, then merge

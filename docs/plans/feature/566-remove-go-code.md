@@ -1,9 +1,9 @@
 ---
 title: "Remove the Go code and re-base the quality gate on documents"
-issue: https://github.com/NobleFactor/noblefactor-ops/issues/XX
-status: draft
+issue: https://github.com/NobleFactor/noblefactor-engprod/issues/566
+status: complete
 created: 2026-08-27
-updated: 2026-08-27
+updated: 2026-11-14
 ---
 
 # Plan: Remove the Go code and re-base the quality gate on documents
@@ -67,20 +67,20 @@ requiring a ruleset change, and coupling the two would freeze the repository.
 
 ### Phase 1: Remove
 
-- [ ] `git rm -r internal cmd star`
-- [ ] `git rm go.mod go.sum .golangci.yaml Makefile scripts/check-codegen.sh`
-- [ ] Confirm no surviving file references the removed trees in a load-bearing way
+- [x] `git rm -r internal cmd star`
+- [x] `git rm go.mod go.sum .golangci.yaml Makefile scripts/check-codegen.sh`
+- [x] Confirm no surviving file references the removed trees in a load-bearing way
 
 **Files**: 143 — Delete
 
 ### Phase 2: Re-base the gate
 
-- [ ] Rewrite `.github/workflows/ci.yaml`: job stays `quality-gate`, steps become
+- [x] Rewrite `.github/workflows/ci.yaml`: job stays `quality-gate`, steps become
       frontmatter / pre-commit / codespell
-- [ ] Port `.github/scripts/Test-Frontmatter.sh`, `.github/frontmatter-exempt`, and
+- [x] Port `.github/scripts/Test-Frontmatter.sh`, `.github/frontmatter-exempt`, and
       `.github/codespell-ignore` from the `noblefactor` repository
-- [ ] Drop the app-token and `GOPRIVATE` steps — they exist to fetch private Go modules
-- [ ] Verify the gate is green on the branch **before** merging; a red gate on a repository
+- [x] Drop the app-token and `GOPRIVATE` steps — they exist to fetch private Go modules
+- [x] Verify the gate is green on the branch **before** merging; a red gate on a repository
       whose only required check is that gate cannot be merged past without an override
 
 **Files**: `.github/workflows/ci.yaml` — Modify; `.github/scripts/`, `.github/frontmatter-exempt`,
@@ -88,12 +88,16 @@ requiring a ruleset change, and coupling the two would freeze the repository.
 
 ### Phase 3: Documentation truth
 
-- [ ] `README.md` still describes a build; correct it
-- [ ] Eleven documents under `docs/` reference `star/extensions/`, `internal/provider`, or
+- [x] `README.md` still describes a build; correct it
+- [x] Eleven documents under `docs/` reference `star/extensions/`, `internal/provider`, or
       `internal/extension`. They are historical records of work that happened, so their paths
       become dangling by design — add a note rather than rewriting history
 
 **Files**: `README.md` — Modify
+
+**Landed** in #130 on 2026-08-27, its `quality-gate` check passing: Phases 1 and 2, and the README. The eleven documents
+were not given a note: #228 deleted them on 2026-09-24 instead. #130 closed no issue, so this plan named none; Task #566
+was filed for it on 2026-11-14, by #557, and the plan moved here from `docs/plans/remove-go-code.md`, named for it.
 
 ## What this does not do
 
@@ -104,7 +108,8 @@ runtime. Both already fail, so nothing regresses — but the registry's fix live
 
 ## Open Questions
 
-- [ ] Do the three surviving `scripts/setup-*.sh` still work, or are they also stale?
+- [x] Do the three surviving `scripts/setup-*.sh` still work, or are they also stale? **Deleted 2026-10-26, with
+      `scripts/`, in #410 (#377).**
 - [x] `PLAN-starlark-extensions.md` and `draft-star-lint-deadcode.md` sit at the root and
       describe the removed code — archive under `docs/`, or delete? **Deleted 2026-09-24 (#228).**
       Neither had a live referent: the first designs "nf-ops", which the README says was never
