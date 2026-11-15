@@ -3,7 +3,7 @@ title: "Consolidate engineering documentation"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/420
 status: draft
 created: 2026-10-29
-updated: 2026-10-29
+updated: 2026-11-14
 ---
 
 # Consolidate engineering documentation
@@ -16,24 +16,24 @@ Deliver a coherent documentation set on `develop` with one authoritative home pe
 
 ## Issue 420
 
-[Documentation consolidation](https://github.com/NobleFactor/noblefactor-engprod/issues/420) is a Task under [shared engineering process documentation, Feature #419](https://github.com/NobleFactor/noblefactor-engprod/issues/419), within [Process, Epic #142](https://github.com/NobleFactor/noblefactor-engprod/issues/142). No schedule membership has been assigned; this plan does not modify another worker's schedule.
+[Documentation consolidation](https://github.com/NobleFactor/noblefactor-engprod/issues/420) is a Task under [shared engineering process documentation, Feature #419](https://github.com/NobleFactor/noblefactor-engprod/issues/419), within [Engineering handbook, agent rules and skills, Epic #526](https://github.com/NobleFactor/noblefactor-engprod/issues/526). It is Step 1 of [Adopt the engineering handbook, Schedule #551](https://github.com/NobleFactor/noblefactor-engprod/issues/551), on [Schedule: engprod](https://github.com/orgs/NobleFactor/projects/26/views/2?filterQuery=schedule%3A%22adopt%20the%20engineering%20handbook%22). The Owner requested this focused schedule on 2026-11-14; subsequent role, skill and entrypoint implementation remains separate work.
 
 ## 2. Roles and authority
 
 - **Owner:** David Noble, accountable for policy, design and adoption decisions.
 - **Participant:** Codex, preparing this plan, the documentation and supporting evidence under the Owner's direction.
-- **Reviewer:** Claude Code is performing an initial read at the Owner's request. The Owner brings its findings into this review; no direct conversation has been authorized.
+- **Reviewer:** the initial review and Owner responses are preserved in the review material. The Owner appoints the reviewer for the resumed adoption pass; no direct conversation has been authorized.
 - **Observer:** no separate assignment recorded. Keep the Owner informed directly.
 
-The Owner has approved the structure, recorded policy decisions and worktree import. This plan remains draft for its commit/review record. The Owner has explicitly directed review-driven reconciliation to proceed; that direction does not authorize commit, push, publication or policy adoption. No agent communication is authorized by naming a Reviewer here.
+The Owner has approved the structure, recorded policy decisions and worktree import, and directed Handbook consolidation to resume on 2026-11-14. The prior draft is committed in checkpoint d4960b7430ff717e256d3c2effcdb135ba9d1208. This refreshed execution plan is the plan-only checkpoint for Owner review before further handbook reconciliation. The direction to resume does not authorize commit, push, publication or policy adoption. No agent communication is authorized by naming a Reviewer here.
 
 ## 3. Current state and preservation
 
-- Worktree: `~/Workspace/NobleFactor/noblefactor-engprod.420-consolidate-engineering`.
+- Worktree: `/Users/david-noble/Workspace/NobleFactor/noblefactor-engprod.420-consolidate-engineering`.
 - Branch: `doc/420-consolidate-engineering`; target: `develop`.
 - Import base: `59740c91f0183f2165a70f6aa3b352d1e5d42515`.
 - All 42 package files were copied and hash-verified without overwriting existing repository files. The package README is preserved as `ENGINEERING-DOCUMENTATION-REVIEW.md`.
-- The original `/tmp` package and verified backups under the organization workspace remain available.
+- The prior pass records preservation of the original review package and verified backups. Their current availability has not yet been rechecked in this resumed pass; retain the committed source evidence and import manifests.
 - [Import manifest](../../engineering/review/worktree-import.json) records source/destination identities and content hashes. It is a record of the import, not a promise that subsequent edits retain those hashes.
 - [Review decisions](../../engineering/review/open-decisions.md) records the resolutions of O01–O11 and preserves the Owner's responses.
 - [Documentation entry point](../../index.md) exists. Consistent parent navigation and cutover of old active documents remain unfinished.
@@ -47,6 +47,16 @@ Use `docs/index.md` as the entry point. Define roles once in the engineering pro
 Reconcile the old document paths through reviewed successor notices or precise retained responsibilities. Do not merely add a new directory while leaving competing active definitions. Preserve incoming links where practical; do not delete historical plans to remove inconvenient old wording.
 
 Treat editorial corrections supported by settled decisions as consolidation work. Present substantive policy gaps to the Owner one at a time before selecting an answer. Record findings in the [conflict register](../../engineering/review/conflicts.md). Comparison with Claude Code's initial read follows when the Owner supplies it.
+
+### 4.1. Resumed reconciliation pass
+
+1. Recheck preserved sources and review evidence; refresh the requirement inventory against current develop, including the current issue hierarchy, Schedule project representation and PR-script records.
+2. Use the recorded O01-O11 decisions and conflict-register dispositions as source material. Present any disagreement with current active instructions to the Owner before selecting a policy; distinguish adopted rules, approved draft decisions and deferred tooling.
+3. Reconcile one authoritative definition for each shared requirement, align procedures and templates, and record old-path successors while preserving historical evidence and incoming links.
+4. Complete navigation, metadata, language and link validation, then present the resulting documentation and transition for Owner adoption.
+5. Maintain this step's Schedule row through the prescribed worktree scripts and record merge, verification and completion evidence on the issue.
+
+The adopted handbook will supply inputs for [Agent roles (#460)](https://github.com/NobleFactor/noblefactor-engprod/issues/460), [Skills standard and catalog (#550)](https://github.com/NobleFactor/noblefactor-engprod/issues/550), and [Agent entrypoints (#528)](https://github.com/NobleFactor/noblefactor-engprod/issues/528). This step prepares their authoritative documentation sources; their implementation and any schedule expansion require separate planning and Owner direction.
 
 ## 5. Acceptance and evidence
 
@@ -74,7 +84,10 @@ The documentation-only CI path is agreed policy but not implemented by this task
 - [x] Copy and hash-verify the entire draft, preserving originals and existing repository files.
 - [x] Create a local documentation entry point.
 - [x] Prepare this draft plan and initial conflict register.
-- [ ] Commit the plan under Owner authorization; no commit is claimed. The Owner has directed review-driven reconciliation to proceed in this worktree.
+- [x] Preserve the original plan in a committed checkpoint: d4960b7430ff717e256d3c2effcdb135ba9d1208, verified by the Owner-approved Git inspection on 2026-11-14. The former unchecked preparation entry was stale.
+- [x] Establish the Owner-requested handbook-adoption schedule (#551), with Handbook consolidation (#420) as Step 1.
+- [x] Refresh the execution plan for the handbook-adoption schedule, preserving the prior checkpoint and review evidence.
+- [ ] Obtain Owner review of this plan checkpoint before further handbook reconciliation.
 
 ### 6.2. Reconciliation
 
@@ -106,10 +119,10 @@ The documentation-only CI path is agreed policy but not implemented by this task
 
 | Milestone | Required | Current state |
 | --- | --- | --- |
-| Implementation | Yes: reconciled documents, templates, navigation and transition | Draft import only; reconciliation pending |
+| Implementation | Yes: reconciled documents, templates, navigation and transition | Existing draft and prior review checkpoints preserved; resumed reconciliation pending |
 | Merge | Yes: approved adoption change on `develop` | Not performed |
 | Deployment | No separate runtime deployment is proposed; evaluate installed agent-instruction dependencies during cutover | No deployment claimed |
-| Verification | Yes: required document checks, Owner review and post-merge entry-point verification | Import hashes and local link targets checked; remaining evidence pending |
+| Verification | Yes: required document checks, Owner review and post-merge entry-point verification | Prior import and local-link results recorded; current-pass validation and adoption evidence pending |
 
 The plan remains active once implementation is authorized and until required milestones are satisfied. Post-merge evidence is recorded immediately on the issue and incorporated through the approved documentation-follow-up process. Do not relabel an unfinished obligation complete merely to close the plan.
 
