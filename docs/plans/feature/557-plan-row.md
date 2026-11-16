@@ -30,8 +30,9 @@ done, which is its evidence of completion: every issue already filed brought to 
   worktree; devlore-cli's two logged as one issue of their own, NobleFactor/devlore-cli#1228, in Triage: devlore.
 - 2026-11-14: approved; then, on the step as first built, about 200 lines of bash and 400 of PowerShell for every first
   script: the step is a `star` command instead. `star` could read Markdown as values through a Markdown provider,
-  logged as NobleFactor/devlore-cli#1229; until that exists the command reads the issue's body by its lines, and its
-  code says so in a TODO naming #1229 by its URL.
+  logged as NobleFactor/devlore-cli#1229, which on 2026-11-15 was closed as a duplicate of Feature
+  NobleFactor/devlore-cli#1100, the markdown provider, under Epic #815, Providers, its use carried there; until that
+  exists the command reads the issue's body by its lines, and its code says so in a TODO naming #1100 by its URL.
 - 2026-11-15: one command, `star github plan link`, whose sole purpose is that our issues trace back to the plans that
   reference them. The plans are the authority: a plan is reviewed with the owner before the work and changes only
   through a pull request, and it names the issues it serves, the one it is named for in its `issue:` line and each
@@ -175,7 +176,7 @@ devlore-cli and devlore.noblefactor.com.
 
    Every byte outside the section is kept; the section's lines end as the body's do, `\r\n` or `\n`. It writes the body
    once and reads it back, failing unless the section reads as written. It finds the heading by the body's lines, with a
-   TODO naming https://github.com/NobleFactor/devlore-cli/issues/1229, the Markdown provider that will let it read the
+   TODO naming https://github.com/NobleFactor/devlore-cli/issues/1100, the Markdown provider that will let it read the
    body's sections as values.
 4. **`--all [--repository <owner/name>,...]`** does the same for every issue that a plan under `docs/plans` on the default
    branch of each repository named, or of writ's layers, serves, read after a fetch, never from a working tree; plans and
