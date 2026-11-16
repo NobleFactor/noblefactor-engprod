@@ -18,6 +18,44 @@ commands:
         default: ""
         help: "Read only what GitHub's issue search finds, in its syntax, passed unchanged and run once for each repository as (<search>) repo:<repository> is:issue; an error when it matches more than 1,000 issues in one"
 
+  - name: github.schedule.list
+    help: "Every schedule of an account, or of one of its teams: one flat record for each option of the Schedule field of its Schedule projects, Schedule: <team> in an organization and Schedule: <account> in a user account, with its Schedule issue's key, title, state and assignee, the project, and the counts of its open and closed steps; writes nothing; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    implementation: commands/github-schedule-list.star
+    args:
+      - name: account
+        help: "The account, an organization or a user; required"
+    flags:
+      - name: team
+        type: string
+        default: ""
+        help: "The team whose Schedule project alone is read, by its slug; refused in a user account, which has no teams"
+
+  - name: github.schedule.get
+    help: "One schedule's rows: one flat record for each row under its option, its Schedule issue's own row first, with no step, then its steps in step order, then any row with no step; each the step, the issue's key, type, title and state, the row's Status, Worktree and Iteration, and the keys of the issues that block it; reads a closed schedule too; writes nothing; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    implementation: commands/github-schedule-get.star
+    args:
+      - name: schedule
+        help: "The schedule's own issue, <owner>/<repository>#<number>, as a session's NFEP_AGENT_SCHEDULE names it; required"
+
+  - name: github.scenario.list
+    help: "Every scenario of an account, or of one of its teams: one flat record for each option of the Scenario field of its Scenario projects, Scenario: <team> in an organization and Scenario: <account> in a user account, with its Scenario issue's key, title, state and assignee, the project, and the counts of its open and closed rows; writes nothing; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    implementation: commands/github-scenario-list.star
+    args:
+      - name: account
+        help: "The account, an organization or a user; required"
+    flags:
+      - name: team
+        type: string
+        default: ""
+        help: "The team whose Scenario project alone is read, by its slug; refused in a user account, which has no teams"
+
+  - name: github.scenario.get
+    help: "One scenario's rows: one flat record for each row under its option, its Scenario issue's own row first, with no Beat, then its rows in Beat order, then any row with no Beat; each the Beat, the issue's key, type, title and state, and the row's Status; reads a retired scenario too; writes nothing; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    implementation: commands/github-scenario-get.star
+    args:
+      - name: scenario
+        help: "The scenario's own issue, <owner>/<repository>#<number>; required"
+
   - name: github.issue.move
     help: "Move issues, in the order given, to one destination: --schedule puts them on a schedule, each with its step, its schedule's option and Status Open, placed in step order and leaving the project it was on, or with --after moves one already there, the steps between renumbered, closed or open; --triage or --backlog takes steps off their schedule to their team's Triage or Backlog project, every later step moving up, and --triage takes items off their scenario; --scenario puts tasks and bugs on a scenario at a Beat, or sets the Beat of one already on it; a schedule's change writes one amendment line in its Schedule issue, and a scenario's a comment on its Scenario issue and a line in the item's body, each naming the date, who ran it and why; return one flat record for each row it added, moved, took off or left; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
     implementation: commands/github-issue-move.star

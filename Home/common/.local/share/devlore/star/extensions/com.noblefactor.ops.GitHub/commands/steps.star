@@ -15,7 +15,8 @@
 #
 # A scenario is read the same way, an option of its team's Scenario project's Scenario field, whose rows carry a Beat
 # (section 9); its changes are recorded in a comment on its Scenario issue and a line in the item's body, which this
-# module writes too. star github issue move uses it (#511), made from `add` (#438).
+# module writes too. star github issue move uses it (#511), made from `add` (#438), and get and list of both groups read
+# through it (collections.star, #510).
 
 load("commands/markdown.star", "body_lines", "line_end", "numbered", "sections")
 load("commands/model.star", "extension_dir", "read_text")
@@ -30,6 +31,8 @@ _SCENARIO_FIELD = "Scenario"
 _STEP_FIELD = "Step"
 _BEAT_FIELD = "Beat"
 _STATUS_FIELD = "Status"
+_WORKTREE_FIELD = "Worktree"
+_ITERATION_FIELD = "Iteration"
 _OPEN = "Open"
 _AMENDMENTS = "## Amendments"
 _WIDTH = 120
@@ -81,7 +84,9 @@ def today():
 
 _ROW_VALUES = ("fieldValues(first: 20) { nodes { " +
                "... on ProjectV2ItemFieldSingleSelectValue { name optionId field { ... on ProjectV2FieldCommon { name } } } " +
-               "... on ProjectV2ItemFieldNumberValue { number field { ... on ProjectV2FieldCommon { name } } } } }")
+               "... on ProjectV2ItemFieldNumberValue { number field { ... on ProjectV2FieldCommon { name } } } " +
+               "... on ProjectV2ItemFieldTextValue { text field { ... on ProjectV2FieldCommon { name } } } " +
+               "... on ProjectV2ItemFieldIterationValue { title field { ... on ProjectV2FieldCommon { name } } } } }")
 
 def issue(key, model):
     """An issue as issue move reads it: its node ID, type, state, title and body, its assignees and blockers, and its rows.
@@ -130,17 +135,17 @@ def issue(key, model):
 
 # ── a schedule and a scenario ───────────────────────────────────────────────
 
-def _collection(key, model, kind, number, closed):
+def _collection(key, model, kind, number, closed, reading):
     """A schedule or a scenario: its own issue, its team's project of kind with its fields, and its option.
 
     kind names the project, the field and the issue's type alike; number is the field that orders the rows, Step or Beat.
-    The option is the one the issue's own row carries; fails, naming why, when the issue is not an open issue of kind or
-    has no such row, closed saying what a closed one takes no more of.
+    The option is the one the issue's own row carries; fails, naming why, when the issue is not an issue of kind or has
+    no such row, and, unless reading, when it is closed, closed saying what a closed one takes no more of.
     """
     own = issue(key, model)
     if own["type"] != kind:
         fail(own["key"] + " is not a " + kind + " issue: its type is " + (own["type"] or "none"))
-    if own["state"] != "open":
+    if own["state"] != "open" and not reading:
         fail(own["key"] + " is closed: " + closed)
     attr = kind.lower()
     rows = [r for r in own["rows"] if r["kind"] == kind and r[attr] != None]
@@ -155,21 +160,22 @@ def _collection(key, model, kind, number, closed):
         fail(project["title"] + " has no " + kind + " option named " + rows[0][attr])
     return {"issue": own, "project": project, "option": option[0], "own_item": rows[0]["item"], "field": kind}
 
-def schedule(key, model):
+def schedule(key, model, reading = False):
     """A schedule: its Schedule issue, its team's Schedule project with its fields, and its option.
 
-    The option is the one the Schedule issue's own row carries; fails, naming why, when the issue is not an open Schedule
-    issue or has no such row.
+    The option is the one the Schedule issue's own row carries; fails, naming why, when the issue is not a Schedule issue
+    or has no such row, and, unless reading, as get reads a finished schedule, when it is closed.
     """
-    return _collection(key, model, _SCHEDULE_FIELD, _STEP_FIELD, "a closed schedule takes no step")
+    return _collection(key, model, _SCHEDULE_FIELD, _STEP_FIELD, "a closed schedule takes no step", reading)
 
-def scenario(key, model):
+def scenario(key, model, reading = False):
     """A scenario: its Scenario issue, its team's Scenario project with its fields, and its option.
 
-    The option is the one the Scenario issue's own row carries; fails, naming why, when the issue is not an open Scenario
-    issue or has no such row. A scenario that is retired is closed, and takes no item.
+    The option is the one the Scenario issue's own row carries; fails, naming why, when the issue is not a Scenario issue
+    or has no such row, and, unless reading, as get reads a retired scenario, when it is closed: a scenario that is
+    retired is closed, and takes no item.
     """
-    return _collection(key, model, _SCENARIO_FIELD, _BEAT_FIELD, "a retired scenario takes no item")
+    return _collection(key, model, _SCENARIO_FIELD, _BEAT_FIELD, "a retired scenario takes no item", reading)
 
 def walk(own):
     """How many steps a Scenario issue's walk numbers under its How to walk through it heading; None when it numbers none.
@@ -211,19 +217,22 @@ def option_of(project, field, name):
             return o["id"]
     fail(project["title"] + "'s " + field + " field has no option " + name)
 
-def rows(sched, model):
-    """Every row under a schedule's or a scenario's option, in the project's order.
+def project_rows(project, model):
+    """Every issue's row of a project, in the project's order.
 
-    Each row is its item, issue, type, state, title, step and Beat.
+    Each row is its item; its issue's key, node ID, type, state and title, its assignees, and the keys of the issues that
+    block it; and its Schedule or Scenario option, Status, step, Beat, Worktree and Iteration, None where it has none. The
+    issues that block it are its open blockers: a closed issue blocks nothing, as GitHub's is:blocked counts only open
+    ones, so a blocked-by link to a closed issue is left out. issue's blocked_by keeps every link, which issue move reads
+    to tell which links an issue already has.
     """
-    query = ("query starStepRows($endCursor: String) { node(id: \"" + sched["project"]["id"] + "\") { ... on ProjectV2 { " +
+    query = ("query starStepRows($endCursor: String) { node(id: \"" + project["id"] + "\") { ... on ProjectV2 { " +
              "items(first: 100, after: $endCursor) { pageInfo { hasNextPage endCursor } nodes { id " +
              "content { ... on Issue { id number title state issueType { name } labels(first: 20) { nodes { name } } " +
-             "repository { nameWithOwner } } } " + _ROW_VALUES + " } } } } }")
+             "repository { nameWithOwner } assignees(first: 20) { nodes { login } } " +
+             "blockedBy(first: 50) { nodes { number state repository { nameWithOwner } } } } } " + _ROW_VALUES + " } } } } }")
     out = []
     for item in json_lines("gh api graphql --paginate -f query=" + quote(query) + " --jq " + quote(".data.node.items.nodes[] | tojson")):
-        if _value(item, sched["field"], "name") != sched["option"]["name"]:
-            continue
         content = item.get("content") or {}
         if not content.get("number"):
             continue
@@ -235,10 +244,26 @@ def rows(sched, model):
             "type": type_of(model, content.get("issueType"), labels),
             "title": content.get("title"),
             "state": (content.get("state") or "").lower(),
+            "assignees": [a["login"] for a in ((content.get("assignees") or {}).get("nodes") or [])],
+            "blocked_by": [
+                canonical_repo(b["repository"]["nameWithOwner"]) + "#" + str(int(b["number"]))
+                for b in ((content.get("blockedBy") or {}).get("nodes") or [])
+                if (b.get("state") or "").upper() == "OPEN"
+            ],
+            "schedule": _value(item, _SCHEDULE_FIELD, "name"),
+            "scenario": _value(item, _SCENARIO_FIELD, "name"),
+            "status": _value(item, _STATUS_FIELD, "name"),
             "step": _int(_value(item, _STEP_FIELD, "number")),
             "beat": _int(_value(item, _BEAT_FIELD, "number")),
+            "worktree": _value(item, _WORKTREE_FIELD, "text"),
+            "iteration": _value(item, _ITERATION_FIELD, "title"),
         })
     return out
+
+def rows(sched, model):
+    """Every row under a schedule's or a scenario's option, in the project's order, as project_rows reads each."""
+    attr = sched["field"].lower()
+    return [r for r in project_rows(sched["project"], model) if r[attr] == sched["option"]["name"]]
 
 def snapshot(rs):
     """What the one-act check compares between its two reads: each row's item, step, Beat and state, in order."""

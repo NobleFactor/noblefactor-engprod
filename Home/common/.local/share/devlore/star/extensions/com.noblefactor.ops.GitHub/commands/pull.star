@@ -5,12 +5,12 @@
 
 # pull.star
 #
-# docs/plans/feature/426-model-pull-to-dot-github.md and docs/plans/feature/437-model-diff-apply-restore.md. backup lands
-# a model this way, and apply a .github repository's files and each repository's Triage workflow. A pull request is
-# opened from a branch, or the one open on it reused; the head commit's workflow runs are waited for, and every check
-# the base branch requires must have passed; then it is merged, each step a comment on it. apply commits through
-# GitHub's git data API, so that no clone of the owner's is touched; backup commits in its own clone of the .github
-# repository (#426).
+# docs/plans/feature/426-model-pull-to-dot-github.md and docs/plans/feature/437-model-diff-apply-restore.md. backup
+# lands a model this way, and apply a .github repository's files and each repository's Triage workflow. A pull request
+# is opened from a branch, or the one open on it reused; the head commit's workflow runs are waited for, and every
+# check the base branch requires must have passed; then it is merged, each step a comment on it. apply commits
+# through GitHub's git data API, so that no clone of the owner's is touched; backup commits in its own clone of the
+# .github repository (#426).
 
 load("commands/model.star", "escape", "quote", "rest", "sh")
 

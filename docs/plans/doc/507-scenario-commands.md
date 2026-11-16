@@ -164,7 +164,8 @@ its tests in `tests/Test-StarGitHub`, `make check` passing before each commit:
 - [x] `star github issue move` (#511), from `schedule add`, on 2026-11-15: cases 46 to 55 converted and 86 to 100
       added, 315 test lines passing; `plan link`'s body readers moved to `commands/markdown.star`, which `issue move`
       shares, plan link's cases passing unchanged
-- [ ] `get` and `list` of both groups (#510)
+- [x] `get` and `list` of both groups (#510), on 2026-11-15: one implementation in `commands/collections.star` over
+      four command files; `get`'s blockers its open ones; cases 101 to 106 added, 337 test lines passing
 - [ ] `new` of both groups, and Start-Claude's `--schedule new` refused (#509)
 - [ ] `close` and `retire` (#512)
 - [x] The documents that name `schedule add` as a command to run brought to `issue move`, in the commit that retires

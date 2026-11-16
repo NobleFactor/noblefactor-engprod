@@ -5,9 +5,9 @@
 
 # github-issue-move.star
 #
-# docs/plans/doc/507-scenario-commands.md, Requirement 2 (noblefactor-engprod#511), to section 8 of the issue data model,
-# § Moving an issue, and section 9, § Moving an issue onto, within and off a scenario. Made from star github schedule add
-# (#438), which it retires. Exactly one destination is given, and the issues move in the order given:
+# docs/plans/doc/507-scenario-commands.md, Requirement 2 (noblefactor-engprod#511), to section 8 of the issue data
+# model, § Moving an issue, and section 9, § Moving an issue onto, within and off a scenario. Made from star github
+# schedule add (#438), which it retires. Exactly one destination is given, and the issues move in the order given:
 #
 #   - --schedule puts them on a schedule, or with --after moves them within it. Every row then takes its place's number,
 #     so the steps stay consecutive whole numbers, closed steps among them (question 5); each row gets the schedule's
@@ -378,7 +378,8 @@ def _onto_schedule(sk, keys, after, blockers, assignee, reason):
         "moved": span(plan["moves"]),
     }
 
-    # The amendment first, pending: a run that stops partway leaves its record, which the same command run again finishes.
+    # The amendment first, pending: a run that stops partway leaves its record, which the same command run again
+    # finishes.
     if not resume:
         amend(sched["issue"], amendment(record, pending = True))
         _note("wrote the amendment in " + sched["issue"]["key"] + ", in progress")
@@ -657,7 +658,8 @@ def _off(keys, kind, reason):
     for p in plans:
         _unchanged([p["r"]], p["model"])
 
-    # Each amendment first, pending: a run that stops partway leaves its record, which the same command run again finishes.
+    # Each amendment first, pending: a run that stops partway leaves its record, which the same command run again
+    # finishes.
     for key in order:
         if not groups[key]["resume"]:
             amend(groups[key]["sched"]["issue"], amendment(groups[key]["record"], pending = True))

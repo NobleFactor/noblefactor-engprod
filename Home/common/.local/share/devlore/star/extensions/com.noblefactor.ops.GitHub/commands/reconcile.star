@@ -14,8 +14,8 @@
 # copy, copy_short_description, its owner's name for {owner} (#555, 2026-11-14).
 #
 # On the same account a thing matches by its ID, so a rename is a rename; across accounts, and against a reference,
-# which holds no IDs, by name. Every attribute is compared, whether the model names it or not: a value the model lacks is
-# drift against one GitHub holds (the owner, 2026-11-10), so a reference names every attribute.
+# which holds no IDs, by name. Every attribute is compared, whether the model names it or not: a value the model lacks
+# is drift against one GitHub holds (the owner, 2026-11-10), so a reference names every attribute.
 # A field whose options are each project's own, marked own_options in the common templates, is compared without them.
 #
 # One record for each difference: kind, path, change (missing: the model has it and GitHub does not; different;
@@ -61,8 +61,8 @@ _TEMPLATE_LINKS = ["teams", "repositories"]
 _COPY = ["short_description", "readme"]
 _TEAM = ["name", "description", "privacy", "notification_setting", "parent", "roles", "repositories"]
 
-# What every reference entry names, a deliberate none written as one, null (the owner, 2026-11-10): an attribute left out
-# is an omission, refused, not a decision.
+# What every reference entry names, a deliberate none written as one, null (the owner, 2026-11-10): an attribute left
+# out is an omission, refused, not a decision.
 _REQUIRED = {
     "organization type": ["name", "color", "description", "enabled", "pinned_fields"],
     "user type": ["name", "label", "color", "description"],

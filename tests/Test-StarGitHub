@@ -8,9 +8,10 @@
 # each account's model read from GitHub when a command needs it, star github model get and backup, and the sweep's
 # two-types rule (#426), as docs/plans/feature/426-model-pull-to-dot-github.md's test plan lists them; star github
 # schedule add (#438), as docs/plans/feature/438-schedule-add.md's test plan lists them, run as star github issue move
-# (#511), which it became, with issue move's own cases, as docs/plans/doc/507-scenario-commands.md's test plan lists
-# them; each team's project of a kind held to its template's README and to the short description the template names for
-# a copy (#555), as docs/plans/fix/555-copy-readme.md's test plan lists them; and star github plan link (#557), as
+# (#511), which it became, with issue move's own cases, and get and list of star github schedule and star github
+# scenario (#510), as docs/plans/doc/507-scenario-commands.md's test plan lists them; each team's project of a kind held
+# to its template's README and to the short description the template names for a copy (#555), as
+# docs/plans/fix/555-copy-readme.md's test plan lists them; and star github plan link (#557), as
 # docs/plans/feature/557-plan-row.md's test plan lists them
 
 [[ -r "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" ]] || {
@@ -52,7 +53,8 @@ function cleanup {
 }
 
 # make_extension lays out an extension directory as writ deploys one: this checkout's manifest, commands, reference
-# models and templates, linked, and no model file: an account's model is what GitHub holds, which the stand-in serves (#426).
+# models and templates, linked, and no model file: an account's model is what GitHub holds, which the stand-in serves
+# (#426).
 #
 # Parameters:
 #   - `$1`: the data directory to make, which star is given as XDG_DATA_HOME.
@@ -387,7 +389,8 @@ function check {
 #   project. Scenario: devlore: other, beta#54's, whose walk numbers no step, #43 at beat 2.
 #   Schedule: test-user: u1, test-user/personal#10's, step 1: personal#11; personal#12 a task on no project. Triage:
 #   test-user holds nothing, and Scenario: test-user's user walk, personal#20's, numbers two steps.
-#   engprod's members are stand-in and member; devlore's, other. gh runs as stand-in.
+#   Each Schedule project has the Schedule, Step, Status, Worktree and Iteration fields, and each Scenario project the
+#   Scenario, Beat and Status fields. engprod's members are stand-in and member; devlore's, other. gh runs as stand-in.
 function base_world {
     jq -n '
         def id($repo; $n): "I_" + ($repo | split("/")[1]) + "_" + ($n | tostring);
@@ -398,7 +401,8 @@ function base_world {
         def status: {id: "F_status", name: "Status", dataType: "SINGLE_SELECT", options: [{id: "O_open", name: "Open", description: ""},
             {id: "O_progress", name: "In progress", description: ""}, {id: "O_closed", name: "Closed", description: ""}]};
         def schedule_fields($options): [{id: "F_schedule", name: "Schedule", dataType: "SINGLE_SELECT", options: $options},
-            {id: "F_step", name: "Step", dataType: "NUMBER"}, status];
+            {id: "F_step", name: "Step", dataType: "NUMBER"}, status, {id: "F_worktree", name: "Worktree", dataType: "TEXT"},
+            {id: "F_iteration", name: "Iteration", dataType: "ITERATION"}];
         def body($option; $amendments): "## Deliverable\n\nWhat \($option) delivers.\n\n## Steps\n\nThe steps are the rows under \($option).\n\n## Amendments\n\n" + $amendments;
         def walk($steps): "### What the person wants to do\n\nTo walk.\n\n### How to walk through it\n\n" + $steps
             + "\n### The features it uses\n\nWalking.\n";
@@ -604,21 +608,24 @@ SLEEP
     cat >"${run_directory}/bin/world.jq" <<'JQ'
 # The schedule commands' GitHub: one world that their reads answer from and their writes change. Its issues and its
 # projects are keyed by node ID; a project's items are its rows, in its order, each with its content's ID and its
-# values by field name. The answer is {answer} for a read, {answer, world} for a write.
+# values by field name, each answered as GitHub types the field's value. The answer is {answer} for a read, {answer,
+# world} for a write.
 def values_of($p; $item):
     [$item.values | to_entries[] | . as $e | ($p.fields[] | select(.name == $e.key)) as $f |
         if $f.dataType == "SINGLE_SELECT" then
             {name: $e.value, optionId: ([$f.options[] | select(.name == $e.value) | .id][0]), field: {name: $e.key}}
+        elif $f.dataType == "TEXT" then {text: $e.value, field: {name: $e.key}}
+        elif $f.dataType == "ITERATION" then {title: $e.value, field: {name: $e.key}}
         else {number: $e.value, field: {name: $e.key}} end];
 def content($w; $id):
     $w.issues[$id] as $i |
     {id: $i.id, number: $i.number, title: $i.title, state: $i.state,
         issueType: (if $i.type then {name: $i.type} else null end),
-        labels: {nodes: [($i.labels // [])[] | {name: .}]}, repository: {nameWithOwner: $i.repo}};
+        labels: {nodes: [($i.labels // [])[] | {name: .}]}, repository: {nameWithOwner: $i.repo},
+        assignees: {nodes: [($i.assignees // [])[] | {login: .}]},
+        blockedBy: {nodes: [($i.blockedBy // [])[] | $w.issues[.] | {id, number, state, repository: {nameWithOwner: .repo}}]}};
 def issue_node($w; $i):
     content($w; $i.id) + {body: $i.body, url: "https://github.com/\($i.repo)/issues/\($i.number)",
-        assignees: {nodes: [($i.assignees // [])[] | {login: .}]},
-        blockedBy: {nodes: [($i.blockedBy // [])[] | $w.issues[.] | {id, number, repository: {nameWithOwner: .repo}}]},
         projectItems: {nodes: [$w.projects[] as $p | $p.items[] | select(.content == $i.id) |
             {id, project: {id: $p.id, title: $p.title, number: $p.number, closed: ($p.closed // false)},
                 fieldValues: {nodes: values_of($p; .)}}]}};
@@ -2278,8 +2285,9 @@ expect "45: the sweep given noblefactor sweeps NobleFactor's issues as for Noble
     '([.[].issue | ascii_downcase] | sort) == '"${swept}"
 
 # The schedule commands' cases (#438), as docs/plans/feature/438-schedule-add.md's test plan lists them, run as star
-# github issue move --schedule (#511), which star github schedule add became, as docs/plans/doc/507-scenario-commands.md's
-# test plan case 1 has it: each starts from base_world, and reads back what issue move left in it.
+# github issue move --schedule (#511), which star github schedule add became, as
+# docs/plans/doc/507-scenario-commands.md's test plan case 1 has it: each starts from base_world, and reads back what
+# issue move left in it.
 today="$(date -u +%Y-%m-%d)"
 declare -r amendments='def amendments($id): .issues[$id].body | split("\n") | index("## Amendments") as $at
     | .[($at + 1):] | reduce .[] as $line ([]; if ($line | startswith("- ")) then . + [$line]
@@ -3067,8 +3075,8 @@ check "85 (heading case): each body holds one section, at its heading's level, t
 run_star "${data_plan}" github plan link --all --repository NobleFactor/alpha
 expect "85 (heading case): run again, all three are unchanged" ok 'map(.action) == ["unchanged", "unchanged", "unchanged"]'
 
-# 86 to 100: star github issue move's own cases (#511), docs/plans/doc/507-scenario-commands.md's test plan cases 2 to 8,
-# each named with its number there, and a run of each new kind that stops partway, finished when run again
+# 86 to 100: star github issue move's own cases (#511), docs/plans/doc/507-scenario-commands.md's test plan cases 2 to
+# 8, each named with its number there, and a run of each new kind that stops partway, finished when run again
 # (Requirement 2). Each starts from base_world, and reads back what issue move left in it.
 
 # 86 (plan 2). Within a schedule: #22, step 2 and In progress, goes after step 3, the closed bug #23, which moves up to
@@ -3236,8 +3244,8 @@ expect "96 (plan 5): a walk that numbers no step takes beat 9" ok \
 check "96 (plan 5): #41's body names the scenario in another repository's form" world_holds \
     '.issues.I_alpha_41.body == "Found while walking NobleFactor/beta#54\n"'
 
-# 97 (plan 6). --scenario refuses, writing nothing, a closed issue, an epic, another account's issue, an issue on another
-# scenario, and one on a Backlog or a Schedule project.
+# 97 (plan 6). --scenario refuses, writing nothing, a closed issue, an epic, another account's issue, an issue on
+# another scenario, and one on a Backlog or a Schedule project.
 world
 run_star "${data}" github issue move NobleFactor/alpha#29 --scenario NobleFactor/alpha#40 --beat 1 --reason "R."
 expect "97 (plan 6): a closed issue is refused" error "${no_writes}" "NobleFactor/alpha#29 is closed" text
@@ -3321,6 +3329,140 @@ check "100 (plans 3 and 4): its body names the scenario, and personal#20 has the
     '.issues.I_personal_12.body == "Found while walking #20\n"
         and .issues.I_personal_20.comments == ["test-user/personal#12 joined this scenario on '"${today}"', at beat 2, by " +
             "`star github issue move`, run by stand-in: Personal walk."]'
+
+# 101 to 106: star github schedule get and list, and star github scenario get and list (#510), as
+# docs/plans/doc/507-scenario-commands.md's test plan case 9 has them, each named for it. Each starts from base_world,
+# changed where the case says, and writes nothing.
+
+# A world for the order get returns rows in: s1's rows out of step order on the project, #22's with its Worktree, its
+# Iteration and two blockers, #21, closed, and #24, open, and #44, a row of s1 with no step, placed before them all;
+# walk's likewise, #46, with no Beat, just after #40's own row, then #45 at beat 3, then #27 at beat 1.
+declare -r unordered='
+    def task($n; $title): {("I_alpha_" + ($n | tostring)): {id: ("I_alpha_" + ($n | tostring)), repo: "NobleFactor/alpha",
+        number: $n, title: $title, state: "OPEN", type: "Task", labels: [], assignees: [], blockedBy: [], body: ""}};
+    def row($n; $values): {id: ("IT_alpha_" + ($n | tostring)), content: ("I_alpha_" + ($n | tostring)), values: $values};
+    .issues += task(44; "a row with no step") + task(45; "found at beat 3") + task(46; "found at no beat")
+    | .issues.I_alpha_22.blockedBy = ["I_alpha_21", "I_alpha_24"]
+    | .projects.PVT_s_eng.items |= (map(if .id == "IT_alpha_22"
+            then .values += {Worktree: "https://github.com/NobleFactor/alpha/tree/task/22-second", Iteration: "Iteration 3"} else . end)
+        | [.[0], row(44; {Schedule: "s1", Status: "Open"})] + [.[] | select(.id == "IT_alpha_24")] + [.[1:][] | select(.id != "IT_alpha_24")])
+    | .projects.PVT_c_eng.items = [.projects.PVT_c_eng.items[0], row(46; {Scenario: "walk", Status: "Open"}),
+        row(45; {Scenario: "walk", Beat: 3, Status: "In progress"})] + .projects.PVT_c_eng.items[1:]'
+
+# 101 (plan 9). schedule get returns s1's Schedule issue's own row first, with no step, then its steps in step order
+# whatever the project's order, then #44, which has no step; each record its step, the issue's key, type, title and
+# state, and the row's Status, Worktree, Iteration and open blockers, null or [] where the row has none. A closed issue
+# blocks nothing: #22's link to #21, closed, is left out, and its link to #24, open, is kept.
+world "${unordered}"
+run_star "${data}" github schedule get NobleFactor/alpha#20
+expect "101 (plan 9): #22's closed blocker, #21, is left out, and its open one, #24, is kept" ok \
+    '[.[] | select(.issue == "NobleFactor/alpha#22") | .blocked_by] == [["NobleFactor/alpha#24"]]'
+expect "101 (plan 9): schedule get returns #20's own row, then steps 1 to 4, then the row with no step" ok "${no_writes}"' and . == [
+    {step: null, issue: "NobleFactor/alpha#20", type: "Schedule", title: "Schedule: s1", state: "open", status: "Open",
+        worktree: null, iteration: null, blocked_by: []},
+    {step: 1, issue: "NobleFactor/alpha#21", type: "Task", title: "the first step", state: "closed", status: "Closed",
+        worktree: null, iteration: null, blocked_by: []},
+    {step: 2, issue: "NobleFactor/alpha#22", type: "Task", title: "the second step", state: "open", status: "Open",
+        worktree: "https://github.com/NobleFactor/alpha/tree/task/22-second", iteration: "Iteration 3", blocked_by: ["NobleFactor/alpha#24"]},
+    {step: 3, issue: "NobleFactor/alpha#23", type: "Bug", title: "the third step", state: "closed", status: "Closed",
+        worktree: null, iteration: null, blocked_by: []},
+    {step: 4, issue: "NobleFactor/alpha#24", type: "Task", title: "the fourth step", state: "open", status: "Open",
+        worktree: null, iteration: null, blocked_by: []},
+    {step: null, issue: "NobleFactor/alpha#44", type: "Task", title: "a row with no step", state: "open", status: "Open",
+        worktree: null, iteration: null, blocked_by: []}]'
+
+# 102 (plan 9). scenario get returns walk's Scenario issue's own row first, with no Beat, then its rows in Beat order
+# whatever the project's order, then #46, which has no Beat; each record its Beat, the issue's key, type, title and
+# state, and the row's Status.
+run_star "${data}" github scenario get NobleFactor/alpha#40
+expect "102 (plan 9): scenario get returns #40's own row, then beats 1 and 3, then the row with no Beat" ok "${no_writes}"' and . == [
+    {beat: null, issue: "NobleFactor/alpha#40", type: "Scenario", title: "Scenario: walk", state: "open", status: "Open"},
+    {beat: 1, issue: "NobleFactor/alpha#27", type: "Task", title: "a task found walking", state: "open", status: "Open"},
+    {beat: 3, issue: "NobleFactor/alpha#45", type: "Task", title: "found at beat 3", state: "open", status: "In progress"},
+    {beat: null, issue: "NobleFactor/alpha#46", type: "Task", title: "found at no beat", state: "open", status: "Open"}]'
+
+# 103 (plan 9). In a user account, whose types are labels: get of u1 and of the user walk, which holds
+# test-user/personal#12 at beat 2.
+world '.projects.PVT_c_user.items += [{id: "IT_personal_12", content: "I_personal_12", values: {Scenario: "user walk", Beat: 2,
+    Status: "Open"}}]'
+run_star "${data}" github schedule get test-user/personal#10
+expect "103 (plan 9): schedule get of a user account's schedule" ok "${no_writes}"' and . == [
+    {step: null, issue: "test-user/personal#10", type: "Schedule", title: "Schedule: u1", state: "open", status: "Open",
+        worktree: null, iteration: null, blocked_by: []},
+    {step: 1, issue: "test-user/personal#11", type: "Task", title: "u1 first", state: "open", status: "Open",
+        worktree: null, iteration: null, blocked_by: []}]'
+run_star "${data}" github scenario get test-user/personal#20
+expect "103 (plan 9): scenario get of a user account's scenario" ok "${no_writes}"' and . == [
+    {beat: null, issue: "test-user/personal#20", type: "Scenario", title: "Scenario: user walk", state: "open", status: "Open"},
+    {beat: 2, issue: "test-user/personal#12", type: "Task", title: "a personal task", state: "open", status: "Open"}]'
+
+# 104 (plan 9). list returns one record for each option of each team's Schedule or Scenario project, in the model's
+# team order, by slug, devlore's then engprod's, the owners team having none: the option, its issue's key, title,
+# state and assignees, the project, and the counts of its open and closed rows, its own row not counted. A closed
+# schedule is listed; a template titled Schedule, and a closed project with a team's title, found before the open one,
+# are not read. Here #20 has two assignees, s2's Schedule issue, #30, is closed, and #43, other's only item, is closed.
+world '.issues.I_alpha_20.assignees = ["stand-in", "member"] | .issues.I_alpha_30.state = "CLOSED" | .issues.I_alpha_43.state = "CLOSED"
+    | .projects.PVT_template = {id: "PVT_template", title: "Schedule", number: 7, fields: [{id: "F_tschedule", name: "Schedule",
+        dataType: "SINGLE_SELECT", options: [{id: "O_placeholder", name: "placeholder", description: "NobleFactor/alpha#99"}]}], items: []}
+    | .projects = {PVT_closed: (.projects.PVT_s_eng | .id = "PVT_closed" | .number = 12 | .closed = true | .items = []
+        | .fields[0].options = [{id: "O_old", name: "old", description: "NobleFactor/alpha#98"}])} + .projects'
+run_star "${data}" github schedule list NobleFactor
+expect "104 (plan 9): schedule list returns NobleFactor's schedules, team by team" ok "${no_writes}"' and . == [
+    {schedule: "d1", issue: "NobleFactor/beta#50", title: "Schedule: d1", state: "open", assignee: null,
+        project: "Schedule: devlore", open_steps: 2, closed_steps: 0},
+    {schedule: "s1", issue: "NobleFactor/alpha#20", title: "Schedule: s1", state: "open", assignee: "stand-in, member",
+        project: "Schedule: engprod", open_steps: 2, closed_steps: 2},
+    {schedule: "s2", issue: "NobleFactor/alpha#30", title: "Schedule: s2", state: "closed", assignee: null,
+        project: "Schedule: engprod", open_steps: 3, closed_steps: 0}]'
+run_star "${data}" github scenario list NobleFactor
+expect "104 (plan 9): scenario list returns NobleFactor's scenarios, team by team" ok "${no_writes}"' and . == [
+    {scenario: "other", issue: "NobleFactor/beta#54", title: "Scenario: other", state: "open", assignee: null,
+        project: "Scenario: devlore", open_rows: 0, closed_rows: 1},
+    {scenario: "walk", issue: "NobleFactor/alpha#40", title: "Scenario: walk", state: "open", assignee: null,
+        project: "Scenario: engprod", open_rows: 1, closed_rows: 0}]'
+
+# 105 (plan 9). --team narrows an organization's list to one team's project; a team the account doesn't have, and a
+# team with no such project, are refused. A user account lists its one project of each kind, and refuses --team.
+world
+run_star "${data}" github schedule list NobleFactor --team devlore
+expect "105 (plan 9): --team devlore narrows schedule list to Schedule: devlore" ok "${no_writes}"' and map(.schedule) == ["d1"]'
+run_star "${data}" github scenario list NobleFactor --team engprod
+expect "105 (plan 9): --team engprod narrows scenario list to Scenario: engprod" ok "${no_writes}"' and map(.scenario) == ["walk"]'
+run_star "${data}" github schedule list NobleFactor --team nosuch
+expect "105 (plan 9): a team the account doesn't have is refused" error "${no_writes}" "NobleFactor has no team nosuch" text
+run_star "${data}" github scenario list NobleFactor --team owners
+expect "105 (plan 9): and a team with no such project" error "${no_writes}" "NobleFactor has no open project Scenario: owners" text
+run_star "${data}" github schedule list test-user
+expect "105 (plan 9): schedule list of a user account reads Schedule: test-user" ok "${no_writes}"' and . == [
+    {schedule: "u1", issue: "test-user/personal#10", title: "Schedule: u1", state: "open", assignee: null,
+        project: "Schedule: test-user", open_steps: 1, closed_steps: 0}]'
+run_star "${data}" github scenario list test-user
+expect "105 (plan 9): scenario list of a user account reads Scenario: test-user" ok "${no_writes}"' and . == [
+    {scenario: "user walk", issue: "test-user/personal#20", title: "Scenario: user walk", state: "open", assignee: null,
+        project: "Scenario: test-user", open_rows: 0, closed_rows: 0}]'
+run_star "${data}" github schedule list test-user --team test-user
+expect "105 (plan 9): --team in a user account is refused" error "${no_writes}" "test-user is a user account, which has no teams" text
+
+# 106 (plan 9). get refuses a key that names no issue, and one that names an issue of the other kind or of no kind, and
+# reads a closed schedule; get and list refuse star's --dry-run, until devlore-cli#1170.
+world '.issues.I_alpha_30.state = "CLOSED"'
+run_star "${data}" github schedule get NobleFactor/alpha#99
+expect "106 (plan 9): a schedule key that names no issue is refused" error "${no_writes}" "no issue NobleFactor/alpha#99" text
+run_star "${data}" github scenario get NobleFactor/alpha#99
+expect "106 (plan 9): and a scenario key" error "${no_writes}" "no issue NobleFactor/alpha#99" text
+run_star "${data}" github schedule get NobleFactor/alpha#40
+expect "106 (plan 9): a Scenario issue is no schedule" error "${no_writes}" "NobleFactor/alpha#40 is not a Schedule issue: its type is Scenario" text
+run_star "${data}" github scenario get NobleFactor/alpha#20
+expect "106 (plan 9): a Schedule issue is no scenario" error "${no_writes}" "NobleFactor/alpha#20 is not a Scenario issue: its type is Schedule" text
+run_star "${data}" github schedule get NobleFactor/alpha#22
+expect "106 (plan 9): nor is a task" error "${no_writes}" "NobleFactor/alpha#22 is not a Schedule issue: its type is Task" text
+run_star "${data}" github schedule get NobleFactor/alpha#30
+expect "106 (plan 9): a closed schedule is read" ok "${no_writes}"' and map([.step, .issue, .state]) == [[null, "NobleFactor/alpha#30", "closed"],
+    [1, "NobleFactor/alpha#31", "open"], [2, "NobleFactor/alpha#32", "open"], [3, "NobleFactor/alpha#33", "open"]]'
+run_star "${data}" github schedule get NobleFactor/alpha#20 --dry-run
+expect "106 (plan 9): get refuses star's --dry-run" error "${no_writes}" "1170" text
+run_star "${data}" github scenario list NobleFactor --dry-run
+expect "106 (plan 9): and so does list" error "${no_writes}" "1170" text
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"

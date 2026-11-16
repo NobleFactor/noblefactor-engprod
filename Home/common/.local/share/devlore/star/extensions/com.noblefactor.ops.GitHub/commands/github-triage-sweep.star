@@ -10,9 +10,9 @@
 # already there, to its team's Triage project with Status Open, reading the row back, and comments on it naming each
 # rule it broke (ruled 2026-11-04), so that triage knows why it came. It never removes a row from any
 # project: a Triage row sits beside an issue's home and never takes it off a schedule or a scenario (ruled 2026-11-08).
-# Its result is its output: one flat record for each issue it added, found in Triage with a fault, or found a Triage row,
-# so that star's --filter and --jq narrow it and CSV renders it as they do the report's (ruled 2026-11-08); a non-zero
-# exit is an error and nothing else (ruled 2026-11-08).
+# Its result is its output: one flat record for each issue it added, found in Triage with a fault, or found a Triage
+# row, so that star's --filter and --jq narrow it and CSV renders it as they do the report's (ruled 2026-11-08); a
+# non-zero exit is an error and nothing else (ruled 2026-11-08).
 
 load("commands/access.star", "check_access")
 load("commands/accounts.star", "default_accounts")
@@ -105,8 +105,8 @@ def faults(r, node, model, by_key):
             if len(mine) > 1:
                 out.append(_fault("two-labels", "two " + family["key"] + ": labels: " + ", ".join(mine)))
 
-        # GitHub allows an issue one issue type; a user account's types are labels, and nothing stops an issue carrying two
-        # (noblefactor-engprod#426). type_of takes the first the model lists, so the second is silently ignored.
+        # GitHub allows an issue one issue type; a user account's types are labels, and nothing stops an issue carrying
+        # two (noblefactor-engprod#426). type_of takes the first the model lists, so the second is silently ignored.
         types = [label for label in [t.get("label") for t in model["hierarchy"] + model["collections"]] if label and label in r["labels"]]
         if len(types) > 1:
             out.append(_fault("two-types", "two type labels: " + ", ".join(types)))
