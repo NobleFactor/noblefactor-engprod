@@ -281,7 +281,7 @@ def _marks(lines):
     one, a fence opening and closing by its backticks or tildes, as CommonMark does.
     """
 
-    # TODO(https://github.com/NobleFactor/devlore-cli/issues/1229): read the body's sections as values through star's
+    # TODO(https://github.com/NobleFactor/devlore-cli/issues/1100): read the body's sections as values through star's
     # Markdown provider once it exists, in place of finding the headings and breaks by the body's lines.
     out = []
     fence = None

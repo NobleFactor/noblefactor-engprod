@@ -3,7 +3,11 @@ title: "The sweep returns a step with no step number to Triage, the last of #427
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/427
 status: complete
 created: 2026-11-12
-updated: 2026-11-12
+updated: 2026-11-15
+documents:
+  - kind: "Design: collections"
+    path: "docs/architecture/issue-data-model/3-collections.md"
+    text: "section 3"
 ---
 
 # Plan: The sweep returns a step with no step number to Triage, the last of #427

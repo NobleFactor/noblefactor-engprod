@@ -137,5 +137,5 @@ first run, on 2026-11-11, and section 7 states each as done.
   tables in issue bodies, and NobleFactor's kind labels `epic`, `feature`, `task` and `bug`. A user account's type
   labels stay.
 - [ ] Rule 15's grep retired, once the create command checks the documents table; no issue is named for it yet.
-- [ ] The documents table written from the plans by `star github plan link`, ruled 2026-11-15 (#557), and every
-  issue's section checked by its `--all --check`.
+- [x] The documents table written from the plans by `star github plan link`, ruled 2026-11-15 (#557), and every
+  issue's section checked by its `--all --check`: every issue a plan serves brought to its plans on 2026-11-15.

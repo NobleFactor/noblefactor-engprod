@@ -3,7 +3,14 @@ title: "The Triage workflow sets a new issue's Severity and puts a scenario's fi
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/448
 status: complete
 created: 2026-11-12
-updated: 2026-11-13
+updated: 2026-11-15
+documents:
+  - kind: "Where this is listed"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/plans/chore/303-issue-data-model.md#closing-from-2026-11-04"
+    text: "#303's plan, § Closing, from 2026-11-04"
+  - kind: "Design: triage"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/architecture/issue-data-model/4-storage-and-reach.md#triage"
+    text: "section 4, § Triage"
 ---
 
 # Plan: The Triage workflow sets a new issue's Severity and puts a scenario's findings in the scenario

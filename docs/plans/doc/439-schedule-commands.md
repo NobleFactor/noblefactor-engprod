@@ -3,7 +3,17 @@ title: "The star github schedule commands, designed before any is built"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/439
 status: complete
 created: 2026-11-11
-updated: 2026-11-12
+updated: 2026-11-15
+documents:
+  - kind: "Design: the schedule commands"
+    path: "docs/architecture/issue-data-model/8-the-schedule-commands.md"
+    text: "section 8"
+  - kind: "Design: collections"
+    path: "docs/architecture/issue-data-model/3-collections.md"
+    text: "section 3"
+  - kind: "Design: the workflow before and after"
+    path: "docs/architecture/issue-data-model/7-the-workflow-before-and-after.md"
+    text: "section 7"
 ---
 
 # Plan: The star github schedule commands, designed before any is built

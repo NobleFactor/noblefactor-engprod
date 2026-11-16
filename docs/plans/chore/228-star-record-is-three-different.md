@@ -3,7 +3,20 @@ title: "The star record is three different things: the rest goes"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/228
 status: active
 created: 2026-09-24
-updated: 2026-11-14
+updated: 2026-11-15
+documents:
+  - kind: "Design"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/pull/130"
+    text: "#130"
+  - kind: "Design"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/issues/227"
+    text: "#227"
+  - kind: "Design"
+    url: "https://github.com/NobleFactor/devlore-cli/blob/develop/docs/architecture/star-extensions.md"
+    text: "devlore-cli docs/architecture/star-extensions.md"
+  - kind: "Design"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/issues/217"
+    text: "#217"
 ---
 
 # Plan: the rest of the star record goes

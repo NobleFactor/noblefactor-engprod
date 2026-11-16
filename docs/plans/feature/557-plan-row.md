@@ -1,9 +1,13 @@
 ---
 title: "The PR script template links each step's plan in its issue's Plan row, and the issues that still say Not yet opened get theirs"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/557
-status: active
+status: complete
 created: 2026-11-14
 updated: 2026-11-15
+documents:
+  - kind: "Design: the process"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/guides/development-process.md#plans"
+    text: "development-process.md § Plans"
 ---
 
 # Plan: The PR script template links each step's plan in its issue's Plan row, and the issues that still say Not yet opened get theirs
@@ -26,8 +30,9 @@ done, which is its evidence of completion: every issue already filed brought to 
   worktree; devlore-cli's two logged as one issue of their own, NobleFactor/devlore-cli#1228, in Triage: devlore.
 - 2026-11-14: approved; then, on the step as first built, about 200 lines of bash and 400 of PowerShell for every first
   script: the step is a `star` command instead. `star` could read Markdown as values through a Markdown provider,
-  logged as NobleFactor/devlore-cli#1229; until that exists the command reads the issue's body by its lines, and its
-  code says so in a TODO naming #1229 by its URL.
+  logged as NobleFactor/devlore-cli#1229, which on 2026-11-15 was closed as a duplicate of Feature
+  NobleFactor/devlore-cli#1100, the markdown provider, under Epic #815, Providers, its use carried there; until that
+  exists the command reads the issue's body by its lines, and its code says so in a TODO naming #1100 by its URL.
 - 2026-11-15: one command, `star github plan link`, whose sole purpose is that our issues trace back to the plans that
   reference them. The plans are the authority: a plan is reviewed with the owner before the work and changes only
   through a pull request, and it names the issues it serves, the one it is named for in its `issue:` line and each
@@ -77,6 +82,19 @@ done, which is its evidence of completion: every issue already filed brought to 
 - 2026-11-15: the backfill is #557's evidence of completion. The command's pull request is part of #557, which
   stays open, step 43 In progress, its row linking the pull request, until the backfill is done; the plans'
   `documents:` entries it calls for land one pull request per repository, one at a time, each part of #557.
+- 2026-11-15, on the first `--all --check`, 576 records: the design documents its 224 dropped rows link go into the
+  plans' `documents:`, drafted from those rows, one pull request per repository: devlore-cli's in
+  NobleFactor/devlore-cli#1231, closing #1230; personal's in David-Noble-at-work/personal#333, closing #332, with
+  #568, its stand-in here, closed with it; this repository's last. The words a row carries after its link are left
+  out.
+- 2026-11-15: before `--all` writes, a one-time cleanup moves what the plans will not produce in an issue's section, the
+  text after its table and the rows that link nothing, to just above the section's heading, word for word, a row as
+  `**<kind>:** <document>`; so the table ends the issue, and the issues' own history, such as "Rewritten on
+  2026-11-10 to the plan", is kept. The header rows of tables laid out otherwise, the placeholders, the Plan rows and
+  the rows whose documents the plans carry are left for the command. Each body is written once, read back, and kept,
+  as it was, in scratch.
+- 2026-11-15: after the backfill, its records on #557 as the evidence, a last pull request ticks this plan's last box
+  and closes #557 and step 43.
 - The process, already: every issue ends with the table; each row links a committed file; links go to the default
   branch; a plan carries an `## Issue NNN` heading for every issue it serves.
 
@@ -158,7 +176,7 @@ devlore-cli and devlore.noblefactor.com.
 
    Every byte outside the section is kept; the section's lines end as the body's do, `\r\n` or `\n`. It writes the body
    once and reads it back, failing unless the section reads as written. It finds the heading by the body's lines, with a
-   TODO naming https://github.com/NobleFactor/devlore-cli/issues/1229, the Markdown provider that will let it read the
+   TODO naming https://github.com/NobleFactor/devlore-cli/issues/1100, the Markdown provider that will let it read the
    body's sections as values.
 4. **`--all [--repository <owner/name>,...]`** does the same for every issue that a plan under `docs/plans` on the default
    branch of each repository named, or of writ's layers, serves, read after a fetch, never from a working tree; plans and
@@ -183,7 +201,8 @@ devlore-cli and devlore.noblefactor.com.
 8. **The issues already filed,** in the four repositories: after the merge and `writ deploy`, `--all --check`, its
    report reviewed with the owner before `--all` writes anything. Its `dropped` rows say which plans need `documents:`
    entries first, so that no design document an issue links is lost; how the plans in each repository gain them is
-   ruled with the report. Ruled 2026-11-15: every file under `docs/plans` with frontmatter is a plan, and one naming no
+   ruled with the report, and the cleanup ruled 2026-11-15 runs before it writes. Ruled 2026-11-15: every file under
+   `docs/plans` with frontmatter is a plan, and one naming no
    issue is `refused`, a finding, as is a file with no frontmatter; read in the rehearsal, 130 plans with no `issue:`
    line, 77 of them for finished work, 129 in devlore-cli, and 58 files with no frontmatter. NobleFactor/devlore-cli#1228's
    scope grows, by a comment on it, to all of them: the plans with no `issue:` line, the files with no frontmatter, the
@@ -267,10 +286,10 @@ in scratch, are among them.
 
 ### Phase 3: the backfill, #557's evidence of completion
 
-- [ ] The command's pull request merged, part of #557; `writ deploy`; case 16, `--all --check`, its report reviewed with
+- [x] The command's pull request merged, part of #557; `writ deploy`; case 16, `--all --check`, its report reviewed with
       the owner; the plans' `documents:` entries it calls for, one pull request per repository, one at a time, each part
-      of #557; case 17, `--all`, each issue read back, and `--all --check` finding every issue unchanged; the records
-      on #557 as its evidence; #557 and step 43 Closed
+      of #557; the cleanup; case 17, `--all`, each issue read back, and `--all --check` finding every issue unchanged;
+      the records on #557 as its evidence; this box ticked by a last pull request, which closes #557 and step 43: done on 2026-11-15
 
 ## Files to Create/Modify
 

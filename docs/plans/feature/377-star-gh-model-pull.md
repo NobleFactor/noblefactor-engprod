@@ -3,7 +3,14 @@ title: "star gh model pull: the organization's types, labels and projects into m
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/377
 status: complete
 created: 2026-10-23
-updated: 2026-10-26
+updated: 2026-11-15
+documents:
+  - kind: "Design"
+    path: "docs/architecture/issue-data-model/6-the-asset-and-its-sync.md"
+    text: "section 6, the asset and its sync"
+  - kind: "Design"
+    path: "docs/architecture/issue-data-model/5-from-todays-scheme.md"
+    text: "section 5, from today's scheme"
 ---
 
 # Plan: star gh model pull

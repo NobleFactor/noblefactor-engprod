@@ -3,7 +3,20 @@ title: "agent-rules gains rule 12: a document a commit makes stale is corrected 
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/229
 status: complete
 created: 2026-09-23
-updated: 2026-11-14
+updated: 2026-11-15
+documents:
+  - kind: "Design"
+    path: "docs/guides/development-process.md"
+    text: "development-process.md § Documents on every commit"
+  - kind: "Design"
+    path: "docs/guides/agent-rules.md"
+    text: "agent-rules.md"
+  - kind: "Design"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/issues/199"
+    text: "#199"
+  - kind: "Design"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/issues/227"
+    text: "#227"
 ---
 
 # Plan: agent-rules gains rule 12

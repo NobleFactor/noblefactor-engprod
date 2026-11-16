@@ -3,7 +3,20 @@ title: "Prose is checked for spelling locale: codespell gains its en-GB_to_en-US
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/234
 status: complete
 created: 2026-09-23
-updated: 2026-09-23
+updated: 2026-11-15
+documents:
+  - kind: "Design"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/issues/232"
+    text: "#232"
+  - kind: "Design"
+    url: "https://github.com/NobleFactor/devlore-cli/issues/932"
+    text: "NobleFactor/devlore-cli#932"
+  - kind: "Design"
+    path: "docs/documentation-standards.md"
+    text: "documentation-standards.md"
+  - kind: "Design"
+    url: "https://github.com/NobleFactor/devlore-cli/issues/933"
+    text: "NobleFactor/devlore-cli#933"
 ---
 
 # Plan: Prose is checked for spelling locale

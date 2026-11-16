@@ -3,7 +3,14 @@ title: "NobleFactor/.github's Triage workflow template stops at the end of an is
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/447
 status: complete
 created: 2026-11-10
-updated: 2026-11-10
+updated: 2026-11-15
+documents:
+  - kind: "Where this fix is listed"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/plans/chore/303-issue-data-model.md#the-cutover-from-2026-11-02"
+    text: "#303's plan, § The cutover"
+  - kind: "Design: triage"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/architecture/issue-data-model/4-storage-and-reach.md#triage"
+    text: "section 4, § Triage"
 ---
 
 # Plan: NobleFactor/.github's Triage workflow template stops at the end of an issue's body, and names no account

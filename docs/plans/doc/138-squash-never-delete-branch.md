@@ -3,7 +3,11 @@ title: "The PR script merges with --squash and never --delete-branch, and the te
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/138
 status: complete
 created: 2026-09-03
-updated: 2026-09-03
+updated: 2026-11-15
+documents:
+  - kind: "Design"
+    path: "docs/guides/pr-script-template.md"
+    text: "PR Script Template"
 ---
 
 # Plan: Always --squash, never --delete-branch

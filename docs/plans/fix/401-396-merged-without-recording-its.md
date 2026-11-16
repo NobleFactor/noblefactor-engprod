@@ -3,7 +3,20 @@ title: "#301 records the lanes #396 left stale, and a pull request records its l
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/401
 status: complete
 created: 2026-10-25
-updated: 2026-10-25
+updated: 2026-11-15
+documents:
+  - kind: "Guide"
+    path: "docs/issue-standards.md"
+    text: "issue-standards.md"
+  - kind: "Guide"
+    path: "docs/guides/development-process.md"
+    text: "development-process.md"
+  - kind: "Guide"
+    path: "docs/guides/pr-script-template.md"
+    text: "pr-script-template.md"
+  - kind: "Guide"
+    path: "docs/guides/agent-rules.md"
+    text: "agent-rules.md"
 ---
 
 # Plan: #301 records the lanes #396 left stale, and a pull request records its lanes as it lands

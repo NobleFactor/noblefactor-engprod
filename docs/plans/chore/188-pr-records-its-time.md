@@ -3,7 +3,12 @@ title: "Every pull request records its time"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/188
 status: complete
 created: 2026-09-08
-updated: 2026-09-08
+updated: 2026-11-15
+documents:
+  - kind: "Design"
+    path: "docs/guides/pr-script-template.md"
+  - kind: "Design"
+    path: "docs/guides/development-process.md"
 ---
 
 # Plan: Every pull request records its time

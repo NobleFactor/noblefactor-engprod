@@ -3,7 +3,11 @@ title: "The Scenario projects' readme says they hold the scenarios and the tasks
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/554
 status: complete
 created: 2026-11-14
-updated: 2026-11-14
+updated: 2026-11-15
+documents:
+  - kind: "Design: collections"
+    path: "docs/architecture/issue-data-model/3-collections.md"
+    text: "section 3"
 ---
 
 # Plan: The Scenario projects' readme says they hold the scenarios and the tasks and bugs found while walking them

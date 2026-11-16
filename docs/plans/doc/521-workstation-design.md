@@ -3,7 +3,14 @@ title: "Plan: Workstation architecture and planner handoff"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/521
 status: complete
 created: 2026-11-12
-updated: 2026-11-13
+updated: 2026-11-15
+documents:
+  - kind: "System design"
+    path: "docs/architecture/agentic-developer-workstation.md"
+    text: "Agentic Developer Workstation RFC — Draft"
+  - kind: "Roadmap"
+    path: "docs/roadmaps/agentic-developer-workstation.md"
+    text: "Roadmap and Epic Decomposition — Draft"
 ---
 
 # Plan: Workstation architecture and planner handoff

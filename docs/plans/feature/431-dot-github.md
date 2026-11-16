@@ -3,7 +3,14 @@ title: "NobleFactor/.github holds the organization's issue model and its shared 
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/431
 status: complete
 created: 2026-11-08
-updated: 2026-11-08
+updated: 2026-11-15
+documents:
+  - kind: "Design: reference models, read on demand"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/architecture/issue-data-model/6-the-asset-and-its-sync.md#reference-models-read-on-demand"
+    text: "section 6"
+  - kind: "Design: accounts"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/architecture/issue-data-model/4-storage-and-reach.md#accounts-organizations-and-individuals"
+    text: "section 4"
 ---
 
 # Plan: NobleFactor/.github holds the organization's issue model and its shared health files

@@ -3,7 +3,17 @@ title: "Remove-BrokenLinks.ps1 ships from the base layer's common.Windows"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/213
 status: complete
 created: 2026-09-21
-updated: 2026-09-21
+updated: 2026-11-15
+documents:
+  - kind: "Design"
+    path: "docs/guides/powershell-style-guidelines.md"
+    text: "powershell-style-guidelines.md"
+  - kind: "Design"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/guides/development-process.md#where-a-script-lives"
+    text: "development-process.md § Where a script lives"
+  - kind: "Design"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/guides/agent-rules.md#5-a-layer-change-is-finished-when-the-machine-is-converged-not-when-the-pr-merges"
+    text: "agent-rules.md § 5"
 ---
 
 # Plan: Remove-BrokenLinks.ps1 ships from the base

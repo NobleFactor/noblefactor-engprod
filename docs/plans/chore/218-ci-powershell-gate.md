@@ -3,7 +3,17 @@ title: "The CI gate gains a PowerShell step"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/218
 status: active
 created: 2026-09-22
-updated: 2026-09-22
+updated: 2026-11-15
+documents:
+  - kind: "Design"
+    path: "docs/guides/powershell-style-guidelines.md"
+    text: "powershell-style-guidelines.md § 10 Validation"
+  - kind: "Design"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/issues/216"
+    text: "#216"
+  - kind: "Design"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/issues/213"
+    text: "#213"
 ---
 
 # Plan: The CI gate gains a PowerShell step

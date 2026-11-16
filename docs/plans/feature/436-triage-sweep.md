@@ -3,7 +3,14 @@ title: "star reads the issue data model, and keeps every Triage project up to da
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/436
 status: complete
 created: 2026-11-08
-updated: 2026-11-08
+updated: 2026-11-15
+documents:
+  - kind: "Design: hierarchy"
+    path: "docs/architecture/issue-data-model/1-hierarchy.md"
+    text: "section 1"
+  - kind: "Design: collections"
+    path: "docs/architecture/issue-data-model/3-collections.md"
+    text: "section 3"
 ---
 
 # Plan: star reads the issue data model, and keeps every Triage project up to date

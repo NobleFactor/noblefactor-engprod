@@ -3,7 +3,17 @@ title: "The base layer deploys its star extension under devlore/"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/227
 status: complete
 created: 2026-09-23
-updated: 2026-09-23
+updated: 2026-11-15
+documents:
+  - kind: "Design"
+    url: "https://github.com/NobleFactor/devlore-cli/blob/develop/docs/architecture/star-extensions.md"
+    text: "devlore-cli docs/architecture/star-extensions.md"
+  - kind: "Design"
+    url: "https://github.com/NobleFactor/devlore-cli/issues/918"
+    text: "devlore-cli#918"
+  - kind: "Design"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/issues/217"
+    text: "#217"
 ---
 
 # Plan: The base layer deploys its star extension under devlore/

@@ -3,7 +3,11 @@ title: "A consuming repository's bash scripts live in common, beside the Declare
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/240
 status: complete
 created: 2026-09-24
-updated: 2026-09-24
+updated: 2026-11-15
+documents:
+  - kind: "Design"
+    path: "docs/guides/development-process.md"
+    text: "development-process.md"
 ---
 
 # Plan: a consuming repository's bash scripts live in common

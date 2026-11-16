@@ -3,7 +3,13 @@ title: "Clear-Claude leaves nothing of a cleared conversation"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/414
 status: abandoned
 created: 2026-10-27
-updated: 2026-11-12
+updated: 2026-11-15
+documents:
+  - kind: "Design"
+    path: "docs/architecture/agent-schedule/1-session-model.md"
+  - kind: "Design"
+    path: "docs/architecture/agent-schedule/2-command-line.md"
+    text: "2-command-line.md"
 ---
 
 # Plan: Clear-Claude leaves nothing of a cleared conversation

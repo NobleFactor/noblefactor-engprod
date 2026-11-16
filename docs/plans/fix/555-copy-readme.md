@@ -3,7 +3,11 @@ title: "star github model diff and apply leave a team copy's readme behind its t
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/555
 status: complete
 created: 2026-11-14
-updated: 2026-11-14
+updated: 2026-11-15
+documents:
+  - kind: "Design: the asset and its sync"
+    path: "docs/architecture/issue-data-model/6-the-asset-and-its-sync.md"
+    text: "section 6"
 ---
 
 # Plan: star github model diff and apply leave a team copy's readme behind its template's

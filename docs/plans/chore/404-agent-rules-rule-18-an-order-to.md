@@ -3,7 +3,10 @@ title: "agent-rules rule 18: an order to message a session is not the yes; the m
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/404
 status: complete
 created: 2026-10-25
-updated: 2026-10-25
+updated: 2026-11-15
+documents:
+  - kind: "Design"
+    path: "docs/guides/agent-rules.md"
 ---
 
 # Plan: rule 18 says an order to message a session is not the owner's yes
