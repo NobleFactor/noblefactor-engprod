@@ -1,7 +1,7 @@
 ---
 title: "The star github scenario commands, designed before any is built"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/507
-status: draft
+status: approved
 created: 2026-11-15
 updated: 2026-11-15
 documents:
@@ -43,6 +43,7 @@ its status page, listed in the index.
   in a design of their own.
 - 2026-11-14 (#453): each account's Scenario form asks what the person wants to do, how to walk through it, and the
   features it uses.
+- 2026-11-15, on this plan: approved.
 
 ## Current State
 
@@ -88,9 +89,9 @@ The design, section 9, states:
 
 ### Phase 1: the plan
 
-- [ ] Written and committed on `doc/507-scenario-commands` by the worktree's first script, which opens the branch with
+- [x] Written and committed on `doc/507-scenario-commands` by the worktree's first script, which opens the branch with
       `git open-branch 507 -T doc`, pushes it, and sets step 50's row In progress with the branch in its Worktree
-      column, read back; reviewed with the owner
+      column, read back; reviewed with the owner, and approved on 2026-11-15
 
 ### Phase 2: the design
 
