@@ -1,7 +1,7 @@
 ---
 title: "The Triage workflow leaves Schedule and Scenario issues out of Triage"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/573
-status: approved
+status: complete
 created: 2026-11-16
 updated: 2026-11-16
 documents:
@@ -106,8 +106,8 @@ with Resolution Invalid, or `resolution:invalid` in David-Noble-at-work, its row
 
 ### Phase 5: the documents and the merge
 
-- [ ] The documents name the exception; this repository's pull request merged, closing #573 with the evidence; step 48
-      Closed
+- [x] The documents name the exception; this repository's pull request merged, closing #573 with the evidence; step 48
+      Closed: #578, merged on 2026-11-16, its box ticked by #507's pull request, since #578 could not tick its own
 
 ## Files to Create/Modify
 

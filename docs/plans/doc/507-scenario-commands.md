@@ -1,9 +1,9 @@
 ---
 title: "The schedule and scenario commands, designed and then built in one pull request"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/507
-status: approved
+status: complete
 created: 2026-11-15
-updated: 2026-11-15
+updated: 2026-11-16
 documents:
   - kind: "Design: the scenario commands"
     path: "docs/architecture/issue-data-model/9-the-scenario-commands.md"
@@ -153,8 +153,8 @@ Read on 2026-11-15 from GitHub and from develop at `1565afc`:
 
 - [x] #509 to #512 put on #346 as steps 48 to 51, after #507, by `star github schedule add` on 2026-11-15; #508, #265
       and #531 moved down to 52 to 54
-- [ ] #507's body brought to the design, and #509 to #512 widened to scenarios with their new titles; each read back;
-      their sections written from this plan by `star github plan link`
+- [x] #507's body brought to the design, and #509 to #512 widened to scenarios with their new titles; each read back;
+      their sections written from this plan by `star github plan link`, on 2026-11-16
 
 ### Phase 4: the build
 
@@ -178,14 +178,16 @@ its tests in `tests/Test-StarGitHub`, `make check` passing before each commit:
 
 ### Phase 5: the proofs
 
-- [ ] Each command run in NobleFactor-sandbox and David-Noble-at-work-sandbox, each write read back; the runs kept as
-      each issue's evidence
+- [x] Each command run in NobleFactor-sandbox and David-Noble-at-work-sandbox, each write read back; the runs kept as
+      each issue's evidence: on 2026-11-16, run 20261116T221107Z of the proof script, at 0347189, 15 of 15 steps
+      passing; both sandboxes first brought to their accounts' models by `star github model apply`, their Scenario
+      forms having been the ones before #453
 
 ### Phase 6: merge
 
-- [ ] The pull request script written, shown and handed over. It puts question 7's findings right, each read back;
-      merges, closing #507 and #509 to #512, each with its evidence comment; and sets steps 47 to 51 Closed by the
-      template's schedule step
+- [x] The pull request script written, shown and handed over. It puts question 7's findings right, each read back,
+      before this box is ticked; merges, closing #507 and #509 to #512, each with its evidence comment; and sets
+      steps 47 and 49 to 52 Closed by the template's schedule step, #573 having become step 48
 
 ## Files to Create/Modify
 
