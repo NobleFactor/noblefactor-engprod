@@ -1,7 +1,7 @@
 ---
 title: "The PR script template links each step's plan in its issue's Plan row, and the issues that still say Not yet opened get theirs"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/557
-status: active
+status: complete
 created: 2026-11-14
 updated: 2026-11-15
 documents:
@@ -286,10 +286,10 @@ in scratch, are among them.
 
 ### Phase 3: the backfill, #557's evidence of completion
 
-- [ ] The command's pull request merged, part of #557; `writ deploy`; case 16, `--all --check`, its report reviewed with
+- [x] The command's pull request merged, part of #557; `writ deploy`; case 16, `--all --check`, its report reviewed with
       the owner; the plans' `documents:` entries it calls for, one pull request per repository, one at a time, each part
       of #557; the cleanup; case 17, `--all`, each issue read back, and `--all --check` finding every issue unchanged;
-      the records on #557 as its evidence; this box ticked by a last pull request, which closes #557 and step 43
+      the records on #557 as its evidence; this box ticked by a last pull request, which closes #557 and step 43: done on 2026-11-15
 
 ## Files to Create/Modify
 
