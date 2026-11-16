@@ -64,7 +64,7 @@ The Owner approved one source line per prose paragraph after confirming numbered
 
 ## F16 — Living incident record
 
-The Owner selected an engprod-team-owned GitHub Project associated with noblefactor-engprod, with stable identifiers grouping recurring errors. Issue #317 remains historical/transition evidence. Provisioning, schema, spreadsheet export, duplicate-recognition mechanics and cost accounting remain separate design/implementation work. This resolves the destination choice without claiming an operational Project exists. The Reviewer’s findings file remains unchanged.
+The Owner selected an engprod-team-owned GitHub Project associated with noblefactor-engprod, with stable identifiers grouping recurring errors. Issue #317 remains historical/transition evidence. Provisioning, schema, spreadsheet export and duplicate-recognition mechanics remain separate design/implementation work. The Owner's later direction on 2026-11-16 assigns findings to compliance auditing and withdraws mandatory breach reports and cost estimates. Cost accounting is not outstanding implementation work. The destination choice does not claim an operational Project exists. The Reviewer’s findings file remains unchanged.
 
 ## C15 — Live entrypoint cutover
 
@@ -81,3 +81,7 @@ The review of Issue forms (#572) found that the generic handbook outline used Ac
 ## C18 — PR serialization belongs to the session
 
 On 2026-11-16, the Owner clarified that the one-PR-at-a-time rule applies to this session's work. Other workers' PRs do not block it; the Owner coordinates their work. The publication guard checks only this session's assigned Handbook consolidation (#420) and Issue forms (#572) branches. This clarifies the existing instruction; no exception for an unrelated PR is required.
+
+## C19 — Compliance auditing replaces breach reports and cost estimates
+
+Resolved by the Owner on 2026-11-16 during PR #579 adoption review: compliance auditing replaces mandatory agent-authored breach reports; breach-cost estimates are withdrawn. [Agent operation](../agent-operation.md#compliance-auditing) owns the current requirement. The requirement inventory, retained entrypoint, adoption review and live-instruction transition now identify the supersession. The original Reviewer findings and captured sources remain unchanged as historical evidence. This documentation correction does not implement the auditor or provision its Project.

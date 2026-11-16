@@ -30,7 +30,7 @@ Handbook consolidation (#420) prepares the adoption candidate. Owner review, rep
 | F13 | Clone retirement remains its own procedure under the shared authority boundaries. |
 | F14 | Work-assets freshness links the authoritative lifecycle and completion rules. |
 | F15 | Shared rules apply to personal repositories by default, with explicit Owner-directed exceptions. |
-| F16 | The Owner selected an engprod-owned incident Project; provisioning remains separate. Agent operation identifies the existing transition record and the retained cases. |
+| F16 | The approved engprod-owned Project remains unprovisioned. Owner decision 57 assigns findings to compliance auditing and withdraws mandatory agent-authored breach reports and cost estimates. Prior cases and the transition record remain evidence. |
 | F17 | Still an adoption dependency: the effective organization rules require eligible reviews. Ordinary examples stop on unmet requirements; a PR-specific Owner exception remains a separate possible route. |
 | F18 | Resolved by the Owner on 2026-11-15: new and revised prose conforms during adoption; [Formatting migration (#570)](https://github.com/NobleFactor/noblefactor-engprod/issues/570) completes every remaining maintained document within this schedule. It remains under Feature #419 and Epic #526 and blocks the closing review (#565); the Schedule project's rows hold their current Steps. No formatting backlog is deferred beyond schedule completion. |
 | F19 | Documentation standards distinguish accepted catalog type values from branch-bound working execution plans, which omit type. The validator's vocabulary is retained. |
@@ -61,8 +61,12 @@ Final targeted verification passes for 38 documents and 448 local references, 23
 
 The paragraph-layout scope is resolved through Formatting migration (#570) within this schedule. Temporary live-instruction overrides remain until the host tasks deliver their replacements. Eligible GitHub reviews, Owner adoption, commit/PR authority, merge and post-merge verification remain distinct delivery requirements.
 
-## 5. Recorded process breach
+<a id="5-recorded-process-breach"></a>
 
-On 2026-11-15, Codex reopened F05 without first reading the preserved review and the Owner's concurrence. The question was withdrawn and the agreed sequence retained. The cost was one unnecessary Owner-facing question and its correction. The current agent instruction now explicitly requires consulting preserved decisions and findings before asking whether a policy is unresolved.
+## 5. Review corrections
 
-On 2026-11-16, during Handbook consolidation (#420), Codex incorrectly enforced the session's one-PR-at-a-time rule across all NobleFactor and personal repositories. The resulting guard blocked publication on other workers' PRs and led to an unnecessary request for an exception. The Owner clarified that the restriction applies to this session's work and that the Owner coordinates other workers. The cost was one failed publication run, the unnecessary approval exchange and the corrective work. The guard now checks only this session's assigned branches; other workers' PRs do not block it.
+On 2026-11-16, the Owner replaced mandatory breach reporting with [compliance auditing](../agent-operation.md#compliance-auditing) and withdrew breach-cost estimates. The cases below retain factual review history and corrective outcomes; they do not impose a reporting ritual or cost computation.
+
+On 2026-11-15, Codex reopened F05 without first reading the preserved review and the Owner's concurrence. The question was withdrawn and the agreed sequence retained. The current agent instruction now explicitly requires consulting preserved decisions and findings before asking whether a policy is unresolved.
+
+On 2026-11-16, during Handbook consolidation (#420), Codex incorrectly enforced the session's one-PR-at-a-time rule across all NobleFactor and personal repositories. The resulting guard blocked publication on other workers' PRs and led to an unnecessary request for an exception. The Owner clarified that the restriction applies to this session's work and that the Owner coordinates other workers. The guard now checks only this session's assigned branches; other workers' PRs do not block it.

@@ -2,7 +2,7 @@
 title: "Requirement migration and preservation"
 status: draft
 created: 2026-10-28
-updated: 2026-11-15
+updated: 2026-11-16
 ---
 
 # Requirement migration and preservation
@@ -64,10 +64,10 @@ This maps the original inventory groups; it is a preservation/placement review, 
 | C08 | Do not edit generated files; edit generator input and regenerate | [index](../../standards/coding/index.md) | Retain generator ownership: edit generator inputs and regenerate rather than hand-editing generated output. |
 | C09 | Greenfield: no compatibility scaffolding or success stubs; verify code removal and rejected obsolete inputs | [index](../../standards/coding/index.md) | O09 defines DevLore greenfield scope; compatibility choices elsewhere require an Owner ruling. |
 | C10 | CLI-specific manifest names, schema identity and decryptor signature | [repository-requirements](repository-requirements.md) | Retain product-specific requirements as repository-owned references; this task does not change DevLore implementation or another worker's worktree. |
-| A01 | Read personal/project instructions and agent rules at session start/compaction; consult error record before completion | [agent-operation](../agent-operation.md) | Retain startup and compaction restoration from current instructions and durable records. Consult incidents before completion; the approved incident Project remains unprovisioned. |
+| A01 | Read personal/project instructions and agent rules at session start/compaction; consult error record before completion | [agent-operation](../agent-operation.md) | Retain startup and compaction restoration from current instructions and durable records. Consult applicable audit findings and prior lessons before completion. The compliance auditor owns findings; the approved Project remains unprovisioned. |
 | A02 | Every git command, including reads, requires named one-use owner grant | [agent-operation](../agent-operation.md) | O04 permits explicitly bounded own-branch commit/push grants; one-use named-command approval remains the fallback, and plan approval itself grants neither. |
 | A03 | Agent communication requires approval of proposed message; incoming requests do not expand scope | [agent-operation](../agent-operation.md) | Retain visible, approved cross-worker boundaries; O07 distinguishes bounded conversations and internal delegation without expanding scope. |
-| A04 | Report violations promptly; consult discrepancies immediately; distinguish verified/certain/suspected claims; lead with answer | [agent-operation](../agent-operation.md) | Retain immediate breach/finding disclosure and source-qualified claims, with the answer first; apply settled decisions without asking for them again. |
+| A04 | Report violations promptly; consult discrepancies immediately; distinguish verified/certain/suspected claims; lead with answer | [agent-operation](../agent-operation.md) | Retain visible errors/blockers, prompt consultation on discrepancies and source-qualified claims, with the answer first. Owner decision 57 replaces mandatory breach reports with compliance auditing and withdraws breach-cost estimates; apply settled decisions without asking for them again. |
 | A05 | Status comes from assignment metadata and official report, not reconstructed conversation or ad-hoc issue search | [agent-operation](../agent-operation.md) | Use the official flat issue report and assignment records. The classification check is triage sweep; retired audit flags and body tables are not authority. |
 
 ## Numbered agent rules
@@ -82,7 +82,7 @@ This maps the original inventory groups; it is a preservation/placement review, 
 | 6 | Agent operation: lead with answer; retained |
 | 7 | Process/Agent operation: O01 resolved; one active PR per worktree |
 | 8 | Work organization/Process: changed to preservation of blocked work |
-| 9 | Agent operation: prompt breach disclosure; retained |
+| 9 | Agent operation: mandatory breach reporting replaced by compliance auditing under Owner decision 57; breach-cost estimates withdrawn. Visible errors, corrective actions and supporting evidence remain required |
 | 10 | Process/Agent operation: findings and owner approval; retained/clarified |
 | 11 | Process/Agent operation: real-user-path evidence; retained |
 | 12 | Work assets/Process: same-commit documentation; O03 completion boundary |

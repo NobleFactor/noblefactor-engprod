@@ -100,6 +100,7 @@ The documentation-only CI path is agreed policy but not implemented by this task
 
 - [x] Review source requirements against draft definitions at section/sentence level: all 58 inventory groups, nineteen original agent rules, recorded decisions and newer pre-cutover guides have dispositions; Go/PowerShell word-level comparisons isolate the approved changes.
 - [x] Resolve conflicts already answered by recorded decisions: the final pass applies the recorded rulings, corrects stale conflict descriptions and preserves the original review and responses. The duplicate F05 question and its correction remain disclosed.
+- [x] Apply the Owner's 2026-11-16 adoption-review direction: compliance auditing replaces mandatory agent-authored breach reports and cost estimates. Update active requirements, current review records, requirement dispositions and the live-instruction transition; preserve original sources.
 - [x] Present substantive gaps to the Owner individually: paragraph-layout scope and live-entrypoint cutover are resolved and recorded; effective GitHub review requirements remain explicit delivery prerequisites.
 - [x] Resolve the live-entrypoint cutover boundary with the Owner: temporary overrides documented at handbook adoption; live migration assigned to the Claude/Codex host tasks, approved 2026-11-15.
 - [x] Recover and incorporate the preserved external review findings F01–F19 without changing the original record; the current disposition retains the protection dependency and records the Owner's paragraph-scope resolution.
@@ -116,13 +117,13 @@ The documentation-only CI path is agreed policy but not implemented by this task
 
 ### 6.4. Validation and adoption
 
-- [x] Validate the actual changed-document set, including paths and anchors: the final targeted pass checks 38 documents, 448 local references, all source hashes, inventory coverage and entry-point reachability, with no errors. Spelling passes for the final edited set.
+- [x] Validate the actual changed-document set after the Owner's compliance-auditor review direction: 38 documents, 454 local references, preserved source hashes, all 58 inventory groups, nineteen original rule dispositions, 23 reachable active documents and 134 retained legacy anchors pass with no errors. Spelling passes for the eight revised documents.
 - [x] Run applicable repository gates; record results and limitations: the Owner-run validation script exited 0 on 2026-11-15 in 166.1722 seconds, checking 38 documents and 440 local references and passing make check and all Test-Here suites. New untracked documents received explicit additional checks. The displayed output was truncated; the result applies to that tested draft. Later policy/status edits receive document checks, and delivery must still meet its required gates.
 - [ ] Obtain Owner review of the complete documentation and transition.
 - [x] Analyze the Owner-run inspection log and verify the filesystem scope: 42 documentation/evidence paths, including the eight pre-cutover snapshots. No runtime code is included.
 - [x] Obtain the Owner-run staging dry-run proof before handing over the commit/PR script: 42 named files passed on 2026-11-16 with the index and reviewed content unchanged. The receipt is /Users/david-noble/Workspace/NobleFactor/scratch/handbook-setup/420-staging-receipt.2WLiaxIK.json; the publication script rejects scope, index or content drift.
 - [x] Prepare the Owner-run publication script from the successful staging receipt, with an explicit stop for adoption review and a separate guarded merge mode.
-- [ ] Publish the adoption PR and obtain Owner review; record publication on the issue and keep required post-merge obligations open.
+- [x] Publish the adoption candidate as PR #579 on 2026-11-16 at 391fdfcac66b91ab3699ecc7a1e9aff0dc7cfc8e; the Owner-run script passed make check and all four GitHub checks passed for that head. Owner review is ongoing; subsequent review corrections require a new checked revision.
 - [ ] Record merge and verify the adopted documentation entry point.
 - [ ] Record completion approval and any documentation-only follow-up obligation.
 - [ ] Clean up the worktree/script under the approved procedure after preserving outstanding records.
@@ -131,10 +132,10 @@ The documentation-only CI path is agreed policy but not implemented by this task
 
 | Milestone | Required | Current state |
 | --- | --- | --- |
-| Implementation | Yes: reconciled documents, templates, navigation and transition | Participant reconciliation and final content/navigation checks complete; local candidate awaits Owner review and delivery authorization |
+| Implementation | Yes: reconciled documents, templates, navigation and transition | Adoption candidate published as PR #579; Owner review is ongoing and the compliance-auditor policy correction is documented |
 | Merge | Yes: approved adoption change on `develop` | Not performed |
 | Deployment | No separate runtime deployment is proposed; evaluate installed agent-instruction dependencies during cutover | No deployment claimed |
-| Verification | Yes: required document checks, Owner review and post-merge entry-point verification | Owner-run validation and make check passed on 2026-11-15; final document/spelling checks pass after editorial updates; delivery gates, Owner review and post-merge evidence remain pending |
+| Verification | Yes: required document checks, Owner review and post-merge entry-point verification | Owner-run publication and make check passed on 2026-11-16; all four GitHub checks passed for 391fdfc. Review corrections require fresh validation; Owner adoption and post-merge evidence remain pending |
 
 The plan remains active once implementation is authorized and until required milestones are satisfied. Post-merge evidence is recorded immediately on the issue and incorporated through the approved documentation-follow-up process. Do not relabel an unfinished obligation complete merely to close the plan.
 
@@ -161,3 +162,9 @@ The Owner-run inspection log at /Users/david-noble/Workspace/NobleFactor/scratch
 The inherited account contribution terms still list the retired chore prefix. Apply the settled branch ruling and the current doc branch; Contribution terms (#265) retains the separate account/repository guide update. The effective develop rules were read again on 2026-11-16: one approving review, code-owner and last-push approval, quality-gate, and the configured quality/scanning requirements. No protection configuration was changed.
 
 On 2026-11-16, the Owner clarified that the one-PR-at-a-time rule applies to this session's work. Other workers' PRs do not block it; the Owner coordinates their work. The publication guard checks only this session's assigned Handbook consolidation (#420) and Issue forms (#572) branches. This clarifies the existing instruction; no exception for an unrelated PR is required.
+
+### 8.4. Owner review: compliance-auditor policy
+
+On 2026-11-16, the Owner withdrew mandatory agent-authored breach reporting and breach-cost computations in favor of a compliance auditor. The active agent-operation requirements, live-instruction transition, requirement dispositions and current review records must reflect that direction. Retain factual review history and immutable source evidence; remove cost estimates from maintained current records. Participants still provide honest status, visible errors/blockers and corrective evidence. The auditor role and its tooling remain scheduled work, not an implemented capability of this documentation PR.
+
+The original adoption candidate is published as PR #579 at 391fdfcac66b91ab3699ecc7a1e9aff0dc7cfc8e. This policy correction is a review amendment on the same branch, using an Owner-run commit/push and fresh checks and review for the new head. The issue remains Open and this plan active through the outstanding adoption and post-merge obligations.

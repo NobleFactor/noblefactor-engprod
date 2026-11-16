@@ -2,7 +2,7 @@
 title: "Agent operation"
 status: draft
 created: 2026-10-28
-updated: 2026-11-15
+updated: 2026-11-16
 ---
 
 # Agent operation
@@ -23,19 +23,24 @@ Controller, worker, and sub-agent describe execution arrangements; their authori
 
 Follow the same engineering process as people. Session activity, elapsed time, delegation volume and confident narration are not acceptance evidence. Explain implementation status, test location and remaining deployment work separately.
 
-Read applicable process, repository and agent instructions at session start and after context compaction; restore assignment, approved plan/design, current issue, approvals and blockers from durable records. Consult the living incident record before completion. Its authoritative destination is a GitHub Project owned by the engprod team and associated with `noblefactor-engprod`; provision of that Project is pending. Issue #317 remains historical evidence and the existing record during transition, not the proposed long-term spreadsheet-shaped ledger. Do not substitute memory for current instructions.
+Read applicable process, repository and agent instructions at session start and after context compaction; restore assignment, approved plan/design, current issue, approvals and blockers from durable records. Consult applicable audit findings and prior lessons before completion. Do not substitute memory for current instructions.
 
-Lead with the answer. Identify work by its meaning and issue reference. In owner-facing file references use unambiguous absolute paths. Distinguish verified claims, with method and time, from conclusions and uncertainty; preserve the source's exceptions. Disclose a process breach in the next message as a breach, with the rule, start date, effects and corrective proposal.
+Lead with the answer. Identify work by its meaning and issue reference. In owner-facing file references use unambiguous absolute paths. Distinguish verified claims, with method and time, from conclusions and uncertainty; preserve the source's exceptions. Keep actual errors, failed checks, blockers and corrective actions visible. Provide evidence for the [compliance auditor](#compliance-auditing).
 
 A discovered contradiction between code, plan, design or issue is brought to the owner immediately. Do not choose a side and quietly change the other records. Verify generated execution lists against the actual target before handing them over.
 
 <a id="incident-patterns"></a>
+<a id="compliance-auditing"></a>
 
-### 2.1 Incident patterns
+### 2.1 Compliance auditing
 
-The engprod-owned incident Project groups recurring incidents using a stable error-pattern identifier. Agents must check prior incidents and applicable lessons when recognizing or recording an error, identify relevant prior occurrences, and reuse an established pattern identifier when the underlying error recurs. A repeat occurrence remains evidence of recurrence rather than disappearing as a duplicate report. Duplicate reports of the same occurrence and separate occurrences of the same pattern must be distinguishable.
+The compliance auditor reviews evidence of the work against the approved plan, engineering process and applicable instructions. The auditor records findings with the applicable requirement, supporting evidence and disposition, and checks the evidence for corrective action. This is an assigned review responsibility; the Owner retains decision authority. Participants provide accurate execution records and cooperate with the audit.
 
-Project schema, matching mechanics, cost accounting and automation are design work still under discussion. Naming the destination does not claim that the Project, its export pipeline or duplicate detection has been implemented.
+On 2026-11-16, the Owner replaced mandatory agent-authored breach reporting with compliance auditing and withdrew breach-cost estimation. Agents are not required to produce a breach narrative for each mistake. Neither Participants nor the auditor estimate the cost of a breach. Honest status, visible errors and blockers, corrective work and evidence of completion remain required.
+
+Prior findings and incident history inform the audit. The approved destination remains an engprod-owned GitHub Project associated with `noblefactor-engprod`, grouping recurring findings under stable pattern identifiers. Repeated occurrences remain distinguishable from duplicate reports of the same occurrence. The Project is not yet provisioned; issue #317 remains historical evidence and the existing transition record.
+
+Project schema, matching mechanics and automation remain separate design work. Auditor role context and qualification remain scheduled work; this policy does not claim that an audit service or its storage has been implemented.
 
 <a id="all-agents-writing-for-publication"></a>
 

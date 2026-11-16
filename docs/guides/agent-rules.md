@@ -9,7 +9,7 @@ updated: 2026-11-16
 
 [Up: Engineering handbook](../index.md)
 
-The current requirements are in [Agent operation](../engineering/agent-operation.md). This retained entry point preserves earlier links; it does not define a competing process or standard.
+The current requirements are in [Agent operation](../engineering/agent-operation.md). This retained entry point preserves earlier links; it does not define a competing process or standard. On 2026-11-16, the Owner replaced mandatory breach reporting with [compliance auditing](../engineering/agent-operation.md#compliance-auditing) and withdrew breach-cost estimates. The retained headings and cases below are history, not a requirement to produce breach reports.
 
 The [source captured before cutover](../engineering/review/sources/adoption-2026-11-15/agent-rules.txt) preserves the prior text, including its examples and incident history. [The handbook transition](../engineering/index.md#temporary-live-entrypoint-overrides) records the Owner-approved temporary overrides in live host instructions.
 
@@ -65,7 +65,7 @@ See [Agent operation](../engineering/process.md#preserve-and-clean-up).
 
 ## 9. Earlier section: 9. A violation is disclosed as a violation
 
-See [Agent operation](../engineering/agent-operation.md#all-agents-shared-obligations).
+The former breach-reporting requirement was withdrawn on 2026-11-16. See [Compliance auditing](../engineering/agent-operation.md#compliance-auditing) for the replacement.
 
 <a id="10-a-finding-is-consulted-the-moment-it-is-found"></a>
 
@@ -131,10 +131,10 @@ See [Agent operation](../engineering/work-organization.md#schedule-commitment).
 
 The authoritative obligation is in [Agent operation: writing for publication](../engineering/agent-operation.md#all-agents-writing-for-publication).
 
-On 2026-11-15, during Handbook consolidation (#420), Codex asked whether plan approval should require separate direction to start before reading preserved finding F05 and the Owner's concurrence. The question reopened a settled decision. It was withdrawn; the agreed sequence remained unchanged. The cost was an unnecessary Owner-facing question and its correction. The [preserved review](../../ENGINEERING-DOCUMENTATION-REVIEW.findings.md) and [current disposition](../engineering/review/adoption-review.md) retain the evidence.
+On 2026-11-15, during Handbook consolidation (#420), Codex asked whether plan approval should require separate direction to start before reading preserved finding F05 and the Owner's concurrence. The question reopened a settled decision. It was withdrawn; the agreed sequence remained unchanged. The [preserved review](../../ENGINEERING-DOCUMENTATION-REVIEW.findings.md) and [current disposition](../engineering/review/adoption-review.md) retain the evidence.
 
 ## 21. Recorded incident: scope PR serialization to the session
 
 The authoritative transition scope is in [Temporary live-entrypoint overrides](../engineering/index.md#temporary-live-entrypoint-overrides).
 
-On 2026-11-16, during Handbook consolidation (#420), Codex incorrectly enforced the session's one-PR-at-a-time rule across all NobleFactor and personal repositories. The resulting guard blocked publication on other workers' PRs and led to an unnecessary request for an exception. The Owner clarified that the restriction applies to this session's work and that the Owner coordinates other workers. The cost was one failed publication run, the unnecessary approval exchange and the corrective work. The guard now checks only this session's assigned branches; other workers' PRs do not block it.
+On 2026-11-16, during Handbook consolidation (#420), Codex incorrectly enforced the session's one-PR-at-a-time rule across all NobleFactor and personal repositories. The resulting guard blocked publication on other workers' PRs and led to an unnecessary request for an exception. The Owner clarified that the restriction applies to this session's work and that the Owner coordinates other workers. The guard now checks only this session's assigned branches; other workers' PRs do not block it.
