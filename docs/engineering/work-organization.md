@@ -2,7 +2,7 @@
 title: "Work organization"
 status: draft
 created: 2026-10-28
-updated: 2026-10-29
+updated: 2026-11-15
 ---
 
 # Work organization
@@ -13,25 +13,27 @@ updated: 2026-10-29
 
 ## 1. Work and identity
 
-In a schedule, we resolve bugs and complete tasks that shape features within an epic’s scope in a GitHub repository. The bugs and tasks scheduled for execution are work items; each is tracked as an issue.
+Issues describe the work; schedules order its execution. [Issue standards](../issue-standards.md) owns classification, parent relationships, account fields and labels, and project membership. Product and engineering work use its common Epic → Feature → Task/Bug hierarchy. An issue's Area describes its own work rather than inheriting its parent's Area.
 
-Use a repository-qualified reference, `owner/repository#number`, wherever a bare number is ambiguous. A schedule issue is the GitHub issue containing the schedule. It organizes work; it is not one of its own scheduled tasks.
+Use a repository-qualified reference, `owner/repository#number`, wherever a bare number is ambiguous. A Schedule issue records the deliverable and exit criteria; the tasks and bugs committed to that schedule are its steps. The Schedule issue's own project row has no Step. Epics and features retain their ownership relationships rather than becoming executable steps.
 
-An epic defines a body of work. A feature describes a capability within that scope. Tasks implement parts of it; bugs repair behavior it should already provide. Product and engineering work use the same hierarchy: Epic → Feature → Task/Bug. Distinguish their purpose through the owning epic or area, not a separate chore tier. Most engineering-productivity work is recorded in `NobleFactor/noblefactor-engprod`; other repositories may use their own epic. Recommend an `engprod` epic for engineering-productivity work where appropriate, without requiring that exact name everywhere. Migrate existing chore issues explicitly into this hierarchy, preserving their work and relationships; schedule-container representation remains a separate issue-model decision. Retaining a `chore/` Git branch prefix does not retain Chore as an issue tier. This documentation change does not bulk-reclassify GitHub records. Schedules may draw issues from multiple features, epics and repositories.
+A scenario describes an end-user goal to walk through. Its Scenario project records the tasks and bugs found while walking it. Scenario beats and Schedule steps are different records. A discovered issue moves from the scenario to triage or, after classification and Owner approval of any committed-schedule amendment, onto a schedule. Follow the [scenario representation](../issue-standards.md#scenarios) and record the move; the retired Thread labels and issue-body beat tables are historical.
 
-A thread describes a scenario whose parts cross features or repositories. It is another view of work, not a unit of execution. Historical issue and thread classification is preserved in [the retained classification text](review/issue-classification.md). Its former chore tier is superseded by O02; GitHub field representation and migration are deferred.
+A schedule may draw tasks and bugs from several features, epics and repositories within its account. Cross-account dependencies use a stand-in issue in the schedule's account, under [Issue placement](../issue-standards.md#placement). A concern shared by two schedules does not permit assigning the same work item to both.
 
 <a id="schedule-commitment"></a>
 
 ## 2. Schedule commitment
 
-A schedule states its deliverable as before → after: what exists now and what will exist when its issues are complete. It orders repository-qualified task and bug issues and identifies their dependencies. Positions are numbered 1..N without gaps; completed issues retain their positions so the record of progress remains legible.
+A schedule states its deliverable as before → after: what exists now and what will exist when the committed work is complete. Its exit criteria describe observable completion evidence.
 
-Once committed, execute the declared order. Adding, splitting, removing or reordering scheduled work, or changing the deliverable, requires owner approval. A blocking discovery does not waive this requirement. Record the approved amendment and its consequences before affected execution resumes.
+The team's Schedule project holds the authoritative execution records. Its Schedule field selects the schedule, Step orders the tasks and bugs, Status records progress, and Worktree links the branch holding each step's work. Dependencies are GitHub blocked-by links. Step numbers run from 1..N without gaps; closed steps retain their numbers. The Schedule issue links the board filtered to its option. It does not maintain a second authoritative step table or a Next column.
 
-Keep the current worktree, state, dependencies, PR and completion evidence current as changes occur. Update the recorded worktree when work moves, record a PR merge when it lands, and state the actual reason when an issue closes without delivery. A closed bug/task is not automatically evidence that the promised result was delivered.
+Once committed, work follows step order and its dependencies. The Owner may approve additions, splitting, removal, reordering or a changed deliverable as understanding develops. Record the approved amendment and its consequences before affected execution resumes. These changes are ordinary planning work; discovery of a needed change is a reason to explain and revise the commitment.
 
-The [schedule template](../templates/schedule.md) proposes the record's shape. Before adopting its proposed Position/Issue header, resolve the compatibility items in the [conflict register](review/conflicts.md#schedule-format-compatibility). Publication of a header does not change a deployed parser.
+Keep records current when work starts, moves, merges or closes. Push the branch before linking it from Worktree. Record a merge on the step's own issue as it lands; if an issue closes without delivery, record why. Apply guarded writes and readback under the [PR procedure](procedures/pull-request.md), and preserve [completion milestones](process.md#completion-and-progression) separately from merge.
+
+The [schedule template](../templates/schedule.md) records the deliverable, ownership, board link, amendments and document links. The [issue-model representation](../issue-standards.md#schedules) defines its project fields. Templates do not replace those project records.
 
 **Case:** Two schedule rows continued to name an in-progress worktree after closure and merge had removed it, leaving the Owner and sessions with false progress ([recorded case, rule 19](review/sources/agent-rules.txt)).
 
@@ -39,34 +41,36 @@ The [schedule template](../templates/schedule.md) proposes the record's shape. B
 
 ## 3. Changing scheduled work
 
-The process supports changes in the shape of a job. Engineers must be able to create schedules, add work items, log discovered issues for triage, and move work items between schedules in a coordinated fashion. These are normal operations, not evidence of planning failure.
+Changes in the shape of a job are expected. Engineers may propose schedules, additions, new issues and coordinated transfers. The Owner approves changes to committed scope and order.
 
-Changes to a committed schedule require Owner approval. Record the proposed change, its effect on the promised outcome and dependencies, and the approval. Update affected plans and schedule records so they describe the revised work rather than preserving an obsolete commitment.
+Record the proposed change, its effect on the promised outcome and dependencies, and the Owner's approval. Update affected plans and schedule records together. Use the supported schedule command for the approved operation; [Issue standards](../issue-standards.md#schedules) records the current scheduling interface and representation.
 
-Before transferring a work item, identify its source and destination schedules, execution responsibility, current worktree and state, and any affected dependencies. Coordinate with the affected workers under the approved communication boundaries and keep them informed as the change occurs. Do not leave the work item assigned to two schedules or surprise a worker with a changed mission. Detailed issue-tracking mechanics remain separate tooling work.
+Before a transfer, identify the source and destination schedules, execution responsibility, worktree, state and affected dependencies. Move project membership as one coordinated operation and keep the affected workers informed through approved conversation boundaries. Do not leave an issue assigned to two schedules or surprise a worker with a changed mission.
 
 <a id="overlap-and-coordination"></a>
 
 ## 4. Overlap and coordination
 
-Schedules can overlap. Discovering overlap requires notifying the owner before either worker changes scope, ownership or execution order. State the shared issue or affected code, current owners, dependency and proposed coordination.
+Schedules may affect the same code, features or dependencies. Notify the Owner before either worker changes scope, ownership or order. Identify the overlap, current responsibilities and proposed coordination.
 
-No two schedules may contain the same work item. Schedules may overlap in the code, features or dependencies they affect, but that overlap does not permit duplicate work-item membership. A transfer must be coordinated so responsibility is unambiguous and the affected workers are not surprised.
-
-Overlap does not authorize duplicate writes or cross-worker messages. The Owner approves bounded cross-worker conversations under [Agent operation](agent-operation.md). Any resulting mission change requires its own approval.
+Overlap does not authorize duplicate writes, duplicate work-item membership or cross-worker messages. The Owner approves conversations under [Agent operation](agent-operation.md#owner-supervised-agents-conversations). Any resulting assignment or schedule amendment requires its own approval.
 
 <a id="discoveries-and-blockers"></a>
 
 ## 5. Discoveries and blockers
 
-Log discovered work when found and link it from the current plan. State whether it blocks the approved outcome, where it should be handled and what decision is required. New nonblocking work belongs on a later schedule unless an amendment is approved.
+Log discovered work when found and link it from the current plan. State whether it blocks the approved outcome, where it belongs and what decision is needed. New nonblocking work goes to triage or a later schedule unless the Owner approves adding it to the current commitment.
 
-A blocker prevents proceeding with approved work; severity or annoyance alone does not establish a blocker. Stop affected work, preserve the worktree and unfinished changes, and record state, evidence and the dependency. Propose whether the blocker needs its own worktree or is inseparable from the current work. Consult the owner before acting on a defect in another worker's or PR's scope.
+A blocker prevents proceeding with approved work; severity or annoyance alone does not establish a blocker. Stop affected work, preserve the worktree and unfinished changes, and record state, evidence and the dependency. Propose whether the blocker needs its own worktree or is inseparable from the current work. Consult the Owner before acting on a defect belonging to another worker or PR.
 
-Do not work around an external blocking defect merely to claim progress. Do not change the running schedule, discard work or take over another worker's responsibility without approval.
+Do not work around an external blocking defect to claim progress. Approval is required before changing the committed schedule, discarding work or taking over another worker's responsibility.
 
 <a id="persistent-assignments"></a>
 
 ## 6. Persistent assignments
 
-An owner-supervised worker receives a schedule as its mission. A persistent session works through that schedule's issues; it is not replaced merely because the next issue begins. Resumption restores the assignment and its current approved state. Terminal lifetime, agent-session lifetime, issue state and work completion are distinct. See the [session model](../architecture/agent-schedule/1-session-model.md) for the existing conversation, background-session and viewer lifecycles; that implementation document does not grant additional process authority.
+An Owner-supervised worker receives a schedule as its mission. Its persistent assignment identifies the current issue, plan, repository and worktree. Resumption restores that assignment and its approved state; advancing to another issue does not itself require replacing the conversation.
+
+Role, assignment, native conversation and terminal attachment identify different things. The [workstation architecture](https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/architecture/agentic-developer-workstation.md#41-persistent-specialists) describes the five specialist roles and their persistent conversations. Role definitions and host entrypoints are subsequent work on the handbook-adoption schedule; this handbook does not claim that they have been implemented or qualified.
+
+Apply [Agent operation](agent-operation.md) when restoring context and authority. A new terminal, reconnection or resumed host does not grant a new assignment or additional permission.

@@ -1,91 +1,50 @@
 ---
-title: "Documentation Standards"
-type: Process
-status: Approved
+title: "Documentation Standards \u2014 retained entry point"
+type: Reference
+status: "Superseded by docs/standards/documentation.md"
+updated: 2026-11-15
 ---
 
 # Documentation Standards
 
-Every tracked markdown file in a NobleFactor repository carries frontmatter, and the values it may
-carry come from one of two families. The rule is uniform across repositories; only the vocabulary
-differs, and which vocabulary applies is a property of the document, not of the repository.
+[Up: Engineering handbook](index.md)
 
-`.github/scripts/Test-Frontmatter.sh` in this repository is the reference implementation. Repositories
-adopting the gate should use that script rather than a variant, so that a document valid in one
-repository is valid in all of them.
+The current requirements are in [Documentation standards](standards/documentation.md). This retained entry point preserves earlier links; it does not define a competing process or standard.
 
-## The two families
+The [source captured before cutover](engineering/review/sources/adoption-2026-11-15/documentation-standards.txt) preserves the prior text, including its examples and incident history. [The handbook transition](engineering/index.md#temporary-live-entrypoint-overrides) records the Owner-approved temporary overrides in live host instructions.
 
-A document that declares `type:` is a **catalog document** — an ADR, an RFC, a process record. Its
-`status` describes where a *decision* stands.
+<a id="the-two-families"></a>
 
-A document that does not declare `type:` is a **working document** — a plan or an architecture note.
-Its `status` describes where the *work* has got to, and its shape is prescribed by
-[docs/plans/TEMPLATE.md](plans/TEMPLATE.md), the template CLAUDE.md mandates org-wide.
+## 1. Earlier section: The two families
 
-| | Working | Catalog |
-| --- | --- | --- |
-| Discriminator | no `type` | declares `type` |
-| Required | `title` | `title`, `type` |
-| `status` | `draft`, `approved`, `active`, `complete`, `abandoned` -- the list in [docs/plans/TEMPLATE.md](plans/TEMPLATE.md) | `Draft`, `Proposed`, `Decided`, `Approved`, `Accepted`, `Placeholder`, `Superseded`, `Withdrawn`, `Research Complete` |
-| Example | `docs/plans/*` | ADR trees, `docs/guides/pr-script-template.md` |
+See [Documentation standards](standards/documentation.md#document-families-and-metadata).
 
-`type` must be one of: `ADR`, `RFC`, `PRD`, `README`, `Overview`, `Pitch`, `Index`, `Demos`,
-`Strategy`, `Roadmap`, `Reference`, `Guide`, `Demo Script`, `Plan`, `Process`, `Brief`.
+<a id="why-type-is-the-discriminator"></a>
 
-## Why `type` is the discriminator
+## 2. Earlier section: Why `type` is the discriminator
 
-Not directory. `docs/guides/` in this repository holds both families: `pr-script-template.md` and
-`release-process.md` are `type: Process` with `status: Approved`, while `go-style-guidelines.md`
-carries neither. A path rule would misclassify one or the other.
+See [Documentation standards](standards/documentation.md#document-families-and-metadata).
 
-Using `type` makes each document self-describing, so moving a file does not change what it must
-satisfy.
+<a id="statuses-that-mean-the-same-thing"></a>
 
-`CATALOG_PATHS` in the script pins chosen paths to the catalog family regardless, so a tree of
-ADRs cannot silently downgrade itself by omitting `type`. It is empty here; a repository holding an
-ADR tree should list it.
+## 3. Earlier section: Statuses that mean the same thing
 
-## Statuses that mean the same thing
+See [Documentation standards](standards/documentation.md#document-families-and-metadata).
 
-Two overlaps are accepted rather than normalized, because settling them is an editorial decision:
+<a id="exemptions"></a>
 
-- Catalog: `Decided`, `Approved`, and `Accepted` all read the same to a reader.
-- Working: both `approved` and `Approved` appear in this tree, as does `active`.
+## 4. Earlier section: Exemptions
 
-## Exemptions
+See [Documentation standards](standards/documentation.md#exemptions).
 
-A file that legitimately carries no frontmatter is listed in `.github/frontmatter-exempt`, one path
-per line as `git ls-files` prints it. Exemption is for repository furniture — license text, a README
-that is a landing page — and for closed historical records whose paths now dangle. It is not a way
-to skip filling in a field.
+<a id="documents-are-us-english"></a>
 
-A new entry is a decision a reviewer should see, which is why it is a list and not a pattern.
+## 5. Earlier section: Documents are US English
 
-## Documents are US English
+See [Documentation standards](standards/documentation.md#language).
 
-Ruled 2026-09-23 (#234): *"we're US … all words should be in US English."* `-or` and not `-our`,
-`-ize` and not `-ise`, `-yzer` and not `-yser`, one `l` before a suffix, and `license` for the noun
-as well as the verb.
+<a id="what-the-gate-is-for"></a>
 
-**No word is exempt, including a word that names something.** The catalog family named at the top of
-this document was spelled the other way until that ruling, and it was renamed with everything else —
-as were the three constants in `.github/scripts/Test-Frontmatter.sh` that carry the name, and the
-value the gate prints in its own messages. That a term is domain vocabulary is not a reason to keep
-it, and `.github/codespell-ignore` is not where such a reason goes: that file is for words codespell
-gets wrong, not for words we would rather not change.
+## 6. Earlier section: What the gate is for
 
-The gate is codespell's `en-GB_to_en-US` dictionary, added to `clear,rare` in `ci.yaml`. It reads
-every tracked file rather than only markdown, so a shell script's comments and a Starlark docstring
-are held to the same rule as a plan. One document is skipped by name, #234's plan, because its whole
-subject is the difference between the two spellings and it has to quote both.
-
-`golangci-lint` enforces the same rule inside Go source through `misspell` with `locale: US`, and did
-so before this was written down. Until #234 it was the only thing that did, which is how the drift
-got in.
-
-## What the gate is for
-
-It stops **new** drift. The vocabularies above were enumerated from what the trees already used, so
-that the gate is green on the day it lands. A gate that is red on arrival does not get adopted; it
-gets bypassed.
+See [Documentation standards](standards/documentation.md#form-and-metadata).

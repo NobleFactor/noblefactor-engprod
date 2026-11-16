@@ -1,9 +1,14 @@
 ---
 title: "Consolidate engineering documentation"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/420
-status: draft
+status: active
 created: 2026-10-29
-updated: 2026-11-14
+updated: 2026-11-16
+documents:
+  - kind: Design
+    path: docs/architecture/agentic-developer-workstation.md
+  - kind: Handbook
+    path: docs/index.md
 ---
 
 # Consolidate engineering documentation
@@ -25,7 +30,7 @@ Deliver a coherent documentation set on `develop` with one authoritative home pe
 - **Reviewer:** the initial review and Owner responses are preserved in the review material. The Owner appoints the reviewer for the resumed adoption pass; no direct conversation has been authorized.
 - **Observer:** no separate assignment recorded. Keep the Owner informed directly.
 
-The Owner has approved the structure, recorded policy decisions and worktree import, and directed Handbook consolidation to resume on 2026-11-14. The prior draft is committed in checkpoint d4960b7430ff717e256d3c2effcdb135ba9d1208. This refreshed execution plan is the plan-only checkpoint for Owner review before further handbook reconciliation. The direction to resume does not authorize commit, push, publication or policy adoption. No agent communication is authorized by naming a Reviewer here.
+The Owner has approved the structure, recorded policy decisions and worktree import, and directed Handbook consolidation to resume on 2026-11-14. The prior draft is committed in checkpoint d4960b7430ff717e256d3c2effcdb135ba9d1208. The Owner approved the committed execution plan at 7f9ba188ac6cf7555fee4d6b9fcc0a5ecebf3d64 on 2026-11-15, replying “approved.” after being shown that revision and its proposed reconciliation work. Approval authorizes the planned handbook reconciliation; commit, push, publication and policy adoption retain their separate approval requirements. This approval is recorded from the current Codex conversation. No agent communication is authorized by naming a Reviewer here.
 
 ## 3. Current state and preservation
 
@@ -33,10 +38,10 @@ The Owner has approved the structure, recorded policy decisions and worktree imp
 - Branch: `doc/420-consolidate-engineering`; target: `develop`.
 - Import base: `59740c91f0183f2165a70f6aa3b352d1e5d42515`.
 - All 42 package files were copied and hash-verified without overwriting existing repository files. The package README is preserved as `ENGINEERING-DOCUMENTATION-REVIEW.md`.
-- The prior pass records preservation of the original review package and verified backups. Their current availability has not yet been rechecked in this resumed pass; retain the committed source evidence and import manifests.
+- The resumed pass verified all 13 source snapshots and all 42 imported destinations. The retained review archive contains the original backup matching every import-manifest hash; original Linux locations were not accessed from this Mac. [Resumption evidence](../../engineering/review/reconciliation-2026-11-15.json) records the comparisons. Retain the original archive, source evidence and import manifests.
 - [Import manifest](../../engineering/review/worktree-import.json) records source/destination identities and content hashes. It is a record of the import, not a promise that subsequent edits retain those hashes.
 - [Review decisions](../../engineering/review/open-decisions.md) records the resolutions of O01–O11 and preserves the Owner's responses.
-- [Documentation entry point](../../index.md) exists. Consistent parent navigation and cutover of old active documents remain unfinished.
+- [Documentation entry point](../../index.md) exists. The final Participant review verified all 23 active handbook documents are reachable from it, all 134 legacy section anchors are preserved, and current local references resolve. Owner review and adoption remain pending.
 
 ## 4. Design impact and intended implementation
 
@@ -46,7 +51,7 @@ Use `docs/index.md` as the entry point. Define roles once in the engineering pro
 
 Reconcile the old document paths through reviewed successor notices or precise retained responsibilities. Do not merely add a new directory while leaving competing active definitions. Preserve incoming links where practical; do not delete historical plans to remove inconvenient old wording.
 
-Treat editorial corrections supported by settled decisions as consolidation work. Present substantive policy gaps to the Owner one at a time before selecting an answer. Record findings in the [conflict register](../../engineering/review/conflicts.md). Comparison with Claude Code's initial read follows when the Owner supplies it.
+Treat editorial corrections supported by settled decisions as consolidation work. Present substantive policy gaps to the Owner one at a time before selecting an answer. Record findings in the [conflict register](../../engineering/review/conflicts.md). The preserved Reviewer findings are available in the root review record and [current adoption disposition](../../engineering/review/adoption-review.md); consult those records rather than asking the Owner to supply them again.
 
 ### 4.1. Resumed reconciliation pass
 
@@ -87,30 +92,37 @@ The documentation-only CI path is agreed policy but not implemented by this task
 - [x] Preserve the original plan in a committed checkpoint: d4960b7430ff717e256d3c2effcdb135ba9d1208, verified by the Owner-approved Git inspection on 2026-11-14. The former unchecked preparation entry was stale.
 - [x] Establish the Owner-requested handbook-adoption schedule (#551), with Handbook consolidation (#420) as Step 1.
 - [x] Refresh the execution plan for the handbook-adoption schedule, preserving the prior checkpoint and review evidence.
-- [ ] Obtain Owner review of this plan checkpoint before further handbook reconciliation.
+- [x] Obtain Owner review of this plan checkpoint before further handbook reconciliation: approved 2026-11-15, revision 7f9ba188ac6cf7555fee4d6b9fcc0a5ecebf3d64.
+- [x] Integrate current develop through the Owner-run script on 2026-11-15, including Plan linking (#557), without changing the bytes of the fifteen local draft files. The successful script output is recorded in this conversation.
+- [x] Recheck preservation on 2026-11-15: all 13 source snapshots match their hashes; all 42 imported destinations exist; the retained archive contains a backup matching every import-manifest hash. See [resumption evidence](../../engineering/review/reconciliation-2026-11-15.json).
 
 ### 6.2. Reconciliation
 
-- [ ] Review source requirements against draft definitions at section/sentence level.
-- [ ] Resolve conflicts already answered by recorded decisions without asking for those decisions again.
-- [ ] Present substantive gaps to the Owner individually.
-- [ ] Incorporate the Owner-provided external review findings.
-- [ ] Reconcile detailed issue, language, metadata, release and PR-template responsibilities.
-- [ ] Record successor paths and preserve required source/history material.
+- [x] Review source requirements against draft definitions at section/sentence level: all 58 inventory groups, nineteen original agent rules, recorded decisions and newer pre-cutover guides have dispositions; Go/PowerShell word-level comparisons isolate the approved changes.
+- [x] Resolve conflicts already answered by recorded decisions: the final pass applies the recorded rulings, corrects stale conflict descriptions and preserves the original review and responses. The duplicate F05 question and its correction remain disclosed.
+- [x] Present substantive gaps to the Owner individually: paragraph-layout scope and live-entrypoint cutover are resolved and recorded; effective GitHub review requirements remain explicit delivery prerequisites.
+- [x] Resolve the live-entrypoint cutover boundary with the Owner: temporary overrides documented at handbook adoption; live migration assigned to the Claude/Codex host tasks, approved 2026-11-15.
+- [x] Recover and incorporate the preserved external review findings F01–F19 without changing the original record; the current disposition retains the protection dependency and records the Owner's paragraph-scope resolution.
+- [x] Reconcile detailed issue, language, metadata, release and PR-template responsibilities; required reviews remain an explicit adoption dependency; the Owner resolved paragraph-layout scope through Formatting migration (#570), which completes the remainder within this schedule before its closing review.
+- [x] Record the Owner's formatting scope direction on 2026-11-15: new/revised prose conforms during adoption, and Formatting migration (#570), under Feature #419 and Epic #526, belongs to Handbook adoption (#551), whose project row holds its current Step. It covers all maintained documents and schedule assets and blocks the closing review (#565). No formatting backlog remains beyond schedule completion.
+- [x] Record successor paths and preserve required source/history material: retained guide entrypoints preserve earlier anchors; eight pre-cutover sources and their hashes are captured under the adoption source manifest.
 
 ### 6.3. Navigation and publication quality
 
-- [ ] Complete parent/child and related-document navigation.
-- [ ] Apply publication-quality language and stable terminology consistently.
-- [ ] Bring templates into agreement with authoritative definitions.
-- [ ] Verify the requirement mapping and conflict dispositions.
+- [x] Complete parent/child and related-document navigation: all 23 active documents are reachable from the handbook entry point; 134 legacy section anchors and 448 local references pass verification.
+- [x] Apply publication-quality language and stable terminology consistently: correct the final inline-code, circular-link, subsection-number and stale-review defects; preserve immutable historical text.
+- [x] Bring templates into agreement with the settled definitions, including plan-derived document tables, explicit closure authorization and conservative merge gates. The subsequent Issue forms (#572) review exposed a competing issue outline; the candidate now delegates body shape to the account forms, preserving shared context guidance and parser-sensitive headings.
+- [x] Verify all 58 inventory-group dispositions and preserve the original 19 agent rules; record outstanding adoption decisions in the current review.
 
 ### 6.4. Validation and adoption
 
-- [ ] Validate the actual changed-document set, including paths and anchors.
-- [ ] Run applicable repository gates; record results and limitations.
+- [x] Validate the actual changed-document set, including paths and anchors: the final targeted pass checks 38 documents, 448 local references, all source hashes, inventory coverage and entry-point reachability, with no errors. Spelling passes for the final edited set.
+- [x] Run applicable repository gates; record results and limitations: the Owner-run validation script exited 0 on 2026-11-15 in 166.1722 seconds, checking 38 documents and 440 local references and passing make check and all Test-Here suites. New untracked documents received explicit additional checks. The displayed output was truncated; the result applies to that tested draft. Later policy/status edits receive document checks, and delivery must still meet its required gates.
 - [ ] Obtain Owner review of the complete documentation and transition.
-- [ ] Prepare the approved PR script and adoption PR; do not auto-close the issue while required post-merge evidence remains.
+- [x] Analyze the Owner-run inspection log and verify the filesystem scope: 42 documentation/evidence paths, including the eight pre-cutover snapshots. No runtime code is included.
+- [x] Obtain the Owner-run staging dry-run proof before handing over the commit/PR script: 42 named files passed on 2026-11-16 with the index and reviewed content unchanged. The receipt is /Users/david-noble/Workspace/NobleFactor/scratch/handbook-setup/420-staging-receipt.2WLiaxIK.json; the publication script rejects scope, index or content drift.
+- [x] Prepare the Owner-run publication script from the successful staging receipt, with an explicit stop for adoption review and a separate guarded merge mode.
+- [ ] Publish the adoption PR and obtain Owner review; record publication on the issue and keep required post-merge obligations open.
 - [ ] Record merge and verify the adopted documentation entry point.
 - [ ] Record completion approval and any documentation-only follow-up obligation.
 - [ ] Clean up the worktree/script under the approved procedure after preserving outstanding records.
@@ -119,10 +131,10 @@ The documentation-only CI path is agreed policy but not implemented by this task
 
 | Milestone | Required | Current state |
 | --- | --- | --- |
-| Implementation | Yes: reconciled documents, templates, navigation and transition | Existing draft and prior review checkpoints preserved; resumed reconciliation pending |
+| Implementation | Yes: reconciled documents, templates, navigation and transition | Participant reconciliation and final content/navigation checks complete; local candidate awaits Owner review and delivery authorization |
 | Merge | Yes: approved adoption change on `develop` | Not performed |
 | Deployment | No separate runtime deployment is proposed; evaluate installed agent-instruction dependencies during cutover | No deployment claimed |
-| Verification | Yes: required document checks, Owner review and post-merge entry-point verification | Prior import and local-link results recorded; current-pass validation and adoption evidence pending |
+| Verification | Yes: required document checks, Owner review and post-merge entry-point verification | Owner-run validation and make check passed on 2026-11-15; final document/spelling checks pass after editorial updates; delivery gates, Owner review and post-merge evidence remain pending |
 
 The plan remains active once implementation is authorized and until required milestones are satisfied. Post-merge evidence is recorded immediately on the issue and incorporated through the approved documentation-follow-up process. Do not relabel an unfinished obligation complete merely to close the plan.
 
@@ -132,4 +144,20 @@ Related issues include documentation standards #399, Bash standards #266/#267, a
 
 The original draft contains review material with superseded wording. The conflict review must distinguish active policy, retained detail and immutable source snapshots rather than treating every historical sentence as an instruction. Some links name removed source worktrees; replacement requires checking provenance, not guessing a new target.
 
-No direct agent communication, commits, pushes, PR execution, ruleset updates, sandbox claims or repository-wide issue migrations are authorized by this plan's draft status.
+Execution-plan approval does not grant direct agent communication, Git execution, PR execution, ruleset updates, sandbox qualification or repository-wide issue migrations. The existing approval requirements remain in force.
+
+### 8.1. Live entrypoint cutover
+
+On 2026-11-15, the resumed review verified that `/Users/david-noble/.Codex/AGENTS.md` and `/Users/david-noble/.claude/CLAUDE.md` both resolve to `/Users/david-noble/.local/share/devlore/writ/repos/personal/Home/common/.claude/CLAUDE.md`. That file still repeats the former session-wide PR restriction and literal Claude attribution, while O01 and O05 establish the reviewed replacement policies. The Owner approved the cutover timing on 2026-11-15: document temporary live-instruction overrides during handbook adoption, then migrate the live entrypoints in [Claude consumption (#562)](https://github.com/NobleFactor/noblefactor-engprod/issues/562) and [Codex consumption (#563)](https://github.com/NobleFactor/noblefactor-engprod/issues/563). The policies remain settled. This step adopts the handbook with the explicit transition described in [Temporary live-entrypoint overrides](../../engineering/index.md#temporary-live-entrypoint-overrides). Live instruction changes and their qualification belong to the host tasks; handbook adoption alone does not change current session permissions.
+
+### 8.2. Issue-filing handoff
+
+The Owner transferred Issue forms (#572), Issue filing (#338) and Filing enforcement (#504) onto Handbook adoption (#551), after this foundation. Issue forms retains Feature #331 ownership; the filing command and enforcement retain Feature #332 ownership. The inherited issue-forms plan is preserved at d3dc008cdf0e0c1889178cfc8d4da77b47ea5210. Its approved Task/Bug required fields are recorded from the Owner-relayed handoff; Area representation and the remaining form questions stay open. The handbook supplies shared process and references the account forms for body shape. The issue template's conflicting Acceptance outline is corrected before publication. Required dependencies and independent work are recorded in the Schedule issue and native links; no new implementation or Git authority is inferred from the transfers.
+
+### 8.3. Delivery preparation on 2026-11-16
+
+The Owner-run inspection log at /Users/david-noble/Workspace/NobleFactor/scratch/handbook-setup/420-git-inspection.EVgxQ4QU.log supplies the tracked/untracked scope. The delivery verifier checks all 42 paths and their current hashes, the branch and index state, document checks and the actual named-path Git staging dry run. The Owner runs it; the agent has no Git grant. The Owner completed the staging dry run on 2026-11-16; all 42 named files passed and the index and reviewed content were unchanged. Receipt: /Users/david-noble/Workspace/NobleFactor/scratch/handbook-setup/420-staging-receipt.2WLiaxIK.json. The delivery script incorporates that proof, script-preparation bookkeeping and the Owner's session-scope clarification in the implementation commit, publishes the candidate and stops for Owner review. Owner adoption, actual publication/merge and post-merge obligations remain separate; their subsequent evidence belongs on the issue and in the approved documentation follow-up.
+
+The inherited account contribution terms still list the retired chore prefix. Apply the settled branch ruling and the current doc branch; Contribution terms (#265) retains the separate account/repository guide update. The effective develop rules were read again on 2026-11-16: one approving review, code-owner and last-push approval, quality-gate, and the configured quality/scanning requirements. No protection configuration was changed.
+
+On 2026-11-16, the Owner clarified that the one-PR-at-a-time rule applies to this session's work. Other workers' PRs do not block it; the Owner coordinates their work. The publication guard checks only this session's assigned Handbook consolidation (#420) and Issue forms (#572) branches. This clarifies the existing instruction; no exception for an unrelated PR is required.

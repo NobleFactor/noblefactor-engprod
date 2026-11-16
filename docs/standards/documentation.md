@@ -2,7 +2,7 @@
 title: "Documentation standards"
 status: draft
 created: 2026-10-28
-updated: 2026-10-29
+updated: 2026-11-15
 ---
 
 # Documentation standards
@@ -25,6 +25,8 @@ Every tracked Markdown document carries frontmatter unless a reviewed, explicit 
 | Catalog | Declares `type` | `title`, `type` | `Draft`, `Proposed`, `Decided`, `Approved`, `Accepted`, `Placeholder`, `Superseded`, `Withdrawn`, `Research Complete` |
 
 Allowed catalog types are `ADR`, `RFC`, `PRD`, `README`, `Overview`, `Pitch`, `Index`, `Demos`, `Strategy`, `Roadmap`, `Reference`, `Guide`, `Demo Script`, `Plan`, `Process`, and `Brief`. The existing `Superseded by <reference>` status form identifies its successor. Legacy vocabulary overlaps are not normalized by this consolidation; identify any actual mismatch with the current checker before publication.
+
+The catalog values `Plan` and `Process` name decision-document types; they do not select the working execution-plan format. A branch-bound execution plan uses the working template and omits `type`. An approved shared process record may declare `type: Process`. This consolidation retains the checker's existing vocabulary and introduces no second execution-plan format.
 
 Decision status, working-document progress and delivery milestones describe different facts. [Completion and progression](../engineering/process.md#completion-and-progression) defines the plan-completion transition. An approved design is not evidence of implementation.
 
@@ -62,11 +64,13 @@ Each prose paragraph occupies one source line. Do not hard-wrap prose to a colum
 
 Preserve code blocks, tables, nested lists and intentional structural boundaries. Code and documentation comments inside source files follow their language-specific formatting rules; this prose rule does not remove those limits. Historical source records remain unchanged unless an explicitly reviewed migration applies.
 
+For [Handbook adoption (#551)](https://github.com/NobleFactor/noblefactor-engprod/issues/551), the Owner approved on 2026-11-15 that new and revised prose conforms during adoption, with every remaining maintained document formatted before the schedule closes. [Formatting migration (#570)](https://github.com/NobleFactor/noblefactor-engprod/issues/570) owns the comprehensive inventory and final pass over noblefactor-engprod and the documentation/context assets delivered by the schedule. The closing review verifies this completion; previously untouched documents are included, and immutable historical evidence is preserved.
+
 <a id="section-numbering"></a>
 
 ## 3. Section numbering
 
-Numbered sections are mandatory in published process, plan and design documents. Number sections hierarchically so reviewers can identify a passage precisely. Preserve stable issue headings in shared plans as `## Issue NNN`, without a title or a section-number prefix. These headings identify issues rather than positions in the document.
+Numbered sections are mandatory in published process, plan and design documents. Number sections hierarchically so reviewers can identify a passage precisely. Preserve stable issue headings in shared plans as `## Issue NNN`, without a title or a section-number prefix. These headings identify issues rather than positions in the document. Issue-form bodies preserve the selected form's literal labels without section-number prefixes; machine-parsed labels such as Evidence of completion and Plan and design documents must remain recognizable.
 
 When adding or changing section numbers, preserve existing incoming link targets through explicit anchors or a reviewed reference migration. Numbering must not silently break links. Templates must demonstrate the required structure rather than leave numbering to each author.
 
@@ -74,6 +78,6 @@ When adding or changing section numbers, preserve existing incoming link targets
 
 ## 4. Links, changes and history
 
-Work assets define issue/plan/design link and path requirements. Prefer stable anchors and identities. Update affected documents in the same commit as the facts change, including implementation-status companions and user-facing material. Distinguish proposed, approved, implemented and verified statements.
+[Work assets](../engineering/work-assets.md#plans-and-designs) defines issue/plan/design link and path requirements, including default-branch links for open issues and merge-commit links for issues closed by a merged PR. Prefer stable anchors and identities. Update affected documents in the same commit as the facts change, including implementation-status companions and user-facing material. Distinguish proposed, approved, implemented and verified statements.
 
-When replacing a document, record its successor and migrate incoming references. Retain a clear historical designation for source records; do not leave two active definitions. The publication migration and any compatibility changes to tools are later work requiring review.
+When replacing a document, record its successor and migrate incoming references. Retain a clear historical designation for source records; do not leave two active definitions. Handbook consolidation owns the reviewed document cutover. Live host entrypoint changes follow the [Owner-approved transition](../engineering/index.md#temporary-live-entrypoint-overrides); tool behavior changes require their own approved implementation.

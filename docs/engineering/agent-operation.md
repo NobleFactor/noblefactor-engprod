@@ -2,7 +2,7 @@
 title: "Agent operation"
 status: draft
 created: 2026-10-28
-updated: 2026-10-29
+updated: 2026-11-15
 ---
 
 # Agent operation
@@ -45,7 +45,7 @@ Documents are edited for publication. Treat the Owner’s answers, notes and rev
 
 Distinguish a verbatim quotation from an edited statement of policy. Preserve exact wording when the Owner asks for it or when the wording itself is material. Do not introduce policy changes as editorial improvements.
 
-**Rationale:** The Owner distinguished policy answers from published prose on 2026-10-29: preserve the decision while editing its expression for publication ([decision record, entries 40–41](review/decisions.md)). Seek clarification when a substantive ambiguity remains; do not ask the Owner to approve the same decision again merely because its wording needs editing.
+**Rationale:** The Owner distinguished policy answers from published prose on 2026-10-29: preserve the decision while editing its expression for publication ([decision record, entries 40–41](review/decisions.md)). Read the preserved Owner decisions and review findings before treating a question as new. Apply a settled ruling unless a later direction or substantive ambiguity needs the Owner's judgment. Seek clarification when a substantive ambiguity remains; do not ask the Owner to approve the same decision again merely because its wording needs editing.
 
 <a id="owner-supervised-agents-assignment-and-responsibility"></a>
 
@@ -89,13 +89,13 @@ Canonical-clone integration maintenance, including updating its target checkout 
 
 Sandbox enforcement is verified separately before it is relied on; approval of this authorization model does not establish that enforcement exists. PR execution authority is separate from permission to commit and push: retain the reviewed-script handoff to the Owner unless an explicit exception authorizes agent execution.
 
-Follow the [PR disclosure requirements](procedures/pull-request.md#review-boundary) and read repository contribution terms before preparing the script. Surface inconsistent contribution terms for the approved documentation process rather than silently claiming compliance with both.
+Follow the [PR disclosure requirements](procedures/pull-request.md#review-boundary) and read repository contribution terms before preparing the script. Surface inconsistent contribution terms for the approved documentation process rather than silently claiming compliance with both. During handbook adoption, apply the Owner-approved [temporary live-entrypoint overrides](index.md#temporary-live-entrypoint-overrides) to sessions using the retained personal instructions. The Claude and Codex host tasks own their replacement and qualification; publication alone grants no new execution authority.
 
 <a id="all-agents-tools-and-status"></a>
 
 ## 8. All agents: tools and status
 
-Use the official issue report/audit for issue questions, not ad-hoc searches or reconstructed conversational status. Read a specific issue body after the report identifies it. Determine the assigned schedule from assignment metadata, not branch names or remembered conversation; authoritative metadata precedence remains a tooling decision.
+Use `star github schedule report` for issue questions and `star github triage sweep` for classification checks. Read a specific issue body after the report identifies it. Resolve the assigned schedule through the approved assignment procedure and its metadata, rather than branch names or remembered conversation. Host-specific lookup belongs in the host binding; assignment does not grant additional authority.
 
 Retain the verification duty before recommending a locally built command: identify installed copy/build, compare with the fetched target under required permission, confirm the operation exists, and state what is actually available. Do not overwrite another session's dirty or unmerged installed build. If an approved command form precedes released support, identify that distinction and the interim explicitly. Never claim a dry run exercised the live mutation path.
 

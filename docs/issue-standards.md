@@ -580,17 +580,7 @@ branch its work is on; the step's own issue records that it merged or closed. Th
 
 ### What a schedule commits to
 
-A schedule is a commitment, not a proposal:
-
-- **Steps are worked in step order,** each after the steps its blocked-by links name. One pull request
-  may close several steps.
-- **No step is split, and none is added, once the schedule is committed.** The owner may amend the
-  deliverable; whoever is executing it may not. A step added by the owner's amendment gets its step number
-  and its blocked-by links when it is added. Discovering that a step must be split is a planning failure,
-  not a discovery — the steps were not understood before they were committed to.
-- **Work found along the way does not join a running schedule.** It is filed as a task or a bug and goes
-  into its team's Triage project until a triage decision is made. After that it may become a step of a
-  later schedule.
+[Schedule commitment](engineering/work-organization.md#schedule-commitment) owns execution order, dependencies and Owner-approved amendments. Adding, splitting, removing or reordering work is supported when the Owner approves and the records are updated. [Discoveries and blockers](engineering/work-organization.md#discoveries-and-blockers) owns the disposition of work found during execution. The project representation above remains authoritative for the rows.
 
 ### The deliverable
 
@@ -598,8 +588,7 @@ A schedule is a commitment, not a proposal:
 today, and what they will have when the last step closes — and its exit criteria, which are its evidence
 of completion. The steps are how it is delivered; the deliverable is what was promised.
 
-If delivering it turns out to need something outside the steps, **the deliverable has changed**: stop, say
-so, and replan together. That is the moment a schedule is allowed to change, and the only one.
+When the deliverable or required steps change, explain the effect and replan with the Owner under [Changing scheduled work](engineering/work-organization.md#changing-scheduled-work). The approved amendment changes the commitment; a worker does not silently change it.
 
 ### What the audit checks
 

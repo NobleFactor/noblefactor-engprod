@@ -1,17 +1,16 @@
 ---
-title: "Go standards — retained detail"
+title: "Go standards"
 status: draft
 created: 2026-10-28
-updated: 2026-10-29
+updated: 2026-11-15
 ---
 
-# Go standards — retained detail
+# Go standards
 
 [Up: Coding standards](index.md)
 
-Imported detailed requirements for review; no substantive style changes have been approved. The shared coding index defines applicability; approved scope changes are incorporated explicitly.
+The shared coding index defines applicability. These detailed conventions incorporate the Owner-approved clarifications recorded in the review; repository-specific product requirements remain with their owning repository.
 
-# Go Style Guidelines
 
 ## 1. File Layout (MANDATORY)
 
@@ -90,7 +89,9 @@ Within each delineator group, methods are **alphabetical**.
 
 <a id="sort-order-summary"></a>
 
-### 3.3 Sort Order Summary
+<a id="33-sort-order-summary"></a>
+
+### 3.1 Sort Order Summary
 
 1. **State management** before **Behaviors**
 2. Within Behaviors: **Fallible** → **Actions**

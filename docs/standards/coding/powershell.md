@@ -1,18 +1,15 @@
 ---
-title: "Powershell standards — retained detail"
+title: "PowerShell standards"
 status: draft
 created: 2026-10-28
-updated: 2026-10-29
+updated: 2026-11-15
 ---
 
-# Powershell standards — retained detail
+# PowerShell standards
 
 [Up: Coding standards](index.md)
 
-Imported detailed requirements for review; no substantive style changes have been approved. The shared coding index defines applicability; approved scope changes are incorporated explicitly.
-
-
-# PowerShell Style Guidelines
+The shared coding index defines applicability. These detailed conventions incorporate the Owner-approved clarifications recorded in the review; repository-specific product requirements remain with their owning repository.
 
 These guidelines define the NobleFactor style for PowerShell scripts and modules. They parallel the Go Style Guidelines while following PowerShell's command, parameter, and pipeline model.
 
@@ -239,7 +236,9 @@ Every comment is in the form of the Go Style Guidelines, section 4, except the h
 
 <a id="comment-based-help"></a>
 
-### 10.5 Comment-based help
+<a id="105-comment-based-help"></a>
+
+### 10.1 Comment-based help
 
 `.SYNOPSIS`, `.DESCRIPTION`, a `.PARAMETER` for each parameter, `.EXAMPLE` when one helps, and `.OUTPUTS` when the command writes output. A function's help sits in a `<# #>` block immediately above its `function` line, so `Get-Help` finds it:
 
@@ -271,7 +270,9 @@ function Open-Repository {
 
 <a id="documentation-headers"></a>
 
-### 10.6 Documentation headers
+<a id="106-documentation-headers"></a>
+
+### 10.2 Documentation headers
 
 A function that is not an end user's carries a header of `#` line comments immediately above its `function` line, in the Go form:
 
@@ -302,7 +303,9 @@ function Find-OnPath {
 
 <a id="every-other-comment"></a>
 
-### 10.7 Every other comment
+<a id="107-every-other-comment"></a>
+
+### 10.3 Every other comment
 
 Every other comment is `#` line comments, full sentences, filled to column 120. `<# #>` is for comment-based help alone. A comment explains why the code has a non-obvious shape, especially when it works around native command parsing, Windows Terminal behavior, transcript naming, or path semantics; it does not narrate the statement it precedes.
 
@@ -314,7 +317,7 @@ Every change is followed by a focused check before further edits:
 - Check the first line: it is exactly `#!/usr/bin/env pwsh`, and the file's first two bytes are `#!`. A UTF-8 BOM ahead of the shebang still parses, but it hides the shebang from the loader.
 - Verify every function has `[CmdletBinding()]` and an immediate `param()` block.
 - Verify every function is documented in the form section 10 gives it: comment-based help in a file that is dot-sourced, and for a script's entry point; a Go-style header for every other function, its first line one line within 120 columns.
-- Verify no function ends with `return` and a value, and every type name is cased as section 5 says.
+- Verify that a function's normal final result is emitted as its last statement, without `return` and a value; legitimate early exits follow section 9. Verify every type name is cased as section 5 says.
 - Check brace placement and blank-line rules when formatting changes are involved.
 - Run the narrowest available behavior check without launching interactive workflows unnecessarily.
 - Fix every parser, lint, or validation issue as discovered; do not pass by warnings or errors.

@@ -2,7 +2,7 @@
 title: "Coding standards"
 status: draft
 created: 2026-10-28
-updated: 2026-10-29
+updated: 2026-11-15
 ---
 
 # Coding standards
@@ -28,7 +28,7 @@ Use repository build/test/vet entry points; devlore-cli requires Make rather tha
 - [PowerShell](powershell.md)
 - [Starlark](starlark.md)
 
-Go and PowerShell detailed standards are imported without substantive normalization. Contradictory or surprising requirements must be surfaced, not silently corrected during consolidation. Repository-specific product constraints remain in the owning repository, linked from [the local requirements record](../../engineering/review/repository-requirements.md).
+Go and PowerShell retain their detailed shared standards, with the Owner-approved comment and applicability clarifications recorded in the review. Bring unresolved contradictions to the Owner; apply settled decisions without silently introducing another style rule. Repository-specific product constraints remain in the owning repository, linked from [the local requirements record](../../engineering/review/repository-requirements.md).
 
 <a id="greenfield-product-policy"></a>
 

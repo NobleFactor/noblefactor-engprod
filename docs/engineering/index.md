@@ -2,7 +2,7 @@
 title: "Engineering documentation"
 status: draft
 created: 2026-10-28
-updated: 2026-10-29
+updated: 2026-11-16
 ---
 
 # Engineering documentation
@@ -54,3 +54,20 @@ See [Roles and responsibilities](process.md#roles-and-responsibilities) for the 
 The process says when a step may occur; standards say what must be true; procedures say how to perform it. Templates introduce no policy. Existing incidents remain rationale and regression examples.
 
 Unresolved scope questions do not grant exceptions. Surface them to the owner before affected work. Historical source material is evidence of previous requirements, not permission to choose between conflicting instructions.
+
+<a id="temporary-live-entrypoint-overrides"></a>
+
+## 5. Temporary live-entrypoint overrides
+
+The Owner approved this transition on 2026-11-15. Handbook consolidation (#420) reconciles and publishes the shared requirements, with the temporary overrides below. [Claude consumption (#562)](https://github.com/NobleFactor/noblefactor-engprod/issues/562) and [Codex consumption (#563)](https://github.com/NobleFactor/noblefactor-engprod/issues/563) own migration and qualification of the live host entry documents. Publishing the handbook does not grant new authority to a running session.
+
+At inspection on 2026-11-15, `/Users/david-noble/.claude/CLAUDE.md` and `/Users/david-noble/.Codex/AGENTS.md` both resolved to `/Users/david-noble/.local/share/devlore/writ/repos/personal/Home/common/.claude/CLAUDE.md`. That personal-layer source still contains these explicit instructions:
+
+| Topic | Shared handbook policy | Temporary override in existing live entrypoints |
+| --- | --- | --- |
+| PR concurrency | [One active PR per worktree](process.md#pull-request-and-integration), allowing independent work in separate worktrees | Existing entrypoints permit one PR in flight for a session and restrict that session's other repository writes during delivery. Other workers' PRs do not block the session; the Owner coordinates their work. Sessions retain this restriction until their approved entrypoint cutover. |
+| Assistance disclosure | [Name the submitting agent](procedures/pull-request.md#review-boundary) while retaining human sign-off and AI disclosure | Existing entrypoints literally require `Assisted-by: Claude Code`. Their replacement belongs to the host tasks; adoption of this handbook does not silently rewrite that instruction. |
+
+These are scoped, temporary Owner-directed overrides for the affected personal entrypoints. The shared policies have already been decided. Record any additional live-instruction conflict with the Owner before choosing a definition. Policy approval, an entrypoint edit and successful loading by a session are separate facts.
+
+The host tasks must coordinate changes to their shared source through the personal repository's issue, plan and PR process, replace embedded shared policy with references to authoritative resources, and verify the installed paths and effective instructions. Remove an override only after its host cutover is delivered and verified, or the Owner explicitly disposes of it. Keep the other host's outstanding obligation visible. This observed shared source path is evidence for this transition, rather than a permanent discovery convention.

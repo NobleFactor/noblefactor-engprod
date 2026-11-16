@@ -1,11 +1,11 @@
 ---
-title: "Pull request procedure — retained specification"
+title: "Pull request procedure"
 status: draft
 created: 2026-10-28
-updated: 2026-10-29
+updated: 2026-11-15
 ---
 
-# Pull request procedure — retained specification
+# Pull request procedure
 
 [Up: Procedures](index.md)
 
@@ -19,9 +19,7 @@ Generated PR scripts follow the dedicated platform-specific PR template. They ar
 
 ## 2. Review boundary
 
-The [existing PR script specification](../review/sources/pr-script-template.txt) is preserved verbatim for detailed review: Unix and Windows forms, staging/preflight, CI and merge gates, message/trailer composition, time-open calculation, guarded schedule writes, readback, cleanup and final verification.
-
-Its historical terminology and paths are not new approved definitions. Apply the draft process's issue terminology and approval boundaries. A new executable template is deferred until unresolved questions are answered; this source is not a ready-to-run script.
+The [dedicated script specification](../../guides/pr-script-template.md) provides the Bash and PowerShell forms, including the current native-process and plan-link behavior. The [pre-cutover source](../review/sources/adoption-2026-11-15/pr-script-template.txt) preserves its earlier examples as evidence. Use the current forms when generating a script; historical snapshots are not executable alternatives.
 
 Retain explicit staging; never stage the whole tree indiscriminately. Verify generated path lists, use safe literal multi-line message construction, check native exit results, and run the repository's actual CI-equivalent entry point. Do not bypass hooks. Check actual CI and mergeability rather than inferring them from a local run.
 
@@ -41,7 +39,7 @@ PR scripts must refuse to merge while required checks, reviews or review convers
 
 Do not treat `UNSTABLE` or `BLOCKED` as sufficient evidence that a merge may proceed. Inspect the actual check conclusions, required reviews and unresolved conversations. An absent check run immediately after a push is not proof that CI is unconfigured. Wait for the required results for the PR’s current revision; if their status cannot be established, stop rather than merge on an assumption.
 
-The retained source template’s unconditional `--admin` and permissive merge-state cases conflict with this rule. Reconcile both platform templates before generating an executable script; do not copy those cases forward. This documentation decision does not change GitHub protection settings or authorize a bypass.
+The current platform examples refuse absent or failing observed checks, non-clean merge state, changed heads and unresolved or incompletely read review threads. They pin the ordinary merge to the qualified head and verify actual merged state before bookkeeping. Their conservative check gate must be reconciled with the repository's verified CI policy when generating the concrete script; an empty check list does not justify an exception. This documentation decision does not change GitHub protection settings or authorize a bypass.
 
 **Case:** The existing PR-tooling issue #145 records a merge before a run existed for the final revision and identifies `UNSTABLE` and undifferentiated `BLOCKED` handling as defects. The dedicated script approach is retained, but the gate must establish readiness rather than infer it from a coarse state label.
 
@@ -49,7 +47,7 @@ The retained source template’s unconditional `--admin` and permissive merge-st
 
 ## 4. Issue closure
 
-Apply [Completion and progression](../process.md#completion-and-progression). Before creating the PR body, check whether any required milestone remains after merge; if so, use an issue reference rather than an automatic closing keyword. Historical examples containing unconditional closing lines must be reconciled before use.
+Apply [Completion and progression](../process.md#completion-and-progression). Before creating the PR body, check whether any required milestone remains after merge; if so, use an issue reference rather than an automatic closing keyword. The concrete script lists the issues whose closure is explicitly authorized and includes closing references only for those issues. Other issues stay Open with their Schedule rows In progress and linked to the merged PR, while required post-merge evidence and Owner acceptance remain outstanding. Every merge is recorded independently of closure.
 
 <a id="documentation-only-completion-follow-up"></a>
 

@@ -2,7 +2,7 @@
 title: "Decisions established in review"
 status: draft
 created: 2026-10-28
-updated: 2026-10-29
+updated: 2026-11-15
 ---
 
 # Decisions established in review
@@ -90,3 +90,7 @@ These decisions are recorded from the owner's approvals in this conversation. Ap
 53. Prose layout approved: each paragraph occupies one source line and visual wrapping belongs to the editor or renderer. Preserve code, tables, list structure and language-specific source/comment formatting.
 
 54. Incident-record destination approved: a GitHub Project owned by the engprod team and associated with noblefactor-engprod. Group recurring errors under stable pattern IDs; agents must recognize prior occurrences. The recommended issue-backed Project/export arrangement is accepted in principle; schema, provisioning, cost accounting and automation are not yet implemented. The Owner is asking focused design questions and will signal when that sequence is complete.
+
+55. On 2026-11-15, the Owner approved documenting temporary live-instruction overrides during handbook adoption and assigning live entrypoint migration to Claude consumption (#562) and Codex consumption (#563). The shared policy decisions remain settled. Record the temporary scope and removal evidence; publication alone does not replace the personal-layer instructions or expand a running session's permissions.
+
+56. On 2026-11-15, the Owner directed a formatting task onto Handbook adoption (#551): all maintained documents must conform to the adopted formatting standard by schedule completion. New and revised prose conforms during adoption; Formatting migration (#570), under Feature #419 and Epic #526, covers the comprehensive remainder as Step 9. The closing review (#565), now Step 10, depends on it. Include previously untouched documents and new schedule assets; preserve immutable historical evidence.

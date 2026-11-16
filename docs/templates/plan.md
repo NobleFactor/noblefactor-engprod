@@ -2,7 +2,7 @@
 title: "Plan template"
 status: draft
 created: 2026-10-28
-updated: 2026-10-29
+updated: 2026-11-15
 ---
 
 # Plan template
@@ -10,6 +10,24 @@ updated: 2026-10-29
 [Up: Templates](index.md)
 
 Copy to `docs/plans/<type>/<issue>-<name>.md` after the issue and worktree exist. Replace frontmatter title, retain working-document status, and add issue URL(s), created and updated dates. Commit the plan under applicable approval before implementation; review the committed revision with the owner. This template itself is not an approved implementation plan.
+
+The output plan's frontmatter records its issue, lifecycle and related documents. Replace the example values; omit a document row only when it does not apply.
+
+```yaml
+title: "Approved outcome to deliver"
+issue: https://github.com/OWNER/REPOSITORY/issues/NNN
+status: draft
+created: YYYY-MM-DD
+updated: YYYY-MM-DD
+documents:
+  - kind: Design
+    path: docs/architecture/RELATED-DESIGN.md
+  - kind: Related work
+    url: https://github.com/OWNER/REPOSITORY/issues/RELATED
+    text: "Related issue"
+```
+
+The plan is the authority for the issue's document table. The worktree's first script runs `star github plan link` after pushing it; inspect refused and dropped-row records as well as the exit status. [Work assets](../engineering/work-assets.md#plans-and-designs) owns link targets and stable issue headings.
 
 <a id="role-assignments"></a>
 

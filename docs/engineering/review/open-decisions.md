@@ -2,7 +2,7 @@
 title: "Open decisions for review"
 status: draft
 created: 2026-10-28
-updated: 2026-10-29
+updated: 2026-11-15
 ---
 
 # Open decisions for review
@@ -156,5 +156,7 @@ The owner's philosophy requires changes to work to be easy. Existing wording say
 The latter will require communication between active agents. We do not want an agent to be surprised by changes to its schedule.
 
 ## Deferred implementation questions
+
+The following list records the original review's deferred implementation scope. Current [Issue standards](../../issue-standards.md) and [Work organization](../work-organization.md) now provide the authoritative issue and project representation; this historical list does not reopen those settled definitions. Host assignment precedence and implementation/configuration evidence remain with their owning tasks.
 
 Which GitHub fields are authoritative; assignment metadata precedence; report schema/headers; required checks and actual protection; read-only enforcement; approval/event storage; adapters and controller/monitor product capabilities. These are not settled by the documentation tree.

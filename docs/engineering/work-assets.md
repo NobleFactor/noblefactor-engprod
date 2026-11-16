@@ -2,7 +2,7 @@
 title: "Work assets"
 status: draft
 created: 2026-10-28
-updated: 2026-10-29
+updated: 2026-11-15
 ---
 
 # Work assets
@@ -36,7 +36,7 @@ Use one organization subtree, `~/Workspace/<org>/`. It contains canonical clone 
 
 A worktree is `<clone>.<issue>-<name>`. Its PR script is `<worktree>.bash` on macOS/Linux or `<worktree>.ps1` on Windows. Read an existing script before overwriting; ensure its target is this worktree. Authorization for one script never extends to another worker's script.
 
-Branch types remain `chore`, `doc`, `feature`, `fix`, `hotfix`, `refactor`, `release` pending any separately approved change. The branch identifies its issue and is created from the chosen PR target through the supported open-branch procedure. The work-item hierarchy is defined in [Work organization](work-organization.md#work-and-identity); branch prefixes describe Git references and do not reintroduce an issue tier.
+Branch types are `doc`, `feature`, `fix`, `hotfix`, `refactor` and `release`. The `chore/` prefix was retired on 2026-11-03; historical plans retain their original paths. The branch identifies its issue and is created from the chosen PR target through the supported open-branch procedure. Its type follows the issue's type, or its type label in a user account, under the [maintained open-branch manual](../../Home/common/.local/share/man/man1/git-open-branch.1). The work-item hierarchy is defined in [Work organization](work-organization.md#work-and-identity); branch prefixes describe Git references and do not reintroduce an issue tier.
 
 <a id="plans-and-designs"></a>
 
@@ -44,7 +44,9 @@ Branch types remain `chore`, `doc`, `feature`, `fix`, `hotfix`, `refactor`, `rel
 
 Plans live at `docs/plans/<type>/<issue>-<name>.md`, corresponding to the originating branch name. A separately needed plan for an additional issue names that issue. A shared plan carries a stable `## Issue NNN` heading for each issue; use the number alone, with no title or `#` prefix. This is an existing rule, not a new convention introduced by this consolidation. For active plans with title-bearing headings, inventory incoming anchors and preserve or migrate those references before renaming a heading. Leave completed historical plans unchanged unless a specific migration is approved.
 
-Every issue ends with `## Plan and design documents`, a two-column Kind/Document table. It has a plan row from filing, initially “Not yet opened,” and one linked row per applicable design. Add the design-impact determination to the issue and plan, even when no separate design is needed. Document links target committed files on the default branch and stable issue anchors. Before merge, such links may intentionally be pending; provide the review revision separately so approval is possible.
+Every issue ends with `## Plan and design documents`, a two-column Kind/Document table. It has a plan row from filing, initially “Not yet opened,” and one linked row per applicable design. Add the design-impact determination to the issue and plan, even when no separate design is needed. For an open issue, document links target committed files on the default branch and stable issue anchors. An issue closed by a merged PR links files at that PR's merge commit; files absent there, cross-repository documents and issues closed without such a PR use the default-branch fallback reported by the linking command. Provide the committed review revision separately before merge so approval is possible.
+
+Plans are the authority for an issue's document table, under the 2026-11-15 ruling implemented by Plan linking (#557). A plan identifies the issues it serves through its `issue:` field and stable `## Issue NNN` headings. Its `documents:` frontmatter lists related documents, each with `kind` and either a repository-relative `path` or a `url`, plus optional display `text`. The first script runs `star github plan link` after pushing the plan. Inspect its action, reason and dropped-row records: refusal or a dropped row is a finding even when the command exits 0. An issue no plan serves keeps the table it was filed with.
 
 New enduring designs belong under `docs/architecture/` within the owning repository. Existing approved locations remain until individually migrated. This draft proposes no new design filename scheme.
 
