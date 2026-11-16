@@ -97,6 +97,8 @@ first run, on 2026-11-11, and section 7 states each as done.
   ([the plan](../../plans/chore/303-issue-data-model.md) § The cutover, from 2026-11-02); that closing missed
   NobleFactor project 4, "Thread: the model follows a rename", the thread project made on 2026-10-24 as #377's write
   test, which the owner closed on 2026-11-04 ([section 3's status](3-collections.status.md))
+- [x] The Triage workflow leaves a Schedule or Scenario issue out of Triage, its row being on its collection's
+  project: in both accounts' templates and each participating repository's copy on 2026-11-16 (#573)
 - [x] The Triage workflow in each repository, ruled 2026-11-03: a GitHub Actions workflow, run when an issue is opened
   or transferred, that adds it to its team's Triage project with `actions/add-to-project`; each repository's
   `TRIAGE_PROJECT_URL` variable, from the team mapping; a Triage workflow template in each account's `.github`

@@ -56,7 +56,7 @@ erDiagram
     PROJECT_TEMPLATE ||--o{ SCHEDULE_PROJECT : "Schedule is copied into"
     PROJECT_TEMPLATE ||--o{ SCENARIO_PROJECT : "Scenario is copied into"
     DOT_GITHUB_REPOSITORY ||--o{ REPOSITORY : "serves issue forms and the Triage workflow and pull request templates to"
-    REPOSITORY }o--|| TRIAGE_PROJECT : "adds each new issue to, by its Triage workflow"
+    REPOSITORY }o--|| TRIAGE_PROJECT : "adds each new issue but a collection's to, by its Triage workflow"
     REPOSITORY ||--o{ LABEL : holds
     REPOSITORY ||--o{ ISSUE : holds
     ISSUE_TYPE ||--o{ ISSUE : types
@@ -191,7 +191,7 @@ erDiagram
     TEMPLATE_COPY ||--o| SCHEDULE_PROJECT : "Schedule is copied into"
     TEMPLATE_COPY ||--o| SCENARIO_PROJECT : "Scenario is copied into"
     DOT_GITHUB_REPOSITORY ||--o{ REPOSITORY : "serves issue forms and the pull request template to"
-    REPOSITORY }o--|| TRIAGE_PROJECT : "adds each new issue to, by its Triage workflow"
+    REPOSITORY }o--|| TRIAGE_PROJECT : "adds each new issue but a collection's to, by its Triage workflow"
     REPOSITORY ||--o{ TYPE_LABEL : holds
     REPOSITORY ||--o{ LABEL : holds
     REPOSITORY ||--o{ ISSUE : holds
@@ -373,14 +373,16 @@ settles how a triage decision is carried out and how an issue is kept in one pro
 ([section 3](3-collections.md#triage-and-the-backlog)).
 
 Ruled 2026-11-03: a new issue reaches its team's Triage project through a GitHub Actions workflow in each repository.
-The workflow runs when an issue is opened or transferred, and uses actions/add-to-project. GitHub's built-in auto-add
-workflow is not used. Since 2026-11-03 none of the twenty projects of the four kinds (§ A user account, above) has a
-built-in workflow: every project of a kind is configured the same way (ruled 2026-11-03), and GitHub's API can delete a
-built-in workflow but can't make one or turn one on, so all were deleted that day, "Auto-add sub-issues to project" in
-Triage: devlore among them ([section 3](3-collections.md#triage-and-the-backlog)). Each repository's
-`TRIAGE_PROJECT_URL` variable names its team's Triage project, from the team mapping: the team with the maintain role on
-a repository owns it. A Triage workflow template in each account's `.github` repository offers the workflow. Read on
-2026-11-03, GitHub's documentation [describes workflow templates kept in an organization's `.github` repository](
+The workflow runs when an issue is opened or transferred, and uses actions/add-to-project. Since 2026-11-16 it leaves
+out a Schedule or Scenario issue, whose row is on its Schedule or Scenario project: a step before the Triage step reads
+the issue's type, or in David-Noble-at-work its label (#573). GitHub's built-in auto-add workflow is not used. Since
+2026-11-03 none of the twenty projects of the four kinds (§ A user account, above) has a built-in workflow: every
+project of a kind is configured the same way (ruled 2026-11-03), and GitHub's API can delete a built-in workflow but
+can't make one or turn one on, so all were deleted that day, "Auto-add sub-issues to project" in Triage: devlore among
+them ([section 3](3-collections.md#triage-and-the-backlog)). Each repository's `TRIAGE_PROJECT_URL` variable names its
+team's Triage project, from the team mapping: the team with the maintain role on a repository owns it. A Triage workflow
+template in each account's `.github` repository offers the workflow. Read on 2026-11-03, GitHub's documentation
+[describes workflow templates kept in an organization's `.github` repository](
 https://docs.github.com/en/actions/how-tos/reuse-automations/create-workflow-templates) and says nothing about a user
 account's. Whether GitHub offers David-Noble-at-work/.github's Triage workflow template to personal has not been
 checked; either way, David-Noble-at-work/personal#315 copies personal's `triage.yml` from it.
@@ -534,7 +536,7 @@ still open, and so is David-Noble-at-work/personal#309, which gives personal its
 | Why an issue was closed | the issue field Resolution, a single select: Declined, Duplicate or Invalid (ruled 2026-11-03), only on a closed issue | the field's type, and one value | a label named `resolution:<name>`: resolution:declined, resolution:duplicate or resolution:invalid, only on a closed issue. GitHub enforces nothing |
 | `good first issue` | the label `good first issue`, held per repository, on tasks and bugs only (ruled 2026-11-04): it tells a newcomer they can pick the issue up, and only a task or a bug is a single piece of work | nothing | the same. personal gets the label from the script of #303's closing pull request, so both accounts hold it |
 | The other labels | labels, held per repository | nothing | the same |
-| A new issue, until its triage decision | a row of the team's Triage project, added by each repository's Triage workflow (ruled 2026-11-03), but for a task or a bug logged while walking a scenario, which the Triage workflow adds to that scenario in the team's Scenario project instead (ruled 2026-11-04; #448) | nothing | the same, in Triage: David-Noble-at-work, or for a logged item in Scenario: David-Noble-at-work |
+| A new issue, until its triage decision | a row of the team's Triage project, added by each repository's Triage workflow (ruled 2026-11-03), but for a task or a bug logged while walking a scenario, which the Triage workflow adds to that scenario in the team's Scenario project instead (ruled 2026-11-04; #448), and for a Schedule or Scenario issue, which it leaves out (ruled 2026-11-16; #573) | nothing | the same, in Triage: David-Noble-at-work, or for a logged item in Scenario: David-Noble-at-work |
 | Accepted work not yet scheduled | a row of the team's Backlog project, ordered by priority (ruled 2026-11-03), which its view By priority shows sorted by Priority; the script of #303's closing pull request makes the view (ruled 2026-11-04) | nothing | the same, in Backlog: David-Noble-at-work, which has no Priority field to sort by |
 | A schedule's rows, steps, sprints and status | the team's one Schedule project (ruled 2026-11-03), which holds its committed tasks and bugs: Status on every row, Schedule, a single select naming the row's schedule, Step, a number, Iteration, GitHub's iteration field, and Worktree, a link to the branch the step's work is on | the field's type | the same, in Schedule: David-Noble-at-work |
 | A scenario's rows, beats and status | the team's one Scenario project (ruled 2026-11-03), which holds its Scenario issues and the tasks and bugs found while walking them, and no feature (ruled 2026-11-04): Status on every row, Scenario, a single select naming the row's scenario, and Beat, the point in the walk where a row turned up | the field's type | the same, in Scenario: David-Noble-at-work |

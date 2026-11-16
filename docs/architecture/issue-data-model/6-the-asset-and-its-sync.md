@@ -190,7 +190,8 @@ Question 17 is settled. Ruled 2026-11-02: each account's model file is stored in
 NobleFactor/.github and David-Noble-at-work/.github. GitHub treats a public repository named `.github` as the account's
 own and serves its default community health files and issue templates to every repository of the account; the issue
 forms for Schedule and Scenario issues are kept there too, and so is the Triage workflow template (ruled 2026-11-03).
-Each repository's Triage workflow, which adds its new issues to its team's Triage project, is made from it. Ruled
+Each repository's Triage workflow, which adds its new issues to its team's Triage project, but for a Schedule or
+Scenario issue (#573), is made from it. Ruled
 2026-11-03: the issue forms in each account's `.github` repository have a required Area dropdown, and the Triage
 workflow copies its answer into the Area issue field, or in a user account the `area:` label, when the issue is opened:
 personal's adds the `area:` label, and NobleFactor's sets the Area field (#447, #448). Both

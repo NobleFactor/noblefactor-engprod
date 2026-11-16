@@ -126,6 +126,9 @@ and 30), David-Noble-at-work's copies (its projects 1 and 2) and its own (its pr
 grouped by the Schedule or Scenario field, with no sort, showing Title, Assignees, Status, Linked pull requests,
 Sub-issues progress, and Step and Worktree in a Schedule project or Beat in a Scenario project. It is each project's
 view 2; the view each had before, Default in a Schedule project and View 1 in a Scenario project, is unchanged.
+Ruled 2026-11-16 (#573): every Schedule project's By schedule view is the owner's, as Schedule: engprod's was that
+day: Sub-issues progress hidden, and the rows sorted by Step, ascending. The column was hidden in the other four
+that day through GitHub's GraphQL API; the sort, which no API sets on a view that exists, is set in GitHub by hand.
 GitHub's REST API made them, with `POST .../projectsV2/<number>/views`, which takes `group_by`. GitHub's GraphQL API
 can set a view's name, layout, filter and visible fields, but not its grouping or its sort. The owner tried the views
 and found that moving between the Default and By schedule tabs works well. In each of the 15 Schedule and Scenario
@@ -262,17 +265,18 @@ has no teams and owns its own Triage project (ruled 2026-11-02 and 2026-11-03). 
 and its order is nobody's commitment. It has no issue of its own: there is no triage epic and no Triage issue type.
 
 **How a new issue arrives.** Ruled 2026-11-03: a GitHub Actions workflow in each repository adds a new issue to its
-team's Triage project when the issue is opened or transferred, using `actions/add-to-project`. GitHub's built-in
-auto-add workflow is not used. Each repository's `TRIAGE_PROJECT_URL` variable names its team's Triage project, taken
-from the team mapping: the team with the maintain role on a repository owns it. A Triage workflow template in each
+team's Triage project when the issue is opened or transferred, using `actions/add-to-project`, but for a Schedule or
+Scenario issue, whose row is on its Schedule or Scenario project, which it leaves out (ruled 2026-11-16, #573). GitHub's
+built-in auto-add workflow is not used. Each repository's `TRIAGE_PROJECT_URL` variable names its team's Triage project,
+taken from the team mapping: the team with the maintain role on a repository owns it. A Triage workflow template in each
 account's `.github` repository offers the workflow ([section 6](6-the-asset-and-its-sync.md) § One model per account).
 GitHub's documentation describes workflow templates in an organization's `.github` repository and says nothing about a
 user account's, and whether GitHub offers David-Noble-at-work/.github's template to personal has not been checked;
 either way, David-Noble-at-work/personal#315 copies personal's `triage.yml` from it. How the workflow signs in, with a
 token from the noblefactor-automation GitHub App in NobleFactor and a classic personal access token in a user account,
 is in [section 4](4-storage-and-reach.md) § Triage. Ruled 2026-11-04: a work item logged while walking a scenario names
-the scenario in its body, as "Found while walking #N", and the Triage workflow adds it to that scenario instead
-(#448; § The Schedule and Scenario fields).
+the scenario in its body, as "Found while walking #N", and the Triage workflow adds it to that scenario instead (#448; §
+The Schedule and Scenario fields).
 
 Every project of a kind is configured the same way (ruled 2026-11-03; § Four projects per team), and GitHub's GraphQL
 API can delete a project's built-in workflow, with `deleteProjectV2Workflow`, but has no call that makes one or turns

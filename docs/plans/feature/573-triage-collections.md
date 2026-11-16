@@ -1,7 +1,7 @@
 ---
 title: "The Triage workflow leaves Schedule and Scenario issues out of Triage"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/573
-status: draft
+status: approved
 created: 2026-11-16
 updated: 2026-11-16
 documents:
@@ -34,6 +34,10 @@ Four pull requests, one at a time, as #448's were: NobleFactor/.github, David-No
   template, through a pull request on its default branch.
 - 2026-11-16: the Triage workflow leaves a Schedule or Scenario issue out of Triage, fixed at the source; `new` does not
   wait for a Triage row.
+- 2026-11-16, on this plan: approved.
+- 2026-11-16: the owner's By schedule view on Schedule: engprod, Sub-issues progress hidden and the rows sorted by
+  Step, is every Schedule project's. Found when NobleFactor's backup could not hold it: the model keeps one view per
+  kind of project, its template's.
 
 ## Current State
 
@@ -55,6 +59,9 @@ Read on 2026-11-16:
 3. **Applied.** `star github model apply` on each account lands its template in each participating repository, and
    `star github model diff` then shows no difference.
 4. **The documents** that say the workflow adds every new issue to Triage name the exception.
+5. **The owner's By schedule view** in the reference model, `templates.yaml`, and in section 3. Sub-issues progress
+   hidden in every Schedule project's By schedule view through GitHub's GraphQL API, and the sort by Step, which no
+   API sets on a view that exists, left to be set by hand.
 
 ## Test Plan
 
@@ -67,30 +74,35 @@ with Resolution Invalid, or `resolution:invalid` in David-Noble-at-work, its row
 | 2 | In noblefactor-engprod, a Schedule issue and a Scenario issue | No Triage row; Area set; Severity N/A; the log says it is a collection |
 | 3 | In noblefactor-engprod, a Task | A Triage: engprod row, as before |
 | 4 | In personal, an issue labeled `schedule`, and a Task | No Triage row for the first, and its `area:` and `severity:n/a` labels; a Triage: David-Noble-at-work row for the Task |
-| 5 | `star github model diff` on both accounts, after `apply` | No difference |
+| 5 | `star github model diff` on both accounts, after `apply` | No difference but the views' sort, which only a person can set |
 
 ## Implementation Phases
 
 ### Phase 1: the plan
 
-- [ ] Committed on `feature/573-triage-collections` by the worktree's first script, which also sets step 48 In
-      progress with the branch linked; reviewed with the owner
+- [x] Committed on `feature/573-triage-collections` by the worktree's first script, which also sets step 48 In
+      progress with the branch linked; reviewed with the owner, and approved on 2026-11-16
 
 ### Phase 2: NobleFactor's template
 
-- [ ] The step and the condition in NobleFactor/.github's template, on `feature/573-triage-collections`, its worktree
+- [x] The step and the condition in NobleFactor/.github's template, on `feature/573-triage-collections`, its worktree
       made by hand as #448's was, since `git open-branch` reads only the clone's own issues; merged; `apply` on
-      NobleFactor; `diff` shows no difference
+      NobleFactor; `diff` shows no difference: on 2026-11-16, NobleFactor/.github#19 the backup first, #20 the
+      template, and #21, NobleFactor/devlore-cli#1232, NobleFactor/devlore-registry#101,
+      NobleFactor/devlore.noblefactor.com#543 and #574 the copies; `diff` then finding only Schedule: engprod's sort
 
 ### Phase 3: David-Noble-at-work's template
 
-- [ ] The same in David-Noble-at-work/.github's template; merged; `apply` on David-Noble-at-work lands it in personal;
-      `diff` shows no difference
+- [x] The same in David-Noble-at-work/.github's template; merged; `apply` on David-Noble-at-work lands it in personal;
+      `diff` shows no difference: on 2026-11-16, David-Noble-at-work/.github#14 the backup first, #15 the template, and
+      #16 and David-Noble-at-work/personal#334 the copies
 
 ### Phase 4: the evidence
 
-- [ ] The test issues filed, their rows, fields, labels and runs read back, each closed with Resolution Invalid and its
-      rows removed
+- [x] The test issues filed, their rows, fields, labels and runs read back, each closed with Resolution Invalid and its
+      rows removed: on 2026-11-16, #575, a Schedule issue, and #576, a Scenario issue, on no project, and #577, a Task,
+      in Triage: engprod; David-Noble-at-work/personal#335, labeled schedule, on no project, and
+      David-Noble-at-work/personal#336, a task, in Triage: David-Noble-at-work
 
 ### Phase 5: the documents and the merge
 
@@ -106,6 +118,8 @@ with Resolution Invalid, or `resolution:invalid` in David-Noble-at-work, its row
 | NobleFactor's five participating repositories, and personal | `.github/workflows/triage.yml` | Landed by `apply` |
 | noblefactor-engprod | `docs/plans/feature/573-triage-collections.md` | Create |
 | noblefactor-engprod | The documents that say every new issue goes to Triage | Modify |
+| noblefactor-engprod | The extension's `reference/templates.yaml`, and the comments of `organization.yaml` and `user.yaml` | Modify |
+| noblefactor-engprod | `tests/Test-StarGitHub`: case 29 expects the By schedule view's sort as a step by hand | Modify |
 
 ## Related Documents
 
