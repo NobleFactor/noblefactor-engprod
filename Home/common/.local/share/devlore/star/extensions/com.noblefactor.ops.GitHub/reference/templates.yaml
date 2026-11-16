@@ -83,10 +83,10 @@ templates:
       - name: "By schedule"
         layout: table
         filter: ""
-        fields: ["Title", "Assignees", "Status", "Linked pull requests", "Sub-issues progress", "Step", "Worktree"]
+        fields: ["Title", "Assignees", "Status", "Linked pull requests", "Step", "Worktree"]
         group_by: ["Schedule"]
         vertical_group_by: []
-        sort_by: []
+        sort_by: [{ field: "Step", direction: "asc" }]
   - name: "Scenario"
     readme: |-
       A team's Scenario project holds its Scenario issues, and the tasks and bugs found while walking each one.

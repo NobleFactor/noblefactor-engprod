@@ -269,6 +269,9 @@ teams: []
 # sort, showing Title, Assignees, Status, Linked pull requests, Sub-issues progress, Step and Worktree (read from
 # GitHub on 2026-11-04). GitHub's REST API made it; it sets a view's grouping and sort only when it makes the view,
 # and GitHub's GraphQL API sets neither.
+# Ruled 2026-11-16 (noblefactor-engprod#573): every Schedule project's By schedule view is the owner's, Sub-issues
+# progress hidden and the rows sorted by Step, ascending; templates.yaml says so. The column was hidden that day
+# through the GraphQL API, and the sort, which no API sets on a view that exists, is set in GitHub by hand.
 #
 # Scenario holds the team's scenarios. Ruled 2026-11-04: a scenario is a high-level description of a feature, a workflow
 # or a real-life situation that needs to be tested. Its Scenario issue, its own row in the team's Scenario project,

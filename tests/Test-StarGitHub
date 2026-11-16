@@ -2114,13 +2114,17 @@ expect "29: each Iteration field apply makes starts on the reference's start day
         | capture("startDate: \"(?<day>[0-9-]+)\"").day] as $days
     | ($days | length) > 0 and ($days | all(weekday == 1))
     and ($days | all(. <= (now | strflocaltime("%Y-%m-%d")) and . > ((now - 7 * 86400) | strflocaltime("%Y-%m-%d"))))'
+# A Schedule project's By schedule view is sorted by Step as well as grouped, the owner's view made every Schedule
+# project's (ruled 2026-11-16, #573), so it needs two steps by hand.
 expect "29: a template or project made says on its own record what its views still need by hand" ok '
     def steps($kind; $path): first(.[] | select(.kind == $kind and .path == $path and .action == "created")) | .steps // [];
-    (steps("template"; "Schedule") | length == 1 and (.[0] | test("^set the Schedule/By schedule view.s group by to \\[\"Schedule\"\\] in GitHub")))
+    (steps("template"; "Schedule") | length == 2 and (.[0] | test("^set the Schedule/By schedule view.s group by to \\[\"Schedule\"\\] in GitHub"))
+        and (.[1] | test("^set the Schedule/By schedule view.s sort by to .*Step.* in GitHub")))
     and (steps("template"; "Scenario") | length == 1 and (.[0] | test("^set the Scenario/By scenario view.s group by to ")))
     and (steps("template"; "Backlog") | length == 1 and (.[0] | test("^set the Backlog/By priority view.s sort by to ")))
     and steps("template"; "Triage") == []
-    and (steps("project"; "Schedule: web") | length == 1 and (.[0] | test("^set the Schedule: web/By schedule view.s group by to ")))
+    and (steps("project"; "Schedule: web") | length == 2 and (.[0] | test("^set the Schedule: web/By schedule view.s group by to "))
+        and (.[1] | test("^set the Schedule: web/By schedule view.s sort by to .*Step")))
     and steps("project"; "Triage: web") == []'
 expect "29: the App's secrets, missing, are steps by hand, set on the organization" ok '
     ([.[] | select(.kind == "secret") | {path, action}] | sort_by(.path)) == [
