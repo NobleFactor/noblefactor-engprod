@@ -41,17 +41,16 @@
     It runs on Windows only, and elsewhere refuses to run.
 
 .PARAMETER Schedule
-    The schedule the session works: <owner>/<repository>#<number>, a bare <number> in the startup directory's
-    repository, or new. The only positional parameter. It is read with gh from its own repository, never the
-    caller's, and an issue that is not a schedule is refused. With new, a schedule opens in the startup directory's
-    repository, titled "Schedule: <title>" from -Title, with an empty lane table. Requires gh. Given with -Resume or
+    The schedule the session works: <owner>/<repository>#<number>, or a bare <number> in the startup directory's
+    repository. The only positional parameter. It is read with gh from its own repository, never the caller's, and
+    an issue that is not a schedule is refused. new is refused, naming star github schedule new, which makes a
+    schedule: its issue from the account's form, its option and its row. Requires gh. Given with -Resume or
     -Continue, it is the schedule the conversation joins, when the schedule has none or the conversation is already
     its own; a schedule another conversation works, and a conversation on another schedule, are refused.
 
 .PARAMETER Title
-    The schedule's title without its "Schedule: " prefix, by name or from the pipeline. With -Schedule new it titles
-    the new schedule and is required: when it is not given, the prompt "Schedule title:" asks for it, and an empty
-    title opens nothing. With any other schedule it is optional; given, it retitles the issue when its title differs.
+    The schedule's title without its "Schedule: " prefix, by name or from the pipeline. Optional; given, it retitles
+    the schedule's issue when its title differs.
 
 .PARAMETER Resume
     The conversation to resume, as claude --resume takes it but its picker: its id, a UUID, found in any project
@@ -106,12 +105,6 @@
     Start-Claude -Directory ..\noblefactor-engprod NobleFactor/devlore-cli#916
 
     Opens a session for another clone without leaving this one.
-
-.EXAMPLE
-    'Release checklist' | Start-Claude new
-
-    Opens a new, empty schedule in the current repository, titled "Schedule: Release checklist", and a conversation
-    on it. Start-Claude new -Title 'Release checklist' does the same, and with no title the prompt asks for one.
 
 .EXAMPLE
     Start-Claude 916 -Title 'writ lifecycle management'
@@ -427,7 +420,7 @@ begin {
         param([string]$Directory)
 
         # The repository as GitHub names it, <owner>/<repository>, read from the directory's origin. A bare -Schedule
-        # number means the startup directory's repository, and -Schedule new opens the schedule there.
+        # number means the startup directory's repository.
         $url = Invoke-Git -Directory $Directory -Argument @('config', '--get', 'remote.origin.url')
 
         if ($url -and $url -match 'github\.com[:/]([^/]+/[^/]+?)(\.git)?$') {
@@ -488,42 +481,6 @@ begin {
             type   = $issue.issueType.name
             labels = @($issue.labels.nodes.name)
         }
-    }
-
-    function Open-Schedule {
-        [CmdletBinding()]
-        [OutputType([string])]
-        param(
-            [string]
-            $Slug,
-
-            [string]
-            $Title
-        )
-
-        # It opens empty: a deliverable to state, and a lane table the report reads, with no rows yet.
-        $body = @(
-            '## Deliverable',
-            '',
-            'To be stated: what the owner has today, and what they will have when the last lane closes.',
-            '',
-            '## Lanes',
-            '',
-            '| Lane | Item | Next | Waits on |',
-            '| --- | --- | --- | --- |'
-        ) -join "`n"
-
-        $argument = @(
-            'issue', 'create', '--repo', $Slug, '--title', "Schedule: $Title", '--label', 'chore', '--body', $body
-        )
-        $result = Invoke-Gh -Argument $argument
-
-        if ($result.ExitCode -ne 0 -or -not $result.Output) {
-            $message = "The schedule could not be opened in $Slug. gh: $($result.Reason)"
-            Exit-Launch -ErrorId 'ScheduleNotOpened' -Category WriteError -Message $message
-        }
-
-        return $result.Output
     }
 
     function Set-ScheduleTitle {
@@ -1694,9 +1651,17 @@ end {
             Exit-Launch -ErrorId 'OneWayInRequired' -Category InvalidArgument -Message $message
         }
 
-        if ($Schedule -and $Schedule -cne 'new' -and
-            $Schedule -notmatch '^([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+#)?[0-9]+$') {
-            $message = "-Schedule takes <owner>/<repository>#<number>, a bare <number>, or new: $Schedule"
+        # -Schedule new is retired: star github schedule new makes a schedule, its issue from the account's form with
+        # its option and its row, which this script never made (section 8 of the issue data model, question 7, #509).
+        if ($Schedule -ceq 'new') {
+            $message = '-Schedule new is retired: make the schedule with star github schedule new <repository> <name> '
+            $message += '--area Product|Engineering --deliverable <text> --exit-criteria <text> '
+            $message += "--evidence <text>, then open its conversation with $scriptName <owner>/<repository>#<number>."
+            Exit-Launch -ErrorId 'ScheduleNewRetired' -Category InvalidArgument -Message $message
+        }
+
+        if ($Schedule -and $Schedule -notmatch '^([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+#)?[0-9]+$') {
+            $message = "-Schedule takes <owner>/<repository>#<number> or a bare <number>: $Schedule"
             Exit-Launch -ErrorId 'ScheduleMalformed' -Category InvalidArgument -Message $message
         }
 
@@ -1840,8 +1805,8 @@ end {
 
         Require-Command 'gh'
 
-        # The schedule: <owner>/<repository>#<number>, a bare <number> in the startup directory's repository, or new.
-        if ($scheduleArgument -ceq 'new' -or $scheduleArgument -match '^[0-9]+$') {
+        # The schedule: <owner>/<repository>#<number>, or a bare <number> in the startup directory's repository.
+        if ($scheduleArgument -match '^[0-9]+$') {
             $scheduleSlug = Get-RepositorySlug -Directory $startupDirectory
 
             if (-not $scheduleSlug) {
@@ -1852,8 +1817,7 @@ end {
         }
 
         # A title comes by name or from the pipeline, and the process block keeps each. Of several piped, the first is
-        # the title, as the first line is on macOS and Linux. A new schedule must have one, and the prompt asks when
-        # none is given; with any other schedule it is optional, and given, it retitles the issue.
+        # the title. It is optional, and given, it retitles the issue.
         $titleGiven = $titles.Count -gt 0
         $givenTitle = $null
 
@@ -1861,63 +1825,41 @@ end {
             $givenTitle = $titles[0]
         }
 
-        if ($scheduleArgument -ceq 'new') {
-            $answer = $givenTitle
-
-            if (-not $titleGiven) {
-                $answer = Read-Host -Prompt 'Schedule title'
-            }
-
-            $answer = "$answer".Trim()
-
-            if (-not $answer) {
-                $message = 'No schedule title was given; nothing is opened.'
-                Exit-Launch -ErrorId 'TitleMissing' -Category InvalidData -Message $message
-            }
-
-            $scheduleUrl = Open-Schedule -Slug $scheduleSlug -Title $answer
-            $scheduleNumber = $scheduleUrl.Split('/')[-1]
-            $scheduleTitle = "Schedule: $answer"
-            Write-Verbose "Opened $scheduleUrl"
+        if ($scheduleArgument -match '^[0-9]+$') {
+            $scheduleNumber = $scheduleArgument
         }
         else {
+            $scheduleSlug, $scheduleNumber = $scheduleArgument.Split('#')
+        }
 
-            if ($scheduleArgument -match '^[0-9]+$') {
-                $scheduleNumber = $scheduleArgument
+        $issue = Get-ScheduleIssue -Slug $scheduleSlug -Number $scheduleNumber
+
+        # issue-standards.md, Schedules: a schedule is an issue of type Schedule and, in a user account, which has no
+        # issue types, an issue labeled schedule (ruled 2026-11-03). The chore label and the title's "Schedule:" retired
+        # that day.
+        if (-not ($issue.type -ceq 'Schedule' -or $issue.labels -ccontains 'schedule')) {
+            $message = "$scheduleSlug#$scheduleNumber is not a schedule: a schedule is an issue of type Schedule, or,"
+            $message += ' in a user account, one labeled schedule.'
+            Exit-Launch -ErrorId 'NotASchedule' -Category InvalidData -Message $message
+        }
+
+        $scheduleTitle = $issue.title
+        $scheduleUrl = $issue.url
+
+        if ($titleGiven) {
+            $answer = "$givenTitle".Trim()
+
+            if (-not $answer) {
+                $message = "No title was given; $scheduleSlug#$scheduleNumber keeps its own."
+                Exit-Launch -ErrorId 'TitleEmpty' -Category InvalidData -Message $message
             }
-            else {
-                $scheduleSlug, $scheduleNumber = $scheduleArgument.Split('#')
-            }
 
-            $issue = Get-ScheduleIssue -Slug $scheduleSlug -Number $scheduleNumber
+            $retitled = "Schedule: $answer"
 
-            # issue-standards.md, Schedules: a schedule is an issue of type Schedule and, in a user account, which has
-            # no issue types, an issue labeled schedule (ruled 2026-11-03). The chore label and the title's "Schedule:"
-            # retired that day.
-            if (-not ($issue.type -ceq 'Schedule' -or $issue.labels -ccontains 'schedule')) {
-                $message = "$scheduleSlug#$scheduleNumber is not a schedule: a schedule is an issue of type Schedule, or,"
-                Exit-Launch -ErrorId 'NotASchedule' -Category InvalidData -Message "$message in a user account, one labeled schedule."
-            }
-
-            $scheduleTitle = $issue.title
-            $scheduleUrl = $issue.url
-
-            if ($titleGiven) {
-                $answer = "$givenTitle".Trim()
-
-                if (-not $answer) {
-                    $message = "No title was given; $scheduleSlug#$scheduleNumber keeps its own."
-                    Exit-Launch -ErrorId 'TitleEmpty' -Category InvalidData -Message $message
-                }
-
-                $retitled = "Schedule: $answer"
-
-                if ($retitled -cne $scheduleTitle -and
-                    (Set-ScheduleTitle -Slug $scheduleSlug -Number $scheduleNumber -Title $retitled)) {
-                    Write-Verbose "Retitled $scheduleSlug#$scheduleNumber to $retitled"
-                    $scheduleTitle = $retitled
-                }
-
+            if ($retitled -cne $scheduleTitle -and
+                (Set-ScheduleTitle -Slug $scheduleSlug -Number $scheduleNumber -Title $retitled)) {
+                Write-Verbose "Retitled $scheduleSlug#$scheduleNumber to $retitled"
+                $scheduleTitle = $retitled
             }
 
         }

@@ -150,6 +150,27 @@ def rest(method, path, body = None):
     out = sh(command).strip()
     return json.decode(data = out) if out.startswith("{") else None
 
+def option_literal(o):
+    """A project option as GraphQL's input takes it, with its ID when it has one."""
+    parts = []
+    if o.get("id"):
+        parts.append("id: " + json.encode(o["id"]))
+    parts.append("name: " + json.encode(o["name"]))
+    parts.append("color: " + (o.get("color") or "GRAY"))
+    parts.append("description: " + json.encode(o.get("description") or ""))
+    return "{" + ", ".join(parts) + "}"
+
+def write_options(field_id, options, operation):
+    """A project's single-select field's options written whole, each kept option with its ID, so no row loses its value.
+
+    GitHub's updateProjectV2Field replaces the field's options with those it is sent: an option sent without its ID is
+    made anew, and one not sent is deleted, blanking every row that held it. star github model apply writes a field's
+    options this way, and star github schedule new and scenario new add one (#509). operation is the mutation's name,
+    each caller's own, as every query the extension makes is named for the module that makes it.
+    """
+    graphql("mutation " + operation + " { r: updateProjectV2Field(input: {fieldId: " + json.encode(field_id) + ", singleSelectOptions: [" +
+            ", ".join([option_literal(o) for o in options]) + "]}) { projectV2Field { ... on ProjectV2FieldCommon { id } } } }")
+
 _UNRESERVED = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.~"
 _HEX = "0123456789ABCDEF"
 

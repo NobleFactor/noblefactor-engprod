@@ -15,11 +15,12 @@
 #
 # A scenario is read the same way, an option of its team's Scenario project's Scenario field, whose rows carry a Beat
 # (section 9); its changes are recorded in a comment on its Scenario issue and a line in the item's body, which this
-# module writes too. star github issue move uses it (#511), made from `add` (#438), and get and list of both groups read
-# through it (collections.star, #510).
+# module writes too. star github issue move uses it (#511), made from `add` (#438); get and list of both groups read
+# through it (collections.star, #510); and new of both groups files its issue, sets its issue fields and adds its option
+# through it (making.star, #509).
 
 load("commands/markdown.star", "body_lines", "line_end", "numbered", "sections")
-load("commands/model.star", "extension_dir", "read_text")
+load("commands/model.star", "extension_dir", "read_text", "rest", "write_options")
 load("commands/records.star", "json_lines", "kind_of_project", "quote", "sh")
 load("commands/scheme.star", "canonical_repo", "owners_of", "type_of")
 
@@ -199,10 +200,13 @@ def project_named(model, title):
     return None
 
 def project_of(project_id):
-    """A project's ID, title, and fields by name, a single-select field with its options."""
+    """A project's ID, title, and fields by name, a single-select field with its options, each with its color.
+
+    An option's color is read so that writing a field's options whole sends each one back as it is (add_option).
+    """
     query = ("query starStepProject { node(id: \"" + project_id + "\") { ... on ProjectV2 { id title number " +
              "fields(first: 50) { nodes { ... on ProjectV2FieldCommon { id name dataType } " +
-             "... on ProjectV2SingleSelectField { options { id name description } } } } } } }")
+             "... on ProjectV2SingleSelectField { options { id name color description } } } } } } }")
     node = json.decode(data = _call(query, jq = ".data.node"))
     fields = {}
     for f in ((node.get("fields") or {}).get("nodes") or []):
@@ -335,7 +339,16 @@ def set_beat(project, item, beat):
     )
 
 def place_after(project, item, after_item):
-    """A row placed just after another in the project's order, as section 3 keeps the rows: by Step within each option."""
+    """A row placed just after another in the project's order, as section 3 keeps the rows: by Step within each option.
+
+    With no row to follow, after_item None, it is placed first, as GitHub places a row given no afterId.
+    """
+    if after_item == None:
+        _call(
+            "mutation starStepPlace($p: ID!, $i: ID!) { updateProjectV2ItemPosition(input: {projectId: $p, itemId: $i}) { clientMutationId } }",
+            {"p": project["id"], "i": item},
+        )
+        return
     _call(
         "mutation starStepPlace($p: ID!, $i: ID!, $a: ID!) { updateProjectV2ItemPosition(input: {projectId: $p, itemId: $i, afterId: $a}) { clientMutationId } }",
         {"p": project["id"], "i": item, "a": after_item},
@@ -544,3 +557,54 @@ def write_line(own, line):
         return False
     _write_body(own, with_line(own["body"], line), lambda back: line in back.split("\n"), "the line " + line)
     return True
+
+# ── an issue filed, its issue fields, and an option added ───────────────────
+
+def open_titled(repo, title):
+    """The number of an open issue of repo titled title exactly, among the 100 opened last; None when there is none.
+
+    It is read from the repository's issues, newest first, not from GitHub's search, whose index trails a new issue: a
+    run of star github schedule new or scenario new that stopped partway filed its issue moments before.
+    """
+    owner, name = repo.split("/")
+    query = ("query starStepOpen { repository(owner: \"" + owner + "\", name: \"" + name + "\") { issues(states: [OPEN], " +
+             "first: 100, orderBy: {field: CREATED_AT, direction: DESC}) { nodes { number title } } } }")
+    for node in json.decode(data = _call(query, jq = ".data.repository.issues.nodes") or "[]") or []:
+        if node.get("title") == title:
+            return int(node["number"])
+    return None
+
+def file_issue(repo, fields):
+    """An issue filed in repo through GitHub's REST call, fields its title, body, assignees, and type or labels; its number."""
+    answer = rest("POST", "repos/" + repo + "/issues", fields)
+    if answer == None or not answer.get("number"):
+        fail("GitHub filed no issue in " + repo + ": it answered " + str(answer))
+    return int(answer["number"])
+
+def issue_fields(own):
+    """An issue's single-select issue fields, each field's name to its value's, as GitHub holds them now."""
+    query = ("query starStepFields { node(id: \"" + own["id"] + "\") { ... on Issue { issueFieldValues(first: 20) { nodes { " +
+             "... on IssueFieldSingleSelectValue { name field { ... on IssueFieldCommon { name } } } } } } } }")
+    out = {}
+    for v in json.decode(data = _call(query, jq = ".data.node.issueFieldValues.nodes") or "[]") or []:
+        if type(v) == "dict" and type(v.get("field")) == "dict" and v.get("name"):
+            out[v["field"]["name"]] = v["name"]
+    return out
+
+def set_issue_field(own, field_id, option_id):
+    """An issue's single-select issue field set to an option, by their IDs."""
+    _call(
+        "mutation starStepSetField($i: ID!, $f: ID!, $o: ID!) { setIssueFieldValue(input: {issueId: $i, issueFields: " +
+        "[{fieldId: $f, singleSelectOptionId: $o}]}) { clientMutationId } }",
+        {"i": own["id"], "f": field_id, "o": option_id},
+    )
+
+def add_option(project, field, name, description):
+    """An option added last to a project's single-select field, its color GRAY; the project read again.
+
+    Every existing option is sent back as it is, with its ID, its color and its description, so that no row loses its
+    value: write_options, as star github model apply writes a field's options.
+    """
+    kept = [{"id": o["id"], "name": o["name"], "color": o.get("color"), "description": o.get("description")} for o in project["fields"][field]["options"]]
+    write_options(project["fields"][field]["id"], kept + [{"name": name, "color": "GRAY", "description": description}], "starStepOptions")
+    return project_of(project["id"])

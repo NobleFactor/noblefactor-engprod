@@ -1,0 +1,29 @@
+{{- /*
+SPDX-License-Identifier: Apache-2.0
+Copyright Noble Factor. All rights reserved.
+
+scenario.md.template: the body star github scenario new files a Scenario issue with (section 9 of the issue data model,
+§ Making a scenario: new, ruled 2026-11-15): the sections of the account's Scenario form, in the form's order, each
+headed at level 3 as GitHub heads a form's sections, and a line of its own linking the project's view 2 filtered to
+the scenario's option, just above the Plan and design documents section, since star github plan link replaces that
+section to the end of the body; or last, when the form has none. Rendered by making.star with star's template module,
+its line ends kept.
+
+  .sections        the form's sections, in its order: {heading, text, documents}, documents true of the Plan and
+                   design documents section
+  .has_documents   whether one of them is
+  .project         the Scenario project's title, Scenario: <team>
+  .link            its view 2, filtered to the option
+  .name            the scenario's name, its option
+*/ -}}
+{{- range $i, $s := .sections}}{{if $i}}
+{{end}}{{if $s.documents}}The beats are the rows of [{{$.project}}]({{$.link}})
+under the Scenario option "{{$.name}}", in Beat order.
+
+{{end}}### {{$s.heading}}
+
+{{$s.text}}
+{{end}}{{if not .has_documents}}
+The beats are the rows of [{{.project}}]({{.link}})
+under the Scenario option "{{.name}}", in Beat order.
+{{end -}}

@@ -12,8 +12,9 @@
     the output, detached, and attached; the refusals of usage; and a refusal's exit status, run as a process
     (David-Noble-at-work/personal#273, questions 11 and 12). Then every way in, with a schedule and without, each
     checking the schedule's entry in the store, and row 2 of personal#259's plan, a conversation resumed in another
-    clone that -Continue finds there (NobleFactor/noblefactor-ops#322); and a -Detach wake of a stopped session, which
-    keeps the launch's name (NobleFactor/noblefactor-ops#260).
+    clone that -Continue finds there (NobleFactor/noblefactor-ops#322); a -Detach wake of a stopped session, which
+    keeps the launch's name (NobleFactor/noblefactor-ops#260); and -Schedule new, retired, refused naming star github
+    schedule new, by its message (NobleFactor/noblefactor-engprod#509).
 
     Each case is an output object whose Result is passed, failed or skipped. A failure ends the run with a terminating
     error, so that run as a process it exits 1.
@@ -351,6 +352,7 @@ exit 1
 #   - `Directory`: The startup directory (default: the run's startup repository).
 #   - `CheckStore`: Check schedule 7's entry in the store.
 #   - `Held`: With CheckStore, the id the entry must hold, or nothing when there must be no entry.
+#   - `MessageLike`: A wildcard pattern a refusal's message must match (default: any).
 #
 # Returns:
 #   - PSCustomObject: the case's result, as ConvertTo-CaseResult makes it.
@@ -380,7 +382,10 @@ function Invoke-StartClaudeCase {
         $CheckStore,
 
         [String]
-        $Held
+        $Held,
+
+        [String]
+        $MessageLike
     )
 
     $category = @{ 'usage' = 'InvalidArgument'; 'data-error' = 'InvalidData'; 'not-found' = 'ObjectNotFound' }
@@ -437,6 +442,10 @@ function Invoke-StartClaudeCase {
 
             if ($found -cne $category[$Expected]) {
                 $problem += "its category was $found, not $($category[$Expected]); "
+            }
+
+            if ($MessageLike -and $caught[0].Exception.Message -notlike $MessageLike) {
+                $problem += "its message, '$($caught[0].Exception.Message)', is not like '$MessageLike'; "
             }
 
         }
@@ -864,6 +873,16 @@ name nothing records | no such name | not-found | ConversationNotFound
         Invoke-StartClaudeCase -Name '-Detach with -NoRemoteControl' -Expected 'usage' `
             -ErrorId 'RemoteControlRequired' `
             -Parameter @{ Resume = 'abcd1234'; Detach = $true; NoRemoteControl = $true }
+
+        # -Schedule new is retired (#509; section 8 of the issue data model, question 7): a usage error naming the
+        # command that makes a schedule, star github schedule new; and a -Schedule that is neither a key nor a number is
+        # refused without offering new.
+        Invoke-StartClaudeCase -Name '-Schedule new: refused, naming star github schedule new' -Expected 'usage' `
+            -ErrorId 'ScheduleNewRetired' -Parameter @{ Schedule = 'new'; Detach = $true } `
+            -MessageLike '-Schedule new is retired: make the schedule with star github schedule new *'
+        Invoke-StartClaudeCase -Name '-Schedule that is neither a key nor a number: refused, new not offered' `
+            -Expected 'usage' -ErrorId 'ScheduleMalformed' -Parameter @{ Schedule = 'tomorrow'; Detach = $true } `
+            -MessageLike '-Schedule takes <owner>/<repository>#<number> or a bare <number>: tomorrow'
         Invoke-ProcessCase -Name 'a refusal, run as a process'
         Invoke-AttachedCase -Name 'attached, the id on the output when the viewer leaves'
     )

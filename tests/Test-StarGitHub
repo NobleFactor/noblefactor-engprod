@@ -8,9 +8,9 @@
 # each account's model read from GitHub when a command needs it, star github model get and backup, and the sweep's
 # two-types rule (#426), as docs/plans/feature/426-model-pull-to-dot-github.md's test plan lists them; star github
 # schedule add (#438), as docs/plans/feature/438-schedule-add.md's test plan lists them, run as star github issue move
-# (#511), which it became, with issue move's own cases, and get and list of star github schedule and star github
-# scenario (#510), as docs/plans/doc/507-scenario-commands.md's test plan lists them; each team's project of a kind held
-# to its template's README and to the short description the template names for a copy (#555), as
+# (#511), which it became, with issue move's own cases, and get, list and new of star github schedule and star github
+# scenario (#510, #509), as docs/plans/doc/507-scenario-commands.md's test plan lists them; each team's project of a
+# kind held to its template's README and to the short description the template names for a copy (#555), as
 # docs/plans/fix/555-copy-readme.md's test plan lists them; and star github plan link (#557), as
 # docs/plans/feature/557-plan-row.md's test plan lists them
 
@@ -390,7 +390,10 @@ function check {
 #   Schedule: test-user: u1, test-user/personal#10's, step 1: personal#11; personal#12 a task on no project. Triage:
 #   test-user holds nothing, and Scenario: test-user's user walk, personal#20's, numbers two steps.
 #   Each Schedule project has the Schedule, Step, Status, Worktree and Iteration fields, and each Scenario project the
-#   Scenario, Beat and Status fields. engprod's members are stand-in and member; devlore's, other. gh runs as stand-in.
+#   Scenario, Beat and Status fields, each field's ID its project's own. engprod's members are stand-in and member;
+#   devlore's, other. gh runs as stand-in.
+#   NobleFactor's Area and Priority issue fields are named by their IDs and their options', as star github schedule new
+#   and scenario new set them (#509).
 function base_world {
     jq -n '
         def id($repo; $n): "I_" + ($repo | split("/")[1]) + "_" + ($n | tostring);
@@ -410,6 +413,9 @@ function base_world {
             {id: "F_beat", name: "Beat", dataType: "NUMBER"}, status];
         def step($s; $n; $status): {Schedule: $s, Step: $n, Status: $status};
         {viewer: "stand-in", teams: {engprod: ["stand-in", "member"], devlore: ["other"]},
+        issue_fields: {IF_area: {name: "Area", options: {o_product: "Product", o_engineering: "Engineering"}},
+            IF_priority: {name: "Priority", options: {o_urgent: "Urgent", o_high_priority: "High", o_medium_priority: "Medium",
+                o_low_priority: "Low"}}},
         issues: (
             issue("NobleFactor/alpha"; 20; "Schedule"; "Schedule: s1"; {body: body("s1"; "- 2026-11-01, on the owner'"'"'s word: step 4 was added, Task NobleFactor/alpha#24.\n")})
             + issue("NobleFactor/alpha"; 21; "Task"; "the first step"; {state: "CLOSED"})
@@ -474,7 +480,8 @@ function base_world {
             PVT_t_user: {id: "PVT_t_user", title: "Triage: test-user", number: 9, fields: [status], items: []},
             PVT_c_user: {id: "PVT_c_user", title: "Scenario: test-user", number: 8,
                 fields: scenario_fields([{id: "O_uwalk", name: "user walk", description: "test-user/personal#20"}]),
-                items: [item("test-user/personal"; 20; {Scenario: "user walk", Status: "Open"})]}}}'
+                items: [item("test-user/personal"; 20; {Scenario: "user walk", Status: "Open"})]}}}
+        | .projects |= with_entries(.key as $project | .value.fields |= map(.id += "_" + $project))'
 }
 
 # world gives one of add's cases its GitHub: base_world, changed by a jq program when one is given, as the world the
@@ -553,6 +560,32 @@ function plan_holds {
 #   - 0, the plan printed.
 function plan_text {
     printf -- '---\ntitle: Plan: a plan for a test\nissue: %s\nstatus: active\n%s---\n\n# Plan\n\n%s' "$1" "${2:-}" "${3:-}"
+}
+
+# issue_form prints an issue form as each account's .github repository holds its Schedule and Scenario forms (read
+# 2026-11-16): its name, what sets its issues' type, its Area dropdown, its textareas, each required, and its Plan and
+# design documents textarea with its default table (#509).
+#
+# Parameters:
+#   - `$1`: the form's name, Schedule or Scenario.
+#   - `$2`: what sets its type: type: <type> in an organization's form, labels: and its label in a user account's.
+#   - `${@:3}`: its textareas before the documents one, in its order, each id=label.
+#
+# Returns:
+#   - 0, the form printed.
+function issue_form {
+    local name="$1" sets="$2" textarea
+    shift 2
+
+    printf 'name: %s\ndescription: A %s\n%s\nbody:\n' "${name}" "${name,,}" "${sets}"
+    printf -- '- type: dropdown\n  id: area\n  attributes:\n    label: Area\n    options:\n    - Product\n    - Engineering\n'
+    printf '  validations:\n    required: true\n'
+    for textarea in "$@"; do
+        printf -- '- type: textarea\n  id: %s\n  attributes:\n    label: %s\n  validations:\n    required: true\n' \
+            "${textarea%%=*}" "${textarea#*=}"
+    done
+    printf -- '- type: textarea\n  id: documents\n  attributes:\n    label: Plan and design documents\n    value: |\n'
+    printf '      | Document | Link |\n      | --- | --- |\n      | Plan | Not yet opened |\n  validations:\n    required: true\n'
 }
 
 # write_stand_in writes the stand-in for gh to the run's bin directory.
@@ -638,6 +671,29 @@ def set_value($w; $p; $i; $name; $value):
 elif $op == "starStepIssue" then
     {answer: {data: {repository: {issue: ([$w.issues[] | select(.repo == $repo and (.number | tostring) == $number)][0]
         | if . then issue_node($w; .) else null end)}}}}
+elif $op == "restFileIssue" then
+    ($body | fromjson) as $in | (((([$w.issues[] | select(.repo == $repo) | .number] | max) // 0) + 1)) as $n |
+    ("I_" + ($repo | split("/")[1]) + "_" + ($n | tostring)) as $id |
+    {world: ($w | .issues[$id] = {id: $id, repo: $repo, number: $n, title: $in.title, state: "OPEN", type: ($in.type // null),
+            labels: ($in.labels // []), assignees: ($in.assignees // []), blockedBy: [], body: $in.body}),
+        answer: {number: $n, node_id: $id, html_url: "https://github.com/\($repo)/issues/\($n)"}}
+elif $op == "starStepOpen" then
+    {answer: {data: {repository: {issues: {nodes: ([$w.issues[] | select(.repo == $repo and .state == "OPEN")] | sort_by(-.number)
+        | map({number, title}))}}}}}
+elif $op == "starStepFields" then
+    {answer: {data: {node: {issueFieldValues: {nodes: [($w.issues[$node].fields // {}) | to_entries[]
+        | {name: .value, field: {name: .key}}]}}}}}
+elif $op == "starStepSetField" then
+    $w.issue_fields[$f] as $field |
+    {world: ($w | .issues[$i].fields[$field.name] = $field.options[$o]), answer: {data: {setIssueFieldValue: {clientMutationId: null}}}}
+elif $op == "starStepOptions" then
+    # A field's options written whole, as a literal in the mutation: each kept by its ID, each without one made anew.
+    ($query | capture("fieldId: \"(?<f>[^\"]+)\", singleSelectOptions: \\[(?<o>.*)\\]\\}\\)")) as $m |
+    ("[" + ($m.o | gsub("(?<p>\\{|, )(?<k>id|name|color|description): "; "\(.p)\"\(.k)\": ")
+        | gsub("\"color\": (?<c>[A-Z_]+)"; "\"color\": \"\(.c)\"")) + "]" | fromjson) as $options |
+    {world: ($w | .projects |= map_values(.fields |= map(if .id == $m.f then .options = [$options[]
+            | {id: (.id // ("O_" + (.name | gsub("[^A-Za-z0-9]"; "_")))), name, color, description}] else . end))),
+        answer: {data: {r: {projectV2Field: {id: $m.f}}}}}
 elif $op == "starStepProject" then
     {answer: {data: {node: ($w.projects[$node] | {id, title, number, fields: {nodes: .fields}})}}}
 elif $op == "starStepRows" then
@@ -672,8 +728,9 @@ elif $op == "starStepComment" then
     {world: ($w | .issues[$s].comments = ((.issues[$s].comments // []) + [$b])),
         answer: {data: {addComment: {commentEdge: {node: {id: ("IC_" + $s + "_" + ($n | tostring))}}}}}}
 elif $op == "starStepPlace" then
+    # With no row to follow, the row is placed first.
     ($w.projects[$p].items | map(select(.id == $i))[0]) as $it | ($w.projects[$p].items | map(select(.id != $i))) as $rest |
-    ($rest | map(.id) | index($a)) as $at |
+    (if $a == "" then -1 else ($rest | map(.id) | index($a)) end) as $at |
     {world: ($w | .projects[$p].items = ($rest[:($at + 1)] + [$it] + $rest[($at + 1):])),
         answer: {data: {updateProjectV2ItemPosition: {clientMutationId: null}}}}
 elif $op == "starStepDeleteRow" then
@@ -1020,6 +1077,55 @@ if [[ "${rest_path}" =~ ${repo_path} ]]; then
     esac
 fi
 
+# world_answer answers an operation of the schedule and scenario commands from their world, through world.jq, and keeps
+# what a write changes; when the world names the operation in fail_on, it fails once, after letting fail_skip calls of
+# it through. What world.jq reads of a request is parsed from its GraphQL query, none for a REST call, and gh's -f and
+# -F values, with a REST call's body.
+#
+# Parameters:
+#   - `$1`: the operation: a GraphQL query's name, or, for a REST call, a name the stand-in gives it.
+#   - `$2`: the repository a query or a REST path names, owner/name.
+#
+# Returns:
+#   - it does not return: the stand-in prints the answer and exits 0, or exits 1.
+function world_answer {
+    local op="$1" repo="$2" world="${GH_REMOTES}/world.json" result number="" node="" slug="" member="" user="" title=""
+
+    [[ -r "${world}" ]] || { printf 'stand-in gh: no world for %s\n' "${op}" >&2; exit 1; }
+    if [[ "$(jq -r '.fail_on // ""' "${world}")" == "${op}" ]]; then
+        if (($(jq '.fail_skip // 0' "${world}") > 0)); then
+            jq '.fail_skip -= 1' "${world}" >"${world}.next" && mv -- "${world}.next" "${world}"
+        else
+            jq '.fail_on = ""' "${world}" >"${world}.next" && mv -- "${world}.next" "${world}"
+            printf 'gh: %s failed, as the case asked\n' "${op}" >&2
+            exit 1
+        fi
+    fi
+    [[ "${query}" =~ issue\(number:[[:space:]]*([0-9]+)\) ]] && number="${BASH_REMATCH[1]}"
+    [[ "${query}" =~ node\(id:[[:space:]]*\"([^\"]+)\" ]] && node="${BASH_REMATCH[1]}"
+    [[ "${query}" =~ team\(slug:[[:space:]]*\"([^\"]+)\" ]] && slug="${BASH_REMATCH[1]}"
+    [[ "${query}" =~ members\(query:[[:space:]]*\"([^\"]*)\" ]] && member="${BASH_REMATCH[1]}"
+    [[ "${query}" =~ user\(login:[[:space:]]*\"([^\"]+)\" ]] && user="${BASH_REMATCH[1]}"
+    [[ "${query}" =~ projectsV2\(first:[[:space:]]*[0-9]+,[[:space:]]*query:[[:space:]]*\"([^\"]*)\" ]] && title="${BASH_REMATCH[1]}"
+    result="$(jq -c --arg op "${op}" --arg repo "${repo}" --arg number "${number}" --arg node "${node}" \
+        --arg slug "${slug}" --arg member "${member}" --arg user "${user}" --arg title "${title}" --arg p "${vars[p]:-}" \
+        --arg i "${vars[i]:-}" --arg c "${vars[c]:-}" --arg f "${vars[f]:-}" --arg o "${vars[o]:-}" --arg v "${vars[v]:-}" \
+        --arg a "${vars[a]:-}" --arg b "${vars[b]:-}" --arg u "${vars[u]:-}" --arg s "${vars[s]:-}" --arg query "${query}" \
+        --arg body "${body}" -f "${BASH_SOURCE[0]%/*}/world.jq" "${world}")" || exit 1
+    if jq -e 'has("world")' <<<"${result}" >/dev/null; then
+        jq '.world' <<<"${result}" >"${world}.next" && mv -- "${world}.next" "${world}"
+    fi
+    jq -c '.answer' <<<"${result}" | if [[ -n "${jq_program}" ]]; then jq -r -c "${jq_program}"; else cat; fi
+    exit 0
+}
+
+# An issue filed by a REST call, star github schedule new's and scenario new's (#509), when their world is there: it
+# joins the world, as GitHub files it.
+if [[ "${method}" == POST && "${rest_path}" =~ ^repos/([^/]+/[^/]+)/issues$ && -r "${GH_REMOTES}/world.json" ]]; then
+    query=""
+    world_answer restFileIssue "${BASH_REMATCH[1]}"
+fi
+
 # A REST write: recorded among the calls, and answered with an ID.
 if [[ "${method}" != GET && "${rest_path}" != graphql ]]; then
     jq -cn --arg p "${rest_path}" '{id: 9000, node_id: ("N_" + $p), html_url: ("https://github.com/" + $p)}' |
@@ -1054,34 +1160,7 @@ login="" owner="" name=""
 
 # The schedule commands' GitHub (#438): the world, read and changed through world.jq.
 if [[ "${operation}" == starViewer || "${operation}" == starStep* ]]; then
-    world="${GH_REMOTES}/world.json"
-    [[ -r "${world}" ]] || { printf 'stand-in gh: no world for %s\n' "${operation}" >&2; exit 1; }
-    if [[ "$(jq -r '.fail_on // ""' "${world}")" == "${operation}" ]]; then
-        if (($(jq '.fail_skip // 0' "${world}") > 0)); then
-            jq '.fail_skip -= 1' "${world}" >"${world}.next" && mv -- "${world}.next" "${world}"
-        else
-            jq '.fail_on = ""' "${world}" >"${world}.next" && mv -- "${world}.next" "${world}"
-            printf 'gh: %s failed, as the case asked\n' "${operation}" >&2
-            exit 1
-        fi
-    fi
-    number="" node="" slug="" member="" user="" title=""
-    [[ "${query}" =~ issue\(number:[[:space:]]*([0-9]+)\) ]] && number="${BASH_REMATCH[1]}"
-    [[ "${query}" =~ node\(id:[[:space:]]*\"([^\"]+)\" ]] && node="${BASH_REMATCH[1]}"
-    [[ "${query}" =~ team\(slug:[[:space:]]*\"([^\"]+)\" ]] && slug="${BASH_REMATCH[1]}"
-    [[ "${query}" =~ members\(query:[[:space:]]*\"([^\"]*)\" ]] && member="${BASH_REMATCH[1]}"
-    [[ "${query}" =~ user\(login:[[:space:]]*\"([^\"]+)\" ]] && user="${BASH_REMATCH[1]}"
-    [[ "${query}" =~ projectsV2\(first:[[:space:]]*[0-9]+,[[:space:]]*query:[[:space:]]*\"([^\"]*)\" ]] && title="${BASH_REMATCH[1]}"
-    result="$(jq -c --arg op "${operation}" --arg repo "${owner}/${name}" --arg number "${number}" --arg node "${node}" \
-        --arg slug "${slug}" --arg member "${member}" --arg user "${user}" --arg title "${title}" --arg p "${vars[p]:-}" \
-        --arg i "${vars[i]:-}" --arg c "${vars[c]:-}" --arg f "${vars[f]:-}" --arg o "${vars[o]:-}" --arg v "${vars[v]:-}" \
-        --arg a "${vars[a]:-}" --arg b "${vars[b]:-}" --arg u "${vars[u]:-}" --arg s "${vars[s]:-}" \
-        -f "${BASH_SOURCE[0]%/*}/world.jq" "${world}")" || exit 1
-    if jq -e 'has("world")' <<<"${result}" >/dev/null; then
-        jq '.world' <<<"${result}" >"${world}.next" && mv -- "${world}.next" "${world}"
-    fi
-    jq -c '.answer' <<<"${result}" | if [[ -n "${jq_program}" ]]; then jq -r -c "${jq_program}"; else cat; fi
-    exit 0
+    world_answer "${operation}" "${owner}/${name}"
 fi
 
 case ${operation} in
@@ -3463,6 +3542,186 @@ run_star "${data}" github schedule get NobleFactor/alpha#20 --dry-run
 expect "106 (plan 9): get refuses star's --dry-run" error "${no_writes}" "1170" text
 run_star "${data}" github scenario list NobleFactor --dry-run
 expect "106 (plan 9): and so does list" error "${no_writes}" "1170" text
+
+# 107 to 112: star github schedule new and star github scenario new (#509), as
+# docs/plans/doc/507-scenario-commands.md's test plan case 10 has them, each named for it. Their data directory's
+# NobleFactor has a Priority issue field, which the shared fixture's lacks, and each account's .github repository holds
+# its Schedule and Scenario forms. Each case starts from base_world, changed where it says, and reads back what new left
+# in it.
+data_new="${run_directory}/data-new"
+make_extension "${data_new}"
+jq '.[0].data.organization.issueFields.nodes += [{__typename: "IssueFieldSingleSelect", name: "Priority", dataType: "SINGLE_SELECT",
+        id: "IF_priority", fullDatabaseId: "74", description: "How soon", visibility: "ALL",
+        options: [{id: "o_urgent", databaseId: 741, name: "Urgent", color: "PINK", description: "", priority: 1},
+            {id: "o_high_priority", databaseId: 742, name: "High", color: "RED", description: "", priority: 2},
+            {id: "o_medium_priority", databaseId: 743, name: "Medium", color: "YELLOW", description: "", priority: 3},
+            {id: "o_low_priority", databaseId: 744, name: "Low", color: "GREEN", description: "", priority: 4}]}]' \
+    "${run_directory}/fixtures/starOrganizationModel/NobleFactor.json" | override "${data_new}" starOrganizationModel/NobleFactor.json
+schedule_textareas=("what=Deliverable" "exit=Exit criteria" "evidence=Evidence of completion")
+scenario_textareas=("goal=What the person wants to do" "walk=How to walk through it" "features=The features it uses")
+repository NobleFactor/.github \
+    ".github/ISSUE_TEMPLATE/schedule.yml=$(issue_form Schedule 'type: Schedule' "${schedule_textareas[@]}")" \
+    ".github/ISSUE_TEMPLATE/scenario.yml=$(issue_form Scenario 'type: Scenario' "${scenario_textareas[@]}")"
+repository test-user/.github \
+    ".github/ISSUE_TEMPLATE/schedule.yml=$(issue_form Schedule $'labels:\n- schedule' "${schedule_textareas[@]}")" \
+    ".github/ISSUE_TEMPLATE/scenario.yml=$(issue_form Scenario $'labels:\n- scenario' "${scenario_textareas[@]}")"
+schedule_flags=(--area Engineering --deliverable "The schedule commands, built." --exit-criteria "Each command proved."
+    --evidence "A comment with each proof.")
+scenario_flags=(--area Product --wants "To start." --walk $'1. Install it.\n2. Run it.' --features "Task #509")
+declare -r documents='"| Document | Link |\n| --- | --- |\n| Plan | Not yet opened |\n"'
+declare -r schedule_body='def schedule_body($project; $link; $name): "## Deliverable\n\nThe schedule commands, built.\n\n## Exit criteria\n\n" +
+    "Each command proved.\n\n## Evidence of completion\n\nA comment with each proof.\n\n## Plan and design documents\n\n" + '"${documents}"' +
+    "\n## Steps\n\nThe steps are the rows of [\($project)](\($link))\nunder the Schedule option \"\($name)\", worked in step order.\n\n" +
+    "## Amendments\n";'
+declare -r scenario_body='def scenario_body($project; $link; $name): "### What the person wants to do\n\nTo start.\n\n" +
+    "### How to walk through it\n\n1. Install it.\n2. Run it.\n\n### The features it uses\n\nTask #509\n\n" +
+    "The beats are the rows of [\($project)](\($link))\nunder the Scenario option \"\($name)\", in Beat order.\n\n" +
+    "### Plan and design documents\n\n" + '"${documents}"';'
+
+# 107 (plan 10). schedule new in an organization files Schedule: issue tracking, iteration 2 in NobleFactor/alpha, of
+# type Schedule, Area Engineering, Priority Medium, assigned to who ran it, its body the form's sections at ##, in the
+# form's order, then Steps, linking view 2 of Schedule: engprod filtered to the option as #346's line does, and an empty
+# Amendments; adds the option last to the Schedule field, GRAY, naming the issue, s1 and s2 sent back with their IDs,
+# s1's color kept; and puts the issue's own row, Open, after the last row with an option and before #41's, which has
+# none. It touches no Triage row (ruled 2026-11-16). issue move then puts a step on the new schedule, amending its
+# body.
+world '.projects.PVT_s_eng.fields |= map(if .name == "Schedule" then .options[0].color = "BLUE" else . end)
+    | .projects.PVT_s_eng.items += [{id: "IT_alpha_41", content: "I_alpha_41", values: {Status: "Open"}}]'
+run_star "${data_new}" github schedule new NobleFactor/alpha "issue tracking, iteration 2" "${schedule_flags[@]}"
+expect "107 (plan 10): schedule new makes the issue, the option and the row" ok '. == [{
+    kind: "Schedule", issue: "NobleFactor/alpha#44", title: "Schedule: issue tracking, iteration 2", project: "Schedule: engprod",
+    option: "issue tracking, iteration 2", issue_action: "made", option_action: "made", row_action: "made"}]'
+check "107 (plan 10): the issue reads back with its title, type, assignee, Area and Priority" world_holds \
+    '.issues.I_alpha_44 | {title, state, type, assignees, fields} == {title: "Schedule: issue tracking, iteration 2", state: "OPEN",
+        type: "Schedule", assignees: ["stand-in"], fields: {Area: "Engineering", Priority: "Medium"}}'
+check "107 (plan 10): its body is the form's sections at ##, then Steps and an empty Amendments, every byte" world_holds \
+    "${schedule_body}"' .issues.I_alpha_44.body == schedule_body("Schedule: engprod";
+        "https://github.com/orgs/NobleFactor/projects/26/views/2?filterQuery=schedule%3A%22issue+tracking%2C+iteration+2%22";
+        "issue tracking, iteration 2")'
+check "107 (plan 10): the option is last, GRAY, naming #44, and s1 and s2 are kept, s1 BLUE" world_holds \
+    '[.projects.PVT_s_eng.fields[] | select(.name == "Schedule") | .options[] | [.id, .name, .color, .description]] == [
+        ["O_s1", "s1", "BLUE", "NobleFactor/alpha#20"], ["O_s2", "s2", "GRAY", "NobleFactor/alpha#30"],
+        ["O_issue_tracking__iteration_2", "issue tracking, iteration 2", "GRAY", "NobleFactor/alpha#44"]]'
+check "107 (plan 10): every existing option was sent with its ID" calls_hold \
+    '[.[] | .[] | select(type == "string" and startswith("query=mutation starStepOptions"))] as $w | ($w | length) == 1
+        and ($w[0] | contains("{id: \"O_s1\", name: \"s1\", color: BLUE") and contains("{id: \"O_s2\", name: \"s2\""))'
+check "107 (plan 10): its own row is Open, after s2's last and before #41's, which has no option" world_holds \
+    '(.projects.PVT_s_eng.items | map(.content)) == ["I_alpha_20", "I_alpha_21", "I_alpha_22", "I_alpha_23", "I_alpha_24",
+        "I_alpha_30", "I_alpha_31", "I_alpha_32", "I_alpha_33", "I_alpha_44", "I_alpha_41"]
+        and (.projects.PVT_s_eng.items[] | select(.content == "I_alpha_44") | .values) == {Status: "Open", Schedule: "issue tracking, iteration 2"}'
+check "107 (plan 10): it deletes no row and waits for none: no Triage row is its to touch" calls_hold \
+    '[.[] | select(.[0] == "sleep" or any(.[]; type == "string" and startswith("query=mutation starStepDeleteRow")))] == []'
+run_star "${data_new}" github issue move NobleFactor/alpha#41 --schedule NobleFactor/alpha#44 --reason "Its first step."
+expect "107 (plan 10): issue move puts a step on the new schedule" ok '[.[] | select(.action == "added") | .step] == [1]'
+check "107 (plan 10): and amends its empty Amendments section" world_holds \
+    '.issues.I_alpha_44.body | endswith("## Amendments\n\n- '"${today}"', by stand-in: step 1 was added, Task NobleFactor/alpha#41, a spare task. Its first step.\n")'
+
+# 108 (plan 10). scenario new in an organization files Scenario: first run, of type Scenario, Area Product, Priority
+# High as --priority gives it, its body the form's sections at ###, in the form's order, and its beats line just above
+# its Plan and design documents heading; adds its option after walk's; and puts its own row, Open, after #27's.
+world
+run_star "${data_new}" github scenario new NobleFactor/alpha "first run" "${scenario_flags[@]}" --priority High
+expect "108 (plan 10): scenario new makes the issue, the option and the row" ok '. == [{kind: "Scenario", issue: "NobleFactor/alpha#44",
+    title: "Scenario: first run", project: "Scenario: engprod", option: "first run", issue_action: "made", option_action: "made",
+    row_action: "made"}]'
+check "108 (plan 10): the issue reads back, of type Scenario, Area Product and Priority High" world_holds \
+    '.issues.I_alpha_44 | {type, assignees, fields} == {type: "Scenario", assignees: ["stand-in"], fields: {Area: "Product", Priority: "High"}}'
+check "108 (plan 10): its body is the form's sections at ###, its beats line above its documents heading, every byte" world_holds \
+    "${scenario_body}"' .issues.I_alpha_44.body == scenario_body("Scenario: engprod";
+        "https://github.com/orgs/NobleFactor/projects/27/views/2?filterQuery=scenario%3A%22first+run%22"; "first run")'
+check "108 (plan 10): the option is last, naming #44, walk kept, and the row Open after #27's" world_holds \
+    '[.projects.PVT_c_eng.fields[] | select(.name == "Scenario") | .options[] | [.id, .name, .description]] == [
+        ["O_walk", "walk", "NobleFactor/alpha#40"], ["O_first_run", "first run", "NobleFactor/alpha#44"]]
+        and (.projects.PVT_c_eng.items | map(.content)) == ["I_alpha_40", "I_alpha_27", "I_alpha_44"]
+        and (.projects.PVT_c_eng.items[2].values == {Status: "Open", Scenario: "first run"})'
+
+# 109 (plan 10). In a user account, whose types, Area and Priority are labels: schedule new files test-user/personal#21,
+# labeled schedule, area:product and priority:medium, its line linking the user's project 7; scenario new files #22,
+# labeled scenario, area:engineering and priority:medium, assigned to --assignee, its line linking project 8.
+world
+run_star "${data_new}" github schedule new test-user/personal home --area Product --deliverable "The schedule commands, built." \
+    --exit-criteria "Each command proved." --evidence "A comment with each proof."
+expect "109 (plan 10): schedule new in a user account" ok '. == [{kind: "Schedule", issue: "test-user/personal#21",
+    title: "Schedule: home", project: "Schedule: test-user", option: "home", issue_action: "made", option_action: "made",
+    row_action: "made"}]'
+check "109 (plan 10): its issue is labeled for its type, Area and Priority, its body linking the user's project" world_holds \
+    "${schedule_body}"' .issues.I_personal_21 | .labels == ["schedule", "area:product", "priority:medium"] and .type == null
+        and .body == schedule_body("Schedule: test-user"; "https://github.com/users/test-user/projects/7/views/2?filterQuery=schedule%3A%22home%22"; "home")'
+check "109 (plan 10): its option and its row" world_holds \
+    '[.projects.PVT_s_user.fields[] | select(.name == "Schedule") | .options[] | [.name, .description]] == [["u1", "test-user/personal#10"],
+        ["home", "test-user/personal#21"]] and (.projects.PVT_s_user.items | map(.content)) == ["I_personal_10", "I_personal_11", "I_personal_21"]'
+run_star "${data_new}" github scenario new test-user/personal "evening walk" --area Engineering --wants "To start." \
+    --walk $'1. Install it.\n2. Run it.' --features "Task #509" --assignee other
+expect "109 (plan 10): scenario new in a user account" ok 'map([.issue, .project, .issue_action]) ==
+    [["test-user/personal#22", "Scenario: test-user", "made"]]'
+check "109 (plan 10): its issue labeled scenario, area:engineering and priority:medium, assigned to other, linking project 8" world_holds \
+    "${scenario_body}"' .issues.I_personal_22 | .labels == ["scenario", "area:engineering", "priority:medium"] and .assignees == ["other"]
+        and .body == scenario_body("Scenario: test-user";
+            "https://github.com/users/test-user/projects/8/views/2?filterQuery=scenario%3A%22evening+walk%22"; "evening walk")'
+
+# 110 (plan 10). Each refusal names why, and nothing is written: a name whose issue, option and row are all there; a
+# name that is an option naming an issue that is not an open issue of that title; a section of the form left unfilled;
+# a --walk that numbers no step; --area missing, or neither Product nor Engineering; a repository no team maintains, or,
+# in a user account, one without the topic issue-model; a team with no Schedule project; and star's --dry-run.
+world
+run_star "${data_new}" github schedule new NobleFactor/alpha s1 "${schedule_flags[@]}"
+expect "110 (plan 10): a name whose issue, option and row are all there is refused" error "${no_writes}" \
+    "NobleFactor/alpha#20 is already the schedule s1: its issue, its option and its row are all there" text
+world '.issues.I_alpha_20.state = "CLOSED"'
+run_star "${data_new}" github schedule new NobleFactor/alpha s1 "${schedule_flags[@]}"
+expect "110 (plan 10): a name that is already an option, its issue closed, is refused" error "${no_writes}" \
+    "s1 is already an option of Schedule: engprod's Schedule field, NobleFactor/alpha#20's" text
+world
+run_star "${data_new}" github schedule new NobleFactor/alpha later --area Engineering --deliverable "D." --exit-criteria "E."
+expect "110 (plan 10): a section of the form left unfilled is refused" error "${no_writes}" \
+    "--evidence is missing: it fills the form's section Evidence of completion" text
+run_star "${data_new}" github scenario new NobleFactor/alpha loose --area Product --wants "W." --walk "Wander, then stop." --features "F."
+expect "110 (plan 10): a --walk that numbers no step is refused" error "${no_writes}" "--walk numbers no step" text
+run_star "${data_new}" github schedule new NobleFactor/alpha later --deliverable "D." --exit-criteria "E." --evidence "V."
+expect "110 (plan 10): --area missing is refused" error "${no_writes}" "--area is missing: Product or Engineering" text
+run_star "${data_new}" github schedule new NobleFactor/alpha later --area Marketing --deliverable "D." --exit-criteria "E." --evidence "V."
+expect "110 (plan 10): and --area that is neither" error "${no_writes}" "--area is Product, Engineering: Marketing" text
+run_star "${data_new}" github schedule new NobleFactor/gamma later "${schedule_flags[@]}"
+expect "110 (plan 10): a repository no team maintains is refused" error "${no_writes}" \
+    "NobleFactor/gamma takes no part in NobleFactor's issue model: no team maintains it" text
+run_star "${data_new}" github schedule new test-user/elsewhere later "${schedule_flags[@]}"
+expect "110 (plan 10): and a user account's without the topic issue-model" error "${no_writes}" \
+    "test-user/elsewhere takes no part in test-user's issue model: it lacks the topic issue-model" text
+world 'del(.projects.PVT_s_dev)'
+run_star "${data_new}" github schedule new NobleFactor/beta later "${schedule_flags[@]}"
+expect "110 (plan 10): a team with no Schedule project is refused" error "${no_writes}" "NobleFactor has no open project Schedule: devlore" text
+run_star "${data_new}" github schedule new NobleFactor/alpha later "${schedule_flags[@]}" --dry-run
+expect "110 (plan 10): and star's --dry-run, until devlore-cli#1170" error "${no_writes}" "1170" text
+
+# 111 (plan 10). A run that stops after filing the issue, before its option, is run again: it finds the issue by its
+# title, files no second one, and adds the option and the row.
+world '.fail_on = "starStepOptions"'
+quiet=""
+run_star "${data_new}" github schedule new NobleFactor/alpha later "${schedule_flags[@]}"
+quiet="--silent"
+expect "111 (plan 10): a run that stops before the option says what it filed" error "" "filed NobleFactor/alpha#44, Schedule: later"
+run_star "${data_new}" github schedule new NobleFactor/alpha later "${schedule_flags[@]}"
+expect "111 (plan 10): the same command run again finishes it, the issue found" ok \
+    'map([.issue, .issue_action, .option_action, .row_action]) == [["NobleFactor/alpha#44", "found", "made", "made"]]'
+check "111 (plan 10): one issue titled Schedule: later, with its option and its row" world_holds \
+    '([.issues[] | select(.title == "Schedule: later")] | length) == 1
+        and ([.projects.PVT_s_eng.fields[] | select(.name == "Schedule") | .options[] | select(.name == "later") | .description]
+            == ["NobleFactor/alpha#44"])
+        and ([.projects.PVT_s_eng.items[] | select(.content == "I_alpha_44") | .values] == [{Status: "Open", Schedule: "later"}])'
+
+# 112 (plan 10). A run that stops after the row is made, before it is placed and given its option, is run again: it
+# finds the issue, the option naming it, and the row without the option, which it finishes.
+world '.fail_on = "starStepPlace"'
+run_star "${data_new}" github scenario new NobleFactor/alpha "first run" "${scenario_flags[@]}"
+expect "112 (plan 10): a run that stops at placing the row" error ""
+run_star "${data_new}" github scenario new NobleFactor/alpha "first run" "${scenario_flags[@]}"
+expect "112 (plan 10): the same command run again finishes the row" ok \
+    'map([.issue_action, .option_action, .row_action]) == [["found", "found", "made"]]'
+check "112 (plan 10): one issue, one option, and its own row, Open, under the option, after #27's" world_holds \
+    '([.issues[] | select(.title == "Scenario: first run")] | length) == 1
+        and ([.projects.PVT_c_eng.fields[] | select(.name == "Scenario") | .options[] | select(.name == "first run")] | length) == 1
+        and (.projects.PVT_c_eng.items | map(.content)) == ["I_alpha_40", "I_alpha_27", "I_alpha_44"]
+        and (.projects.PVT_c_eng.items[2].values == {Status: "Open", Scenario: "first run"})'
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"

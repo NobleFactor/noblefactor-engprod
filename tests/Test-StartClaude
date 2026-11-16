@@ -8,8 +8,9 @@
 # refusals of usage (David-Noble-at-work/personal#273, questions 11 and 12); every way in, with a schedule and without,
 # and row 2 of personal#259's plan, a conversation resumed in another clone that --continue finds there
 # (NobleFactor/noblefactor-ops#322); a --detach wake of a stopped session, which passes no flag and renames the session
-# with its first prompt when claude lists it under another name; and a running session so listed, renamed in a viewer
-# (NobleFactor/noblefactor-engprod#384). Test-StartClaude.ps1 runs the same cases, from the same table, against
+# with its first prompt when claude lists it under another name; a running session so listed, renamed in a viewer
+# (NobleFactor/noblefactor-engprod#384); and --schedule new, retired, refused naming star github schedule new
+# (NobleFactor/noblefactor-engprod#509). Test-StartClaude.ps1 runs the same cases, from the same table, against
 # Start-Claude.ps1 on Windows.
 
 [[ -r "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" ]] || {
@@ -597,6 +598,22 @@ done <<<"${case_table}"
 run_case "no way in" usage --detach
 run_case "--detach with --no-remote-control" usage --detach --no-remote-control --resume abcd1234
 run_case "a refusal, run as a process" not-found --detach --resume "no such name"
+
+# --schedule new is retired (#509; section 8 of the issue data model, question 7): a usage error naming the command that
+# makes a schedule, star github schedule new, before anything reads GitHub; and a --schedule that is neither a key nor a
+# number is refused without offering new.
+case_count=$((case_count + 1))
+problem="" written=""
+probe problem "${repository}" usage --detach --schedule new
+retired="--schedule new is retired: make the schedule with star github schedule new <repository> <name>"
+[[ ${written} == *"${retired}"* ]] || problem+="the refusal does not name star github schedule new; "
+report "--schedule new: refused, naming star github schedule new" "${problem}" "${written}"
+case_count=$((case_count + 1))
+problem="" written=""
+probe problem "${repository}" usage --detach --schedule tomorrow
+[[ ${written} == *"--schedule takes <owner>/<repository>#<number> or a bare <number>: tomorrow"* ]] ||
+    problem+="the refusal does not say what --schedule takes; "
+report "--schedule that is neither a key nor a number: refused, new not offered" "${problem}" "${written}"
 
 # Every way in, with a schedule and without (#322), on schedule 7, which the stand-in for gh answers for; --resume alone
 # is the table's cases above. Each case begins from a store holding what it names, and checks the entry it leaves.
