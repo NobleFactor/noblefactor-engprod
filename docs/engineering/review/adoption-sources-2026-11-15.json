@@ -1,0 +1,46 @@
+{
+  "captured_at_utc": "2026-11-15T21:46:46.364331+00:00",
+  "basis": "Owner-run target integrations, including PR #567; source text captured immediately before the handbook cutover.",
+  "sources": [
+    {
+      "source": "docs/guides/development-process.md",
+      "snapshot": "docs/engineering/review/sources/adoption-2026-11-15/development-process.txt",
+      "sha256": "85d47bef0f4b05ba1b5965fd9da653165ecd531937316ba1ae34361b59dc5d5f"
+    },
+    {
+      "source": "docs/guides/agent-rules.md",
+      "snapshot": "docs/engineering/review/sources/adoption-2026-11-15/agent-rules.txt",
+      "sha256": "659a067518c0e9bb1bdd54d29812aa630da3482caa3032735f14a970431ff850"
+    },
+    {
+      "source": "docs/guides/release-process.md",
+      "snapshot": "docs/engineering/review/sources/adoption-2026-11-15/release-process.txt",
+      "sha256": "d0bae05f31461d39594201ecd636c5344f3ff18acc5270f7432a04ad039a1495"
+    },
+    {
+      "source": "docs/guides/go-style-guidelines.md",
+      "snapshot": "docs/engineering/review/sources/adoption-2026-11-15/go-style.txt",
+      "sha256": "45004056b3724b0c35fea58ff8ca44b423044c42db06e6292b91c205ae583025"
+    },
+    {
+      "source": "docs/guides/powershell-style-guidelines.md",
+      "snapshot": "docs/engineering/review/sources/adoption-2026-11-15/powershell-style.txt",
+      "sha256": "22bc4df2847b5691806763d600c1437f903c6ec6541ec56dec4f94c2ea8b8940"
+    },
+    {
+      "source": "docs/documentation-standards.md",
+      "snapshot": "docs/engineering/review/sources/adoption-2026-11-15/documentation-standards.txt",
+      "sha256": "e15d0f77b946d7923078552c254c844b4c76b118741aa0a6386e360093942413"
+    },
+    {
+      "source": "docs/plans/TEMPLATE.md",
+      "snapshot": "docs/engineering/review/sources/adoption-2026-11-15/plan-template.txt",
+      "sha256": "a6215b7bc2612863746074f1acecc139839fe535d05ab1d75897ad942dc47302"
+    },
+    {
+      "source": "docs/guides/pr-script-template.md",
+      "snapshot": "docs/engineering/review/sources/adoption-2026-11-15/pr-script-template.txt",
+      "sha256": "160aaa2afe349913aad551fc6acd8745fb4ea767daaa25d2b3dd0f38e5a0a354"
+    }
+  ]
+}

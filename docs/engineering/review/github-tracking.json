@@ -1,0 +1,73 @@
+{
+  "feature": {
+    "url": "https://github.com/NobleFactor/noblefactor-engprod/issues/419",
+    "title": "Shared engineering process documentation for people and agents",
+    "issue_number": 419,
+    "body": "## Problem\n\nEngineering requirements have accumulated across process guides, coding standards, templates, personal directives and agent instructions. Duplicated definitions and conflicting lifecycle rules make the intended process difficult to learn and follow.\n\n## Intended outcome\n\nPeople and agents can use one coherent documentation set in noblefactor-engprod to understand the engineering process, required assets, responsibilities, approvals and completion criteria. Each shared requirement has one authoritative home; procedures and templates support those definitions.\n\n## Classification and scope\n\n**Kind:** Feature\n**Epic:** #142 — Process\n**Area:** Engineering productivity\n\nThis uses the Owner-approved hierarchy Epic → Feature → Task/Bug for engineering and product work. It does not introduce a Chore tier or rename the existing epic.\n\nThe feature covers documentation of schedules, workflow, work assets, coding/documentation standards, release/recovery and agent operation. Compliance implementation, GitHub configuration and first-/third-party tooling are subsequent work, not implied deliverables of the documentation task.\n\n## Related work\n\n- #156 — Issue standards\n- #316 — Agent conduct\n- #266 / #267 — Scripting standards and Bash guide\n- #331 / #332 / #333 — Issue model, tooling and rollout\n- #399 — Publication-quality documentation\n- #157 — PR tooling\n\nCoordinate scope and document references; do not take over or modify another session's work without Owner direction.\n\n## Architecture and design impact\n\nThe documentation architecture changes: separate workflow transitions, asset definitions, agent authority, standards and procedures, with explicit ownership and links. No product runtime architecture change is intended.\n\n## Acceptance\n\n- The Owner understands and approves the published process and its responsibilities.\n- Tasks delivering the feature preserve existing requirements unless explicitly superseded.\n- Current rules can be understood without reconstructing historical conversations.\n- Related issue-tracking and tooling work can consume the adopted policy without this feature claiming to implement that tooling.\n\n## Plan and design documents\n\n| Kind | Document |\n| --- | --- |\n| Plan | Not yet opened; delivery tasks carry implementation plans |\n| Design | Proposed engineering documentation structure; draft exists locally and is not yet committed |\n",
+    "state": "open",
+    "user": {
+      "login": "David-Noble-at-work",
+      "name": "David-Noble-at-work",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/3037615?v=4",
+      "id": 3037615
+    },
+    "assignees": null,
+    "labels": [
+      {
+        "name": "feature",
+        "color": "0e8a16",
+        "description": "Deliverable unit within an epic"
+      },
+      {
+        "name": "Epic:Ops:Process",
+        "color": "5319e7",
+        "description": "Tooling axis: process work; never closes"
+      }
+    ],
+    "milestone": null,
+    "state_reason": null,
+    "comments": 0,
+    "created_at": "2026-10-29T15:31:10Z",
+    "updated_at": "2026-10-29T15:31:10Z",
+    "closed_at": null,
+    "display_url": "https://github.com/NobleFactor/noblefactor-engprod/issues/419",
+    "display_title": "Shared engineering process documentation for people and agents"
+  },
+  "task": {
+    "url": "https://github.com/NobleFactor/noblefactor-engprod/issues/420",
+    "title": "Consolidate engineering documentation, reconcile conflicts, and migrate the reviewed draft",
+    "issue_number": 420,
+    "body": "## Problem\n\nThe Owner-reviewed engineering documentation draft is outside Git in /tmp. It incorporates an inventory of 58 requirement groups, RACI responsibilities, the approved documentation structure and eleven resolved review decisions, but still needs a detailed conflict review, complete navigation and a durable repository home.\n\n## Intended result\n\nA reviewed documentation set on develop in NobleFactor/noblefactor-engprod that replaces conflicting active definitions with authoritative process, standards, asset specifications and templates for people and agents. Preserve the Owner's review responses, decisions and source traceability during migration.\n\n**Kind:** Task\n**Epic:** #142 — Process\n**Feature:** #419 — Shared engineering process documentation for people and agents\n**Area:** Engineering productivity\n\n## Current assets and preservation\n\n- Working review package on danoble-ud24-1: /tmp/noblefactor-docs-review-2026-10-28/\n- Verified backup copies outside /tmp: /home/david-noble/Workspace/NobleFactor/.documentation-backups/\n- The review package includes source snapshots, decision records, requirement mapping and the Owner's inline responses.\n- Keep the original package and backups until the worktree copy is verified and a durable committed/pushed copy is confirmed. Do not move by deleting the source first.\n- No worktree, branch, commit or push for this task is claimed by filing this issue.\n\n## Plan\n\n1. Preserve and verify the complete current package, including review edits.\n2. Open an issue-named worktree targeting develop; prepare and obtain approval of its plan.\n3. Copy the complete documentation set into the worktree without overwriting unrelated repository work. Verify file/content coverage.\n4. Reconcile the active documents, templates and retained source details against the Owner's decisions. Resolve further substantive conflicts with the Owner one at a time.\n5. Provide a docs/index.md entry point, parent/child navigation and related-document links; reconcile the old entry points and successors.\n6. Edit active documents for publication, preserving policy intent and distinguishing historical source text from active requirements.\n7. Validate the documentation, present the resulting set and deltas for Owner review, and follow the approved PR/adoption process.\n\n## Approved policy to carry forward\n\n- Shared hierarchy: Epic → Feature → Task/Bug; distinguish product/engineering purpose through epic or area. Use issue, not the former schedule-item terminology.\n- Engineer is Owner (Accountable); Reviewer is Consulted, Participant is Responsible, Observer is Informed. Participants exercise judgment and challenge proposals.\n- A persistent worker has a schedule; independent workers use their own worktrees; one active PR per worktree.\n- Scope/design/plan departures and committed schedule amendments require Owner approval. Preserve blocked work.\n- Record implementation, merge, deployment and verification separately. PR readiness does not imply completion. Keep the issue open and plan active through required milestones and completion approval or explicit progression authority.\n- Post-merge results are recorded immediately on the issue and incorporated through documentation-only follow-up PRs with lightweight document validation; CI implementation is deferred.\n- Explicit bounded Git grants may permit assigned-branch commits/pushes; this task does not itself grant Git execution authority.\n- Require signatures on main and release/*, exempting personal repositories; develop is outside that requirement.\n- Human sign-off and submitting-agent assistance disclosure; generated PR scripts retain their dedicated template and are exempt from Declare-BashScript.\n- DevLore greenfield policy covers devlore-cli, devlore-registry and devlore.noblefactor.com; other compatibility questions require Owner rulings.\n- No work item belongs to two schedules. Coordinate transfers and keep affected workers informed.\n- Observe Owner direction, visibility and approved conversation boundaries; sub-agents may help within approved work.\n- Work changes shape; the process must support that change. Documentation is edited for publication.\n\n## Architecture and design impact\n\nDocumentation architecture changes only: establish authoritative ownership, applicability and navigation among process, work organization, assets, agent operation, standards, procedures and templates. Preserve detailed language standards and traceability. No runtime, sandbox, GitHub configuration or issue-tooling implementation is included.\n\n## Out of scope\n\nChanging live GitHub rulesets, implementing compliance/CI paths, installing or replacing tools, building the controller/sandbox/monitor architecture, bulk issue reclassification, or changing other sessions' schedules. Record dependencies and conflicts with #399, #266/#267 and #331–#333; do not silently absorb those sessions' work.\n\n## Acceptance criteria\n\n- [ ] Every source file and Owner review edit is preserved and verified during migration; original backups remain available.\n- [ ] Work is in its own issue-named worktree targeting develop.\n- [ ] Issue-named plan and design/document links are committed and linked here.\n- [ ] All eleven decisions are reflected consistently; additional conflicts are resolved or explicitly presented for Owner decision.\n- [ ] All 58 inventory groups and 19 prior agent rules have traceable dispositions; no policy is silently dropped.\n- [ ] Active documents have clear authority and applicability, without conflicting duplicate definitions.\n- [ ] Entry point, upward/downward navigation and cross-links work.\n- [ ] Metadata, spelling, formatting and link checks pass; limitations and deferred implementation are stated accurately.\n- [ ] PR script guidance is reconciled with approved policy; known admin-bypass/merge-gate concerns are explicitly addressed rather than silently copied.\n- [ ] Owner reviews the documentation for adoption; merge/adoption and any follow-up obligations are recorded separately.\n\n## Schedule\n\nNo schedule membership is assigned by this issue. The Owner determines scheduling; do not add it to another worker's schedule.\n\n## Plan and design documents\n\n| Kind | Document |\n| --- | --- |\n| Plan | Not yet opened; create docs/plans/<type>/<this-issue>-<name>.md in the new worktree |\n| Design | Approved documentation structure and local review draft; repository links pending migration |\n",
+    "state": "open",
+    "user": {
+      "login": "David-Noble-at-work",
+      "name": "David-Noble-at-work",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/3037615?v=4",
+      "id": 3037615
+    },
+    "assignees": null,
+    "labels": [
+      {
+        "name": "task",
+        "color": "1d76db",
+        "description": "Implementation work item"
+      },
+      {
+        "name": "Epic:Ops:Process",
+        "color": "5319e7",
+        "description": "Tooling axis: process work; never closes"
+      }
+    ],
+    "milestone": null,
+    "state_reason": null,
+    "comments": 0,
+    "created_at": "2026-10-29T15:33:55Z",
+    "updated_at": "2026-10-29T15:33:55Z",
+    "closed_at": null,
+    "display_url": "https://github.com/NobleFactor/noblefactor-engprod/issues/420",
+    "display_title": "Consolidate engineering documentation, reconcile conflicts, and migrate the reviewed draft"
+  },
+  "note": "Hierarchy recorded through existing labels and explicit references. Connector does not expose native issue-type or sub-issue mutations; native migration remains deferred."
+}

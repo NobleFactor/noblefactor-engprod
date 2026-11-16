@@ -1,0 +1,160 @@
+---
+title: Existing process requirements inventory
+status: draft
+created: 2026-10-27
+updated: 2026-10-27
+---
+
+# Existing process requirements inventory
+
+This is a read-only inventory of locally available requirements and implementations, not a compliance verdict on current work. No GitHub state, installed binary provenance, branch protection settings, approval history, or CI results were queried. No git commands, builds, or tests were run. Repository files were not changed. The report is outside the repositories pending a decision about its issue and permanent home.
+
+Scope: the engineering-process worktree, the devlore-cli worktree's instructions and Makefile, and the deployed personal Claude instructions. Historical plans and proposed architecture are supporting evidence, not automatically current requirements. Language rules are grouped by independently useful compliance checks rather than one row per sentence. Personal memory files and the live errors-of-judgment issue #317 were not inspected; this is therefore a baseline inventory of the accessible process, not a claim to have enumerated every historical ruling.
+
+## Reading the inventory
+
+- **Implemented** means a concrete check or helper was found in source. It does not mean it was executed, deployed, required everywhere, or impossible to bypass.
+- **Template** means the documented script contains the operation; each generated script must still include it correctly.
+- **Manual** means review or operator behavior is currently needed; no dedicated automatic check was established in the inspected sources.
+- **Proposed** means the architecture/status documents describe unfinished tooling.
+- Source keys below link to full local paths. Section names identify the relevant requirements.
+
+## Sources
+
+- [PI — Personal instructions](/home/david-noble/.claude/CLAUDE.md)
+- [DP — Development process](/home/david-noble/Workspace/NobleFactor/noblefactor-engprod.414-clear-claude-can-remove-a/docs/guides/development-process.md)
+- [IS — Issue standards](/home/david-noble/Workspace/NobleFactor/noblefactor-engprod.414-clear-claude-can-remove-a/docs/issue-standards.md)
+- [AR — Agent rules (numbers refer to numbered rules)](/home/david-noble/Workspace/NobleFactor/noblefactor-engprod.414-clear-claude-can-remove-a/docs/guides/agent-rules.md)
+- [PR — PR script template (numbers refer to rules)](/home/david-noble/Workspace/NobleFactor/noblefactor-engprod.414-clear-claude-can-remove-a/docs/guides/pr-script-template.md)
+- [PT — Plan template](/home/david-noble/Workspace/NobleFactor/noblefactor-engprod.414-clear-claude-can-remove-a/docs/plans/TEMPLATE.md)
+- [DS — Documentation standards](/home/david-noble/Workspace/NobleFactor/noblefactor-engprod.414-clear-claude-can-remove-a/docs/documentation-standards.md)
+- [BP — Branch protection](/home/david-noble/Workspace/NobleFactor/noblefactor-engprod.414-clear-claude-can-remove-a/docs/github-branch-protection.md)
+- [RP — Release process](/home/david-noble/Workspace/NobleFactor/noblefactor-engprod.414-clear-claude-can-remove-a/docs/guides/release-process.md)
+- [GS — Go standards](/home/david-noble/Workspace/NobleFactor/noblefactor-engprod.414-clear-claude-can-remove-a/docs/guides/go-style-guidelines.md)
+- [PS — PowerShell standards](/home/david-noble/Workspace/NobleFactor/noblefactor-engprod.414-clear-claude-can-remove-a/docs/guides/powershell-style-guidelines.md)
+- [CLI instructions](/home/david-noble/Workspace/NobleFactor/devlore-cli.1161-install-ps1-has-no-exit-code-the/CLAUDE.md)
+- [CLI Makefile](/home/david-noble/Workspace/NobleFactor/devlore-cli.1161-install-ps1-has-no-exit-code-the/Makefile)
+- [engprod Makefile](/home/david-noble/Workspace/NobleFactor/noblefactor-engprod.414-clear-claude-can-remove-a/Makefile)
+- [engprod CI](/home/david-noble/Workspace/NobleFactor/noblefactor-engprod.414-clear-claude-can-remove-a/.github/workflows/ci.yaml)
+- [Assignment skill](/home/david-noble/Workspace/NobleFactor/noblefactor-engprod.414-clear-claude-can-remove-a/Home/common/.claude/skills/star-gh-assignment/SKILL.md)
+- [Progress skill](/home/david-noble/Workspace/NobleFactor/noblefactor-engprod.414-clear-claude-can-remove-a/Home/common/.claude/skills/star-gh-progress/SKILL.md)
+- [Model — issue data model](/home/david-noble/Workspace/NobleFactor/noblefactor-engprod.414-clear-claude-can-remove-a/docs/architecture/issue-data-model/index.md)
+- [Schedule/session architecture](/home/david-noble/Workspace/NobleFactor/noblefactor-engprod.414-clear-claude-can-remove-a/docs/architecture/agent-schedule/index.md)
+- [Sandbox status](/home/david-noble/Workspace/NobleFactor/noblefactor-engprod.414-clear-claude-can-remove-a/docs/architecture/agent-schedule/3-agent-sandbox.status.md)
+- [GitHub extension manifest](/home/david-noble/Workspace/NobleFactor/noblefactor-engprod.414-clear-claude-can-remove-a/Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/extension.yaml)
+- [Shared report/audit implementation](/home/david-noble/Workspace/NobleFactor/noblefactor-engprod.414-clear-claude-can-remove-a/Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/scheme.star)
+- [Open-branch implementation](/home/david-noble/Workspace/NobleFactor/noblefactor-engprod.414-clear-claude-can-remove-a/Home/common/.local/bin/git-open-branch)
+- [Close-branch implementation](/home/david-noble/Workspace/NobleFactor/noblefactor-engprod.414-clear-claude-can-remove-a/Home/common/.local/bin/git-close-branch)
+- [PowerShell checker](/home/david-noble/Workspace/NobleFactor/noblefactor-engprod.414-clear-claude-can-remove-a/.github/scripts/Test-PowerShell.ps1)
+- [PowerShell analyzer settings](/home/david-noble/Workspace/NobleFactor/noblefactor-engprod.414-clear-claude-can-remove-a/Home/common/.config/PSScriptAnalyzer/PSScriptAnalyzerSettings.psd1)
+- [Shell checker](/home/david-noble/Workspace/NobleFactor/noblefactor-engprod.414-clear-claude-can-remove-a/.github/scripts/shell-lint.sh)
+- [Frontmatter checker](/home/david-noble/Workspace/NobleFactor/noblefactor-engprod.414-clear-claude-can-remove-a/.github/scripts/Test-Frontmatter.sh)
+
+## Schedules and issue organization
+
+| ID / requirement | Where defined | Asset demonstrating compliance | How checked today | Tool helping satisfy it |
+| --- | --- | --- | --- | --- |
+| S01 — Every agent assignment identifies a repository-qualified schedule | Assignment skill; schedule/session architecture | Assignment metadata, schedule key, session association | Partial: skill reads environment then title; authoritative-store search order remains open | Start-Claude; `NFEP_AGENT_SCHEDULE`; assignment store |
+| S02 — Schedule is a chore titled `Schedule:`, with no epic label | IS, Schedules / What carries no epic | Schedule issue type, title, labels | Partial: report discovers by kind/title; classification audit treats schedules specially, but does not enforce the complete schedule schema | `star gh issues report --by schedule`; `star gh issues audit` |
+| S03 — Each lane identifies a leaf task or bug, including cross-repository identity | IS, Schedules | Lane table containing issue references | Manual: IS explicitly says no schedule audit yet; parser still accepts epic specifications | Schedule report resolves and displays rows, but does not establish leaf-only compliance |
+| S04 — Canonical columns are Lane, Item, Next, Waits on; contiguous numbering 1..N; closed lanes retain numbers | IS, Schedules; Progress skill | Schedule table and its revision history | Manual: parser consumes numeric rows and positional columns; no header or continuity check found | Report renders table; no schedule-schema validator found |
+| S05 — Execute lanes in order; do not split/add lanes after commitment without owner amendment | IS, What a schedule commits to | Committed schedule baseline, amendments, execution/PR history | Manual: no commitment baseline or order validator found | Report helps inspect order; no enforcement helper established |
+| S06 — State deliverable as before → after; stop and jointly replan if it changes | IS, The deliverable | Deliverable text and approved amendment | Manual: semantic review; no structured approval or deliverable check found | GitHub schedule issue |
+| S07 — Keep each lane's state/worktree current at start, move, merge, and other closure | AR19; DP, Schedules; PR13 | Schedule rows naming live worktree or merged PR and squash commit | Template: guarded `updatedAt` comparison, exactly-one-row match and readback for merge updates; opening/moving updates remain script obligations | PR script; report. No dedicated `star gh` lane-transition command found |
+| S08 — Newly discovered nonblocking work belongs on a later schedule; blocking changes require consultation | IS, Schedule commitment; DP, Blocking issues | New issue, cross-referenced plan, schedule placement, owner decision | Manual; potential conflict with instructions to add a blocking issue to the schedule | Issue filing script and plan; no integrated checker found |
+| S09 — A lane must not appear on two live schedules | IS, What the audit checks | All live schedule memberships | Future check explicitly identified by the standard; no current enforcement found | Report is inspection support only |
+| S10 — Classify work into epic → feature/chore → task/bug; distinguish product/process work and triage exceptions | IS, Five kinds / Well classified; Model | Issue labels, native type/parent, body markers and resolved ancestry | Implemented, partial: audit checks kind/epic cardinality, type-label disagreement, parent-link/marker disagreement and some ancestry faults; does not prove the semantic choice of kind | `star gh issues audit`; shared `scheme.star` |
+| S11 — Each lane names its parent; metadata representations agree | IS, Placement; Model | Last Feature/Chore body marker, native parent link, type, epic label | Partial: implemented checks cover disagreement; `faults()` has no blanket missing-parent-marker check, and some checks depend on fetched parents | Issue audit/report |
+| S12 — Required labels exist and have consistent metadata; label sync never deletes | IS, Labels a repository provides | Label inventories across configured repositories | Implemented audit and sync in extension source; repository scope/configuration still matters | `star gh labels audit`; `star gh labels sync` |
+| S13 — Thread issue beat table and Thread labels agree in both directions | IS, Threads | Thread issue, beat rows, labels on members | Implemented in report's `thread_rows`; prose says “nothing checks either” then describes report faults, so documentation is confusing | `star gh issues report --by thread`; `issues audit --unthreaded` is advisory, not a fault check |
+
+## Development workflow and asset locations
+
+| ID / requirement | Where defined | Asset demonstrating compliance | How checked today | Tool helping satisfy it |
+| --- | --- | --- | --- | --- |
+| W01 — Clones are read-only for development; all edits occur in worktrees | Owner's current instruction; DP, Unit of work; Sandbox status | Clone/worktree identity, checkout location, filesystem restrictions | Manual in inspected implementation: workspace symlinks do not demonstrate read-only enforcement. Sandbox read-only mounts are explicitly not started | `git open-branch`; proposed sandbox |
+| W02 — One canonical layer clone under writ home, default branch; organization workspace contains clone symlink, named worktrees, sibling PR scripts | DP, Unit of work; PI, Git | Canonical clone, symlink target, worktree paths and scripts | Partial: open-branch constructs worktree under organization workspace; no comprehensive clone/duplicate/layout audit found | `git open-branch`; writ repository registration |
+| W03 — Branch requires an issue and derives its type/name from it; base is default branch | DP, Unit of work / Reference implementation; BP | Issue, branch name, worktree registration and base | Implemented helper; documented ruleset constrains prefix but does not itself prove issue linkage | `git open-branch <issue>`; GitHub branch-name ruleset |
+| W04 — Issue → branch → committed plan → owner review → implementation | DP, Plans; PI, Process | Issue timestamps, first plan commit, approval, subsequent implementation commits | Manual sequencing/review; no automatic approval or first-plan-commit gate found | Open-branch, plan template, review |
+| W05 — Worktree corresponds to one PR; session corresponds to one issue; multiple issues may share worktree | DP, Unit of work | Worktree-to-PR and session-to-issue associations | Manual; session architecture has evolved toward schedule binding and needs reconciliation with one-session-per-issue prose | Start-Claude and assignment store provide partial association |
+| W06 — All issues in worktree resolved before PR; one PR in flight; no checkout edits while it is in flight | DP, Unit of work; PI, PR process; AR7; PR7 | Worktree scope, issue completion evidence, active PR and edit history | Manual; no cross-session/repository write lock found | PR script serializes its own operations only |
+| W07 — Log discoveries immediately; decide current/other worktree and cross-reference plans; consult on blockers | DP, Discovering issues / Blocking issues; AR10 | Filed issue, plan additions/cross-links, owner decision | Manual; semantic scope and timing need review | GitHub issue and plan assets |
+| W08 — Remove worktree, branch and sibling script promptly after merge or abandonment; sync canonical clone | DP, Unit of work; AR8/16; PR6/8/12 | Merged PR, removed worktree/script, remote/local branch state, target checkout | Implemented close-branch safety checks, cleanup and clone sync; invocation and abandonment preservation remain obligations | `git close-branch`, with preview/force behavior documented in source |
+| W09 — Retire clone only after saving unique work/refs, transferring worktrees and checking consumers | DP, Unit of work | Patches/bundle outside clone, repaired worktrees, updated registrations/links | Manual staged procedure; no all-in-one retirement verifier found | Git bundles/patches, worktree repair, writ registration |
+| W10 — Script placement reflects dependencies; common is self-contained; bash sources Declare-BashScript except hooks | DP, Where a script lives | Layer path, source declaration, dependency declaration | Partial: shell lint follows helper through configured search path; no complete placement/dependency-policy checker established | Declare-BashScript, shell-lint, writ layers |
+
+## Planning, architecture and documentation
+
+| ID / requirement | Where defined | Asset demonstrating compliance | How checked today | Tool helping satisfy it |
+| --- | --- | --- | --- | --- |
+| D01 — Plan at `docs/plans/<type>/<issue>-<name>.md`, based on template; shared plans identify every issue with stable `## Issue NNN` heading | DP, Plans | Correctly named committed plan, issue headings and links | Manual: frontmatter gate does not establish path/branch/issue/heading relationships | Plan template; open-branch provides naming inputs |
+| D02 — Every issue has a Plan and design documents table from filing, with plan placeholder until available and links to applicable design documents | DP, Plans; AR15 | Issue-body table, plan row, design rows | Prescribed filing-script refusal; no shared issue-create command/validator located in extension manifest | Per-task filing script; GitHub API/CLI |
+| D03 — Document links target default branch and stable issue anchor | DP, Plans | Issue's links to committed plan/design files | Manual link/anchor validation; links may intentionally be dead before merge | Issue table convention; no dedicated cross-asset link checker found |
+| D04 — Plan lifecycle is draft → approved → active → complete, or abandoned; complete only with all boxes ticked | DP, Documents on every commit; PT | Plan frontmatter, checkboxes, approval and final implementation commit | Partial: frontmatter vocabulary gate exists; checkbox/status/approval semantics not demonstrated by it | Frontmatter gate; review |
+| D05 — Update affected plan, architecture, status companion and user documentation in the same commit; post-merge checks stay explicitly outstanding | DP, Documents on every commit; AR12 | Commit includes corresponding document updates and accurate remaining checks | Manual semantic review; no automatic code-to-document dependency checker found | Plans, architecture companions, PR review |
+| D06 — Track architectural consequences and link applicable designs; no design document required when none is affected | DP, Plans; owner's stated three-part requirement | Design links and updated design text; explicit no-change decision would strengthen evidence | Manual: no required design-impact field or consistent no-change asset established in inspected process | Issue table and plan Related Documents; architecture/status companions |
+| D07 — Tracked Markdown carries frontmatter under working/catalog family rules; exemptions are explicit paths | DS | Frontmatter, optional type discriminator, permitted statuses, exemption list | Implemented frontmatter script called by `make frontmatter` and `make check`; adoption across all repositories not established | Shared Test-Frontmatter.sh; catalog-path and exemption settings |
+| D08 — US English across documents and code comments | DS, Documents are US English | Text plus reviewed spelling exceptions | Implemented codespell gate; DS also identifies Go misspell locale policy | `make spelling`; codespell; Go lint |
+
+## PR execution, verification and completion
+
+| ID / requirement | Where defined | Asset demonstrating compliance | How checked today | Tool helping satisfy it |
+| --- | --- | --- | --- | --- |
+| P01 — Review deltas; generate platform-native, self-contained sibling PR script; show it; owner runs it unless specifically excepted | PI, PR Process; PR, Windows | Worktree-named .bash/.ps1 script, reviewed contents, handoff and run record | Manual approval/handoff; template is support, not a grant or enforcement mechanism | PR script template |
+| P02 — Stage explicit files; no unstaged tracked modifications left; prove generated file lists | PR1/10; AR4 | Script's staging list and post-stage diff check | Template uses explicit staging and `git diff --quiet`; untracked omissions are not covered by that check alone | PR preflight and source-list comparison |
+| P03 — Run actual repository CI-equivalent gates before commit; never bypass hooks; failures must be fixed | PR, Pre-flight; PI, Code Quality; Makefiles | Successful command results tied to reviewed revision | Implemented Make targets and CI workflow; correct invocation, revision association and bypass resistance remain separate | engprod `make check`; devlore-cli quality-gate/check targets |
+| P04 — Integrate target before push by merge, never rebase; squash PR; do not use merge's delete-branch option | PI, Git; PR8/12 | Branch history, merge command, resulting squash commit | Template; documented protected-branch linear-history/squash rules; local no-rebase behavior not globally enforced here | PR script; GitHub rulesets; close-branch |
+| P05 — Wait for CI and inspect mergeability; real failures abort; missing checks allowed only per policy | PR4/5; BP | Check runs and mergeStateStatus before merge | Template guards; GitHub checks/reviews are documented external controls, not live-verified in this inventory | `gh pr checks`; PR merge gate; GitHub rulesets |
+| P06 — PR discloses AI and carries Signed-off-by/Assisted-by trailers; branch commits have none; squash commit retains both | PI, Git; AR13; PR2 | PR body and landed commit message, configured sign-off identity | Template writes and verifies trailers; compliance also depends on script correctness | PR script and contribution terms |
+| P07 — Every PR records opened/submitted/merged timestamps and elapsed hours; time-open is not effort | DP, Unit of work; PR11 | PR `## Time` section using GitHub timestamps | Template calculates, writes and verifies; dedicated command is explicitly future | Embedded PR span block; `star gh pr span` is not in inspected manifest |
+| P08 — Verify tool build/provenance and real command before handing it over; do not replace another session's dirty build | AR1/2/11; Progress skill | Installed path/version/hash, fetched target comparison, help and behavior check | Manual procedure; not established by a local build or merged PR alone | Version/help commands, provenance comparisons; no consolidated provenance gate found |
+| P09 — Layer change finishes after host convergence and deployed-path verification | AR5/11/12 | Successful deployment/reconciliation and behavior at user's real path | Manual plus tool results; merge alone is insufficient | writ convergence/deployment and live-path checks |
+| P10 — Protected branches require PRs, constrained names, checks and reviews; signing requirements depend on branch/policy | BP; RP | Live organization/repository rulesets, signatures, review/check records | Documented GitHub enforcement; live settings not inspected. RP's all-commit signing is broader than BP's main-only signing ruleset | GitHub rulesets, CI, signing tooling |
+| P11 — Cross-platform products run unit and scenario checks on every supported platform; cross-compilation is insufficient | BP, Required checks | Per-platform test/scenario check runs with stable descriptor names | Documented tier-2 ruleset; current live coverage not verified | CI matrix and required contexts |
+| P12 — Releases/hotfixes require gates, QA, security/docs/sign-off, tagging and versioning; rollback records incident and recovery | RP | Release checklist, CI results, signed tags, artifacts, incident record | Mixed manual/CI, with conflicting checkout/merge/push examples that require reconciliation before operational use | Release workflow/goreleaser described in RP; not validated against current release implementation |
+
+## Coding standards and project-specific requirements
+
+| ID / requirement | Where defined | Asset demonstrating compliance | How checked today | Tool helping satisfy it |
+| --- | --- | --- | --- | --- |
+| C01 — Go formatting immediately after edit and again before PR handoff | PI, Go; GS8 | Formatted changed .go files and clean formatting result | Concrete gofmt exists; timing is manual | `gofmt -w`; `gofmt -l`; project lint |
+| C02 — Go file/method ordering, regions, comment shape, naming, resource/provider conventions and immediate error handling | GS1–8 and appendix | Go AST/source layout, API/type contracts and tests | Partial lint plus review; full custom-style coverage was not established | golangci-lint and `star lint go` through project Makefile |
+| C03 — Go tests follow prescribed naming/helpers/temp cleanup/assertion conventions; use make for builds/tests/vet | GS9/10; CLI instructions, Build and Test | Test source and Make command results | Tests/lint execute through Makefile; invocation discipline and all stylistic conventions not fully gated | `make test`, `make vet`, quality-gate/check |
+| C04 — Bash format, shell correctness and helper dependency resolution | DP, Where a script lives; engprod Makefile | Scripts with shebangs/directives and resolvable helper | Implemented shfmt and shellcheck gate; selected files/tool severities matter | `make shell-lint`; Declare-BashScript; devlore-cli `star lint shell` |
+| C05 — PowerShell scripts parse, have exact shebang/no BOM, advanced binding and param blocks | PS1/2/11; PowerShell checker | .ps1 bytes and AST | Implemented checker walks tracked files (or explicit Path); untracked scratch files excluded by default | `make powershell`; Test-PowerShell.ps1; CLI powershell-lint |
+| C06 — PowerShell naming, type casing, braces/spacing, function layout, comment/help form, output streams, error/native-process handling | PS3–10 | Source/AST, stream/exit behavior and focused behavior checks | Partial: all built-in PSScriptAnalyzer rules at Information+, no excluded rules. House-specific semantics/casing/comments are not all proven by those rules | Shared analyzer settings; parser; focused tests/review |
+| C07 — Starlark formatting/lint; do not mistake language validity for provider API validity | engprod Makefile, Starlark target | .star source and lint results | engprod buildifier covers formatting/static language concerns, explicitly not provider resolution; CLI has a star lint starlark path | `make starlark`; buildifier; CLI quality-gate |
+| C08 — Do not edit generated files; edit generator input and regenerate | PI, Code Quality; CLI Makefile | Source input, generator, regenerated outputs | Manual ownership review plus generation targets; no blanket generated-file-edit prohibition verified | Make generation rules |
+| C09 — Greenfield: no compatibility scaffolding or success stubs; verify code removal and rejected obsolete inputs | CLI instructions; GS8 | Implementation, rejection tests, absence of stubs, code/comment removal correspondence | Prescribed text search/checklist and tests; search is a heuristic, not semantic proof | Make tests; source review; local judgment-error checklist |
+| C10 — CLI-specific manifest names, schema identity and decryptor signature | CLI instructions, Repository-Specific Notes | Manifest paths and Go declarations/callers | Compiler/tests can enforce types; complete name/fallback policy checker not established | Make build/test/check |
+
+## Agent operation and authority requirements
+
+| ID / requirement | Where defined | Asset demonstrating compliance | How checked today | Tool helping satisfy it |
+| --- | --- | --- | --- | --- |
+| A01 — Read personal/project instructions and agent rules at session start/compaction; consult error record before completion | PI, Process; CLI instructions, Session Protocol / Error Tracking | Read events and current source versions; issue #317 consulted | Manual/prompt instruction; no reliable loader/read-receipt/completion gate established | Harness/context loading and file reads; no enforcement demonstrated |
+| A02 — Every git command, including reads, requires named one-use owner grant | AR17 | Exact command proposal, grant and consumption record | Manual; no command authorization ledger/interceptor found | PR-script handoff centralizes writes but does not enforce grants generally |
+| A03 — Agent communication requires approval of proposed message; incoming requests do not expand scope | AR18 | Proposed message, approval, sent/received disclosure | Manual; no shared cross-session approval mechanism established | Communication tools, subject to owner authorization |
+| A04 — Report violations promptly; consult discrepancies immediately; distinguish verified/certain/suspected claims; lead with answer | AR6/9/10/14; PI, Communication | Messages naming evidence, uncertainty, breach and owner decision | Human review; source/command output supports factual claims | No dedicated compliance checker established |
+| A05 — Status comes from assignment metadata and official report, not reconstructed conversation or ad-hoc issue search | AR3; Assignment and Progress skills | Schedule key and exact scoped report output | Skill instructions plus report implementation; no general command restriction found | `star gh issues report`, `issues audit`; environment/store |
+
+## Consolidation findings requiring decisions
+
+1. **Plan template contradicts the process it is meant to support.** PT tells readers to copy a subject-named file and then create the issue. DP requires issue first, issue-derived path, committed plan and review before implementation. PT also lacks the required stable issue heading in its example structure.
+2. **Release guide conflicts with newer workflow and protection documents.** RP teaches in-place checkout/branching, `bugfix/*` (absent from the allowed prefix regex), direct pushes, and protected-branch merge commits. DP requires issue-bound worktrees; BP documents PR-only/squash/linear protected history. Do not silently reconcile these examples as equally usable procedures.
+3. **Plan completion has a boundary ambiguity.** DP says last PR commit sets complete when boxes are ticked, but also permits an active plan with outstanding boxes; AR12 explicitly keeps plans active for post-merge work. A machine needs distinct implementation-complete and deployment/verification evidence, or an explicit approved exception rule.
+4. **Blocking work and committed schedules need reconciliation.** IS forbids additions to a committed schedule except joint deliverable replanning; DP says an external blocking PR defect is filed and put on the schedule as a lane. Define the required amendment/authorization path.
+5. **Blocked-worktree handling needs a preservation rule.** AR8 orders immediate removal/deletion on blocking; DP describes resolving a blocker and returning, or keeping entangled work in the current worktree. These prescriptions need explicit conditions and preservation evidence.
+6. **Session identity has evolved.** DP describes one session per issue and feature-based titles; assignment/session documents and current skills bind persistent sessions to schedules. Establish a single current lifecycle model and adapter-specific implementation instructions.
+7. **Issue schema is transitioning.** IS still describes kind labels/body parent markers; Model and code also read native types/parent links and check disagreement. Specify authoritative fields, compatibility/migration boundaries and eventual removal of duplicate representations.
+8. **Schedule rendering is more permissive than the rule.** Source accepts epic tokens and larger units, ignores header validity, and does not establish contiguous numbering or unique live membership. Displaying a table is not schedule validation.
+9. **No generic cross-asset compliance gate was found.** Frontmatter validity does not verify issue → plan → design → branch → PR → deployment relationships, approved ordering, or freshness.
+10. **Script safeguards are copied obligations.** Critical merge, span, lane-update and cleanup behavior lives in generated scripts. The manifest provides report/audit/labels/model commands, but no dedicated issue-create, schedule-transition, PR-span or whole-process compliance command.
+11. **Read-only clones are specified, not demonstrated as enforced.** Existing symlinks establish location only. The sandbox companion explicitly marks read-only clone support as not started.
+12. **Enforcement scope must be explicit.** engprod CI runs Make gates, but source existence does not show every repository adopted each gate, that local scripts match the template, or that current GitHub rulesets match the documented settings. Admin merge bypass is explicitly documented.
+13. **Architecture impact needs inspectable evidence.** The documents allow no design document for no architectural effect, but no mandatory impact determination was found. Today absence of a design row cannot distinguish “reviewed; none” from “forgotten.”
+14. **Documentation authority and provenance need normalization.** Personal directives still link to noblefactor-ops while the current workspace is noblefactor-engprod; redirects may preserve links, but authoritative location/version and precedence should be stated. Historical rulings can remain rationale without being necessary to reconstruct the active rule.
+
+## What this inventory supports next
+
+The first consolidation deliverable can be a requirement register with stable IDs, applicability, authoritative definition, evidence schema, check implementation and lifecycle trigger. Keep the five concerns connected: schedules; workflow; tools; coding standards; issue/plan/design assets. Migrate the rules above into that register only after resolving conflicts; attach historical incidents as rationale and regression cases. Prefer extending existing star commands and shared Make gates over introducing another independent interpretation of the process.
