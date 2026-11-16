@@ -3,7 +3,14 @@ title: "Clear-Claude is removed"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/529
 status: complete
 created: 2026-11-12
-updated: 2026-11-12
+updated: 2026-11-15
+documents:
+  - kind: "Design: the agent schedule"
+    path: "docs/architecture/agent-schedule/index.md"
+    text: "docs/architecture/agent-schedule/"
+  - kind: "Design: the workstation"
+    path: "docs/architecture/agentic-developer-workstation.md"
+    text: "Agentic Developer Workstation RFC"
 ---
 
 # Plan: Clear-Claude is removed

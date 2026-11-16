@@ -3,7 +3,10 @@ title: "agent-rules rule 18: another agent is spoken to only on the owner's yes,
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/400
 status: complete
 created: 2026-10-25
-updated: 2026-10-25
+updated: 2026-11-15
+documents:
+  - kind: "Design"
+    path: "docs/guides/agent-rules.md"
 ---
 
 # Plan: agent-rules rule 18, agent-to-agent messages and the scope of the owner's orders

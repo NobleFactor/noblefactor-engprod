@@ -3,7 +3,22 @@ title: "git open-branch stops offering chore and takes the branch type from the 
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/449
 status: complete
 created: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-15
+documents:
+  - kind: "Where this is listed"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/plans/chore/303-issue-data-model.md#closing-from-2026-11-04"
+    text: "#303's plan, § Closing, from 2026-11-04"
+  - kind: "Ruleset"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/github-branch-protection.md#12515090--restrict-branch-names"
+    text: "docs/github-branch-protection.md, ruleset 12515090"
+  - kind: "Design: from today's scheme"
+    path: "docs/architecture/issue-data-model/5-from-todays-scheme.md"
+    text: "section 5"
+  - kind: "Design: the index"
+    path: "docs/architecture/issue-data-model/index.md"
+  - kind: "Process: plans"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/guides/development-process.md#plans"
+    text: "docs/guides/development-process.md, § Plans"
 ---
 
 # Plan: git open-branch stops offering chore and takes the branch type from the issue's type

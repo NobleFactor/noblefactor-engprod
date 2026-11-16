@@ -3,7 +3,11 @@ title: "Every start-claude directory becomes agent-schedule, on every platform a
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/321
 status: complete
 created: 2026-10-20
-updated: 2026-10-21
+updated: 2026-11-15
+documents:
+  - kind: "Design"
+    path: "docs/architecture/agent-schedule/2-command-line.md"
+    text: "2. Command line"
 ---
 
 # Plan: Every start-claude directory becomes agent-schedule, on every platform and every host

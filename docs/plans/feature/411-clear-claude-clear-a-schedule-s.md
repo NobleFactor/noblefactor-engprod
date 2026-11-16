@@ -3,7 +3,13 @@ title: "Clear-Claude clears a schedule's conversation and every local record of 
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/411
 status: active
 created: 2026-10-27
-updated: 2026-10-27
+updated: 2026-11-15
+documents:
+  - kind: "Design"
+    path: "docs/architecture/agent-schedule/2-command-line.md"
+  - kind: "Design"
+    path: "docs/architecture/agent-schedule/1-session-model.md"
+    text: "1-session-model.md"
 ---
 
 # Plan: Clear-Claude clears a schedule's conversation and every local record of it, and Start-Claude types a command apart from its Enter

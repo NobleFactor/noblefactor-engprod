@@ -3,7 +3,19 @@ title: "The PR script template records a pull request's steps in the Schedule pr
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/450
 status: complete
 created: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-15
+documents:
+  - kind: "Where this is listed"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/plans/chore/303-issue-data-model.md#closing-from-2026-11-04"
+    text: "#303's plan, § Closing, from 2026-11-04"
+  - kind: "The template"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/guides/pr-script-template.md#rules"
+    text: "docs/guides/pr-script-template.md, rule 13"
+  - kind: "The rule it follows"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/guides/agent-rules.md#19-a-session-keeps-its-steps-current-as-it-goes"
+    text: "docs/guides/agent-rules.md, rule 19"
+  - kind: "Design: the index"
+    path: "docs/architecture/issue-data-model/index.md"
 ---
 
 # Plan: The PR script template records a pull request's steps in the Schedule project

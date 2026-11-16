@@ -3,7 +3,14 @@ title: "The star extension reads the hierarchy from model.yaml: types as levels,
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/376
 status: active
 created: 2026-10-22
-updated: 2026-10-22
+updated: 2026-11-15
+documents:
+  - kind: "Design"
+    path: "docs/architecture/issue-data-model/6-the-asset-and-its-sync.md"
+    text: "section 6, the asset and its sync"
+  - kind: "Design"
+    path: "docs/architecture/issue-data-model/5-from-todays-scheme.md"
+    text: "section 5, from today's scheme"
 ---
 
 # Plan: the star extension reads the hierarchy from model.yaml

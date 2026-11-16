@@ -3,7 +3,14 @@ title: "Both accounts' Scenario forms ask for the end-user goal, how to walk it 
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/453
 status: complete
 created: 2026-11-14
-updated: 2026-11-14
+updated: 2026-11-15
+documents:
+  - kind: "Where this is listed"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/plans/chore/303-issue-data-model.md#closing-from-2026-11-04"
+    text: "#303's plan, § Closing, from 2026-11-04"
+  - kind: "Design: collections"
+    path: "docs/architecture/issue-data-model/3-collections.md"
+    text: "section 3"
 ---
 
 # Plan: Both accounts' Scenario forms ask for the end-user goal, how to walk it and the features it exercises

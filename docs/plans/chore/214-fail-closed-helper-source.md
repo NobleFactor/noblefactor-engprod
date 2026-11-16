@@ -3,7 +3,11 @@ title: "The git-* process commands fail closed when Declare-BashScript is missin
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/214
 status: complete
 created: 2026-09-22
-updated: 2026-09-22
+updated: 2026-11-15
+documents:
+  - kind: "Design"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/guides/development-process.md#where-a-script-lives"
+    text: "development-process.md § Where a script lives"
 ---
 
 # Plan: The git-* process commands fail closed

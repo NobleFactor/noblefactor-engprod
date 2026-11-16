@@ -3,7 +3,14 @@ title: "Every open issue has an Area before the sweep runs"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/452
 status: complete
 created: 2026-11-06
-updated: 2026-11-08
+updated: 2026-11-15
+documents:
+  - kind: "Where this is listed"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/plans/chore/303-issue-data-model.md#closing-from-2026-11-04"
+    text: "#303's plan, § Closing, from 2026-11-04"
+  - kind: "Design: Area"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/architecture/issue-data-model/2-attributes.md#the-attributes"
+    text: "section 2, § The attributes"
 ---
 
 # Plan: every open issue has an Area before the sweep runs

@@ -3,7 +3,10 @@ title: "Rules 10 and 11 join the agents' document: a finding is consulted when f
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/196
 status: complete
 created: 2026-09-11
-updated: 2026-09-11
+updated: 2026-11-15
+documents:
+  - kind: "Design"
+    path: "docs/guides/agent-rules.md"
 ---
 
 # Plan: rules 10 and 11

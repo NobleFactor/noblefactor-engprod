@@ -3,7 +3,11 @@ title: "star github model apply lands in a private repository of a free user acc
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/538
 status: complete
 created: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-15
+documents:
+  - kind: "GitHub's plans"
+    url: "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets"
+    text: "Available rules for rulesets"
 ---
 
 # Plan: star github model apply lands in a private repository of a free user account

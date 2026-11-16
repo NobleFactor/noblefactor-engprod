@@ -3,7 +3,11 @@ title: "Start-Claude, Start-Claude.ps1 and their files take Apache-2.0"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/314
 status: complete
 created: 2026-10-20
-updated: 2026-10-20
+updated: 2026-11-15
+documents:
+  - kind: "Plan it amends"
+    path: "docs/plans/chore/312-copy-start-claude.md"
+    text: "NobleFactor/noblefactor-ops#312's plan"
 ---
 
 # Plan: Start-Claude, Start-Claude.ps1 and their files take Apache-2.0

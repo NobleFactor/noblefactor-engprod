@@ -3,7 +3,16 @@ title: "GitHub is the model: star github model get and backup, and the report an
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/426
 status: complete
 created: 2026-11-09
-updated: 2026-11-10
+updated: 2026-11-15
+documents:
+  - kind: "Design: GitHub is the model"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/architecture/issue-data-model/6-the-asset-and-its-sync.md#github-is-the-model"
+    text: "section 6"
+  - kind: "Design: accounts"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/architecture/issue-data-model/4-storage-and-reach.md#accounts-organizations-and-individuals"
+    text: "section 4"
+  - kind: "Earlier plan"
+    path: "docs/plans/chore/303-issue-data-model.md"
 ---
 
 # Plan: GitHub is the model: star github model get and backup, and the report and the sweep on the live model

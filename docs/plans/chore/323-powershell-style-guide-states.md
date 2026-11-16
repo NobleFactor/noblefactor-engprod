@@ -3,7 +3,10 @@ title: "The PowerShell style guide says how every function is documented"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/323
 status: active
 created: 2026-10-20
-updated: 2026-10-20
+updated: 2026-11-15
+documents:
+  - kind: "Guide"
+    path: "docs/guides/powershell-style-guidelines.md"
 ---
 
 # Plan: the PowerShell style guide says how every function is documented

@@ -3,7 +3,17 @@ title: "star github model diff, apply and restore"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/437
 status: complete
 created: 2026-11-10
-updated: 2026-11-11
+updated: 2026-11-15
+documents:
+  - kind: "Design: GitHub is the model"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/architecture/issue-data-model/6-the-asset-and-its-sync.md#github-is-the-model"
+    text: "section 6"
+  - kind: "Design: risk and recovery"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/architecture/issue-data-model/6-the-asset-and-its-sync.md#risk"
+    text: "section 6"
+  - kind: "Design: storage and reach"
+    path: "docs/architecture/issue-data-model/4-storage-and-reach.md"
+    text: "section 4"
 ---
 
 # Plan: star github model diff, apply and restore

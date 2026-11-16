@@ -302,7 +302,7 @@ non-zero only on an error: a plan or an issue it cannot read, or a write that do
 every other issue first, then fails naming each error. A link points by the issue's state: an open issue's to the
 default branch, and one closed by a merged pull request to that pull request's merge commit, a fixed record of what
 landed. `--repository` takes a comma-separated list, as `--blocked-by` does. Until `star` has a
-Markdown provider (NobleFactor/devlore-cli#1229), it finds the heading by the body's lines. #557 builds it, and its
+Markdown provider (NobleFactor/devlore-cli#1100), it finds the heading by the body's lines. #557 builds it, and its
 plan, [557-plan-row.md](../../plans/feature/557-plan-row.md), says what it does in each case.
 
 ## Building it

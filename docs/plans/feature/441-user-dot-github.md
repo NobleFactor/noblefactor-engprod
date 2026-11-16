@@ -3,7 +3,11 @@ title: "David-Noble-at-work/.github holds that account's issue model, its health
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/441
 status: complete
 created: 2026-11-09
-updated: 2026-11-09
+updated: 2026-11-15
+documents:
+  - kind: "Design: storage and reach"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/architecture/issue-data-model/4-storage-and-reach.md#accounts-organizations-and-individuals"
+    text: "section 4"
 ---
 
 # Plan: David-Noble-at-work/.github holds that account's issue model, its health files and its Triage workflow

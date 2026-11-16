@@ -4,6 +4,10 @@ issue: https://github.com/NobleFactor/noblefactor-engprod/issues/389
 status: complete
 created: 2026-11-11
 updated: 2026-11-15
+documents:
+  - kind: "Guide"
+    path: "docs/guides/agent-rules.md"
+    text: "agent-rules.md"
 ---
 
 # Plan: The schedule progress skill checks star's build through GitHub, with no git command

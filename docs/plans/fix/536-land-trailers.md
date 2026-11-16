@@ -3,7 +3,11 @@ title: "star github model apply and backup land their pull requests with the AI 
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/536
 status: complete
 created: 2026-11-12
-updated: 2026-11-13
+updated: 2026-11-15
+documents:
+  - kind: "The rule"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/guides/pr-script-template.md#rules"
+    text: "pr-script-template.md, rule 2"
 ---
 
 # Plan: star github model apply and backup land their pull requests with the AI disclosure and the trailers
