@@ -353,24 +353,23 @@ issue gets its row in the project it goes to, with that project's fields set, an
 leaves. Out of Triage, declined work is closed as completed with Resolution Declined, and accepted tasks and bugs go to
 the Backlog with their Priority or onto a schedule. From the Backlog, work goes onto a schedule highest Priority first,
 with the schedule's option, the next step or the step the schedule's owner gives it, Status Open and its blocked-by
-links. A committed schedule takes it only by its owner's amendment, recorded in the Schedule issue.
-`star github schedule add` (#438), built on 2026-11-12, makes that move in one command. An issue on another team's
-project is assigned to
-an accountable member of that team: GitHub allows up to 10 assignees on an issue, any organization member who can read
-the repository among them (GitHub's documentation on assigning issues, read 2026-11-04), and all five of NobleFactor's
-participating repositories are public. The person whose name is on an issue moves it to another team the way any move is
-made, in one act, between its team's Triage project or schedule and the other team's: triage to triage, triage to
-schedule, schedule to triage, or schedule to schedule. This supersedes in part the ruling of 2026-10-22, on the plan's
-question 4, that work for another team gets a tracking issue. The sweep (#436) will return to its team's Triage project,
-or in a user account to the account's, an issue in more than one of the account's projects, whichever team owns them,
-the Scenario projects included, or on more than one schedule or scenario, and an epic or a feature that is a row of a
-Backlog, Schedule or Scenario project; it will leave a scenario's rows alone but for those two rules (§ What GitHub does
-not enforce, below). How the sweep will handle an issue that is in a scenario and in another project, without taking a
-scheduled item off its schedule, is #436's to design. The Backlog shows its order in a view named By priority, sorted by
-Priority, which the script of #303's closing pull request makes in Backlog: engprod, Backlog: devlore and the Backlog
-template; David-Noble-at-work's Backlog has no Priority field to sort by, since a user account has no issue fields. That
-settles how a triage decision is carried out and how an issue is kept in one project at a time
-([section 3](3-collections.md#triage-and-the-backlog)).
+links. A committed schedule takes it only by its owner's amendment, recorded in the Schedule issue. `star github issue
+move` (#511), which replaced `star github schedule add` (#438), makes that move in one command. An issue on another
+team's project is assigned to an accountable member of that team: GitHub allows up to 10 assignees on an issue, any
+organization member who can read the repository among them (GitHub's documentation on assigning issues, read
+2026-11-04), and all five of NobleFactor's participating repositories are public. The person whose name is on an issue
+moves it to another team the way any move is made, in one act, between its team's Triage project or schedule and the
+other team's: triage to triage, triage to schedule, schedule to triage, or schedule to schedule. This supersedes in part
+the ruling of 2026-10-22, on the plan's question 4, that work for another team gets a tracking issue. The sweep (#436)
+will return to its team's Triage project, or in a user account to the account's, an issue in more than one of the
+account's projects, whichever team owns them, the Scenario projects included, or on more than one schedule or scenario,
+and an epic or a feature that is a row of a Backlog, Schedule or Scenario project; it will leave a scenario's rows alone
+but for those two rules (§ What GitHub does not enforce, below). How the sweep will handle an issue that is in a
+scenario and in another project, without taking a scheduled item off its schedule, is #436's to design. The Backlog
+shows its order in a view named By priority, sorted by Priority, which the script of #303's closing pull request makes
+in Backlog: engprod, Backlog: devlore and the Backlog template; David-Noble-at-work's Backlog has no Priority field to
+sort by, since a user account has no issue fields. That settles how a triage decision is carried out and how an issue is
+kept in one project at a time ([section 3](3-collections.md#triage-and-the-backlog)).
 
 Ruled 2026-11-03: a new issue reaches its team's Triage project through a GitHub Actions workflow in each repository.
 The workflow runs when an issue is opened or transferred, and uses actions/add-to-project. GitHub's built-in auto-add

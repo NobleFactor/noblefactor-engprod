@@ -161,11 +161,14 @@ Read on 2026-11-15 from GitHub and from develop at `1565afc`:
 Built by one helper agent and reviewed before anything is committed, as #555 and #557 were. In this order, each with
 its tests in `tests/Test-StarGitHub`, `make check` passing before each commit:
 
-- [ ] `star github issue move` (#511), from `schedule add`
+- [x] `star github issue move` (#511), from `schedule add`, on 2026-11-15: cases 46 to 55 converted and 86 to 100
+      added, 315 test lines passing; `plan link`'s body readers moved to `commands/markdown.star`, which `issue move`
+      shares, plan link's cases passing unchanged
 - [ ] `get` and `list` of both groups (#510)
 - [ ] `new` of both groups, and Start-Claude's `--schedule new` refused (#509)
 - [ ] `close` and `retire` (#512)
-- [ ] The documents that name `schedule add` as a command to run brought to `issue move`
+- [x] The documents that name `schedule add` as a command to run brought to `issue move`, in the commit that retires
+      it, as agent rule 12 has it, on 2026-11-15
 
 ### Phase 5: the proofs
 

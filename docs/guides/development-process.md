@@ -94,21 +94,20 @@ its work in its four projects: triage, the backlog, scheduling and scenarios. So
 is membership in the team, whose roles carry the rest: the maintain role on each repository the team owns, and the write
 role on each of its four projects, which the script of #303's closing pull request sets. A user account has no teams;
 there, a new participant is a collaborator on each participating repository, personal and David-Noble-at-work/.github,
-and a writer on each of the account's four projects
-([issue-standards.md § Who can do what](../issue-standards.md#who-can-do-what)). An issue is a row of at most one of its
-account's Triage, Backlog, Schedule and Scenario projects, whichever team owns them, and is on at most one schedule or
-scenario. Epics and features are never rows of a Backlog, Schedule or Scenario project: once classified, one leaves
-Triage for no project, and its tasks and bugs are what reach the Backlog and the schedules. Every move is one act: the
-issue gets its row in the project it goes to, with that project's fields set, and loses its row in the project it
-leaves. Out of Triage, accepted tasks and bugs go to the Backlog with their Priority or onto a schedule. Triage removes
-an issue's Triage row as part of its decision, and the sweep (#436) removes none: an issue someone closes outside triage
-stays in its Triage project until triage decides its disposition. Work goes from the Backlog onto a schedule highest
-Priority first, and a committed schedule takes it only by its owner's amendment, recorded in the Schedule issue;
-`star github schedule add` (#438), built on 2026-11-12, makes that move in one command. A task or a bug found while
-walking a scenario
-waits in the scenario until it moves to Triage or straight onto a schedule (below). The sweep will return an issue that
-is a row of more than one of its account's projects, Scenario included, or is on more than one schedule or scenario, to
-its team's Triage project.
+and a writer on each of the account's four projects ([issue-standards.md § Who can do
+what](../issue-standards.md#who-can-do-what)). An issue is a row of at most one of its account's Triage, Backlog,
+Schedule and Scenario projects, whichever team owns them, and is on at most one schedule or scenario. Epics and features
+are never rows of a Backlog, Schedule or Scenario project: once classified, one leaves Triage for no project, and its
+tasks and bugs are what reach the Backlog and the schedules. Every move is one act: the issue gets its row in the
+project it goes to, with that project's fields set, and loses its row in the project it leaves. Out of Triage, accepted
+tasks and bugs go to the Backlog with their Priority or onto a schedule. Triage removes an issue's Triage row as part of
+its decision, and the sweep (#436) removes none: an issue someone closes outside triage stays in its Triage project
+until triage decides its disposition. Work goes from the Backlog onto a schedule highest Priority first, and a committed
+schedule takes it only by its owner's amendment, recorded in the Schedule issue; `star github issue move` (#511), which
+replaced `star github schedule add` (#438), makes that move in one command. A task or a bug found while walking a
+scenario waits in the scenario until it moves to Triage or straight onto a schedule (below). The sweep will return an
+issue that is a row of more than one of its account's projects, Scenario included, or is on more than one schedule or
+scenario, to its team's Triage project.
 
 **Moving an issue to another team.** Ruled 2026-11-04, superseding in part the ruling of 2026-10-22 that work for
 another team gets a tracking issue: an issue on another team's project is assigned to an accountable member of that
