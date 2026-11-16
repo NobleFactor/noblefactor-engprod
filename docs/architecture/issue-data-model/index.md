@@ -214,8 +214,8 @@ design.
 | [5. From today's scheme](5-from-todays-scheme.md) | The deltas the task list is drawn from, and the order that keeps running work running | [Revised](5-from-todays-scheme.status.md) |
 | [6. The asset and its sync](6-the-asset-and-its-sync.md) | GitHub is each account's model, read when a command needs it; the YAML file in the account's `.github` repository is its backup. `star github model get`, `diff`, `apply`, `backup` and `restore`, each naming its account (#426, #437) | [Ruled](6-the-asset-and-its-sync.status.md) |
 | [7. The workflow, before and after](7-the-workflow-before-and-after.md) | Why this epic: filing an issue, writing a schedule and reporting progress, as a session does them today and once the model is in | [Written](7-the-workflow-before-and-after.status.md) |
-| [8. The schedule commands](8-the-schedule-commands.md) | What `star github schedule` does, verb by verb: `report`, `list`, `get`, `new`, `add`, `move`, `remove` and `close`, for an organization and for a user account (#439) | [Ruled](8-the-schedule-commands.status.md) |
-| [9. The scenario commands](9-the-scenario-commands.md) | What `star github scenario` does, verb by verb: `list`, `get`, `new`, `add`, `remove` and `retire`, for an organization and for a user account, and what the scenarios hold today (#507) | [Drafted](9-the-scenario-commands.status.md) |
+| [8. The schedule commands](8-the-schedule-commands.md) | What `star github schedule` does, verb by verb: `report`, `list`, `get`, `new` and `close`, and `star github issue move`, which moves an issue onto, within and off a schedule, for an organization and for a user account (#439, #507) | [Ruled](8-the-schedule-commands.status.md) |
+| [9. The scenario commands](9-the-scenario-commands.md) | What `star github scenario` does, verb by verb: `list`, `get`, `new` and `retire`, and what `star github issue move` writes onto, within and off a scenario, for an organization and for a user account, and what the scenarios hold today (#507) | [Drafted](9-the-scenario-commands.status.md) |
 
 ## Terms
 

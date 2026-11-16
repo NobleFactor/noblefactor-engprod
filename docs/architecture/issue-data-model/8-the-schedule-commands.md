@@ -9,13 +9,21 @@ schedule moves from Start-Claude into `star github schedule`, and its commands a
 (#439). This section is that design. Each command follows the model as sections 3 and 7 rule it: one Schedule project
 per team, a Schedule field with one option per schedule, and a Schedule issue for each option. Nothing here makes a
 project; a team's four projects are made with the team. Scenarios get commands of their own, in a design that follows
-this one (#507, ruled 2026-11-11): [section 9](9-the-scenario-commands.md).
+this one (#507, ruled 2026-11-11): [section 9](9-the-scenario-commands.md). Ruled 2026-11-15 (#507): putting an
+issue on a schedule, moving it within one and taking it off are one command, `star github issue move`, which moves
+an issue onto, within and off a scenario too (§ Moving an issue).
 
 Its eight questions were ruled by the owner on 2026-11-11 and 2026-11-12, and each is marked with its ruling's date.
+Question 1's `add`, `move` and `remove` became `star github issue move` on 2026-11-15.
 
 ## The commands
 
 **Ruled 2026-11-11, question 1:** eight verbs. `report` is built; `add` is #438; the other six are new.
+
+**Revised 2026-11-15 (#507):** `add`, `move` and `remove` are one command, `star github issue move`, whose one
+positional argument is the issue and whose destination is a flag, so a reader can tell which key names the schedule
+and which the issue. The owner asked for it when the three were seen to be one act, moving an issue from where it is
+to somewhere else, done three ways. The schedule's own verbs are the five that act on a schedule itself:
 
 | Command | Does | Writes to GitHub |
 | --- | --- | --- |
@@ -23,10 +31,8 @@ Its eight questions were ruled by the owner on 2026-11-11 and 2026-11-12, and ea
 | `list <account> [--team <team>]` | Every schedule of an account or a team, one record each | Nothing |
 | `get <schedule>` | One schedule's rows in step order, its Schedule issue's own row first | Nothing |
 | `new <repository> <name>` | Makes a schedule: its Schedule issue, its option and its own row | Issue, option, row |
-| `add <schedule> <issue>... [--after <step>]` | Puts issues on a schedule as its next steps, or after a step | Rows, links, amendment |
-| `move <schedule> <step> --after <step>` | Moves an open step, renumbering the steps between | Rows, amendment |
-| `remove <schedule> <step> --to backlog\|triage` | Takes an open step off, and closes the gap | Rows, amendment |
 | `close <schedule>` | Closes a finished schedule, with its evidence comment | Issue, row, comment |
+| `star github issue move <issue>... --schedule <schedule> [--after <step>]`, `--triage` or `--backlog` | Puts issues on a schedule, moves them within it, or takes them off | Rows, links, amendment |
 
 A `<schedule>` and an `<issue>` are written `<owner>/<repository>#<number>`, the form a session's
 `NFEP_AGENT_SCHEDULE` holds. A `<step>` is a number on the schedule's Step field. Every command names what it acts on;
@@ -141,7 +147,7 @@ star github schedule new <repository> <name> --area Product|Engineering --delive
 `Schedule: <name>` in `<repository>`, then for the option, then for the row, and makes only what is missing. #487 is
 the bug this avoids: a second `apply` after a half-made template made a second project.
 
-## Changing a schedule: add, move and remove
+## Moving an issue: issue move
 
 Every change to a schedule's steps is one act. The rows, the blocked-by links and the amendment in the Schedule issue
 are written together, so the schedule and its record can't disagree (#438). Before writing, a command reads the
@@ -149,61 +155,90 @@ schedule's rows; it reads them again just before its first write, and stops, wri
 has no transaction, so a write that fails partway is reported with what was written, and the same command run again
 finishes it.
 
-**Ruled 2026-11-11, question 4: the amendment.** `add`, `move` and `remove` each write one line at the end of the
-Schedule issue's Amendments section, on every schedule, committed or not, since nothing in GitHub marks a schedule
-committed. Each takes a required `--reason`, and the line names the date, who ran the command and why; the command
-can't know whose word it acted on, only who ran it:
+**Ruled 2026-11-15 (#507):** one command moves an issue wherever it goes, onto a schedule, within one or off one, and
+onto, within or off a scenario. The owner gave its shape:
+
+```
+star github issue move <issue>...
+    ( --schedule <schedule> [--after <step>] [--blocked-by <issue>[,<issue>...]] [--assignee <login>]
+    | --scenario <scenario> --beat <beat>
+    | --triage
+    | --backlog )
+    --reason <text>
+```
+
+Exactly one destination is given, and the issues are placed in the order given; the owner asked that several go at
+once and that `--backlog` stay. `--reason` is required on every move and is written where the move is recorded: in
+the Schedule issue's amendment when a schedule's steps change, and in a comment on the Scenario issue when a
+scenario's rows do. The command reads where each issue is, and does the rest:
+
+| Where it is | `issue move` with | What it writes |
+| --- | --- | --- |
+| In Triage or the Backlog, on no project, on a scenario, or on another schedule | `--schedule <schedule>` | Onto a schedule, below |
+| On this schedule | `--schedule <schedule> --after <step>` | Within a schedule, below |
+| On a schedule | `--triage` or `--backlog` | Off a schedule, below |
+| Anywhere | `--scenario <scenario> --beat <beat>` | Onto or within a scenario: [section 9](9-the-scenario-commands.md) |
+
+**Ruled 2026-11-11, question 4: the amendment.** Each move that changes a schedule's steps writes one line at the end
+of the Schedule issue's Amendments section, on every schedule, committed or not, since nothing in GitHub marks a
+schedule committed. The line names the date, who ran the command and its `--reason`; the command can't know whose
+word it acted on, only who ran it:
 
 ```
 - 2026-11-11, by David-Noble-at-work: step 43 was added, Task NobleFactor/noblefactor-engprod#507, the design of the
   scenario commands. <reason>
 ```
 
-### add
+### Onto a schedule
 
-`add <schedule> <issue>... [--after <step>] [--blocked-by <issue>[,<issue>...]] [--assignee <login>] --reason <text>`
-puts each issue on the schedule, in the order given. Built on 2026-11-12 (#438) and proved that day in
+`issue move <issue>... --schedule <schedule> [--after <step>] [--blocked-by <issue>[,<issue>...]] [--assignee <login>]
+--reason <text>` puts each issue on the schedule, in the order given. Built on 2026-11-12 as
+`star github schedule add <schedule> <issue>...` (#438), which becomes it (§ Building it), and proved that day in
 NobleFactor-sandbox ([section 6](6-the-asset-and-its-sync.md#where-star-githubs-proofs-run)); a user account's
 half on 2026-11-13, in David-Noble-at-work-sandbox. `--blocked-by` takes a comma-separated list, since no star flag
 repeats.
 
 - Without `--after`, each takes the next step. With `--after <step>`, they take the steps after that one, and every
-  later step moves down, the steps staying consecutive whole numbers (ruled 2026-11-11, #438).
+  later step moves down, the steps staying consecutive whole numbers (ruled 2026-11-11, #438). `--after 0` puts them
+  first.
 - Each row gets the schedule's option, Status Open and its step, and is placed in step order.
 - `--blocked-by` adds blocked-by links; links the issue already has are kept.
 - The issue leaves the project it was on, in one act (ruled 2026-11-04): its Triage or Backlog row is removed; a
-  scenario's row is removed, and a comment on the Scenario issue records the move; and a row on another schedule is
-  taken off as `remove` does, with an amendment there too.
-- An issue from another team's repository is assigned to `--assignee`, a member of the schedule's team, which `add`
+  scenario's row is removed, and a comment on the Scenario issue and a line in the issue's body record the move
+  (section 9); and a row on another schedule is taken off as a move off a schedule takes it, with an amendment there
+  too.
+- An issue from another team's repository is assigned to `--assignee`, a member of the schedule's team, which the move
   then requires (ruled 2026-11-04).
 
-`add` refuses, writing nothing, an issue that is closed, already on this schedule, of a type other than Task or Bug,
-or of another account; a `--blocked-by` issue of another account; and a `--after` step the schedule doesn't have.
+It refuses, writing nothing, an issue that is closed, of a type other than Task or Bug, or of another account; an
+issue already on this schedule, unless `--after` moves it within the schedule; a `--blocked-by` issue of another
+account; and a `--after` step the schedule doesn't have.
 Iteration is left for sprint planning to set.
 
-**How a run that stops is finished, as built.** `add` writes its amendment line first, ending "(in progress)", and
-settles it last, dropping the marker. The line is the change's record as it was planned, so a run that stops partway
-leaves one a reader sees is unfinished, and the same command run again finishes it, keeping the steps the first run
-moved among it. Any other issue already on the schedule is refused: most steps went onto their schedules by hand,
-before `add`, and no amendment names them, so an issue on the schedule with no amendment is not a sign of a run that
-stopped. The later rows move from the highest down, which keeps their order should a run stop between them.
+**How a run that stops is finished, as built.** `schedule add` writes its amendment line first, ending "(in
+progress)", and settles it last, dropping the marker, and `issue move` does the same. The line is the change's record
+as it was planned, so a run that stops partway leaves one a reader sees is unfinished, and the same command run again
+finishes it, keeping the steps the first run moved among it. Any other issue already on the schedule is refused: most
+steps went onto their schedules by hand, before `add`, and no amendment names them, so an issue on the schedule with no
+amendment is not a sign of a run that stopped. The later rows move from the highest down, which keeps their order
+should a run stop between them.
 
-### move
+### Within a schedule
 
-`move <schedule> <step> --after <step> --reason <text>` moves an open step to just after another, and renumbers the
-steps between, so they stay consecutive. `--after 0` makes it the first open step.
+`issue move <issue> --schedule <its schedule> --after <step> --reason <text>` moves an open step to just after
+another, and renumbers the steps between, so they stay consecutive. `--after 0` makes it the first step.
 
-### remove
+### Off a schedule
 
-`remove <schedule> <step> --to backlog|triage --reason <text>` takes an open step off the schedule. Its issue goes to
-its team's Backlog, keeping its Priority, or to its Triage project, and every later step moves up one.
+`issue move <issue>... --triage|--backlog --reason <text>` takes open steps off their schedule. Each goes to its
+team's Triage project, or to its Backlog, keeping its Priority, and every later step moves up one.
 
-**Ruled 2026-11-11, question 5: closed steps.** `add --after`, `move` and `remove` renumber every later step, closed or
-open, so the steps stay consecutive whole numbers, as #438's ruling of 2026-11-11 has it. Section 3 said a closed step
-keeps its number, but closed steps already sit among open ones: on issue tracking, iteration 1, steps 29 (#440) and 35
-(#447) are closed, between open steps (read 2026-11-11), and both moved down four when #482 to #485 went in after step
-22 that day. A rule that no closed step moves would refuse almost every `--after`. So closed steps move with the open
-ones, and section 3 says so.
+**Ruled 2026-11-11, question 5: closed steps.** A move onto a schedule with `--after`, within one, or off one
+renumbers every later step, closed or open, so the steps stay consecutive whole numbers, as #438's ruling of 2026-11-11
+has it. Section 3 said a closed step keeps its number, but closed steps already sit among open ones: on issue
+tracking, iteration 1, steps 29 (#440) and 35 (#447) are closed, between open steps (read 2026-11-11), and both moved
+down four when #482 to #485 went in after step 22 that day. A rule that no closed step moves would refuse almost every
+`--after`. So closed steps move with the open ones, and section 3 says so.
 
 ## Ending a schedule: close
 
@@ -315,5 +350,11 @@ need them:
 | --- | --- | --- |
 | #509 | `new`, and Start-Claude's `--schedule new` dropped | #439 |
 | #510 | `get` and `list` | #439 |
-| #511 | `move` and `remove`, which share `add`'s code | #438 |
+| #511 | `star github issue move`, which `schedule add` becomes, with moving within a schedule and off one (revised 2026-11-15) | #438 |
 | #512 | `close` and its evidence comment | #439 |
+
+**Revised 2026-11-15 (#507):** the four are widened to scenarios, since each scenario verb shares its code with one of
+them (section 9, § Building it), and are steps 48 to 51 of #346, after #507, built together in #507's pull request.
+
+`issue move` is a command of `star github issue`, the group Task #338 makes for `issue file`; whichever of #338 and
+#511 lands first makes the group.
