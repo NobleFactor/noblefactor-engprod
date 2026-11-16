@@ -9,7 +9,7 @@ schedule moves from Start-Claude into `star github schedule`, and its commands a
 (#439). This section is that design. Each command follows the model as sections 3 and 7 rule it: one Schedule project
 per team, a Schedule field with one option per schedule, and a Schedule issue for each option. Nothing here makes a
 project; a team's four projects are made with the team. Scenarios get commands of their own, in a design that follows
-this one (#507, ruled 2026-11-11).
+this one (#507, ruled 2026-11-11): [section 9](9-the-scenario-commands.md).
 
 Its eight questions were ruled by the owner on 2026-11-11 and 2026-11-12, and each is marked with its ruling's date.
 
