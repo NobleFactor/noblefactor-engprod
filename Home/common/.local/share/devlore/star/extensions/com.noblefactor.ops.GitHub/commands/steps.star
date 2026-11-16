@@ -16,8 +16,9 @@
 # A scenario is read the same way, an option of its team's Scenario project's Scenario field, whose rows carry a Beat
 # (section 9); its changes are recorded in a comment on its Scenario issue and a line in the item's body, which this
 # module writes too. star github issue move uses it (#511), made from `add` (#438); get and list of both groups read
-# through it (collections.star, #510); and new of both groups files its issue, sets its issue fields and adds its option
-# through it (making.star, #509).
+# through it (collections.star, #510); new of both groups files its issue, sets its issue fields and adds its option
+# through it (making.star, #509); and close and retire close an issue and read how each step closed through it
+# (ending.star, #512).
 
 load("commands/markdown.star", "body_lines", "line_end", "numbered", "sections")
 load("commands/model.star", "extension_dir", "read_text", "rest", "write_options")
@@ -523,7 +524,7 @@ def _names(entry, keys):
 # ── a scenario's records: the comment and the body line ─────────────────────
 
 def comment(own, body):
-    """A comment on an issue, by its node ID; fails, naming the issue, unless GitHub answers with the comment's ID."""
+    """A comment on an issue, by its node ID; the comment's ID. Fails, naming the issue, unless GitHub answers with it."""
     made = _call(
         "mutation starStepComment($s: ID!, $b: String!) { addComment(input: {subjectId: $s, body: $b}) { commentEdge { node { id } } } }",
         {"s": own["id"], "b": body},
@@ -531,6 +532,7 @@ def comment(own, body):
     )
     if made == "" or made == "null":
         fail("the comment on " + own["key"] + " was not made")
+    return made
 
 def with_line(body, line):
     """A body with line written just above its Plan and design documents heading, or at its end, a blank line around it.
@@ -608,3 +610,56 @@ def add_option(project, field, name, description):
     kept = [{"id": o["id"], "name": o["name"], "color": o.get("color"), "description": o.get("description")} for o in project["fields"][field]["options"]]
     write_options(project["fields"][field]["id"], kept + [{"name": name, "color": "GRAY", "description": description}], "starStepOptions")
     return project_of(project["id"])
+
+# ── an issue closed, and how a step closed ──────────────────────────────────
+
+def close_issue(own):
+    """An issue closed as completed, by its node ID."""
+    _call(
+        "mutation starStepClose($i: ID!) { closeIssue(input: {issueId: $i, stateReason: COMPLETED}) { issue { id } } }",
+        {"i": own["id"]},
+    )
+
+def issue_state(own):
+    """An issue's state and the reason it closed, as GitHub holds them now: {"state", "reason"}, lower case; None when open."""
+    node = json.decode(data = _call(
+        "query starStepState { node(id: \"" + own["id"] + "\") { ... on Issue { state stateReason } } }",
+        jq = ".data.node",
+    ) or "{}") or {}
+    return {"state": (node.get("state") or "").lower(), "reason": (node.get("stateReason") or "").lower() or None}
+
+# A pull request as close reads it: what its row in the evidence comment names, and whether and when it merged.
+_PULL = "number title merged mergedAt mergeCommit { oid } repository { nameWithOwner }"
+
+def closing_of(key):
+    """How an issue closed, as GitHub records it.
+
+    The record is {"state", "reason", "closed_at", "fields", "labels", "references", "closer"}. references are the pull
+    requests GitHub records as closing it, closedByPullRequestsReferences, merged or not; closer is its last
+    ClosedEvent's closer, with a commit's associated pull requests; fields are its single-select issue fields, by name.
+    """
+    k = parse_key(key)
+    query = ("query starStepClosing { repository(owner: \"" + k["owner"] + "\", name: \"" + k["name"] + "\") { issue(number: " +
+             str(k["number"]) + ") { state stateReason closedAt labels(first: 50) { nodes { name } } issueFieldValues(first: 20) { " +
+             "nodes { ... on IssueFieldSingleSelectValue { name field { ... on IssueFieldCommon { name } } } } } " +
+             "closedByPullRequestsReferences(first: 20, includeClosedPrs: true) { nodes { " + _PULL + " } } " +
+             "timelineItems(itemTypes: [CLOSED_EVENT], last: 1) { nodes { ... on ClosedEvent { closer { __typename " +
+             "... on PullRequest { " + _PULL + " } ... on Commit { oid associatedPullRequests(first: 5) { nodes { " + _PULL +
+             " } } } } } } } } } }")
+    node = json.decode(data = _call(query, jq = ".data.repository.issue"))
+    if node == None:
+        fail("no issue " + k["key"])
+    events = (node.get("timelineItems") or {}).get("nodes") or []
+    return {
+        "state": (node.get("state") or "").lower(),
+        "reason": (node.get("stateReason") or "").lower() or None,
+        "closed_at": node.get("closedAt"),
+        "fields": {
+            v["field"]["name"]: v["name"]
+            for v in ((node.get("issueFieldValues") or {}).get("nodes") or [])
+            if type(v) == "dict" and type(v.get("field")) == "dict" and v.get("name")
+        },
+        "labels": [label["name"] for label in ((node.get("labels") or {}).get("nodes") or [])],
+        "references": (node.get("closedByPullRequestsReferences") or {}).get("nodes") or [],
+        "closer": (events[-1].get("closer") if events and type(events[-1]) == "dict" else None) or {},
+    }

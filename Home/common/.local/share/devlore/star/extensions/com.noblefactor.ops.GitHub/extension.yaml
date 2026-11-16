@@ -71,6 +71,13 @@ commands:
         default: ""
         help: "Who owns the schedule, assigned its issue; default: you, who run the command"
 
+  - name: github.schedule.close
+    help: "Close a finished schedule: refuses, writing nothing, while a step is open or a box of its Exit criteria section, or of its Evidence of completion section when it has none, is unticked; then sets its own row Closed, writes the evidence comment, one row for each merged pull request in the order they merged, with the date it merged and the steps it closed, then each step no merged pull request closed, with how it closed, and closes the Schedule issue as completed, each write read back; keeps the option, the record of which schedule each step belonged to; returns one flat record of what it did; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    implementation: commands/github-schedule-close.star
+    args:
+      - name: schedule
+        help: "The schedule's own issue, <owner>/<repository>#<number>, as a session's NFEP_AGENT_SCHEDULE names it; required"
+
   - name: github.scenario.list
     help: "Every scenario of an account, or of one of its teams: one flat record for each option of the Scenario field of its Scenario projects, Scenario: <team> in an organization and Scenario: <account> in a user account, with its Scenario issue's key, title, state and assignee, the project, and the counts of its open and closed rows; writes nothing; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
     implementation: commands/github-scenario-list.star
@@ -123,6 +130,18 @@ commands:
         type: string
         default: ""
         help: "Who owns the scenario, assigned its issue; default: you, who run the command"
+
+  - name: github.scenario.retire
+    help: "Retire a scenario the product no longer has: refuses, writing nothing, while an open issue is a row of the scenario, or its Scenario issue has a Resolution; then sets its own row Closed, comments on the Scenario issue with the date, who ran it and --reason, and closes it as completed with no Resolution, each write read back; keeps the option, the record of which scenario each past row belonged to; returns one flat record of what it did; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    implementation: commands/github-scenario-retire.star
+    args:
+      - name: scenario
+        help: "The scenario's own issue, <owner>/<repository>#<number>; required"
+    flags:
+      - name: reason
+        type: string
+        default: ""
+        help: "Why the product no longer has the scenario, written in the comment on its Scenario issue; required"
 
   - name: github.issue.move
     help: "Move issues, in the order given, to one destination: --schedule puts them on a schedule, each with its step, its schedule's option and Status Open, placed in step order and leaving the project it was on, or with --after moves one already there, the steps between renumbered, closed or open; --triage or --backlog takes steps off their schedule to their team's Triage or Backlog project, every later step moving up, and --triage takes items off their scenario; --scenario puts tasks and bugs on a scenario at a Beat, or sets the Beat of one already on it; a schedule's change writes one amendment line in its Schedule issue, and a scenario's a comment on its Scenario issue and a line in the item's body, each naming the date, who ran it and why; return one flat record for each row it added, moved, took off or left; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"

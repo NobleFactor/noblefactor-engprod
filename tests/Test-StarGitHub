@@ -8,11 +8,11 @@
 # each account's model read from GitHub when a command needs it, star github model get and backup, and the sweep's
 # two-types rule (#426), as docs/plans/feature/426-model-pull-to-dot-github.md's test plan lists them; star github
 # schedule add (#438), as docs/plans/feature/438-schedule-add.md's test plan lists them, run as star github issue move
-# (#511), which it became, with issue move's own cases, and get, list and new of star github schedule and star github
-# scenario (#510, #509), as docs/plans/doc/507-scenario-commands.md's test plan lists them; each team's project of a
-# kind held to its template's README and to the short description the template names for a copy (#555), as
-# docs/plans/fix/555-copy-readme.md's test plan lists them; and star github plan link (#557), as
-# docs/plans/feature/557-plan-row.md's test plan lists them
+# (#511), which it became, with issue move's own cases, get, list and new of star github schedule and star github
+# scenario (#510, #509), and star github schedule close and star github scenario retire (#512), as
+# docs/plans/doc/507-scenario-commands.md's test plan lists them; each team's project of a kind held to its template's
+# README and to the short description the template names for a copy (#555), as docs/plans/fix/555-copy-readme.md's test
+# plan lists them; and star github plan link (#557), as docs/plans/feature/557-plan-row.md's test plan lists them
 
 [[ -r "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" ]] || {
     printf '%s: cannot find Declare-BashScript in %s\n' "${0##*/}" "$(dirname "$0")/../Home/common/.local/bin" >&2
@@ -615,11 +615,13 @@ function issue_form {
 # raw at a revision, the git data API apply commits through, a ref, a commit, a tree, and its variables, remembered in
 # ${GH_REMOTES}/variables. A body sent with --input - is read from standard input.
 #
-# The schedule and scenario commands' operations (#438, #511), starViewer and every starStep one, answer from one world,
-# ${GH_REMOTES}/world.json, which a case writes with world and its writes change, through world.jq beside the
-# stand-in, so that a read after a write finds it, as GitHub's would: a project found by its title, and a comment kept
-# on its issue, among them. The world may name an operation to fail once, fail_on, after letting fail_skip calls of it
-# through, none by default, and another writer's change to make after an operation's first answer, change.
+# The schedule and scenario commands' operations (#438, #511, #509, #512), starViewer and every starStep one, answer
+# from one world, ${GH_REMOTES}/world.json, which a case writes with world and its writes change, through world.jq
+# beside the stand-in, so that a read after a write finds it, as GitHub's would: a project found by its title, a comment
+# kept on its issue, an issue filed, and an issue closed, among them. How an issue closed is what a case gives it: its
+# stateReason, its closedAt, its references, the pull requests GitHub records as closing it, and its closer. The world
+# may name an operation to fail once, fail_on, after letting fail_skip calls of it through, none by default, and
+# another writer's change to make after an operation's first answer, change.
 #
 # star github plan link's operations (#557): starPlanBlobs and starPlanAt answer each aliased object(expression:
 # "<revision>:<path>") with the file's text from the repository's bare repository under ${GH_REMOTES}, or null;
@@ -683,6 +685,19 @@ elif $op == "starStepOpen" then
 elif $op == "starStepFields" then
     {answer: {data: {node: {issueFieldValues: {nodes: [($w.issues[$node].fields // {}) | to_entries[]
         | {name: .value, field: {name: .key}}]}}}}}
+elif $op == "starStepClose" then
+    {world: ($w | .issues[$i] |= (.state = "CLOSED" | .stateReason = "COMPLETED")), answer: {data: {closeIssue: {issue: {id: $i}}}}}
+elif $op == "starStepState" then
+    {answer: {data: {node: ($w.issues[$node] | {state, stateReason: (.stateReason // (if .state == "CLOSED" then "COMPLETED" else null end))})}}}
+elif $op == "starStepClosing" then
+    # How an issue closed: what a case gives it, its references the pull requests GitHub records as closing it, and its
+    # closer its last ClosedEvent's; a closed issue with no reason given closed as completed.
+    {answer: {data: {repository: {issue: ([$w.issues[] | select(.repo == $repo and (.number | tostring) == $number)][0]
+        | if . == null then null else {state, stateReason: (.stateReason // (if .state == "CLOSED" then "COMPLETED" else null end)),
+            closedAt: (.closedAt // null), labels: {nodes: [(.labels // [])[] | {name: .}]},
+            issueFieldValues: {nodes: [(.fields // {}) | to_entries[] | {name: .value, field: {name: .key}}]},
+            closedByPullRequestsReferences: {nodes: (.references // [])},
+            timelineItems: {nodes: (if .closer then [{closer: .closer}] else [] end)}} end)}}}}
 elif $op == "starStepSetField" then
     $w.issue_fields[$f] as $field |
     {world: ($w | .issues[$i].fields[$field.name] = $field.options[$o]), answer: {data: {setIssueFieldValue: {clientMutationId: null}}}}
@@ -3722,6 +3737,133 @@ check "112 (plan 10): one issue, one option, and its own row, Open, under the op
         and ([.projects.PVT_c_eng.fields[] | select(.name == "Scenario") | .options[] | select(.name == "first run")] | length) == 1
         and (.projects.PVT_c_eng.items | map(.content)) == ["I_alpha_40", "I_alpha_27", "I_alpha_44"]
         and (.projects.PVT_c_eng.items[2].values == {Status: "Open", Scenario: "first run"})'
+
+# 113 to 118: star github schedule close and star github scenario retire (#512), as
+# docs/plans/doc/507-scenario-commands.md's test plan cases 11 and 12 have them, each named for its case. Each starts
+# from base_world, changed where it says, and reads back what each left in it.
+
+# A finished s1: #20's Exit criteria both ticked, and every step closed. #21 and #24 are closed by alpha's #101, which
+# GitHub records as closing each; #22 by a commit whose merged pull request is beta's #102, its title holding a pipe;
+# and #23, a duplicate, by no pull request, its Resolution Duplicate, though alpha's #103, never merged, would have
+# closed it.
+declare -r finished='
+    def pull($repo; $n; $title; $merged): {number: $n, title: $title, merged: ($merged != null), mergedAt: $merged,
+        mergeCommit: {oid: ("c" + ($n | tostring))}, repository: {nameWithOwner: $repo}};
+    .issues.I_alpha_20.body = ("## Deliverable\n\nWhat s1 delivers.\n\n## Exit criteria\n\n- [x] Each step closed.\n" +
+        "- [x] Its proof shown.\n\n## Steps\n\nThe steps are the rows under s1.\n\n## Amendments\n\n")
+    | .issues.I_alpha_21 += {closedAt: "2026-11-01T09:00:00Z",
+        references: [pull("NobleFactor/alpha"; 101; "the first work"; "2026-11-01T08:00:00Z")]}
+    | .issues.I_alpha_22 += {state: "CLOSED", closedAt: "2026-11-03T09:00:00Z", closer: {__typename: "Commit", oid: "c102",
+        associatedPullRequests: {nodes: [pull("NobleFactor/beta"; 102; "the second | work"; "2026-11-03T08:00:00Z")]}}}
+    | .issues.I_alpha_23 += {closedAt: "2026-11-02T09:00:00Z", fields: {Resolution: "Duplicate"},
+        references: [pull("NobleFactor/alpha"; 103; "a try that did not merge"; null)]}
+    | .issues.I_alpha_24 += {state: "CLOSED", closedAt: "2026-11-01T10:00:00Z",
+        references: [pull("NobleFactor/alpha"; 101; "the first work"; "2026-11-01T08:00:00Z")]}'
+
+# 113 (plan 11). close refuses, writing nothing, a schedule with a step open, one with an exit criterion unticked, a key
+# that names no open Schedule issue, and star's --dry-run.
+world
+run_star "${data}" github schedule close NobleFactor/alpha#20
+expect "113 (plan 11): close refuses a schedule with steps open, naming them" error "${no_writes}" \
+    "not every step is closed: 2, Task #22; 4, Task #24 are open" text
+world "${finished}"' | .issues.I_alpha_20.body |= sub("- \\[x\\] Its proof"; "- [ ] Its proof")'
+run_star "${data}" github schedule close NobleFactor/alpha#20
+expect "113 (plan 11): and one with an exit criterion unticked, naming it" error "${no_writes}" \
+    "not every exit criterion is ticked: Its proof shown." text
+world "${finished}"' | .issues.I_alpha_20.state = "CLOSED"'
+run_star "${data}" github schedule close NobleFactor/alpha#20
+expect "113 (plan 11): and a schedule already closed" error "${no_writes}" "NobleFactor/alpha#20 is closed" text
+run_star "${data}" github schedule close NobleFactor/alpha#40
+expect "113 (plan 11): and a key that names no Schedule issue" error "${no_writes}" \
+    "NobleFactor/alpha#40 is not a Schedule issue: its type is Scenario" text
+world "${finished}"
+run_star "${data}" github schedule close NobleFactor/alpha#20 --dry-run
+expect "113 (plan 11): and star's --dry-run, until devlore-cli#1170" error "${no_writes}" "1170" text
+
+# 114 (plan 11). close on a finished schedule: its own row Closed, then the evidence comment, then the Schedule issue
+# closed as completed; the option kept. The comment is its template's, rendered from the fixed data above: What merged,
+# in the order the pull requests merged, a step closed by a pull request GitHub records as closing it, #101's two, and
+# one closed by a commit, #102's, its title's pipe escaped and its key another repository's; then Closed with no pull
+# request, #23 with its Resolution, the unmerged #103 not counting.
+world "${finished}"
+run_star "${data}" github schedule close NobleFactor/alpha#20
+expect "114 (plan 11): close ends the finished schedule, counting the steps under each heading" ok '. == [{
+    issue: "NobleFactor/alpha#20", kind: "Schedule", comment: "IC_I_alpha_20_0", state: "closed", status: "Closed",
+    steps_merged: 3, steps_with_no_pull_request: 1}]'
+check "114 (plan 11): the evidence comment, every byte, both headings, a step by reference, one by commit, one by Resolution" \
+    world_holds '.issues.I_alpha_20.comments == ["**Evidence of completion**, written by `star github schedule close` on '"${today}"', " +
+        "run by stand-in. All 4 steps of s1 are closed, and its 2 exit criteria are ticked.\n\n**What merged**\n\n" +
+        "| Merged | Pull request | Steps it closed |\n| --- | --- | --- |\n" +
+        "| 2026-11-01 | #101, the first work | 1, Task #21; 4, Task #24 |\n" +
+        "| 2026-11-03 | NobleFactor/beta#102, the second \\| work | 2, Task #22 |\n\n" +
+        "**Closed with no pull request**\n\n| Step | How it closed |\n| --- | --- |\n| 3, Bug #23 | Duplicate, 2026-11-02 |"]'
+check "114 (plan 11): the Schedule issue is closed as completed, its row Closed, and the option s1 kept" world_holds \
+    '(.issues.I_alpha_20 | [.state, .stateReason]) == ["CLOSED", "COMPLETED"]
+        and (.projects.PVT_s_eng.items[] | select(.id == "IT_alpha_20") | .values) == {Schedule: "s1", Status: "Closed"}
+        and ([.projects.PVT_s_eng.fields[] | select(.name == "Schedule") | .options[].name] == ["s1", "s2"])'
+check "114 (plan 11): the row is set Closed first, then the comment written, then the issue closed" calls_hold "${in_order}"'
+    in_order([["starStepSetOption", "i=IT_alpha_20"], ["starStepComment", "s=I_alpha_20"], ["starStepClose", "i=I_alpha_20"]])'
+
+# 115 (plan 11). In a user account: u1's one step, #11, open, is refused; closed as not planned, labeled
+# resolution:declined, it is the one step of u1, under Closed with no pull request, its Resolution its label's, and
+# What merged left out. #10's exit criteria are its Evidence of completion's, at ###, since it has no Exit criteria.
+world '.issues.I_personal_10.body |= sub("## Steps"; "### Evidence of completion\n\n- [x] Shown.\n\n## Steps")'
+run_star "${data}" github schedule close test-user/personal#10
+expect "115 (plan 11): close refuses a user account's schedule with its step open" error "${no_writes}" \
+    "not every step is closed: 1, Task #11 is open" text
+world '.issues.I_personal_10.body |= sub("## Steps"; "### Evidence of completion\n\n- [x] Shown.\n\n## Steps")
+    | .issues.I_personal_11 += {state: "CLOSED", stateReason: "NOT_PLANNED", closedAt: "2026-11-05T09:00:00Z",
+        labels: ["task", "resolution:declined"]}'
+run_star "${data}" github schedule close test-user/personal#10
+expect "115 (plan 11): close ends a user account's finished schedule" ok \
+    'map([.issue, .state, .status, .steps_merged, .steps_with_no_pull_request]) == [["test-user/personal#10", "closed", "Closed", 0, 1]]'
+check "115 (plan 11): its comment, the one step under Closed with no pull request, its Resolution its label's" world_holds \
+    '.issues.I_personal_10.comments == ["**Evidence of completion**, written by `star github schedule close` on '"${today}"', " +
+        "run by stand-in. The one step of u1 is closed, and its one exit criterion is ticked.\n\n" +
+        "**Closed with no pull request**\n\n| Step | How it closed |\n| --- | --- |\n| 1, Task #11 | Declined, 2026-11-05 |"]
+        and (.issues.I_personal_10 | [.state, .stateReason]) == ["CLOSED", "COMPLETED"]
+        and (.projects.PVT_s_user.items[] | select(.id == "IT_personal_10") | .values.Status) == "Closed"'
+
+# 116 (plan 12). retire refuses, writing nothing, a scenario with an open item, naming it; one whose Scenario issue has
+# a Resolution; no --reason; and star's --dry-run.
+world
+run_star "${data}" github scenario retire NobleFactor/alpha#40 --reason "The walk is gone."
+expect "116 (plan 12): retire refuses a scenario with an open item, naming it" error "${no_writes}" \
+    "not every item has moved on: NobleFactor/alpha#27 at beat 1 is open on it" text
+world '.issues.I_alpha_27.state = "CLOSED" | .issues.I_alpha_40.fields = {Resolution: "Declined"}'
+run_star "${data}" github scenario retire NobleFactor/alpha#40 --reason "The walk is gone."
+expect "116 (plan 12): and one whose Scenario issue has a Resolution" error "${no_writes}" \
+    "its issue has the Resolution Declined, and a retired scenario has none" text
+world '.issues.I_alpha_27.state = "CLOSED"'
+run_star "${data}" github scenario retire NobleFactor/alpha#40
+expect "116 (plan 12): and no --reason" error "${no_writes}" "retire needs --reason" text
+run_star "${data}" github scenario retire NobleFactor/alpha#40 --reason "The walk is gone." --dry-run
+expect "116 (plan 12): and star's --dry-run, until devlore-cli#1170" error "${no_writes}" "1170" text
+
+# 117 (plan 12). retire on a scenario whose one item is closed: its own row Closed, then the comment with the reason,
+# then the Scenario issue closed as completed with no Resolution; the option kept.
+world '.issues.I_alpha_27.state = "CLOSED"'
+run_star "${data}" github scenario retire NobleFactor/alpha#40 --reason "The walk is gone."
+expect "117 (plan 12): retire ends the scenario" ok '. == [{issue: "NobleFactor/alpha#40", kind: "Scenario", comment: "IC_I_alpha_40_0",
+    state: "closed", status: "Closed"}]'
+check "117 (plan 12): its comment names the date, who ran it and the reason" world_holds \
+    '.issues.I_alpha_40.comments == ["**Retired** by `star github scenario retire` on '"${today}"', run by stand-in: The walk is gone."]'
+check "117 (plan 12): the Scenario issue is closed as completed with no Resolution, its row Closed, and walk kept" world_holds \
+    '(.issues.I_alpha_40 | [.state, .stateReason, (.fields // {}).Resolution]) == ["CLOSED", "COMPLETED", null]
+        and (.projects.PVT_c_eng.items[] | select(.id == "IT_alpha_40") | .values) == {Scenario: "walk", Status: "Closed"}
+        and ([.projects.PVT_c_eng.fields[] | select(.name == "Scenario") | .options[].name] == ["walk"])'
+
+# 118 (plan 12). In a user account, retire ends the user walk, which has no item: closed as completed, with no
+# resolution: label, its row Closed and its option kept.
+world
+run_star "${data}" github scenario retire test-user/personal#20 --reason "No one walks it now."
+expect "118 (plan 12): retire ends a user account's scenario" ok \
+    'map([.issue, .kind, .state, .status]) == [["test-user/personal#20", "Scenario", "closed", "Closed"]]'
+check "118 (plan 12): closed as completed, labeled no resolution:, its row Closed, its option kept" world_holds \
+    '(.issues.I_personal_20 | [.state, .stateReason, ([.labels[] | select(startswith("resolution:"))] | length)]) == ["CLOSED", "COMPLETED", 0]
+        and (.projects.PVT_c_user.items[] | select(.id == "IT_personal_20") | .values) == {Scenario: "user walk", Status: "Closed"}
+        and ([.projects.PVT_c_user.fields[] | select(.name == "Scenario") | .options[].name] == ["user walk"])
+        and .issues.I_personal_20.comments == ["**Retired** by `star github scenario retire` on '"${today}"', run by stand-in: No one walks it now."]'
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"

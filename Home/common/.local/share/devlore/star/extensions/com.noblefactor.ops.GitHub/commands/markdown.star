@@ -1,14 +1,15 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright Noble Factor. All rights reserved.
 
-"""A body's lines, its ATX headings and thematic breaks, its sections and its numbered items, read by its lines."""
+"""A body's lines, its ATX headings and thematic breaks, its sections, numbered items and task lists, read by its lines."""
 
 # markdown.star
 #
 # docs/plans/doc/507-scenario-commands.md, Requirement 2 (noblefactor-engprod#511). What star github plan link read of a
 # body to find its Plan and design documents section (#557), moved here so that star github issue move finds the same
 # heading the same way: it writes an item's "Found while walking" line just above that heading, where plan link leaves
-# it, and counts the steps under a Scenario issue's How to walk through it heading. Until star has a Markdown provider
+# it, and counts the steps under a Scenario issue's How to walk through it heading. star github schedule close reads the
+# boxes of a Schedule issue's exit criteria the same way (#512). Until star has a Markdown provider
 # (NobleFactor/devlore-cli#1100), a body is read by its lines, as CommonMark reads them.
 
 # A thematic break: ---, *** or ___, or a longer run of one of them, alone on its line. A table's delimiter row holds a
@@ -18,6 +19,10 @@ _BREAK = "^ {0,3}(-{3,}|\\*{3,}|_{3,})[ \\t]*$"
 # An ordered list's item, its number one to nine digits, then . or ), then a space, a tab or the end of the line. An
 # item indented three spaces or more sits under the one before it, as GitHub renders a list, and is not counted.
 _ITEM = "^ {0,2}[0-9]{1,9}[.)]([ \\t]|$)"
+
+# A task list's item, at any depth: a bullet, -, * or +, then its box, [ ] or [x], then a space, a tab or the end of the
+# line. The second group is the box's mark, and the third its text.
+_BOX = "^[ \\t]*[-*+][ \\t]+\\[( |x|X)\\]([ \\t]+(.*))?$"
 
 def body_lines(text):
     """A text's lines, each {"start", "end", "text", "text_end"}: its offsets with and without its \\r\\n or \\n."""
@@ -108,3 +113,15 @@ def numbered(lines, section):
     """How many items of an ordered list a section holds at its top level, outside a fenced code block; 0 when none."""
     fenced = _fenced(lines)
     return len([i for i in range(section["first"] + 1, section["end"]) if i not in fenced and regex.match(pattern = _ITEM, text = lines[i]["text"])])
+
+def boxes(lines, section):
+    """The task list items a section holds, at any depth, outside a fenced code block: [{"ticked", "text"}], in order."""
+    fenced = _fenced(lines)
+    out = []
+    for i in range(section["first"] + 1, section["end"]):
+        if i in fenced:
+            continue
+        m = regex.find_submatch(pattern = _BOX, text = lines[i]["text"])
+        if m:
+            out.append({"ticked": m[1] != " ", "text": (m[3] or "").strip()})
+    return out

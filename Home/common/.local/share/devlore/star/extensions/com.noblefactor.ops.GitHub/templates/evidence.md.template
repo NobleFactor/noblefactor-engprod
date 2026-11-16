@@ -1,0 +1,44 @@
+{{- /*
+SPDX-License-Identifier: Apache-2.0
+Copyright Noble Factor. All rights reserved.
+
+evidence.md.template: the evidence comment star github schedule close writes on a Schedule issue before it closes it
+(section 8 of the issue data model, § Ending a schedule: close, question 6, ruled 2026-11-12): who wrote it and when,
+that every step is closed and every exit criterion ticked; then What merged, one row for each merged pull request, in
+the order they merged, with the date it merged and the steps it closed; then Closed with no pull request, each step
+no merged pull request closed, with how it closed. A heading with no row is left out. Rendered by ending.star with
+star's template module, its line ends kept.
+
+  .date, .login, .name   strings: the day, who ran the command, and the schedule's name, its option
+  .steps, .criteria      how many steps the schedule has, and how many exit criteria
+  .merged                {date, pull, title, steps}: the day it merged, the pull request's key and title, and the steps
+                         it closed, each "<step>, <type> <key>", joined with "; "
+  .unmerged              {step, how}: the step, "<step>, <type> <key>", and how it closed, "<how>, <day>"
+*/ -}}
+**Evidence of completion**, written by `star github schedule close` on {{.date}}, run by {{.login}}.
+{{- if eq .steps 0}} {{.name}} has no steps
+{{- else if eq .steps 1}} The one step of {{.name}} is closed
+{{- else}} All {{.steps}} steps of {{.name}} are closed{{end}}
+{{- if eq .criteria 0}}, and it names no exit criteria.
+{{- else if eq .criteria 1}}, and its one exit criterion is ticked.
+{{- else}}, and its {{.criteria}} exit criteria are ticked.{{end}}
+{{- if .merged}}
+
+**What merged**
+
+| Merged | Pull request | Steps it closed |
+| --- | --- | --- |
+{{- range .merged}}
+| {{.date}} | {{.pull}}, {{.title}} | {{.steps}} |
+{{- end}}
+{{- end}}
+{{- if .unmerged}}
+
+**Closed with no pull request**
+
+| Step | How it closed |
+| --- | --- |
+{{- range .unmerged}}
+| {{.step}} | {{.how}} |
+{{- end}}
+{{- end}}

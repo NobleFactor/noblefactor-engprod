@@ -170,7 +170,9 @@ its tests in `tests/Test-StarGitHub`, `make check` passing before each commit:
       `commands/making.star`, each body from a template and the option added through `model.star`'s `write_options`,
       shared with `apply`; no Triage row touched, the Triage workflow leaving a collection out (#573, ruled
       2026-11-16); cases 107 to 112 added, 371 test lines passing, and two cases in each of Start-Claude's tests
-- [ ] `close` and `retire` (#512)
+- [x] `close` and `retire` (#512), on 2026-11-16: one module, `commands/ending.star`, closing the collection's own row,
+      commenting and closing its issue in that order, each read back, the option kept; the evidence and retire comments
+      from templates; cases 113 to 118 added, 392 test lines passing
 - [x] The documents that name `schedule add` as a command to run brought to `issue move`, in the commit that retires
       it, as agent rule 12 has it, on 2026-11-15
 
