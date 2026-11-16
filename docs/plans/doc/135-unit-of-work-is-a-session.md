@@ -3,7 +3,17 @@ title: "The unit of work is a session, not a worktree, and features run in paral
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/135
 status: active
 created: 2026-09-02
-updated: 2026-09-02
+updated: 2026-11-15
+documents:
+  - kind: "Design"
+    path: "docs/guides/development-process.md"
+    text: "Development Process"
+  - kind: "Design"
+    path: "docs/plans/doc/133-development-process.md"
+    text: "133-development-process.md"
+  - kind: "Design"
+    path: "docs/plans/TEMPLATE.md"
+    text: "Plan Template"
 ---
 
 # Plan: The unit of work is a session

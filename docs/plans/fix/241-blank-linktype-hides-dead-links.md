@@ -3,7 +3,11 @@ title: "A blank LinkType hides a dead link from the tool built to remove it"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/241
 status: active
 created: 2026-09-24
-updated: 2026-09-24
+updated: 2026-11-15
+documents:
+  - kind: "Design"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/issues/195"
+    text: "#195"
 ---
 
 # Plan: a blank LinkType hides a dead link

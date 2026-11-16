@@ -3,7 +3,11 @@ title: "The PR script pulls before and after the merge, and writes the Time sect
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/244
 status: complete
 created: 2026-09-24
-updated: 2026-09-24
+updated: 2026-11-15
+documents:
+  - kind: "Design"
+    path: "docs/guides/pr-script-template.md"
+    text: "pr-script-template.md"
 ---
 
 # Plan: the PR script pulls before and after the merge

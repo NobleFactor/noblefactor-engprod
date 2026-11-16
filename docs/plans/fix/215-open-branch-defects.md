@@ -3,7 +3,14 @@ title: "git-open-branch maps the chore label to chore/"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/215
 status: complete
 created: 2026-09-21
-updated: 2026-09-21
+updated: 2026-11-15
+documents:
+  - kind: "Design"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/issue-standards.md#the-five-kinds"
+    text: "issue-standards.md § The five kinds"
+  - kind: "Design"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/guides/development-process.md#plans"
+    text: "development-process.md § Plans"
 ---
 
 # Plan: git-open-branch maps the chore label to chore/

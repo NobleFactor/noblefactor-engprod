@@ -3,7 +3,15 @@ title: "docs/issue-standards.md gets a section that defines product and engineer
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/446
 status: complete
 created: 2026-11-05
-updated: 2026-11-05
+updated: 2026-11-15
+documents:
+  - kind: "Design: issue standards"
+    path: "docs/issue-standards.md"
+  - kind: "Design: the issue data model"
+    path: "docs/architecture/issue-data-model/index.md"
+  - kind: "Design: filing an issue"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/architecture/issue-data-model/7-the-workflow-before-and-after.md#product-and-engineering"
+    text: "section 7, Product and engineering"
 ---
 
 # Plan: a section of issue-standards.md that says what product and engineering work are, tests in engineering

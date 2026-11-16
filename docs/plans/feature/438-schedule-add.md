@@ -3,7 +3,20 @@ title: "star github schedule add puts issues on a schedule, with their steps, li
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/438
 status: complete
 created: 2026-11-12
-updated: 2026-11-13
+updated: 2026-11-15
+documents:
+  - kind: "Design: the schedule commands"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/architecture/issue-data-model/8-the-schedule-commands.md#add"
+    text: "section 8"
+  - kind: "Design: where star github's proofs run"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/architecture/issue-data-model/6-the-asset-and-its-sync.md#where-star-githubs-proofs-run"
+    text: "section 6"
+  - kind: "Design: collections"
+    path: "docs/architecture/issue-data-model/3-collections.md"
+    text: "section 3"
+  - kind: "Design: the workflow before and after"
+    path: "docs/architecture/issue-data-model/7-the-workflow-before-and-after.md"
+    text: "section 7"
 ---
 
 # Plan: star github schedule add puts issues on a schedule, with their steps, links and amendment, in one act

@@ -3,7 +3,17 @@ title: "The base layer ships a star gh report skill, and #217's lane table match
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/237
 status: active
 created: 2026-09-24
-updated: 2026-09-24
+updated: 2026-11-15
+documents:
+  - kind: "Design"
+    path: "docs/guides/agent-rules.md"
+    text: "agent-rules.md"
+  - kind: "Design"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/issues/190"
+    text: "#190"
+  - kind: "Design"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/issues/217"
+    text: "#217"
 ---
 
 # Plan: the base layer ships the report skill

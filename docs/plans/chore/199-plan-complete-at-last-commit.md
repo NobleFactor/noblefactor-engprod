@@ -3,7 +3,10 @@ title: "A plan reaches complete in its pull request's last commit"
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/199
 status: complete
 created: 2026-09-10
-updated: 2026-09-10
+updated: 2026-11-15
+documents:
+  - kind: "Design"
+    path: "docs/guides/development-process.md"
 ---
 
 # Plan: A plan reaches complete in its pull request's last commit

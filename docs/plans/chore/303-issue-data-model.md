@@ -3,7 +3,13 @@ title: "The GitHub issue data model: one hierarchy, its attributes, and the coll
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/303
 status: complete
 created: 2026-10-21
-updated: 2026-11-05
+updated: 2026-11-15
+documents:
+  - kind: "Design"
+    path: "docs/architecture/issue-data-model/index.md"
+    text: "The issue data model"
+  - kind: "Design"
+    path: "docs/issue-standards.md"
 ---
 
 # Plan: The GitHub issue data model: one hierarchy, its attributes, and the collections that order it

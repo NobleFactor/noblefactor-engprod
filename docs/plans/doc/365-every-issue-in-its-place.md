@@ -3,7 +3,11 @@ title: "Every open issue in its place: typed, and under a parent of the level ab
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/365
 status: complete
 created: 2026-11-12
-updated: 2026-11-12
+updated: 2026-11-15
+documents:
+  - kind: "Design: the hierarchy"
+    path: "docs/architecture/issue-data-model/1-hierarchy.md"
+    text: "section 1 of the issue data model"
 ---
 
 # Plan: Every open issue in its place: typed, and under a parent of the level above

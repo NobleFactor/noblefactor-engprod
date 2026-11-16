@@ -3,7 +3,22 @@ title: "Plan statuses are five words with a state diagram; the process epic's fe
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/219
 status: complete
 created: 2026-09-21
-updated: 2026-09-21
+updated: 2026-11-15
+documents:
+  - kind: "Design"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/guides/development-process.md#documents-on-every-commit"
+    text: "development-process.md § Documents on every commit"
+  - kind: "Design"
+    path: "docs/plans/TEMPLATE.md"
+  - kind: "Design"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/issues/199"
+    text: "#199"
+  - kind: "Design"
+    path: "docs/issue-standards.md"
+    text: "issue-standards.md"
+  - kind: "Design"
+    url: "https://framework.scaledagile.com/enablers"
+    text: "SAFe: Enablers"
 ---
 
 # Plan: Plan statuses, and the process epic's features

@@ -3,7 +3,14 @@ title: "PowerShell scripts start with a shebang, and PR scripts on Windows are P
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/216
 status: complete
 created: 2026-09-22
-updated: 2026-09-22
+updated: 2026-11-15
+documents:
+  - kind: "Design"
+    path: "docs/guides/powershell-style-guidelines.md"
+    text: "powershell-style-guidelines.md"
+  - kind: "Design"
+    path: "docs/guides/pr-script-template.md"
+    text: "pr-script-template.md"
 ---
 
 # Plan: The shebang rule, and the Windows PR script

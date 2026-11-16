@@ -3,7 +3,11 @@ title: "Start-Claude and Start-Claude.ps1 come to noblefactor-ops, and make and 
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/312
 status: complete
 created: 2026-10-19
-updated: 2026-10-20
+updated: 2026-11-15
+documents:
+  - kind: "Design"
+    url: "https://github.com/NobleFactor/noblefactor-engprod/tree/develop/docs/architecture/agent-schedule"
+    text: "docs/architecture/agent-schedule/"
 ---
 
 # Plan: Start-Claude and Start-Claude.ps1 come to noblefactor-ops, and make and CI run every test

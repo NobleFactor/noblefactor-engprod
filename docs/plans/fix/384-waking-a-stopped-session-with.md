@@ -3,7 +3,11 @@ title: "A --detach wake restarts the stopped session itself, and Start-Claude re
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/384
 status: active
 created: 2026-10-23
-updated: 2026-10-24
+updated: 2026-11-15
+documents:
+  - kind: "Design"
+    path: "docs/architecture/agent-schedule/1-session-model.md"
+    text: "1. Session model"
 ---
 
 # Plan: A --detach wake restarts the stopped session itself, and Start-Claude renames a session, running or stopped, with /rename

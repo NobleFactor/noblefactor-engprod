@@ -3,7 +3,11 @@ title: "Start-Claude --continue takes --schedule, and both test scripts prove ev
 issue: https://github.com/NobleFactor/noblefactor-ops/issues/322
 status: complete
 created: 2026-10-21
-updated: 2026-10-21
+updated: 2026-11-15
+documents:
+  - kind: "Design"
+    path: "docs/architecture/agent-schedule/2-command-line.md"
+    text: "2. Command line"
 ---
 
 # Plan: Start-Claude --continue takes --schedule, and both test scripts prove every way in, with a schedule and without

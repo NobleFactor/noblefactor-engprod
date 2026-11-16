@@ -3,7 +3,10 @@ title: "github-branch-protection.md records the eight Installers checks as requi
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/422
 status: complete
 created: 2026-11-01
-updated: 2026-11-01
+updated: 2026-11-15
+documents:
+  - kind: "Design"
+    path: "docs/github-branch-protection.md"
 ---
 
 # Plan: github-branch-protection.md records the eight Installers checks as required on devlore-cli's develop
