@@ -81,7 +81,7 @@ One script does the rest, one repository at a time, each merged and its branch c
 
 - [x] NobleFactor/devlore-cli; merged, NobleFactor/devlore-cli#1234
 - [x] NobleFactor/devlore-registry; merged, NobleFactor/devlore-registry#103
-- [ ] NobleFactor/docker-homebridge; merged
+- [x] NobleFactor/docker-homebridge; merged, NobleFactor/docker-homebridge#21
 
 ### 9.3 Phase 3: the issue bodies
 
