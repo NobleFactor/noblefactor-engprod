@@ -1,10 +1,12 @@
 ---
 title: "The star github issue verbs, open, move, close and reopen, designed and built in one pull request"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/589
-status: draft
+status: approved
 created: 2026-11-17
 updated: 2026-11-17
 documents:
+  - kind: Design
+    path: docs/architecture/issue-data-model/10-the-issue-commands.md
   - kind: Design
     path: docs/architecture/issue-data-model/8-the-schedule-commands.md
   - kind: Design
@@ -98,7 +100,7 @@ A new section 10 of the issue data model, `10-the-issue-commands.md`, and its st
 
 ### 9.1 Phase 1: the plan
 
-- [ ] This plan committed on `doc/589-issue-verbs` and reviewed with the owner; the questions in § 12 ruled
+- [x] This plan committed on `doc/589-issue-verbs` on 2026-11-17 and approved by the owner that day, the questions in § 12 ruled as proposed
 
 ### 9.2 Phase 2: the design
 
@@ -140,14 +142,14 @@ Settled by the documents, each the owner's to change:
 - `reopen` sets a reopened row Open, since no one has taken it up again; it unticks a reopened schedule's every-step criterion, as the owner had #346's unticked on 2026-11-17; an item that left its scenario on closing goes to Triage (section 9, question 7).
 - #338's "`star github` is broken today" no longer holds: it was repaired in iteration 1.
 
-For the owner, four questions:
+Ruled by the owner on 2026-11-17, each as proposed:
 
 1. **Does `close` close a parent when it closes the parent's last open child?** Proposed: no; a feature or an epic closes with its own evidence, by `close` run on it, and `close` says so when it closes a last child.
 2. **Priority at `open`:** required, or Medium when not given? Proposed: Medium when not given, as the issues split from features have been.
 3. **Retyping an issue:** a verb of its own, `star github issue retype <issue> <type>`, in a later step, or a flag of `open`? Proposed: its own verb, later; this pull request builds the four.
 4. **The filing skill:** in #338, or an issue of its own? Proposed: its own issue, on iteration 2, after this one merges.
 
-Not yet approved.
+Approved by the owner on 2026-11-17.
 
 ## 13. Completion review
 
