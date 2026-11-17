@@ -150,7 +150,7 @@ profile, which is its account's; and a search finding no MIT statement in the re
 - [x] Import-AudioCdMetadata, relicensed; merged, NobleFactor/Import-AudioCdMetadata#3
 - [x] NobleFactor's noblefactor, acumen and Fixup-MusicLibrary, their LICENSE and NOTICE; each merged: NobleFactor/noblefactor#66, NobleFactor/acumen#2, NobleFactor/Fixup-MusicLibrary#2
 - [x] David-Noble-at-work/.github, its LICENSE and NOTICE; merged, David-Noble-at-work/.github#17
-- [ ] David-Noble-at-work/personal, relicensed and its `CONTRIBUTING.md` removed; merged
+- [x] David-Noble-at-work/personal, relicensed and its `CONTRIBUTING.md` removed; merged, David-Noble-at-work/personal#337
 
 ### 9.3 Phase 3: David-Noble-at-work's private repositories
 
