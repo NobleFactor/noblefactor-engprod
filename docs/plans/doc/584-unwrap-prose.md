@@ -1,7 +1,7 @@
 ---
 title: "Prose written after the handbook's adoption is one source line per paragraph"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/584
-status: approved
+status: complete
 created: 2026-11-16
 updated: 2026-11-16
 documents:
@@ -89,7 +89,7 @@ One script does the rest, one repository at a time, each merged and its branch c
 
 ### 9.4 Phase 4: noblefactor-engprod
 
-- [ ] The two plans, section 6's paragraph, the status pages' items and #573's plan's item; this plan complete; merged, closing #584
+- [x] The two plans, section 6's paragraph, the status pages' items and #573's plan's item; this plan complete; merged in the pull request that carries this line, closing #584
 
 ## 10. Files and related assets
 
@@ -107,4 +107,4 @@ Approved by the owner on 2026-11-16.
 
 ## 13. Completion review
 
-Pending.
+Complete 2026-11-16: the three other repositories' pull requests merged, each named in § 9, #581's and #582's bodies rewritten, and noblefactor-engprod's pull request closes #584. Every diff, with whitespace ignored, changes no word, and `unwrap.py` run again on each default branch joins nothing; its output is #584's evidence comment. Nothing is outstanding.

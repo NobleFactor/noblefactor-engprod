@@ -27,14 +27,8 @@ nothing goes to Triage. The owner approved the design on 2026-11-15.
 
 - [x] Questions 1 to 8 ruled, 2026-11-15
 - [x] The design approved by the owner, 2026-11-15 (#507)
-- [x] The findings of question 7 put right, each read back, on 2026-11-16 by #507's merge script: 23 closed rows, of 21
-  issues, taken off five scenarios, a comment on each Scenario issue naming them; #806, #891, #892, #893 and #599 titled
-  `Scenario: <its option's name>`; and #599's beats line added
-- [x] `get` and `list` built on 2026-11-15, and proved that day in NobleFactor-sandbox and David-Noble-at-work-sandbox
-  (run 20261116T221107Z) (#510)
-- [x] `new` built on 2026-11-16, and proved that day in NobleFactor-sandbox and David-Noble-at-work-sandbox (run
-  20261116T221107Z) (#509)
-- [x] `star github issue move`'s scenario cases built, with the body line when an item moves onto a schedule, on
-  2026-11-15, and proved that day in NobleFactor-sandbox and David-Noble-at-work-sandbox (run 20261116T221107Z) (#511)
-- [x] `retire` built on 2026-11-16, and proved that day in NobleFactor-sandbox and David-Noble-at-work-sandbox (run
-  20261116T221107Z) (#512)
+- [x] The findings of question 7 put right, each read back, on 2026-11-16 by #507's merge script: 23 closed rows, of 21 issues, taken off five scenarios, a comment on each Scenario issue naming them; #806, #891, #892, #893 and #599 titled `Scenario: <its option's name>`; and #599's beats line added
+- [x] `get` and `list` built on 2026-11-15, and proved that day in NobleFactor-sandbox and David-Noble-at-work-sandbox (run 20261116T221107Z) (#510)
+- [x] `new` built on 2026-11-16, and proved that day in NobleFactor-sandbox and David-Noble-at-work-sandbox (run 20261116T221107Z) (#509)
+- [x] `star github issue move`'s scenario cases built, with the body line when an item moves onto a schedule, on 2026-11-15, and proved that day in NobleFactor-sandbox and David-Noble-at-work-sandbox (run 20261116T221107Z) (#511)
+- [x] `retire` built on 2026-11-16, and proved that day in NobleFactor-sandbox and David-Noble-at-work-sandbox (run 20261116T221107Z) (#512)
