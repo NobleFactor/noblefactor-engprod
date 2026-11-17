@@ -1,0 +1,95 @@
+{
+  "effective_rules": [
+    {
+      "parameters": null,
+      "ruleset_source": "NobleFactor",
+      "ruleset_source_type": "Organization",
+      "type": "deletion"
+    },
+    {
+      "parameters": null,
+      "ruleset_source": "NobleFactor",
+      "ruleset_source_type": "Organization",
+      "type": "non_fast_forward"
+    },
+    {
+      "parameters": null,
+      "ruleset_source": "NobleFactor",
+      "ruleset_source_type": "Organization",
+      "type": "required_linear_history"
+    },
+    {
+      "parameters": {
+        "allowed_merge_methods": [
+          "squash"
+        ],
+        "dismiss_stale_reviews_on_push": true,
+        "require_code_owner_review": true,
+        "require_extra_approval_for_unattributed_changes": true,
+        "require_last_push_approval": true,
+        "required_approving_review_count": 1,
+        "required_review_thread_resolution": true,
+        "required_reviewers": []
+      },
+      "ruleset_source": "NobleFactor",
+      "ruleset_source_type": "Organization",
+      "type": "pull_request"
+    },
+    {
+      "parameters": {
+        "severity": "all"
+      },
+      "ruleset_source": "NobleFactor",
+      "ruleset_source_type": "Organization",
+      "type": "code_quality"
+    },
+    {
+      "parameters": {
+        "do_not_enforce_on_create": false,
+        "required_status_checks": [
+          {
+            "context": "quality-gate"
+          }
+        ],
+        "strict_required_status_checks_policy": false
+      },
+      "ruleset_source": "NobleFactor",
+      "ruleset_source_type": "Organization",
+      "type": "required_status_checks"
+    },
+    {
+      "parameters": {
+        "code_scanning_tools": [
+          {
+            "alerts_threshold": "errors",
+            "security_alerts_threshold": "all",
+            "tool": "CodeQL"
+          }
+        ]
+      },
+      "ruleset_source": "NobleFactor",
+      "ruleset_source_type": "Organization",
+      "type": "code_scanning"
+    }
+  ],
+  "classic_branch_protection": {
+    "enforce_admins": {
+      "enabled": true,
+      "url": "https://api.github.com/repos/NobleFactor/noblefactor-engprod/branches/develop/protection/enforce_admins"
+    },
+    "required_pull_request_reviews": {
+      "dismiss_stale_reviews": false,
+      "require_code_owner_reviews": false,
+      "require_last_push_approval": false,
+      "required_approving_review_count": 0,
+      "url": "https://api.github.com/repos/NobleFactor/noblefactor-engprod/branches/develop/protection/required_pull_request_reviews"
+    },
+    "required_status_checks": null
+  },
+  "verified_at_utc": "2026-11-16T00:03:35.225742+00:00",
+  "method": [
+    "gh api repos/NobleFactor/noblefactor-engprod/rules/branches/develop",
+    "gh api repos/NobleFactor/noblefactor-engprod/branches/develop/protection"
+  ],
+  "interpretation": "Organization review requirements remain effective alongside the classic branch rule. The adoption PR needs eligible reviews or a separate explicit PR-specific Owner exception. No configuration was changed."
+}

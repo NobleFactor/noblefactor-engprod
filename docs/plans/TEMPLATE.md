@@ -1,119 +1,94 @@
 ---
-title: "Plan Template"
-description: "Template for creating new plan documents"
+title: "Plan: [Title] \u2014 retained entry point"
+type: Reference
+status: "Superseded by docs/templates/plan.md"
+updated: 2026-11-15
 ---
 
 # Plan: [Title]
 
-<!--
-TEMPLATE INSTRUCTIONS (delete this block when using):
-1. Copy this file to a new file named after your plan (e.g., `star-quality-gate.md`)
-2. Fill in the frontmatter
-3. Create a GitHub issue referencing this plan
-4. Update the `issue` field with the issue number
-5. Delete this instruction block
--->
+[Up: Engineering handbook](../index.md)
 
-**Frontmatter fields**:
+The current requirements are in [Plan template](../templates/plan.md). This retained entry point preserves earlier links; it does not define a competing process or standard.
 
-```yaml
-title: [Plan Title]
-issue: https://github.com/NobleFactor/noblefactor-engprod/issues/XX
-status: draft | approved | active | complete | abandoned
-created: YYYY-MM-DD
-updated: YYYY-MM-DD
-documents:                      # the design documents this plan bears on, for its issues' tables
-  - kind: "Design: collections"
-    path: docs/architecture/issue-data-model/3-collections.md
-  - kind: "Where this is listed"
-    url: https://github.com/NobleFactor/noblefactor-engprod/blob/develop/docs/plans/chore/303-issue-data-model.md
-    text: "#303's plan"
-```
+The [source captured before cutover](../engineering/review/sources/adoption-2026-11-15/plan-template.txt) preserves the prior text, including its examples and incident history. [The handbook transition](../engineering/index.md#temporary-live-entrypoint-overrides) records the Owner-approved temporary overrides in live host instructions.
 
-`documents:` names the design documents the plan bears on, each a `kind` and a `path` in this repository or a `url`,
-with an optional `text` to show. `star github plan link` writes each issue's `Plan and design documents` section from
-its plans: a Plan row for each, then their documents (#557).
+Use the linked plan template to create a plan after its issue and worktree exist. Do not copy this compatibility notice as an execution plan.
 
-## Summary
+<a id="summary"></a>
 
-One paragraph describing what this plan accomplishes.
+## 1. Earlier section: Summary
 
-## Goals
+See [Plan template](../templates/plan.md).
 
-1. **Goal 1**: Description
-2. **Goal 2**: Description
-3. **Goal 3**: Description
+<a id="goals"></a>
 
-## Current State
+## 2. Earlier section: Goals
 
-Describe what exists today before this plan is implemented.
+See [Plan template](../templates/plan.md).
 
-| Component | Status | Notes |
-| --- | --- | --- |
-| Feature A | ✅ Working | |
-| Feature B | ❌ Missing | |
+<a id="current-state"></a>
 
-## Requirements
+## 3. Earlier section: Current State
 
-### Requirement 1
+See [Plan template](../templates/plan.md).
 
-Detailed description of what must be built.
+<a id="requirements"></a>
 
-**Configuration**:
+## 4. Earlier section: Requirements
 
-```yaml
-example:
-  config: here
-```
+See [Plan template](../templates/plan.md).
 
-**Commands**:
+<a id="requirement-1"></a>
 
-```bash
-example command --flag
-```
+## 5. Earlier section: Requirement 1
 
-### Requirement 2
+See [Plan template](../templates/plan.md).
 
-Detailed description.
+<a id="requirement-2"></a>
 
-## Implementation Phases
+## 6. Earlier section: Requirement 2
 
-### Phase 1: [Name]
+See [Plan template](../templates/plan.md).
 
-- [ ] Task 1
-- [ ] Task 2
-- [ ] Task 3
+<a id="implementation-phases"></a>
 
-**Files**:
+## 7. Earlier section: Implementation Phases
 
-- `path/to/file.go` - Create
-- `path/to/other.star` - Modify
+See [Plan template](../templates/plan.md).
 
-### Phase 2: [Name]
+<a id="phase-1-name"></a>
 
-- [ ] Task 1
-- [ ] Task 2
+## 8. Earlier section: Phase 1: [Name]
 
-## Migration Path
+See [Plan template](../templates/plan.md).
 
-How existing repos/users migrate to this new approach.
+<a id="phase-2-name"></a>
 
-## Files to Create/Modify
+## 9. Earlier section: Phase 2: [Name]
 
-| File | Action | Purpose |
-| --- | --- | --- |
-| `path/to/new.go` | Create | Description |
-| `path/to/existing.go` | Modify | Description |
+See [Plan template](../templates/plan.md).
 
-## Related Documents
+<a id="migration-path"></a>
 
-The design documents an issue's table should link go in the frontmatter's `documents:`, not only here.
+## 10. Earlier section: Migration Path
 
-- [Link to related plan](./other-plan.md)
-- Issue #XX - Related issue
-- ADR-XXX - Related decision
+See [Plan template](../templates/plan.md).
 
-## Open Questions
+<a id="files-to-createmodify"></a>
 
-- [ ] Question 1?
-- [ ] Question 2?
+## 11. Earlier section: Files to Create/Modify
+
+See [Plan template](../templates/plan.md).
+
+<a id="related-documents"></a>
+
+## 12. Earlier section: Related Documents
+
+See [Plan template](../templates/plan.md).
+
+<a id="open-questions"></a>
+
+## 13. Earlier section: Open Questions
+
+See [Plan template](../templates/plan.md).
