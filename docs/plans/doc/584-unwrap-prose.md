@@ -85,7 +85,7 @@ One script does the rest, one repository at a time, each merged and its branch c
 
 ### 9.3 Phase 3: the issue bodies
 
-- [ ] #581's and #582's bodies rewritten and read back
+- [x] #581's and #582's bodies rewritten and read back, read back on 2026-11-17
 
 ### 9.4 Phase 4: noblefactor-engprod
 
