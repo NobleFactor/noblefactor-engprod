@@ -1,0 +1,24 @@
+{{- /*
+SPDX-License-Identifier: Apache-2.0
+Copyright Noble Factor. All rights reserved.
+
+scenario-comment.md.template: the comment star github issue move writes on a Scenario issue when an item joins the
+scenario, has its Beat set, or leaves it (section 9 of the issue data model, § Moving an issue onto, within and off a
+scenario, ruled 2026-11-15): the item, what became of it and when, who ran the command, and why. Rendered by
+github-issue-move.star with star's template module; its whitespace is folded to single spaces after.
+
+  .issue, .date, .login, .reason   strings
+  .action                          joined, moved or left
+  .beat                            its Beat, when it joined or moved
+  .had_beat, .from_beat            whether it had a Beat before it moved, and that Beat; 0 when it had none
+  .to                              where it went, when it left: a Triage project's title or a Schedule issue's key
+  .step                            its step there, when it went onto a schedule; 0 otherwise
+*/ -}}
+{{.issue}}
+{{- if eq .action "joined"}} joined this scenario on {{.date}}, at beat {{.beat}}
+{{- else if eq .action "moved"}}
+{{- if not .had_beat}} was given beat {{.beat}} of this scenario on {{.date}}
+{{- else if eq .from_beat .beat}} was kept at beat {{.beat}} of this scenario on {{.date}}
+{{- else}} moved from beat {{.from_beat}} to beat {{.beat}} of this scenario on {{.date}}{{end}}
+{{- else}} left this scenario on {{.date}} for {{.to}}{{if .step}}, as its step {{.step}}{{end}}{{end}}, by
+`star github issue move`, run by {{.login}}: {{.reason}}

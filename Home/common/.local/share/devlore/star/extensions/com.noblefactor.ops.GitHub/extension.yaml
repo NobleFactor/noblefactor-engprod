@@ -18,32 +18,175 @@ commands:
         default: ""
         help: "Read only what GitHub's issue search finds, in its syntax, passed unchanged and run once for each repository as (<search>) repo:<repository> is:issue; an error when it matches more than 1,000 issues in one"
 
-  - name: github.schedule.add
-    help: "Put issues on a schedule, each with its step, its schedule's option and Status Open, placed in step order, and leaving the project it was on, then write one amendment line in the Schedule issue naming the date, who ran it and why; with --after, after that step, every later step moving down, closed or open; return one flat record for each row it added, moved or took off; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
-    implementation: commands/github-schedule-add.star
+  - name: github.schedule.list
+    help: "Every schedule of an account, or of one of its teams: one flat record for each option of the Schedule field of its Schedule projects, Schedule: <team> in an organization and Schedule: <account> in a user account, with its Schedule issue's key, title, state and assignee, the project, and the counts of its open and closed steps; writes nothing; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    implementation: commands/github-schedule-list.star
+    args:
+      - name: account
+        help: "The account, an organization or a user; required"
+    flags:
+      - name: team
+        type: string
+        default: ""
+        help: "The team whose Schedule project alone is read, by its slug; refused in a user account, which has no teams"
+
+  - name: github.schedule.get
+    help: "One schedule's rows: one flat record for each row under its option, its Schedule issue's own row first, with no step, then its steps in step order, then any row with no step; each the step, the issue's key, type, title and state, the row's Status, Worktree and Iteration, and the keys of the issues that block it; reads a closed schedule too; writes nothing; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    implementation: commands/github-schedule-get.star
     args:
       - name: schedule
-        help: "The schedule's own issue, <owner>/<repository>#<number>, as a session's NFEP_AGENT_SCHEDULE names it"
-      - name: issues
-        help: "The tasks and bugs to put on it, <owner>/<repository>#<number>, in the order their steps take"
-        variadic: true
+        help: "The schedule's own issue, <owner>/<repository>#<number>, as a session's NFEP_AGENT_SCHEDULE names it; required"
+
+  - name: github.schedule.new
+    help: "Make a schedule: its Schedule issue, titled Schedule: <name>, filed in the repository with the account's Schedule form's sections, in the form's order, then its Steps line, linking the team's Schedule project's view 2 filtered to the schedule, and an empty Amendments section, its type, Area and Priority set, and assigned to --assignee or to you; its option, added last to the project's Schedule field, every existing option kept; and its own row, Status Open and no step; each write read back; refuses, writing nothing, a repository no team maintains, or in a user account one without the topic issue-model, a team with no Schedule project, a name that is already an option, and a missing --area or section; a run that stops partway is run again to finish, making only what is missing; returns one flat record of what it made; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    implementation: commands/github-schedule-new.star
+    args:
+      - name: repository
+        help: "The repository the Schedule issue is filed in, <owner>/<name>, whose team, or user account, owns the schedule; required"
+      - name: name
+        help: "The schedule's name: its option, and its issue's title after Schedule: ; required"
     flags:
-      - name: after
+      - name: area
         type: string
         default: ""
-        help: "The step to put them after, every later step moving down; 0 puts them first; default: after the last"
-      - name: blocked-by
+        help: "Product or Engineering: the Schedule issue's Area; required"
+      - name: deliverable
         type: string
         default: ""
-        help: "The issues each is blocked by, <owner>/<repository>#<number>, comma-separated; links the issues already have are kept"
+        help: "What the schedule delivers: the form's Deliverable section; required"
+      - name: exit-criteria
+        type: string
+        default: ""
+        help: "How we'll know it's finished: the form's Exit criteria section; required"
+      - name: evidence
+        type: string
+        default: ""
+        help: "What a comment on the issue will show before it closes: the form's Evidence of completion section; required"
+      - name: priority
+        type: string
+        default: ""
+        help: "The Schedule issue's Priority, one of its account's Priority options; default: Medium"
       - name: assignee
         type: string
         default: ""
-        help: "The member of the schedule's team who answers for an issue of another team's repository, which then needs one"
+        help: "Who owns the schedule, assigned its issue; default: you, who run the command"
+
+  - name: github.schedule.close
+    help: "Close a finished schedule: refuses, writing nothing, while a step is open or a box of its Exit criteria section, or of its Evidence of completion section when it has none, is unticked; then sets its own row Closed, writes the evidence comment, one row for each merged pull request in the order they merged, with the date it merged and the steps it closed, then each step no merged pull request closed, with how it closed, and closes the Schedule issue as completed, each write read back; keeps the option, the record of which schedule each step belonged to; returns one flat record of what it did; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    implementation: commands/github-schedule-close.star
+    args:
+      - name: schedule
+        help: "The schedule's own issue, <owner>/<repository>#<number>, as a session's NFEP_AGENT_SCHEDULE names it; required"
+
+  - name: github.scenario.list
+    help: "Every scenario of an account, or of one of its teams: one flat record for each option of the Scenario field of its Scenario projects, Scenario: <team> in an organization and Scenario: <account> in a user account, with its Scenario issue's key, title, state and assignee, the project, and the counts of its open and closed rows; writes nothing; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    implementation: commands/github-scenario-list.star
+    args:
+      - name: account
+        help: "The account, an organization or a user; required"
+    flags:
+      - name: team
+        type: string
+        default: ""
+        help: "The team whose Scenario project alone is read, by its slug; refused in a user account, which has no teams"
+
+  - name: github.scenario.get
+    help: "One scenario's rows: one flat record for each row under its option, its Scenario issue's own row first, with no Beat, then its rows in Beat order, then any row with no Beat; each the Beat, the issue's key, type, title and state, and the row's Status; reads a retired scenario too; writes nothing; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    implementation: commands/github-scenario-get.star
+    args:
+      - name: scenario
+        help: "The scenario's own issue, <owner>/<repository>#<number>; required"
+
+  - name: github.scenario.new
+    help: "Make a scenario: its Scenario issue, titled Scenario: <name>, filed in the repository with the account's Scenario form's sections, in the form's order, and its beats line, linking the team's Scenario project's view 2 filtered to the scenario, just above its Plan and design documents section, its type, Area and Priority set, and assigned to --assignee or to you; its option, added last to the project's Scenario field, every existing option kept; and its own row, Status Open and no Beat; each write read back; refuses, writing nothing, a repository no team maintains, or in a user account one without the topic issue-model, a team with no Scenario project, a name that is already an option, a missing --area or section, and a --walk that is not a numbered list; a run that stops partway is run again to finish, making only what is missing; returns one flat record of what it made; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    implementation: commands/github-scenario-new.star
+    args:
+      - name: repository
+        help: "The repository the Scenario issue is filed in, <owner>/<name>, whose team, or user account, owns the scenario; required"
+      - name: name
+        help: "The scenario's name: its option, and its issue's title after Scenario: ; required"
+    flags:
+      - name: area
+        type: string
+        default: ""
+        help: "Product or Engineering: the Scenario issue's Area; required"
+      - name: wants
+        type: string
+        default: ""
+        help: "What the person wants to do, said the way they would: the form's What the person wants to do section; required"
+      - name: walk
+        type: string
+        default: ""
+        help: "How to walk through it, as a numbered list, step N of which is Beat N: the form's How to walk through it section; required"
+      - name: features
+        type: string
+        default: ""
+        help: "The features it uses, each by its issue: the form's The features it uses section; required"
+      - name: priority
+        type: string
+        default: ""
+        help: "The Scenario issue's Priority, one of its account's Priority options; default: Medium"
+      - name: assignee
+        type: string
+        default: ""
+        help: "Who owns the scenario, assigned its issue; default: you, who run the command"
+
+  - name: github.scenario.retire
+    help: "Retire a scenario the product no longer has: refuses, writing nothing, while an open issue is a row of the scenario, or its Scenario issue has a Resolution; then sets its own row Closed, comments on the Scenario issue with the date, who ran it and --reason, and closes it as completed with no Resolution, each write read back; keeps the option, the record of which scenario each past row belonged to; returns one flat record of what it did; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    implementation: commands/github-scenario-retire.star
+    args:
+      - name: scenario
+        help: "The scenario's own issue, <owner>/<repository>#<number>; required"
+    flags:
       - name: reason
         type: string
         default: ""
-        help: "Why the schedule changes, written in its amendment; required"
+        help: "Why the product no longer has the scenario, written in the comment on its Scenario issue; required"
+
+  - name: github.issue.move
+    help: "Move issues, in the order given, to one destination: --schedule puts them on a schedule, each with its step, its schedule's option and Status Open, placed in step order and leaving the project it was on, or with --after moves one already there, the steps between renumbered, closed or open; --triage or --backlog takes steps off their schedule to their team's Triage or Backlog project, every later step moving up, and --triage takes items off their scenario; --scenario puts tasks and bugs on a scenario at a Beat, or sets the Beat of one already on it; a schedule's change writes one amendment line in its Schedule issue, and a scenario's a comment on its Scenario issue and a line in the item's body, each naming the date, who ran it and why; return one flat record for each row it added, moved, took off or left; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    implementation: commands/github-issue-move.star
+    args:
+      - name: issues
+        help: "The issues to move, <owner>/<repository>#<number>, in the order they go"
+        variadic: true
+    flags:
+      - name: schedule
+        type: string
+        default: ""
+        help: "The schedule to put them on or move them within: its own issue, <owner>/<repository>#<number>, as a session's NFEP_AGENT_SCHEDULE names it"
+      - name: after
+        type: string
+        default: ""
+        help: "With --schedule, the step to put them after, every later step moving down; 0 puts them first; default: after the last. An issue already on the schedule moves to just after it"
+      - name: blocked-by
+        type: string
+        default: ""
+        help: "With --schedule, the issues each is blocked by, <owner>/<repository>#<number>, comma-separated; links the issues already have are kept"
+      - name: assignee
+        type: string
+        default: ""
+        help: "With --schedule, the member of the schedule's team who answers for an issue of another team's repository, which then needs one"
+      - name: scenario
+        type: string
+        default: ""
+        help: "The scenario to put them on, or whose Beat to set: its own issue, <owner>/<repository>#<number>"
+      - name: beat
+        type: string
+        default: ""
+        help: "With --scenario, the step of the walk at which they turned up, a whole number, 0 before its first; past the walk's last numbered step is refused"
+      - name: triage
+        type: bool
+        default: "false"
+        help: "Take them off their schedule or their scenario, each to its team's Triage project"
+      - name: backlog
+        type: bool
+        default: "false"
+        help: "Take them off their schedule, each to its team's Backlog project, keeping its Priority; an item on a scenario goes to Triage first"
+      - name: reason
+        type: string
+        default: ""
+        help: "Why they move, written in the Schedule issue's amendment or the comment on the Scenario issue; required"
 
   - name: github.plan.link
     help: "Write the Plan and design documents section of each issue the plans named serve, from every plan that serves it: a Plan row for each plan, then each plan's documents: entries; the section found by its heading and replaced whole, added at the end when there is none, and nothing written when there are two; return one flat record for each issue, with what was done and the rows the section drops; exits non-zero only on an error; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read, and --check writes nothing"

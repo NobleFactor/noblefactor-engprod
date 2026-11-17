@@ -63,7 +63,7 @@ function repository_name {
 
 # repository_slug prints the `<owner>/<repository>` that GitHub knows a directory's repository by.
 #
-# A bare `--schedule` number means the startup directory's repository, and `--schedule new` opens the schedule there.
+# A bare `--schedule` number means the startup directory's repository.
 #
 # Parameters:
 #   - `$1`: the directory.
@@ -560,8 +560,8 @@ function attach_to {
     exec 9>&-
 
     # Switched to from inside tmux, the session leaves the one the client was in with no client, and tmux ends that one
-    # when it is Start-Claude's, as it does after a detach (seen 2026-10-15). A title piped to --schedule new leaves
-    # standard input at the pipe's end: tmux attaches through the controlling terminal, which the launch found before
+    # when it is Start-Claude's, as it does after a detach (seen 2026-10-15). Standard input that is no terminal, as a
+    # pipe or a redirection leaves it: tmux attaches through the controlling terminal, which the launch found before
     # anything started, named for its device, since it refuses /dev/tty, and opened for reading and writing, since it
     # draws through the descriptor it reads from (question 73).
     if [[ -n "${TMUX:-}" ]]; then
@@ -586,21 +586,11 @@ function attach_to {
 # Returns:
 #   - it does not return: the script prints the background session's id and exits 0.
 function leave_detached {
-    local attach_command
-
     # Under a schedule, descriptor 9 holds the store's lock: closed here, it is released.
     exec 9>&-
 
-    # After --schedule new the same command would open another schedule, so the note names the one it opened
-    # (question 59).
-    if [[ ${schedule_argument:-} == new ]]; then
-        attach_command="$(printf '%q ' Start-Claude --directory "$startup_directory" --schedule "$schedule_key")"
-        note "Detached: claude runs background session ${background_id}, which Remote Control lists as" \
-            "${session_name}. To open it in a terminal, run ${attach_command% }."
-    else
-        note "Detached: claude runs background session ${background_id}, which Remote Control lists as" \
-            "${session_name}. To open it in a terminal, run the same command without --detach."
-    fi
+    note "Detached: claude runs background session ${background_id}, which Remote Control lists as" \
+        "${session_name}. To open it in a terminal, run the same command without --detach."
 
     printf '%s\n' "$background_id"
     exit 0
@@ -609,8 +599,8 @@ function leave_detached {
 ## The terminal
 
 # has_terminal reports whether there is a terminal to attach a session to: standard input is one, the controlling
-# terminal opens by its device's name, as it does when a title is piped to --schedule new, or the script runs inside
-# tmux, whose client switches to it.
+# terminal opens by its device's name, as it does when standard input is a pipe or a redirection, or the script runs
+# inside tmux, whose client switches to it.
 #
 # Parameters:
 #   - none.
@@ -1071,10 +1061,11 @@ Opens a tmux session onto a Claude Code conversation that claude runs in its bac
 claude attach, in the left pane, and a shell in the right. Each start opens a tmux session of its
 own, named for its schedule and its own tmux id, which ends when its last client leaves, and the
 conversation runs on in claude's background. --schedule opens the conversation of a schedule:
-<owner>/<repository>#<number>, a bare <number> in the startup directory's repository, or new, which
-opens one titled from standard input. --resume opens the conversation it names, as claude --resume
-takes it but its picker: its id, its background session's short id, its name, or its transcript's
-path, and given with --schedule puts it on that schedule; --continue opens the conversation claude lists in the startup
+<owner>/<repository>#<number>, or a bare <number> in the startup directory's repository; new is
+refused, naming star github schedule new, which makes a schedule. --resume opens the conversation
+it names, as claude --resume takes it but its picker: its id, its background session's short id,
+its name, or its transcript's path, and given with --schedule puts it on that schedule; --continue
+opens the conversation claude lists in the startup
 directory, and given with --schedule puts it on that schedule, refusing when claude lists none there; alone, with
 none, it hands the directory to claude's own --continue, which starts a copy of the conversation it picks. A
 conversation claude runs nowhere is resumed in its background under its own
@@ -1084,9 +1075,9 @@ repository clone. Remote Control is on, under the conversation's name; --no-remo
 off. Start-Claude attaches your terminal to the tmux session; with no terminal it starts nothing,
 and prints the command lines that start it. --detach starts the conversation in claude's background,
 or wakes it, and opens no tmux session: the conversation is then available on this host, for Remote
-Control, or for the same command run later in a terminal, which after --schedule new it prints,
-naming the schedule it opened. On macOS, where gh and claude keep their logins in the login keychain,
-a locked keychain is unlocked from a terminal, and with none, --detach included, nothing starts. What
+Control, or for the same command run later in a terminal. On macOS, where gh and claude keep their
+logins in the login keychain, a locked keychain is unlocked from a terminal, and with none,
+--detach included, nothing starts. What
 claude refuses, as a start in a folder it does not trust, it says, and nothing starts. See STARTING
 AND ATTACHING in Start-Claude(1). Arguments after -- are passed through to a conversation the launch
 starts. It prints the background session's short id on standard output, the id claude --bg prints:
@@ -1159,9 +1150,16 @@ ways=$((continue_argument))
 ((! detach || remote_control)) || error $EX_USAGE "--detach leaves the session for Remote Control, which" \
     "--no-remote-control turns off: give one or the other."
 
-if [[ $schedule_argument && $schedule_argument != new &&
-    ! $schedule_argument =~ ^([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+#)?[0-9]+$ ]]; then
-    error $EX_USAGE "--schedule takes <owner>/<repository>#<number>, a bare <number>, or new: ${schedule_argument}"
+# --schedule new is retired: star github schedule new makes a schedule, its issue from the account's form with its
+# option and its row, which this script never made (section 8 of the issue data model, question 7, #509).
+if [[ $schedule_argument == new ]]; then
+    error $EX_USAGE "--schedule new is retired: make the schedule with star github schedule new <repository> <name>" \
+        "--area Product|Engineering --deliverable <text> --exit-criteria <text> --evidence <text>, then open its" \
+        "conversation with ${script_name} --schedule <owner>/<repository>#<number>."
+fi
+
+if [[ $schedule_argument && ! $schedule_argument =~ ^([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+#)?[0-9]+$ ]]; then
+    error $EX_USAGE "--schedule takes <owner>/<repository>#<number> or a bare <number>: ${schedule_argument}"
 fi
 
 # The arguments after --, passed through to a conversation this launch starts in claude's background, which keeps them.
@@ -1297,55 +1295,26 @@ if [[ ! $schedule_argument ]]; then
     arrive
 fi
 
-## The schedule: <owner>/<repository>#<number>, a bare <number> in this repository, or new
+## The schedule: <owner>/<repository>#<number>, or a bare <number> in this repository
 
-if [[ "$schedule_argument" == new || "$schedule_argument" =~ ^[0-9]+$ ]]; then
+if [[ "$schedule_argument" =~ ^[0-9]+$ ]]; then
     schedule_slug="$(repository_slug "$startup_directory")" ||
         error $EX_NOINPUT "The startup directory's origin is not on GitHub: ${startup_directory}"
+    schedule_number="$schedule_argument"
+else
+    schedule_slug="${schedule_argument%#*}"
+    schedule_number="${schedule_argument##*#}"
 fi
 
-if [[ "$schedule_argument" == new ]]; then
+fields="$(schedule_fields "$schedule_slug" "$schedule_number")" ||
+    error $EX_NOINPUT "The issue cannot be read: ${schedule_slug}#${schedule_number}. gh: ${fields//$'\n'/; }"
+IFS=$'\x1f' read -r schedule_title schedule_url schedule_type schedule_labels <<<"$fields"
 
-    # The title is read from standard input, so it can be piped. The prompt goes to standard error, and only when
-    # standard input is a terminal.
-
-    [[ ! -t 0 ]] || printf 'Schedule title: ' >&2
-    IFS= read -r answer || true
-    answer="${answer#"${answer%%[![:space:]]*}"}"
-    answer="${answer%"${answer##*[![:space:]]}"}"
-    [[ -n "$answer" ]] || error $EX_DATAERR "No schedule title was given; nothing is opened."
-
-    # It opens empty: a deliverable to state, and a lane table the report reads, with no rows yet.
-
-    schedule_body="## Deliverable"$'\n\n'"To be stated: what the owner has today, and what they will have when the"
-    schedule_body+=" last lane closes."$'\n\n'"## Lanes"$'\n\n'"| Lane | Item | Next | Waits on |"$'\n'
-    schedule_body+="| --- | --- | --- | --- |"
-
-    schedule_url="$(gh issue create --repo "$schedule_slug" --title "Schedule: ${answer}" --label chore \
-        --body "$schedule_body" 2>&1)" ||
-        error $EX_CANTCREAT "The schedule could not be opened in ${schedule_slug}. gh: ${schedule_url//$'\n'/; }"
-
-    schedule_number="${schedule_url##*/}"
-    schedule_title="Schedule: ${answer}"
-    note "Opened ${schedule_url}"
-else
-    if [[ "$schedule_argument" =~ ^[0-9]+$ ]]; then
-        schedule_number="$schedule_argument"
-    else
-        schedule_slug="${schedule_argument%#*}"
-        schedule_number="${schedule_argument##*#}"
-    fi
-
-    fields="$(schedule_fields "$schedule_slug" "$schedule_number")" ||
-        error $EX_NOINPUT "The issue cannot be read: ${schedule_slug}#${schedule_number}. gh: ${fields//$'\n'/; }"
-    IFS=$'\x1f' read -r schedule_title schedule_url schedule_type schedule_labels <<<"$fields"
-
-    # issue-standards.md § Schedules: a schedule is an issue of type Schedule and, in a user account, which has no issue
-    # types, an issue labeled schedule (ruled 2026-11-03). The chore label and the title's "Schedule:" retired that day.
-    if [[ "$schedule_type" != Schedule && ",${schedule_labels}," != *,schedule,* ]]; then
-        message="${schedule_slug}#${schedule_number} is not a schedule: a schedule is an issue of type Schedule, or, in a"
-        error $EX_DATAERR "${message} user account, one labeled schedule."
-    fi
+# issue-standards.md § Schedules: a schedule is an issue of type Schedule and, in a user account, which has no issue
+# types, an issue labeled schedule (ruled 2026-11-03). The chore label and the title's "Schedule:" retired that day.
+if [[ "$schedule_type" != Schedule && ",${schedule_labels}," != *,schedule,* ]]; then
+    message="${schedule_slug}#${schedule_number} is not a schedule: a schedule is an issue of type Schedule, or, in a"
+    error $EX_DATAERR "${message} user account, one labeled schedule."
 fi
 
 # The key is written as GitHub writes it, so names compare exactly. Rule 8: a schedule moved to another repository

@@ -25,7 +25,9 @@ steps it closed, rendered from a template. Ruled the same day, question 7: Start
 from GitHub on 2026-11-11: the Schedule options of Schedule: engprod, the 15 Schedule issues, both accounts' Schedule
 forms, and the 17 open issues under NobleFactor/devlore-cli#463, which the report as built lists. Ruled 2026-11-15
 (#557): `plan link`, beside the schedule verbs, which writes each issue's `Plan and design documents` section from
-the plans.
+the plans. Revised 2026-11-15 (#507): `add`, `move` and `remove` became one command, `star github issue move`,
+its issue the one positional argument and its destination a flag, `--backlog` kept and several issues at once; and
+#509 to #512, widened to scenarios, became steps 48 to 51 of #346, built in #507's pull request.
 
 ## Completion
 
@@ -33,9 +35,13 @@ the plans.
 - [x] The design approved by the owner, 2026-11-12 (#439)
 - [x] `add` built, with `--after`, on 2026-11-12, and proved that day in NobleFactor-sandbox; a user account's half
   on 2026-11-13, in David-Noble-at-work-sandbox (#438)
-- [ ] `new` built, and Start-Claude's `--schedule new` retired with it (#509)
-- [ ] `get` and `list` built (#510)
-- [ ] `move` and `remove` built (#511)
-- [ ] `close` built (#512)
+- [x] `new` built, and Start-Claude's `--schedule new` retired with it, on 2026-11-16, and
+  proved that day in NobleFactor-sandbox and David-Noble-at-work-sandbox (run 20261116T221107Z) (#509)
+- [x] `get` and `list` built on 2026-11-15, and proved that day in NobleFactor-sandbox and David-Noble-at-work-sandbox
+  (run 20261116T221107Z) (#510)
+- [x] `star github issue move` built from `schedule add`, with moving within a schedule and off one, on 2026-11-15,
+  and proved that day in NobleFactor-sandbox and David-Noble-at-work-sandbox (run 20261116T221107Z) (#511)
+- [x] `close` built on 2026-11-16, and proved that day in NobleFactor-sandbox and David-Noble-at-work-sandbox (run
+  20261116T221107Z) (#512)
 - [x] `plan link` built, with `--all` and `--check`, on 2026-11-15 (#557); every issue brought to its plans by it
   on 2026-11-15, #557's evidence

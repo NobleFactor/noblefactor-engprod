@@ -1,0 +1,25 @@
+{{- /*
+SPDX-License-Identifier: Apache-2.0
+Copyright Noble Factor. All rights reserved.
+
+schedule.md.template: the body star github schedule new files a Schedule issue with (section 8 of the issue data model,
+§ Making a schedule: new, ruled 2026-11-11): the sections of the account's Schedule form, in the form's order, each
+headed at level 2, then two of its own, Steps, whose line links the project's view 2 filtered to the schedule's option,
+and Amendments, empty, where each change to the steps writes its line. Rendered by making.star with star's template
+module, its line ends kept.
+
+  .sections   the form's sections, in its order: {heading, text}
+  .project    the Schedule project's title, Schedule: <team>
+  .link       its view 2, filtered to the option
+  .name       the schedule's name, its option
+*/ -}}
+{{- range .sections}}## {{.heading}}
+
+{{.text}}
+
+{{end}}## Steps
+
+The steps are the rows of [{{.project}}]({{.link}})
+under the Schedule option "{{.name}}", worked in step order.
+
+## Amendments

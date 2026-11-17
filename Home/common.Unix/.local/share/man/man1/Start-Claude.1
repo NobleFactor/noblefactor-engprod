@@ -1,6 +1,6 @@
 .\" SPDX-License-Identifier: Apache-2.0
 .\" Copyright (c) 2026 Noble Factor. All rights reserved.
-.TH START-CLAUDE 1 "2026-10-21" "Noble Factor" "User Commands"
+.TH START-CLAUDE 1 "2026-11-16" "Noble Factor" "User Commands"
 .SH NAME
 Start-Claude \- open a tmux workspace onto the Claude Code conversation of a
 schedule, or of a conversation it names, that claude runs in its background
@@ -77,26 +77,20 @@ its steps are the rows of its team's Schedule project.
 .I SCHEDULE
 is
 .IR <owner>/<repository>#<number> ,
-a bare
+or a bare
 .I <number>
-in the startup directory's repository, or
-.BR new .
+in the startup directory's repository.
 The issue is read with
 .BR gh (1)
 from its own repository, never the caller's, and an issue that is not a
 schedule is refused.
 .PP
 .B "\-\-schedule new"
-opens a schedule in the startup directory's repository. Its title is read from
-standard input, with the prompt
-.I "Schedule title:"
-when standard input is a terminal, and it opens as
-.IR "Schedule: <title>" ,
-with an empty lane table. An empty title opens nothing. A title can be piped;
-the tmux session then attaches through the terminal the launch runs in,
-so a terminal is still needed, unless
-.B \-\-detach
-is given.
+is refused, naming the command that replaces it: a schedule is made with
+.BR "star github schedule new" ,
+which files its issue from the account's form and gives it its option and its
+row, and its conversation then opened with
+.BR "\-\-schedule <owner>/<repository>#<number>" .
 .PP
 The conversation is handed its schedule:
 .B NFEP_AGENT_SCHEDULE
@@ -554,10 +548,7 @@ command is typed alone, and Enter pressed a second after the viewer's input
 line shows it, since claude takes an Enter sent with the text as part of the
 command; while the input line still shows the command, Enter is pressed again,
 up to three times in all.
-After
-.BR "\-\-schedule new" ,
-which that command would run again, Start-Claude prints the command to run
-instead, naming the schedule it opened. Remote Control needs claude signed in.
+Remote Control needs claude signed in.
 Not with
 .BR \-\-no\-remote\-control .
 See
@@ -595,10 +586,12 @@ put it on that schedule. See
 .BI \-s " SCHEDULE" "\fR, \fP" \-\-schedule " SCHEDULE"
 The schedule the conversation works:
 .IR <owner>/<repository>#<number> ,
-a bare
+or a bare
 .I <number>
-in the startup directory's repository, or
-.BR new .
+in the startup directory's repository.
+.B new
+is refused, naming
+.BR "star github schedule new" .
 See
 .BR DESCRIPTION .
 .TP
@@ -737,7 +730,12 @@ or
 with
 .BR \-\-resume ;
 a malformed
-.BR \-\-schedule ;
+.BR \-\-schedule ,
+or
+.BR "\-\-schedule new" ,
+which
+.B star github schedule new
+replaces;
 a
 .B \-\-shell\-width\-percent
 outside 1\-99; or
@@ -746,9 +744,7 @@ with
 .BR \-\-no\-remote\-control .
 .TP
 .B 65
-The schedule's issue is not a schedule;
-.B "\-\-schedule new"
-read an empty title; several conversations carry the name
+The schedule's issue is not a schedule; several conversations carry the name
 .B \-\-resume
 gives, or the transcript it names is not named for a conversation's identifier;
 claude's list of its sessions is not the JSON the script reads; or claude's words
@@ -756,10 +752,9 @@ on a background start name no background session the script reads.
 .TP
 .B 66
 The startup directory does not exist or is not the root of a repository clone,
-its origin is not on GitHub where a bare number or
-.B new
-needs it, or the schedule's issue could not be read, the message ending with
-gh's own; or nothing answers to what
+its origin is not on GitHub where a bare number needs it, or the schedule's
+issue could not be read, the message ending with gh's own; or nothing answers
+to what
 .B \-\-resume
 gives: no session claude lists by that identifier and no transcript of it, no
 background session by that short identifier, no conversation by that name, or no
@@ -795,10 +790,8 @@ lines that start it: see
 .BR "STARTING AND ATTACHING" .
 .TP
 .B 73
-.B "\-\-schedule new"
-could not open the schedule, the message ending with gh's own; the conversation
-is another schedule's; the schedule already has another conversation; or the
-store cannot be written.
+The conversation is another schedule's; the schedule already has another
+conversation; or the store cannot be written.
 .TP
 .B 74
 The store's entry for the schedule could not be read, or holds neither a
@@ -873,11 +866,13 @@ copy of the one claude picks:
 \&Start-Claude --continue
 .fi
 .PP
-Open a new schedule, asked for its title, or with the title piped:
+Make a schedule with star, which files its issue, then open its conversation:
 .PP
 .nf
-\&Start-Claude --schedule new
-\&echo 'Release 0.2' | Start-Claude --schedule new
+\&star github schedule new NobleFactor/noblefactor-engprod 'release 0.2' \e
+\&    --area Engineering --deliverable 'Release 0.2' \e
+\&    --exit-criteria 'It ships' --evidence 'Its release notes'
+\&Start-Claude --schedule NobleFactor/noblefactor-engprod#600
 .fi
 .PP
 Stop a schedule's conversation; the next start opens it again:

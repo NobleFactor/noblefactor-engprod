@@ -27,7 +27,20 @@
 # Issue types and issue fields are written through GitHub's REST calls, which take the database IDs get records; the
 # rest through GraphQL, each mutation's input written as literals, so that every value is in the call star narrates.
 
-load("commands/model.star", "escape", "graphql", "owner_id", "page", "quote", "read_project", "rest", "sh", "templates_of")
+load(
+    "commands/model.star",
+    "escape",
+    "graphql",
+    "option_literal",
+    "owner_id",
+    "page",
+    "quote",
+    "read_project",
+    "rest",
+    "sh",
+    "templates_of",
+    "write_options",
+)
 load("commands/participation.star", "TEMPLATE", "token_records", participation_apply = "apply")
 load("commands/reconcile.star", "differs", "every_difference", "match", "own_options", "prepare", "template_renames")
 load("commands/tokens.star", "for_secrets")
@@ -218,16 +231,9 @@ def _labels(c, records, done):
             _done(done, "label", r["path"], "deleted", {"touches": touches})
 
 # ── a project brought to its template ───────────────────────────────────────
-
-def _option_literal(o):
-    """A project option as GraphQL's input takes it, with its ID when it has one."""
-    parts = []
-    if o.get("id"):
-        parts.append("id: " + _s(o["id"]))
-    parts.append("name: " + _s(o["name"]))
-    parts.append("color: " + (o.get("color") or "GRAY"))
-    parts.append("description: " + _s(o.get("description") or ""))
-    return "{" + ", ".join(parts) + "}"
+#
+# An option's literal and a field's options written whole are model.star's, which star github schedule new and
+# scenario new share (#509).
 
 def _days(date):
     """The days from 1970-01-01 to a date written YYYY-MM-DD: Howard Hinnant's days_from_civil."""
@@ -300,7 +306,7 @@ def _create_field(c, project_id, mf):
     if kind == "single-select":
         # A field whose options are each project's own is made with one, a placeholder, as GitHub needs at least one.
         options = mf.get("options") or [{"name": "placeholder", "color": "GRAY", "description": ""}]
-        extra = ", singleSelectOptions: [" + ", ".join([_option_literal(dict(o, id = None)) for o in options]) + "]"
+        extra = ", singleSelectOptions: [" + ", ".join([option_literal(dict(o, id = None)) for o in options]) + "]"
     elif kind == "iteration":
         configuration = mf.get("configuration") or {}
         extra = (", iterationConfiguration: {startDate: " + _s(_start_date(configuration)) + ", duration: " +
@@ -344,8 +350,7 @@ def _options(c, gf, mf, path, kind, renames, by_id, done):
             final.append(go)
     if [a for a in marks.values() if a != "kept"]:
         # TODO(NobleFactor/devlore-cli#1219): ask before each deletion, naming the rows it blanks (#470).
-        mutate("mutation starUpdateOptions { r: updateProjectV2Field(input: {fieldId: " + _s(gf["id"]) + ", singleSelectOptions: [" +
-               ", ".join([_option_literal(o) for o in final]) + "]}) { projectV2Field { ... on ProjectV2FieldCommon { id } } } }")
+        write_options(gf["id"], final, "starUpdateOptions")
     for path, action in marks.items():
         _done(done, kind, path, action, {"touches": None} if action == "deleted" else {})
 

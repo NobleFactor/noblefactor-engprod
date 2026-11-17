@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright Noble Factor. All rights reserved.
 
-"""A schedule's steps: its Schedule issue and rows read, its steps renumbered and written, and its amendment written."""
+"""A schedule's steps and a scenario's rows: read, renumbered and written, and each change recorded where it is kept."""
 
 # steps.star
 #
@@ -12,9 +12,16 @@
 # the first write, and every write read back, since GitHub promises no stability for the features the model is built on
 # (section 8, question 3). Closed steps move with the open ones (question 5), and each change writes one amendment line,
 # rendered from templates/amendment.md.template, naming the date, who ran the command and why (question 4).
-# `add` uses it (#438), and `move` and `remove` will (#511).
+#
+# A scenario is read the same way, an option of its team's Scenario project's Scenario field, whose rows carry a Beat
+# (section 9); its changes are recorded in a comment on its Scenario issue and a line in the item's body, which this
+# module writes too. star github issue move uses it (#511), made from `add` (#438); get and list of both groups read
+# through it (collections.star, #510); new of both groups files its issue, sets its issue fields and adds its option
+# through it (making.star, #509); and close and retire close an issue and read how each step closed through it
+# (ending.star, #512).
 
-load("commands/model.star", "extension_dir", "read_text")
+load("commands/markdown.star", "body_lines", "line_end", "numbered", "sections")
+load("commands/model.star", "extension_dir", "read_text", "rest", "write_options")
 load("commands/records.star", "json_lines", "kind_of_project", "quote", "sh")
 load("commands/scheme.star", "canonical_repo", "owners_of", "type_of")
 
@@ -24,10 +31,19 @@ SCENARIO_KIND = "Scenario"
 _SCHEDULE_FIELD = "Schedule"
 _SCENARIO_FIELD = "Scenario"
 _STEP_FIELD = "Step"
+_BEAT_FIELD = "Beat"
 _STATUS_FIELD = "Status"
+_WORKTREE_FIELD = "Worktree"
+_ITERATION_FIELD = "Iteration"
 _OPEN = "Open"
 _AMENDMENTS = "## Amendments"
 _WIDTH = 120
+
+# The headings a body line is placed and a walk is read by, at level 2 or 3: a form writes ###, the API ##. A line goes
+# above the Plan and design documents heading, since star github plan link replaces that section to its end (#557).
+_DOCUMENTS = "Plan and design documents"
+_WALK = "How to walk through it"
+_LEVELS = [2, 3]
 
 # ── keys and calls ──────────────────────────────────────────────────────────
 
@@ -70,14 +86,16 @@ def today():
 
 _ROW_VALUES = ("fieldValues(first: 20) { nodes { " +
                "... on ProjectV2ItemFieldSingleSelectValue { name optionId field { ... on ProjectV2FieldCommon { name } } } " +
-               "... on ProjectV2ItemFieldNumberValue { number field { ... on ProjectV2FieldCommon { name } } } } }")
+               "... on ProjectV2ItemFieldNumberValue { number field { ... on ProjectV2FieldCommon { name } } } " +
+               "... on ProjectV2ItemFieldTextValue { text field { ... on ProjectV2FieldCommon { name } } } " +
+               "... on ProjectV2ItemFieldIterationValue { title field { ... on ProjectV2FieldCommon { name } } } } }")
 
 def issue(key, model):
-    """An issue as add reads it: its node ID, type, state, title and body, its assignees and blockers, and its rows.
+    """An issue as issue move reads it: its node ID, type, state, title and body, its assignees and blockers, and its rows.
 
     Each row names its project, the project's kind for the account's owners (Triage, Backlog, Schedule, Scenario, or None
-    for a project of no kind, such as a closed per-schedule project of 2026-11-01), and its Schedule or Scenario option
-    and its step.
+    for a project of no kind, such as a closed per-schedule project of 2026-11-01), its Schedule or Scenario option, its
+    Status, its step and its Beat.
     """
     k = parse_key(key)
     query = ("query starStepIssue { repository(owner: \"" + k["owner"] + "\", name: \"" + k["name"] + "\") { " +
@@ -98,7 +116,9 @@ def issue(key, model):
             "kind": None if project.get("closed") else kind_of_project(project.get("title"), owners),
             "schedule": _value(item, _SCHEDULE_FIELD, "name"),
             "scenario": _value(item, _SCENARIO_FIELD, "name"),
+            "status": _value(item, _STATUS_FIELD, "name"),
             "step": _int(_value(item, _STEP_FIELD, "number")),
+            "beat": _int(_value(item, _BEAT_FIELD, "number")),
         })
     labels = [label["name"] for label in ((node.get("labels") or {}).get("nodes") or [])]
     return {
@@ -115,36 +135,79 @@ def issue(key, model):
         "rows": rows,
     }
 
-# ── a schedule ──────────────────────────────────────────────────────────────
+# ── a schedule and a scenario ───────────────────────────────────────────────
 
-def schedule(key, model):
-    """A schedule: its Schedule issue, its team's Schedule project with its fields, and its option.
+def _collection(key, model, kind, number, closed, reading):
+    """A schedule or a scenario: its own issue, its team's project of kind with its fields, and its option.
 
-    The option is the one the Schedule issue's own row carries; fails, naming why, when the issue is not an open Schedule
-    issue or has no such row.
+    kind names the project, the field and the issue's type alike; number is the field that orders the rows, Step or Beat.
+    The option is the one the issue's own row carries; fails, naming why, when the issue is not an issue of kind or has
+    no such row, and, unless reading, when it is closed, closed saying what a closed one takes no more of.
     """
     own = issue(key, model)
-    if own["type"] != SCHEDULE_KIND:
-        fail(own["key"] + " is not a Schedule issue: its type is " + (own["type"] or "none"))
-    if own["state"] != "open":
-        fail(own["key"] + " is closed: a closed schedule takes no step")
-    rows = [r for r in own["rows"] if r["kind"] == SCHEDULE_KIND and r["schedule"] != None]
+    if own["type"] != kind:
+        fail(own["key"] + " is not a " + kind + " issue: its type is " + (own["type"] or "none"))
+    if own["state"] != "open" and not reading:
+        fail(own["key"] + " is closed: " + closed)
+    attr = kind.lower()
+    rows = [r for r in own["rows"] if r["kind"] == kind and r[attr] != None]
     if len(rows) != 1:
-        fail(own["key"] + " has " + str(len(rows)) + " rows with a Schedule option on its account's Schedule projects, not one")
+        fail(own["key"] + " has " + str(len(rows)) + " rows with a " + kind + " option on its account's " + kind + " projects, not one")
     project = project_of(rows[0]["project"]["id"])
-    for name in [_SCHEDULE_FIELD, _STEP_FIELD, _STATUS_FIELD]:
+    for name in [kind, number, _STATUS_FIELD]:
         if name not in project["fields"]:
             fail(project["title"] + " has no " + name + " field")
-    option = [o for o in project["fields"][_SCHEDULE_FIELD]["options"] if o["name"] == rows[0]["schedule"]]
+    option = [o for o in project["fields"][kind]["options"] if o["name"] == rows[0][attr]]
     if len(option) != 1:
-        fail(project["title"] + " has no Schedule option named " + rows[0]["schedule"])
-    return {"issue": own, "project": project, "option": option[0], "own_item": rows[0]["item"]}
+        fail(project["title"] + " has no " + kind + " option named " + rows[0][attr])
+    return {"issue": own, "project": project, "option": option[0], "own_item": rows[0]["item"], "field": kind}
+
+def schedule(key, model, reading = False):
+    """A schedule: its Schedule issue, its team's Schedule project with its fields, and its option.
+
+    The option is the one the Schedule issue's own row carries; fails, naming why, when the issue is not a Schedule issue
+    or has no such row, and, unless reading, as get reads a finished schedule, when it is closed.
+    """
+    return _collection(key, model, _SCHEDULE_FIELD, _STEP_FIELD, "a closed schedule takes no step", reading)
+
+def scenario(key, model, reading = False):
+    """A scenario: its Scenario issue, its team's Scenario project with its fields, and its option.
+
+    The option is the one the Scenario issue's own row carries; fails, naming why, when the issue is not a Scenario issue
+    or has no such row, and, unless reading, as get reads a retired scenario, when it is closed: a scenario that is
+    retired is closed, and takes no item.
+    """
+    return _collection(key, model, _SCENARIO_FIELD, _BEAT_FIELD, "a retired scenario takes no item", reading)
+
+def walk(own):
+    """How many steps a Scenario issue's walk numbers under its How to walk through it heading; None when it numbers none.
+
+    Beat N is step N of the walk (ruled 2026-11-15), so a Beat past the last is refused only when the walk is numbered.
+    """
+    lines = body_lines(own["body"])
+    found = sections(lines, _WALK, _LEVELS)
+    if not found:
+        return None
+    return numbered(lines, found[0]) or None
+
+def project_named(model, title):
+    """The account's open project titled title, with its fields, as project_of reads it; None when it has none."""
+    kind = "user" if model["user"] else "organization"
+    query = ("query starStepFind { " + kind + "(login: \"" + model["account"] + "\") { projectsV2(first: 20, query: \"" + title +
+             "\") { nodes { id title closed } } } }")
+    for p in json.decode(data = _call(query, jq = ".data." + kind + ".projectsV2.nodes") or "[]") or []:
+        if p.get("title") == title and not p.get("closed"):
+            return project_of(p["id"])
+    return None
 
 def project_of(project_id):
-    """A project's ID, title, and fields by name, a single-select field with its options."""
+    """A project's ID, title, and fields by name, a single-select field with its options, each with its color.
+
+    An option's color is read so that writing a field's options whole sends each one back as it is (add_option).
+    """
     query = ("query starStepProject { node(id: \"" + project_id + "\") { ... on ProjectV2 { id title number " +
              "fields(first: 50) { nodes { ... on ProjectV2FieldCommon { id name dataType } " +
-             "... on ProjectV2SingleSelectField { options { id name description } } } } } } }")
+             "... on ProjectV2SingleSelectField { options { id name color description } } } } } } }")
     node = json.decode(data = _call(query, jq = ".data.node"))
     fields = {}
     for f in ((node.get("fields") or {}).get("nodes") or []):
@@ -159,16 +222,22 @@ def option_of(project, field, name):
             return o["id"]
     fail(project["title"] + "'s " + field + " field has no option " + name)
 
-def rows(sched, model):
-    """Every row under the schedule's option, in the project's order: its item, issue, type, state, title and step."""
-    query = ("query starStepRows($endCursor: String) { node(id: \"" + sched["project"]["id"] + "\") { ... on ProjectV2 { " +
+def project_rows(project, model):
+    """Every issue's row of a project, in the project's order.
+
+    Each row is its item; its issue's key, node ID, type, state and title, its assignees, and the keys of the issues that
+    block it; and its Schedule or Scenario option, Status, step, Beat, Worktree and Iteration, None where it has none. The
+    issues that block it are its open blockers: a closed issue blocks nothing, as GitHub's is:blocked counts only open
+    ones, so a blocked-by link to a closed issue is left out. issue's blocked_by keeps every link, which issue move reads
+    to tell which links an issue already has.
+    """
+    query = ("query starStepRows($endCursor: String) { node(id: \"" + project["id"] + "\") { ... on ProjectV2 { " +
              "items(first: 100, after: $endCursor) { pageInfo { hasNextPage endCursor } nodes { id " +
              "content { ... on Issue { id number title state issueType { name } labels(first: 20) { nodes { name } } " +
-             "repository { nameWithOwner } } } " + _ROW_VALUES + " } } } } }")
+             "repository { nameWithOwner } assignees(first: 20) { nodes { login } } " +
+             "blockedBy(first: 50) { nodes { number state repository { nameWithOwner } } } } } " + _ROW_VALUES + " } } } } }")
     out = []
     for item in json_lines("gh api graphql --paginate -f query=" + quote(query) + " --jq " + quote(".data.node.items.nodes[] | tojson")):
-        if _value(item, _SCHEDULE_FIELD, "name") != sched["option"]["name"]:
-            continue
         content = item.get("content") or {}
         if not content.get("number"):
             continue
@@ -180,23 +249,40 @@ def rows(sched, model):
             "type": type_of(model, content.get("issueType"), labels),
             "title": content.get("title"),
             "state": (content.get("state") or "").lower(),
+            "assignees": [a["login"] for a in ((content.get("assignees") or {}).get("nodes") or [])],
+            "blocked_by": [
+                canonical_repo(b["repository"]["nameWithOwner"]) + "#" + str(int(b["number"]))
+                for b in ((content.get("blockedBy") or {}).get("nodes") or [])
+                if (b.get("state") or "").upper() == "OPEN"
+            ],
+            "schedule": _value(item, _SCHEDULE_FIELD, "name"),
+            "scenario": _value(item, _SCENARIO_FIELD, "name"),
+            "status": _value(item, _STATUS_FIELD, "name"),
             "step": _int(_value(item, _STEP_FIELD, "number")),
+            "beat": _int(_value(item, _BEAT_FIELD, "number")),
+            "worktree": _value(item, _WORKTREE_FIELD, "text"),
+            "iteration": _value(item, _ITERATION_FIELD, "title"),
         })
     return out
 
+def rows(sched, model):
+    """Every row under a schedule's or a scenario's option, in the project's order, as project_rows reads each."""
+    attr = sched["field"].lower()
+    return [r for r in project_rows(sched["project"], model) if r[attr] == sched["option"]["name"]]
+
 def snapshot(rs):
-    """What the one-act check compares between its two reads: each row's item, step and state, in order."""
-    return [(r["item"], r["step"], r["state"]) for r in rs]
+    """What the one-act check compares between its two reads: each row's item, step, Beat and state, in order."""
+    return [(r["item"], r["step"], r["beat"], r["state"]) for r in rs]
 
 # ── the steps ───────────────────────────────────────────────────────────────
 
-def closing(rs, taken_item):
-    """The rows that move when a step is taken off: every other row, in step order, numbered from 1 on.
+def closing(rs, taken_items):
+    """The rows that move when steps are taken off: every other row, in step order, numbered from 1 on.
 
-    The steps are consecutive whole numbers, so the rows after the one taken off move up one, closed or open. Numbering
-    by place rather than by subtracting one means a run that stopped partway, run again, moves nothing twice.
+    The steps are consecutive whole numbers, so each row after one taken off moves up one for each, closed or open.
+    Numbering by place rather than by subtracting means a run that stopped partway, run again, moves nothing twice.
     """
-    others = sorted([r for r in rs if r["step"] != None and r["item"] != taken_item], key = lambda r: r["step"])
+    others = sorted([r for r in rs if r["step"] != None and r["item"] not in taken_items], key = lambda r: r["step"])
     return [{"row": r, "from": r["step"], "to": i + 1} for i, r in enumerate(others) if r["step"] != i + 1]
 
 def span(moves):
@@ -245,22 +331,57 @@ def set_step(project, item, step):
         {"p": project["id"], "i": item, "f": project["fields"][_STEP_FIELD]["id"], "v": step},
     )
 
+def set_beat(project, item, beat):
+    """A row's Beat set; GitHub takes a number field's value as a float."""
+    _call(
+        "mutation starStepSetBeat($p: ID!, $i: ID!, $f: ID!, $v: Float!) { updateProjectV2ItemFieldValue(input: " +
+        "{projectId: $p, itemId: $i, fieldId: $f, value: {number: $v}}) { projectV2Item { id } } }",
+        {"p": project["id"], "i": item, "f": project["fields"][_BEAT_FIELD]["id"], "v": beat},
+    )
+
 def place_after(project, item, after_item):
-    """A row placed just after another in the project's order, as section 3 keeps the rows: by Step within each option."""
+    """A row placed just after another in the project's order, as section 3 keeps the rows: by Step within each option.
+
+    With no row to follow, after_item None, it is placed first, as GitHub places a row given no afterId.
+    """
+    if after_item == None:
+        _call(
+            "mutation starStepPlace($p: ID!, $i: ID!) { updateProjectV2ItemPosition(input: {projectId: $p, itemId: $i}) { clientMutationId } }",
+            {"p": project["id"], "i": item},
+        )
+        return
     _call(
         "mutation starStepPlace($p: ID!, $i: ID!, $a: ID!) { updateProjectV2ItemPosition(input: {projectId: $p, itemId: $i, afterId: $a}) { clientMutationId } }",
         {"p": project["id"], "i": item, "a": after_item},
     )
 
-def put(sched, item, step):
-    """A row given the schedule's option, Status Open and its step."""
+def put(sched, item, step, status = None):
+    """A row given the schedule's option, its step, and its Status: status when given, else Open.
+
+    A step moved within its schedule keeps the Status it has; a step put on a schedule is Open.
+    """
     project = sched["project"]
     set_option(project, item, _SCHEDULE_FIELD, sched["option"]["id"])
-    set_option(project, item, _STATUS_FIELD, option_of(project, _STATUS_FIELD, _OPEN))
+    set_option(project, item, _STATUS_FIELD, option_of(project, _STATUS_FIELD, status or _OPEN))
     set_step(project, item, step)
 
+def put_open(project, r):
+    """An issue's row on a Triage or Backlog project, made when it has none, with Status Open, read back; the row's item."""
+    item = add_row(project, r["id"])
+    set_option(project, item, _STATUS_FIELD, option_of(project, _STATUS_FIELD, _OPEN))
+    reads_back(item, {"project": project["id"], "status": _OPEN}, r["key"])
+    return item
+
+def put_beat(scen, item, beat, joining):
+    """A row given the scenario's Beat; joining, its option and Status Open too, as a row put on a scenario has."""
+    project = scen["project"]
+    if joining:
+        set_option(project, item, _SCENARIO_FIELD, scen["option"]["id"])
+        set_option(project, item, _STATUS_FIELD, option_of(project, _STATUS_FIELD, _OPEN))
+    set_beat(project, item, beat)
+
 def read_row(item):
-    """A row as GitHub holds it now: its project's ID, its Schedule option, its Status and its step."""
+    """A row as GitHub holds it now: its project's ID, its Schedule or Scenario option, its Status, its step and its Beat."""
     node = json.decode(data = _call(
         "query starStepReadRow { node(id: \"" + item + "\") { ... on ProjectV2Item { project { id } " + _ROW_VALUES + " } } }",
         jq = ".data.node",
@@ -270,16 +391,32 @@ def read_row(item):
     return {
         "project": (node.get("project") or {}).get("id"),
         "schedule": _value(node, _SCHEDULE_FIELD, "name"),
+        "scenario": _value(node, _SCENARIO_FIELD, "name"),
         "status": _value(node, _STATUS_FIELD, "name"),
         "step": _int(_value(node, _STEP_FIELD, "number")),
+        "beat": _int(_value(node, _BEAT_FIELD, "number")),
     }
 
-def check_row(sched, item, step, what):
-    """Fails, naming what, unless the row reads back on the schedule's project with its option, Status Open and step."""
+def reads_back(item, want, what):
+    """Fails, naming what, unless the row reads back holding each value want names, as read_row reads them."""
     back = read_row(item)
-    want = {"project": sched["project"]["id"], "schedule": sched["option"]["name"], "status": _OPEN, "step": step}
-    if back != want:
-        fail(what + "'s row reads back as " + str(back) + ", not " + str(want))
+    got = {k: back.get(k) for k in want} if back != None else None
+    if got != want:
+        fail(what + "'s row reads back as " + str(got) + ", not " + str(want))
+
+def check_row(sched, item, step, what, status = None):
+    """Fails, naming what, unless the row reads back on the schedule's project with its option, step and Status.
+
+    The Status is status when given, else Open, as put gives it.
+    """
+    reads_back(item, {"project": sched["project"]["id"], "schedule": sched["option"]["name"], "status": status or _OPEN, "step": step}, what)
+
+def check_beat(scen, item, beat, what, joining):
+    """Fails, naming what, unless the row reads back on the scenario's project with its option and Beat; joining, Open."""
+    want = {"project": scen["project"]["id"], "scenario": scen["option"]["name"], "beat": beat}
+    if joining:
+        want["status"] = _OPEN
+    reads_back(item, want, what)
 
 # ── the amendment ───────────────────────────────────────────────────────────
 
@@ -334,18 +471,23 @@ def _entries(body):
     return [(e[0], e[1], " ".join([line.strip() for line in lines[e[0]:e[1]]])) for e in out]
 
 def pending_for(own, keys):
-    """Whether the Schedule issue holds a pending amendment naming every one of keys: a run of them that stopped."""
+    """Whether the Schedule issue holds a pending amendment naming every one of keys: a run of them that stopped.
+
+    A body with no Amendments section, or with two, holds none; amend refuses to write in one.
+    """
+    if len([line for line in own["body"].replace("\r\n", "\n").split("\n") if line.strip() == _AMENDMENTS]) != 1:
+        return False
     for _, _, entry in _entries(own["body"]):
         if entry.endswith(_PENDING) and _names(entry, keys):
             return True
     return False
 
-def _write_body(own, body, check):
-    """The Schedule issue's body written and read back; fails, naming what, unless check holds of what reads back."""
+def _write_body(own, body, check, what = "its amendment"):
+    """An issue's body written and read back; fails, naming what, unless check holds of what reads back."""
     _call("mutation starStepAmend($i: ID!, $b: String!) { updateIssue(input: {id: $i, body: $b}) { issue { id } } }", {"i": own["id"], "b": body})
     back = _call("query starStepBody { node(id: \"" + own["id"] + "\") { ... on Issue { body } } }", jq = ".data.node.body").replace("\r\n", "\n")
     if not check(back):
-        fail(own["key"] + "'s body does not read back with its amendment")
+        fail(own["key"] + "'s body does not read back with " + what)
     own["body"] = back
 
 def amend(own, line):
@@ -378,3 +520,146 @@ def settle(own, keys, line):
 def _names(entry, keys):
     """Whether an amendment entry names every one of keys."""
     return all([regex.match(pattern = "(^|[^0-9A-Za-z/])" + k.replace(".", "\\.") + "([^0-9]|$)", text = entry) for k in keys])
+
+# ── a scenario's records: the comment and the body line ─────────────────────
+
+def comment(own, body):
+    """A comment on an issue, by its node ID; the comment's ID. Fails, naming the issue, unless GitHub answers with it."""
+    made = _call(
+        "mutation starStepComment($s: ID!, $b: String!) { addComment(input: {subjectId: $s, body: $b}) { commentEdge { node { id } } } }",
+        {"s": own["id"], "b": body},
+        ".data.addComment.commentEdge.node.id",
+    )
+    if made == "" or made == "null":
+        fail("the comment on " + own["key"] + " was not made")
+    return made
+
+def with_line(body, line):
+    """A body with line written just above its Plan and design documents heading, or at its end, a blank line around it.
+
+    The heading is the first at level 2 or 3, as star github plan link finds it. The body's line ends are kept.
+    """
+    lines = body_lines(body)
+    eol = line_end(body)
+    found = sections(lines, _DOCUMENTS, _LEVELS)
+    if not found:
+        kept = body.rstrip("\r\n")
+        return (kept + eol + eol if kept else "") + line + eol
+    at = lines[found[0]["first"]]["start"]
+    head = body[:at]
+    gap = "" if head == "" or head.endswith(eol + eol) or head == eol else eol
+    return head + gap + line + eol + eol + body[at:]
+
+def write_line(own, line):
+    """A line written into an issue's body, as with_line places it, unless a line of the body is it already; read back.
+
+    Returns whether it was written.
+    """
+    if line in [text.strip() for text in own["body"].replace("\r\n", "\n").split("\n")]:
+        return False
+    _write_body(own, with_line(own["body"], line), lambda back: line in back.split("\n"), "the line " + line)
+    return True
+
+# ── an issue filed, its issue fields, and an option added ───────────────────
+
+def open_titled(repo, title):
+    """The number of an open issue of repo titled title exactly, among the 100 opened last; None when there is none.
+
+    It is read from the repository's issues, newest first, not from GitHub's search, whose index trails a new issue: a
+    run of star github schedule new or scenario new that stopped partway filed its issue moments before.
+    """
+    owner, name = repo.split("/")
+    query = ("query starStepOpen { repository(owner: \"" + owner + "\", name: \"" + name + "\") { issues(states: [OPEN], " +
+             "first: 100, orderBy: {field: CREATED_AT, direction: DESC}) { nodes { number title } } } }")
+    for node in json.decode(data = _call(query, jq = ".data.repository.issues.nodes") or "[]") or []:
+        if node.get("title") == title:
+            return int(node["number"])
+    return None
+
+def file_issue(repo, fields):
+    """An issue filed in repo through GitHub's REST call, fields its title, body, assignees, and type or labels; its number."""
+    answer = rest("POST", "repos/" + repo + "/issues", fields)
+    if answer == None or not answer.get("number"):
+        fail("GitHub filed no issue in " + repo + ": it answered " + str(answer))
+    return int(answer["number"])
+
+def issue_fields(own):
+    """An issue's single-select issue fields, each field's name to its value's, as GitHub holds them now."""
+    query = ("query starStepFields { node(id: \"" + own["id"] + "\") { ... on Issue { issueFieldValues(first: 20) { nodes { " +
+             "... on IssueFieldSingleSelectValue { name field { ... on IssueFieldCommon { name } } } } } } } }")
+    out = {}
+    for v in json.decode(data = _call(query, jq = ".data.node.issueFieldValues.nodes") or "[]") or []:
+        if type(v) == "dict" and type(v.get("field")) == "dict" and v.get("name"):
+            out[v["field"]["name"]] = v["name"]
+    return out
+
+def set_issue_field(own, field_id, option_id):
+    """An issue's single-select issue field set to an option, by their IDs."""
+    _call(
+        "mutation starStepSetField($i: ID!, $f: ID!, $o: ID!) { setIssueFieldValue(input: {issueId: $i, issueFields: " +
+        "[{fieldId: $f, singleSelectOptionId: $o}]}) { clientMutationId } }",
+        {"i": own["id"], "f": field_id, "o": option_id},
+    )
+
+def add_option(project, field, name, description):
+    """An option added last to a project's single-select field, its color GRAY; the project read again.
+
+    Every existing option is sent back as it is, with its ID, its color and its description, so that no row loses its
+    value: write_options, as star github model apply writes a field's options.
+    """
+    kept = [{"id": o["id"], "name": o["name"], "color": o.get("color"), "description": o.get("description")} for o in project["fields"][field]["options"]]
+    write_options(project["fields"][field]["id"], kept + [{"name": name, "color": "GRAY", "description": description}], "starStepOptions")
+    return project_of(project["id"])
+
+# ── an issue closed, and how a step closed ──────────────────────────────────
+
+def close_issue(own):
+    """An issue closed as completed, by its node ID."""
+    _call(
+        "mutation starStepClose($i: ID!) { closeIssue(input: {issueId: $i, stateReason: COMPLETED}) { issue { id } } }",
+        {"i": own["id"]},
+    )
+
+def issue_state(own):
+    """An issue's state and the reason it closed, as GitHub holds them now: {"state", "reason"}, lower case; None when open."""
+    node = json.decode(data = _call(
+        "query starStepState { node(id: \"" + own["id"] + "\") { ... on Issue { state stateReason } } }",
+        jq = ".data.node",
+    ) or "{}") or {}
+    return {"state": (node.get("state") or "").lower(), "reason": (node.get("stateReason") or "").lower() or None}
+
+# A pull request as close reads it: what its row in the evidence comment names, and whether and when it merged.
+_PULL = "number title merged mergedAt mergeCommit { oid } repository { nameWithOwner }"
+
+def closing_of(key):
+    """How an issue closed, as GitHub records it.
+
+    The record is {"state", "reason", "closed_at", "fields", "labels", "references", "closer"}. references are the pull
+    requests GitHub records as closing it, closedByPullRequestsReferences, merged or not; closer is its last
+    ClosedEvent's closer, with a commit's associated pull requests; fields are its single-select issue fields, by name.
+    """
+    k = parse_key(key)
+    query = ("query starStepClosing { repository(owner: \"" + k["owner"] + "\", name: \"" + k["name"] + "\") { issue(number: " +
+             str(k["number"]) + ") { state stateReason closedAt labels(first: 50) { nodes { name } } issueFieldValues(first: 20) { " +
+             "nodes { ... on IssueFieldSingleSelectValue { name field { ... on IssueFieldCommon { name } } } } } " +
+             "closedByPullRequestsReferences(first: 20, includeClosedPrs: true) { nodes { " + _PULL + " } } " +
+             "timelineItems(itemTypes: [CLOSED_EVENT], last: 1) { nodes { ... on ClosedEvent { closer { __typename " +
+             "... on PullRequest { " + _PULL + " } ... on Commit { oid associatedPullRequests(first: 5) { nodes { " + _PULL +
+             " } } } } } } } } } }")
+    node = json.decode(data = _call(query, jq = ".data.repository.issue"))
+    if node == None:
+        fail("no issue " + k["key"])
+    events = (node.get("timelineItems") or {}).get("nodes") or []
+    return {
+        "state": (node.get("state") or "").lower(),
+        "reason": (node.get("stateReason") or "").lower() or None,
+        "closed_at": node.get("closedAt"),
+        "fields": {
+            v["field"]["name"]: v["name"]
+            for v in ((node.get("issueFieldValues") or {}).get("nodes") or [])
+            if type(v) == "dict" and type(v.get("field")) == "dict" and v.get("name")
+        },
+        "labels": [label["name"] for label in ((node.get("labels") or {}).get("nodes") or [])],
+        "references": (node.get("closedByPullRequestsReferences") or {}).get("nodes") or [],
+        "closer": (events[-1].get("closer") if events and type(events[-1]) == "dict" else None) or {},
+    }
