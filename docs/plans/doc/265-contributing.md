@@ -142,7 +142,7 @@ profile, which is its account's; and a search finding no MIT statement in the re
 
 ### 9.2 Phase 2: the public repositories, Import-AudioCdMetadata and personal
 
-- [ ] NobleFactor/.github, its LICENSE and NOTICE; merged
+- [x] NobleFactor/.github, its LICENSE and NOTICE; merged, NobleFactor/.github#22
 - [ ] devlore-registry, its `CONTRIBUTING.md` removed, `CLA.md` and its README; merged
 - [ ] devlore-cli, its `CONTRIBUTING.md` removed and its README; merged
 - [ ] devlore.noblefactor.com, its LICENSE and NOTICE; merged
