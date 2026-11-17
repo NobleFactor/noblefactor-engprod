@@ -137,6 +137,30 @@ def issue(key, model):
 
 # ── a schedule and a scenario ───────────────────────────────────────────────
 
+def _collection_read(key, model, kind, number, closed, reading):
+    """A schedule or a scenario as _collection reads it, with what stops it: (collection, "") or (None, why).
+
+    The fault is returned, not failed, so that a command can count it among its refusals before it writes anything
+    (#531).
+    """
+    own = issue(key, model)
+    if own["type"] != kind:
+        return None, own["key"] + " is not a " + kind + " issue: its type is " + (own["type"] or "none")
+    if own["state"] != "open" and not reading:
+        return None, own["key"] + " is closed: " + closed
+    attr = kind.lower()
+    rows = [r for r in own["rows"] if r["kind"] == kind and r[attr] != None]
+    if len(rows) != 1:
+        return None, own["key"] + " has " + str(len(rows)) + " rows with a " + kind + " option on its account's " + kind + " projects, not one"
+    project = project_of(rows[0]["project"]["id"])
+    for name in [kind, number, _STATUS_FIELD]:
+        if name not in project["fields"]:
+            return None, project["title"] + " has no " + name + " field"
+    option = [o for o in project["fields"][kind]["options"] if o["name"] == rows[0][attr]]
+    if len(option) != 1:
+        return None, project["title"] + " has no " + kind + " option named " + rows[0][attr]
+    return {"issue": own, "project": project, "option": option[0], "own_item": rows[0]["item"], "field": kind}, ""
+
 def _collection(key, model, kind, number, closed, reading):
     """A schedule or a scenario: its own issue, its team's project of kind with its fields, and its option.
 
@@ -144,23 +168,10 @@ def _collection(key, model, kind, number, closed, reading):
     The option is the one the issue's own row carries; fails, naming why, when the issue is not an issue of kind or has
     no such row, and, unless reading, when it is closed, closed saying what a closed one takes no more of.
     """
-    own = issue(key, model)
-    if own["type"] != kind:
-        fail(own["key"] + " is not a " + kind + " issue: its type is " + (own["type"] or "none"))
-    if own["state"] != "open" and not reading:
-        fail(own["key"] + " is closed: " + closed)
-    attr = kind.lower()
-    rows = [r for r in own["rows"] if r["kind"] == kind and r[attr] != None]
-    if len(rows) != 1:
-        fail(own["key"] + " has " + str(len(rows)) + " rows with a " + kind + " option on its account's " + kind + " projects, not one")
-    project = project_of(rows[0]["project"]["id"])
-    for name in [kind, number, _STATUS_FIELD]:
-        if name not in project["fields"]:
-            fail(project["title"] + " has no " + name + " field")
-    option = [o for o in project["fields"][kind]["options"] if o["name"] == rows[0][attr]]
-    if len(option) != 1:
-        fail(project["title"] + " has no " + kind + " option named " + rows[0][attr])
-    return {"issue": own, "project": project, "option": option[0], "own_item": rows[0]["item"], "field": kind}
+    found, fault = _collection_read(key, model, kind, number, closed, reading)
+    if fault:
+        fail(fault)
+    return found
 
 def schedule(key, model, reading = False):
     """A schedule: its Schedule issue, its team's Schedule project with its fields, and its option.
@@ -169,6 +180,13 @@ def schedule(key, model, reading = False):
     or has no such row, and, unless reading, as get reads a finished schedule, when it is closed.
     """
     return _collection(key, model, _SCHEDULE_FIELD, _STEP_FIELD, "a closed schedule takes no step", reading)
+
+def read_schedule(key, model):
+    """A schedule as schedule reads it, or what stops it: (schedule, "") or (None, why), never failing on the schedule.
+
+    issue move reads the schedule an issue leaves this way, among its refusals, before it writes anything (#531).
+    """
+    return _collection_read(key, model, _SCHEDULE_FIELD, _STEP_FIELD, "a closed schedule takes no step", False)
 
 def scenario(key, model, reading = False):
     """A scenario: its Scenario issue, its team's Scenario project with its fields, and its option.
