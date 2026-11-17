@@ -156,7 +156,7 @@ profile, which is its account's; and a search finding no MIT statement in the re
 
 - [x] azure-cosmos-benchmark-pointreads, jetbrains-idea-settings, jetbrains-rider-settings, specifications and
   azure-database-migration-service; each merged: David-Noble-at-work/azure-cosmos-benchmark-pointreads#5, David-Noble-at-work/jetbrains-idea-settings#1, David-Noble-at-work/jetbrains-rider-settings#1, David-Noble-at-work/specifications#1, David-Noble-at-work/azure-database-migration-service#1
-- [ ] azure-cosmos-cassandra-test, its first commit
+- [x] azure-cosmos-cassandra-test, its first commit, David-Noble-at-work/azure-cosmos-cassandra-test@e378f57
 
 ### 9.4 Phase 4: noblefactor-engprod and the evidence
 
