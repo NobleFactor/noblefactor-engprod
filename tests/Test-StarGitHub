@@ -415,7 +415,8 @@ function base_world {
         {viewer: "stand-in", teams: {engprod: ["stand-in", "member"], devlore: ["other"]},
         issue_fields: {IF_area: {name: "Area", options: {o_product: "Product", o_engineering: "Engineering"}},
             IF_priority: {name: "Priority", options: {o_urgent: "Urgent", o_high_priority: "High", o_medium_priority: "Medium",
-                o_low_priority: "Low"}}},
+                o_low_priority: "Low"}},
+            IF_resolution: {name: "Resolution", options: {o_declined: "Declined", o_duplicate: "Duplicate", o_invalid: "Invalid"}}},
         issues: (
             issue("NobleFactor/alpha"; 20; "Schedule"; "Schedule: s1"; {body: body("s1"; "- 2026-11-01, on the owner'"'"'s word: step 4 was added, Task NobleFactor/alpha#24.\n")})
             + issue("NobleFactor/alpha"; 21; "Task"; "the first step"; {state: "CLOSED"})
@@ -751,6 +752,21 @@ elif $op == "starStepPlace" then
 elif $op == "starStepDeleteRow" then
     {world: ($w | .projects[$p].items |= map(select(.id != $i))), answer: {data: {deleteProjectV2Item: {deletedItemId: $i}}}}
 elif $op == "starStepAmend" then {world: ($w | .issues[$i].body = $b), answer: {data: {updateIssue: {issue: {id: $i}}}}}
+elif $op == "starStepParent" then
+    # An issue's sub-issue parent, its parent the ID a case gives it, and the states of every issue with that parent.
+    ([$w.issues[] | select(.repo == $repo and (.number | tostring) == $number)][0].parent // null) as $pid |
+    {answer: {data: {repository: {issue: {parent: (if $pid == null then null else $w.issues[$pid] |
+        {number, repository: {nameWithOwner: .repo}, subIssues: {nodes: [$w.issues[] | select(.parent == $pid) | {state}]}} end)}}}}}
+elif $op == "restAddLabels" then
+    # Labels added to an issue by REST, its number given as issue(number: N), the body {labels: [...]}.
+    ([$w.issues[] | select(.repo == $repo and (.number | tostring) == $number) | .id][0]) as $id |
+    {world: ($w | .issues[$id].labels = ((.issues[$id].labels // []) + ($body | fromjson | .labels) | unique)),
+        answer: [($w.issues[$id].labels // [])[] | {name: .}]}
+elif $op == "restRemoveLabel" then
+    # A label removed from an issue by REST, its name given as label("<name>").
+    ([$w.issues[] | select(.repo == $repo and (.number | tostring) == $number) | .id][0]) as $id |
+    ($query | capture("label\\(\"(?<l>[^\"]+)\"\\)").l) as $label |
+    {world: ($w | .issues[$id].labels = [(.issues[$id].labels // [])[] | select(. != $label)]), answer: []}
 elif $op == "starStepBlock" then
     {world: ($w | .issues[$i].blockedBy += [$b]), answer: {data: {addBlockedBy: {clientMutationId: null}}}}
 elif $op == "starStepAssign" then
@@ -1139,6 +1155,17 @@ function world_answer {
 if [[ "${method}" == POST && "${rest_path}" =~ ^repos/([^/]+/[^/]+)/issues$ && -r "${GH_REMOTES}/world.json" ]]; then
     query=""
     world_answer restFileIssue "${BASH_REMATCH[1]}"
+fi
+
+# An issue's labels added and removed by REST, star github issue close's and reopen's resolution: label in a user
+# account (#590, #587), when their world is there: the world's issue changes, as GitHub's would.
+if [[ "${method}" == POST && "${rest_path}" =~ ^repos/([^/]+/[^/]+)/issues/([0-9]+)/labels$ && -r "${GH_REMOTES}/world.json" ]]; then
+    query="issue(number: ${BASH_REMATCH[2]})"
+    world_answer restAddLabels "${BASH_REMATCH[1]}"
+fi
+if [[ "${method}" == DELETE && "${rest_path}" =~ ^repos/([^/]+/[^/]+)/issues/([0-9]+)/labels/(.+)$ && -r "${GH_REMOTES}/world.json" ]]; then
+    query="issue(number: ${BASH_REMATCH[2]}) label(\"$(printf '%b' "${BASH_REMATCH[3]//%/\\x}")\")"
+    world_answer restRemoveLabel "${BASH_REMATCH[1]}"
 fi
 
 # A REST write: recorded among the calls, and answered with an ID.
@@ -3890,6 +3917,105 @@ world '(.projects.PVT_c_eng.fields[] | select(.name == "Scenario") | .options[] 
 run_star "${data}" github issue move NobleFactor/alpha#22 NobleFactor/alpha#27 --triage --reason "R."
 expect "121 (#531): --triage off a schedule and a broken scenario is refused, nothing written" error "${no_writes}" \
     "NobleFactor/alpha#27 is on Scenario: engprod's scenario walk, whose option names no Scenario issue" text
+
+# 122 (#590). issue close with --resolution: #22, step 2 of s1, closed as completed with Resolution Declined, its row
+# kept and set Closed first, then the comment saying why, then the Resolution, and the issue closed last.
+world
+run_star "${data}" github issue close NobleFactor/alpha#22 --resolution declined --reason "Not needed now."
+expect "122 (#590): issue close closes #22 with Resolution Declined, its row Closed" ok \
+    'map([.action, .issue, .project, .resolution]) == [["row-closed", "NobleFactor/alpha#22", "Schedule: engprod", null],
+        ["closed", "NobleFactor/alpha#22", null, "Declined"]]'
+check "122 (#590): #22 is closed as completed with Resolution Declined, its comment says why, and its row is kept, Closed" world_holds \
+    '(.issues.I_alpha_22 | [.state, .stateReason, .fields.Resolution]) == ["CLOSED", "COMPLETED", "Declined"]
+        and .issues.I_alpha_22.comments == ["Closed by `star github issue close` on '"${today}"', run by stand-in, with Resolution Declined: Not needed now."]
+        and (.projects.PVT_s_eng.items[] | select(.content == "I_alpha_22") | .values) == {Schedule: "s1", Step: 2, Status: "Closed"}'
+check "122 (#590): the row first, then the comment, then the Resolution, and the issue closed last" calls_hold "${in_order}"'
+    in_order([["starStepSetOption", "i=IT_alpha_22"], ["starStepComment", "s=I_alpha_22"], ["starStepSetField", "i=I_alpha_22"],
+        ["starStepClose", "i=I_alpha_22"]])'
+
+# 123 (#590). issue close with --evidence: #26, in Triage, its row removed, the evidence its comment, headed with the
+# issue's title since the file has no heading, and no Resolution.
+world
+printf 'Shipped in #99.\n' >"${run_directory}/evidence-26.md"
+run_star "${data}" github issue close NobleFactor/alpha#26 --evidence "${run_directory}/evidence-26.md"
+expect "123 (#590): issue close closes #26 with its evidence, and it leaves Triage" ok \
+    'map([.action, .project]) == [["left", "Triage: engprod"], ["closed", null]]'
+check "123 (#590): #26 is closed, its evidence its comment, headed, with no Resolution, and its Triage row is gone" world_holds \
+    '(.issues.I_alpha_26 | [.state, .stateReason, (.fields.Resolution // null)]) == ["CLOSED", "COMPLETED", null]
+        and .issues.I_alpha_26.comments == ["## Evidence: a bug from triage\n\nShipped in #99."]
+        and ([.projects.PVT_t_eng.items[].content] | index("I_alpha_26")) == null'
+
+# 124 (#590). An item on a scenario leaves it when it closes (section 9, question 7): a comment on #40, the Scenario
+# issue, then #27's row removed; its evidence, which has a heading of its own, is its comment as it is.
+world
+printf '## Evidence: walked\n\nThe walk passes.\n' >"${run_directory}/evidence-27.md"
+run_star "${data}" github issue close NobleFactor/alpha#27 --evidence "${run_directory}/evidence-27.md"
+expect "124 (#590): issue close closes #27, and it leaves the scenario walk" ok \
+    'map([.action, .project, .scenario]) == [["left", "Scenario: engprod", "NobleFactor/alpha#40"], ["closed", null, null]]'
+check "124 (#590): #40 says #27 closed and left it, walk keeps only #40's own row, and #27's evidence is as written" world_holds \
+    '.issues.I_alpha_40.comments == ["NobleFactor/alpha#27 closed on '"${today}"', and so left this scenario, by `star github issue close`, run by stand-in."]
+        and ([.projects.PVT_c_eng.items[].content] == ["I_alpha_40"])
+        and .issues.I_alpha_27.comments == ["## Evidence: walked\n\nThe walk passes."] and .issues.I_alpha_27.state == "CLOSED"'
+check "124 (#590): the comment on #40 comes before the row's removal, and the issue is closed last" calls_hold "${in_order}"'
+    in_order([["starStepComment", "s=I_alpha_40"], ["starStepDeleteRow", "p=PVT_c_eng"], ["starStepComment", "s=I_alpha_27"],
+        ["starStepClose", "i=I_alpha_27"]])'
+
+# 125 (#590). issue close doesn't close a parent with its last open child (ruled 2026-11-17): #41's feature, #50, has
+# #41 open and #29 closed, so the record names #50, which stays open.
+world '.issues.I_alpha_50 = {id: "I_alpha_50", repo: "NobleFactor/alpha", number: 50, title: "a feature", state: "OPEN",
+    type: "Feature", labels: [], assignees: [], blockedBy: [], body: ""}
+    | .issues.I_alpha_41.parent = "I_alpha_50" | .issues.I_alpha_29.parent = "I_alpha_50"'
+printf 'Done.\n' >"${run_directory}/evidence-41.md"
+run_star "${data}" github issue close NobleFactor/alpha#41 --evidence "${run_directory}/evidence-41.md"
+expect "125 (#590): closing #41, its feature's last open child, names the feature" ok \
+    'map([.action, .last_child_of]) == [["closed", "NobleFactor/alpha#50"]]'
+check "125 (#590): the feature, #50, stays open" world_holds '.issues.I_alpha_50.state == "OPEN"'
+
+# 126 (#590). In a user account, which has no issue fields, the Resolution is the resolution: label.
+world
+run_star "${data}" github issue close test-user/personal#12 --resolution Duplicate --reason "The same as #11."
+expect "126 (#590): issue close closes test-user/personal#12 with Resolution Duplicate" ok \
+    'map([.action, .resolution]) == [["closed", "Duplicate"]]'
+check "126 (#590): #12 carries resolution:duplicate, and is closed as completed" world_holds \
+    '(.issues.I_personal_12 | [.state, .stateReason, (.labels | index("resolution:duplicate") != null)]) == ["CLOSED", "COMPLETED", true]'
+
+# 127 (#590). An issue already closed is finished, not closed again: #29, closed, still a row of Triage: engprod, loses
+# that row and gets no comment; run again, nothing is written.
+world '.projects.PVT_t_eng.items += [{id: "IT_alpha_29", content: "I_alpha_29", values: {Status: "Open"}}]'
+printf 'Done.\n' >"${run_directory}/evidence-29.md"
+run_star "${data}" github issue close NobleFactor/alpha#29 --evidence "${run_directory}/evidence-29.md"
+expect "127 (#590): a closed issue's Triage row is removed, and nothing else is written" ok 'map(.action) == ["left"]'
+check "127 (#590): #29 has no comment, and its Triage row is gone" world_holds \
+    '((.issues.I_alpha_29.comments // []) == []) and ([.projects.PVT_t_eng.items[].content] | index("I_alpha_29")) == null'
+run_star "${data}" github issue close NobleFactor/alpha#29 --evidence "${run_directory}/evidence-29.md"
+expect "127 (#590): run again, it is unchanged, and nothing is written" ok "${no_writes}"' and map(.action) == ["unchanged"]'
+
+# 128 (#590). issue close refuses, writing nothing: a Schedule issue; neither --evidence nor --resolution, and both;
+# --resolution without --reason, and one the account doesn't have; --reason with --evidence; a missing evidence file; an
+# item on a scenario whose option names no Scenario issue; and star's --dry-run.
+world
+run_star "${data}" github issue close NobleFactor/alpha#20 --evidence "${run_directory}/evidence-41.md"
+expect "128 (#590): a Schedule issue is refused, naming its group's close" error "${no_writes}" \
+    "NobleFactor/alpha#20 is a Schedule issue: star github schedule close closes it" text
+run_star "${data}" github issue close NobleFactor/alpha#41
+expect "128 (#590): neither --evidence nor --resolution is refused" error "${no_writes}" "neither was given" text
+run_star "${data}" github issue close NobleFactor/alpha#41 --evidence "${run_directory}/evidence-41.md" --resolution Declined --reason "R."
+expect "128 (#590): and both" error "${no_writes}" "both were given" text
+run_star "${data}" github issue close NobleFactor/alpha#41 --resolution Declined
+expect "128 (#590): --resolution without --reason is refused" error "${no_writes}" "--resolution needs --reason" text
+run_star "${data}" github issue close NobleFactor/alpha#41 --resolution Wontfix --reason "R."
+expect "128 (#590): a resolution that is not one of the three is refused" error "${no_writes}" \
+    "--resolution is one of Declined, Duplicate, Invalid, not Wontfix" text
+run_star "${data}" github issue close NobleFactor/alpha#41 --evidence "${run_directory}/evidence-41.md" --reason "R."
+expect "128 (#590): --reason with --evidence is refused" error "${no_writes}" "--reason goes with --resolution" text
+run_star "${data}" github issue close NobleFactor/alpha#41 --evidence "${run_directory}/no-such-evidence.md"
+expect "128 (#590): a missing evidence file is refused" error "${no_writes}" "which is missing or empty" text
+world '(.projects.PVT_c_eng.fields[] | select(.name == "Scenario") | .options[] | select(.name == "walk") | .description) = ""'
+run_star "${data}" github issue close NobleFactor/alpha#27 --evidence "${run_directory}/evidence-41.md"
+expect "128 (#590): an item on a scenario whose option names no Scenario issue is refused" error "${no_writes}" \
+    "NobleFactor/alpha#27 is on Scenario: engprod's scenario walk, whose option names no Scenario issue" text
+run_star "${data}" github issue close NobleFactor/alpha#41 --evidence "${run_directory}/evidence-41.md" --dry-run
+expect "128 (#590): and star's --dry-run, until devlore-cli#1170" error "${no_writes}" "1170" text
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"

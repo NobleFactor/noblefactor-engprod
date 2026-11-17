@@ -188,6 +188,27 @@ commands:
         default: ""
         help: "Why they move, written in the Schedule issue's amendment or the comment on the Scenario issue; required"
 
+  - name: github.issue.close
+    help: "Close issues, in the order given, each in one act, everything read before the first write: an issue whose work was done with --evidence, its file the comment; one whose work was not done with --resolution and --reason, its Resolution set and a comment saying why; each closed as completed, last, after its rows: a Schedule row set Closed and kept, a Scenario row removed after a comment on the Scenario issue, a Triage or Backlog row removed; an issue already closed is finished, not closed again; a Schedule or Scenario issue is refused, naming its group's close; return one flat record for each issue and row, naming a parent whose last open child it closed; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    implementation: commands/github-issue-close.star
+    args:
+      - name: issues
+        help: "The issues to close, <owner>/<repository>#<number>, in the order given"
+        variadic: true
+    flags:
+      - name: evidence
+        type: string
+        default: ""
+        help: "For work done: a file whose text is each issue's evidence comment, headed ## Evidence: <title> when it has no heading"
+      - name: resolution
+        type: string
+        default: ""
+        help: "For work not done: Declined, Duplicate or Invalid, the issue field in an organization, the resolution: label in a user account; needs --reason"
+      - name: reason
+        type: string
+        default: ""
+        help: "With --resolution, why the work was not done, written in the comment on each issue"
+
   - name: github.plan.link
     help: "Write the Plan and design documents section of each issue the plans named serve, from every plan that serves it: a Plan row for each plan, then each plan's documents: entries; the section found by its heading and replaced whole, added at the end when there is none, and nothing written when there are two; return one flat record for each issue, with what was done and the rows the section drops; exits non-zero only on an error; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read, and --check writes nothing"
     implementation: commands/github-plan-link.star

@@ -1,7 +1,7 @@
 ---
 title: "The star github issue verbs, open, move, close and reopen, designed and built in one pull request"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/589
-status: approved
+status: active
 created: 2026-11-17
 updated: 2026-11-17
 documents:
@@ -112,7 +112,7 @@ A new section 10 of the issue data model, `10-the-issue-commands.md`, and its st
 
 ### 9.3 Phase 3: the builds
 
-- [ ] `close` (#590), with its cases
+- [x] `close` (#590), with its cases, 122 to 128, built on 2026-11-17: its rows first, then its comment, its Resolution, and the issue closed last
 - [ ] `reopen` (#587), with its cases
 - [ ] `open` and `create` (#338), with its cases
 - [ ] The collection groups' `open`, `close` and `reopen`, `new` and `retire` renamed everywhere they stand (#595), with their cases
