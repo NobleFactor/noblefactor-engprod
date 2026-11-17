@@ -1,7 +1,7 @@
 ---
 title: "Every repository carries its own LICENSE and shows its account's CONTRIBUTING.md"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/265
-status: approved
+status: complete
 created: 2026-11-16
 updated: 2026-11-16
 documents:
@@ -148,19 +148,24 @@ profile, which is its account's; and a search finding no MIT statement in the re
 - [x] devlore.noblefactor.com, its LICENSE and NOTICE; merged, NobleFactor/devlore.noblefactor.com#545
 - [x] docker-homebridge, relicensed and its guide moved; merged, NobleFactor/docker-homebridge#20
 - [x] Import-AudioCdMetadata, relicensed; merged, NobleFactor/Import-AudioCdMetadata#3
-- [x] NobleFactor's noblefactor, acumen and Fixup-MusicLibrary, their LICENSE and NOTICE; each merged: NobleFactor/noblefactor#66, NobleFactor/acumen#2, NobleFactor/Fixup-MusicLibrary#2
+- [x] NobleFactor's noblefactor, acumen and Fixup-MusicLibrary, their LICENSE and NOTICE; each merged:
+  NobleFactor/noblefactor#66, NobleFactor/acumen#2, NobleFactor/Fixup-MusicLibrary#2
 - [x] David-Noble-at-work/.github, its LICENSE and NOTICE; merged, David-Noble-at-work/.github#17
-- [x] David-Noble-at-work/personal, relicensed and its `CONTRIBUTING.md` removed; merged, David-Noble-at-work/personal#337
+- [x] David-Noble-at-work/personal, relicensed and its `CONTRIBUTING.md` removed; merged,
+  David-Noble-at-work/personal#337
 
 ### 9.3 Phase 3: David-Noble-at-work's private repositories
 
 - [x] azure-cosmos-benchmark-pointreads, jetbrains-idea-settings, jetbrains-rider-settings, specifications and
-  azure-database-migration-service; each merged: David-Noble-at-work/azure-cosmos-benchmark-pointreads#5, David-Noble-at-work/jetbrains-idea-settings#1, David-Noble-at-work/jetbrains-rider-settings#1, David-Noble-at-work/specifications#1, David-Noble-at-work/azure-database-migration-service#1
+  azure-database-migration-service; each merged: David-Noble-at-work/azure-cosmos-benchmark-pointreads#5,
+  David-Noble-at-work/jetbrains-idea-settings#1, David-Noble-at-work/jetbrains-rider-settings#1,
+  David-Noble-at-work/specifications#1, David-Noble-at-work/azure-database-migration-service#1
 - [x] azure-cosmos-cassandra-test, its first commit, David-Noble-at-work/azure-cosmos-cassandra-test@e378f57
 
 ### 9.4 Phase 4: noblefactor-engprod and the evidence
 
-- [ ] Section 6's sentence; the check posted on #265; merged, closing #265
+- [x] Section 6's sentence; the check run on 2026-11-16, every repository by the rule, and posted on #265; merged in the
+  pull request that carries this line, closing #265
 
 ## 10. Files and related assets
 
@@ -200,4 +205,8 @@ Approved by the owner 2026-11-16, with:
 
 ## 13. Completion review
 
-Pending.
+Complete 2026-11-16: 16 pull requests merged, one repository at a time, and azure-cosmos-cassandra-test's first commit,
+each named in § 9; noblefactor-engprod's own closes #265. The check, `check-265.bash`, read every repository of both
+accounts from GitHub that day: each license by the rule, every public repository showing its account's
+`CONTRIBUTING.md`, no per-commit rule and no MIT statement left in the three relicensed. Its output is #265's evidence
+comment. Nothing is outstanding.
