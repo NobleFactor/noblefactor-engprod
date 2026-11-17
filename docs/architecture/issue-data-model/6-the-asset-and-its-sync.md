@@ -228,9 +228,7 @@ forms among them, asks for the Plan and design documents table, and its quality 
 file's `pulled.at` was until #426 retired it. `SECURITY.md` sends reports to GitHub's private vulnerability reporting,
 on for every public NobleFactor repository since the same day.
 
-Since 2026-11-16 no repository of either account, forks aside, carries a `CONTRIBUTING.md` of its own, so GitHub
-shows its account's in every one; and every one carries its own `LICENSE`, Apache 2.0 with a `NOTICE`, but
-devlore-registry, whose lore packages are MIT (#265).
+Since 2026-11-16 no repository of either account, forks aside, carries a `CONTRIBUTING.md` of its own, so GitHub shows its account's in every one; and every one carries its own `LICENSE`, Apache 2.0 with a `NOTICE`, but devlore-registry, whose lore packages are MIT (#265).
 
 Since 2026-11-09 David-Noble-at-work/.github holds the same, worded for the account (#441,
 David-Noble-at-work/.github#1): its model file, its pull request template, `CONTRIBUTING.md`, `SECURITY.md` and
