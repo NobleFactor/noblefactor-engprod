@@ -148,7 +148,7 @@ profile, which is its account's; and a search finding no MIT statement in the re
 - [x] devlore.noblefactor.com, its LICENSE and NOTICE; merged, NobleFactor/devlore.noblefactor.com#545
 - [x] docker-homebridge, relicensed and its guide moved; merged, NobleFactor/docker-homebridge#20
 - [x] Import-AudioCdMetadata, relicensed; merged, NobleFactor/Import-AudioCdMetadata#3
-- [ ] NobleFactor's noblefactor, acumen and Fixup-MusicLibrary, their LICENSE and NOTICE; each merged
+- [x] NobleFactor's noblefactor, acumen and Fixup-MusicLibrary, their LICENSE and NOTICE; each merged: NobleFactor/noblefactor#66, NobleFactor/acumen#2, NobleFactor/Fixup-MusicLibrary#2
 - [ ] David-Noble-at-work/.github, its LICENSE and NOTICE; merged
 - [ ] David-Noble-at-work/personal, relicensed and its `CONTRIBUTING.md` removed; merged
 
