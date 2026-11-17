@@ -189,7 +189,7 @@ commands:
         help: "Why they move, written in the Schedule issue's amendment or the comment on the Scenario issue; required"
 
   - name: github.issue.close
-    help: "Close issues, in the order given, each in one act, everything read before the first write: an issue whose work was done with --evidence, its file the comment; one whose work was not done with --resolution and --reason, its Resolution set and a comment saying why; each closed as completed, last, after its rows: a Schedule row set Closed and kept, a Scenario row removed after a comment on the Scenario issue, a Triage or Backlog row removed; an issue already closed is finished, not closed again; a Schedule or Scenario issue is refused, naming its group's close; return one flat record for each issue and row, naming a parent whose last open child it closed; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    help: "Close issues, in the order given, each in one act, everything read before the first write: an issue whose work was done with --evidence, its file the comment; one whose work was not done with --resolution and --reason, its Resolution set and a comment saying why; each closed as completed, and then its rows: a Schedule row set Closed and kept, a Scenario row removed after a comment on the Scenario issue, a Triage or Backlog row removed; an issue already closed is left as it is; a Schedule or Scenario issue is refused, naming its group's close; return one flat record for each issue and row, naming a parent whose last open child it closed; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
     implementation: commands/github-issue-close.star
     args:
       - name: issues

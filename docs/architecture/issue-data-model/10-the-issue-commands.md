@@ -89,16 +89,14 @@ star github issue close <issue>... --resolution Declined|Duplicate|Invalid --rea
 
 Exactly one of `--evidence` and `--resolution` is given. An issue whose work was done closes with its evidence; an issue whose work was not done closes as completed with its Resolution saying why, and GitHub's `not_planned` is not used (issue standards, § Resolution, ruled 2026-11-03).
 
-`close` does, for each issue, in this order, the issue closed last, as `star github schedule close` closes its issue last, so that a run that stops partway leaves the issue open, where the same command run again finds it:
+`close` does, for each issue, in this order:
 
-1. **Its rows:** on a Schedule project, Status Closed, the row kept, as a merged step's is (section 8, question 5); on a Scenario project, a comment on the Scenario issue that the item closed, then the row removed, as a closed item leaves its scenario (section 9, question 7); on Triage, the row removed, triage's decision made; on Backlog, the row removed, since nothing is left to schedule.
-2. **The comment:** the evidence file, word for word, headed `## Evidence: <title>` when it has no heading of its own; or `Closed by \`star github issue close\` on <date>, run by <login>, with Resolution <resolution>: <reason>.`
-3. **The Resolution,** with `--resolution`: the Resolution field in NobleFactor, the `resolution:<name>` label in David-Noble-at-work.
-4. **The issue closed,** as completed.
+1. **The comment:** the evidence file, word for word, headed `## Evidence: <title>` when it has no heading of its own; or `Closed by \`star github issue close\` on <date>, run by <login>, with Resolution <resolution>: <reason>.`
+2. **The Resolution,** with `--resolution`: the Resolution field in NobleFactor, the `resolution:<name>` label in David-Noble-at-work.
+3. **The issue closed,** as completed.
+4. **Its rows:** on a Schedule project, Status Closed, the row kept, as a merged step's is (section 8, question 5); on a Scenario project, a comment on the Scenario issue that the item closed, then the row removed, as a closed item leaves its scenario (section 9, question 7); on Triage, the row removed, triage's decision made; on Backlog, the row removed, since nothing is left to schedule.
 
-An issue already closed is finished, not closed again: any row of it the steps above would change is changed, and nothing else is written.
-
-`close` refuses, writing nothing: neither or both of `--evidence` and `--resolution`; `--resolution` without `--reason`, or with a name its account doesn't have; an evidence file that is missing or empty; and a Schedule or Scenario issue, naming `star github schedule close` or `star github scenario close`. An issue already closed with nothing left to change is left as it is, its record `unchanged`.
+`close` refuses, writing nothing: neither or both of `--evidence` and `--resolution`; `--resolution` without `--reason`, or with a name its account doesn't have; an evidence file that is missing or empty; and a Schedule or Scenario issue, naming `star github schedule close` or `star github scenario close`. An issue already closed is left as it is, its record `unchanged`.
 
 **Ruled 2026-11-17, as proposed:** `close` doesn't close a parent when it closes the parent's last open child. A feature or an epic closes with its own evidence, by `close` run on it; when an issue `close` closes is its parent's last open child, its record says so, with the parent's key.
 

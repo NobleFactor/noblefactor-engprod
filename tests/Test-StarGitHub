@@ -3918,20 +3918,20 @@ run_star "${data}" github issue move NobleFactor/alpha#22 NobleFactor/alpha#27 -
 expect "121 (#531): --triage off a schedule and a broken scenario is refused, nothing written" error "${no_writes}" \
     "NobleFactor/alpha#27 is on Scenario: engprod's scenario walk, whose option names no Scenario issue" text
 
-# 122 (#590). issue close with --resolution: #22, step 2 of s1, closed as completed with Resolution Declined, its row
-# kept and set Closed first, then the comment saying why, then the Resolution, and the issue closed last.
+# 122 (#590). issue close with --resolution: #22, step 2 of s1, closed as completed with Resolution Declined, in section
+# 10's order: the comment saying why, the Resolution, the issue closed, then its row kept and set Closed.
 world
 run_star "${data}" github issue close NobleFactor/alpha#22 --resolution declined --reason "Not needed now."
 expect "122 (#590): issue close closes #22 with Resolution Declined, its row Closed" ok \
-    'map([.action, .issue, .project, .resolution]) == [["row-closed", "NobleFactor/alpha#22", "Schedule: engprod", null],
-        ["closed", "NobleFactor/alpha#22", null, "Declined"]]'
+    'map([.action, .issue, .project, .resolution]) == [["closed", "NobleFactor/alpha#22", null, "Declined"],
+        ["row-closed", "NobleFactor/alpha#22", "Schedule: engprod", null]]'
 check "122 (#590): #22 is closed as completed with Resolution Declined, its comment says why, and its row is kept, Closed" world_holds \
     '(.issues.I_alpha_22 | [.state, .stateReason, .fields.Resolution]) == ["CLOSED", "COMPLETED", "Declined"]
         and .issues.I_alpha_22.comments == ["Closed by `star github issue close` on '"${today}"', run by stand-in, with Resolution Declined: Not needed now."]
         and (.projects.PVT_s_eng.items[] | select(.content == "I_alpha_22") | .values) == {Schedule: "s1", Step: 2, Status: "Closed"}'
-check "122 (#590): the row first, then the comment, then the Resolution, and the issue closed last" calls_hold "${in_order}"'
-    in_order([["starStepSetOption", "i=IT_alpha_22"], ["starStepComment", "s=I_alpha_22"], ["starStepSetField", "i=I_alpha_22"],
-        ["starStepClose", "i=I_alpha_22"]])'
+check "122 (#590): the comment, then the Resolution, then the issue closed, and its row last" calls_hold "${in_order}"'
+    in_order([["starStepComment", "s=I_alpha_22"], ["starStepSetField", "i=I_alpha_22"], ["starStepClose", "i=I_alpha_22"],
+        ["starStepSetOption", "i=IT_alpha_22"]])'
 
 # 123 (#590). issue close with --evidence: #26, in Triage, its row removed, the evidence its comment, headed with the
 # issue's title since the file has no heading, and no Resolution.
@@ -3939,7 +3939,7 @@ world
 printf 'Shipped in #99.\n' >"${run_directory}/evidence-26.md"
 run_star "${data}" github issue close NobleFactor/alpha#26 --evidence "${run_directory}/evidence-26.md"
 expect "123 (#590): issue close closes #26 with its evidence, and it leaves Triage" ok \
-    'map([.action, .project]) == [["left", "Triage: engprod"], ["closed", null]]'
+    'map([.action, .project]) == [["closed", null], ["left", "Triage: engprod"]]'
 check "123 (#590): #26 is closed, its evidence its comment, headed, with no Resolution, and its Triage row is gone" world_holds \
     '(.issues.I_alpha_26 | [.state, .stateReason, (.fields.Resolution // null)]) == ["CLOSED", "COMPLETED", null]
         and .issues.I_alpha_26.comments == ["## Evidence: a bug from triage\n\nShipped in #99."]
@@ -3951,14 +3951,14 @@ world
 printf '## Evidence: walked\n\nThe walk passes.\n' >"${run_directory}/evidence-27.md"
 run_star "${data}" github issue close NobleFactor/alpha#27 --evidence "${run_directory}/evidence-27.md"
 expect "124 (#590): issue close closes #27, and it leaves the scenario walk" ok \
-    'map([.action, .project, .scenario]) == [["left", "Scenario: engprod", "NobleFactor/alpha#40"], ["closed", null, null]]'
+    'map([.action, .project, .scenario]) == [["closed", null, null], ["left", "Scenario: engprod", "NobleFactor/alpha#40"]]'
 check "124 (#590): #40 says #27 closed and left it, walk keeps only #40's own row, and #27's evidence is as written" world_holds \
     '.issues.I_alpha_40.comments == ["NobleFactor/alpha#27 closed on '"${today}"', and so left this scenario, by `star github issue close`, run by stand-in."]
         and ([.projects.PVT_c_eng.items[].content] == ["I_alpha_40"])
         and .issues.I_alpha_27.comments == ["## Evidence: walked\n\nThe walk passes."] and .issues.I_alpha_27.state == "CLOSED"'
-check "124 (#590): the comment on #40 comes before the row's removal, and the issue is closed last" calls_hold "${in_order}"'
-    in_order([["starStepComment", "s=I_alpha_40"], ["starStepDeleteRow", "p=PVT_c_eng"], ["starStepComment", "s=I_alpha_27"],
-        ["starStepClose", "i=I_alpha_27"]])'
+check "124 (#590): the issue is closed, then #40 is told, then the row is removed" calls_hold "${in_order}"'
+    in_order([["starStepComment", "s=I_alpha_27"], ["starStepClose", "i=I_alpha_27"], ["starStepComment", "s=I_alpha_40"],
+        ["starStepDeleteRow", "p=PVT_c_eng"]])'
 
 # 125 (#590). issue close doesn't close a parent with its last open child (ruled 2026-11-17): #41's feature, #50, has
 # #41 open and #29 closed, so the record names #50, which stays open.
@@ -3979,16 +3979,12 @@ expect "126 (#590): issue close closes test-user/personal#12 with Resolution Dup
 check "126 (#590): #12 carries resolution:duplicate, and is closed as completed" world_holds \
     '(.issues.I_personal_12 | [.state, .stateReason, (.labels | index("resolution:duplicate") != null)]) == ["CLOSED", "COMPLETED", true]'
 
-# 127 (#590). An issue already closed is finished, not closed again: #29, closed, still a row of Triage: engprod, loses
-# that row and gets no comment; run again, nothing is written.
+# 127 (#590). An issue already closed is left as it is (section 10, ruled 2026-11-17): #29, closed, though still a row
+# of Triage: engprod, is unchanged, and nothing is written.
 world '.projects.PVT_t_eng.items += [{id: "IT_alpha_29", content: "I_alpha_29", values: {Status: "Open"}}]'
 printf 'Done.\n' >"${run_directory}/evidence-29.md"
 run_star "${data}" github issue close NobleFactor/alpha#29 --evidence "${run_directory}/evidence-29.md"
-expect "127 (#590): a closed issue's Triage row is removed, and nothing else is written" ok 'map(.action) == ["left"]'
-check "127 (#590): #29 has no comment, and its Triage row is gone" world_holds \
-    '((.issues.I_alpha_29.comments // []) == []) and ([.projects.PVT_t_eng.items[].content] | index("I_alpha_29")) == null'
-run_star "${data}" github issue close NobleFactor/alpha#29 --evidence "${run_directory}/evidence-29.md"
-expect "127 (#590): run again, it is unchanged, and nothing is written" ok "${no_writes}"' and map(.action) == ["unchanged"]'
+expect "127 (#590): a closed issue is unchanged, and nothing is written" ok "${no_writes}"' and map(.action) == ["unchanged"]'
 
 # 128 (#590). issue close refuses, writing nothing: a Schedule issue; neither --evidence nor --resolution, and both;
 # --resolution without --reason, and one the account doesn't have; --reason with --evidence; a missing evidence file; an

@@ -7,20 +7,20 @@
 #
 # docs/plans/doc/589-issue-verbs.md (noblefactor-engprod#590), to section 10 of the issue data model, § Closing an
 # issue. An issue whose work was done closes with its evidence; one whose work was not done closes as completed with its
-# Resolution saying why, and GitHub's not_planned is not used (ruled 2026-11-03). For each issue, in this order, the
-# issue closed last, so that a run that stops partway leaves it open, where the same command run again finds it:
+# Resolution saying why, and GitHub's not_planned is not used (ruled 2026-11-03). For each issue, in section 10's order
+# (ruled 2026-11-17, kept as approved):
 #
-#   1. Its rows: on a Schedule project, Status Closed, the row kept (section 8, question 5); on a Scenario project, a
+#   1. The comment: the evidence file, or the Resolution and the reason, from templates/issue-close.md.template.
+#   2. The Resolution: the issue field in an organization, the resolution: label in a user account.
+#   3. The issue closed, as completed.
+#   4. Its rows: on a Schedule project, Status Closed, the row kept (section 8, question 5); on a Scenario project, a
 #      comment on the Scenario issue that the item closed, then the row removed (section 9, question 7); on Triage and
 #      on Backlog, the row removed.
-#   2. The comment: the evidence file, or the Resolution and the reason, from templates/issue-close.md.template.
-#   3. The Resolution: the issue field in an organization, the resolution: label in a user account.
-#   4. The issue closed, as completed.
 #
 # Everything is read before the first write, so that a fault is a refusal with nothing written (#531); each write is
 # read back, and noted as it is made. A Schedule or Scenario issue is refused, naming its group's close (ruled
-# 2026-11-17, #595). An issue already closed is finished: any row of it the steps above would change is changed. It
-# doesn't close a parent with its last open child (ruled 2026-11-17); its record names the parent then.
+# 2026-11-17, #595). An issue already closed is left as it is, its record unchanged. It doesn't close a parent with its
+# last open child (ruled 2026-11-17); its record names the parent then.
 
 load("commands/access.star", "check_access")
 load(
@@ -165,15 +165,17 @@ def run(_command, ctx):
         if why != "":
             refused.append(why)
             continue
+        if r["state"] == "closed":
+            work.append({"r": r})
+            continue
         changes, faults = _rows(r, model)
         refused.extend(faults)
         plan = None
-        if resolution != "" and r["state"] != "closed":
+        if resolution != "":
             plan, fault = resolution_plan(model, resolution)
             if fault != "":
                 refused.append(k + ": " + fault)
-        parent = parent_of(k) if r["state"] != "closed" else None
-        work.append({"r": r, "model": model, "changes": changes, "plan": plan, "parent": parent})
+        work.append({"r": r, "model": model, "changes": changes, "plan": plan, "parent": parent_of(k)})
     if refused:
         fail("nothing was written:\n  " + "\n  ".join(refused))
 
@@ -182,11 +184,8 @@ def run(_command, ctx):
     out = []
     for w in work:
         r = w["r"]
-        for change in w["changes"]:
-            out.append(_change(r, change, date, login, resolution if w["plan"] != None else None))
         if r["state"] == "closed":
-            if not w["changes"]:
-                out.append(_record(r["key"], "unchanged"))
+            out.append(_record(r["key"], "unchanged"))
             continue
 
         if text != "":
@@ -206,4 +205,6 @@ def run(_command, ctx):
         note("closed " + r["key"] + " as completed")
         last = w["parent"]["key"] if w["parent"] != None and w["parent"]["open"] == 1 else None
         out.append(_record(r["key"], "closed", resolution = w["plan"]["name"] if w["plan"] != None else None, parent = last))
+        for change in w["changes"]:
+            out.append(_change(r, change, date, login, resolution if w["plan"] != None else None))
     return out

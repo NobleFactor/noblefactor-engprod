@@ -112,7 +112,7 @@ A new section 10 of the issue data model, `10-the-issue-commands.md`, and its st
 
 ### 9.3 Phase 3: the builds
 
-- [x] `close` (#590), with its cases, 122 to 128, built on 2026-11-17: its rows first, then its comment, its Resolution, and the issue closed last
+- [x] `close` (#590), with its cases, 122 to 128, built on 2026-11-17 in section 10's order: its comment, its Resolution, the issue closed, then its rows
 - [ ] `reopen` (#587), with its cases
 - [ ] `open` and `create` (#338), with its cases
 - [ ] The collection groups' `open`, `close` and `reopen`, `new` and `retire` renamed everywhere they stand (#595), with their cases
@@ -155,6 +155,10 @@ Ruled by the owner on 2026-11-17, each as proposed:
 4. **The filing skill:** in #338, or an issue of its own? Proposed: its own issue, on iteration 2, after this one merges.
 
 Approved by the owner on 2026-11-17.
+
+Departures, each ruled by the owner:
+
+1. **`close`'s order, ruled 2026-11-17: section 10's order stands.** `close` was first built, in b68d022, to change an issue's rows first and close it last, and to change the rows of an issue already closed. The owner ruled the approved order kept: the comment, the Resolution, the issue closed, then its rows; an issue already closed is left as it is. The next commit restored it.
 
 ## 13. Completion review
 
