@@ -52,6 +52,7 @@ load(
     "put_beat",
     "put_open",
     "read_row",
+    "read_schedule",
     "rows",
     "scenario",
     "schedule",
@@ -276,16 +277,36 @@ def _shift(sched, m):
         from_step = m["from"],
     )
 
-def _take_off(r, row, sched, model, login, date, reason):
+def _source_schedule(r, row, sched, model):
+    """The other schedule an issue is on, read before anything is written: ({key, sched, rows}, "") or (None, why not).
+
+    Its Schedule issue is found through the option's description, then read with its own row and option, and its steps;
+    a fault in any of them is a refusal, so that issue move refuses rather than stopping after its first write (#531).
+    """
+    key = _option_key(_project_for(row, sched), "Schedule", row["schedule"])
+    if key == "":
+        return None, r["key"] + " is on " + row["project"]["title"] + "'s schedule " + str(row["schedule"]) + ", whose option names no Schedule issue"
+    other, fault = read_schedule(key, model)
+    if fault:
+        return None, r["key"] + " is on the schedule " + key + ", which issue move can't read: " + fault
+    return {"key": key, "sched": other, "rows": rows(other, model)}, ""
+
+def _source_scenario(r, row, model):
+    """The scenario an item is on, read before anything is written: ({key, issue}, "") or (None, why not) (#531)."""
+    key = _option_key(project_of(row["project"]["id"]), "Scenario", row["scenario"])
+    if key == "":
+        return None, r["key"] + " is on " + row["project"]["title"] + "'s scenario " + row["scenario"] + ", whose option names no Scenario issue"
+    return {"key": key, "issue": issue(key, model)}, ""
+
+def _take_off(r, row, sched, login, date, reason, source):
     """An issue taken off the other schedule it is on: its later steps up one, and that Schedule issue amended.
 
     On the same project the row stays, and put gives it this schedule's option; on another team's project it is deleted.
+    source is the other schedule as _source_schedule read it, before anything was written.
     """
-    other_key = _option_key(_project_for(row, sched), "Schedule", row["schedule"])
-    if other_key == "":
-        fail(r["key"] + " is on " + row["project"]["title"] + "'s schedule " + str(row["schedule"]) + ", whose option names no Schedule issue")
-    other = schedule(other_key, model)
-    moves = closing(rows(other, model), [row["item"]])
+    other_key = source["key"]
+    other = source["sched"]
+    moves = closing(source["rows"], [row["item"]])
     out = [_record(r["key"], r["type"], r["title"], "taken-off", other["project"]["title"], schedule = other_key, from_step = row["step"])]
     for m in sorted(moves, key = lambda m: m["from"]):
         out.append(_shift(other, m))
@@ -304,16 +325,15 @@ def _take_off(r, row, sched, model, login, date, reason):
     _note("amended " + other_key)
     return out
 
-def _record_leaving(r, row, model, to, step, where, login, date, reason):
+def _record_leaving(r, source, to, step, where, login, date, reason):
     """An item's leaving recorded before its scenario row moves: a comment on the Scenario issue, then a line in its body.
 
     The comment comes first, so that a run that stops before the row moves leaves a second comment, not a move
-    unrecorded (section 9, § Off a scenario). Returns the Scenario issue's key.
+    unrecorded (section 9, § Off a scenario). source is the scenario as _source_scenario read it, before anything was
+    written. Returns the Scenario issue's key.
     """
-    key = _option_key(project_of(row["project"]["id"]), "Scenario", row["scenario"])
-    if key == "":
-        fail(r["key"] + " is on " + row["project"]["title"] + "'s scenario " + row["scenario"] + ", whose option names no Scenario issue")
-    comment(issue(key, model), _scenario_comment({
+    key = source["key"]
+    comment(source["issue"], _scenario_comment({
         "issue": r["key"],
         "action": "left",
         "date": date,
@@ -348,6 +368,22 @@ def _onto_schedule(sk, keys, after, blockers, assignee, reason):
     refused = []
     for r in read:
         refused.extend(_refusals(r, sched, model, account, assignee, resume, after))
+
+    # Every schedule and scenario an issue leaves is read now, before the first write, so that a fault in one is a
+    # refusal and not a run stopped halfway (#531).
+    sources = {}
+    for r in read:
+        for row in r["rows"]:
+            if row["kind"] == SCHEDULE_KIND and row["schedule"] not in [None, sched["option"]["name"]]:
+                source, fault = _source_schedule(r, row, sched, model)
+            elif row["kind"] == SCENARIO_KIND and row["scenario"] != None:
+                source, fault = _source_scenario(r, row, model)
+            else:
+                continue
+            if fault:
+                refused.append(fault)
+            else:
+                sources[row["item"]] = source
     blocking = {b: issue(b, model)["id"] for b in blockers}
     if refused:
         fail("nothing was written:\n  " + "\n  ".join(refused))
@@ -394,7 +430,7 @@ def _onto_schedule(sk, keys, after, blockers, assignee, reason):
         mine = here[r["key"]]
         on = [row for row in r["rows"] if row["project"]["id"] == sched["project"]["id"]]
         for row in [row for row in r["rows"] if row["kind"] == SCHEDULE_KIND and row["schedule"] not in [None, sched["option"]["name"]]]:
-            out.extend(_take_off(r, row, sched, model, login, date, reason))
+            out.extend(_take_off(r, row, sched, login, date, reason, sources[row["item"]]))
         item = on[0]["item"] if on else add_row(sched["project"], r["id"])
 
         # A step moved within its schedule keeps its Status; one put on the schedule is Open.
@@ -423,7 +459,7 @@ def _onto_schedule(sk, keys, after, blockers, assignee, reason):
                     out.append(_record(r["key"], r["type"], r["title"], "left", row["project"]["title"]))
                 elif row["kind"] == SCENARIO_KIND and row["scenario"] != None:
                     where = sched["option"]["name"] + " (" + _short(sched["issue"]["key"], r["repo"]) + "), as its step " + str(step)
-                    left = _record_leaving(r, row, model, sched["issue"]["key"], step, where, login, date, reason)
+                    left = _record_leaving(r, sources[row["item"]], sched["issue"]["key"], step, where, login, date, reason)
                     delete_row(row["project"]["id"], row["item"])
                     _note("took " + r["key"] + "'s row off " + row["project"]["title"])
                     out.append(_record(r["key"], r["type"], r["title"], "left", row["project"]["title"], scenario = left, beat = row["beat"]))
@@ -555,10 +591,13 @@ def _onto_scenario(ck, keys, beat, reason):
 
 # ── off a schedule or a scenario ────────────────────────────────────────────
 
-def _group(groups, order, key, model, r, row):
-    """An issue counted among those taken off the schedule key, with its row on it, None when it has none left."""
+def _group(groups, order, key, model, r, row, sched = None):
+    """An issue counted among those taken off the schedule key, with its row on it, None when it has none left.
+
+    sched is the schedule when it has been read already, as read_schedule reads it among the refusals.
+    """
     if key not in groups:
-        groups[key] = {"sched": schedule(key, model), "model": model, "keys": [], "read": {}, "rows": {}}
+        groups[key] = {"sched": sched or schedule(key, model), "model": model, "keys": [], "read": {}, "rows": {}}
         order.append(key)
     g = groups[key]
     if r["key"] not in g["keys"]:
@@ -585,7 +624,7 @@ def _off(keys, kind, reason):
     for k in keys:
         model = model_for(models, parse_key(k)["repo"])
         r = issue(k, model)
-        p = {"r": r, "model": model, "dest": None, "steps": [], "walks": [], "unchanged": False}
+        p = {"r": r, "model": model, "dest": None, "steps": [], "walks": [], "leaving": {}, "unchanged": False}
         plans.append(p)
         t = type_named(model, r["type"]) if r["type"] else None
         team = team_of(model, r["repo"])
@@ -611,11 +650,28 @@ def _off(keys, kind, reason):
         if p["walks"] and kind == _BACKLOG:
             refused.append(k + " is on the scenario " + p["walks"][0]["scenario"] + ": an item found on a walk is classified in Triage first (ruled 2026-11-04)")
             continue
+
+        # Every schedule and scenario an issue leaves is read now, before the first write, so that a fault in one is a
+        # refusal and not a run stopped halfway (#531).
         for row in p["steps"]:
             sk = _option_key(project_of(row["project"]["id"]), "Schedule", row["schedule"])
             if sk == "":
-                fail(k + " is on " + row["project"]["title"] + "'s schedule " + row["schedule"] + ", whose option names no Schedule issue")
-            _group(groups, order, sk, model, r, row)
+                refused.append(k + " is on " + row["project"]["title"] + "'s schedule " + row["schedule"] + ", whose option names no Schedule issue")
+                continue
+            if sk in groups:
+                _group(groups, order, sk, model, r, row)
+                continue
+            sched, fault = read_schedule(sk, model)
+            if fault:
+                refused.append(k + " is on the schedule " + sk + ", which issue move can't read: " + fault)
+                continue
+            _group(groups, order, sk, model, r, row, sched)
+        for row in p["walks"]:
+            source, fault = _source_scenario(r, row, model)
+            if fault:
+                refused.append(fault)
+            else:
+                p["leaving"][row["item"]] = source
         if p["steps"] or p["walks"]:
             continue
         pending = _pending(model, k)
@@ -672,7 +728,7 @@ def _off(keys, kind, reason):
             out.append(_record(r["key"], r["type"], r["title"], "unchanged", p["dest"]["title"]))
             continue
         for row in p["walks"]:
-            left = _record_leaving(r, row, p["model"], p["dest"]["title"], 0, p["dest"]["title"], login, date, reason)
+            left = _record_leaving(r, p["leaving"][row["item"]], p["dest"]["title"], 0, p["dest"]["title"], login, date, reason)
             put_open(p["dest"], r)
             _note("put " + r["key"] + " on " + p["dest"]["title"])
             delete_row(row["project"]["id"], row["item"])

@@ -3869,5 +3869,27 @@ check "118 (plan 12): closed as completed, labeled no resolution:, its row Close
         and ([.projects.PVT_c_user.fields[] | select(.name == "Scenario") | .options[].name] == ["user walk"])
         and .issues.I_personal_20.comments == ["**Retired** by `star github scenario retire` on '"${today}"', run by stand-in: No one walks it now."]'
 
+# 119 (#531). issue move reads the schedule an issue leaves before it writes anything: s2's own row has lost its option,
+# as Start-Claude's schedule #301's had on 2026-11-12, so #32, on s2, is refused, and nothing is written, not even the
+# amendment in progress on #20.
+world '(.projects.PVT_s_eng.items[] | select(.content == "I_alpha_30") | .values) |= del(.Schedule)'
+run_star "${data}" github issue move NobleFactor/alpha#32 --schedule NobleFactor/alpha#20 --reason "R."
+expect "119 (#531): an issue on a schedule that can't be read is refused, nothing written" error "${no_writes}" \
+    "NobleFactor/alpha#32 is on the schedule NobleFactor/alpha#30, which issue move can't read: NobleFactor/alpha#30 has 0 rows" text
+
+# 120 (#531). So it reads the scenario an issue leaves: walk's option names no Scenario issue, so #27, on walk, is
+# refused, and nothing is written.
+world '(.projects.PVT_c_eng.fields[] | select(.name == "Scenario") | .options[] | select(.name == "walk") | .description) = ""'
+run_star "${data}" github issue move NobleFactor/alpha#27 --schedule NobleFactor/alpha#20 --reason "R."
+expect "120 (#531): an issue on a scenario whose option names no Scenario issue is refused, nothing written" error "${no_writes}" \
+    "NobleFactor/alpha#27 is on Scenario: engprod's scenario walk, whose option names no Scenario issue" text
+
+# 121 (#531). --triage of #22, off s1, and #27, off walk, whose option names no Scenario issue: refused before s1's
+# amendment is written, and nothing is written.
+world '(.projects.PVT_c_eng.fields[] | select(.name == "Scenario") | .options[] | select(.name == "walk") | .description) = ""'
+run_star "${data}" github issue move NobleFactor/alpha#22 NobleFactor/alpha#27 --triage --reason "R."
+expect "121 (#531): --triage off a schedule and a broken scenario is refused, nothing written" error "${no_writes}" \
+    "NobleFactor/alpha#27 is on Scenario: engprod's scenario walk, whose option names no Scenario issue" text
+
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"

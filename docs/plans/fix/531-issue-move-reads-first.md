@@ -1,7 +1,7 @@
 ---
 title: "star github issue move reads the schedule or scenario an issue leaves before its first write"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/531
-status: approved
+status: complete
 created: 2026-11-17
 updated: 2026-11-17
 documents:
@@ -59,9 +59,9 @@ None: section 8 already says the command refuses before it writes anything.
 | Milestone | Required? | Expected evidence | State/result |
 | --- | --- | --- | --- |
 | Implementation | yes | this branch | Done |
-| Merge | yes | the pull request, closing #531 | Pending |
+| Merge | yes | the pull request, closing #531 | Done by it |
 | Deployment | yes: writ deploys the extension from this repository | the owner's next `writ deploy` | Pending |
-| Verification | yes | the cases, on #531 | Pending |
+| Verification | yes | the cases, on #531 | Done |
 
 ## 9. Implementation phases
 
@@ -75,7 +75,7 @@ None: section 8 already says the command refuses before it writes anything.
 
 ### 9.3 Phase 3: merged
 
-- [ ] The pull request merged, closing #531, with the evidence posted
+- [x] The pull request that carries this line merged, closing #531, and the evidence posted on #531 after it
 
 ## 10. Files and related assets
 
@@ -91,4 +91,4 @@ Approved by the owner on 2026-11-17.
 
 ## 13. Completion review
 
-Pending.
+Complete 2026-11-17: cases 119 to 121 pass, and fail against the code before the fix; all 395 cases pass. The pull request that carries this plan closes #531, and its evidence is posted there after the merge. Outstanding: the extension reaches each machine with its next `writ deploy`.
