@@ -41,6 +41,10 @@ Owner David Noble. Participant: Claude Code, in the session working [issue track
 
 [NobleFactor/noblefactor-engprod#587](https://github.com/NobleFactor/noblefactor-engprod/issues/587), Task, Area Product: `star github issue reopen`.
 
+## Issue 595
+
+[NobleFactor/noblefactor-engprod#595](https://github.com/NobleFactor/noblefactor-engprod/issues/595), Task, Area Product: the collection groups take the same verbs, `new` renamed `open`, with `create`, `scenario retire` renamed `close`, and `schedule reopen` and `scenario reopen` added; the `issue` verbs refuse Schedule and Scenario issues. Ruled by the owner on 2026-11-17, and put in this pull request.
+
 ## 3. Current state
 
 - `star github issue move` is built (#511) and reads every source before its first write (#531). No other `issue` verb exists; issues are opened, closed and reopened by hand or by a script written for one issue, as on 2026-11-17 for #508, #470 and #346.
@@ -92,7 +96,7 @@ A new section 10 of the issue data model, `10-the-issue-commands.md`, and its st
 | Milestone | Required? | Expected evidence | State/result |
 | --- | --- | --- | --- |
 | Implementation | yes | this branch | Pending |
-| Merge | yes | the pull request, closing #589, #338, #590 and #587 | Pending |
+| Merge | yes | the pull request, closing #589, #338, #590, #587 and #595 | Pending |
 | Deployment | yes: writ deploys the extension's new files | the owner's next `writ deploy` | Pending |
 | Verification | yes | the proof, on each issue | Pending |
 
@@ -104,13 +108,14 @@ A new section 10 of the issue data model, `10-the-issue-commands.md`, and its st
 
 ### 9.2 Phase 2: the design
 
-- [ ] Section 10 and its status page written, sections 8 and 9 and the issue standards pointed to it, and approved by the owner
+- [x] Section 10 and its status page written on 2026-11-17, and approved by the owner that day, the collection groups' verbs synchronized the same day; sections 8 and 9 and the issue standards are pointed to it in Phase 4
 
 ### 9.3 Phase 3: the builds
 
 - [ ] `close` (#590), with its cases
 - [ ] `reopen` (#587), with its cases
 - [ ] `open` and `create` (#338), with its cases
+- [ ] The collection groups' `open`, `close` and `reopen`, `new` and `retire` renamed everywhere they stand (#595), with their cases
 
 ### 9.4 Phase 4: the documentation
 
@@ -118,7 +123,7 @@ A new section 10 of the issue data model, `10-the-issue-commands.md`, and its st
 
 ### 9.5 Phase 5: the proof and the merge
 
-- [ ] Each verb proved in both sandboxes; the pull request merged, closing #589, #338, #590 and #587, each with its evidence
+- [ ] Each verb proved in both sandboxes; the pull request merged, closing #589, #338, #590, #587 and #595, each with its evidence
 
 ## 10. Files and related assets
 

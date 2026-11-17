@@ -216,7 +216,7 @@ design.
 | [7. The workflow, before and after](7-the-workflow-before-and-after.md) | Why this epic: filing an issue, writing a schedule and reporting progress, as a session does them today and once the model is in | [Written](7-the-workflow-before-and-after.status.md) |
 | [8. The schedule commands](8-the-schedule-commands.md) | What `star github schedule` does, verb by verb: `report`, `list`, `get`, `new` and `close`, and `star github issue move`, which moves an issue onto, within and off a schedule, for an organization and for a user account (#439, #507) | [Ruled](8-the-schedule-commands.status.md) |
 | [9. The scenario commands](9-the-scenario-commands.md) | What `star github scenario` does, verb by verb: `list`, `get`, `new` and `retire`, and what `star github issue move` writes onto, within and off a scenario, for an organization and for a user account, and what the scenarios hold today (#507) | [Drafted](9-the-scenario-commands.status.md) |
-| [10. The issue commands](10-the-issue-commands.md) | What `star github issue` does, verb by verb: `open`, with `create` its synonym, `move`, `close` and `reopen`, for an organization and for a user account (#589) | [Drafted](10-the-issue-commands.status.md) |
+| [10. The issue commands](10-the-issue-commands.md) | What `star github issue` does, verb by verb: `open`, with `create` its synonym, `move`, `close` and `reopen`, and the same verbs of the schedule and scenario groups, for an organization and for a user account (#589, #595) | [Ruled](10-the-issue-commands.status.md) |
 
 ## Terms
 
