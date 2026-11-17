@@ -146,7 +146,7 @@ profile, which is its account's; and a search finding no MIT statement in the re
 - [x] devlore-registry, its `CONTRIBUTING.md` removed, `CLA.md` and its README; merged, NobleFactor/devlore-registry#102
 - [x] devlore-cli, its `CONTRIBUTING.md` removed and its README; merged, NobleFactor/devlore-cli#1233
 - [x] devlore.noblefactor.com, its LICENSE and NOTICE; merged, NobleFactor/devlore.noblefactor.com#545
-- [ ] docker-homebridge, relicensed and its guide moved; merged
+- [x] docker-homebridge, relicensed and its guide moved; merged, NobleFactor/docker-homebridge#20
 - [ ] Import-AudioCdMetadata, relicensed; merged
 - [ ] NobleFactor's noblefactor, acumen and Fixup-MusicLibrary, their LICENSE and NOTICE; each merged
 - [ ] David-Noble-at-work/.github, its LICENSE and NOTICE; merged
