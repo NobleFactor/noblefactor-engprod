@@ -442,8 +442,10 @@ git status --short
 # --- The end-of-PR report, when one is asked for (rule 9) ---
 #
 # Not automatic: ruled 2026-09-12 (development-process.md), retiring the standing rule of 2026-09-04.
-# When the owner asks for it, scope it to what the pull request served with --filter on its epic, feature or
-# schedule (#379, ruled 2026-11-08); --silent, not 2>/dev/null.
+# When the owner asks for it, use get for a schedule or scenario, and the broad report for an epic or feature.
+# Keep --silent and a projection naming the fields wanted, never 2>/dev/null.
+# star github schedule get <owner>/<repo>#<n> --silent --output table --jq 'map({step, issue, type, state, status, worktree})'
+# star github scenario get <owner>/<repo>#<n> --silent --output table --jq 'map({beat, issue, type, state, status})'
 # star github schedule report --silent --output table --filter epic=<owner>/<repo>#<n> --jq 'map({issue, type, state, title})'
 ```
 
@@ -461,7 +463,7 @@ git status --short
 6. **`git close-branch` for cleanup.** Handles both worktree and regular-branch scenarios. It also **removes the worktree the script is standing in**, so nothing after it may assume `cwd` survives: `cd` to the main clone first. Observed as a spurious exit 128 after a successful merge on devlore-cli#811. It **removes the script itself**, `<worktree>.bash` or `.ps1` beside the worktree (#366); bash reads on from the unlinked file and PowerShell parsed the file before running it, so the lines after it still run. Then it **syncs the main clone** to the target branch, whatever it had checked out, prints what it had and the commit it is at now, and exits 75 when the sync cannot happen (#306).
 7. **Follow the [worktree integration boundary](../engineering/process.md#pull-request-and-integration).** A worktree serves one active PR. During integration it accepts that PR's review or CI corrections; honor any temporary live-entrypoint restriction still applicable to the session.
 8. **Always `--squash`, never `--delete-branch`.** The merge command carries `--squash` and no other deletion flag. `--delete-branch` deletes the local branch first, which fails when a linked worktree holds it, and under `set -e` that aborts the script after the merge and before cleanup. `git close-branch` deletes in the order that survives a failure: remote, then worktree, then local, then the script. Then it syncs the main clone itself (rules 6 and 12).
-9. **The epic report ends a pull request when one is asked for.** Table form, all states, scoped to the epic, feature or thread the pull request served, printed last, after cleanup, so the reader sees the state the merge produced. Not automatic: ruled 2026-09-12 in `development-process.md`, which retired the standing rule of 2026-09-04 that every pull request print one.
+9. **A scoped report ends a pull request when one is asked for.** Table form, all states, printed last after cleanup so the reader sees the state the merge produced. Use `star github schedule get` for a schedule, `star github scenario get` for a scenario, or `star github schedule report` filtered to an epic or feature. Not automatic: ruled 2026-09-12 in `development-process.md`, which retired the standing rule of 2026-09-04 that every pull request print one.
 
 10. **Nothing left behind.** After `git add` by name, `git diff --quiet` must pass. A modified tracked file the script did not stage is a change the PR silently omits; #161 merged without the rule above for exactly this reason.
 

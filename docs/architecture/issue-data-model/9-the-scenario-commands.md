@@ -27,6 +27,8 @@ day, when moving an issue became one command, `star github issue move`, for sche
 
 ## What two pieces already do
 
+This section records the implementation context before PR #580. Its schedule-add operation has since been replaced by `star github issue move`; the current command contract follows below.
+
 Two pieces built since the rulings of 2026-11-04 already do part of a scenario's work, and the commands are designed
 around them, not over them:
 
@@ -146,7 +148,7 @@ on another scenario, or on a Backlog or Schedule project, which means it has alr
 walk's last step, when the Scenario issue numbers its walk, as every scenario `new` makes does. An issue is on at most
 one scenario (ruled 2026-11-04), so taking an item from one scenario to another is two moves, `--triage` and then
 `--scenario`. Filing the item is not `issue move`'s: the walker files it from the form, or with
-`star github issue file` (#338), with "Found while walking #N" in its body.
+`star github issue open` (#338), with "Found while walking #N" in its body.
 
 **Off a scenario.** The command comments on the Scenario issue first, then writes the item's body line, then moves the
 row, so a run that stops partway leaves a second comment, not a move unrecorded, as `schedule add` orders its writes.
@@ -175,6 +177,10 @@ stays, as section 8 keeps a closed schedule's: it records which scenario each pa
 No Resolution says it, since nothing was left undone: the scenario served until the product changed, and its comment
 says so. An issue whose work was not done is closed as completed with its Resolution saying why (ruled 2026-11-03), and
 NobleFactor's Resolution field offers Declined, Duplicate and Invalid, none of which applies.
+
+## Ongoing cleanup
+
+Until [recurring Scenario cleanup (#593)](https://github.com/NobleFactor/noblefactor-engprod/issues/593) is delivered, remove closed finding rows manually and verify their removal. Preserve the Scenario issue's own row and option, open findings, and the issues' existing origin and closure evidence. The Owner approved this interim policy on 2026-11-17.
 
 ## What the scenarios hold today
 

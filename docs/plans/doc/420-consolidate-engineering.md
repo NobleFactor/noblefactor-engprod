@@ -1,9 +1,9 @@
 ---
 title: "Consolidate engineering documentation"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/420
-status: active
+status: complete
 created: 2026-10-29
-updated: 2026-11-16
+updated: 2026-11-17
 documents:
   - kind: Design
     path: docs/architecture/agentic-developer-workstation.md
@@ -119,23 +119,23 @@ The documentation-only CI path is agreed policy but not implemented by this task
 
 - [x] Validate the actual changed-document set after the Owner's compliance-auditor review direction: 38 documents, 454 local references, preserved source hashes, all 58 inventory groups, nineteen original rule dispositions, 23 reachable active documents and 134 retained legacy anchors pass with no errors. Spelling passes for the eight revised documents.
 - [x] Run applicable repository gates; record results and limitations: the Owner-run validation script exited 0 on 2026-11-15 in 166.1722 seconds, checking 38 documents and 440 local references and passing make check and all Test-Here suites. New untracked documents received explicit additional checks. The displayed output was truncated; the result applies to that tested draft. Later policy/status edits receive document checks, and delivery must still meet its required gates.
-- [ ] Obtain Owner review of the complete documentation and transition.
+- [x] Obtain Owner review and adoption: the Owner merged PR #579 on 2026-11-16.
 - [x] Analyze the Owner-run inspection log and verify the filesystem scope: 42 documentation/evidence paths, including the eight pre-cutover snapshots. No runtime code is included.
 - [x] Obtain the Owner-run staging dry-run proof before handing over the commit/PR script: 42 named files passed on 2026-11-16 with the index and reviewed content unchanged. The receipt is /Users/david-noble/Workspace/NobleFactor/scratch/handbook-setup/420-staging-receipt.2WLiaxIK.json; the publication script rejects scope, index or content drift.
 - [x] Prepare the Owner-run publication script from the successful staging receipt, with an explicit stop for adoption review and a separate guarded merge mode.
-- [x] Publish the adoption candidate as PR #579 on 2026-11-16 at 391fdfcac66b91ab3699ecc7a1e9aff0dc7cfc8e; the Owner-run script passed make check and all four GitHub checks passed for that head. Owner review is ongoing; subsequent review corrections require a new checked revision.
-- [ ] Record merge and verify the adopted documentation entry point.
-- [ ] Record completion approval and any documentation-only follow-up obligation.
-- [ ] Clean up the worktree/script under the approved procedure after preserving outstanding records.
+- [x] Publish the adoption candidate as PR #579 on 2026-11-16 at 391fdfcac66b91ab3699ecc7a1e9aff0dc7cfc8e; the Owner-run script passed make check and all four GitHub checks passed for that head. The final review head 2be2c9ab8ca59ba5c932910fcbb0adf90bc5d610 passed all four GitHub checks and was adopted by the Owner's merge.
+- [x] Record the merge as 0694bf11684baf7952a7df73911bf5cd7d37637f and the successful post-merge entry-point, reference, navigation and source-preservation checks recorded on the issue.
+- [x] Record the Owner's requested completion closure on 2026-11-16; incorporate the already established completion evidence in this approved documentation follow-up.
+- [x] Record the successful Owner-run cleanup: git close-branch exited 0, removed the branch, worktree and sibling script, and synchronized the canonical clone.
 
 ## 7. Milestones and boundaries
 
 | Milestone | Required | Current state |
 | --- | --- | --- |
-| Implementation | Yes: reconciled documents, templates, navigation and transition | Adoption candidate published as PR #579; Owner review is ongoing and the compliance-auditor policy correction is documented |
-| Merge | Yes: approved adoption change on `develop` | Not performed |
+| Implementation | Yes: reconciled documents, templates, navigation and transition | Adopted in PR #579, including the Owner's compliance-auditor policy correction |
+| Merge | Yes: approved adoption change on `develop` | Owner merged PR #579 on 2026-11-16 at 23:26:25 UTC as 0694bf11684baf7952a7df73911bf5cd7d37637f |
 | Deployment | No separate runtime deployment is proposed; evaluate installed agent-instruction dependencies during cutover | No deployment claimed |
-| Verification | Yes: required document checks, Owner review and post-merge entry-point verification | Owner-run publication and make check passed on 2026-11-16; all four GitHub checks passed for 391fdfc. Review corrections require fresh validation; Owner adoption and post-merge evidence remain pending |
+| Verification | Yes: required document checks, Owner review and post-merge entry-point verification | Owner-run make check and all four GitHub checks passed for delivered head 2be2c9ab8ca59ba5c932910fcbb0adf90bc5d610; post-merge verification and cleanup passed, and the Owner requested issue closure on 2026-11-16 |
 
 The plan remains active once implementation is authorized and until required milestones are satisfied. Post-merge evidence is recorded immediately on the issue and incorporated through the approved documentation-follow-up process. Do not relabel an unfinished obligation complete merely to close the plan.
 
@@ -167,4 +167,14 @@ On 2026-11-16, the Owner clarified that the one-PR-at-a-time rule applies to thi
 
 On 2026-11-16, the Owner withdrew mandatory agent-authored breach reporting and breach-cost computations in favor of a compliance auditor. The active agent-operation requirements, live-instruction transition, requirement dispositions and current review records must reflect that direction. Retain factual review history and immutable source evidence; remove cost estimates from maintained current records. Participants still provide honest status, visible errors/blockers and corrective evidence. The auditor role and its tooling remain scheduled work, not an implemented capability of this documentation PR.
 
-The original adoption candidate is published as PR #579 at 391fdfcac66b91ab3699ecc7a1e9aff0dc7cfc8e. This policy correction is a review amendment on the same branch, using an Owner-run commit/push and fresh checks and review for the new head. The issue remains Open and this plan active through the outstanding adoption and post-merge obligations.
+The original adoption candidate is published as PR #579 at 391fdfcac66b91ab3699ecc7a1e9aff0dc7cfc8e. This policy correction is a review amendment on the same branch, using an Owner-run commit/push and fresh checks and review for the new head. At that review checkpoint the issue remained Open and this plan active through adoption and post-merge obligations. Those obligations were subsequently satisfied as recorded in the completion review below.
+
+## 9. Completion review — evidence established on 2026-11-16
+
+The Owner adopted [PR #579](https://github.com/NobleFactor/noblefactor-engprod/pull/579), merging reviewed head 2be2c9ab8ca59ba5c932910fcbb0adf90bc5d610 as 0694bf11684baf7952a7df73911bf5cd7d37637f on 2026-11-16 at 23:26:25 UTC. The [issue's completion record](https://github.com/NobleFactor/noblefactor-engprod/issues/420) preserves the Owner's closure direction, verification and cleanup; the issue closed on 2026-11-16 at 23:37:34 UTC, and its Schedule row is Closed with the PR link.
+
+The established post-merge checks covered 38 documents, 454 local references, 23 reachable active handbook documents, 134 retained legacy anchors, 58 inventory groups and nineteen original rule dispositions. The 42 delivery paths matched the reviewed content and merged result, with Issue standards also incorporating the separately merged Triage exception (#573). All four GitHub checks passed for the delivered head. Original sources and Reviewer evidence were preserved. These are the recorded adoption results, not a claim that later revisions received that same run.
+
+The Owner-run git close-branch completed successfully, removed the branch, worktree and sibling script, and synchronized the canonical clone. There was no separate runtime deployment. Live host-entrypoint migration, role/context assets, issue forms and the remaining formatting migration retain their owning issues on Handbook adoption (#551).
+
+This section incorporates the completion-only documentation obligation retained on the issue and Schedule. It records work already accepted and closed; it creates no additional completion milestone for Handbook consolidation (#420).

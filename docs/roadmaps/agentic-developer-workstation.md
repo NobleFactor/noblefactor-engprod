@@ -3,7 +3,7 @@ title: "Agentic Developer Workstation — Roadmap and Planner Handoff"
 type: Roadmap
 status: Draft
 created: 2026-11-11
-updated: 2026-11-13
+updated: 2026-11-17
 ---
 
 # Agentic Developer Workstation — Roadmap
@@ -17,40 +17,24 @@ updated: 2026-11-13
 | Design work | [Workstation architecture and delivery plan (#521)](https://github.com/NobleFactor/noblefactor-engprod/issues/521) |
 | Status | Draft delivery baseline; implementation plans and schedule commitments require their normal review |
 
-The designer delivers a reviewed problem statement, goals, solution, workflow, system
-architecture, proposed scenarios, and this roadmap. The planner turns those assets into
-classified issues, plans, dependencies, and one or more schedules. The current design work
-began without a schedule; creating the first schedule is part of the handoff.
+The designer delivers a reviewed problem statement, goals, solution, workflow, system architecture, proposed scenarios, and this roadmap. The planner turns those assets into classified issues, plans, dependencies, and one or more schedules. The current design work began without a schedule; creating the first schedule is part of the handoff, using `star github schedule new <repository> <name>` to create its issue, option and own row.
 
 ## 1. Goal and success criteria
 
-Deliver a human-directed development methodology and the environment that supports it:
-five persistent specialist roles on Claude, Codex, and OpenCode inside one SBX sandbox per
-schedule; editor-launched shell profiles for desktop/iPad views; durable work and retrievable
-original evidence;
-iterative delivery with frequent merges; and eventual DevLore lifecycle management.
+Deliver a human-directed development methodology and the environment that supports it: five persistent specialist roles on Claude, Codex, and OpenCode inside one SBX sandbox per schedule; editor-launched shell profiles for desktop/iPad views; durable work and retrievable original evidence; iterative delivery with frequent merges; and eventual DevLore lifecycle management.
 
-Start with hosted models and existing hardware. The available machines are a Mac mini and
-a Minisforum system; the latter shares capacity with centralized logging. New hardware and
-local inference are outside this delivery path.
+Start with hosted models and existing hardware. The available machines are a Mac mini and a Minisforum system; the latter shares capacity with centralized logging. New hardware and local inference are outside this delivery path.
 
-Success is an accepted, tested, compliant change with useful continuity and less repair.
-Measure accepted-change latency, human intervention, correction cycles, repeated
-investigations, evidence gaps, and recovery outcomes. Agree numerical thresholds with the
-owner before using them as gates; this roadmap does not invent latency or recovery promises.
+Success is an accepted, tested, compliant change with useful continuity and less repair. Measure accepted-change latency, human intervention, correction cycles, repeated investigations, evidence gaps, and recovery outcomes. Agree numerical thresholds with the owner before using them as gates; this roadmap does not invent latency or recovery promises.
 
 There are two acceptance boundaries:
 
-- **Design handoff:** the owner accepts a buildable architecture/roadmap baseline and first
-  actionable increment, satisfying Workstation architecture and delivery plan (#521).
-- **System and methodology:** the qualified environment carries real work through the
-  documented process, including independent closing review, recovery, and DevLore lifecycle
-  management. Procedures, rules, and skills are reviewed under their owning epic.
+- **Design handoff:** the owner accepts a buildable architecture/roadmap baseline and first actionable increment, satisfying Workstation architecture and delivery plan (#521).
+- **System and methodology:** the qualified environment carries real work through the documented process, including independent closing review, recovery, and DevLore lifecycle management. Procedures, rules, and skills are reviewed under their owning epic.
 
 ## 2. Epic structure and ownership
 
-These are cooperating peer epics. A schedule can draw Tasks/Bugs from several Features;
-each issue retains its owning Feature/Epic and native relationships.
+These are cooperating peer epics. A schedule can draw Tasks/Bugs from several Features; each issue retains its owning Feature/Epic and native relationships.
 
 | Epic | Owns this part of delivery |
 | --- | --- |
@@ -60,25 +44,13 @@ each issue retains its owning Feature/Epic and native relationships.
 | [Agentic workstation integration (#514)](https://github.com/NobleFactor/noblefactor-engprod/issues/514) | Developer experience, schedule continuity, workspace/build integration, continuous compliance, operations, and this design baseline |
 | [Local inference and capacity qualification (#515)](https://github.com/NobleFactor/noblefactor-engprod/issues/515) | Separate future model-serving, benchmarking, hardware, and procurement qualification |
 
-GitHub's issue/schedule/scenario model remains owned by its existing work. Use
-[issue standards](../issue-standards.md) and current tooling; do not create a second planning
-database or a new issue type for the workstation.
+GitHub's issue/schedule/scenario model remains owned by its existing work. Use [issue standards](../issue-standards.md) and current tooling; do not create a second planning database or a new issue type for the workstation.
 
-DevLore owns the eventual lifecycle implementation through its resource/control-plane
-contracts. The planner must identify the reviewed product interface and its owning work
-before scheduling adoption. Initial prototypes integrate existing engprod drivers and SBX
-contracts rather than wait for a complete new subsystem or become a competing permanent manager.
+DevLore owns the eventual lifecycle implementation through its resource/control-plane contracts. The planner must identify the reviewed product interface and its owning work before scheduling adoption. Initial prototypes integrate existing engprod drivers and SBX contracts rather than wait for a complete new subsystem or become a competing permanent manager.
 
 ## 3. Integration features
 
-The existing Feature boundaries under Agentic workstation integration remain the planner's
-ownership map. Editor-server work and UI attachment integrate through A1/A4, with sandbox
-and workspace obligations through A2; they do not create another host-driver implementation.
-Compatible editors launch the same guest-side role-view entry point through their profile
-formats and connection backends. Developer devices connect to editors; native role-host
-listeners stay private to SBX. The native servers manage their assigned sessions and internal
-execution processes; the control plane manages server lifecycle and authoritative role bindings.
-Roles are created on demand through start-or-attach, independently of editor/view lifetimes.
+The existing Feature boundaries under Agentic workstation integration remain the planner's ownership map. Editor-server work and UI attachment integrate through A1/A4, with sandbox and workspace obligations through A2; they do not create another host-driver implementation. Compatible editors launch the same guest-side role-view entry point through their profile formats and connection backends. Developer devices connect to editors; native role-host listeners stay private to SBX. The native servers manage their assigned sessions and internal execution processes; the control plane manages server lifecycle and authoritative role bindings. Roles are created on demand through start-or-attach, independently of editor/view lifetimes.
 
 | Feature | Deliverable in this roadmap | Principal integration |
 | --- | --- | --- |
@@ -88,36 +60,19 @@ Roles are created on demand through start-or-attach, independently of editor/vie
 | [A4 — Engineering-service operations and recovery (#520)](https://github.com/NobleFactor/noblefactor-engprod/issues/520) | Supervision, access, credentials, quotas, telemetry, restoration, editor-service and lifecycle integration | Archive operations #496; eventual DevLore lifecycle |
 | [A5 — Workstation architecture and delivery plan (#521)](https://github.com/NobleFactor/noblefactor-engprod/issues/521) | Reviewed architecture, roadmap, ownership, decisions, acceptance criteria, and first actionable increment | The existing documents and cooperating epics |
 
-The archive's canonical Features are [capture (#491)](https://github.com/NobleFactor/noblefactor-engprod/issues/491),
-[catalog/provenance (#492)](https://github.com/NobleFactor/noblefactor-engprod/issues/492),
-[retrieval (#493)](https://github.com/NobleFactor/noblefactor-engprod/issues/493),
-[checkpoints (#494)](https://github.com/NobleFactor/noblefactor-engprod/issues/494),
-[reviewed decision traceability (#495)](https://github.com/NobleFactor/noblefactor-engprod/issues/495),
-and [protection/recovery (#496)](https://github.com/NobleFactor/noblefactor-engprod/issues/496).
-Use those owners directly.
+The archive's canonical Features are [capture (#491)](https://github.com/NobleFactor/noblefactor-engprod/issues/491), [catalog/provenance (#492)](https://github.com/NobleFactor/noblefactor-engprod/issues/492), [retrieval (#493)](https://github.com/NobleFactor/noblefactor-engprod/issues/493), [checkpoints (#494)](https://github.com/NobleFactor/noblefactor-engprod/issues/494), [reviewed decision traceability (#495)](https://github.com/NobleFactor/noblefactor-engprod/issues/495), and [protection/recovery (#496)](https://github.com/NobleFactor/noblefactor-engprod/issues/496). Use those owners directly.
 
-[Role entry points (#528)](https://github.com/NobleFactor/noblefactor-engprod/issues/528)
-owns startup and post-compaction reading on all three hosts. The handbook draft remains under
-review until adopted. Methodology findings go through #526; a successful prototype does not
-silently change engineering policy.
+[Role entry points (#528)](https://github.com/NobleFactor/noblefactor-engprod/issues/528) owns startup and post-compaction reading on all three hosts. The handbook draft remains under review until adopted. Methodology findings go through #526; a successful prototype does not silently change engineering policy.
 
 ## 4. Separate future inference track
 
-Keep the existing [B1 model qualification (#522)](https://github.com/NobleFactor/noblefactor-engprod/issues/522),
-[B2 serving/admission (#523)](https://github.com/NobleFactor/noblefactor-engprod/issues/523),
-[B3 workload/energy measurements (#524)](https://github.com/NobleFactor/noblefactor-engprod/issues/524),
-and [B4 hardware/deployment qualification (#525)](https://github.com/NobleFactor/noblefactor-engprod/issues/525)
-under Local inference and capacity qualification (#515).
+Keep the existing [B1 model qualification (#522)](https://github.com/NobleFactor/noblefactor-engprod/issues/522), [B2 serving/admission (#523)](https://github.com/NobleFactor/noblefactor-engprod/issues/523), [B3 workload/energy measurements (#524)](https://github.com/NobleFactor/noblefactor-engprod/issues/524), and [B4 hardware/deployment qualification (#525)](https://github.com/NobleFactor/noblefactor-engprod/issues/525) under Local inference and capacity qualification (#515).
 
-They can consume evidence from the hosted-model environment if the owner later schedules them.
-They do not block the initial platform or its acceptance. Selecting a host such as OpenCode
-does not itself select local inference or authorize a purchase.
+They can consume evidence from the hosted-model environment if the owner later schedules them. They do not block the initial platform or its acceptance. Selecting a host such as OpenCode does not itself select local inference or authorize a purchase.
 
 ## 5. Delivery waves and gates
 
-Waves describe dependencies and acceptance, not deadlines or a fixed role sequence. The planner
-proposes focused schedules and may work several related steps together. The owner amends
-committed schedules as findings change their scope.
+Waves describe dependencies and acceptance, not deadlines or a fixed role sequence. The planner proposes focused schedules and may work several related steps together. The owner amends committed schedules as findings change their scope.
 
 | Wave | Useful increment and owners | Exit evidence |
 | --- | --- | --- |
@@ -129,16 +84,9 @@ committed schedules as findings change their scope.
 | **5 — Adopt DevLore lifecycle** | DevLore lifecycle owner with A1/A4 and archive operations: replace prototype lifecycle operations with reviewed DevLore resources/contracts | **G5:** create, attach, stop, resume, replace, and recover an environment through DevLore; preserve schedule/role/evidence identity and pending-operation state; demonstrate upgrade recovery or rollback |
 | **6 — Accept the environment and methodology** | Integration and cooperating owners: repeat real scenarios on the selected existing deployment; review handbook/rules/skills and operational procedures | **G6:** owner accepts the documented methodology and installed configuration after repeated delivery, resource-sharing, outage, restore, and upgrade demonstrations; remaining limitations have explicit owners |
 
-Basic supervision, credentials, approved policy loading, permanent work, and evidence
-preservation accompany Wave 1. Even the first host proof uses an editor-launched shell profile
-inside SBX; Wave 2 qualifies the complete remote editor topology. Wave 3 completes the broader
-evidence/policy integration; it is not permission
-to lose prototype evidence or work until then. Full archive and handbook completion need not
-precede the first role-host experiment.
+Basic supervision, credentials, approved policy loading, permanent work, and evidence preservation accompany Wave 1. Even the first host proof uses an editor-launched shell profile inside SBX; Wave 2 qualifies the complete remote editor topology. Wave 3 completes the broader evidence/policy integration; it is not permission to lose prototype evidence or work until then. Full archive and handbook completion need not precede the first role-host experiment.
 
-Waves 2 and 3 can advance in parallel after the minimal Wave 1 contracts exist. DevLore
-interface discovery and prototype contract alignment start early; adoption completes after
-the operational and delivery contracts have been exercised.
+Waves 2 and 3 can advance in parallel after the minimal Wave 1 contracts exist. DevLore interface discovery and prototype contract alignment start early; adoption completes after the operational and delivery contracts have been exercised.
 
 ```mermaid
 flowchart TB
@@ -153,37 +101,19 @@ flowchart TB
 
 ### First actionable implementation increment
 
-The first build increment is the Wave 1 vertical slice. The planner decomposes these work
-packages into issues under their existing Feature owners, with plans and owner review:
+The first build increment is the Wave 1 vertical slice. The planner decomposes these work packages into issues under their existing Feature owners, with plans and owner review:
 
-1. Qualify one existing host and a pinned SBX setup; provision permanent private work storage
-   with protected canonical clones and basic service supervision.
-2. Establish stable schedule/environment/role bindings and selected native host servers.
-   Open profiles to create five independent role sessions on demand, using an assignment
-   that exercises Claude, Codex, and OpenCode. Let the hosts manage their session execution.
-   Record exact versions, server and session identities, model access, instructions,
-   permissions, and outcomes.
-3. Exercise each host's attachment/capture path from an editor-launched shell profile inside
-   SBX. The profile calls the common role-view launcher and resolves the existing role binding.
-   Disconnect a view and reattach to that same session while preserving bounded work and
-   visible pending questions.
-4. Capture original records/results and a source-linked checkpoint on permanent storage.
-   Declare coverage and unsupported hooks; a complete search UI is not required yet.
-5. Produce the capability/failure manifest and measured gaps that make the Wave 2 editor
-   and Wave 3 evidence tasks actionable.
+1. Qualify one existing host and a pinned SBX setup; provision permanent private work storage with protected canonical clones and basic service supervision.
+2. Establish stable schedule/environment/role bindings and selected native host servers. Open profiles to create five independent role sessions on demand, using an assignment that exercises Claude, Codex, and OpenCode. Let the hosts manage their session execution. Record exact versions, server and session identities, model access, instructions, permissions, and outcomes.
+3. Exercise each host's attachment/capture path from an editor-launched shell profile inside SBX. The profile calls the common role-view launcher and resolves the existing role binding. Disconnect a view and reattach to that same session while preserving bounded work and visible pending questions.
+4. Capture original records/results and a source-linked checkpoint on permanent storage. Declare coverage and unsupported hooks; a complete search UI is not required yet.
+5. Produce the capability/failure manifest and measured gaps that make the Wave 2 editor and Wave 3 evidence tasks actionable.
 
-A discovery that a host cannot satisfy a required behavior becomes classified work and an
-owner-reviewed dependency. It does not become a passing gate or an unannounced host substitution.
+A discovery that a host cannot satisfy a required behavior becomes classified work and an owner-reviewed dependency. It does not become a passing gate or an unannounced host substitution.
 
 ## 6. Scenario walkthroughs and qualification obligations
 
-The owner's proposed first schedule is a focused set of walkthroughs. Use the pattern in
-[Portable tooling (#152)](https://github.com/NobleFactor/noblefactor-engprod/issues/152):
-a concrete developer journey, dependencies across feature owners, evidence of where it
-breaks, and discovered work that can move into execution schedules. Its
-[project-membership record](https://github.com/NobleFactor/noblefactor-engprod/issues/152#issuecomment-6661940131)
-preserves that transition. The [Scenarios project](https://github.com/orgs/NobleFactor/projects/27/views/2)
-holds the team's scenarios; the following are proposed narratives, not filed Scenario IDs.
+The owner's proposed first schedule is a focused set of walkthroughs. Use the pattern in [Portable tooling (#152)](https://github.com/NobleFactor/noblefactor-engprod/issues/152): a concrete developer journey, dependencies across feature owners, evidence of where it breaks, and discovered work that can move into execution schedules. Its [project-membership record](https://github.com/NobleFactor/noblefactor-engprod/issues/152#issuecomment-6661940131) preserves that transition. The [Scenarios project](https://github.com/orgs/NobleFactor/projects/27/views/2) holds the team's scenarios; the following are proposed narratives, not filed Scenario IDs.
 
 | Proposed scenario | Walk and evidence to retain | Main requirements |
 | --- | --- | --- |
@@ -196,80 +126,32 @@ holds the team's scenarios; the following are proposed narratives, not filed Sce
 | S7 — DevLore takes lifecycle ownership | Adopt an existing prototype environment, operate it through DevLore, then restore/upgrade without changing authoritative identities | R8, R10 |
 | S8 — Recover from loss of a native session | Accidentally delete the coder's native session data; exhaust restoration, obtain owner approval, fence the original session, and reconstruct one authoritative successor from surviving work and archived evidence; retain identity, approval, citations, and gaps | R1, R2, R3, R5, R6, R10 |
 
-A proposed first schedule walks S1–S3 using the capabilities currently available and bounded
-prototypes where authorized. Its deliverable is an observed methodology draft, capability
-matrix, evidence, and classified implementation gaps. A blocked walkthrough is a useful
-finding, but it does not satisfy the corresponding deployment gate. The owner reviews the
-first schedule's actual scope and exit criteria; this document adds no project rows.
+A proposed first schedule walks S1–S3 using the capabilities currently available and bounded prototypes where authorized. Its classified work enters the approved schedule through `star github issue move <item>... --schedule <schedule> --reason <text>`. Its deliverable is an observed methodology draft, capability matrix, evidence, and classified implementation gaps. A blocked walkthrough is a useful finding, but it does not satisfy the corresponding deployment gate. The owner reviews the first schedule's actual scope and exit criteria; this document adds no project rows.
 
-As walkthroughs proceed, record each finding against its scenario/beat, preserve original
-evidence, and classify the work under its owning Feature. When an item moves to Triage or a
-schedule, retain its origin and the movement record under current issue standards. Review
-methodology changes through #526 and #456; do not turn a prototype's behavior into policy by default.
+As walkthroughs proceed, record each finding with `star github issue move <item> --scenario <scenario> --beat <N> --reason <text>`, preserve original evidence, and classify the work under its owning Feature. Beat N is step N of the walk; Beat 0 is before its first step. Use `issue move --triage` or `--schedule`, with the required `--reason` and Owner approval, when the finding moves on; the command retains its origin and records the move under current issue standards. Review methodology changes through #526 and #456; do not turn a prototype's behavior into policy by default.
 
 ### S8 — Disaster recovery after loss of a native session
 
-**Developer goal.** Continue the same schedule and role after a disaster destroys the native
-conversation and restoration cannot recover it. The driving example is self-inflicted loss:
-the developer accidentally deletes the coder's persistent session data. The schedule,
-worktree, reviewed plan, and shared engineering evidence survive. Corruption or destruction
-of the session's storage are additional variants. This is a proposed qualification scenario,
-not a claim that a particular host reports an unrecoverable conversation error.
+**Developer goal.** Continue the same schedule and role after a disaster destroys the native conversation and restoration cannot recover it. The driving example is self-inflicted loss: the developer accidentally deletes the coder's persistent session data. The schedule, worktree, reviewed plan, and shared engineering evidence survive. Corruption or destruction of the session's storage are additional variants. This is a proposed qualification scenario, not a claim that a particular host reports an unrecoverable conversation error.
 
-**Owners and prerequisites.** Developer control and schedule continuity (#517) coordinates
-host drivers (#459), durable workspaces (#518), and operations/recovery (#520). Archive
-capture/retrieval/checkpoints/recovery (#491/#493/#494/#496) supply identified evidence;
-role entry points (#528) load current instructions. Use an isolated recovery fixture with
-known session IDs, completed and pending work, a checkpoint, and measured capture coverage.
+**Owners and prerequisites.** Developer control and schedule continuity (#517) coordinates host drivers (#459), durable workspaces (#518), and operations/recovery (#520). Archive capture/retrieval/checkpoints/recovery (#491/#493/#494/#496) supply identified evidence; role entry points (#528) load current instructions. Use an isolated recovery fixture with known session IDs, completed and pending work, a checkpoint, and measured capture coverage.
 
 Walk these beats and retain the evidence:
 
-1. **Discover the loss.** Open the Coder profile through an editor. The launcher resolves the
-   original binding and reports the failed recovery. Repeated or concurrent profile opens
-   preserve that binding and cannot silently start a replacement.
-2. **Attempt restoration.** Diagnose the failure and attempt recovery from retained native
-   state and available backups. Rule out repairable configuration, credentials, connectivity,
-   mount, and host-compatibility problems. If restoration succeeds, resume the same native
-   session and finish through S6; exercise a separate variant where restoration is exhausted.
-3. **Request a recovery decision.** Present the original session identity, restoration
-   attempts, surviving work, evidence watermarks/gaps, and the proposed successor's
-   host/configuration. Record the owner's explicit approval; denied or pending approval
-   leaves the role blocked for replacement.
-4. **Establish sole authority.** Fence the original runtime and binding before authorizing
-   the successor to act. If fencing cannot be established, stay blocked. Serialize creation
-   and cutover; reconcile a lost response before retrying so multiple views cannot create
-   competing successors. Record both native IDs and their succession relationship.
-5. **Reconstruct working context.** Load approved common/role instructions and inspect the
-   actual plan and worktree. Retrieve checkpoints and cited original evidence, then reconcile
-   unfinished work and uncertain operations. Report which decisions and context can be
-   recovered and which are missing; an archive is not a promise of a complete native backup.
-6. **Continue through the same role profile.** Attach desktop and iPad views to the successor
-   through the current binding and complete a bounded owner-authorized action. A later
-   return of the original runtime cannot recover its former authority.
+1. **Discover the loss.** Open the Coder profile through an editor. The launcher resolves the original binding and reports the failed recovery. Repeated or concurrent profile opens preserve that binding and cannot silently start a replacement.
+2. **Attempt restoration.** Diagnose the failure and attempt recovery from retained native state and available backups. Rule out repairable configuration, credentials, connectivity, mount, and host-compatibility problems. If restoration succeeds, resume the same native session and finish through S6; exercise a separate variant where restoration is exhausted.
+3. **Request a recovery decision.** Present the original session identity, restoration attempts, surviving work, evidence watermarks/gaps, and the proposed successor's host/configuration. Record the owner's explicit approval; denied or pending approval leaves the role blocked for replacement.
+4. **Establish sole authority.** Fence the original runtime and binding before authorizing the successor to act. If fencing cannot be established, stay blocked. Serialize creation and cutover; reconcile a lost response before retrying so multiple views cannot create competing successors. Record both native IDs and their succession relationship.
+5. **Reconstruct working context.** Load approved common/role instructions and inspect the actual plan and worktree. Retrieve checkpoints and cited original evidence, then reconcile unfinished work and uncertain operations. Report which decisions and context can be recovered and which are missing; an archive is not a promise of a complete native backup.
+6. **Continue through the same role profile.** Attach desktop and iPad views to the successor through the current binding and complete a bounded owner-authorized action. A later return of the original runtime cannot recover its former authority.
 
-**Acceptance evidence.** Preserve the incident and failed restoration record, owner approval,
-original/successor IDs, binding revision and cutover time, fencing/duplicate-prevention
-results, checkpoint and source citations, evidence gaps, and the successor's reconciliation
-of current work. Demonstrate the pending/denied-approval and failed-fencing refusal paths,
-concurrent attachment, lost-response reconciliation, and return of the old runtime. Repeat
-the applicable paths on Claude, Codex, and OpenCode under the pinned capability matrix.
-The original identity remains in the historical record even when its conversation is lost.
+**Acceptance evidence.** Preserve the incident and failed restoration record, owner approval, original/successor IDs, binding revision and cutover time, fencing/duplicate-prevention results, checkpoint and source citations, evidence gaps, and the successor's reconciliation of current work. Demonstrate the pending/denied-approval and failed-fencing refusal paths, concurrent attachment, lost-response reconciliation, and return of the old runtime. Repeat the applicable paths on Claude, Codex, and OpenCode under the pinned capability matrix. The original identity remains in the historical record even when its conversation is lost.
 
-The [architecture's recovery contract](../architecture/agentic-developer-workstation.md#disaster-recovery-and-session-succession)
-defines the invariant. Routine disconnect, sleep, and process restart belong to S6 and retain
-the original session identity. The archive's distinct responsibility in S8 is to supply
-evidence for reconstruction once original-session restoration is exhausted. The walkthrough
-also produces reviewed recovery procedures under Engineering handbook, agent rules and
-skills (#526). Add its bounded Tasks/Bugs to an owner-reviewed schedule when its prerequisites
-are available; the Scenario itself remains a persistent record.
+The [architecture's recovery contract](../architecture/agentic-developer-workstation.md#disaster-recovery-and-session-succession) defines the invariant. Routine disconnect, sleep, and process restart belong to S6 and retain the original session identity. The archive's distinct responsibility in S8 is to supply evidence for reconstruction once original-session restoration is exhausted. The walkthrough also produces reviewed recovery procedures under Engineering handbook, agent rules and skills (#526). Add its bounded Tasks/Bugs to an owner-reviewed schedule when its prerequisites are available; the Scenario itself remains a persistent record.
 
 ### Interaction acceptance cases
 
-The [architecture's interaction lifecycle](../architecture/agentic-developer-workstation.md#58-interaction-lifecycle)
-defines the state model, eight stable startup combinations, activity diagrams, durable
-operation/ownership contracts, and concrete I1–I7 walkthroughs. These are design case IDs,
-not filed issues or additional Scenario records. The planner decomposes bounded walks
-under the existing scenario and Feature owners:
+The [architecture's interaction lifecycle](../architecture/agentic-developer-workstation.md#58-interaction-lifecycle) defines the state model, eight stable startup combinations, activity diagrams, durable operation/ownership contracts, and concrete I1–I7 walkthroughs. These are design case IDs, not filed issues or additional Scenario records. The planner decomposes bounded walks under the existing scenario and Feature owners:
 
 | Interaction | Scenario and delivery coverage | Observable acceptance result |
 | --- | --- | --- |
@@ -281,15 +163,9 @@ under the existing scenario and Feature owners:
 | [I6 — Failure recovery](../architecture/agentic-developer-workstation.md#i6-recover-failures-while-preserving-identity) | S5/S6/S8; evidence/restore G3, deployment failures G6 | Storage/archive/provider/authentication faults expose the affected capability; spool replay preserves evidence identity; interrupted effects are reconciled; unresolved binding/native loss follows the recorded recovery path |
 | [I7 — Configuration and delegation](../architecture/agentic-developer-workstation.md#i7-configuration-native-session-controls-and-delegation) | S2/S4/S5; managed views G2, delivery G4 | Conflicting configuration and native session-switch requests preserve the role binding; the managed attachment enforces its native identity; delegated children have parent identities/evidence and cannot replace a top-level role |
 
-Record initial environment/editor/server/binding/view states, actor and authority scope,
-operation ID, requested action, expected binding revision, observed transition, native
-identities, and supporting evidence. Exercise refusal and unresolved-outcome cases alongside
-successful paths. Starting or unknown states require reconciliation; a stopped session is
-not a never-created role.
+Record initial environment/editor/server/binding/view states, actor and authority scope, operation ID, requested action, expected binding revision, observed transition, native identities, and supporting evidence. Exercise refusal and unresolved-outcome cases alongside successful paths. Starting or unknown states require reconciliation; a stopped session is not a never-created role.
 
-A walkthrough that correctly reports an intentionally injected unresolved outcome can
-satisfy that refusal case. An unsupported required capability remains a gap and does not
-satisfy its deployment gate. Keep the capability record for each pinned host/editor path.
+A walkthrough that correctly reports an intentionally injected unresolved outcome can satisfy that refusal case. An unsupported required capability remains a gap and does not satisfy its deployment gate. Keep the capability record for each pinned host/editor path.
 
 ### Host capability matrix the planner must obtain
 
@@ -303,24 +179,13 @@ satisfy its deployment gate. Keep the capability record for each pinned host/edi
 | Reading/capture/checkpoint/recovery | Qualify startup and post-compaction reading, capture coverage, supported hooks, and restoration | Qualify the same contracts on its own APIs and supported hooks | Qualify the same contracts on its own APIs and supported hooks |
 | Disaster recovery and approved succession | Demonstrate S8: restore first, approval, fencing, successor, retained history and gaps | Demonstrate S8 with native thread IDs and reconciled creation outcomes | Demonstrate S8 with native session IDs and reconciled creation outcomes |
 
-The [architecture's host-driver section](../architecture/agentic-developer-workstation.md#53-common-host-driver-contract)
-links the primary technical sources and states the current evidence boundary. Record each
-matrix entry as demonstrated, documented but untested, unsupported, or inconclusive, with
-version and evidence. Qualify the editor-to-profile-to-local-host path, including reconnect
-with no developer-device access to the native host listener. Do not erase host differences
-behind a common interface.
+The [architecture's host-driver section](../architecture/agentic-developer-workstation.md#53-common-host-driver-contract) links the primary technical sources and states the current evidence boundary. Record each matrix entry as demonstrated, documented but untested, unsupported, or inconclusive, with version and evidence. Qualify the editor-to-profile-to-local-host path, including reconnect with no developer-device access to the native host listener. Do not erase host differences behind a common interface.
 
 ## 7. Planner handoff and cross-epic contracts
 
-The handoff contains the architecture and requirement IDs, this roadmap, proposed scenario
-narratives, interface owners, open decisions, current capability evidence, and the first
-implementation increment. The planner returns classified work, dependencies, issue plans,
-schedule proposals and exit criteria, and decisions requiring owner review.
+The handoff contains the architecture and requirement IDs, this roadmap, proposed scenario narratives, interface owners, open decisions, current capability evidence, and the first implementation increment. The planner returns classified work, dependencies, issue plans, schedule proposals and exit criteria, and decisions requiring owner review.
 
-Each schedule is a bounded commitment. The planner preserves room for iterative amendments,
-keeps one schedule associated with one execution sandbox, and avoids allocating separate
-sandboxes merely for editor connections or PRs. A roadmap may produce several schedules;
-each gets its own environment while sharing authorized policy and evidence services.
+Each schedule is a bounded commitment. The planner preserves room for iterative amendments, keeps one schedule associated with one execution sandbox, and avoids allocating separate sandboxes merely for editor connections or PRs. A roadmap may produce several schedules; each gets its own environment while sharing authorized policy and evidence services.
 
 | Contract | Minimum information and invariant | Owner |
 | --- | --- | --- |
@@ -334,10 +199,7 @@ each gets its own environment while sharing authorized policy and evidence servi
 | Lifecycle/recovery | Environment/host-server desired and observed states; native host ownership of execution; I5 target scope and stale-request fencing; retained state; I6 outcome reconciliation; compatible restore manifests; restore-before-replace policy, approval, succession records, and release rules | A4 with DevLore and #496 |
 | Methodology change | Scenario evidence, proposed procedure/rule/skill, authoritative home, review and adoption | #526 with #456 |
 
-Existing process governs issue classification, plan commits and owner review, Git commands,
-PR execution, status updates, and repository-write restrictions. The planner must use the
-current filing path and verify native records; a prose parent link is not a native relationship.
-No issues, schedules, approvals, or dependencies are created by publishing this roadmap.
+Existing process governs issue classification, plan commits and owner review, Git commands, PR execution, status updates, and repository-write restrictions. The planner must use the current filing path and verify native records; a prose parent link is not a native relationship. No issues, schedules, approvals, or dependencies are created by publishing this roadmap.
 
 ## 8. Decisions and dependencies to resolve
 
@@ -352,34 +214,16 @@ Use the architecture's D1–D6 decision IDs when decomposing work:
 | D5 — Placement and resource budgets | First deployment, rechecked at G6 | Existing-machine support, shared logging headroom, quotas, backup destination, and agreed acceptance thresholds |
 | D6 — DevLore interface and adoption | Interface discovery early; adoption before G5 | Reviewed lifecycle contract, product-side owners/dependencies, migration and recovery evidence |
 
-Some current issue descriptions retain model-serving/hardware assumptions from the earlier
-draft. The planner should propose any issue-scope/dependency amendments needed to align them
-with this hosted-model baseline for owner review. Do not claim the optional inference work
-completed or silently rewrite its acceptance requirements.
+Some current issue descriptions retain model-serving/hardware assumptions from the earlier draft. The planner should propose any issue-scope/dependency amendments needed to align them with this hosted-model baseline for owner review. Do not claim the optional inference work completed or silently rewrite its acceptance requirements.
 
-The designer/planner must also inventory implemented, reusable, experimental, and missing
-capabilities. An issue describing an operation is not evidence that a deployed command supports it.
+The designer/planner must also inventory implemented, reusable, experimental, and missing capabilities. An issue describing an operation is not evidence that a deployed command supports it.
 
 ## 9. Review and delivery record
 
-This revision replaces the earlier local-inference-first delivery sequence with hosted-model
-proofs on existing hardware, adds the pre-schedule design transition, makes independent
-editor instances, guest-side shell profiles, and shared role views explicit, integrates
-#526's authority, and uses
-scenario walkthroughs to develop the methodology. Existing Feature ownership is preserved.
+This revision replaces the earlier local-inference-first delivery sequence with hosted-model proofs on existing hardware, adds the pre-schedule design transition, makes independent editor instances, guest-side shell profiles, and shared role views explicit, integrates #526's authority, and uses scenario walkthroughs to develop the methodology. Existing Feature ownership is preserved.
 
-On 2026-11-13 the owner approved explicit replacement after original-session restoration is
-exhausted and identified disaster recovery, including self-inflicted loss, as its driving
-scenario. S8 records that decision; S6 retains routine recovery of the original session.
+On 2026-11-13 the owner approved explicit replacement after original-session restoration is exhausted and identified disaster recovery, including self-inflicted loss, as its driving scenario. S8 records that decision; S6 retains routine recovery of the original session.
 
-During owner review of design PR #544, the owner approved depicting shared native host
-servers managing sessions and internal execution, then requested the complete interaction
-lifecycle. The owner then requested filling those gaps with concrete interactions. This
-revision defines I1–I7 actor/action/outcome walkthroughs, ownership and operation receipts,
-concurrent startup, reconnect, approval and host lifecycle diagrams, scoped stop/resume,
-and observable acceptance results. It does not select a local capture-spool storage engine.
+During owner review of design PR #544, the owner approved depicting shared native host servers managing sessions and internal execution, then requested the complete interaction lifecycle. The owner then requested filling those gaps with concrete interactions. This revision defines I1–I7 actor/action/outcome walkthroughs, ownership and operation receipts, concurrent startup, reconnect, approval and host lifecycle diagrams, scoped stop/resume, and observable acceptance results. It does not select a local capture-spool storage engine.
 
-Acceptance of the architecture baseline closes A5 only through its normal owner-reviewed
-evidence on develop. Acceptance of later waves and cooperating Features is separate.
-The architecture links here for delivery sequencing; this roadmap is the single dependency
-outline rather than a second implementation plan or schedule database.
+Acceptance of the architecture baseline closes A5 only through its normal owner-reviewed evidence on develop. Acceptance of later waves and cooperating Features is separate. The architecture links here for delivery sequencing; this roadmap is the single dependency outline rather than a second implementation plan or schedule database.

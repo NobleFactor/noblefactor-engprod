@@ -2,7 +2,7 @@
 title: "Engineering process"
 status: draft
 created: 2026-10-28
-updated: 2026-10-29
+updated: 2026-11-17
 ---
 
 # Engineering process
@@ -46,7 +46,7 @@ Participants should develop and demonstrate the judgment needed to serve as Revi
 
 ## 3. Define the promised outcome
 
-Work begins with an issue describing the problem and intended result. Place it within the applicable feature and epic, and within an approved schedule when executing scheduled work. Consult [Work organization](work-organization.md) for definitions, commitments and discoveries.
+Work begins with an issue describing the problem and intended result. Place it within the applicable feature and epic, and within an approved schedule when executing scheduled work. Consult [Work organization](work-organization.md#changing-scheduled-work) for definitions, commitments, discoveries and the supported schedule-creation and issue-move commands.
 
 The owner must be able to understand the design and implementation they will have at the end before implementation starts. A list of activities alone is insufficient.
 

@@ -2,7 +2,7 @@
 title: "Agent operation"
 status: draft
 created: 2026-10-28
-updated: 2026-11-16
+updated: 2026-11-17
 ---
 
 # Agent operation
@@ -100,7 +100,7 @@ Follow the [PR disclosure requirements](procedures/pull-request.md#review-bounda
 
 ## 8. All agents: tools and status
 
-Use `star github schedule report` for issue questions and `star github triage sweep` for classification checks. Read a specific issue body after the report identifies it. Resolve the assigned schedule through the approved assignment procedure and its metadata, rather than branch names or remembered conversation. Host-specific lookup belongs in the host binding; assignment does not grant additional authority.
+Use `star github schedule get` for schedule status and next-work questions, `star github scenario get` for a scenario's findings, and each collection's `list` command for discovery. Retain `star github schedule report` for epics, features, bugs and searches across issues or repositories. Read a specific issue body after the appropriate command identifies it. `star github triage sweep` finds classification faults and may add issues to Triage; apply the relevant mutation authority. Resolve the assigned schedule through the approved assignment procedure and its metadata, rather than branch names or remembered conversation. Host-specific lookup belongs in the host binding; assignment does not grant additional authority.
 
 Retain the verification duty before recommending a locally built command: identify installed copy/build, compare with the fetched target under required permission, confirm the operation exists, and state what is actually available. Do not overwrite another session's dirty or unmerged installed build. If an approved command form precedes released support, identify that distinction and the interim explicitly. Never claim a dry run exercised the live mutation path.
 

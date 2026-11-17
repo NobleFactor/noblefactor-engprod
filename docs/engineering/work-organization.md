@@ -2,7 +2,7 @@
 title: "Work organization"
 status: draft
 created: 2026-10-28
-updated: 2026-11-15
+updated: 2026-11-17
 ---
 
 # Work organization
@@ -17,7 +17,7 @@ Issues describe the work; schedules order its execution. [Issue standards](../is
 
 Use a repository-qualified reference, `owner/repository#number`, wherever a bare number is ambiguous. A Schedule issue records the deliverable and exit criteria; the tasks and bugs committed to that schedule are its steps. The Schedule issue's own project row has no Step. Epics and features retain their ownership relationships rather than becoming executable steps.
 
-A scenario describes an end-user goal to walk through. Its Scenario project records the tasks and bugs found while walking it. Scenario beats and Schedule steps are different records. A discovered issue moves from the scenario to triage or, after classification and Owner approval of any committed-schedule amendment, onto a schedule. Follow the [scenario representation](../issue-standards.md#scenarios) and record the move; the retired Thread labels and issue-body beat tables are historical.
+A scenario describes an end-user goal to walk through. Its Scenario project records the tasks and bugs found while walking it. Scenario beats and Schedule steps are different records. A discovered issue moves from the scenario to triage or, after classification and Owner approval of any committed-schedule amendment, onto a schedule. Use `star github issue move <issue> --triage --reason <text>` or `--schedule <schedule> --reason <text>` for that move. It writes a comment on the Scenario issue and a `Left #N on <date> for <destination>` line in the item's body, then changes project membership. A closed finding leaves the scenario; until recurring automation (#593) is delivered, remove its row manually and verify the result, following the scenario representation below. Follow the [scenario representation](../issue-standards.md#scenarios); the retired Thread labels and issue-body beat tables are historical.
 
 A schedule may draw tasks and bugs from several features, epics and repositories within its account. Cross-account dependencies use a stand-in issue in the schedule's account, under [Issue placement](../issue-standards.md#placement). A concern shared by two schedules does not permit assigning the same work item to both.
 
@@ -27,13 +27,13 @@ A schedule may draw tasks and bugs from several features, epics and repositories
 
 A schedule states its deliverable as before → after: what exists now and what will exist when the committed work is complete. Its exit criteria describe observable completion evidence.
 
-The team's Schedule project holds the authoritative execution records. Its Schedule field selects the schedule, Step orders the tasks and bugs, Status records progress, and Worktree links the branch holding each step's work. Dependencies are GitHub blocked-by links. Step numbers run from 1..N without gaps; closed steps retain their numbers. The Schedule issue links the board filtered to its option. It does not maintain a second authoritative step table or a Next column.
+The team's Schedule project holds the authoritative execution records. Its Schedule field selects the schedule, Step orders the tasks and bugs, Status records progress, and Worktree links the branch holding each step's work. Dependencies are GitHub blocked-by links. Step numbers run from 1..N without gaps; insertions, moves and removals renumber later closed and open steps together. The Schedule issue links the board filtered to its option. It does not maintain a second authoritative step table or a Next column.
 
-Once committed, work follows step order and its dependencies. The Owner may approve additions, splitting, removal, reordering or a changed deliverable as understanding develops. Record the approved amendment and its consequences before affected execution resumes. These changes are ordinary planning work; discovery of a needed change is a reason to explain and revise the commitment.
+Once committed, work follows step order and its dependencies. The Owner may approve additions, splitting, removal, reordering or a changed deliverable as understanding develops. Use `star github issue move` with the required `--reason` carrying the Owner's approval; it records the amendment and its consequences on each affected Schedule issue. Read the resulting rows and amendment before affected execution resumes. These changes are ordinary planning work; discovery of a needed change is a reason to explain and revise the commitment.
 
 Keep records current when work starts, moves, merges or closes. Push the branch before linking it from Worktree. Record a merge on the step's own issue as it lands; if an issue closes without delivery, record why. Apply guarded writes and readback under the [PR procedure](procedures/pull-request.md), and preserve [completion milestones](process.md#completion-and-progression) separately from merge.
 
-The [schedule template](../templates/schedule.md) records the deliverable, ownership, board link, amendments and document links. The [issue-model representation](../issue-standards.md#schedules) defines its project fields. Templates do not replace those project records.
+The [schedule template](../templates/schedule.md) records the deliverable, ownership, board link, amendments and document links. Read the current rows with `star github schedule get <schedule>`; discover schedules with `star github schedule list <account>`, using `--team <slug>` for one organizational team. The [issue-model representation](../issue-standards.md#schedules) defines its project fields. Templates do not replace those project records.
 
 **Case:** Two schedule rows continued to name an in-progress worktree after closure and merge had removed it, leaving the Owner and sessions with false progress ([recorded case, rule 19](review/sources/agent-rules.txt)).
 
@@ -43,9 +43,9 @@ The [schedule template](../templates/schedule.md) records the deliverable, owner
 
 Changes in the shape of a job are expected. Engineers may propose schedules, additions, new issues and coordinated transfers. The Owner approves changes to committed scope and order.
 
-Record the proposed change, its effect on the promised outcome and dependencies, and the Owner's approval. Update affected plans and schedule records together. Use the supported schedule command for the approved operation; [Issue standards](../issue-standards.md#schedules) records the current scheduling interface and representation.
+Record the proposed change, its effect on the promised outcome and dependencies, and the Owner's approval. Update affected plans and schedule records together. Use `star github schedule new <repository> <name>` to create the Schedule issue, option and own row from the account's form. Use `star github issue move <issue>... --schedule <schedule> --reason <text>` to add or transfer work, with `--after`, `--blocked-by` or a receiving team's `--assignee` when needed; [Issue standards](../issue-standards.md#schedules) records the current scheduling interface and representation.
 
-Before a transfer, identify the source and destination schedules, execution responsibility, worktree, state and affected dependencies. Move project membership as one coordinated operation and keep the affected workers informed through approved conversation boundaries. Do not leave an issue assigned to two schedules or surprise a worker with a changed mission.
+Before a transfer, identify the source and destination schedules, execution responsibility, worktree, state and affected dependencies. Use `star github issue move --schedule <destination> --reason <text>` to coordinate project membership and record an amendment on each schedule. Keep the affected workers informed through approved conversation boundaries. Do not leave an issue assigned to two schedules or surprise a worker with a changed mission.
 
 <a id="overlap-and-coordination"></a>
 
@@ -59,7 +59,7 @@ Overlap does not authorize duplicate writes, duplicate work-item membership or c
 
 ## 5. Discoveries and blockers
 
-Log discovered work when found and link it from the current plan. State whether it blocks the approved outcome, where it belongs and what decision is needed. New nonblocking work goes to triage or a later schedule unless the Owner approves adding it to the current commitment.
+Log discovered work when found and link it from the current plan. State whether it blocks the approved outcome, where it belongs and what decision is needed. New nonblocking work goes to triage or a later schedule unless the Owner approves adding it to the current commitment. Use `star github issue move --triage` or `--schedule`, with `--reason`, for a supported move of an existing issue; the Triage workflow initially places newly filed issues, except Schedule and Scenario issues and findings routed to a scenario.
 
 A blocker prevents proceeding with approved work; severity or annoyance alone does not establish a blocker. Stop affected work, preserve the worktree and unfinished changes, and record state, evidence and the dependency. Propose whether the blocker needs its own worktree or is inseparable from the current work. Consult the Owner before acting on a defect belonging to another worker or PR.
 

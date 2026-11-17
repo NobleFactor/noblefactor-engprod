@@ -147,6 +147,8 @@ star github schedule new <repository> <name> --area Product|Engineering --delive
 `Schedule: <name>` in `<repository>`, then for the option, then for the row, and makes only what is missing. #487 is
 the bug this avoids: a second `apply` after a half-made template made a second project.
 
+<a id="changing-a-schedule-add-move-and-remove"></a>
+
 ## Moving an issue: issue move
 
 Every change to a schedule's steps is one act. The rows, the blocked-by links and the amendment in the Schedule issue

@@ -1,9 +1,9 @@
 ---
 title: "Align schedule and scenario command consumers"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/581
-status: draft
+status: active
 created: 2026-11-16
-updated: 2026-11-16
+updated: 2026-11-17
 documents:
   - kind: "Design: the schedule commands"
     path: docs/architecture/issue-data-model/8-the-schedule-commands.md
@@ -29,7 +29,7 @@ Deliver a consistent skill and documentation set for the implemented schedule/sc
 
 ## 1. Roles and authority
 
-Owner: David Noble. Participant: this Codex session, assigned Handbook adoption (#551). The Owner appoints independent review and compliance auditing; neither delegation nor cross-session communication is authorized by this plan. Approval of the priority change is recorded in the current conversation and the Schedule amendment, not approval of this implementation plan.
+Owner: David Noble. Participant: this Codex session, assigned Handbook adoption (#551). The Owner appoints independent review and compliance auditing; neither delegation nor cross-session communication is authorized by this plan. The priority change is recorded in the conversation and Schedule amendment. The Owner's separate implementation-plan approval is recorded in [Approval and departures](#12-approval-and-departures).
 
 ## 2. Scope and promised result
 
@@ -59,7 +59,7 @@ No new runtime design is proposed. Align consumer documentation with the impleme
 
 Update the skill's description and examples for schedule get/list and scenario get/list, retaining the assignment lookup, evidence requirements and broad-report use cases. Document the smaller read scope without breach-cost estimates. Review skill-authoring guidance before editing the shared asset and preserve host-consumable metadata.
 
-Correct the data-model index, then inventory every page named by Handbook command alignment. Follow references to discover additional competing instructions. Distinguish the issue command group from the future issue file operation (#338), document the Triage exceptions and current collection lifecycles, and retain the boundary between approved behavior and implemented automation.
+Correct the data-model index, then inventory every page named by Handbook command alignment. Follow references to discover additional competing instructions. Distinguish the issue command group from the planned issue-open operation (#338), document the Triage exceptions and current collection lifecycles, and retain the boundary between approved behavior and implemented automation.
 
 Use the adopted one-source-line-per-paragraph rule, reconfirmed by the Owner on 2026-11-16. The conflicting 120-column suggestions have been corrected in both issue bodies. Preserve language-specific code/comment formatting and immutable source snapshots.
 
@@ -67,12 +67,22 @@ Carry the previously recorded Handbook consolidation (#420) completion-only book
 
 ## 6. Questions and existing decisions
 
-1. Which component removes closed scenario items after the one-time cleanup in PR #580? Until ruled and implemented, document the required membership outcome without claiming an automatic actor.
+1. Scenario cleanup is manual until recurring automation is delivered; the Owner approved this interim policy on 2026-11-17, and automation is tracked separately in #593.
 2. Should the PR script invoke schedule close after the last open step? Apply existing Owner-approval and completion gates; the desired automation remains subject to its recorded decision.
-3. Is manual Triage-to-Backlog movement intentional while issue move --backlog only removes a schedule step? Document the actual supported interface without inventing support.
+3. Triage-to-Backlog is a verified current implementation limitation; document the supported interface, with further issue-tooling work coordinated separately by the Owner.
 4. Should the Schedule template follow the form's separate Exit criteria and Evidence of completion sections? Consult the existing forms-as-authority ruling and the preserved Issue forms (#572) decisions before treating this as a new policy question.
 
 Bring genuinely unresolved questions to the Owner individually. Answers already established by adopted rules are applied with their source recorded rather than requested again. Question-dependent passages do not prevent independent skill/index work after plan approval.
+
+### 6.1. Dispositions recorded on 2026-11-17
+
+Question 1 was resolved by the Owner on 2026-11-17 in this conversation: manual cleanup is the interim policy, with recurring automation planned separately. Remove closed finding rows manually and verify the result, preserving the Scenario issue's own row, option, open findings and existing origin/closure evidence. [Recurring Scenario cleanup (#593)](https://github.com/NobleFactor/noblefactor-engprod/issues/593) tracks the automation under Issue tooling (#332); its Task type, Product Area, Medium Priority, N/A Severity, native parent and Open engprod Triage row were read back. It is outside this schedule's commitment and does not block these documentation changes.
+
+Question 2 retains the existing Owner completion gate in Engineering process and the PR procedure. This change adds no automatic schedule closure to the PR script. Any later automation must preserve Owner authorization, closed-step and exit-criteria checks; no such automation is claimed here.
+
+Question 3 is answered for this documentation change by inspection of the installed extension and develop at 97d1e12f66fff8fe085f0e3dee3103db480a6b3c: the sources match, and an ordinary issue in Triage is refused by `issue move --backlog` because it is on no Schedule. Explicit Scenario-to-Triage and Scenario-to-Schedule moves already record the origin and remove the old row. The Owner directed this worker to document what is true now and will coordinate further issue-tooling implementation with the parallel worker. This describes a current limitation, not a permanent manual-only policy.
+
+Question 4 is settled by the forms-as-authority ruling preserved in the adoption review's F20 and Issue forms (#572) handoff. The schedule template now distinguishes the account form's Exit criteria and Evidence of completion sections; it does not define a competing issue shape.
 
 ## 7. Acceptance and evidence
 
@@ -87,6 +97,18 @@ Bring genuinely unresolved questions to the Owner individually. Answers already 
 | Delivery meets repository gates | Run the actual make check target and required GitHub checks for the delivered head |
 | The change is adopted and verified | Owner review, merge, live skill/reference verification, issue/project updates and cleanup evidence |
 
+### 7.1. Implementation verification — 2026-11-17
+
+After consuming the revised skill, one `star github schedule get NobleFactor/noblefactor-engprod#551` call returned the Schedule issue followed by its fifteen Step rows; one `star github scenario get NobleFactor/noblefactor-engprod#152` returned the Scenario issue and its two findings in Beat order. `star github schedule list NobleFactor --team engprod` also passed. The exact invocations, outputs and timestamps are retained in /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/routing-verification.7tg9jzn_/receipt.json and its sibling output files. These were normal read-only invocations, not dry runs.
+
+The shared skill retains its original top-level title, as required by the repository's documentation standard and frontmatter gate. The corrected document verifier checks that format plus the skill's name and description with the existing /opt/local/bin/python3.12 and installed PyYAML; no dependency installation or shared tool replacement was needed. Native Codex packaging is not qualified by these checks. Its validator rejects the top-level title required here; reconciling the shared format and native host bindings belongs to Skills curation (#560) and Codex consumption (#563).
+
+Read-only document verification covers the 25 named Markdown/skill files, their local references, frontmatter, retained explicit anchors, all 23 preserved source/review files and the unchanged original Owner-assignment appendix. The current receipt records the observed link count and file hashes. The verifier is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/verify-documents.py; its current receipt and complete output are beside it. The implementation includes no runtime code. Spelling passes for the changed files. Historical status companions, source snapshots and Owner quotations remain preserved.
+
+The earlier Owner-run `make check` passed for the plan checkpoint at 340f2cf7a5744460f1afd13b54a0ac16450a7dbd. The Owner-run implementation attempt on 2026-11-17 failed the repository frontmatter gate because this session had unnecessarily moved the skill's title under metadata to satisfy the native Codex validator. The complete failure output is retained in /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/verify-update.lSkcCZES. The title is restored and the verifier follows the existing repository format. The Owner's retry passed on 2026-11-17 at 22:21:31 UTC: make check exited 0, with 181 Markdown files checked, one exemption and no frontmatter errors; all other repository gates and tests passed. Verification covered the 25 frozen paths, 273 local references and 23 preserved sources. The named-path staging dry run left the index unchanged. The complete result and content hashes are retained in /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/verify-update.YGz2hbIa/receipt.json. This plan update records that established result. No implementation commit, push, PR, merge or deployment is claimed. Another worker's Issue-move read ordering (#531) landed in PR #586 after this checkpoint; integrate current develop by an Owner-run merge before delivery and recheck any resulting revision.
+
+The Owner's 2026-11-17 ruling in [Issue filing (#338)](https://github.com/NobleFactor/noblefactor-engprod/issues/338) names the planned command `star github issue open`, with `create` as its synonym. Current prose follows that name while keeping the operation marked as undelivered; captured sources and historical Owner appendices remain unchanged.
+
 ## 8. Completion milestones
 
 Implementation, Owner review, merge and post-merge verification are required. Confirm that the deployed shared skill resolves to the delivered content before claiming it available in another host. This work does not qualify the later five-role host bindings or implement an auditor service.
@@ -98,19 +120,19 @@ Implementation, Owner review, merge and post-merge verification are required. Co
 - [x] Identify both recent Triage issues and verify the merged command dependency.
 - [x] Record the Owner-approved priority amendment and verify Steps 2 and 3.
 - [x] Owner created the worktree and verified the one-file staging dry run; the index stayed unchanged. Receipt: /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/prepare.5mkFWiLR/receipt.json.
-- [x] Commit this draft plan as the first checkpoint; Owner review and direction to implement remain outstanding.
-- [ ] Owner reviews the committed plan and directs implementation.
+- [x] Commit the draft plan as the first checkpoint at 340f2cf7a5744460f1afd13b54a0ac16450a7dbd; the subsequent Owner approval and direction are recorded below.
+- [x] Owner approved the committed plan on 2026-11-17 and directed continuation of the work.
 
 ### 9.2. Reconciliation
 
-- [ ] Update the skill and data-model index; record routing evidence for the new commands.
-- [ ] Reconcile the handbook inventory and referenced pages.
-- [ ] Consult prior decisions and resolve only the remaining policy questions.
-- [ ] Incorporate the established #420 completion bookkeeping and update affected records in the same commit.
+- [x] Update the skill and data-model index; validate the existing repository skill format with Python 3.12/PyYAML and record one-call schedule/scenario routing plus schedule-list evidence in /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/routing-verification.7tg9jzn_/receipt.json.
+- [x] Reconcile the delivered-command descriptions in the handbook inventory and linked design chapters, including the agent-operation routing conflict and preserved incoming anchors; remaining policy choices are recorded separately below.
+- [x] Consult prior decisions and record all four dispositions: manual cleanup pending #593, the existing Owner closure gate, verified issue-move behavior, and forms as body authority.
+- [x] Incorporate the established Handbook consolidation (#420) merge, adoption, post-merge verification, Owner closure and cleanup evidence into its plan and adoption review for this implementation commit.
 
 ### 9.3. Delivery
 
-- [ ] Complete document/link/source checks and make check; record actual results.
+- [x] Complete document/link/source checks and the Owner-run make check; record the passing result and unchanged-index staging dry run in /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/verify-update.YGz2hbIa/receipt.json. Recheck the integrated revision before delivery.
 - [ ] Prepare the Owner-run PR script and publish only on explicit authorization.
 - [ ] Obtain review and adoption, merge, verify delivered/deployed content, update issues and Schedule rows, and clean up.
 
@@ -124,8 +146,8 @@ Preserve the satisfied #507 links. Preserve Skills (#550), Shared documentation 
 
 ## 12. Approval and departures
 
-The Owner approved taking these issues onto the schedule for immediate attention on 2026-11-16. This draft is not an approved implementation plan. Git commands remain Owner-run or separately granted by exact command; no commit, push or PR execution authority is inferred from assignment. The adopted paragraph-formatting and Owner-approval rules continue to apply.
+The Owner approved taking these issues onto the schedule for immediate attention on 2026-11-16. On 2026-11-17, after directing continuation, the Owner approved the committed plan at 340f2cf7a5744460f1afd13b54a0ac16450a7dbd in this conversation: “the plan is approved”. This authorizes implementation of the recorded scope. Git commands remain Owner-run or separately granted by exact command; no commit, push or PR execution authority is inferred from plan approval. The adopted paragraph-formatting and Owner-approval rules continue to apply.
 
 ## 13. Completion review
 
-Pending implementation, review, delivery and post-merge evidence. Keep the issues open and the plan active until their required milestones and Owner completion approval are recorded. Record established post-merge results immediately on the issues and carry completion-only documentation through the approved follow-up procedure.
+The implementation candidate is written; targeted document, spelling and routing checks and the Owner-run full repository gate passed for the verified content. Owner review, integration verification, delivery and post-merge evidence remain outstanding. Keep the issues open and the plan active until their required milestones and Owner completion approval are recorded. Record established post-merge results immediately on the issues and carry completion-only documentation through the approved follow-up procedure.

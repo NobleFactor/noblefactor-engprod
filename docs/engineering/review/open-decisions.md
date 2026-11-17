@@ -2,7 +2,7 @@
 title: "Open decisions for review"
 status: draft
 created: 2026-10-28
-updated: 2026-11-15
+updated: 2026-11-17
 ---
 
 # Open decisions for review
@@ -142,7 +142,7 @@ We can discuss this with the agent responsible for issue tracking after these do
 
 ## O11 — Changing the shape of work
 
-**Resolved:** Support creating schedules, adding work items, recording discovered issues for triage, and coordinated transfers between schedules. Retain Owner approval for committed schedule changes and the communication boundaries. Update affected records and inform workers so changes to their missions are not surprises. Treat reshaping work as normal, not a planning failure. Tool implementation remains deferred. Earlier discussion and the Owner response below are retained as history.
+**Resolved:** Support creating schedules, adding work items, recording discovered issues for triage, and coordinated transfers between schedules. Retain Owner approval for committed schedule changes and the communication boundaries. Update affected records and inform workers so changes to their missions are not surprises. Treat reshaping work as normal, not a planning failure. PR #580 delivered `star github schedule new` and `star github issue move` for schedule creation, additions, transfers and supported moves to Triage. General issue filing remains with Issue filing (#338); cross-worker communication and other undelivered control-plane mechanisms remain separate work. Earlier discussion and the Owner response below are retained as history.
 
 The owner's philosophy requires changes to work to be easy. Existing wording says discovering a needed split is a planning failure, while new decisions explicitly permit approved splits and amendments. This draft removes the characterization of change as failure, preserves approval boundaries, and makes amendments first-class records. Confirm whether further changes to the review/approval flow are needed to support churn without excessive overhead.
 

@@ -5,9 +5,7 @@ description: "The NobleFactor base layer: engineering standards, process tooling
 
 # noblefactor-engprod
 
-This is the NobleFactor **base layer**: the organization's engineering standards, the tooling that
-runs its process, and the `star` extensions that ship with them. Every NobleFactor machine deploys
-it with DevLore's `writ`; every NobleFactor repository's `CLAUDE.md` points into it.
+This is the NobleFactor **base layer**: the organization's engineering standards, the tooling that runs its process, and the `star` extensions that ship with them. Every NobleFactor machine deploys it with DevLore's `writ`; every NobleFactor repository's `CLAUDE.md` points into it.
 
 ## What is here
 
@@ -23,74 +21,44 @@ it with DevLore's `writ`; every NobleFactor repository's `CLAUDE.md` points into
 | [docs/github-branch-protection.md](docs/github-branch-protection.md) | Branch protection and required checks |
 | [docs/guides/agent-rules.md](docs/guides/agent-rules.md) | The agents' document: rules whose only audience is a coding agent, each with the day it was broken |
 
-`.github/scripts/Test-Frontmatter.sh` is the reference implementation of the frontmatter standard.
-Repositories adopting the gate should use that script rather than a variant, so a document valid in
-one repository is valid in all of them.
+`.github/scripts/Test-Frontmatter.sh` is the reference implementation of the frontmatter standard. Repositories adopting the gate should use that script rather than a variant, so a document valid in one repository is valid in all of them.
 
 ### The layer content
 
-`Home/` is what `writ` deploys, laid out as the home directory it lands in. Today it holds the
-`com.noblefactor.ops.GitHub` star extension — `star github schedule report`, `star github triage sweep` and
-`star github model get|diff|apply|backup|restore` — under `Home/common/.local/share/devlore/star/extensions/`, where star looks for a
-user-scoped extension since devlore-cli#918. `Declare-BashScript` and the `git-*` process commands arrive with #147 and
-#146.
+`Home/` is what `writ` deploys, laid out as the home directory it lands in. Today it holds the `com.noblefactor.ops.GitHub` star extension — `star github issue move`, `star github schedule list|get|new|close|report`, `star github scenario list|get|new|retire`, `star github plan link`, `star github triage sweep` and `star github model get|diff|apply|backup|restore` — under `Home/common/.local/share/devlore/star/extensions/`, where star looks for a user-scoped extension since devlore-cli#918. `Declare-BashScript` and the `git-*` process commands arrive with #147 and #146.
 
 ### The star work is not here
 
-`star` was a product of this repository until March 2026. Its code moved to **devlore-cli**, the Go
-and Starlark were removed on 2026-08-27 (#130), and the design documents followed on 2026-09-24
-(#228) — the three that describe code still shipping went with it, as `docs/architecture/9.1`, `9.2`
-and `9.3` there; the rest described retired implementations and were deleted.
+`star` was a product of this repository until March 2026. Its code moved to **devlore-cli**, the Go and Starlark were removed on 2026-08-27 (#130), and the design documents followed on 2026-09-24 (#228) — the three that describe code still shipping went with it, as `docs/architecture/9.1`, `9.2` and `9.3` there; the rest described retired implementations and were deleted.
 
-An earlier revision of this section kept those documents deliberately, saying the reasoning outlived
-the code. An audit on 2026-09-23 found that one sentence covering three different things: records of
-retired code, the **only** written design of code that ships in devlore-cli, and guides that were
-never records at all. The first was worth keeping and the second was in the wrong repository, which
-is not a distinction one sentence can carry.
+An earlier revision of this section kept those documents deliberately, saying the reasoning outlived the code. An audit on 2026-09-23 found that one sentence covering three different things: records of retired code, the **only** written design of code that ships in devlore-cli, and guides that were never records at all. The first was worth keeping and the second was in the wrong repository, which is not a distinction one sentence can carry.
 
-Anything about `star` belongs in devlore-cli. What stays here is
-`docs/plans/feature/140-star-report-epics.md`, which designs the extension this layer ships, and
-`docs/plans/feature/566-remove-go-code.md`, which charters the CI gate this repository still runs.
+Anything about `star` belongs in devlore-cli. What stays here is `docs/plans/feature/140-star-report-epics.md`, which designs the extension this layer ships, and `docs/plans/feature/566-remove-go-code.md`, which charters the CI gate this repository still runs.
 
 ### Tools
 
-The repository's own tools, not deployed, are in `bin/`, each with its manual in `share/man/man1`, which `--help`
-shows, and its completion in `share/bash-completion/completions`: `Test-Here` and `Test-OnHosts`, which `make test`
-runs, and `Test-Here.ps1`, their Windows half. The hosting setup tools live with the site they build, in
-NobleFactor/devlore.noblefactor.com's `bin/`.
+The repository's own tools, not deployed, are in `bin/`, each with its manual in `share/man/man1`, which `--help` shows, and its completion in `share/bash-completion/completions`: `Test-Here` and `Test-OnHosts`, which `make test` runs, and `Test-Here.ps1`, their Windows half. The hosting setup tools live with the site they build, in NobleFactor/devlore.noblefactor.com's `bin/`.
 
 ## What is not here, despite what this file used to say
 
-Earlier revisions of this README described an `nf-ops` binary with key-ceremony, signing, and
-registry-audit commands, and a `cmd/nf-ops` / `internal/{ceremony,signing,index,audit}` layout. None
-of that was ever built. The only command this repository ever held was `cmd/star`, a copy left
-behind by the March move — which devlore-registry's CI went on building for five months, producing
-the wrong binary and the failure tracked as devlore-cli#695.
+Earlier revisions of this README described an `nf-ops` binary with key-ceremony, signing, and registry-audit commands, and a `cmd/nf-ops` / `internal/{ceremony,signing,index,audit}` layout. None of that was ever built. The only command this repository ever held was `cmd/star`, a copy left behind by the March move — which devlore-registry's CI went on building for five months, producing the wrong binary and the failure tracked as devlore-cli#695.
 
-Release signing and key management remain unimplemented. When they are built, they need an ADR
-before a README.
+Release signing and key management remain unimplemented. When they are built, they need an ADR before a README.
 
 ## Deploying it
 
-`writ` is DevLore's environment deployer, part of [devlore-cli](https://github.com/NobleFactor/devlore-cli).
-Register this repository as the base layer, then deploy. `common` and the projects named for the
-configured layers — here, `noblefactor-engprod` — are implicit; nothing is named unless it is extra:
+`writ` is DevLore's environment deployer, part of [devlore-cli](https://github.com/NobleFactor/devlore-cli). Register this repository as the base layer, then deploy. `common` and the projects named for the configured layers — here, `noblefactor-engprod` — are implicit; nothing is named unless it is extra:
 
 ```bash
 writ repo set base https://github.com/NobleFactor/noblefactor-engprod.git
 writ deploy
 ```
 
-Layers above it — a team repository, a personal one — are registered the same way and deployed
-together. `writ` merges them into one home directory, and where two layers provide the same path
-the higher layer wins. Until devlore-cli#791 and devlore-cli#850 ship, the binary still spells
-these two lines `writ repo add` and `writ deploy common`.
+Layers above it — a team repository, a personal one — are registered the same way and deployed together. `writ` merges them into one home directory, and where two layers provide the same path the higher layer wins. Until devlore-cli#791 and devlore-cli#850 ship, the binary still spells these two lines `writ repo add` and `writ deploy common`.
 
 ## CI
 
-One job, `quality-gate`: frontmatter validation and spelling. The name is fixed — organization
-ruleset 12426847 requires that context on every repository, so renaming it would leave a required
-check that never arrives.
+One job, `quality-gate`: frontmatter validation and spelling. The name is fixed — organization ruleset 12426847 requires that context on every repository, so renaming it would leave a required check that never arrives.
 
 ## License
 
