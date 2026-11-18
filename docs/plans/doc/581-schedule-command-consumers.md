@@ -3,7 +3,7 @@ title: "Align schedule and scenario command consumers"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/581
 status: active
 created: 2026-11-16
-updated: 2026-11-17
+updated: 2026-11-18
 documents:
   - kind: "Design: the schedule commands"
     path: docs/architecture/issue-data-model/8-the-schedule-commands.md
@@ -112,11 +112,19 @@ The Owner's 2026-11-17 ruling in [Issue filing (#338)](https://github.com/NobleF
 
 ### 7.2. Owner review correction — 2026-11-17
 
-The Owner clarified the methodology: designs describe what we want; plans explain how to get there from what exists; schedules order the issues we will carry out. Planning produces issues and a schedule, and each issue references one or more plans. Designs must not mix the wanted system with rulings, rejected approaches or migration history. That material belongs in plans. All documents must use plain language.
+The Owner clarified the methodology: designs describe what we want; plans explain how to get there from what exists; schedules order the issues we will carry out. Planning produces issues and a schedule, and each issue references one or more plans. Designs explain the wanted system and its significant design decisions. Transition decisions and migration history belong in plans. All documents must use plain language.
 
 After reviewing the copy in the Issue verbs (#589) worktree, the Owner explicitly directed this session to revise docs/engineering/work-assets.md in its own current worktree. This correction adds the definitions and handoff, states that an issue can use several plans and a plan can cover several issues, removes unnecessary consolidation history and simplifies the prose. Existing storage, linking and approval requirements and incoming anchors are preserved. The broader rewrite of design documents remains separate work.
 
 The two local changes are this plan and the work-assets document. Earlier gate results remain evidence for their named revisions. The revised candidate must pass document checks, an Owner-run make check, publication to PR #596, fresh CI and review before merge. The previous merge command is replaced while these corrections are pending.
+
+### 7.3. Design decisions and transition history — 2026-11-18
+
+The Owner clarified that a design decision explains what the system should be and why. Relevant alternatives and tradeoffs belong with that explanation. A transition decision explains how to reach the wanted system from what exists and belongs in a plan. The earlier work-assets correction excluded rulings and rejected approaches too broadly; this review correction makes the distinction explicit.
+
+The initial two-file correction was published at 7a30967d21033c140d8cfd7c3897bb8cf8b59645 after the Owner-run make check passed. Its publication and PR-description readback are recorded in /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/finish-review.h7eQzeWM/receipt.json. This clarification changes the work-assets definition and this plan. Read-only document checks passed on 2026-11-18 for all 26 reviewed files and 285 local references, with all 23 preserved source/review files and the original Owner appendix unchanged. The evidence is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/design-decision-clarification-verification.json. An Owner-run make check, publication and review remain required.
+
+The Owner also approved Google writing guidance as the basis of the shared writing-and-review skill and arc42 as the basis of architecture content. [Google writing and review (#599)](https://github.com/NobleFactor/noblefactor-engprod/issues/599) and [arc42 architecture content (#600)](https://github.com/NobleFactor/noblefactor-engprod/issues/600) are open at Steps 4 and 5 of Handbook adoption (#551), after this PR's work. They can be planned independently. Their implementation plans, publication and qualification remain separate work. The approved guidance can inform corrections in this PR without claiming that either new deliverable is complete.
 
 ## 8. Completion milestones
 
@@ -148,7 +156,10 @@ Implementation, Owner review, merge and post-merge verification are required. Co
 ### 9.4. Owner review correction
 
 - [x] Revise the work-assets definitions, relationships and prose as explicitly directed by the Owner, preserving existing requirements and anchors.
-- [ ] Verify and publish the two-file correction, then review the updated PR and its current-head CI before merge.
+- [x] Verify and publish the initial two-file correction at 7a30967d21033c140d8cfd7c3897bb8cf8b59645; retain the Owner-run gate and publication evidence cited above.
+- [x] Apply the Owner's distinction between design decisions and transition history to work-assets and this plan.
+- [x] Verify the clarification's document scope, metadata, links, anchors and preserved evidence; retain the receipt cited in section 7.3.
+- [ ] Run the Owner's repository gate and publish the clarification, then obtain Owner review and passing current-head CI before merge.
 
 ## 10. Files and related assets
 
@@ -164,6 +175,8 @@ The Owner approved taking these issues onto the schedule for immediate attention
 
 On 2026-11-17, the Owner explicitly asked: “can you revise work-assets.md right now on your current worktree?” This authorizes the review correction described above within the existing worktree. It does not grant agent execution of Git or the PR script. The Owner's earlier reluctant acceptance applies to the earlier reviewed revision; the corrected candidate is presented for fresh review.
 
+On 2026-11-18, the Owner distinguished design decisions from transition history, approved the two adoption tasks, and directed continuation. This authorizes the scoped review correction above. It does not grant agent execution of Git or the PR script, or replace the committed-plan and review requirements for the new tasks.
+
 ## 13. Completion review
 
-The implementation candidate is written; targeted document, spelling and routing checks and the Owner-run full repository gate passed for the verified content. Integration verification passed. PR #596 is open. The Owner reluctantly accepted its earlier revision and then requested the work-assets correction. Publication and review of that correction, target-branch merge, deployed-content verification and completion approval remain outstanding. Keep the issues open and the plan active until their required milestones and Owner completion approval are recorded. Record established post-merge results immediately on the issues and carry completion-only documentation through the approved follow-up procedure.
+The implementation candidate is written; targeted document, spelling and routing checks and the Owner-run full repository gate passed for the verified content. Integration verification passed. PR #596 is open. The Owner reluctantly accepted its earlier revision and then requested the work-assets correction. The initial correction is published; the clarification recorded in section 7.3 still requires verification, publication and Owner review. Target-branch merge, deployed-content verification and completion approval remain outstanding. Keep the issues open and the plan active until their required milestones and Owner completion approval are recorded. Record established post-merge results immediately on the issues and carry completion-only documentation through the approved follow-up procedure.

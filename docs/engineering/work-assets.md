@@ -2,7 +2,7 @@
 title: "Work assets"
 status: draft
 created: 2026-10-28
-updated: 2026-11-17
+updated: 2026-11-18
 ---
 
 # Work assets
@@ -15,8 +15,8 @@ updated: 2026-11-17
 
 | Asset | Purpose and required content |
 | --- | --- |
-| Design | What we want: how the finished system works, how its parts fit together, and the rules it must meet |
-| Plan | How we get there from where we are: the changes, approach, phases, decisions, completion checks and results |
+| Design | What we want: how the system works, how its parts fit together, the rules it must meet, and the reasons for significant design choices |
+| Plan | How we get there from where we are: the changes, approach, phases, transition decisions, completion checks and results |
 | Schedule | What we will deliver, stated as before → after; the issues in order, their dependencies, work locations, progress and approved changes |
 | Issue | A defined piece of work: its problem, scope, intended result, parent feature or epic, schedule where applicable, and document links |
 | Approval | Who approved what, which proposal or revision they approved, and the limits of that approval |
@@ -48,7 +48,9 @@ Branch types are `doc`, `feature`, `fix`, `hotfix`, `refactor` and `release`. Th
 
 A design describes the system we want. Explain what people can do with it, how its parts fit together and the rules it must meet. Describe the intended system as a whole.
 
-Designs must not contain rulings, rejected approaches, migration steps or change history. Put those in plans. When the intended system changes, revise the design to describe it clearly; record the reasons and the work needed in the plan.
+Explain significant design choices and why they meet the system's goals. Include relevant alternatives and tradeoffs when they help the reader understand a choice.
+
+Put transition decisions, migration steps and change history in plans. When the intended system changes, revise the design to describe it clearly and update the plan with the work needed to reach it.
 
 Design files belong under `docs/architecture/` in the repository that owns the design. Leave files in other approved locations until a move is approved.
 
@@ -56,7 +58,7 @@ Design files belong under `docs/architecture/` in the repository that owns the d
 
 ### 3.2. Plans
 
-A plan starts with what exists and explains the changes needed to reach the design. It records the chosen approach, decisions, migration work, phases, completion checks and results. Link to the design instead of repeating its description of the finished system.
+A plan starts with what exists and explains the changes needed to reach the design. It records the approach to the work, transition decisions, migration steps, phases, completion checks and results. Link to the design instead of repeating its description of the finished system.
 
 Record each Owner approval in the plan with its date, the proposal or revision approved, and the work it authorizes. Keep a link or reference to the original exchange. Quote the Owner's exact words when the wording matters. Approval covers only the work it names.
 
