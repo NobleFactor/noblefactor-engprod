@@ -22,7 +22,7 @@ A scenario is like a schedule that starts with no tasks or bugs: they are found 
 | `close <scenario> --reason <text>` | Closes a scenario the product no longer has | Row, comment, issue |
 | `reopen <scenario> --reason <text>` | Reopens a closed scenario | Issue, comment, row |
 
-A `<scenario>` is its Scenario issue's key, `<owner>/<repository>#<number>`. A `<beat>` is a whole number on the scenario's Beat field. As in section 8, every command names what it acts on, takes star's `--filter`, `--jq` and `--output`, returns one flat record per thing it read or changed, JSON by default, and exits non-zero only on an error. A command that writes reads everything it needs first, so a fault is a refusal with nothing written, reads each write back, and finishes, run again, what a run that stopped partway started. `--dry-run` is refused until NobleFactor/devlore-cli#1170 lets a dry run read. `star github schedule report` returns each row's scenario and Beat.
+A `<scenario>` is its Scenario issue's key, `<owner>/<repository>#<number>`. A `<beat>` is a whole number on the scenario's Beat field. As in section 8, every command names what it acts on, takes star's `--filter`, `--jq` and `--output`, returns one flat record per thing it read or changed, JSON by default, and exits non-zero only on an error. A command that writes reads everything it needs first, so a fault is a refusal with nothing written, reads each write back, and finishes, run again, what a run that stopped partway started. `--dry-run` is refused. `star github schedule report` returns each row's scenario and Beat.
 
 ## Reading: list and get
 
@@ -101,4 +101,4 @@ Each Scenario project has the views Default and By scenario, view 2, and the fie
 
 ## Building it
 
-Each verb is a file in the GitHub extension's `commands` directory, `github-scenario-<verb>.star`, and `create` is a second manifest entry with `open`'s implementation until NobleFactor/devlore-cli#1235 lets an extension command name an alias. Each shares its code with the schedule verb of the same name (section 8, § Building it). The comments and the Scenario issue's body are templates in the extension's `templates` directory, and the tests are `tests/Test-StarGitHub`. [The status page](9-the-scenario-commands.status.md) records what is built, every ruling, and the findings put right on 2026-11-16.
+Each verb is a file in the GitHub extension's `commands` directory, `github-scenario-<verb>.star`, and `create` is another name for `open`, a second manifest entry with `open`'s implementation. Each shares its code with the schedule verb of the same name (section 8, § Building it). The comments and the Scenario issue's body are templates in the extension's `templates` directory, and the tests are `tests/Test-StarGitHub`. [The status page](9-the-scenario-commands.status.md) records what is built.

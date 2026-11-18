@@ -18,7 +18,7 @@ title: "10. The issue commands"
 | `close <issue>... --resolution Declined\|Duplicate\|Invalid --reason <text>` | Closes issues whose work was not done, each with its Resolution | Comment, field or label, issue, rows |
 | `reopen <issue>... --reason <text>` | Reopens issues, with their closed parents and the closed schedules they are steps of | Comments, issues, fields or labels, rows, a Schedule issue's body |
 
-An `<issue>` is written `<owner>/<repository>#<number>`. Every command names what it acts on, takes star's `--filter`, `--jq` and `--output`, returns one flat record per thing it read or changed, JSON by default, and exits non-zero only on an error. Every command reads all it needs before its first write, so a fault is a refusal with nothing written, and reads every write back. A run that stops partway is run again to finish. `--dry-run` is refused until NobleFactor/devlore-cli#1170 lets a dry run read.
+An `<issue>` is written `<owner>/<repository>#<number>`. Every command names what it acts on, takes star's `--filter`, `--jq` and `--output`, returns one flat record per thing it read or changed, JSON by default, and exits non-zero only on an error. Every command reads all it needs before its first write, so a fault is a refusal with nothing written, and reads every write back. A run that stops partway is run again to finish. `--dry-run` is refused.
 
 ## Where an issue lives
 
@@ -62,7 +62,7 @@ star github issue open --template <path> [--set <name>=<value>[,<name>=<value>].
 
 `open` opens its issue in the repository of the clone it runs in, the repository its origin names. `--directory <path>` names another clone, as git's `-C` does. `create` is the same command.
 
-A template is the issue's header and then its body. The header takes the values the flags give: `type`, `parent`, `title`, `area`, `priority`, `severity`, `assignee` and `unique`. With `--template`, no flag but `--set` and `--directory` is given. Each `{name}` in the header or the body is a blank that `--set` fills; a shell's `${name}` is left alone. `--set` takes its pairs comma-separated, since star's extension flags can't repeat yet (#315).
+A template is the issue's header and then its body. The header takes the values the flags give: `type`, `parent`, `title`, `area`, `priority`, `severity`, `assignee` and `unique`. With `--template`, no flag but `--set` and `--directory` is given. Each `{name}` in the header or the body is a blank that `--set` fills; a shell's `${name}` is left alone. `--set` takes its pairs comma-separated.
 
 ```markdown
 ---
@@ -79,7 +79,7 @@ unique: true
 `open` does this, in order:
 
 1. **Fills the blanks.** A blank left unfilled is refused.
-2. **Reads everything it needs:** the clone's repository, the account's model, the type, the parent and its type, the Area, Priority and Severity options, and the type's issue form, from the account's `.github` repository as it stands now.
+2. **Reads everything it needs:** the clone's repository, the account's model, the type, the parent and its type, the Area, Priority and Severity options, and the type's issue form, from the account's `.github` repository when it runs.
 3. **Checks the issue,** and refuses it, writing nothing, when it has no Area; its type is one the account doesn't have, or is Schedule or Scenario, which `star github schedule open` and `star github scenario open` open; its parent isn't one level up, or it is an Epic with a parent; its body lacks a section its form requires, or its Plan and design documents table; it is given a Severity and isn't a Bug; the directory is no clone; or the repository takes no part in issue tracking.
 4. **Looks for a duplicate,** with `unique`: when the parent already has a sub-issue, open or closed, with the same title, `open` opens nothing, names that issue, and exits 0.
 5. **Opens the issue** in one call, with its type, its parent, its assignee, and its Area, Priority and Severity. Priority is Medium unless given. A Bug's Severity is Medium unless given, as the Triage workflow starts a bug, and every other type's is N/A. No one is assigned unless `--assignee` names someone.
@@ -132,7 +132,7 @@ For each issue, in order, `close` writes:
 
 It refuses, writing nothing: neither or both of `--evidence` and `--resolution`; `--resolution` without `--reason`, or with a name its account doesn't have; `--reason` with `--evidence`; an evidence file that is missing or empty; a Schedule or Scenario issue, which `star github schedule close` and `star github scenario close` close; and an item on a scenario whose option names no Scenario issue. An issue already closed is left as it is, and its record is `unchanged`.
 
-Its records: one for each issue, `closed` with its Resolution and the parent whose last open child it was, or `unchanged`; and one for each row, `row-closed` or `left`. An item closed some other way, such as by a pull request's `Closes` line, keeps its Scenario row until #593's recurring check removes it.
+Its records: one for each issue, `closed` with its Resolution and the parent whose last open child it was, or `unchanged`; and one for each row, `row-closed` or `left`. An item closed some other way, such as by a pull request's `Closes` line, has its Scenario row removed by a recurring check.
 
 ## Reopening an issue: reopen
 
@@ -163,6 +163,6 @@ Its records: one for each issue, parent and schedule reopened, with the Resoluti
 
 ## Building it
 
-Each verb is a file in the GitHub extension's `commands` directory, `github-issue-<verb>.star`, and `create` is a second manifest entry with `open`'s implementation until NobleFactor/devlore-cli#1235 lets an extension command name an alias. The code they share is in `issues.star`, an issue's Resolution, the scenario a row is under and an issue's parents, and in `steps.star`, which reads an issue and its rows and writes them, as `move` does. `ending.star` closes and reopens a schedule, for `star github schedule` and for `reopen`. Each comment is rendered from a template in the extension's `templates` directory.
+Each verb is a file in the GitHub extension's `commands` directory, `github-issue-<verb>.star`, and `create` is another name for `open`, a second manifest entry with `open`'s implementation. The code they share is in `issues.star`, an issue's Resolution, the scenario a row is under and an issue's parents, and in `steps.star`, which reads an issue and its rows and writes them, as `move` does. `ending.star` closes and reopens a schedule, for `star github schedule` and for `reopen`. Each comment is rendered from a template in the extension's `templates` directory.
 
-The tests are `tests/Test-StarGitHub`, which runs each command against a stand-in for `gh` holding a small world of issues and projects. The work is #338 (`open` and `create`), #590 (`close`), #587 (`reopen`) and #597 (`move`), under feature #332; [the status page](10-the-issue-commands.status.md) records what is built and every ruling.
+The tests are `tests/Test-StarGitHub`, which runs each command against a stand-in for `gh` holding a small world of issues and projects. [The status page](10-the-issue-commands.status.md) records what is built.
