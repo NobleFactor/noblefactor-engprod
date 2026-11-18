@@ -368,7 +368,8 @@ set_row() {
 # AFTER the merge and its span, since the records name the squash commit. Guarded on what each record holds (ruled
 # 2026-11-13): the step's row must link this branch, or this pull request when the script runs again; otherwise the
 # step has moved to another worktree, and the script stops. Closure requires the reviewed close_steps authorization: a
-# step approved to close is closed by star github issue close, the merge record its evidence, which also sets its
+# step approved to close is closed by star github issue close, which writ deploys with the GitHub extension, the merge
+# record its evidence, which also sets its
 # schedule row Closed; every other step gets the merge record as a comment, once, and stays open for its post-merge
 # obligations. Each record is read back. A step that moves to another worktree, or closes without a merge,
 # is recorded by this script before git close-branch, its row linking where the work went. Leave the step out only

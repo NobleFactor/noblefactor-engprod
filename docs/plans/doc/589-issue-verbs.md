@@ -13,6 +13,12 @@ documents:
     path: docs/architecture/issue-data-model/9-the-scenario-commands.md
   - kind: Design
     path: docs/architecture/issue-data-model/1-hierarchy.md
+  - kind: Design
+    path: docs/architecture/issue-data-model/10-the-issue-commands.decisions.md
+  - kind: Design
+    path: docs/architecture/issue-data-model/8-the-schedule-commands.decisions.md
+  - kind: Design
+    path: docs/architecture/issue-data-model/9-the-scenario-commands.decisions.md
 ---
 
 # The star github issue verbs, open, move, close and reopen, designed and built in one pull request
@@ -128,7 +134,8 @@ A new section 10 of the issue data model, `10-the-issue-commands.md`, and its st
 
 ### 9.4 Phase 4: the documentation
 
-- [ ] The handbook and the user documentation read in full against section 10, and every page that opens, closes or reopens an issue brought to the verbs
+- [x] The user documentation brought to the commands on 2026-11-18: every page searched for opening, closing, reopening or moving an issue; the README's list of commands, the issue standards' filing rows and the PR script template's closing step changed; each `star github` command's help one plain line of at most 120 characters, its fuller help waiting on NobleFactor/devlore-cli#1237. The handbook is the documenter's (#599, #600)
+- [x] Sections 8, 9 and 10 given their design-decisions companions on 2026-11-18, from the documenter's writing-and-review skill and arc42 drafts, each significant choice with its reasons, alternatives, consequences and approval; their status pages removed, what is built being this plan's and the plans of #439 and #507
 
 ### 9.5 Phase 5: the proof and the merge
 
@@ -175,6 +182,9 @@ Departures, each ruled by the owner:
 6. **`move`, ruled 2026-11-17: it puts an issue where it needs to be, from wherever it is.** `move --backlog` refused an issue in Triage, so an issue `open` opens could not reach the Backlog by command. The owner ruled the old refusals broken: an epic, a feature, a task or a bug goes to Triage or the Backlog, a task or a bug to a schedule or a scenario, and a Schedule or Scenario issue nowhere. Filed as Bug #597, step 6, and put in this pull request.
 7. **Epics and features, ruled 2026-11-17: on the Backlog until they close, their state their children's.** In place of the ruling of 2026-11-04 that an epic or a feature, once classified, leaves Triage for no project, it goes from Triage to the Backlog and stays there until it closes; nothing moves it when its tasks and bugs are pulled onto a schedule or a scenario. The owner first proposed that it leave the Backlog when its first task or bug went onto a schedule or a scenario, and asked how other trackers do it: Azure Boards, Jira, Shortcut and Linear move none, only its children, and change its state instead (section 10, § Epics and features, with its sources). The owner chose the simplest thing, with that evidence.
 8. **The design docs, directed 2026-11-17: they say what the commands do.** The owner found sections 8, 9 and 10 ran on with one ruling after another, and more talk of what changed between iterations than of the design. They were rewritten in plain present-tense language for the commands this pull request builds, each command's syntax, what it does in order, what it refuses and what it returns, and their rulings and history moved to their status pages. The notes this pull request had added to sections 1 to 7, the index and the issue standards, saying each passage was superseded in part, were replaced by the passages themselves, rewritten in place, and each status page given one dated line; rewriting sections 1 to 7 in plain language is Task #598, step 7.
+9. **Every project's first view is named Default, decided 2026-11-18.** The owner had the Backlog's View 1 renamed Default with its Epics and features view and its By priority view of tasks and bugs; the rule holds for every project, so the Triage and Scenario templates' View 1 is Default too. Recorded as [D-012 of section 10](../../architecture/issue-data-model/10-the-issue-commands.decisions.md#d-012).
+10. **Design decisions in companions, decided 2026-11-18.** The documenter's drafts for Writing and review (#599) and Architecture content (#600) put a design's significant choices in a companion, `<design>.decisions.md`, each with its reasons, alternatives, consequences and approval, and the work of reaching the design in its plan. Sections 8, 9 and 10 took companions, and their status pages, which mixed approvals, history and progress, were removed; their progress is in this plan and the plans of #439 and #507. Sections 1 to 7 keep theirs until Task #598 rewrites them.
+11. **The help, decided 2026-11-18.** Each `star github` command's help is one plain line of at most 120 characters, the length of our lines. star shows an extension command's help as its one-line summary and has nowhere for a description, examples, argument descriptions or completions; NobleFactor/devlore-cli#1237, step 25, gives an extension command's entry what star needs to make its man page, its completions and its help.
 
 ## 13. Completion review
 

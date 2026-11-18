@@ -106,7 +106,7 @@ templates:
       - { name: "Beat", type: number }
       - { name: "Scenario", type: single-select, own_options: true }
     views:
-      - name: "View 1"
+      - name: "Default"
         layout: table
         filter: ""
         fields: ["Title", "Assignees", "Status", "Linked pull requests", "Sub-issues progress"]

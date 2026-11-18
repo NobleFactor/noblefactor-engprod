@@ -124,6 +124,15 @@ A schedule is in progress while any of its steps is open, so a schedule closed b
 
 The option was never removed, so the schedule's past rows are under it still. An open schedule is `unchanged`. `star github issue reopen` reopens each closed schedule a reopened issue is a step of the same way, its comment naming the issue (section 10).
 
+## Significant design decisions
+
+The choices this design rests on, each recorded with its reasons, alternatives and consequences in [the design decisions](8-the-schedule-commands.decisions.md):
+
+- [D-001](8-the-schedule-commands.decisions.md#d-001) and [D-002](8-the-schedule-commands.decisions.md#d-002): results shaped by star's common flags, and every command reading first and reading each write back.
+- [D-003](8-the-schedule-commands.decisions.md#d-003) to [D-005](8-the-schedule-commands.decisions.md#d-005): one command for a schedule's steps, an amendment line for each change, and steps kept consecutive.
+- [D-006](8-the-schedule-commands.decisions.md#d-006) and [D-007](8-the-schedule-commands.decisions.md#d-007): what `close` posts, and the option it keeps.
+- [D-008](8-the-schedule-commands.decisions.md#d-008): what `reopen` sets.
+
 ## Start-Claude
 
 Start-Claude and Start-Claude.ps1 start a session on a schedule with `--schedule <owner>/<repository>#<number>`. They make no schedule: asked for one, they refuse and name `star github schedule open`.
@@ -156,4 +165,4 @@ Each record is an issue: the plans that serve it, what was done (`written`, `unc
 
 ## Building it
 
-Each verb is a file in the GitHub extension's `commands` directory, `github-schedule-<verb>.star`, and `create` is another name for `open`, a second manifest entry with `open`'s implementation. Each shares its code with the scenario verb of the same name (section 9): `making.star` opens a schedule or a scenario, `collections.star` reads them, and `ending.star` closes and reopens them; `steps.star` reads and writes rows and amendments for them and for `star github issue move`. The comments and the Schedule issue's body are templates in the extension's `templates` directory, and the tests are `tests/Test-StarGitHub`. [The status page](8-the-schedule-commands.status.md) records what is built.
+Each verb is a file in the GitHub extension's `commands` directory, `github-schedule-<verb>.star`, and `create` is another name for `open`, a second manifest entry with `open`'s implementation. Each shares its code with the scenario verb of the same name (section 9): `making.star` opens a schedule or a scenario, `collections.star` reads them, and `ending.star` closes and reopens them; `steps.star` reads and writes rows and amendments for them and for `star github issue move`. The comments and the Schedule issue's body are templates in the extension's `templates` directory, and the tests are `tests/Test-StarGitHub`. How the work reached this design, and what of it is built, is in the plans of [#439](../../plans/doc/439-schedule-commands.md), [#507](../../plans/doc/507-scenario-commands.md) and [#589](../../plans/doc/589-issue-verbs.md).

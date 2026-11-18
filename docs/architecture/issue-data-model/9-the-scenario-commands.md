@@ -85,6 +85,15 @@ The option stays, as a closed schedule's does: it records which scenario each pa
 
 `reopen <scenario> --reason <text>` reopens a closed scenario, when the product has it again: it reopens the Scenario issue, comments with the reason, `Reopened by \`star github scenario reopen\` on <date>, run by <login>: <reason>`, and sets the scenario's own row Open. The option was never removed, so the scenario's past rows are under it still. An open scenario is `unchanged`.
 
+## Significant design decisions
+
+The choices this design rests on, each recorded with its reasons, alternatives and consequences in [the design decisions](9-the-scenario-commands.decisions.md):
+
+- [D-001](9-the-scenario-commands.decisions.md#d-001): scenarios with a command group of their own.
+- [D-002](9-the-scenario-commands.decisions.md#d-002): Beat N as step N of the walk.
+- [D-003](9-the-scenario-commands.decisions.md#d-003) and [D-004](9-the-scenario-commands.decisions.md#d-004): a move recorded in two places, and a closed item leaving its scenario.
+- [D-005](9-the-scenario-commands.decisions.md#d-005): a scenario closed as completed, with no Resolution.
+
 ## How each command runs in each account
 
 | | NobleFactor | David-Noble-at-work |
@@ -101,4 +110,4 @@ Each Scenario project has the views Default and By scenario, view 2, and the fie
 
 ## Building it
 
-Each verb is a file in the GitHub extension's `commands` directory, `github-scenario-<verb>.star`, and `create` is another name for `open`, a second manifest entry with `open`'s implementation. Each shares its code with the schedule verb of the same name (section 8, § Building it). The comments and the Scenario issue's body are templates in the extension's `templates` directory, and the tests are `tests/Test-StarGitHub`. [The status page](9-the-scenario-commands.status.md) records what is built.
+Each verb is a file in the GitHub extension's `commands` directory, `github-scenario-<verb>.star`, and `create` is another name for `open`, a second manifest entry with `open`'s implementation. Each shares its code with the schedule verb of the same name (section 8, § Building it). The comments and the Scenario issue's body are templates in the extension's `templates` directory, and the tests are `tests/Test-StarGitHub`. How the work reached this design, and what of it is built, is in the plans of [#507](../../plans/doc/507-scenario-commands.md) and [#589](../../plans/doc/589-issue-verbs.md).

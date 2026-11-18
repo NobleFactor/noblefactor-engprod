@@ -307,7 +307,7 @@ labels:
 # A Scenario project's rows are kept in order the same way: under each option of the Scenario field, the scenario
 # issue's own row first, then its rows by Beat, then any with no beat, and rows with no option last.
 # David-Noble-at-work's Scenario copy (its project 2) and Scenario: David-Noble-at-work (its project 8) each have a
-# second view, "By scenario", made on 2026-11-03 beside view 1, "View 1", as NobleFactor's Scenario template has: a
+# second view, "By scenario", made on 2026-11-03 beside view 1, "Default", as NobleFactor's Scenario template has: a
 # table grouped by the Scenario field, with no sort, showing Title, Assignees, Status, Linked pull requests, Sub-issues
 # progress and Beat (read from GitHub on 2026-11-04).
 #
@@ -334,7 +334,7 @@ templates:
     short_description: "{account}'s copy of NobleFactor's Triage template. A user account can't have templates, so a Triage project is copied from this one."
     copy_short_description: "{owner}'s Triage project: the account's queue of issues waiting to be classified."
     views:
-      - name: "View 1"
+      - name: "Default"
         layout: table
         filter: ""
         fields: ["Title", "Assignees", "Status", "Labels", "Linked pull requests", "Sub-issues progress"]

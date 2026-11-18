@@ -37,20 +37,9 @@ A new issue goes to Triage: the Triage workflow gives every issue opened a Triag
 
 An epic or a feature goes to Triage when it is opened and to the Backlog once it is classified. It stays on the Backlog until it closes, when `close` removes its row. Nothing moves it when its tasks and bugs are pulled onto a schedule or a scenario.
 
-Its state comes from its children. It is in progress when any issue under it is in progress, and it is ready to close when all of them are closed; `close` says so when it closes the last one. `star github schedule report --by feature` and `--by epic` show where each stands. The Backlog project has a view of its epics and features beside the view of its tasks and bugs.
+Its state comes from its children. It is in progress when any issue under it is in progress, and it is ready to close when all of them are closed; `close` says so when it closes the last one. `star github schedule report --by feature` and `--by epic` show where each stands. Every Backlog has a Default view of all its rows and an Epics and features view; in NobleFactor, its By priority view shows its tasks and bugs in Priority order.
 
-This is how other issue trackers treat them, read on 2026-11-17. None moves an epic or a feature when its work is pulled into a sprint: only the children move, and the parent's state changes.
-
-| Tracker | Where epics and features live | What goes into a sprint | How their state changes |
-| --- | --- | --- | --- |
-| Azure Boards | Portfolio backlogs, Features and Epics, apart from the product backlog of stories and bugs | Stories and bugs; features and epics "might take one or more sprints" | Shown on their backlog while Proposed, In Progress or Resolved, and hidden once Completed; rollup columns show the children's progress |
-| Jira | An epics panel beside the backlog | Stories, bugs and tasks | Set by hand, or by an automation rule that moves the epic to In Progress when a child moves |
-| Shortcut | Its epics list | Stories; its iteration automations handle stories alone | Auto Start Epic when a story starts, and Auto Complete Epic when every story is done |
-| Linear | Parent issues | Issues | Optionally, the parent is marked done when every sub-issue is |
-
-Moving an epic or a feature off the Backlog when its first task or bug is pulled would record its state by moving its row, and every move of a child would have to check its parents in both directions, since a child can go back to the Backlog. None of these trackers does that.
-
-Sources: [Azure Boards: Use backlogs to manage projects](https://learn.microsoft.com/en-us/azure/devops/boards/backlogs/backlogs-overview), [Azure Boards: Define features and epics](https://learn.microsoft.com/en-us/azure/devops/boards/backlogs/define-features-epics), [Shortcut: Automations](https://www.shortcut.com/help/fields-and-features/automations), [Linear: Parent and sub-issues](https://linear.app/docs/parent-and-sub-issues), and [Atlassian Community: Automation for moving epics to In Progress when any child story is moved](https://community.atlassian.com/t5/Jira-questions/Automation-for-Moving-Epics-to-In-Progress-when-any-of-the-child/qaq-p/2490530).
+Other issue trackers do the same: none moves an epic or a feature when its work is pulled into a sprint. The comparison, and the alternative it rules out, are in [D-004](10-the-issue-commands.decisions.md#d-004).
 
 ## Opening an issue: open, and create
 
@@ -151,6 +140,17 @@ An issue already open is not reopened again, and its rows are left as they are; 
 
 Its records: one for each issue, parent and schedule reopened, with the Resolution it cleared, the issue it was reopened for, and a schedule's unticked criteria; one for each row set Open or added to Triage; or `unchanged`.
 
+## Significant design decisions
+
+The choices this design rests on, each recorded with its reasons, alternatives and consequences in [the design decisions](10-the-issue-commands.decisions.md):
+
+- [D-001](10-the-issue-commands.decisions.md#d-001) and [D-002](10-the-issue-commands.decisions.md#d-002): the verbs, `create` another name for `open`, and the issue verbs acting on epics, features, tasks and bugs.
+- [D-003](10-the-issue-commands.decisions.md#d-003) and [D-004](10-the-issue-commands.decisions.md#d-004): where an issue can live, and an epic or a feature staying on the Backlog until it closes.
+- [D-005](10-the-issue-commands.decisions.md#d-005) to [D-007](10-the-issue-commands.decisions.md#d-007): where `open` opens an issue, its row left to the Triage workflow, and its defaults.
+- [D-008](10-the-issue-commands.decisions.md#d-008) to [D-010](10-the-issue-commands.decisions.md#d-010): how `close` closes work done and not done, in what order, and without its parent.
+- [D-011](10-the-issue-commands.decisions.md#d-011): what `reopen` reopens with the issue.
+- [D-012](10-the-issue-commands.decisions.md#d-012): every project's first view named Default, and the Backlog's views.
+
 ## How each command runs in each account
 
 | | NobleFactor | David-Noble-at-work |
@@ -165,4 +165,4 @@ Its records: one for each issue, parent and schedule reopened, with the Resoluti
 
 Each verb is a file in the GitHub extension's `commands` directory, `github-issue-<verb>.star`, and `create` is another name for `open`, a second manifest entry with `open`'s implementation. The code they share is in `issues.star`, an issue's Resolution, the scenario a row is under and an issue's parents, and in `steps.star`, which reads an issue and its rows and writes them, as `move` does. `ending.star` closes and reopens a schedule, for `star github schedule` and for `reopen`. Each comment is rendered from a template in the extension's `templates` directory.
 
-The tests are `tests/Test-StarGitHub`, which runs each command against a stand-in for `gh` holding a small world of issues and projects. [The status page](10-the-issue-commands.status.md) records what is built.
+The tests are `tests/Test-StarGitHub`, which runs each command against a stand-in for `gh` holding a small world of issues and projects. How the work reaches this design, and what of it is built, is in [the plan](../../plans/doc/589-issue-verbs.md).

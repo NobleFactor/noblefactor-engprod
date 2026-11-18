@@ -297,7 +297,7 @@ teams: []
 # A Scenario project's rows are kept in order the same way: under each option of the Scenario field, the Scenario
 # issue's own row first, then its rows by Beat, then any with no beat, and rows with no option last. The Scenario
 # template, like each team's Scenario project, has a second view, "By scenario", made on 2026-11-03 beside its view 1,
-# "View 1": a table grouped by the Scenario field, with no sort, showing Title, Assignees, Status, Linked pull requests,
+# "Default": a table grouped by the Scenario field, with no sort, showing Title, Assignees, Status, Linked pull requests,
 # Sub-issues progress and Beat (read from GitHub on 2026-11-04).
 #
 # Status is a field on a project row, and anyone may set it. Read from GitHub on 2026-11-03, the Status options below
@@ -325,7 +325,7 @@ templates:
     fields:
       - { name: "Area", type: single-select, issue_field: true }
     views:
-      - name: "View 1"
+      - name: "Default"
         layout: table
         filter: ""
         fields: ["Title", "Assignees", "Status", "Linked pull requests", "Sub-issues progress", "Area"]

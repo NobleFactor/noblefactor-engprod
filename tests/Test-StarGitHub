@@ -2169,7 +2169,7 @@ expect "29: apply of the reference brings a new organization into the model" ok 
         and .value == "https://github.com/orgs/Acme/projects/99")'
 expect "29: each template made holds the reference's parts alone, and no project made or copied keeps a built-in workflow" ok "${writes}"'
     (wrote("NO_todo|NO_progress|NO_done") | not)
-    and count("deleteProjectV2View") == 2 and wrote("deleteProjectV2View.*NV_1")
+    and count("deleteProjectV2View") == 4 and wrote("deleteProjectV2View.*NV_1")
     and wrote("createProjectV2View.*Default") and wrote("createProjectV2View.*Epics and features")
     and before("createProjectV2View.*NEW_starCreateProject.*Default"; "deleteProjectV2View.*NV_1")
     and count("createProjectV2\\(") == 4 and count("copyProjectV2") == 12
