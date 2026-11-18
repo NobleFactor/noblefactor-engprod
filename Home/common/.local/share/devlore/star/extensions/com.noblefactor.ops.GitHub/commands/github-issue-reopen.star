@@ -11,9 +11,8 @@
 #   1. The issue reopened, its Resolution cleared, the issue field in an organization or each resolution: label in a
 #      user account, and a comment, from templates/issue-reopen.md.template.
 #   2. Its rows: a Schedule row set Open, its Worktree kept, since no one has taken it up again; a Backlog row set Open.
-#      A task or a bug that has no row on its team's Triage, Backlog, Schedule or Scenario project gets a Triage row, as
-#      an item that left its scenario when it closed does (ruled 2026-11-17); so does an issue with no type and no row,
-#      since an untriaged issue waits in Triage (section 1).
+#      An issue that has no row on its team's Triage, Backlog, Schedule or Scenario project gets a Triage row, since the
+#      Triage workflow runs only when an issue is opened.
 #   3. Each closed parent, its feature and then its epic, reopened the same way, its comment naming the issue.
 #   4. Each closed schedule it is a step of reopened, by what star github schedule reopen does (ending.star): the
 #      Schedule issue reopened with its comment, its own row In progress, and its every-step exit criterion unticked.
@@ -37,7 +36,7 @@ load(
     "resolution_of",
 )
 load("commands/model.star", "refuse_dry_run")
-load("commands/scheme.star", "model_for", "models_for", "team_of", "type_named")
+load("commands/scheme.star", "model_for", "models_for", "team_of")
 load(
     "commands/steps.star",
     "SCENARIO_KIND",
@@ -72,14 +71,6 @@ def _record(key, action, project = None, resolution = None, reopened_for = None,
         "criteria_unticked": criteria,
     }
 
-def _work_item(model, r):
-    """Whether an issue is one that holds a row: a task or a bug, at the hierarchy's last level, or one with no type."""
-    if not r["type"]:
-        return True
-    t = type_named(model, r["type"])
-    levels = [h["level"] for h in model["hierarchy"] if h.get("level") != None]
-    return t != None and t.get("level") != None and levels != [] and t["level"] == max(levels)
-
 def _rows(r, model, projects):
     """What reopen does to a reopened issue's rows, read before anything is written: (changes, refusals)."""
     changes, refused = [], []
@@ -92,7 +83,7 @@ def _rows(r, model, projects):
             refused.append(project["title"] + "'s " + _STATUS + " field has no option " + _OPEN + ", for " + r["key"])
             continue
         changes.append({"do": "row-opened", "row": row, "project": project, "option": found[0]})
-    if [row for row in r["rows"] if row["kind"] in _KINDS] or not _work_item(model, r):
+    if [row for row in r["rows"] if row["kind"] in _KINDS]:
         return changes, refused
     team = team_of(model, r["repo"])
     if team == None:

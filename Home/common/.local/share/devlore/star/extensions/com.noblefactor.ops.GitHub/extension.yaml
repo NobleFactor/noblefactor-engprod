@@ -342,7 +342,7 @@ commands:
         help: "The clone whose repository the issue opens in, as git's -C names one; default: the clone the command runs in"
 
   - name: github.issue.move
-    help: "Move issues, in the order given, to one destination: --schedule puts them on a schedule, each with its step, its schedule's option and Status Open, placed in step order and leaving the project it was on, or with --after moves one already there, the steps between renumbered, closed or open; --triage or --backlog takes steps off their schedule to their team's Triage or Backlog project, every later step moving up, and --triage takes items off their scenario; --scenario puts tasks and bugs on a scenario at a Beat, or sets the Beat of one already on it; a schedule's change writes one amendment line in its Schedule issue, and a scenario's a comment on its Scenario issue and a line in the item's body, each naming the date, who ran it and why; return one flat record for each row it added, moved, took off or left; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    help: "Move issues, in the order given, to one destination: --schedule puts them on a schedule, each with its step, its schedule's option and Status Open, placed in step order and leaving the project it was on, or with --after moves one already there, the steps between renumbered, closed or open; --triage or --backlog puts them in their team's Triage or Backlog project from wherever they are, a schedule, every later step moving up, a scenario, Triage, the Backlog or no project; --scenario puts tasks and bugs on a scenario at a Beat from wherever they are, or sets the Beat of one already on it; an epic or a feature goes only to Triage or the Backlog, an issue with no type only to Triage, and a Schedule or Scenario issue nowhere; a schedule's change writes one amendment line in its Schedule issue, and a scenario's a comment on its Scenario issue and a line in the item's body, each naming the date, who ran it and why; return one flat record for each row it added, moved, took off or left; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
     implementation: commands/github-issue-move.star
     args:
       - name: issues
@@ -376,11 +376,11 @@ commands:
       - name: triage
         type: bool
         default: "false"
-        help: "Take them off their schedule or their scenario, each to its team's Triage project"
+        help: "Put them in their team's Triage project, from wherever they are: a schedule, a scenario, the Backlog or no project"
       - name: backlog
         type: bool
         default: "false"
-        help: "Take them off their schedule, each to its team's Backlog project, keeping its Priority; an item on a scenario goes to Triage first"
+        help: "Put them in their team's Backlog project, keeping each one's Priority, from wherever they are: a schedule, a scenario, Triage or no project; an issue with no type goes to Triage first"
       - name: reason
         type: string
         default: ""
@@ -408,7 +408,7 @@ commands:
         help: "With --resolution, why the work was not done, written in the comment on each issue"
 
   - name: github.issue.reopen
-    help: "Reopen issues, in the order given, everything read before the first write: each reopened, its Resolution cleared, the issue field in an organization or the resolution: label in a user account, and a comment saying why; then its rows, a Schedule or Backlog row set Open, and a Triage row for a task, a bug or an issue with no type that has no row on its team's projects; then each closed parent, its feature and its epic, reopened the same way; then each closed schedule it is a step of, its own row In progress and its every-step exit criterion unticked; an issue already open is not reopened again, its rows left as they are; a Schedule or Scenario issue is refused, naming its group's reopen; return one flat record for each issue, row, parent and schedule; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    help: "Reopen issues, in the order given, everything read before the first write: each reopened, its Resolution cleared, the issue field in an organization or the resolution: label in a user account, and a comment saying why; then its rows, a Schedule or Backlog row set Open, and a Triage row for an issue that has no row on its team's projects; then each closed parent, its feature and its epic, reopened the same way; then each closed schedule it is a step of, its own row In progress and its every-step exit criterion unticked; an issue already open is not reopened again, its rows left as they are; a Schedule or Scenario issue is refused, naming its group's reopen; return one flat record for each issue, row, parent and schedule; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
     implementation: commands/github-issue-reopen.star
     args:
       - name: issues

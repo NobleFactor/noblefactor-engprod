@@ -78,9 +78,10 @@ def faults(r, node, model, by_key):
 
     if len(r["home"]) > 1:
         out.append(_fault("two-homes", "more than one home: " + _projects(r["home"])))
-    if len(r["home"]) > 0 and level != None and level != leaf:
-        out.append(_fault("epic-on-collection", "a " + r["type"] + " is a row of " + _projects(r["home"]) +
-                                                "; an epic or a feature is on no Backlog, Schedule or Scenario project"))
+    collections = [h for h in r["home"] if (h["project"] or "").startswith(_SCHEDULE_KIND + ": ") or (h["project"] or "").startswith(_SCENARIO_KIND + ": ")]
+    if collections and level != None and level != leaf:
+        out.append(_fault("epic-on-collection", "a " + r["type"] + " is a row of " + _projects(collections) +
+                                                "; an epic or a feature is on no Schedule or Scenario project"))
     if len([h for h in r["home"] if (h["project"] or "").startswith(_SCENARIO_KIND + ": ")]) > 0:
         return out
 

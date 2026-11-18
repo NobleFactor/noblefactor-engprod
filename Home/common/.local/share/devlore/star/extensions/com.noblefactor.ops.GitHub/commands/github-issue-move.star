@@ -13,9 +13,13 @@
 #     so the steps stay consecutive whole numbers, closed steps among them (question 5); each row gets the schedule's
 #     option, its step and Status Open, placed in step order, and leaves the project it was on, in one act (ruled
 #     2026-11-04).
-#   - --triage and --backlog take them off their schedule to their team's Triage or Backlog project, every later step
-#     moving up; --triage takes them off their scenario too.
-#   - --scenario puts them on a scenario at a Beat, or sets the Beat of one already on it.
+#   - --triage and --backlog put them in their team's Triage or Backlog project from wherever they are: off a schedule,
+#     every later step moving up; off a scenario; or out of Triage, the Backlog or no project (#597).
+#   - --scenario puts them on a scenario at a Beat, from wherever they are, or sets the Beat of one already on it.
+#
+# What an issue's type allows is all that limits a move (section 10, § Where an issue lives): an epic or a feature goes to
+# Triage or the Backlog; a task or a bug anywhere; an issue with no type only to Triage; a Schedule or Scenario issue
+# nowhere, since it is its collection's own record.
 #
 # A schedule's change is one amendment line in its Schedule issue, rendered from templates/amendment.md.template:
 # written first, ending "(in progress)", and settled last, so that a run that stops partway leaves a record a reader
@@ -73,6 +77,16 @@ _LEAVES = [_TRIAGE, _BACKLOG]
 
 # A key as an option's description holds it: each Schedule and Scenario option names its own issue.
 _KEY = "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+#[0-9]+$"
+
+_GROUPS = {SCHEDULE_KIND: "schedule", SCENARIO_KIND: "scenario"}
+
+def _collection_refusal(r):
+    """Why issue move refuses a Schedule or Scenario issue, naming the group that keeps it; "" for any other type."""
+    group = _GROUPS.get(r["type"] or "")
+    if group == None:
+        return ""
+    return (r["key"] + " is a " + r["type"] + " issue, its " + group + "'s own record, which star github " + group +
+            " opens, closes and reopens; issue move moves no Schedule or Scenario issue")
 
 # ── the flags ───────────────────────────────────────────────────────────────
 
@@ -213,7 +227,9 @@ def _refusals(r, sched, model, account, assignee, resume, after):
     if r["state"] != "open":
         out.append(r["key"] + " is closed")
     t = type_named(model, r["type"]) if r["type"] else None
-    if t == None or t.get("level") != leaf_level(model):
+    if _collection_refusal(r) != "":
+        out.append(_collection_refusal(r))
+    elif t == None or t.get("level") != leaf_level(model):
         out.append(r["key"] + " is " + ("of type " + r["type"] if r["type"] else "of no type") + ": a schedule's steps are tasks and bugs")
     here = _here(r, sched)
     if here and not resume and after == None:
@@ -490,21 +506,26 @@ def _onto_schedule(sk, keys, after, blockers, assignee, reason):
 
 # ── onto and within a scenario ──────────────────────────────────────────────
 
-def _scenario_refusals(r, scen, model):
+def _scenario_refusals(r, model):
     """Why an issue can't go on the scenario, each in plain words; none when it can."""
     out = []
     if r["state"] != "open":
         out.append(r["key"] + " is closed")
     t = type_named(model, r["type"]) if r["type"] else None
-    if t == None or t.get("level") != leaf_level(model):
+    if _collection_refusal(r) != "":
+        out.append(_collection_refusal(r))
+    elif t == None or t.get("level") != leaf_level(model):
         out.append(r["key"] + " is " + ("of type " + r["type"] if r["type"] else "of no type") + ": a scenario's items are tasks and bugs")
-    for row in r["rows"]:
-        if row["kind"] == SCENARIO_KIND and row["scenario"] != None and _here(r, scen) != row:
-            out.append(r["key"] + " is on the scenario " + row["scenario"] + " of " + row["project"]["title"] +
-                       ": an issue is on at most one scenario, so it goes to Triage first")
-        elif row["kind"] in [_BACKLOG, SCHEDULE_KIND]:
-            out.append(r["key"] + " is on " + row["project"]["title"] + ", so it has moved on from its walk")
     return out
+
+def _leaving(r, mine):
+    """The rows an issue leaves when it goes on a scenario: every row but its own there, on a schedule, a scenario, Triage or the Backlog."""
+    return [
+        row
+        for row in r["rows"]
+        if row != mine and ((row["kind"] == SCHEDULE_KIND and row["schedule"] != None) or
+                            (row["kind"] == SCENARIO_KIND and row["scenario"] != None) or row["kind"] in _LEAVES)
+    ]
 
 def _beat_anchor(rs, keys, beat):
     """The row an item at beat goes after: the last of the scenario's other rows with a Beat at or before it, or None."""
@@ -527,7 +548,23 @@ def _onto_scenario(ck, keys, beat, reason):
     read = [issue(k, model) for k in keys]
     refused = []
     for r in read:
-        refused.extend(_scenario_refusals(r, scen, model))
+        refused.extend(_scenario_refusals(r, model))
+
+    # Every schedule and other scenario an issue leaves is read now, before the first write, so that a fault in one is a
+    # refusal and not a run stopped halfway (#531).
+    sources = {}
+    for r in read:
+        for row in _leaving(r, _here(r, scen)):
+            if row["kind"] == SCHEDULE_KIND:
+                source, fault = _source_schedule(r, row, scen, model)
+            elif row["kind"] == SCENARIO_KIND:
+                source, fault = _source_scenario(r, row, model)
+            else:
+                continue
+            if fault:
+                refused.append(fault)
+            else:
+                sources[row["item"]] = source
     if refused:
         fail("nothing was written:\n  " + "\n  ".join(refused))
 
@@ -543,9 +580,9 @@ def _onto_scenario(ck, keys, beat, reason):
     previous = _beat_anchor(first, keys, beat) or scen["own_item"]
     for r in read:
         mine = _here(r, scen)
-        triage = [row for row in r["rows"] if row["kind"] == _TRIAGE]
+        leaving = _leaving(r, mine)
         named = _found(r["body"], ck["key"], r["repo"])
-        if mine and mine["beat"] == beat and named and not triage:
+        if mine and mine["beat"] == beat and named and not leaving:
             out.append(_record(r["key"], r["type"], r["title"], "unchanged", title, scenario = ck["key"], beat = beat, from_beat = beat))
             continue
 
@@ -573,10 +610,22 @@ def _onto_scenario(ck, keys, beat, reason):
         check_beat(scen, item, beat, r["key"], mine == None)
         _note("put " + r["key"] + " on " + ck["key"] + " at beat " + str(beat))
         previous = item
-        for row in triage:
-            delete_row(row["project"]["id"], row["item"])
-            _note("took " + r["key"] + "'s row off " + row["project"]["title"])
-            out.append(_record(r["key"], r["type"], r["title"], "left", row["project"]["title"]))
+
+        # It leaves wherever else it was: a schedule as a move off one records it, another scenario as a move off one
+        # records it, and a Triage or Backlog row removed.
+        for row in leaving:
+            if row["kind"] == SCHEDULE_KIND:
+                out.extend(_take_off(r, row, scen, login, date, reason, sources[row["item"]]))
+            elif row["kind"] == SCENARIO_KIND:
+                where = scen["option"]["name"] + " (" + _short(ck["key"], r["repo"]) + ")"
+                left = _record_leaving(r, sources[row["item"]], ck["key"], 0, where, login, date, reason)
+                delete_row(row["project"]["id"], row["item"])
+                _note("took " + r["key"] + "'s row off " + row["project"]["title"])
+                out.append(_record(r["key"], r["type"], r["title"], "left", row["project"]["title"], scenario = left, beat = row["beat"]))
+            else:
+                delete_row(row["project"]["id"], row["item"])
+                _note("took " + r["key"] + "'s row off " + row["project"]["title"])
+                out.append(_record(r["key"], r["type"], r["title"], "left", row["project"]["title"]))
         out.append(_record(
             r["key"],
             r["type"],
@@ -631,8 +680,11 @@ def _off(keys, kind, reason):
         if r["state"] != "open":
             refused.append(k + " is closed")
             continue
-        if t != None and t.get("level") == None:
-            refused.append(k + " is a " + r["type"] + " issue: issue move moves tasks and bugs")
+        if _collection_refusal(r) != "":
+            refused.append(_collection_refusal(r))
+            continue
+        if t == None and kind == _BACKLOG:
+            refused.append(k + " has no type: an issue waits in Triage until it is classified, and goes to the Backlog after")
             continue
         if team == None:
             refused.append("no team maintains " + r["repo"] + ", so " + k + " has no " + kind + " project")
@@ -647,9 +699,7 @@ def _off(keys, kind, reason):
             continue
         p["steps"] = [row for row in r["rows"] if row["kind"] == SCHEDULE_KIND and row["schedule"] != None and row["step"] != None]
         p["walks"] = [row for row in r["rows"] if row["kind"] == SCENARIO_KIND and row["scenario"] != None]
-        if p["walks"] and kind == _BACKLOG:
-            refused.append(k + " is on the scenario " + p["walks"][0]["scenario"] + ": an item found on a walk is classified in Triage first (ruled 2026-11-04)")
-            continue
+        p["plain"] = [row for row in r["rows"] if row["kind"] in _LEAVES and row["project"]["id"] != p["dest"]["id"]]
 
         # Every schedule and scenario an issue leaves is read now, before the first write, so that a fault in one is a
         # refusal and not a run stopped halfway (#531).
@@ -677,10 +727,8 @@ def _off(keys, kind, reason):
         pending = _pending(model, k)
         if pending != "":
             _group(groups, order, pending, model, r, None)
-        elif [row for row in r["rows"] if row["project"]["id"] == p["dest"]["id"]]:
+        elif not p["plain"] and [row for row in r["rows"] if row["project"]["id"] == p["dest"]["id"]]:
             p["unchanged"] = True
-        else:
-            refused.append(k + " is on no schedule" + (" or scenario" if kind == _TRIAGE else "") + ", so there is nothing to take it off")
     if refused:
         fail("nothing was written:\n  " + "\n  ".join(refused))
 
@@ -737,6 +785,12 @@ def _off(keys, kind, reason):
         if not p["walks"]:
             put_open(p["dest"], r)
             _note("put " + r["key"] + " on " + p["dest"]["title"])
+
+        # Out of Triage or the Backlog, after it has its row where it goes.
+        for row in p["plain"]:
+            delete_row(row["project"]["id"], row["item"])
+            _note("took " + r["key"] + "'s row off " + row["project"]["title"])
+            out.append(_record(r["key"], r["type"], r["title"], "left", row["project"]["title"]))
         out.append(_record(r["key"], r["type"], r["title"], "added", p["dest"]["title"]))
 
     # Each schedule's later steps up, from the lowest, which keeps their order; then its rows taken off, and its

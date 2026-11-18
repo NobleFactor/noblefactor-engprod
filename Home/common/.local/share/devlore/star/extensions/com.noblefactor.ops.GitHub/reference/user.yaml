@@ -237,9 +237,9 @@ labels:
 # whether GitHub offers this one to the account's repositories has not been checked, and each repository's triage.yml
 # is copied from it either way.
 # Ruled 2026-11-04: accepted tasks and bugs go out of Triage to the Backlog with their priority label or onto a
-# schedule. Epics and features are never rows of a Backlog, Schedule or Scenario project: once classified, one leaves
-# Triage for no project, since the hierarchy holds it and its tasks and bugs are what reach the Backlog and the
-# schedules. Every move is one act: the issue gets its row in the project it goes to, with that project's fields set,
+# schedule. Epics and features go to the Backlog once triage has classified them, and stay there until they close; they
+# are never rows of a Schedule or Scenario project, whose rows are tasks and bugs (section 10, § Epics and features).
+# Every move is one act: the issue gets its row in the project it goes to, with that project's fields set,
 # and loses its row in the project it leaves. Triage removes an issue's Triage row as part of its decision, and the
 # sweep, noblefactor-engprod#436, will remove none: an issue someone closes outside triage stays in the Triage project
 # until triage decides its disposition. An issue is a row of at most one of the account's four projects and is on at
@@ -352,9 +352,16 @@ templates:
     short_description: "{account}'s copy of NobleFactor's Backlog template. A user account can't have templates, so a Backlog project is copied from this one."
     copy_short_description: "{owner}'s Backlog project: its accepted work not yet scheduled"
     views:
-      - name: "View 1"
+      - name: "Default"
         layout: table
         filter: ""
+        fields: ["Title", "Assignees", "Status", "Labels", "Linked pull requests", "Sub-issues progress"]
+        group_by: []
+        vertical_group_by: []
+        sort_by: []
+      - name: "Epics and features"
+        layout: table
+        filter: "label:epic,feature"
         fields: ["Title", "Assignees", "Status", "Labels", "Linked pull requests", "Sub-issues progress"]
         group_by: []
         vertical_group_by: []

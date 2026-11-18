@@ -2169,8 +2169,9 @@ expect "29: apply of the reference brings a new organization into the model" ok 
         and .value == "https://github.com/orgs/Acme/projects/99")'
 expect "29: each template made holds the reference's parts alone, and no project made or copied keeps a built-in workflow" ok "${writes}"'
     (wrote("NO_todo|NO_progress|NO_done") | not)
-    and count("deleteProjectV2View") == 1 and wrote("deleteProjectV2View.*NV_1")
-    and before("createProjectV2View.*NEW_starCreateProject.*By schedule"; "deleteProjectV2View.*NV_1")
+    and count("deleteProjectV2View") == 2 and wrote("deleteProjectV2View.*NV_1")
+    and wrote("createProjectV2View.*Default") and wrote("createProjectV2View.*Epics and features")
+    and before("createProjectV2View.*NEW_starCreateProject.*Default"; "deleteProjectV2View.*NV_1")
     and count("createProjectV2\\(") == 4 and count("copyProjectV2") == 12
     and count("deleteProjectV2Workflow") == 2 * (count("createProjectV2\\(") + count("copyProjectV2"))'
 # The day of the week of a date written YYYY-MM-DD, Sunday 0 to Saturday 6, as GitHub numbers an Iteration field's
@@ -3411,7 +3412,8 @@ expect "96 (plan 5): a walk that numbers no step takes beat 9" ok \
 check "96 (plan 5): #41's body names the scenario in another repository's form" world_holds \
     '.issues.I_alpha_41.body == "Found while walking NobleFactor/beta#54\n"'
 
-# 97 (plan 6). --scenario refuses, writing nothing, a closed issue, an epic, another account's issue, an issue on
+# 97 (plan 6). --scenario refuses, writing nothing, a closed issue, an epic, and another account's issue.
+# Until #597 it refused too an issue on
 # another scenario, and one on a Backlog or a Schedule project.
 world
 run_star "${data}" github issue move NobleFactor/alpha#29 --scenario NobleFactor/alpha#40 --beat 1 --reason "R."
@@ -3421,18 +3423,39 @@ expect "97 (plan 6): an epic is refused" error "${no_writes}" "NobleFactor/alpha
 run_star "${data}" github issue move test-user/personal#12 --scenario NobleFactor/alpha#40 --beat 1 --reason "R."
 expect "97 (plan 6): another account's issue is refused" error "${no_writes}" \
     "not in NobleFactor, the scenario's account: test-user/personal#12" text
-run_star "${data}" github issue move NobleFactor/alpha#43 --scenario NobleFactor/alpha#40 --beat 1 --reason "R."
-expect "97 (plan 6): an issue on another scenario is refused" error "${no_writes}" \
-    "NobleFactor/alpha#43 is on the scenario other of Scenario: devlore: an issue is on at most one scenario" text
+
+# 97 (#597). An item moves onto a scenario from wherever it is: from another scenario, which records its leaving as a
+# move off it does; from the Backlog, its row removed; and from a schedule, which records it as a step taken off.
+world
+run_star "${data}" github issue move NobleFactor/alpha#43 --scenario NobleFactor/alpha#40 --beat 1 --reason "Found on this walk too."
+expect "97 (#597): an item on another scenario moves onto walk, leaving other" ok \
+    'map([.action, .project, .scenario]) == [["left", "Scenario: devlore", "NobleFactor/beta#54"], ["added", "Scenario: engprod", "NobleFactor/alpha#40"]]'
+check "97 (#597): other's issue says it left, #43's body says so, and it is a row of walk alone" world_holds \
+    '.issues.I_beta_54.comments == ["NobleFactor/alpha#43 left this scenario on '"${today}"' for NobleFactor/alpha#40, by " +
+        "`star github issue move`, run by stand-in: Found on this walk too."]
+        and (.issues.I_alpha_43.body | contains("Found while walking #40") and contains("Left NobleFactor/beta#54 on '"${today}"' for walk (#40)."))
+        and ([.projects.PVT_c_dev.items[].content] | index("I_alpha_43")) == null
+        and (.projects.PVT_c_eng.items[] | select(.content == "I_alpha_43") | .values.Beat) == 1'
+world
 run_star "${data}" github issue move NobleFactor/alpha#25 --scenario NobleFactor/alpha#40 --beat 1 --reason "R."
-expect "97 (plan 6): an issue on a Backlog project is refused" error "${no_writes}" \
-    "NobleFactor/alpha#25 is on Backlog: engprod, so it has moved on from its walk" text
+expect "97 (#597): an item on the Backlog moves onto walk, its Backlog row removed" ok \
+    'map([.action, .project]) == [["left", "Backlog: engprod"], ["added", "Scenario: engprod"]]'
+check "97 (#597): #25 is a row of walk, and of no Backlog" world_holds \
+    '([.projects.PVT_b_eng.items[].content] | index("I_alpha_25")) == null
+        and (.projects.PVT_c_eng.items[] | select(.content == "I_alpha_25") | .values.Beat) == 1'
+world
 run_star "${data}" github issue move NobleFactor/alpha#22 --scenario NobleFactor/alpha#40 --beat 1 --reason "R."
-expect "97 (plan 6): and one on a Schedule project" error "${no_writes}" \
-    "NobleFactor/alpha#22 is on Schedule: engprod, so it has moved on from its walk" text
+expect "97 (#597): a step of s1 moves onto walk, s1's later steps moving up" ok \
+    'map([.action, .issue, .project]) == [["taken-off", "NobleFactor/alpha#22", "Schedule: engprod"], ["moved", "NobleFactor/alpha#23", "Schedule: engprod"],
+        ["moved", "NobleFactor/alpha#24", "Schedule: engprod"], ["added", "NobleFactor/alpha#22", "Scenario: engprod"]]'
+check "97 (#597): s1's amendment says step 2 was taken off for walk, and its steps stay whole" world_holds \
+    '(.issues.I_alpha_20.body | contains("step 2, Task NobleFactor/alpha#22, the second step, was taken off, for NobleFactor/alpha#40"))
+        and ([.projects.PVT_s_eng.items[] | select(.values.Schedule == "s1" and .values.Step != null) | [.content, .values.Step]]
+            == [["I_alpha_21", 1], ["I_alpha_23", 2], ["I_alpha_24", 3]])
+        and (.projects.PVT_c_eng.items[] | select(.content == "I_alpha_22") | .values.Beat) == 1'
 
 # 98 (plan 7). --triage moves #27 off walk to Triage: engprod: a comment on #40 first, then the line in #27's body, then
-# its Triage row, then its scenario row deleted. --backlog of an item on a scenario is refused, nothing written.
+# its Triage row, then its scenario row deleted. --backlog takes an item off a scenario too (#597).
 world
 run_star "${data}" github issue move NobleFactor/alpha#27 --triage --reason "Ready to classify."
 expect "98 (plan 7): --triage takes #27 off walk and puts it in Triage: engprod" ok \
@@ -3449,9 +3472,14 @@ check "98 (plan 7): the comment, then the body's line, then the Triage row, then
     "${in_order}"' in_order([["starStepComment", "s=I_alpha_40"], ["starStepAmend", "i=I_alpha_27"], ["starStepAddRow", "p=PVT_t_eng"],
         ["starStepDeleteRow", "p=PVT_c_eng"]])'
 world
-run_star "${data}" github issue move NobleFactor/alpha#27 --backlog --reason "R."
-expect "98 (plan 7): --backlog of an item on a scenario is refused" error "${no_writes}" \
-    "NobleFactor/alpha#27 is on the scenario walk: an item found on a walk is classified in Triage first" text
+run_star "${data}" github issue move NobleFactor/alpha#27 --backlog --reason "Ready to schedule."
+expect "98 (#597): --backlog takes #27 off walk and puts it on the Backlog" ok \
+    'map([.issue, .action, .project, .scenario]) == [["NobleFactor/alpha#27", "left", "Scenario: engprod", "NobleFactor/alpha#40"],
+        ["NobleFactor/alpha#27", "added", "Backlog: engprod", null]]'
+check "98 (#597): #40 says #27 left for Backlog: engprod, and #27 is Open there" world_holds \
+    '.issues.I_alpha_40.comments == ["NobleFactor/alpha#27 left this scenario on '"${today}"' for Backlog: engprod, by " +
+        "`star github issue move`, run by stand-in: Ready to schedule."]
+        and [.projects.PVT_b_eng.items[] | select(.content == "I_alpha_27") | .values] == [{Status: "Open"}]'
 
 # 99 (plan 8). Exactly one destination, and --reason: none, two, a flag of one destination with another, a scenario with
 # no beat, and no --reason, each refused, nothing written. So is a change to the scenario between issue move's two
@@ -4094,19 +4122,20 @@ check "129 (#587): #21 reopened, cleared and commented, then its row; then #60, 
         ["starStepAmend", "i=I_alpha_20"]])'
 
 # 130 (#587). Rows in an organization: #25, closed, its Backlog row Closed, gets that row Open; #41, a closed task with no
-# row left, as close leaves one it took off Triage, gets a Triage row Open (ruled 2026-11-17); and #61, a closed epic,
-# is reopened with no row, since an epic is never a row once classified.
+# row left, as close leaves one it took off Triage, gets a Triage row Open; and so does #61, a closed epic, since an open
+# epic is a row of Triage or the Backlog (#597).
 world "${closed_parents}"'
     | .issues.I_alpha_25.state = "CLOSED" | .issues.I_alpha_41.state = "CLOSED"
     | (.projects.PVT_b_eng.items[] | select(.content == "I_alpha_25") | .values.Status) = "Closed"'
 run_star "${data}" github issue reopen NobleFactor/alpha#25 NobleFactor/alpha#41 NobleFactor/alpha#61 --reason "R."
-expect "130 (#587): a Backlog row is set Open, a task with no row goes to Triage, and an epic gets no row" ok \
+expect "130 (#587): a Backlog row is set Open, and a task and an epic with no row go to Triage" ok \
     'map([.action, .issue, .project]) == [["reopened", "NobleFactor/alpha#25", null], ["row-opened", "NobleFactor/alpha#25", "Backlog: engprod"],
-        ["reopened", "NobleFactor/alpha#41", null], ["triaged", "NobleFactor/alpha#41", "Triage: engprod"], ["reopened", "NobleFactor/alpha#61", null]]'
-check "130 (#587): #25's Backlog row is Open, #41 is a row of Triage: engprod, Open, and #61 is a row of nothing" world_holds \
+        ["reopened", "NobleFactor/alpha#41", null], ["triaged", "NobleFactor/alpha#41", "Triage: engprod"], ["reopened", "NobleFactor/alpha#61", null],
+        ["triaged", "NobleFactor/alpha#61", "Triage: engprod"]]'
+check "130 (#587): #25's Backlog row is Open, and #41 and #61 are rows of Triage: engprod, Open" world_holds \
     '(.projects.PVT_b_eng.items[] | select(.content == "I_alpha_25") | .values.Status) == "Open"
         and (.projects.PVT_t_eng.items[] | select(.content == "I_alpha_41") | .values.Status) == "Open"
-        and ([.projects[].items[] | select(.content == "I_alpha_61")] == [])
+        and (.projects.PVT_t_eng.items[] | select(.content == "I_alpha_61") | .values.Status) == "Open"
         and ([.issues.I_alpha_25, .issues.I_alpha_41, .issues.I_alpha_61] | all(.state == "OPEN"))'
 
 # 131 (#587). In a user account, the Resolution is the resolution: label, removed; test-user/personal#12, with no row,
@@ -4384,6 +4413,66 @@ run_star "${data}" github scenario reopen NobleFactor/alpha#40
 expect "145 (#595): scenario reopen with no --reason" error "${no_writes}" "scenario reopen needs --reason" text
 run_star "${data}" github schedule reopen NobleFactor/alpha#20 --reason "R." --dry-run
 expect "145 (#595): and star's --dry-run, until devlore-cli#1170" error "${no_writes}" "1170" text
+
+# 146 (#597). Into Triage or the Backlog from wherever an issue is: #26 from Triage to the Backlog, #25 from the Backlog
+# to Triage, and #41, on no project, to the Backlog; each one's old row removed after its new one is made.
+world
+run_star "${data}" github issue move NobleFactor/alpha#26 --backlog --reason "Accepted."
+expect "146 (#597): #26 goes from Triage to the Backlog" ok 'map([.action, .project]) == [["left", "Triage: engprod"], ["added", "Backlog: engprod"]]'
+check "146 (#597): #26 is a row of the Backlog, Open, and of no Triage project" world_holds \
+    '[.projects.PVT_b_eng.items[] | select(.content == "I_alpha_26") | .values] == [{Status: "Open"}]
+        and ([.projects.PVT_t_eng.items[].content] | index("I_alpha_26")) == null'
+check "146 (#597): its Backlog row is made before its Triage row is removed" calls_hold "${in_order}"'
+    in_order([["starStepAddRow", "p=PVT_b_eng"], ["starStepDeleteRow", "p=PVT_t_eng"]])'
+world
+run_star "${data}" github issue move NobleFactor/alpha#25 --triage --reason "Back for a look."
+expect "146 (#597): #25 goes from the Backlog to Triage" ok 'map([.action, .project]) == [["left", "Backlog: engprod"], ["added", "Triage: engprod"]]'
+world
+run_star "${data}" github issue move NobleFactor/alpha#41 --backlog --reason "Accepted."
+expect "146 (#597): #41, on no project, goes to the Backlog" ok 'map([.action, .project]) == [["added", "Backlog: engprod"]]'
+run_star "${data}" github issue move NobleFactor/alpha#41 --backlog --reason "Accepted."
+expect "146 (#597): run again, it is unchanged, and nothing is written" ok "${no_writes}"' and map(.action) == ["unchanged"]'
+
+# 147 (#597). An epic and a feature go to Triage or the Backlog: #60, a feature in Triage, to the Backlog; #61, an epic on
+# no project, to Triage. Neither goes on a schedule or a scenario, as cases 52 and 97 refuse.
+world "${closed_parents}"' | .issues.I_alpha_60.state = "OPEN" | .issues.I_alpha_61.state = "OPEN"
+    | .projects.PVT_t_eng.items += [{id: "IT_alpha_60", content: "I_alpha_60", values: {Status: "Open"}}]'
+run_star "${data}" github issue move NobleFactor/alpha#60 --backlog --reason "Classified."
+expect "147 (#597): the feature #60 goes from Triage to the Backlog" ok 'map([.action, .project]) == [["left", "Triage: engprod"], ["added", "Backlog: engprod"]]'
+run_star "${data}" github issue move NobleFactor/alpha#61 --triage --reason "For a look."
+expect "147 (#597): the epic #61 goes to Triage" ok 'map([.action, .project]) == [["added", "Triage: engprod"]]'
+run_star "${data}" github issue move NobleFactor/alpha#60 --schedule NobleFactor/alpha#20 --reason "R."
+expect "147 (#597): a feature goes on no schedule" error "${no_writes}" "NobleFactor/alpha#60 is of type Feature: a schedule's steps are tasks and bugs" text
+
+# 148 (#597). An issue with no type waits in Triage until it is classified: --backlog refuses it, writing nothing, and
+# --triage puts it there.
+world '.issues.I_alpha_44 = {id: "I_alpha_44", repo: "NobleFactor/alpha", number: 44, title: "an untyped issue", state: "OPEN",
+    type: null, labels: [], assignees: [], blockedBy: [], body: ""}'
+run_star "${data}" github issue move NobleFactor/alpha#44 --backlog --reason "R."
+expect "148 (#597): an issue with no type goes to no Backlog" error "${no_writes}" \
+    "NobleFactor/alpha#44 has no type: an issue waits in Triage until it is classified, and goes to the Backlog after" text
+run_star "${data}" github issue move NobleFactor/alpha#44 --triage --reason "To classify."
+expect "148 (#597): and goes to Triage" ok 'map([.action, .project]) == [["added", "Triage: engprod"]]'
+
+# 149 (#597). A Schedule or Scenario issue is its collection's own record, and moves nowhere, writing nothing.
+world
+run_star "${data}" github issue move NobleFactor/alpha#20 --triage --reason "R."
+expect "149 (#597): a Schedule issue goes to no Triage project" error "${no_writes}" \
+    "NobleFactor/alpha#20 is a Schedule issue, its schedule's own record, which star github schedule opens, closes and reopens; issue move moves no Schedule or Scenario issue" text
+run_star "${data}" github issue move NobleFactor/alpha#40 --backlog --reason "R."
+expect "149 (#597): a Scenario issue goes to no Backlog" error "${no_writes}" \
+    "NobleFactor/alpha#40 is a Scenario issue, its scenario's own record, which star github scenario opens, closes and reopens" text
+run_star "${data}" github issue move NobleFactor/alpha#40 --schedule NobleFactor/alpha#20 --reason "R."
+expect "149 (#597): nor on a schedule" error "${no_writes}" "NobleFactor/alpha#40 is a Scenario issue, its scenario's own record" text
+run_star "${data}" github issue move NobleFactor/alpha#20 --scenario NobleFactor/alpha#40 --beat 1 --reason "R."
+expect "149 (#597): nor on a scenario" error "${no_writes}" "NobleFactor/alpha#20 is a Schedule issue, its schedule's own record" text
+
+# 150 (#597). The sweep's rule on epics and features counts a Schedule or Scenario project, not the Backlog: feature #7,
+# a row of Backlog: engprod and a schedule, is faulted for the schedule alone.
+run_star "${data}" github triage sweep NobleFactor test-user
+expect "150 (#597): #7's fault names its schedule, and not the Backlog" ok "${entry}"'
+    [entry("NobleFactor/alpha#7").faults[] | select(.rule == "epic-on-collection") | .message]
+        == ["a Feature is a row of Schedule: engprod; an epic or a feature is on no Schedule or Scenario project"]'
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"
