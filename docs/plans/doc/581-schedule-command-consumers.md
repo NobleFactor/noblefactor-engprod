@@ -33,7 +33,7 @@ Owner: David Noble. Participant: this Codex session, assigned Handbook adoption 
 
 ## 2. Scope and promised result
 
-One documentation worktree serves the two issues. Start with the skill/index corrections, then reconcile the handbook inventory. Obtain Owner review of the committed plan before implementation. Preserve existing feature ownership and satisfied dependencies. Do not change the command implementation or GitHub configuration under this plan.
+One documentation worktree serves the two issues. Start with the skill/index corrections, then reconcile the handbook inventory. Obtain Owner review of the committed plan before implementation. Preserve existing feature ownership and satisfied dependencies. Do not change the command implementation or GitHub configuration under this plan. The Owner's later review correction also covers the definitions and relationships in docs/engineering/work-assets.md, as recorded in Approval and departures.
 
 ## Issue 581
 
@@ -109,6 +109,15 @@ The earlier Owner-run `make check` passed for the plan checkpoint at 340f2cf7a57
 
 The Owner's 2026-11-17 ruling in [Issue filing (#338)](https://github.com/NobleFactor/noblefactor-engprod/issues/338) names the planned command `star github issue open`, with `create` as its synonym. Current prose follows that name while keeping the operation marked as undelivered; captured sources and historical Owner appendices remain unchanged.
 
+
+### 7.2. Owner review correction — 2026-11-17
+
+The Owner clarified the methodology: designs describe what we want; plans explain how to get there from what exists; schedules order the issues we will carry out. Planning produces issues and a schedule, and each issue references one or more plans. Designs must not mix the wanted system with rulings, rejected approaches or migration history. That material belongs in plans. All documents must use plain language.
+
+After reviewing the copy in the Issue verbs (#589) worktree, the Owner explicitly directed this session to revise docs/engineering/work-assets.md in its own current worktree. This correction adds the definitions and handoff, states that an issue can use several plans and a plan can cover several issues, removes unnecessary consolidation history and simplifies the prose. Existing storage, linking and approval requirements and incoming anchors are preserved. The broader rewrite of design documents remains separate work.
+
+The two local changes are this plan and the work-assets document. Earlier gate results remain evidence for their named revisions. The revised candidate must pass document checks, an Owner-run make check, publication to PR #596, fresh CI and review before merge. The previous merge command is replaced while these corrections are pending.
+
 ## 8. Completion milestones
 
 Implementation, Owner review, merge and post-merge verification are required. Confirm that the deployed shared skill resolves to the delivered content before claiming it available in another host. This work does not qualify the later five-role host bindings or implement an auditor service.
@@ -136,6 +145,11 @@ Implementation, Owner review, merge and post-merge verification are required. Co
 - [x] Prepare and check the Owner-run publication script, with explicit staging of this verification record, preserved integration evidence, human sign-off and the effective assistance disclosure. The Owner decides publication by reviewing and running that mode.
 - [ ] Obtain review and adoption, merge, verify delivered/deployed content, update issues and Schedule rows, and clean up.
 
+### 9.4. Owner review correction
+
+- [x] Revise the work-assets definitions, relationships and prose as explicitly directed by the Owner, preserving existing requirements and anchors.
+- [ ] Verify and publish the two-file correction, then review the updated PR and its current-head CI before merge.
+
 ## 10. Files and related assets
 
 Primary files are Home/common/.claude/skills/star-github-schedule-progress/SKILL.md and docs/architecture/issue-data-model/index.md. The handbook issue lists docs/issue-standards.md, docs/engineering/work-organization.md, docs/engineering/process.md, docs/templates/schedule.md, docs/guides/pr-script-template.md, README.md, docs/github-branch-protection.md, docs/engineering/review/open-decisions.md, the three agent-schedule architecture pages, and the optional workstation roadmap. Inspect exact current content and incoming references before editing.
@@ -148,6 +162,8 @@ Preserve the satisfied #507 links. Preserve Skills (#550), Shared documentation 
 
 The Owner approved taking these issues onto the schedule for immediate attention on 2026-11-16. On 2026-11-17, after directing continuation, the Owner approved the committed plan at 340f2cf7a5744460f1afd13b54a0ac16450a7dbd in this conversation: “the plan is approved”. This authorizes implementation of the recorded scope. Git commands remain Owner-run or separately granted by exact command; no commit, push or PR execution authority is inferred from plan approval. The adopted paragraph-formatting and Owner-approval rules continue to apply.
 
+On 2026-11-17, the Owner explicitly asked: “can you revise work-assets.md right now on your current worktree?” This authorizes the review correction described above within the existing worktree. It does not grant agent execution of Git or the PR script. The Owner's earlier reluctant acceptance applies to the earlier reviewed revision; the corrected candidate is presented for fresh review.
+
 ## 13. Completion review
 
-The implementation candidate is written; targeted document, spelling and routing checks and the Owner-run full repository gate passed for the verified content. Integration verification passed. Owner review, PR publication, target-branch merge, deployed-content verification and completion approval remain outstanding. Keep the issues open and the plan active until their required milestones and Owner completion approval are recorded. Record established post-merge results immediately on the issues and carry completion-only documentation through the approved follow-up procedure.
+The implementation candidate is written; targeted document, spelling and routing checks and the Owner-run full repository gate passed for the verified content. Integration verification passed. PR #596 is open. The Owner reluctantly accepted its earlier revision and then requested the work-assets correction. Publication and review of that correction, target-branch merge, deployed-content verification and completion approval remain outstanding. Keep the issues open and the plan active until their required milestones and Owner completion approval are recorded. Record established post-merge results immediately on the issues and carry completion-only documentation through the approved follow-up procedure.
