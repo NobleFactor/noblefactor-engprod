@@ -128,16 +128,7 @@ Ruled 2026-10-21, the plan's question 4: an issue is fully classified or it is n
 none, can be added to a Triage project. Issues sent for review are those added to it. GitHub's searches, such as
 `no:type` and `no:parent-issue`, find issues that can be added to it periodically.
 
-Ruled 2026-11-03: there is no triage epic and no Triage issue type. Each team owns its Triage project, and a user
-account owns its own. A new issue of any kind goes into its team's Triage project until it is classified. The Triage
-project is where every issue is reviewed and a triage decision made: the work is declined, or the issue moves to the
-team's Backlog, Schedule or Scenario project. Superseded in part on 2026-11-04: a work item logged while walking a
-scenario goes into the scenario instead; accepted tasks and bugs go to the Backlog or onto a schedule; an issue moves to
-another team in one act, between its team's Triage project or schedule and the other team's: triage to triage, triage to
-schedule, schedule to triage, or schedule to schedule; and an epic or a feature, once classified, leaves Triage for no
-project (below).
-
-Superseded in part on 2026-11-17 ([section 10 § Epics and features](10-the-issue-commands.md#epics-and-features), #597): an epic or a feature, once classified, goes from Triage to the Backlog and stays there until it closes, its state its children's, and is never a row of a Schedule or Scenario project; `star github issue move` puts any epic, feature, task or bug in Triage or the Backlog, and any task or bug on a schedule or a scenario, from wherever it is; and the sweep returns an epic or a feature on a Schedule or Scenario project, not one on the Backlog.
+Ruled 2026-11-03: there is no triage epic and no Triage issue type. Each team owns its Triage project, and a user account owns its own. A new issue of any kind goes into its team's Triage project until it is classified. The Triage project is where every issue is reviewed and a triage decision made: the work is declined, or the issue moves to the team's Backlog, Schedule or Scenario project. Superseded in part on 2026-11-04 and 2026-11-17: a work item logged while walking a scenario goes into the scenario instead; accepted tasks and bugs go to the Backlog or onto a schedule; an issue moves to another team in one act, between its team's Triage project or schedule and the other team's: triage to triage, triage to schedule, schedule to triage, or schedule to schedule; and an epic or a feature, once classified, goes to the Backlog, where it stays until it closes (below).
 
 - An issue is fully classified or it is not. Fully classified is a Type and, below level 0, a parent one level up. An
   issue with no Type, or below level 0 with no parent, is untriaged, and waits in its team's Triage project, or its
@@ -196,16 +187,7 @@ Superseded in part on 2026-11-17 ([section 10 § Epics and features](10-the-issu
   Backlog, work goes onto a schedule highest Priority first, and onto a committed schedule only by its owner's
   amendment, recorded in the Schedule issue; `star github issue move` (#511), which replaced `star github schedule add`
   (#438), makes that move in one command ([section 3](3-collections.md#triage-and-the-backlog)).
-- Ruled 2026-11-04: epics and features are never rows of a Backlog, Schedule or Scenario project. A new one reaches
-  Triage like every new issue and, once classified, leaves Triage for no project: the hierarchy holds it, and its tasks
-  and bugs are what reach the Backlog and the schedules, from which a work item's parent link leads to its feature and
-  its epic. So the only rows of a Schedule or Scenario project that are not tasks or bugs are the Schedule and Scenario
-  issues themselves. Read 2026-11-04, five features were rows: #140 and #151 of Scenario: engprod,
-  NobleFactor/devlore-cli#762 and #847 of Scenario: devlore, and NobleFactor/devlore-cli#1023 of Schedule: devlore. The
-  script of #303's closing pull request removes those rows, first commenting on each scenario's Scenario issue naming
-  the features it exercised. The sweep (#436) will return an epic or a feature that is a row of a Backlog, Schedule or
-  Scenario project to its team's Triage project.
-- Superseded in part on 2026-11-17 ([section 10 § Epics and features](10-the-issue-commands.md#epics-and-features), #597): an epic or a feature, once classified, goes from Triage to the Backlog and stays there until it closes, its state its children's, and is never a row of a Schedule or Scenario project; `star github issue move` puts any epic, feature, task or bug in Triage or the Backlog, and any task or bug on a schedule or a scenario, from wherever it is; and the sweep returns an epic or a feature on a Schedule or Scenario project, not one on the Backlog.
+- Ruled 2026-11-04, revised 2026-11-17: epics and features are never rows of a Schedule or Scenario project. A new one reaches Triage like every new issue and, once classified, goes to the Backlog, where it stays until it closes; its state is its children's, and its tasks and bugs are what reach the schedules and the scenarios, from which a work item's parent link leads to its feature and its epic. So the only rows of a Schedule or Scenario project that are not tasks or bugs are the Schedule and Scenario issues themselves. Read 2026-11-04, five features were rows: #140 and #151 of Scenario: engprod, NobleFactor/devlore-cli#762 and #847 of Scenario: devlore, and NobleFactor/devlore-cli#1023 of Schedule: devlore. The script of #303's closing pull request removes those rows, first commenting on each scenario's Scenario issue naming the features it exercised. The sweep (#436) will return an epic or a feature that is a row of a Schedule or Scenario project to its team's Triage project.
 - Ruled 2026-11-04: one project at a time holds across the whole account. An issue is a row of at most one of its
   account's Triage, Backlog, Schedule and Scenario projects, whichever team owns them, and is on at most one schedule or
   scenario. An issue on another team's project is assigned to an accountable member of that team: GitHub allows up to 10
@@ -225,25 +207,7 @@ Superseded in part on 2026-11-17 ([section 10 § Epics and features](10-the-issu
   NobleFactor's Triage projects were also rows of a Schedule project, their own team's or another's, and the same script
   deletes their Triage rows. David-Noble-at-work/personal#268 and #275, rows of Triage: David-Noble-at-work and of
   Schedule: devlore, keep their Triage rows: their Schedule: devlore rows are crossings that #428 removes.
-- **Scenarios.** Ruled 2026-11-04: a scenario is a high-level description of a feature, a workflow or a real-life
-  situation that needs to be tested. Its Scenario issue, its own row in the team's Scenario project, summarizes an
-  end-user goal. It drives planning, coverage and team alignment, includes an example for demos and ad-hoc testing that
-  helps find gaps and defects no other kind of testing finds, and names in its body the features it exercises. A
-  scenario is structurally like a schedule that starts with no tasks or bugs: they are found with time. Someone opens
-  the scenario and walks it, logging work items as they go, each a task or a bug and a row of the team's Scenario
-  project under the scenario's option, its Beat the point in the walk where it turned up. A logged item names its
-  scenario in its body, as "Found while walking #N", and the Triage workflow adds it to the scenario instead of to
-  the team's Triage project (#448); every other new issue goes to Triage. Each item later moves to its team's Triage
-  project or straight onto a schedule, and leaves the scenario; the item's body and a comment on the Scenario issue
-  record the move. The sweep will leave a scenario's rows alone but for two structural rules: it will return an epic or
-  a feature that is a row of the Scenario project, as it will one on a Backlog or Schedule project, and an issue that is
-  a row of a scenario and of another of the account's projects, whichever team owns it (above). Every other rule waits
-  until an item moves out: it gets its type and parent then, and moving straight onto a schedule means classifying it
-  first. A scenario never ends: it is kept, updated or removed as the product changes, since it has value before, during
-  and after a release. Its Scenario issue never closes, so it states no evidence of completion (§ How long a level
-  lives, below). #453 brought both accounts' Scenario forms to this on 2026-11-14, and with them the Scenario type's
-  description and the `scenario` label's in personal and David-Noble-at-work/.github (§ Type, above).
-- Superseded in part on 2026-11-17 ([section 10 § Epics and features](10-the-issue-commands.md#epics-and-features), #597): an epic or a feature, once classified, goes from Triage to the Backlog and stays there until it closes, its state its children's, and is never a row of a Schedule or Scenario project; `star github issue move` puts any epic, feature, task or bug in Triage or the Backlog, and any task or bug on a schedule or a scenario, from wherever it is; and the sweep returns an epic or a feature on a Schedule or Scenario project, not one on the Backlog.
+- **Scenarios.** Ruled 2026-11-04, revised 2026-11-17: a scenario is a high-level description of a feature, a workflow or a real-life situation that needs to be tested. Its Scenario issue, its own row in the team's Scenario project, summarizes an end-user goal. It drives planning, coverage and team alignment, includes an example for demos and ad-hoc testing that helps find gaps and defects no other kind of testing finds, and names in its body the features it exercises. A scenario is structurally like a schedule that starts with no tasks or bugs: they are found with time. Someone opens the scenario and walks it, logging work items as they go, each a task or a bug and a row of the team's Scenario project under the scenario's option, its Beat the point in the walk where it turned up. A logged item names its scenario in its body, as "Found while walking #N", and the Triage workflow adds it to the scenario instead of to the team's Triage project (#448); every other new issue goes to Triage. Each item later moves on, to its team's Triage project or Backlog, onto a schedule or onto another scenario, and leaves the scenario; the item's body and a comment on the Scenario issue record the move. The sweep will leave a scenario's rows alone but for two structural rules: it will return an epic or a feature that is a row of the Scenario project, as it will one on a Schedule project, and an issue that is a row of a scenario and of another of the account's projects, whichever team owns it (above). Every other rule waits until an item moves out: it gets its type and parent then, and moving straight onto a schedule means classifying it first. A scenario never ends: it is kept, updated or removed as the product changes, since it has value before, during and after a release. Its Scenario issue never closes, so it states no evidence of completion (§ How long a level lives, below). #453 brought both accounts' Scenario forms to this on 2026-11-14, and with them the Scenario type's description and the `scenario` label's in personal and David-Noble-at-work/.github (§ Type, above).
 - Triage gives an issue its Type, its parent and its Area and, for a bug, its severity, and N/A on any other type
   ([section 2](2-attributes.md)). Ruled 2026-11-04: an issue that arrives with no type gets no Severity; when triage
   gives it a type other than Bug, triage sets its Severity to N/A, and the sweep (#436) will catch a miss.

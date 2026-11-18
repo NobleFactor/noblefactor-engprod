@@ -88,7 +88,7 @@ label's in personal and David-Noble-at-work/.github, read "Collection: what some
 and the features it uses", and both accounts' Scenario forms ask for those three things in place of the story and the
 evidence of completion (§ Type).
 
-Superseded in part on 2026-11-17 ([section 10 § Epics and features](10-the-issue-commands.md#epics-and-features), #597): an epic or a feature, once classified, goes from Triage to the Backlog and stays there until it closes, its state its children's, and is never a row of a Schedule or Scenario project; `star github issue move` puts any epic, feature, task or bug in Triage or the Backlog, and any task or bug on a schedule or a scenario, from wherever it is; and the sweep returns an epic or a feature on a Schedule or Scenario project, not one on the Backlog.
+**Revised 2026-11-17 ([section 10](10-the-issue-commands.md#epics-and-features), #597):** an epic or a feature goes from Triage to the Backlog once classified and stays there until it closes, its state its children's, and is never a row of a Schedule or Scenario project; `star github issue move` puts an issue where its type allows, from wherever it is; and the sweep returns an epic or a feature on a Schedule or Scenario project, not one on the Backlog.
 
 ## Completion
 
