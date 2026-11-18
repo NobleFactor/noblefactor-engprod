@@ -367,8 +367,10 @@ set_row() {
 #
 # AFTER the merge and its span, since the records name the squash commit. Guarded on what each record holds (ruled
 # 2026-11-13): the step's row must link this branch, or this pull request when the script runs again; otherwise the
-# step has moved to another worktree, and the script stops. The merge comment is posted once. Closure requires the reviewed close_steps authorization;
-# other issues remain open for their post-merge obligations. Each record is read back. A step that moves to another worktree, or closes without a merge,
+# step has moved to another worktree, and the script stops. Closure requires the reviewed close_steps authorization: a
+# step approved to close is closed by star github issue close, the merge record its evidence, which also sets its
+# schedule row Closed; every other step gets the merge record as a comment, once, and stays open for its post-merge
+# obligations. Each record is read back. A step that moves to another worktree, or closes without a merge,
 # is recorded by this script before git close-branch, its row linking where the work went. Leave the step out only
 # when the pull request lands no step.
 steps=(<issue>)
@@ -387,8 +389,6 @@ for step in "${steps[@]}"; do
         exit 1
     }
     record="Merged in #${pr_number} as \`${merged% *}\` on ${merged#* } (UTC)."
-    gh api "repos/${repository}/issues/${step}/comments" --paginate --jq '.[].body' | grep -qxF -- "${record}" ||
-        gh issue comment "${step}" --repo "${repository}" --body "${record}" >/dev/null
     close_allowed=false
     for approved in "${close_steps[@]}"; do
         [[ "${approved}" != "${step}" ]] || close_allowed=true
@@ -396,13 +396,25 @@ for step in "${steps[@]}"; do
     expected_state=OPEN
     expected_status='In progress'
     if [[ "${close_allowed}" == true ]]; then
-        [[ "$(gh issue view "${step}" --repo "${repository}" --json state --jq .state)" == CLOSED ]] ||
-            gh issue close "${step}" --repo "${repository}" --reason completed >/dev/null
+        # The merge record is the step's evidence: star github issue close posts it, closes the issue as completed and
+        # sets its schedule row Closed. Run again, it leaves a closed step as it is.
+        evidence="$(mktemp)"
+        printf '%s\n' "${record}" >"${evidence}"
+        if ! star github issue close "${repository}#${step}" --evidence "${evidence}" --silent --no-pager -o json >/dev/null; then
+            rm -f -- "${evidence}"
+            echo "#${step} did not close" >&2
+            exit 1
+        fi
+        rm -f -- "${evidence}"
         expected_state=CLOSED
         expected_status=Closed
-    elif [[ "$(gh issue view "${step}" --repo "${repository}" --json state --jq .state)" != OPEN ]]; then
-        echo "#${step} is already closed; inspect its completion disposition before changing its row." >&2
-        exit 1
+    else
+        if [[ "$(gh issue view "${step}" --repo "${repository}" --json state --jq .state)" != OPEN ]]; then
+            echo "#${step} is already closed; inspect its completion disposition before changing its row." >&2
+            exit 1
+        fi
+        gh api "repos/${repository}/issues/${step}/comments" --paginate --jq '.[].body' | grep -qxF -- "${record}" ||
+            gh issue comment "${step}" --repo "${repository}" --body "${record}" >/dev/null
     fi
     set_row "$(jq -r .project <<<"${row}")" "$(jq -r .item <<<"${row}")" "${expected_status}" "${pr_url}"
     after="$(step_row "${step}")"
