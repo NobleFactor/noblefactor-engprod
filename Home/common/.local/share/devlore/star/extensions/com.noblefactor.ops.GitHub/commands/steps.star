@@ -17,7 +17,7 @@
 # (section 9); its changes are recorded in a comment on its Scenario issue and a line in the item's body, which this
 # module writes too. star github issue move uses it (#511), made from `add` (#438); get and list of both groups read
 # through it (collections.star, #510); new of both groups files its issue, sets its issue fields and adds its option
-# through it (making.star, #509); and close and retire close an issue and read how each step closed through it
+# through it (making.star, #509); and schedule close and scenario close close an issue and read how each step closed through it
 # (ending.star, #512).
 
 load("commands/markdown.star", "body_lines", "line_end", "numbered", "sections")
@@ -189,14 +189,21 @@ def read_schedule(key, model, reading = False):
     """
     return _collection_read(key, model, _SCHEDULE_FIELD, _STEP_FIELD, "a closed schedule takes no step", reading)
 
+def read_scenario(key, model, reading = False):
+    """A scenario as scenario reads it, or what stops it: (scenario, "") or (None, why), never failing on the scenario.
+
+    star github scenario reopen reads the scenario it reopens this way, with reading, so that a closed one is read.
+    """
+    return _collection_read(key, model, _SCENARIO_FIELD, _BEAT_FIELD, "a closed scenario takes no item", reading)
+
 def scenario(key, model, reading = False):
     """A scenario: its Scenario issue, its team's Scenario project with its fields, and its option.
 
     The option is the one the Scenario issue's own row carries; fails, naming why, when the issue is not a Scenario issue
-    or has no such row, and, unless reading, as get reads a retired scenario, when it is closed: a scenario that is
-    retired is closed, and takes no item.
+    or has no such row, and, unless reading, as get reads a closed scenario, when it is closed: a closed scenario
+    takes no item.
     """
-    return _collection(key, model, _SCENARIO_FIELD, _BEAT_FIELD, "a retired scenario takes no item", reading)
+    return _collection(key, model, _SCENARIO_FIELD, _BEAT_FIELD, "a closed scenario takes no item", reading)
 
 def walk(own):
     """How many steps a Scenario issue's walk numbers under its How to walk through it heading; None when it numbers none.
@@ -590,7 +597,7 @@ def open_titled(repo, title):
     """The number of an open issue of repo titled title exactly, among the 100 opened last; None when there is none.
 
     It is read from the repository's issues, newest first, not from GitHub's search, whose index trails a new issue: a
-    run of star github schedule new or scenario new that stopped partway filed its issue moments before.
+    run of star github schedule open or scenario open that stopped partway filed its issue moments before.
     """
     owner, name = repo.split("/")
     query = ("query starStepOpen { repository(owner: \"" + owner + "\", name: \"" + name + "\") { issues(states: [OPEN], " +

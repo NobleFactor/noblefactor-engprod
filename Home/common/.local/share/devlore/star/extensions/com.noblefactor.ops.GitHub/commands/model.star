@@ -165,7 +165,7 @@ def write_options(field_id, options, operation):
 
     GitHub's updateProjectV2Field replaces the field's options with those it is sent: an option sent without its ID is
     made anew, and one not sent is deleted, blanking every row that held it. star github model apply writes a field's
-    options this way, and star github schedule new and scenario new add one (#509). operation is the mutation's name,
+    options this way, and star github schedule open and scenario open add one (#509). operation is the mutation's name,
     each caller's own, as every query the extension makes is named for the module that makes it.
     """
     graphql("mutation " + operation + " { r: updateProjectV2Field(input: {fieldId: " + json.encode(field_id) + ", singleSelectOptions: [" +

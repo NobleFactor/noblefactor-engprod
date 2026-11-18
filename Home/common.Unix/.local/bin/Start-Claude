@@ -1062,7 +1062,7 @@ claude attach, in the left pane, and a shell in the right. Each start opens a tm
 own, named for its schedule and its own tmux id, which ends when its last client leaves, and the
 conversation runs on in claude's background. --schedule opens the conversation of a schedule:
 <owner>/<repository>#<number>, or a bare <number> in the startup directory's repository; new is
-refused, naming star github schedule new, which makes a schedule. --resume opens the conversation
+refused, naming star github schedule open, which makes a schedule. --resume opens the conversation
 it names, as claude --resume takes it but its picker: its id, its background session's short id,
 its name, or its transcript's path, and given with --schedule puts it on that schedule; --continue
 opens the conversation claude lists in the startup
@@ -1150,10 +1150,10 @@ ways=$((continue_argument))
 ((! detach || remote_control)) || error $EX_USAGE "--detach leaves the session for Remote Control, which" \
     "--no-remote-control turns off: give one or the other."
 
-# --schedule new is retired: star github schedule new makes a schedule, its issue from the account's form with its
+# --schedule new is retired: star github schedule open makes a schedule, its issue from the account's form with its
 # option and its row, which this script never made (section 8 of the issue data model, question 7, #509).
 if [[ $schedule_argument == new ]]; then
-    error $EX_USAGE "--schedule new is retired: make the schedule with star github schedule new <repository> <name>" \
+    error $EX_USAGE "--schedule new is retired: make the schedule with star github schedule open <repository> <name>" \
         "--area Product|Engineering --deliverable <text> --exit-criteria <text> --evidence <text>, then open its" \
         "conversation with ${script_name} --schedule <owner>/<repository>#<number>."
 fi

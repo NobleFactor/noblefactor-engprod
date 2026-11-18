@@ -1,17 +1,17 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright Noble Factor. All rights reserved.
 
-"""A schedule closed with its evidence comment, or a scenario retired with its reason: its issue closed, its row Closed."""
+"""A schedule or a scenario closed, its comment written, its issue closed and its row Closed; and either reopened."""
 
 # ending.star
 #
-# docs/plans/doc/507-scenario-commands.md, Requirement 5 (noblefactor-engprod#512), to section 8 of the issue data
-# model, § Ending a schedule: close, and section 9, § Removing a scenario: retire. The two end a collection the same
-# way, _end: its own row set Closed, its comment written, its issue closed as completed, each read back; and its option
-# kept, the record of which collection each past row belonged to (ruled 2026-11-11). What differs is what each refuses
-# and what its comment says, each rendered from a template in templates/: close's the evidence every Schedule issue asks
-# for (question 6, ruled 2026-11-12), retire's the reason the product no longer has the scenario (question 6, ruled
-# 2026-11-15). Nothing is written until every refusal has been checked.
+# Sections 8 and 9 of the issue data model, § Closing a schedule: close, § Closing a scenario: close, and § Reopening
+# each (#512, #595). A schedule and a scenario close the same way, _end: its own row set Closed, its comment written, its
+# issue closed as completed, each read back; and its option kept, the record of which collection each past row belonged
+# to. What differs is what each refuses and what its comment says, each rendered from a template in templates/: a
+# schedule's the evidence every Schedule issue asks for, a scenario's the reason the product no longer has it. Reopening
+# undoes it: the issue reopened with its comment, its own row In progress for a schedule and Open for a scenario, and a
+# schedule's every-step exit criterion unticked. Nothing is written until every refusal has been checked.
 
 load("commands/markdown.star", "body_lines", "boxes", "sections")
 load("commands/model.star", "extension_dir", "read_text")
@@ -29,6 +29,7 @@ load(
     "option_of",
     "parse_key",
     "project_of",
+    "read_scenario",
     "read_schedule",
     "reads_back",
     "reopen_issue",
@@ -57,6 +58,7 @@ _LEVELS = [2, 3]
 # step is closed unticked, found by its words (section 10, § Reopening an issue): the boxes of the schedules so far say
 # "Every step closed" and "Every other step closed".
 _IN_PROGRESS = "In progress"
+_OPEN = "Open"
 _EVERY_STEP = "^[Ee]very (other )?steps? "
 
 # GitHub's reasons an issue closed, as a step's How it closed names them when it has no Resolution.
@@ -263,14 +265,14 @@ def reopen_schedule(plan, body):
         note("unticked " + own["key"] + "'s exit criterion: " + "; ".join(plan["criteria"]))
     return {"issue": own["key"], "kind": SCHEDULE_KIND, "status": _IN_PROGRESS, "criteria": plan["criteria"]}
 
-def retire_scenario(key, reason):
-    """A scenario the product no longer has retired, with its reason: one record of what was done.
+def close_scenario(key, reason):
+    """A scenario the product no longer has closed, with its reason: one record of what was done.
 
     Refuses, writing nothing, while an open issue is a row under the scenario's option, and while its Scenario issue has
-    a Resolution, which a retired scenario has none of: nothing was left undone (section 9, § Removing a scenario).
+    a Resolution, which a closed scenario has none of: nothing was left undone (section 9, § Closing a scenario).
     """
     if reason.strip() == "":
-        fail("retire needs --reason: the comment on the Scenario issue says why the product no longer has the scenario")
+        fail("close needs --reason: the comment on the Scenario issue says why the product no longer has the scenario")
     k = parse_key(key)
     model = model_of(models_for([k["owner"]]), k["owner"])
     scen = scenario(k["key"], model)
@@ -287,13 +289,43 @@ def retire_scenario(key, reason):
                        " open on it; star github issue move --triage moves each on")
     resolution = _resolution(model, {} if model["user"] else issue_fields(own), own["labels"])
     if resolution != None:
-        refused.append("its issue has the Resolution " + resolution + ", and a retired scenario has none")
+        refused.append("its issue has the Resolution " + resolution + ", and a closed scenario has none")
     if refused:
-        fail("nothing was written: " + own["key"] + " cannot be retired:\n  " + "\n  ".join(refused))
+        fail("nothing was written: " + own["key"] + " cannot be closed:\n  " + "\n  ".join(refused))
 
-    body = _render("retire.md.template", {"date": today(), "login": viewer(), "reason": " ".join(reason.split())})
+    body = _render("scenario-close.md.template", {"date": today(), "login": viewer(), "reason": " ".join(reason.split())})
     ended = _end(scen, body)
     back = issue(own["key"], model)
     if _resolution(model, {} if model["user"] else issue_fields(back), back["labels"]) != None:
-        fail(own["key"] + " reads back with a Resolution, which a retired scenario has none of")
+        fail(own["key"] + " reads back with a Resolution, which a closed scenario has none of")
     return {"issue": own["key"], "kind": SCENARIO_KIND, "comment": ended["comment"], "state": ended["state"], "status": ended["status"]}
+
+def scenario_reopening(key, model):
+    """A closed scenario's reopening, read before anything is written: ({scen}, "") or (None, why)."""
+    scen, fault = read_scenario(key, model, reading = True)
+    if fault:
+        return None, fault
+    project = scen["project"]
+    if not [o for o in project["fields"][_STATUS_FIELD]["options"] if o["name"] == _OPEN]:
+        return None, project["title"] + "'s " + _STATUS_FIELD + " field has no option " + _OPEN + ", for " + key + "'s own row"
+    return {"scen": scen}, ""
+
+def reopen_scenario(plan, body):
+    """A closed scenario reopened as scenario_reopening read it, with its comment, each write read back: its record.
+
+    The Scenario issue reopened, its comment written, and its own row set Open. The option was never removed, so the
+    scenario's past rows are under it still.
+    """
+    scen = plan["scen"]
+    own = scen["issue"]
+    project = scen["project"]
+    reopen_issue(own)
+    if issue_state(own)["state"] != "open":
+        fail(own["key"] + " does not read back open after it was reopened")
+    note("reopened " + own["key"])
+    comment(own, body)
+    note("commented on " + own["key"])
+    set_option(project, scen["own_item"], _STATUS_FIELD, option_of(project, _STATUS_FIELD, _OPEN))
+    reads_back(scen["own_item"], {"project": project["id"], "scenario": scen["option"]["name"], "status": _OPEN}, own["key"])
+    note("set " + own["key"] + "'s own row on " + project["title"] + " " + _OPEN)
+    return {"issue": own["key"], "kind": SCENARIO_KIND, "status": _OPEN}

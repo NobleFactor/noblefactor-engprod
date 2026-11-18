@@ -232,8 +232,8 @@ def _labels(c, records, done):
 
 # ── a project brought to its template ───────────────────────────────────────
 #
-# An option's literal and a field's options written whole are model.star's, which star github schedule new and
-# scenario new share (#509).
+# An option's literal and a field's options written whole are model.star's, which star github schedule open and
+# scenario open share (#509).
 
 def _days(date):
     """The days from 1970-01-01 to a date written YYYY-MM-DD: Howard Hinnant's days_from_civil."""

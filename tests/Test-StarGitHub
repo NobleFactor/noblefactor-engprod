@@ -9,7 +9,7 @@
 # two-types rule (#426), as docs/plans/feature/426-model-pull-to-dot-github.md's test plan lists them; star github
 # schedule add (#438), as docs/plans/feature/438-schedule-add.md's test plan lists them, run as star github issue move
 # (#511), which it became, with issue move's own cases, get, list and new of star github schedule and star github
-# scenario (#510, #509), and star github schedule close and star github scenario retire (#512), as
+# scenario (#510, #509), and star github schedule close and star github scenario close (#512), as
 # docs/plans/doc/507-scenario-commands.md's test plan lists them; each team's project of a kind held to its template's
 # README and to the short description the template names for a copy (#555), as docs/plans/fix/555-copy-readme.md's test
 # plan lists them; and star github plan link (#557), as docs/plans/feature/557-plan-row.md's test plan lists them
@@ -392,8 +392,8 @@ function check {
 #   Each Schedule project has the Schedule, Step, Status, Worktree and Iteration fields, and each Scenario project the
 #   Scenario, Beat and Status fields, each field's ID its project's own. engprod's members are stand-in and member;
 #   devlore's, other. gh runs as stand-in.
-#   NobleFactor's Area and Priority issue fields are named by their IDs and their options', as star github schedule new
-#   and scenario new set them (#509).
+#   NobleFactor's Area and Priority issue fields are named by their IDs and their options', as star github schedule open
+#   and scenario open set them (#509).
 function base_world {
     jq -n '
         def id($repo; $n): "I_" + ($repo | split("/")[1]) + "_" + ($n | tostring);
@@ -1190,7 +1190,7 @@ function world_answer {
     exit 0
 }
 
-# An issue filed by a REST call, star github schedule new's and scenario new's (#509), when their world is there: it
+# An issue filed by a REST call, star github schedule open's and scenario open's (#509), when their world is there: it
 # joins the world, as GitHub files it.
 if [[ "${method}" == POST && "${rest_path}" =~ ^repos/([^/]+/[^/]+)/issues$ && -r "${GH_REMOTES}/world.json" ]]; then
     query=""
@@ -3631,7 +3631,7 @@ expect "106 (plan 9): get refuses star's --dry-run" error "${no_writes}" "1170" 
 run_star "${data}" github scenario list NobleFactor --dry-run
 expect "106 (plan 9): and so does list" error "${no_writes}" "1170" text
 
-# 107 to 112: star github schedule new and star github scenario new (#509), as
+# 107 to 112: star github schedule open and star github scenario open (#509), as
 # docs/plans/doc/507-scenario-commands.md's test plan case 10 has them, each named for it. Their data directory's
 # NobleFactor has a Priority issue field, which the shared fixture's lacks, and each account's .github repository holds
 # its Schedule and Scenario forms. Each case starts from base_world, changed where it says, and reads back what new left
@@ -3666,7 +3666,7 @@ declare -r scenario_body='def scenario_body($project; $link; $name): "### What t
     "The beats are the rows of [\($project)](\($link))\nunder the Scenario option \"\($name)\", in Beat order.\n\n" +
     "### Plan and design documents\n\n" + '"${documents}"';'
 
-# 107 (plan 10). schedule new in an organization files Schedule: issue tracking, iteration 2 in NobleFactor/alpha, of
+# 107 (plan 10). schedule open in an organization files Schedule: issue tracking, iteration 2 in NobleFactor/alpha, of
 # type Schedule, Area Engineering, Priority Medium, assigned to who ran it, its body the form's sections at ##, in the
 # form's order, then Steps, linking view 2 of Schedule: engprod filtered to the option as #346's line does, and an empty
 # Amendments; adds the option last to the Schedule field, GRAY, naming the issue, s1 and s2 sent back with their IDs,
@@ -3675,8 +3675,8 @@ declare -r scenario_body='def scenario_body($project; $link; $name): "### What t
 # body.
 world '.projects.PVT_s_eng.fields |= map(if .name == "Schedule" then .options[0].color = "BLUE" else . end)
     | .projects.PVT_s_eng.items += [{id: "IT_alpha_41", content: "I_alpha_41", values: {Status: "Open"}}]'
-run_star "${data_new}" github schedule new NobleFactor/alpha "issue tracking, iteration 2" "${schedule_flags[@]}"
-expect "107 (plan 10): schedule new makes the issue, the option and the row" ok '. == [{
+run_star "${data_new}" github schedule open NobleFactor/alpha "issue tracking, iteration 2" "${schedule_flags[@]}"
+expect "107 (plan 10): schedule open makes the issue, the option and the row" ok '. == [{
     kind: "Schedule", issue: "NobleFactor/alpha#44", title: "Schedule: issue tracking, iteration 2", project: "Schedule: engprod",
     option: "issue tracking, iteration 2", issue_action: "made", option_action: "made", row_action: "made"}]'
 check "107 (plan 10): the issue reads back with its title, type, assignee, Area and Priority" world_holds \
@@ -3704,12 +3704,12 @@ expect "107 (plan 10): issue move puts a step on the new schedule" ok '[.[] | se
 check "107 (plan 10): and amends its empty Amendments section" world_holds \
     '.issues.I_alpha_44.body | endswith("## Amendments\n\n- '"${today}"', by stand-in: step 1 was added, Task NobleFactor/alpha#41, a spare task. Its first step.\n")'
 
-# 108 (plan 10). scenario new in an organization files Scenario: first run, of type Scenario, Area Product, Priority
+# 108 (plan 10). scenario open in an organization files Scenario: first run, of type Scenario, Area Product, Priority
 # High as --priority gives it, its body the form's sections at ###, in the form's order, and its beats line just above
 # its Plan and design documents heading; adds its option after walk's; and puts its own row, Open, after #27's.
 world
-run_star "${data_new}" github scenario new NobleFactor/alpha "first run" "${scenario_flags[@]}" --priority High
-expect "108 (plan 10): scenario new makes the issue, the option and the row" ok '. == [{kind: "Scenario", issue: "NobleFactor/alpha#44",
+run_star "${data_new}" github scenario open NobleFactor/alpha "first run" "${scenario_flags[@]}" --priority High
+expect "108 (plan 10): scenario open makes the issue, the option and the row" ok '. == [{kind: "Scenario", issue: "NobleFactor/alpha#44",
     title: "Scenario: first run", project: "Scenario: engprod", option: "first run", issue_action: "made", option_action: "made",
     row_action: "made"}]'
 check "108 (plan 10): the issue reads back, of type Scenario, Area Product and Priority High" world_holds \
@@ -3723,13 +3723,13 @@ check "108 (plan 10): the option is last, naming #44, walk kept, and the row Ope
         and (.projects.PVT_c_eng.items | map(.content)) == ["I_alpha_40", "I_alpha_27", "I_alpha_44"]
         and (.projects.PVT_c_eng.items[2].values == {Status: "Open", Scenario: "first run"})'
 
-# 109 (plan 10). In a user account, whose types, Area and Priority are labels: schedule new files test-user/personal#21,
-# labeled schedule, area:product and priority:medium, its line linking the user's project 7; scenario new files #22,
+# 109 (plan 10). In a user account, whose types, Area and Priority are labels: schedule open files test-user/personal#21,
+# labeled schedule, area:product and priority:medium, its line linking the user's project 7; scenario open files #22,
 # labeled scenario, area:engineering and priority:medium, assigned to --assignee, its line linking project 8.
 world
-run_star "${data_new}" github schedule new test-user/personal home --area Product --deliverable "The schedule commands, built." \
+run_star "${data_new}" github schedule open test-user/personal home --area Product --deliverable "The schedule commands, built." \
     --exit-criteria "Each command proved." --evidence "A comment with each proof."
-expect "109 (plan 10): schedule new in a user account" ok '. == [{kind: "Schedule", issue: "test-user/personal#21",
+expect "109 (plan 10): schedule open in a user account" ok '. == [{kind: "Schedule", issue: "test-user/personal#21",
     title: "Schedule: home", project: "Schedule: test-user", option: "home", issue_action: "made", option_action: "made",
     row_action: "made"}]'
 check "109 (plan 10): its issue is labeled for its type, Area and Priority, its body linking the user's project" world_holds \
@@ -3738,9 +3738,9 @@ check "109 (plan 10): its issue is labeled for its type, Area and Priority, its 
 check "109 (plan 10): its option and its row" world_holds \
     '[.projects.PVT_s_user.fields[] | select(.name == "Schedule") | .options[] | [.name, .description]] == [["u1", "test-user/personal#10"],
         ["home", "test-user/personal#21"]] and (.projects.PVT_s_user.items | map(.content)) == ["I_personal_10", "I_personal_11", "I_personal_21"]'
-run_star "${data_new}" github scenario new test-user/personal "evening walk" --area Engineering --wants "To start." \
+run_star "${data_new}" github scenario open test-user/personal "evening walk" --area Engineering --wants "To start." \
     --walk $'1. Install it.\n2. Run it.' --features "Task #509" --assignee other
-expect "109 (plan 10): scenario new in a user account" ok 'map([.issue, .project, .issue_action]) ==
+expect "109 (plan 10): scenario open in a user account" ok 'map([.issue, .project, .issue_action]) ==
     [["test-user/personal#22", "Scenario: test-user", "made"]]'
 check "109 (plan 10): its issue labeled scenario, area:engineering and priority:medium, assigned to other, linking project 8" world_holds \
     "${scenario_body}"' .issues.I_personal_22 | .labels == ["scenario", "area:engineering", "priority:medium"] and .assignees == ["other"]
@@ -3752,43 +3752,43 @@ check "109 (plan 10): its issue labeled scenario, area:engineering and priority:
 # a --walk that numbers no step; --area missing, or neither Product nor Engineering; a repository no team maintains, or,
 # in a user account, one without the topic issue-model; a team with no Schedule project; and star's --dry-run.
 world
-run_star "${data_new}" github schedule new NobleFactor/alpha s1 "${schedule_flags[@]}"
+run_star "${data_new}" github schedule open NobleFactor/alpha s1 "${schedule_flags[@]}"
 expect "110 (plan 10): a name whose issue, option and row are all there is refused" error "${no_writes}" \
     "NobleFactor/alpha#20 is already the schedule s1: its issue, its option and its row are all there" text
 world '.issues.I_alpha_20.state = "CLOSED"'
-run_star "${data_new}" github schedule new NobleFactor/alpha s1 "${schedule_flags[@]}"
+run_star "${data_new}" github schedule open NobleFactor/alpha s1 "${schedule_flags[@]}"
 expect "110 (plan 10): a name that is already an option, its issue closed, is refused" error "${no_writes}" \
     "s1 is already an option of Schedule: engprod's Schedule field, NobleFactor/alpha#20's" text
 world
-run_star "${data_new}" github schedule new NobleFactor/alpha later --area Engineering --deliverable "D." --exit-criteria "E."
+run_star "${data_new}" github schedule open NobleFactor/alpha later --area Engineering --deliverable "D." --exit-criteria "E."
 expect "110 (plan 10): a section of the form left unfilled is refused" error "${no_writes}" \
     "--evidence is missing: it fills the form's section Evidence of completion" text
-run_star "${data_new}" github scenario new NobleFactor/alpha loose --area Product --wants "W." --walk "Wander, then stop." --features "F."
+run_star "${data_new}" github scenario open NobleFactor/alpha loose --area Product --wants "W." --walk "Wander, then stop." --features "F."
 expect "110 (plan 10): a --walk that numbers no step is refused" error "${no_writes}" "--walk numbers no step" text
-run_star "${data_new}" github schedule new NobleFactor/alpha later --deliverable "D." --exit-criteria "E." --evidence "V."
+run_star "${data_new}" github schedule open NobleFactor/alpha later --deliverable "D." --exit-criteria "E." --evidence "V."
 expect "110 (plan 10): --area missing is refused" error "${no_writes}" "--area is missing: Product or Engineering" text
-run_star "${data_new}" github schedule new NobleFactor/alpha later --area Marketing --deliverable "D." --exit-criteria "E." --evidence "V."
+run_star "${data_new}" github schedule open NobleFactor/alpha later --area Marketing --deliverable "D." --exit-criteria "E." --evidence "V."
 expect "110 (plan 10): and --area that is neither" error "${no_writes}" "--area is Product, Engineering: Marketing" text
-run_star "${data_new}" github schedule new NobleFactor/gamma later "${schedule_flags[@]}"
+run_star "${data_new}" github schedule open NobleFactor/gamma later "${schedule_flags[@]}"
 expect "110 (plan 10): a repository no team maintains is refused" error "${no_writes}" \
     "NobleFactor/gamma takes no part in NobleFactor's issue model: no team maintains it" text
-run_star "${data_new}" github schedule new test-user/elsewhere later "${schedule_flags[@]}"
+run_star "${data_new}" github schedule open test-user/elsewhere later "${schedule_flags[@]}"
 expect "110 (plan 10): and a user account's without the topic issue-model" error "${no_writes}" \
     "test-user/elsewhere takes no part in test-user's issue model: it lacks the topic issue-model" text
 world 'del(.projects.PVT_s_dev)'
-run_star "${data_new}" github schedule new NobleFactor/beta later "${schedule_flags[@]}"
+run_star "${data_new}" github schedule open NobleFactor/beta later "${schedule_flags[@]}"
 expect "110 (plan 10): a team with no Schedule project is refused" error "${no_writes}" "NobleFactor has no open project Schedule: devlore" text
-run_star "${data_new}" github schedule new NobleFactor/alpha later "${schedule_flags[@]}" --dry-run
+run_star "${data_new}" github schedule open NobleFactor/alpha later "${schedule_flags[@]}" --dry-run
 expect "110 (plan 10): and star's --dry-run, until devlore-cli#1170" error "${no_writes}" "1170" text
 
 # 111 (plan 10). A run that stops after filing the issue, before its option, is run again: it finds the issue by its
 # title, files no second one, and adds the option and the row.
 world '.fail_on = "starStepOptions"'
 quiet=""
-run_star "${data_new}" github schedule new NobleFactor/alpha later "${schedule_flags[@]}"
+run_star "${data_new}" github schedule open NobleFactor/alpha later "${schedule_flags[@]}"
 quiet="--silent"
 expect "111 (plan 10): a run that stops before the option says what it filed" error "" "filed NobleFactor/alpha#44, Schedule: later"
-run_star "${data_new}" github schedule new NobleFactor/alpha later "${schedule_flags[@]}"
+run_star "${data_new}" github schedule open NobleFactor/alpha later "${schedule_flags[@]}"
 expect "111 (plan 10): the same command run again finishes it, the issue found" ok \
     'map([.issue, .issue_action, .option_action, .row_action]) == [["NobleFactor/alpha#44", "found", "made", "made"]]'
 check "111 (plan 10): one issue titled Schedule: later, with its option and its row" world_holds \
@@ -3800,9 +3800,9 @@ check "111 (plan 10): one issue titled Schedule: later, with its option and its 
 # 112 (plan 10). A run that stops after the row is made, before it is placed and given its option, is run again: it
 # finds the issue, the option naming it, and the row without the option, which it finishes.
 world '.fail_on = "starStepPlace"'
-run_star "${data_new}" github scenario new NobleFactor/alpha "first run" "${scenario_flags[@]}"
+run_star "${data_new}" github scenario open NobleFactor/alpha "first run" "${scenario_flags[@]}"
 expect "112 (plan 10): a run that stops at placing the row" error ""
-run_star "${data_new}" github scenario new NobleFactor/alpha "first run" "${scenario_flags[@]}"
+run_star "${data_new}" github scenario open NobleFactor/alpha "first run" "${scenario_flags[@]}"
 expect "112 (plan 10): the same command run again finishes the row" ok \
     'map([.issue_action, .option_action, .row_action]) == [["found", "found", "made"]]'
 check "112 (plan 10): one issue, one option, and its own row, Open, under the option, after #27's" world_holds \
@@ -3811,7 +3811,7 @@ check "112 (plan 10): one issue, one option, and its own row, Open, under the op
         and (.projects.PVT_c_eng.items | map(.content)) == ["I_alpha_40", "I_alpha_27", "I_alpha_44"]
         and (.projects.PVT_c_eng.items[2].values == {Status: "Open", Scenario: "first run"})'
 
-# 113 to 118: star github schedule close and star github scenario retire (#512), as
+# 113 to 118: star github schedule close and star github scenario close (#512), as
 # docs/plans/doc/507-scenario-commands.md's test plan cases 11 and 12 have them, each named for its case. Each starts
 # from base_world, changed where it says, and reads back what each left in it.
 
@@ -3897,46 +3897,46 @@ check "115 (plan 11): its comment, the one step under Closed with no pull reques
         and (.issues.I_personal_10 | [.state, .stateReason]) == ["CLOSED", "COMPLETED"]
         and (.projects.PVT_s_user.items[] | select(.id == "IT_personal_10") | .values.Status) == "Closed"'
 
-# 116 (plan 12). retire refuses, writing nothing, a scenario with an open item, naming it; one whose Scenario issue has
+# 116 (plan 12). close refuses, writing nothing, a scenario with an open item, naming it; one whose Scenario issue has
 # a Resolution; no --reason; and star's --dry-run.
 world
-run_star "${data}" github scenario retire NobleFactor/alpha#40 --reason "The walk is gone."
-expect "116 (plan 12): retire refuses a scenario with an open item, naming it" error "${no_writes}" \
+run_star "${data}" github scenario close NobleFactor/alpha#40 --reason "The walk is gone."
+expect "116 (plan 12): close refuses a scenario with an open item, naming it" error "${no_writes}" \
     "not every item has moved on: NobleFactor/alpha#27 at beat 1 is open on it" text
 world '.issues.I_alpha_27.state = "CLOSED" | .issues.I_alpha_40.fields = {Resolution: "Declined"}'
-run_star "${data}" github scenario retire NobleFactor/alpha#40 --reason "The walk is gone."
+run_star "${data}" github scenario close NobleFactor/alpha#40 --reason "The walk is gone."
 expect "116 (plan 12): and one whose Scenario issue has a Resolution" error "${no_writes}" \
-    "its issue has the Resolution Declined, and a retired scenario has none" text
+    "its issue has the Resolution Declined, and a closed scenario has none" text
 world '.issues.I_alpha_27.state = "CLOSED"'
-run_star "${data}" github scenario retire NobleFactor/alpha#40
-expect "116 (plan 12): and no --reason" error "${no_writes}" "retire needs --reason" text
-run_star "${data}" github scenario retire NobleFactor/alpha#40 --reason "The walk is gone." --dry-run
+run_star "${data}" github scenario close NobleFactor/alpha#40
+expect "116 (plan 12): and no --reason" error "${no_writes}" "close needs --reason" text
+run_star "${data}" github scenario close NobleFactor/alpha#40 --reason "The walk is gone." --dry-run
 expect "116 (plan 12): and star's --dry-run, until devlore-cli#1170" error "${no_writes}" "1170" text
 
-# 117 (plan 12). retire on a scenario whose one item is closed: its own row Closed, then the comment with the reason,
+# 117 (plan 12). close on a scenario whose one item is closed: its own row Closed, then the comment with the reason,
 # then the Scenario issue closed as completed with no Resolution; the option kept.
 world '.issues.I_alpha_27.state = "CLOSED"'
-run_star "${data}" github scenario retire NobleFactor/alpha#40 --reason "The walk is gone."
-expect "117 (plan 12): retire ends the scenario" ok '. == [{issue: "NobleFactor/alpha#40", kind: "Scenario", comment: "IC_I_alpha_40_0",
+run_star "${data}" github scenario close NobleFactor/alpha#40 --reason "The walk is gone."
+expect "117 (plan 12): close ends the scenario" ok '. == [{issue: "NobleFactor/alpha#40", kind: "Scenario", comment: "IC_I_alpha_40_0",
     state: "closed", status: "Closed"}]'
 check "117 (plan 12): its comment names the date, who ran it and the reason" world_holds \
-    '.issues.I_alpha_40.comments == ["**Retired** by `star github scenario retire` on '"${today}"', run by stand-in: The walk is gone."]'
+    '.issues.I_alpha_40.comments == ["**Closed** by `star github scenario close` on '"${today}"', run by stand-in: The walk is gone."]'
 check "117 (plan 12): the Scenario issue is closed as completed with no Resolution, its row Closed, and walk kept" world_holds \
     '(.issues.I_alpha_40 | [.state, .stateReason, (.fields // {}).Resolution]) == ["CLOSED", "COMPLETED", null]
         and (.projects.PVT_c_eng.items[] | select(.id == "IT_alpha_40") | .values) == {Scenario: "walk", Status: "Closed"}
         and ([.projects.PVT_c_eng.fields[] | select(.name == "Scenario") | .options[].name] == ["walk"])'
 
-# 118 (plan 12). In a user account, retire ends the user walk, which has no item: closed as completed, with no
+# 118 (plan 12). In a user account, close ends the user walk, which has no item: closed as completed, with no
 # resolution: label, its row Closed and its option kept.
 world
-run_star "${data}" github scenario retire test-user/personal#20 --reason "No one walks it now."
-expect "118 (plan 12): retire ends a user account's scenario" ok \
+run_star "${data}" github scenario close test-user/personal#20 --reason "No one walks it now."
+expect "118 (plan 12): close ends a user account's scenario" ok \
     'map([.issue, .kind, .state, .status]) == [["test-user/personal#20", "Scenario", "closed", "Closed"]]'
 check "118 (plan 12): closed as completed, labeled no resolution:, its row Closed, its option kept" world_holds \
     '(.issues.I_personal_20 | [.state, .stateReason, ([.labels[] | select(startswith("resolution:"))] | length)]) == ["CLOSED", "COMPLETED", 0]
         and (.projects.PVT_c_user.items[] | select(.id == "IT_personal_20") | .values) == {Scenario: "user walk", Status: "Closed"}
         and ([.projects.PVT_c_user.fields[] | select(.name == "Scenario") | .options[].name] == ["user walk"])
-        and .issues.I_personal_20.comments == ["**Retired** by `star github scenario retire` on '"${today}"', run by stand-in: No one walks it now."]'
+        and .issues.I_personal_20.comments == ["**Closed** by `star github scenario close` on '"${today}"', run by stand-in: No one walks it now."]'
 
 # 119 (#531). issue move reads the schedule an issue leaves before it writes anything: s2's own row has lost its option,
 # as Start-Claude's schedule #301's had on 2026-11-12, so #32, on s2, is refused, and nothing is written, not even the
@@ -4317,6 +4317,73 @@ run_star "${data_new}" github issue open "${alpha[@]}" --type Task --parent Nobl
     --body-file "${run_directory}/task.md" --dry-run
 expect "140 (#338): and star's --dry-run, until devlore-cli#1170" error "${no_writes}" "1170" text
 check "140 (#315): --set's split carries the #315 TODO" todo_beside github-issue-open.star --set '(value or "").split(",")'
+
+# 141 (#595). schedule create is schedule open by another name: the same issue, option and row.
+world
+run_star "${data_new}" github schedule create NobleFactor/alpha "issue tracking, iteration 2" "${schedule_flags[@]}"
+expect "141 (#595): schedule create opens a schedule as schedule open does" ok \
+    'map([.kind, .issue, .issue_action, .option_action, .row_action]) == [["Schedule", "NobleFactor/alpha#44", "made", "made", "made"]]'
+run_star "${data_new}" github schedule new NobleFactor/alpha later "${schedule_flags[@]}"
+expect "141 (#595): schedule new is no longer a command" error "${no_writes}" 'unknown command "new" for "star github schedule"' text
+
+# 142 (#595). scenario create is scenario open by another name.
+world
+run_star "${data_new}" github scenario create NobleFactor/alpha "first run" "${scenario_flags[@]}"
+expect "142 (#595): scenario create opens a scenario as scenario open does" ok \
+    'map([.kind, .issue, .issue_action, .option_action, .row_action]) == [["Scenario", "NobleFactor/alpha#44", "made", "made", "made"]]'
+
+# 143 (#595). schedule reopen of s1, closed, its own row Closed and its every-step criterion ticked: the issue reopened
+# with its comment, its own row In progress, and that criterion unticked, the other left as it was. Run again, s1 is
+# open, so it is unchanged and nothing is written.
+world '.issues.I_alpha_20.state = "CLOSED"
+    | .issues.I_alpha_20.body = ("## Exit criteria\n\n- [x] Every step closed, or moved to a later schedule by amendment\n"
+        + "- [x] Triage holds only issues that await a decision\n\n" + .issues.I_alpha_20.body)
+    | (.projects.PVT_s_eng.items[] | select(.content == "I_alpha_20") | .values.Status) = "Closed"'
+run_star "${data}" github schedule reopen NobleFactor/alpha#20 --reason "A step was reopened."
+expect "143 (#595): schedule reopen reopens s1, its own row In progress, its every-step criterion unticked" ok \
+    'map([.issue, .action, .status, .criteria]) == [["NobleFactor/alpha#20", "reopened", "In progress",
+        ["Every step closed, or moved to a later schedule by amendment"]]]'
+check "143 (#595): #20 is open, its comment says why, its own row In progress, and only the every-step box unticked" world_holds \
+    '.issues.I_alpha_20.state == "OPEN"
+        and .issues.I_alpha_20.comments == ["Reopened by `star github schedule reopen` on '"${today}"', run by stand-in: A step was reopened."]
+        and (.projects.PVT_s_eng.items[] | select(.content == "I_alpha_20") | .values.Status) == "In progress"
+        and (.issues.I_alpha_20.body | startswith("## Exit criteria\n\n- [ ] Every step closed, or moved to a later schedule by amendment\n- [x] Triage holds"))'
+check "143 (#595): the issue reopened, then its comment, then its row, then its body" calls_hold "${in_order}"'
+    in_order([["starStepReopen", "i=I_alpha_20"], ["starStepComment", "s=I_alpha_20"], ["starStepSetOption", "i=IT_alpha_20"],
+        ["starStepAmend", "i=I_alpha_20"]])'
+run_star "${data}" github schedule reopen NobleFactor/alpha#20 --reason "A step was reopened."
+expect "143 (#595): run again, s1 is open, so it is unchanged and nothing is written" ok \
+    "${no_writes}"' and map([.issue, .action]) == [["NobleFactor/alpha#20", "unchanged"]]'
+
+# 144 (#595). scenario reopen of walk, closed, its own row Closed: the issue reopened with its comment and its own row
+# Open. Run again, it is unchanged.
+world '.issues.I_alpha_40.state = "CLOSED" | (.projects.PVT_c_eng.items[] | select(.content == "I_alpha_40") | .values.Status) = "Closed"'
+run_star "${data}" github scenario reopen NobleFactor/alpha#40 --reason "The walk is back."
+expect "144 (#595): scenario reopen reopens walk, its own row Open" ok \
+    'map([.issue, .kind, .action, .status]) == [["NobleFactor/alpha#40", "Scenario", "reopened", "Open"]]'
+check "144 (#595): #40 is open, its comment says why, and its own row is Open" world_holds \
+    '.issues.I_alpha_40.state == "OPEN"
+        and .issues.I_alpha_40.comments == ["Reopened by `star github scenario reopen` on '"${today}"', run by stand-in: The walk is back."]
+        and (.projects.PVT_c_eng.items[] | select(.content == "I_alpha_40") | .values.Status) == "Open"'
+run_star "${data}" github scenario reopen NobleFactor/alpha#40 --reason "The walk is back."
+expect "144 (#595): run again, it is unchanged and nothing is written" ok \
+    "${no_writes}"' and map([.issue, .action]) == [["NobleFactor/alpha#40", "unchanged"]]'
+
+# 145 (#595). reopen refuses, writing nothing: a schedule reopen of a Scenario issue, a scenario reopen of a Schedule
+# issue, no --reason, and star's --dry-run.
+world '.issues.I_alpha_20.state = "CLOSED" | .issues.I_alpha_40.state = "CLOSED"'
+run_star "${data}" github schedule reopen NobleFactor/alpha#40 --reason "R."
+expect "145 (#595): schedule reopen of a Scenario issue" error "${no_writes}" \
+    "NobleFactor/alpha#40 is not a Schedule issue: its type is Scenario" text
+run_star "${data}" github scenario reopen NobleFactor/alpha#20 --reason "R."
+expect "145 (#595): scenario reopen of a Schedule issue" error "${no_writes}" \
+    "NobleFactor/alpha#20 is not a Scenario issue: its type is Schedule" text
+run_star "${data}" github schedule reopen NobleFactor/alpha#20
+expect "145 (#595): schedule reopen with no --reason" error "${no_writes}" "schedule reopen needs --reason" text
+run_star "${data}" github scenario reopen NobleFactor/alpha#40
+expect "145 (#595): scenario reopen with no --reason" error "${no_writes}" "scenario reopen needs --reason" text
+run_star "${data}" github schedule reopen NobleFactor/alpha#20 --reason "R." --dry-run
+expect "145 (#595): and star's --dry-run, until devlore-cli#1170" error "${no_writes}" "1170" text
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"

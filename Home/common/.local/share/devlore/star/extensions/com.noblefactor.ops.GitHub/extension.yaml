@@ -37,9 +37,43 @@ commands:
       - name: schedule
         help: "The schedule's own issue, <owner>/<repository>#<number>, as a session's NFEP_AGENT_SCHEDULE names it; required"
 
-  - name: github.schedule.new
-    help: "Make a schedule: its Schedule issue, titled Schedule: <name>, filed in the repository with the account's Schedule form's sections, in the form's order, then its Steps line, linking the team's Schedule project's view 2 filtered to the schedule, and an empty Amendments section, its type, Area and Priority set, and assigned to --assignee or to you; its option, added last to the project's Schedule field, every existing option kept; and its own row, Status Open and no step; each write read back; refuses, writing nothing, a repository no team maintains, or in a user account one without the topic issue-model, a team with no Schedule project, a name that is already an option, and a missing --area or section; a run that stops partway is run again to finish, making only what is missing; returns one flat record of what it made; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
-    implementation: commands/github-schedule-new.star
+  - name: github.schedule.open
+    help: "Open a schedule: its Schedule issue, titled Schedule: <name>, filed in the repository with the account's Schedule form's sections, in the form's order, then its Steps line, linking the team's Schedule project's view 2 filtered to the schedule, and an empty Amendments section, its type, Area and Priority set, and assigned to --assignee or to you; its option, added last to the project's Schedule field, every existing option kept; and its own row, Status Open and no step; each write read back; refuses, writing nothing, a repository no team maintains, or in a user account one without the topic issue-model, a team with no Schedule project, a name that is already an option, and a missing --area or section; a run that stops partway is run again to finish, making only what is missing; returns one flat record of what it made; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    implementation: commands/github-schedule-open.star
+    args:
+      - name: repository
+        help: "The repository the Schedule issue is filed in, <owner>/<name>, whose team, or user account, owns the schedule; required"
+      - name: name
+        help: "The schedule's name: its option, and its issue's title after Schedule: ; required"
+    flags:
+      - name: area
+        type: string
+        default: ""
+        help: "Product or Engineering: the Schedule issue's Area; required"
+      - name: deliverable
+        type: string
+        default: ""
+        help: "What the schedule delivers: the form's Deliverable section; required"
+      - name: exit-criteria
+        type: string
+        default: ""
+        help: "How we'll know it's finished: the form's Exit criteria section; required"
+      - name: evidence
+        type: string
+        default: ""
+        help: "What a comment on the issue will show before it closes: the form's Evidence of completion section; required"
+      - name: priority
+        type: string
+        default: ""
+        help: "The Schedule issue's Priority, one of its account's Priority options; default: Medium"
+      - name: assignee
+        type: string
+        default: ""
+        help: "Who owns the schedule, assigned its issue; default: you, who run the command"
+
+  - name: github.schedule.create
+    help: "The same command as star github schedule open, by its synonym; an alias once NobleFactor/devlore-cli#1235 lets an extension command name one. Open a schedule: its Schedule issue, titled Schedule: <name>, filed in the repository with the account's Schedule form's sections, in the form's order, then its Steps line, linking the team's Schedule project's view 2 filtered to the schedule, and an empty Amendments section, its type, Area and Priority set, and assigned to --assignee or to you; its option, added last to the project's Schedule field, every existing option kept; and its own row, Status Open and no step; each write read back; refuses, writing nothing, a repository no team maintains, or in a user account one without the topic issue-model, a team with no Schedule project, a name that is already an option, and a missing --area or section; a run that stops partway is run again to finish, making only what is missing; returns one flat record of what it made; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    implementation: commands/github-schedule-open.star
     args:
       - name: repository
         help: "The repository the Schedule issue is filed in, <owner>/<name>, whose team, or user account, owns the schedule; required"
@@ -78,6 +112,18 @@ commands:
       - name: schedule
         help: "The schedule's own issue, <owner>/<repository>#<number>, as a session's NFEP_AGENT_SCHEDULE names it; required"
 
+  - name: github.schedule.reopen
+    help: "Reopen a closed schedule: its Schedule issue reopened, a comment on it with the date, who ran it and --reason, its own row set In progress, and each ticked box of its Exit criteria section whose text begins Every step or Every other step unticked, each write read back; a schedule with no such box is reopened all the same; an open schedule is unchanged; refuses, writing nothing, an issue that is not a Schedule issue; returns one flat record of what it did; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    implementation: commands/github-schedule-reopen.star
+    args:
+      - name: schedule
+        help: "The schedule's own issue, <owner>/<repository>#<number>, as a session's NFEP_AGENT_SCHEDULE names it; required"
+    flags:
+      - name: reason
+        type: string
+        default: ""
+        help: "Why the schedule is reopened, written in the comment on its Schedule issue; required"
+
   - name: github.scenario.list
     help: "Every scenario of an account, or of one of its teams: one flat record for each option of the Scenario field of its Scenario projects, Scenario: <team> in an organization and Scenario: <account> in a user account, with its Scenario issue's key, title, state and assignee, the project, and the counts of its open and closed rows; writes nothing; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
     implementation: commands/github-scenario-list.star
@@ -91,15 +137,15 @@ commands:
         help: "The team whose Scenario project alone is read, by its slug; refused in a user account, which has no teams"
 
   - name: github.scenario.get
-    help: "One scenario's rows: one flat record for each row under its option, its Scenario issue's own row first, with no Beat, then its rows in Beat order, then any row with no Beat; each the Beat, the issue's key, type, title and state, and the row's Status; reads a retired scenario too; writes nothing; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    help: "One scenario's rows: one flat record for each row under its option, its Scenario issue's own row first, with no Beat, then its rows in Beat order, then any row with no Beat; each the Beat, the issue's key, type, title and state, and the row's Status; reads a closed scenario too; writes nothing; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
     implementation: commands/github-scenario-get.star
     args:
       - name: scenario
         help: "The scenario's own issue, <owner>/<repository>#<number>; required"
 
-  - name: github.scenario.new
-    help: "Make a scenario: its Scenario issue, titled Scenario: <name>, filed in the repository with the account's Scenario form's sections, in the form's order, and its beats line, linking the team's Scenario project's view 2 filtered to the scenario, just above its Plan and design documents section, its type, Area and Priority set, and assigned to --assignee or to you; its option, added last to the project's Scenario field, every existing option kept; and its own row, Status Open and no Beat; each write read back; refuses, writing nothing, a repository no team maintains, or in a user account one without the topic issue-model, a team with no Scenario project, a name that is already an option, a missing --area or section, and a --walk that is not a numbered list; a run that stops partway is run again to finish, making only what is missing; returns one flat record of what it made; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
-    implementation: commands/github-scenario-new.star
+  - name: github.scenario.open
+    help: "Open a scenario: its Scenario issue, titled Scenario: <name>, filed in the repository with the account's Scenario form's sections, in the form's order, and its beats line, linking the team's Scenario project's view 2 filtered to the scenario, just above its Plan and design documents section, its type, Area and Priority set, and assigned to --assignee or to you; its option, added last to the project's Scenario field, every existing option kept; and its own row, Status Open and no Beat; each write read back; refuses, writing nothing, a repository no team maintains, or in a user account one without the topic issue-model, a team with no Scenario project, a name that is already an option, a missing --area or section, and a --walk that is not a numbered list; a run that stops partway is run again to finish, making only what is missing; returns one flat record of what it made; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    implementation: commands/github-scenario-open.star
     args:
       - name: repository
         help: "The repository the Scenario issue is filed in, <owner>/<name>, whose team, or user account, owns the scenario; required"
@@ -131,9 +177,43 @@ commands:
         default: ""
         help: "Who owns the scenario, assigned its issue; default: you, who run the command"
 
-  - name: github.scenario.retire
-    help: "Retire a scenario the product no longer has: refuses, writing nothing, while an open issue is a row of the scenario, or its Scenario issue has a Resolution; then sets its own row Closed, comments on the Scenario issue with the date, who ran it and --reason, and closes it as completed with no Resolution, each write read back; keeps the option, the record of which scenario each past row belonged to; returns one flat record of what it did; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
-    implementation: commands/github-scenario-retire.star
+  - name: github.scenario.create
+    help: "The same command as star github scenario open, by its synonym; an alias once NobleFactor/devlore-cli#1235 lets an extension command name one. Open a scenario: its Scenario issue, titled Scenario: <name>, filed in the repository with the account's Scenario form's sections, in the form's order, and its beats line, linking the team's Scenario project's view 2 filtered to the scenario, just above its Plan and design documents section, its type, Area and Priority set, and assigned to --assignee or to you; its option, added last to the project's Scenario field, every existing option kept; and its own row, Status Open and no Beat; each write read back; refuses, writing nothing, a repository no team maintains, or in a user account one without the topic issue-model, a team with no Scenario project, a name that is already an option, a missing --area or section, and a --walk that is not a numbered list; a run that stops partway is run again to finish, making only what is missing; returns one flat record of what it made; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    implementation: commands/github-scenario-open.star
+    args:
+      - name: repository
+        help: "The repository the Scenario issue is filed in, <owner>/<name>, whose team, or user account, owns the scenario; required"
+      - name: name
+        help: "The scenario's name: its option, and its issue's title after Scenario: ; required"
+    flags:
+      - name: area
+        type: string
+        default: ""
+        help: "Product or Engineering: the Scenario issue's Area; required"
+      - name: wants
+        type: string
+        default: ""
+        help: "What the person wants to do, said the way they would: the form's What the person wants to do section; required"
+      - name: walk
+        type: string
+        default: ""
+        help: "How to walk through it, as a numbered list, step N of which is Beat N: the form's How to walk through it section; required"
+      - name: features
+        type: string
+        default: ""
+        help: "The features it uses, each by its issue: the form's The features it uses section; required"
+      - name: priority
+        type: string
+        default: ""
+        help: "The Scenario issue's Priority, one of its account's Priority options; default: Medium"
+      - name: assignee
+        type: string
+        default: ""
+        help: "Who owns the scenario, assigned its issue; default: you, who run the command"
+
+  - name: github.scenario.close
+    help: "Close a scenario the product no longer has: refuses, writing nothing, while an open issue is a row of the scenario, or its Scenario issue has a Resolution; then sets its own row Closed, comments on the Scenario issue with the date, who ran it and --reason, and closes it as completed with no Resolution, each write read back; keeps the option, the record of which scenario each past row belonged to; returns one flat record of what it did; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    implementation: commands/github-scenario-close.star
     args:
       - name: scenario
         help: "The scenario's own issue, <owner>/<repository>#<number>; required"
@@ -142,6 +222,18 @@ commands:
         type: string
         default: ""
         help: "Why the product no longer has the scenario, written in the comment on its Scenario issue; required"
+
+  - name: github.scenario.reopen
+    help: "Reopen a closed scenario: its Scenario issue reopened, a comment on it with the date, who ran it and --reason, and its own row set Open, each write read back; the option was never removed, so its past rows are under it still; an open scenario is unchanged; refuses, writing nothing, an issue that is not a Scenario issue; returns one flat record of what it did; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    implementation: commands/github-scenario-reopen.star
+    args:
+      - name: scenario
+        help: "The scenario's own issue, <owner>/<repository>#<number>; required"
+    flags:
+      - name: reason
+        type: string
+        default: ""
+        help: "Why the scenario is reopened, written in the comment on its Scenario issue; required"
 
   - name: github.issue.open
     help: "Open an issue of any type but Schedule and Scenario in the repository of the clone it runs in, or the one --directory names, classified as it is made, from flags or from a template whose blanks --set fills: everything read before the first write, the type's form from the account's .github repository among it, and the issue opened in one call with its type, its parent, its assignee, and its Area, Priority and Severity, the issue fields in an organization or the labels that stand in for them in a user account; its row left to the Triage workflow; read back; return one flat record of the issue opened, or found with --unique; refuses an issue without an Area, a type the account doesn't have, a parent at the wrong level, a body without a section its form requires or its Plan and design documents table, and --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"

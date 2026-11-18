@@ -6,7 +6,7 @@
 # github-schedule-close.star
 #
 # docs/plans/doc/507-scenario-commands.md, Requirement 5 (noblefactor-engprod#512), to section 8 of the issue data
-# model, § Ending a schedule: close. ending.star ends a schedule as it retires a scenario; close refuses while a step is
+# model, § Ending a schedule: close. ending.star ends a schedule as it closes a scenario; close refuses while a step is
 # open or an exit criterion's box is unticked, and its comment, rendered from templates/evidence.md.template, shows
 # what merged and when, and how each step no merged pull request closed did.
 
