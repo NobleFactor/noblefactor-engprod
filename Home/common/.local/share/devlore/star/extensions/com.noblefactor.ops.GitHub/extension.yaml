@@ -6,7 +6,7 @@ description: GitHub under the NobleFactor issue data model -- every issue as a r
 
 commands:
   - name: github.schedule.report
-    help: "Every issue, open and closed, of the repositories named, or of writ's layers, as one flat record each; narrow the result with --filter and --jq, render it with --output"
+    help: "List every issue, open and closed, of the repositories named, or of writ's layers, one record each, with where it lives"
     implementation: commands/github-schedule-report.star
     args:
       - name: repositories
@@ -16,10 +16,10 @@ commands:
       - name: search
         type: string
         default: ""
-        help: "Read only what GitHub's issue search finds, in its syntax, passed unchanged and run once for each repository as (<search>) repo:<repository> is:issue; an error when it matches more than 1,000 issues in one"
+        help: "Only the issues GitHub's issue search finds, in its syntax, run once per repository; an error past 1,000 in one"
 
   - name: github.schedule.list
-    help: "Every schedule of an account, or of one of its teams: one flat record for each option of the Schedule field of its Schedule projects, Schedule: <team> in an organization and Schedule: <account> in a user account, with its Schedule issue's key, title, state and assignee, the project, and the counts of its open and closed steps; writes nothing; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    help: "List an account's schedules, or one team's, each with its Schedule issue and its open and closed steps"
     implementation: commands/github-schedule-list.star
     args:
       - name: account
@@ -31,14 +31,14 @@ commands:
         help: "The team whose Schedule project alone is read, by its slug; refused in a user account, which has no teams"
 
   - name: github.schedule.get
-    help: "One schedule's rows: one flat record for each row under its option, its Schedule issue's own row first, with no step, then its steps in step order, then any row with no step; each the step, the issue's key, type, title and state, the row's Status, Worktree and Iteration, and the keys of the issues that block it; reads a closed schedule too; writes nothing; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    help: "List a schedule's rows, its Schedule issue first, then its steps in order, with each one's state and blockers"
     implementation: commands/github-schedule-get.star
     args:
       - name: schedule
         help: "The schedule's own issue, <owner>/<repository>#<number>, as a session's NFEP_AGENT_SCHEDULE names it; required"
 
   - name: github.schedule.open
-    help: "Open a schedule: its Schedule issue, titled Schedule: <name>, filed in the repository with the account's Schedule form's sections, in the form's order, then its Steps line, linking the team's Schedule project's view 2 filtered to the schedule, and an empty Amendments section, its type, Area and Priority set, and assigned to --assignee or to you; its option, added last to the project's Schedule field, every existing option kept; and its own row, Status Open and no step; each write read back; refuses, writing nothing, a repository no team maintains, or in a user account one without the topic issue-model, a team with no Schedule project, a name that is already an option, and a missing --area or section; a run that stops partway is run again to finish, making only what is missing; returns one flat record of what it made; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    help: "Open a schedule: its Schedule issue, from the account's Schedule form, its option and its own row"
     implementation: commands/github-schedule-open.star
     args:
       - name: repository
@@ -72,7 +72,7 @@ commands:
         help: "Who owns the schedule, assigned its issue; default: you, who run the command"
 
   - name: github.schedule.create
-    help: "The same command as star github schedule open, by its synonym; an alias once NobleFactor/devlore-cli#1235 lets an extension command name one. Open a schedule: its Schedule issue, titled Schedule: <name>, filed in the repository with the account's Schedule form's sections, in the form's order, then its Steps line, linking the team's Schedule project's view 2 filtered to the schedule, and an empty Amendments section, its type, Area and Priority set, and assigned to --assignee or to you; its option, added last to the project's Schedule field, every existing option kept; and its own row, Status Open and no step; each write read back; refuses, writing nothing, a repository no team maintains, or in a user account one without the topic issue-model, a team with no Schedule project, a name that is already an option, and a missing --area or section; a run that stops partway is run again to finish, making only what is missing; returns one flat record of what it made; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    help: "Open a schedule, as schedule open does: create is another name for open"
     implementation: commands/github-schedule-open.star
     args:
       - name: repository
@@ -106,14 +106,14 @@ commands:
         help: "Who owns the schedule, assigned its issue; default: you, who run the command"
 
   - name: github.schedule.close
-    help: "Close a finished schedule: refuses, writing nothing, while a step is open or a box of its Exit criteria section, or of its Evidence of completion section when it has none, is unticked; then sets its own row Closed, writes the evidence comment, one row for each merged pull request in the order they merged, with the date it merged and the steps it closed, then each step no merged pull request closed, with how it closed, and closes the Schedule issue as completed, each write read back; keeps the option, the record of which schedule each step belonged to; returns one flat record of what it did; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    help: "Close a finished schedule, posting its evidence: what each merged pull request closed, and how the rest closed"
     implementation: commands/github-schedule-close.star
     args:
       - name: schedule
         help: "The schedule's own issue, <owner>/<repository>#<number>, as a session's NFEP_AGENT_SCHEDULE names it; required"
 
   - name: github.schedule.reopen
-    help: "Reopen a closed schedule: its Schedule issue reopened, a comment on it with the date, who ran it and --reason, its own row set In progress, and each ticked box of its Exit criteria section whose text begins Every step or Every other step unticked, each write read back; a schedule with no such box is reopened all the same; an open schedule is unchanged; refuses, writing nothing, an issue that is not a Schedule issue; returns one flat record of what it did; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    help: "Reopen a closed schedule: its issue, a comment saying why, its own row In progress, its every-step box unticked"
     implementation: commands/github-schedule-reopen.star
     args:
       - name: schedule
@@ -125,7 +125,7 @@ commands:
         help: "Why the schedule is reopened, written in the comment on its Schedule issue; required"
 
   - name: github.scenario.list
-    help: "Every scenario of an account, or of one of its teams: one flat record for each option of the Scenario field of its Scenario projects, Scenario: <team> in an organization and Scenario: <account> in a user account, with its Scenario issue's key, title, state and assignee, the project, and the counts of its open and closed rows; writes nothing; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    help: "List an account's scenarios, or one team's, each with its Scenario issue and its open and closed items"
     implementation: commands/github-scenario-list.star
     args:
       - name: account
@@ -137,14 +137,14 @@ commands:
         help: "The team whose Scenario project alone is read, by its slug; refused in a user account, which has no teams"
 
   - name: github.scenario.get
-    help: "One scenario's rows: one flat record for each row under its option, its Scenario issue's own row first, with no Beat, then its rows in Beat order, then any row with no Beat; each the Beat, the issue's key, type, title and state, and the row's Status; reads a closed scenario too; writes nothing; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    help: "List a scenario's rows, its Scenario issue first, then its items in Beat order, with each one's state"
     implementation: commands/github-scenario-get.star
     args:
       - name: scenario
         help: "The scenario's own issue, <owner>/<repository>#<number>; required"
 
   - name: github.scenario.open
-    help: "Open a scenario: its Scenario issue, titled Scenario: <name>, filed in the repository with the account's Scenario form's sections, in the form's order, and its beats line, linking the team's Scenario project's view 2 filtered to the scenario, just above its Plan and design documents section, its type, Area and Priority set, and assigned to --assignee or to you; its option, added last to the project's Scenario field, every existing option kept; and its own row, Status Open and no Beat; each write read back; refuses, writing nothing, a repository no team maintains, or in a user account one without the topic issue-model, a team with no Scenario project, a name that is already an option, a missing --area or section, and a --walk that is not a numbered list; a run that stops partway is run again to finish, making only what is missing; returns one flat record of what it made; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    help: "Open a scenario: its Scenario issue, from the account's Scenario form, its option and its own row"
     implementation: commands/github-scenario-open.star
     args:
       - name: repository
@@ -163,7 +163,7 @@ commands:
       - name: walk
         type: string
         default: ""
-        help: "How to walk through it, as a numbered list, step N of which is Beat N: the form's How to walk through it section; required"
+        help: "How to walk through it, a numbered list whose step N is Beat N: the form's How to walk through it; required"
       - name: features
         type: string
         default: ""
@@ -178,7 +178,7 @@ commands:
         help: "Who owns the scenario, assigned its issue; default: you, who run the command"
 
   - name: github.scenario.create
-    help: "The same command as star github scenario open, by its synonym; an alias once NobleFactor/devlore-cli#1235 lets an extension command name one. Open a scenario: its Scenario issue, titled Scenario: <name>, filed in the repository with the account's Scenario form's sections, in the form's order, and its beats line, linking the team's Scenario project's view 2 filtered to the scenario, just above its Plan and design documents section, its type, Area and Priority set, and assigned to --assignee or to you; its option, added last to the project's Scenario field, every existing option kept; and its own row, Status Open and no Beat; each write read back; refuses, writing nothing, a repository no team maintains, or in a user account one without the topic issue-model, a team with no Scenario project, a name that is already an option, a missing --area or section, and a --walk that is not a numbered list; a run that stops partway is run again to finish, making only what is missing; returns one flat record of what it made; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    help: "Open a scenario, as scenario open does: create is another name for open"
     implementation: commands/github-scenario-open.star
     args:
       - name: repository
@@ -197,7 +197,7 @@ commands:
       - name: walk
         type: string
         default: ""
-        help: "How to walk through it, as a numbered list, step N of which is Beat N: the form's How to walk through it section; required"
+        help: "How to walk through it, a numbered list whose step N is Beat N: the form's How to walk through it; required"
       - name: features
         type: string
         default: ""
@@ -212,7 +212,7 @@ commands:
         help: "Who owns the scenario, assigned its issue; default: you, who run the command"
 
   - name: github.scenario.close
-    help: "Close a scenario the product no longer has: refuses, writing nothing, while an open issue is a row of the scenario, or its Scenario issue has a Resolution; then sets its own row Closed, comments on the Scenario issue with the date, who ran it and --reason, and closes it as completed with no Resolution, each write read back; keeps the option, the record of which scenario each past row belonged to; returns one flat record of what it did; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    help: "Close a scenario the product no longer has, once every item has moved on, with a comment saying why"
     implementation: commands/github-scenario-close.star
     args:
       - name: scenario
@@ -224,7 +224,7 @@ commands:
         help: "Why the product no longer has the scenario, written in the comment on its Scenario issue; required"
 
   - name: github.scenario.reopen
-    help: "Reopen a closed scenario: its Scenario issue reopened, a comment on it with the date, who ran it and --reason, and its own row set Open, each write read back; the option was never removed, so its past rows are under it still; an open scenario is unchanged; refuses, writing nothing, an issue that is not a Scenario issue; returns one flat record of what it did; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    help: "Reopen a closed scenario: its issue, a comment saying why, and its own row Open"
     implementation: commands/github-scenario-reopen.star
     args:
       - name: scenario
@@ -236,13 +236,13 @@ commands:
         help: "Why the scenario is reopened, written in the comment on its Scenario issue; required"
 
   - name: github.issue.open
-    help: "Open an issue of any type but Schedule and Scenario in the repository of the clone it runs in, or the one --directory names, classified as it is made, from flags or from a template whose blanks --set fills: everything read before the first write, the type's form from the account's .github repository among it, and the issue opened in one call with its type, its parent, its assignee, and its Area, Priority and Severity, the issue fields in an organization or the labels that stand in for them in a user account; its row left to the Triage workflow; read back; return one flat record of the issue opened, or found with --unique; refuses an issue without an Area, a type the account doesn't have, a parent at the wrong level, a body without a section its form requires or its Plan and design documents table, and --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    help: "Open an issue in this clone's repository, from flags or a template, its type, parent, Area and Priority set"
     implementation: commands/github-issue-open.star
     flags:
       - name: template
         type: string
         default: ""
-        help: "A template: a line ---, its header of type, parent, title, area, priority, severity, assignee and unique, a line ---, then the issue's body, its {name} blanks filled by --set; takes no flag but --set and --directory"
+        help: "A template file: a header between two --- lines with the flags' values, then the body; --set fills its {name} blanks"
       - name: set
         type: string
         default: ""
@@ -250,11 +250,11 @@ commands:
       - name: type
         type: string
         default: ""
-        help: "The issue's type: Epic, Feature, Task or Bug, as the account's model names them; a Schedule or Scenario issue is opened by its group's open"
+        help: "The issue's type: Epic, Feature, Task or Bug; a Schedule or Scenario issue is opened by its group's open"
       - name: parent
         type: string
         default: ""
-        help: "Its parent, <owner>/<repository>#<number>, one level up, in its own account; an Epic has none, and every other type needs one"
+        help: "Its parent, <owner>/<repository>#<number>, one level up; an Epic has none, and every other type needs one"
       - name: title
         type: string
         default: ""
@@ -289,13 +289,13 @@ commands:
         help: "The clone whose repository the issue opens in, as git's -C names one; default: the clone the command runs in"
 
   - name: github.issue.create
-    help: "The same command as star github issue open, by its synonym (ruled 2026-11-17); an alias once NobleFactor/devlore-cli#1235 lets an extension command name one. Open an issue of any type but Schedule and Scenario in the repository of the clone it runs in, or the one --directory names, classified as it is made, from flags or from a template whose blanks --set fills: everything read before the first write, the type's form from the account's .github repository among it, and the issue opened in one call with its type, its parent, its assignee, and its Area, Priority and Severity, the issue fields in an organization or the labels that stand in for them in a user account; its row left to the Triage workflow; read back; return one flat record of the issue opened, or found with --unique; refuses an issue without an Area, a type the account doesn't have, a parent at the wrong level, a body without a section its form requires or its Plan and design documents table, and --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    help: "Open an issue, as issue open does: create is another name for open"
     implementation: commands/github-issue-open.star
     flags:
       - name: template
         type: string
         default: ""
-        help: "A template: a line ---, its header of type, parent, title, area, priority, severity, assignee and unique, a line ---, then the issue's body, its {name} blanks filled by --set; takes no flag but --set and --directory"
+        help: "A template file: a header between two --- lines with the flags' values, then the body; --set fills its {name} blanks"
       - name: set
         type: string
         default: ""
@@ -303,11 +303,11 @@ commands:
       - name: type
         type: string
         default: ""
-        help: "The issue's type: Epic, Feature, Task or Bug, as the account's model names them; a Schedule or Scenario issue is opened by its group's open"
+        help: "The issue's type: Epic, Feature, Task or Bug; a Schedule or Scenario issue is opened by its group's open"
       - name: parent
         type: string
         default: ""
-        help: "Its parent, <owner>/<repository>#<number>, one level up, in its own account; an Epic has none, and every other type needs one"
+        help: "Its parent, <owner>/<repository>#<number>, one level up; an Epic has none, and every other type needs one"
       - name: title
         type: string
         default: ""
@@ -342,7 +342,7 @@ commands:
         help: "The clone whose repository the issue opens in, as git's -C names one; default: the clone the command runs in"
 
   - name: github.issue.move
-    help: "Move issues, in the order given, to one destination: --schedule puts them on a schedule, each with its step, its schedule's option and Status Open, placed in step order and leaving the project it was on, or with --after moves one already there, the steps between renumbered, closed or open; --triage or --backlog puts them in their team's Triage or Backlog project from wherever they are, a schedule, every later step moving up, a scenario, Triage, the Backlog or no project; --scenario puts tasks and bugs on a scenario at a Beat from wherever they are, or sets the Beat of one already on it; an epic or a feature goes only to Triage or the Backlog, an issue with no type only to Triage, and a Schedule or Scenario issue nowhere; a schedule's change writes one amendment line in its Schedule issue, and a scenario's a comment on its Scenario issue and a line in the item's body, each naming the date, who ran it and why; return one flat record for each row it added, moved, took off or left; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    help: "Move issues to Triage, the Backlog, a schedule or a scenario, from wherever they are, recording each move"
     implementation: commands/github-issue-move.star
     args:
       - name: issues
@@ -352,19 +352,19 @@ commands:
       - name: schedule
         type: string
         default: ""
-        help: "The schedule to put them on or move them within: its own issue, <owner>/<repository>#<number>, as a session's NFEP_AGENT_SCHEDULE names it"
+        help: "The schedule to put them on or move them within: its Schedule issue, <owner>/<repository>#<number>"
       - name: after
         type: string
         default: ""
-        help: "With --schedule, the step to put them after, every later step moving down; 0 puts them first; default: after the last. An issue already on the schedule moves to just after it"
+        help: "With --schedule, the step to put them after, later steps moving down; 0 puts them first; default: after the last"
       - name: blocked-by
         type: string
         default: ""
-        help: "With --schedule, the issues each is blocked by, <owner>/<repository>#<number>, comma-separated; links the issues already have are kept"
+        help: "With --schedule, the issues each is blocked by, <owner>/<repository>#<number>, comma-separated"
       - name: assignee
         type: string
         default: ""
-        help: "With --schedule, the member of the schedule's team who answers for an issue of another team's repository, which then needs one"
+        help: "With --schedule, a member of the schedule's team who answers for an issue from another team's repository"
       - name: scenario
         type: string
         default: ""
@@ -372,7 +372,7 @@ commands:
       - name: beat
         type: string
         default: ""
-        help: "With --scenario, the step of the walk at which they turned up, a whole number, 0 before its first; past the walk's last numbered step is refused"
+        help: "With --scenario, the step of the walk at which they turned up: 0 before its first, and no later than its last"
       - name: triage
         type: bool
         default: "false"
@@ -380,14 +380,14 @@ commands:
       - name: backlog
         type: bool
         default: "false"
-        help: "Put them in their team's Backlog project, keeping each one's Priority, from wherever they are: a schedule, a scenario, Triage or no project; an issue with no type goes to Triage first"
+        help: "Put them on their team's Backlog from wherever they are, keeping their Priority; an issue with no type is refused"
       - name: reason
         type: string
         default: ""
         help: "Why they move, written in the Schedule issue's amendment or the comment on the Scenario issue; required"
 
   - name: github.issue.close
-    help: "Close issues, in the order given, each in one act, everything read before the first write: an issue whose work was done with --evidence, its file the comment; one whose work was not done with --resolution and --reason, its Resolution set and a comment saying why; each closed as completed, and then its rows: a Schedule row set Closed and kept, a Scenario row removed after a comment on the Scenario issue, a Triage or Backlog row removed; an issue already closed is left as it is; a Schedule or Scenario issue is refused, naming its group's close; return one flat record for each issue and row, naming a parent whose last open child it closed; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    help: "Close issues as completed, each with its evidence or the reason its work wasn't done, and update their rows"
     implementation: commands/github-issue-close.star
     args:
       - name: issues
@@ -401,14 +401,14 @@ commands:
       - name: resolution
         type: string
         default: ""
-        help: "For work not done: Declined, Duplicate or Invalid, the issue field in an organization, the resolution: label in a user account; needs --reason"
+        help: "For work not done: Declined, Duplicate or Invalid, set as the Resolution field or a resolution: label; needs --reason"
       - name: reason
         type: string
         default: ""
         help: "With --resolution, why the work was not done, written in the comment on each issue"
 
   - name: github.issue.reopen
-    help: "Reopen issues, in the order given, everything read before the first write: each reopened, its Resolution cleared, the issue field in an organization or the resolution: label in a user account, and a comment saying why; then its rows, a Schedule or Backlog row set Open, and a Triage row for an issue that has no row on its team's projects; then each closed parent, its feature and its epic, reopened the same way; then each closed schedule it is a step of, its own row In progress and its every-step exit criterion unticked; an issue already open is not reopened again, its rows left as they are; a Schedule or Scenario issue is refused, naming its group's reopen; return one flat record for each issue, row, parent and schedule; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    help: "Reopen issues, and the closed parents and schedules they belong to, clearing each Resolution and saying why"
     implementation: commands/github-issue-reopen.star
     args:
       - name: issues
@@ -421,7 +421,7 @@ commands:
         help: "Why they are reopened, written in the comment on each issue, parent and schedule reopened; required"
 
   - name: github.plan.link
-    help: "Write the Plan and design documents section of each issue the plans named serve, from every plan that serves it: a Plan row for each plan, then each plan's documents: entries; the section found by its heading and replaced whole, added at the end when there is none, and nothing written when there are two; return one flat record for each issue, with what was done and the rows the section drops; exits non-zero only on an error; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read, and --check writes nothing"
+    help: "Write each issue's Plan and design documents table from the plans that serve it; --check writes nothing"
     implementation: commands/github-plan-link.star
     args:
       - name: plans
@@ -435,29 +435,29 @@ commands:
       - name: repository
         type: string
         default: ""
-        help: "The repositories whose default branches' plans are read, owner/name, comma-separated; with --all, writ's layers' when none is named; beside the plans named, writ's layers', these and the clone's"
+        help: "The repositories whose default branches' plans are read too, owner/name, comma-separated; default: writ's layers"
       - name: check
         type: bool
         default: "false"
         help: "Write nothing: return the records the command would, so that every issue's section can be checked against its plans"
 
   - name: github.triage.sweep
-    help: "Add every open issue that breaks a classification rule to its team's Triage project, commenting on it with the rules it breaks; return one flat record for each issue added, already there with a fault, or a Triage row; adds only, never removes; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    help: "Add each open issue that breaks a classification rule to its team's Triage project, commenting which rules"
     implementation: commands/github-triage-sweep.star
     args:
       - name: accounts
-        help: "The accounts to sweep, NobleFactor or David-Noble-at-work; default: star's default account and the owner of each of writ's layer repositories"
+        help: "The accounts to sweep; default: star's default account and the owner of each of writ's layer repositories"
         variadic: true
 
   - name: github.model.get
-    help: "An account's issue data model as GitHub holds it now: its issue types or type labels, its issue fields, its teams, its labels, and its project templates with their fields and views, as one record; -o yaml gives the form a backup keeps"
+    help: "Print an account's issue model as GitHub holds it: types, fields, teams, labels and project templates"
     implementation: commands/github-model-get.star
     args:
       - name: account
         help: "The account, an organization or a user; required"
 
   - name: github.model.diff
-    help: "What differs between a model and an account's, as GitHub holds it now: one record for each difference; writes nothing"
+    help: "List what differs between a model and an account as GitHub holds it, one record each; writes nothing"
     implementation: commands/github-model-diff.star
     args:
       - name: model
@@ -466,7 +466,7 @@ commands:
         help: "The account, an organization or a user; required"
 
   - name: github.model.apply
-    help: "Make a model the account's: every difference diff finds made in GitHub, renames in place, nothing of the account's deleted without --prune; one record for each difference, with what was done"
+    help: "Make a model the account's, writing each difference diff finds; deletes nothing of the account's without --prune"
     implementation: commands/github-model-apply.star
     args:
       - name: model
@@ -481,10 +481,10 @@ commands:
       - name: token
         type: string
         default: ""
-        help: "Where each secret the Triage workflow signs in with comes from: <SECRET>=env:<NAME> or <SECRET>=file:<path>, comma-separated, or a bare env:<NAME> or file:<path> when the workflow uses one; never a secret's value"
+        help: "Each Triage workflow secret's source, <SECRET>=env:<NAME> or <SECRET>=file:<path>, comma-separated, or bare for one"
 
   - name: github.model.restore
-    help: "Apply an account's backup to it: model.yaml from its .github repository, at the revision named or main, applied as apply applies a model"
+    help: "Apply an account's backup, model.yaml in its .github repository at main or the revision named, as apply does"
     implementation: commands/github-model-restore.star
     args:
       - name: account
@@ -503,7 +503,7 @@ commands:
         help: "Where each secret the Triage workflow signs in with comes from, as apply takes it; never a secret's value"
 
   - name: github.model.backup
-    help: "Checkpoint an account's model, as GitHub holds it now, in its .github repository: written on a doc/model-<date> branch and landed by a pull request, asking nothing yet"
+    help: "Save an account's model in its .github repository, by a pull request from a doc/model-<date> branch"
     implementation: commands/github-model-backup.star
     args:
       - name: account
