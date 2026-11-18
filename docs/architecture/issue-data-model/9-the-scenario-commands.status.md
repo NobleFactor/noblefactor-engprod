@@ -23,6 +23,24 @@ what a move onto and off a scenario writes, Beat 0 before the walk's first step 
 as revised: #509 to #512, widened to scenarios, are steps 48 to 51 of #346, built in #507's pull request, and
 nothing goes to Triage. The owner approved the design on 2026-11-15.
 
+**Revised 2026-11-17 (#589, #595, #597):** `new` became `open`, with `create` its synonym, `retire` became `close`, and `reopen` joined the verbs, as the owner synchronized the verbs across `star github issue`, `schedule` and `scenario`. `move --scenario` takes an item from the Backlog, a schedule or another scenario, and `move --backlog` takes one off a scenario, which until then were refused (section 10, § Moving an issue). The design text was rewritten that day to say what the commands do, in plain language, at the owner's direction; its rulings and history are kept here.
+
+## History
+
+- **What two pieces did before the commands:** the Triage workflow (#448) put an item found while walking on its scenario, with no Beat; and `star github schedule add` (#438) took an item off its scenario when it put it on a schedule, commenting on the Scenario issue but writing nothing in the item's body. `issue move` (#511) took both over.
+- **The findings of 2026-11-15 (question 7),** read from GitHub that day, each put right once by #507's merge script on 2026-11-16 (§ Completion):
+
+| Finding | What the scenarios held | Ruled |
+| --- | --- | --- |
+| Closed rows | 21 of the 29 issues that were rows of a scenario were closed, and still rows | A closed item leaves its scenario: each row removed, one comment on each Scenario issue naming the items |
+| Two scenarios | #147 and #179 were rows of two scenarios each; both closed | Settled by the row above |
+| No Beat | 15 rows had no Beat; 5 open: NobleFactor/devlore-cli#468, #469, #471, #473 and #1033 | The scenario's owner gives each its Beat with `issue move --scenario --beat`; nothing guesses one |
+| Old titles | NobleFactor/devlore-cli#806, #891, #892 and #893 titled `Thread: ...`; #599 with no prefix | Each retitled `Scenario: <its option's name>` |
+| No beats line | #599's body had no line linking view 2 | The line added |
+| Old bodies | The six scenarios' bodies predated #453's form | Left to each scenario's owner, rewritten when next walked |
+
+- **The two placeholders,** NobleFactor/noblefactor-engprod#442 and David-Noble-at-work/personal#316, stay: they give the Scenario fields their first option (section 3).
+
 ## Completion
 
 - [x] Questions 1 to 8 ruled, 2026-11-15
@@ -32,3 +50,5 @@ nothing goes to Triage. The owner approved the design on 2026-11-15.
 - [x] `new` built on 2026-11-16, and proved that day in NobleFactor-sandbox and David-Noble-at-work-sandbox (run 20261116T221107Z) (#509)
 - [x] `star github issue move`'s scenario cases built, with the body line when an item moves onto a schedule, on 2026-11-15, and proved that day in NobleFactor-sandbox and David-Noble-at-work-sandbox (run 20261116T221107Z) (#511)
 - [x] `retire` built on 2026-11-16, and proved that day in NobleFactor-sandbox and David-Noble-at-work-sandbox (run 20261116T221107Z) (#512)
+- [ ] `open` and `create`, renamed from `new`, `close`, renamed from `retire`, and `reopen`, built and proved in both sandboxes (#595)
+- [ ] `move` onto a scenario from the Backlog, a schedule or another scenario, and off one to the Backlog, built and proved in both (#597)

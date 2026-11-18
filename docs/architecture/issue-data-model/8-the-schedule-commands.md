@@ -4,119 +4,53 @@ title: "8. The schedule commands"
 
 # 8. The schedule commands
 
-What `star github schedule` does, verb by verb, for an organization and for a user account. Ruled 2026-11-02: making a
-schedule moves from Start-Claude into `star github schedule`, and its commands are designed before any is built
-(#439). This section is that design. Each command follows the model as sections 3 and 7 rule it: one Schedule project
-per team, a Schedule field with one option per schedule, and a Schedule issue for each option. Nothing here makes a
-project; a team's four projects are made with the team. Scenarios get commands of their own, in a design that follows
-this one (#507, ruled 2026-11-11): [section 9](9-the-scenario-commands.md). Ruled 2026-11-15 (#507): putting an
-issue on a schedule, moving it within one and taking it off are one command, `star github issue move`, which moves
-an issue onto, within and off a scenario too (§ Moving an issue).
-
-Its eight questions were ruled by the owner on 2026-11-11 and 2026-11-12, and each is marked with its ruling's date.
-Question 1's `add`, `move` and `remove` became `star github issue move` on 2026-11-15.
+`star github schedule` reads, opens, closes and reopens schedules, in an organization and in a user account. A schedule is three things (section 3): an option of its team's Schedule project's Schedule field, the Schedule issue that option names, and the rows under the option, its steps, numbered in the order they are worked. Putting an issue on a schedule, moving it within one and taking it off is `star github issue move` ([section 10](10-the-issue-commands.md#moving-an-issue-move)); this section says what such a move records on the schedule. Nothing here makes a project: a team's four projects are made with the team. Scenarios have their own commands, in [section 9](9-the-scenario-commands.md).
 
 ## The commands
 
-**Ruled 2026-11-11, question 1:** eight verbs. `report` is built; `add` is #438; the other six are new.
-
-**Revised 2026-11-15 (#507):** `add`, `move` and `remove` are one command, `star github issue move`, whose one
-positional argument is the issue and whose destination is a flag, so a reader can tell which key names the schedule
-and which the issue. The owner asked for it when the three were seen to be one act, moving an issue from where it is
-to somewhere else, done three ways. The schedule's own verbs are the five that act on a schedule itself:
-
 | Command | Does | Writes to GitHub |
 | --- | --- | --- |
-| `report [<repository>...] [--search <query>]` | Every issue as one flat record, as built in #379 | Nothing |
+| `report [<repository>...] [--search <query>]` | Every issue as one flat record | Nothing |
 | `list <account> [--team <team>]` | Every schedule of an account or a team, one record each | Nothing |
 | `get <schedule>` | One schedule's rows in step order, its Schedule issue's own row first | Nothing |
-| `new <repository> <name>` | Makes a schedule: its Schedule issue, its option and its own row | Issue, option, row |
-| `close <schedule>` | Closes a finished schedule, with its evidence comment | Issue, row, comment |
-| `star github issue move <issue>... --schedule <schedule> [--after <step>]`, `--triage` or `--backlog` | Puts issues on a schedule, moves them within it, or takes them off | Rows, links, amendment |
+| `open <repository> <name> ...`, or `create` | Opens a schedule: its Schedule issue, its option and its own row | Issue, option, row |
+| `close <schedule>` | Closes a finished schedule, with its evidence comment | Row, comment, issue |
+| `reopen <schedule> --reason <text>` | Reopens a closed schedule | Issue, comment, row, body |
 
-A `<schedule>` and an `<issue>` are written `<owner>/<repository>#<number>`, the form a session's
-`NFEP_AGENT_SCHEDULE` holds. A `<step>` is a number on the schedule's Step field. Every command names what it acts on;
-none has a default account or schedule, as the model commands have none (section 6, ruled 2026-11-09).
+A `<schedule>` is its Schedule issue's key, `<owner>/<repository>#<number>`, the form a session's `NFEP_AGENT_SCHEDULE` holds. Every command names what it acts on, and none has a default account or schedule.
 
-Every command takes star's common flags. `--filter` and `--jq` narrow the result, `--output` renders it, and a command
-binds none of the three (devlore-cli's `docs/architecture/10-command-line-interface.md`, §4 and §8). Each returns one
-flat record per thing it read or changed, JSON by default, and exits non-zero only on an error.
+Every command takes star's `--filter`, `--jq` and `--output`, which select, reshape and render its result, so none has flags of its own for that. Each returns one flat record per thing it read or changed, JSON by default, and exits non-zero only on an error. A command that writes reads everything it needs first, so a fault is a refusal with nothing written, and reads each write back, since GitHub promises no stability for the features the model is built on. A run that stops partway is run again to finish. `--dry-run` is refused until NobleFactor/devlore-cli#1170 lets a dry run read.
 
-## The syntax of 2026-11-04
-
-On 2026-11-04 the owner gave an example of a command to be able to run:
-
-```
-star github schedule --group-by Schedule --account NobleFactor --team engprod --where '{ Schedule: { _eq: 346 } }' --output csv
-```
-
-**Ruled 2026-11-11, question 2:** the example becomes `get`, and the read commands take no `--group-by`, `--where`,
-`--account` or `--team`. `--filter`, `--jq` and `--output` do that work, the same way on every command, this one
-among them.
+For example, one schedule's rows as CSV, and the rows of all of a team's schedules:
 
 ```
 star github schedule get NobleFactor/noblefactor-engprod#346 --output csv
+star github schedule report --jq '[.[] | select(.home[]?.project == "Schedule: engprod")]'
 ```
-
-- `star github schedule` is a group, and a group takes no action of its own (devlore-cli §3). The verb says what is
-  read.
-- `--where` would be a third way to select, beside `--filter` and `--jq`, which own the filter stage (devlore-cli §8).
-  Selecting one schedule is what `get`'s argument does.
-- `--group-by` reshapes, and reshaping is `--jq`'s work: `--jq 'group_by(.schedule)'`. `get` returns one schedule, so
-  it has nothing to group.
-- The account is a positional argument on every model command (section 6, ruled 2026-11-09). A schedule's key names
-  its account already. `list` takes the account as its argument and `--team` to narrow it, since a user account has no
-  teams.
-- `--output csv` is as the owner wrote it.
-
-The rows of every schedule of a team, grouped, are `list`'s keys handed to `get`, or the report:
-`star github schedule report --jq '[.[] | select(.home[]?.project == "Schedule: engprod")]'`.
 
 ## Reading: list, get and report
 
-**`list <account> [--team <team>]`** returns one record for each option of the Schedule field of the account's
-Schedule projects, or the team's: the option's name, its Schedule issue's key, title, state and assignee, the project,
-and the count of open and closed steps. In David-Noble-at-work it reads Schedule: David-Noble-at-work, and `--team` is
-refused, since a user account has no teams.
+**`list <account> [--team <team>]`** returns one record for each option of the Schedule field of the account's Schedule projects, or the team's: the option's name, its Schedule issue's key, title, state and assignee, the project, and the count of open and closed steps. In David-Noble-at-work it reads Schedule: David-Noble-at-work, and refuses `--team`, since a user account has no teams.
 
-**`get <schedule>`** returns one record for each row under the schedule's option: the step, the issue's key, type,
-title and state, the row's Status, Worktree and Iteration, and the keys of the issues that block it. The Schedule
-issue's own row comes first, with no step. Rows come in step order, then any row with no step, which is an error the
-sweep returns to Triage (#436).
+**`get <schedule>`** returns one record for each row under the schedule's option: the step, the issue's key, type, title and state, the row's Status, Worktree and Iteration, and the keys of the issues that block it. The Schedule issue's own row comes first, with no step. Rows come in step order, then any row with no step, which is an error the sweep returns to Triage.
 
-**`report`** stays as built (#379): every issue of the repositories named as one flat record, whose `home` names its
-schedule and step.
-
-**Rule 2 of agent-rules.md,** what lists the open ruling issues under NobleFactor/devlore-cli#463 now that the `Epic:`
-labels are gone, is answered by the report as built. Run on 2026-11-11, it returned the 17 open issues GitHub lists
-under #463, in 26 seconds:
+**`report`** returns every issue of the repositories named as one flat record, whose `home` names its schedule and step. GitHub's issue search has no qualifier for a parent, so `--search` narrows to open issues and `--filter` to a parent's children:
 
 ```
 star github schedule report NobleFactor/devlore-cli --search is:open --filter parent=NobleFactor/devlore-cli#463 --output table
 ```
 
-GitHub's issue search has no qualifier for a parent, so `--search` narrows to open issues and `--filter` to #463's.
-
-## Making a schedule: new
-
-**Ruled 2026-11-11, question 3:** the syntax and the steps below, each write read back. The owner weighed the
-read-backs most: GitHub promises no stability for the features the model is built on, so a command checks that
-GitHub holds what it wrote.
+## Opening a schedule: open, and create
 
 ```
-star github schedule new <repository> <name> --area Product|Engineering --deliverable <text> --exit-criteria <text>
+star github schedule open <repository> <name> --area Product|Engineering --deliverable <text> --exit-criteria <text>
     --evidence <text> [--priority <priority>] [--assignee <login>]
 ```
 
-`new` makes one schedule, in this order, reading each write back:
+`create` is the same command. `open` makes one schedule, in this order, reading each write back:
 
-1. **The team.** The team with the maintain role on `<repository>` owns the schedule (`team_of` in the extension's
-   `scheme.star`), and its project is `Schedule: <team>`. In a user account, the project is `Schedule: <account>`.
-2. **The Schedule issue,** titled `Schedule: <name>`, as all 15 Schedule issues are (read 2026-11-11), filed in
-   `<repository>`: in NobleFactor of type Schedule, with the Area and Priority issue fields; in David-Noble-at-work
-   labeled `schedule`, `area:` and `priority:`. It is assigned to `--assignee`, or to the user running the command, who
-   then owns the schedule (section 3, § Ownership). Its body has the sections of the account's Schedule form, in its
-   `.github` repository, in the form's order, then two of its own:
+1. **The team.** The team with the maintain role on `<repository>` owns the schedule, and its project is `Schedule: <team>`. In a user account, the project is `Schedule: <account>`.
+2. **The Schedule issue,** titled `Schedule: <name>`, in `<repository>`: in NobleFactor of type Schedule, with the Area and Priority issue fields; in David-Noble-at-work labeled `schedule`, `area:` and `priority:`. Priority is Medium unless given. It is assigned to `--assignee`, or to whoever runs the command, who then owns the schedule. Its body has the sections of the account's Schedule form, in the form's order, then two of its own:
 
    ```
    ## Deliverable
@@ -129,132 +63,36 @@ star github schedule new <repository> <name> --area Product|Engineering --delive
    ## Amendments
    ```
 
-   The Steps line links the project's view 2, filtered to the option, as section 3 rules for every Schedule issue.
-3. **The option** `<name>`, added last to the project's Schedule field. Its description is the issue's key, as each
-   option's is today, and its color GRAY, as theirs is. Every existing option is sent back with its ID, so no row loses
-   its value; `star github model apply` adds an option the same way.
-4. **The issue's own row,** with the option, Status Open and no step, placed after the last row that has an option
-   (section 3: rows are kept in the field's order).
+   The Steps line links the project's view 2, filtered to the option.
+3. **The option** `<name>`, added last to the project's Schedule field, its description the issue's key and its color GRAY. Every existing option is sent back with its ID, so no row loses its value.
+4. **The issue's own row,** with the option, Status Open and no step, placed after the last row that has an option, since a project's rows are kept in its field's order.
 
-`new` refuses, writing nothing, when:
+`open` refuses, writing nothing, when `<repository>` takes no part (no team maintains it, or, in a user account, it lacks the topic `issue-model`); the team has no Schedule project; the field already has an option named `<name>`; or `--area` or a section of the form is missing. Run again after stopping partway, it finds the open Schedule issue titled `Schedule: <name>`, then the option, then the row, and makes only what is missing.
 
-- `<repository>` takes no part: no team maintains it, or, in a user account, it lacks the topic issue-model;
-- the team has no Schedule project;
-- the field already has an option named `<name>`;
-- `--area` or a section of the form is missing.
+## What a move records on a schedule
 
-**A run that stops partway is run again to finish.** `new` looks first for an open Schedule issue titled
-`Schedule: <name>` in `<repository>`, then for the option, then for the row, and makes only what is missing. #487 is
-the bug this avoids: a second `apply` after a half-made template made a second project.
-
-## Moving an issue: issue move
-
-Every change to a schedule's steps is one act. The rows, the blocked-by links and the amendment in the Schedule issue
-are written together, so the schedule and its record can't disagree (#438). Before writing, a command reads the
-schedule's rows; it reads them again just before its first write, and stops, writing nothing, if they changed. GitHub
-has no transaction, so a write that fails partway is reported with what was written, and the same command run again
-finishes it.
-
-**Ruled 2026-11-15 (#507):** one command moves an issue wherever it goes, onto a schedule, within one or off one, and
-onto, within or off a scenario. The owner gave its shape:
-
-```
-star github issue move <issue>...
-    ( --schedule <schedule> [--after <step>] [--blocked-by <issue>[,<issue>...]] [--assignee <login>]
-    | --scenario <scenario> --beat <beat>
-    | --triage
-    | --backlog )
-    --reason <text>
-```
-
-Exactly one destination is given, and the issues are placed in the order given; the owner asked that several go at
-once and that `--backlog` stay. `--reason` is required on every move and is written where the move is recorded: in
-the Schedule issue's amendment when a schedule's steps change, and in a comment on the Scenario issue when a
-scenario's rows do. The command reads where each issue is, and does the rest:
-
-| Where it is | `issue move` with | What it writes |
-| --- | --- | --- |
-| In Triage or the Backlog, on no project, on a scenario, or on another schedule | `--schedule <schedule>` | Onto a schedule, below |
-| On this schedule | `--schedule <schedule> --after <step>` | Within a schedule, below |
-| On a schedule | `--triage` or `--backlog` | Off a schedule, below |
-| Anywhere | `--scenario <scenario> --beat <beat>` | Onto or within a scenario: [section 9](9-the-scenario-commands.md) |
-
-**Ruled 2026-11-11, question 4: the amendment.** Each move that changes a schedule's steps writes one line at the end
-of the Schedule issue's Amendments section, on every schedule, committed or not, since nothing in GitHub marks a
-schedule committed. The line names the date, who ran the command and its `--reason`; the command can't know whose
-word it acted on, only who ran it:
+`star github issue move` changes a schedule's steps in one act: the rows, the blocked-by links, and one line at the end of the Schedule issue's Amendments section, which names the date, who ran the command, what changed and the `--reason`:
 
 ```
 - 2026-11-11, by David-Noble-at-work: step 43 was added, Task NobleFactor/noblefactor-engprod#507, the design of the
   scenario commands. <reason>
 ```
 
-### Onto a schedule
+Every schedule's changes are recorded this way, since nothing in GitHub marks a schedule committed. The command records who ran it, not on whose word, which it can't know.
 
-`issue move <issue>... --schedule <schedule> [--after <step>] [--blocked-by <issue>[,<issue>...]] [--assignee <login>]
---reason <text>` puts each issue on the schedule, in the order given. Built on 2026-11-12 as
-`star github schedule add <schedule> <issue>...` (#438), which becomes it (§ Building it), and proved that day in
-NobleFactor-sandbox ([section 6](6-the-asset-and-its-sync.md#where-star-githubs-proofs-run)); a user account's
-half on 2026-11-13, in David-Noble-at-work-sandbox. `--blocked-by` takes a comma-separated list, since no star flag
-repeats.
+**The steps stay consecutive whole numbers.** Onto a schedule, an issue takes the next step, or, with `--after <step>`, the step after that one, every later step moving down; `--after 0` makes it the first. Within a schedule, `--after` moves a step to just after another, and the steps between are renumbered. Off a schedule, every later step moves up one. Closed steps are renumbered with open ones, since closed steps sit among open ones and a rule that kept their numbers would refuse almost every `--after`.
 
-- Without `--after`, each takes the next step. With `--after <step>`, they take the steps after that one, and every
-  later step moves down, the steps staying consecutive whole numbers (ruled 2026-11-11, #438). `--after 0` puts them
-  first.
-- Each row gets the schedule's option, Status Open and its step, and is placed in step order.
-- `--blocked-by` adds blocked-by links; links the issue already has are kept.
-- The issue leaves the project it was on, in one act (ruled 2026-11-04): its Triage or Backlog row is removed; a
-  scenario's row is removed, and a comment on the Scenario issue and a line in the issue's body record the move
-  (section 9); and a row on another schedule is taken off as a move off a schedule takes it, with an amendment there
-  too.
-- An issue from another team's repository is assigned to `--assignee`, a member of the schedule's team, which the move
-  then requires (ruled 2026-11-04).
+**Onto a schedule,** each row gets the schedule's option, Status Open and its step, and is placed in step order. `--blocked-by` adds blocked-by links, keeping those the issue has; it takes a comma-separated list until star's extension flags can repeat (#315). An issue from another team's repository is assigned to `--assignee`, a member of the schedule's team, which the move then requires. Iteration is left for sprint planning. A move onto a schedule refuses, writing nothing, an issue already on it unless `--after` moves it within it; a `--blocked-by` issue of another account; and an `--after` step the schedule doesn't have.
 
-It refuses, writing nothing, an issue that is closed, of a type other than Task or Bug, or of another account; an
-issue already on this schedule, unless `--after` moves it within the schedule; a `--blocked-by` issue of another
-account; and a `--after` step the schedule doesn't have.
-Iteration is left for sprint planning to set.
+**A run that stops partway.** The amendment line is written first, ending "(in progress)", and settled last, without the marker. A run that stops partway leaves a line a reader sees is unfinished, and the same command run again finds it and finishes the move. The later rows move from the highest down, which keeps their order if a run stops between them.
 
-**How a run that stops is finished, as built.** `schedule add` writes its amendment line first, ending "(in
-progress)", and settles it last, dropping the marker, and `issue move` does the same. The line is the change's record
-as it was planned, so a run that stops partway leaves one a reader sees is unfinished, and the same command run again
-finishes it, keeping the steps the first run moved among it. Any other issue already on the schedule is refused: most
-steps went onto their schedules by hand, before `add`, and no amendment names them, so an issue on the schedule with no
-amendment is not a sign of a run that stopped. The later rows move from the highest down, which keeps their order
-should a run stop between them.
+## Closing a schedule: close
 
-### Within a schedule
+`close <schedule>` refuses while any step is open or any exit criterion's box is unticked. The exit criteria are the boxes of the Schedule issue's Exit criteria section, or of its Evidence of completion section when it has none. Then it sets the schedule's own row Closed, writes the evidence comment every Schedule issue asks for, and closes the Schedule issue as completed, in that order, so a run that stops partway leaves the issue open.
 
-`issue move <issue> --schedule <its schedule> --after <step> --reason <text>` moves an open step to just after
-another, and renumbers the steps between, so they stay consecutive. `--after 0` makes it the first step.
+The comment shows what merged and when: one row for each merged pull request, with the date it merged and the steps it closed, in the order they merged, then each step no merged pull request closed, with how it closed. Every step appears once. For example:
 
-### Off a schedule
-
-`issue move <issue>... --triage|--backlog --reason <text>` takes open steps off their schedule. Each goes to its
-team's Triage project, or to its Backlog, keeping its Priority, and every later step moves up one.
-
-Since #597, ruled 2026-11-17, `--triage` and `--backlog` take an issue from wherever it is, a schedule, a scenario, Triage, the Backlog or no project, as [section 10 § Moving an issue](10-the-issue-commands.md#moving-an-issue-move) gives it.
-
-**Ruled 2026-11-11, question 5: closed steps.** A move onto a schedule with `--after`, within one, or off one
-renumbers every later step, closed or open, so the steps stay consecutive whole numbers, as #438's ruling of 2026-11-11
-has it. Section 3 said a closed step keeps its number, but closed steps already sit among open ones: on issue
-tracking, iteration 1, steps 29 (#440) and 35 (#447) are closed, between open steps (read 2026-11-11), and both moved
-down four when #482 to #485 went in after step 22 that day. A rule that no closed step moves would refuse almost every
-`--after`. So closed steps move with the open ones, and section 3 says so.
-
-## Ending a schedule: close
-
-**Ruled 2026-11-12, question 6:** `close <schedule>` refuses while a step is open or an exit criterion's box is
-unticked. Then it writes the evidence comment every Schedule issue asks for, closes the Schedule issue as completed and
-sets its row Closed.
-
-The comment shows what merged and when. Asked what a completed schedule should show, the owner chose the pull requests
-over the steps: one row for each merged pull request, with the date it merged and the steps it closed, in the order
-they merged. Every step appears once. A step whose issue no merged pull request closed is listed after, with how it
-closed. Built on 2026-11-12 from what GitHub then held for issue tracking, iteration 1 (#346), the comment begins:
-
-> **Evidence of completion**, written by `star github schedule close` on 2026-11-20, run by David-Noble-at-work. All 43
-> steps of issue tracking, iteration 1 are closed, and its 3 exit criteria are ticked.
+> **Evidence of completion**, written by `star github schedule close` on 2026-11-20, run by David-Noble-at-work. All 43 steps of issue tracking, iteration 1 are closed, and its 3 exit criteria are ticked.
 >
 > **What merged**
 >
@@ -262,46 +100,33 @@ closed. Built on 2026-11-12 from what GitHub then held for issue tracking, itera
 > | --- | --- | --- |
 > | 2026-10-23 | #386, every open noblefactor-engprod issue typed from its kind label | 3, Task #380 |
 > | 2026-11-09 | #467, each account's model, every issue as a record | 15, Task #376; 16, Task #379; 17, Task #436; 18, Bug #466 |
-> | 2026-11-09 | NobleFactor/devlore-cli#1216, every empty list in a command's result is [] | 14, Bug NobleFactor/devlore-cli#1215 |
-> | 2026-11-12 | #488, git close-branch deletes only what is verified merged | 23, Bug #482; 24, Bug #483; 25, Bug #484; 26, Bug #485 |
 >
 > **Closed with no pull request**
 >
 > | Step | How it closed |
 > | --- | --- |
 > | 8, Task #361 | Declined, 2026-11-04 |
-> | 11, Task #303 | Completed, 2026-11-05 |
 > | 29, Bug #440 | Duplicate, 2026-11-09 |
 
-Of #346's 28 closed steps that day, 19 fell under 13 pull requests and 9 had none.
+- **A step's pull request** is the merged one GitHub records as closing its issue, else the merged one whose commit closed it. A pull request that only mentions an issue doesn't count, since it may not be the issue's work.
+- **How a step closed** is its Resolution where it has one, else GitHub's reason.
+- **The wording** is a template in the extension's `templates` directory, rendered with star's `template` module.
 
-- **A step's pull request** is the merged one GitHub records as closing its issue (`closedByPullRequestsReferences`),
-  else the merged one whose commit closed it. No other link counts: a pull request that only mentions an issue may not
-  be its work. #503 changed a skill and named #379, whose work merged in #467.
-- **How a step closed** is its Resolution where it has one, else GitHub's reason. GitHub records #361 to #363, which
-  were declined, and #440, a duplicate, as completed; their Resolution says what happened.
-- **The comment's wording is a template** in the extension, a Go text template rendered with star's `template`
-  module; the command gathers the data, and a test renders the template from fixed data. The devlore Actions extension
-  keeps its templates the same way, in its `templates` directory.
+The option stays. It records which schedule each closed step belonged to: a step is not a sub-issue of its Schedule issue, so its row's Schedule field is the only link between them, and deleting an option blanks every row that held it. GitHub allows at most 50 options in a single-select field, and a team's Schedule field grows by one option per schedule, so how the record is kept once a field nears 50 is decided then.
 
-Five of #346's steps were finished by merged work but closed by hand, so they show no pull request: #303, whose work
-spread over seven, #358, #359, #360 and #446. A pull request whose description says `Closes #N` is linked by GitHub,
-and #508 asks the PR script template for that line.
+## Reopening a schedule: reopen
 
-**Ruled 2026-11-11: the option stays.** It is the record of which schedule each closed step belonged to, and that
-record is kept. A step is not a sub-issue of its Schedule issue, so its row's Schedule field is the only link between
-them, and deleting an option blanks every row that held it. The cost is a cap: GitHub allows at most 50 options in a
-project's single-select field (GitHub's documentation, About single select fields, read 2026-11-11), and a team's
-Schedule field grows by one option per schedule. Schedule: engprod has 4 (read 2026-11-11). How the record is kept
-once a field nears 50 is decided then.
+A schedule is in progress while any of its steps is open, so a schedule closed before a step was reopened, or before one was added, is reopened. `reopen <schedule> --reason <text>`, in order:
+
+1. Reopens the Schedule issue, with a comment: `Reopened by \`star github schedule reopen\` on <date>, run by <login>: <reason>`.
+2. Sets its own row In progress.
+3. Unticks its exit criterion that every step is closed: each ticked box of its Exit criteria section whose text begins "Every step" or "Every other step", as the schedules' boxes say. A schedule with no such box is reopened all the same, and its record says no criterion was unticked.
+
+The option was never removed, so the schedule's past rows are under it still. An open schedule is `unchanged`. `star github issue reopen` reopens each closed schedule a reopened issue is a step of the same way, its comment naming the issue (section 10).
 
 ## Start-Claude
 
-Start-Claude's `--schedule new` files `Schedule: <title>` with the `chore` label, retired on 2026-11-03, and a lane
-table, retired the same day; it makes no option and no row. Since the ruling of 2026-11-02 moves making a schedule into
-star, **ruled 2026-11-12, question 7:** Start-Claude and Start-Claude.ps1 drop `new` when `star github schedule new`
-is built, in the same pull request, and refuse it with the command to run instead. Their
-`--schedule <owner>/<repository>#<number>` is unchanged.
+Start-Claude and Start-Claude.ps1 start a session on a schedule with `--schedule <owner>/<repository>#<number>`. They make no schedule: asked for one, they refuse and name `star github schedule open`.
 
 ## How each command runs in each account
 
@@ -311,52 +136,24 @@ is built, in the same pull request, and refuse it with the command to run instea
 | Area and Priority | issue fields | `area:` and `priority:` labels |
 | The schedule's team | the team with the maintain role on the repository | none: the account |
 | The Schedule project | `Schedule: <team>`, projects 26 (engprod) and 29 (devlore) | `Schedule: David-Noble-at-work`, project 7 |
-| The form `new` follows | NobleFactor/.github, `.github/ISSUE_TEMPLATE/schedule.yml` | David-Noble-at-work/.github, the same path |
+| The form `open` follows | NobleFactor/.github, `.github/ISSUE_TEMPLATE/schedule.yml` | David-Noble-at-work/.github, the same path |
 | `list --team` | narrows to one team | refused |
 
-The two forms differ only in how they set the kind: `type: Schedule` in NobleFactor's, the label `schedule` in
-David-Noble-at-work's (read 2026-11-11).
+The two forms differ only in how they set the kind: `type: Schedule` in NobleFactor's, the label `schedule` in David-Noble-at-work's.
 
 ## Linking plans: plan link
 
-**Ruled 2026-11-15 (#557):** beside the schedule verbs, `star github plan link`, whose one purpose is that our issues
-trace back to the plans that reference them.
+`star github plan link` writes each issue's Plan and design documents section from the plans that serve it, so that an issue traces back to its plans.
 
 | Command | Does | Writes to GitHub |
 | --- | --- | --- |
-| `plan link <plan>... [--check]` | Writes the `Plan and design documents` section of each issue the plans named serve, from every plan that serves it, each plan a path relative to `docs/plans` in the clone it runs in | The issues' bodies |
+| `plan link <plan>... [--check]` | Writes the section of each issue the plans named serve, from every plan that serves it, each plan a path relative to `docs/plans` in the clone it runs in | The issues' bodies |
 | `plan link --all [--repository <owner/name>,...] [--check]` | The same for every issue a plan under `docs/plans` on each repository's default branch serves, writ's layers when none is named | The issues' bodies |
 
-The plans are the authority. A plan names the issues it serves, the one it is named for in its `issue:` line and each
-other in an `## Issue NNN` heading, and the design documents it bears on, in its frontmatter's `documents:`. An
-issue's section is written from them: a Plan row for each plan that serves it, then each plan's documents. The command
-finds the section by its heading, `Plan and design documents` at level 2 or 3, and replaces it whole, reading none of
-its rows; with no such heading it adds the section, and with two it writes nothing. An issue no plan serves is not
-touched, and no command writes a plan from its issues. `--check` writes nothing, and returns the records the command
-would. Each record is an issue: the plans that serve it, what was done, `written`, `unchanged` or `appended`, or
-`refused`, the section before and after, and the rows the new section drops. Like every command here, it exits
-non-zero only on an error: a plan or an issue it cannot read, or a write that does not read back; under `--all` it does
-every other issue first, then fails naming each error. A link points by the issue's state: an open issue's to the
-default branch, and one closed by a merged pull request to that pull request's merge commit, a fixed record of what
-landed. `--repository` takes a comma-separated list, as `--blocked-by` does. Until `star` has a
-Markdown provider (NobleFactor/devlore-cli#1100), it finds the heading by the body's lines. #557 builds it, and its
-plan, [557-plan-row.md](../../plans/feature/557-plan-row.md), says what it does in each case.
+The plans are the authority. A plan names the issues it serves, the one in its `issue:` line and each other in an `## Issue NNN` heading, and the design documents it bears on, in its frontmatter's `documents:`. An issue's section is written from them: a Plan row for each plan that serves it, then each plan's documents. The command finds the section by its heading, `Plan and design documents` at level 2 or 3, and replaces it whole; with no such heading it adds the section, and with two it writes nothing. An issue no plan serves is not touched. `--check` writes nothing, and returns the records the command would.
+
+Each record is an issue: the plans that serve it, what was done (`written`, `unchanged`, `appended` or `refused`), the section before and after, and the rows the new section drops. It exits non-zero only on an error, a plan or an issue it can't read or a write that doesn't read back; under `--all` it does every other issue first, then fails naming each error. A link points by the issue's state: an open issue's to the default branch, and one closed by a merged pull request to that pull request's merge commit. `--repository` takes a comma-separated list until star's extension flags can repeat (#315). Its plan, [557-plan-row.md](../../plans/feature/557-plan-row.md), says what it does in each case.
 
 ## Building it
 
-`add` is #438, step 28 of issue tracking, iteration 1. **Ruled 2026-11-12, question 8:** the other verbs are four
-tasks under feature #332, filed that day in Backlog: engprod with Priority Medium, since #346's exit criteria don't
-need them:
-
-| Task | Builds | Blocked by |
-| --- | --- | --- |
-| #509 | `new`, and Start-Claude's `--schedule new` dropped | #439 |
-| #510 | `get` and `list` | #439 |
-| #511 | `star github issue move`, which `schedule add` becomes, with moving within a schedule and off one (revised 2026-11-15) | #438 |
-| #512 | `close` and its evidence comment | #439 |
-
-**Revised 2026-11-15 (#507):** the four are widened to scenarios, since each scenario verb shares its code with one of
-them (section 9, § Building it), and are steps 48 to 51 of #346, after #507, built together in #507's pull request.
-
-`issue move` is a command of `star github issue`, the group Task #338 makes for `issue file`; whichever of #338 and
-#511 lands first makes the group.
+Each verb is a file in the GitHub extension's `commands` directory, `github-schedule-<verb>.star`, and `create` is a second manifest entry with `open`'s implementation until NobleFactor/devlore-cli#1235 lets an extension command name an alias. Each shares its code with the scenario verb of the same name (section 9): `making.star` opens a schedule or a scenario, `collections.star` reads them, and `ending.star` closes and reopens them; `steps.star` reads and writes rows and amendments for them and for `star github issue move`. The comments and the Schedule issue's body are templates in the extension's `templates` directory, and the tests are `tests/Test-StarGitHub`. [The status page](8-the-schedule-commands.status.md) records what is built and every ruling.

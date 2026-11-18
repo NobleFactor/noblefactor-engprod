@@ -29,6 +29,18 @@ the plans. Revised 2026-11-15 (#507): `add`, `move` and `remove` became one comm
 its issue the one positional argument and its destination a flag, `--backlog` kept and several issues at once; and
 #509 to #512, widened to scenarios, became steps 48 to 51 of #346, built in #507's pull request.
 
+**Revised 2026-11-17 (#589, #595):** `new` became `open`, with `create` its synonym, and `reopen` joined the verbs, as the owner synchronized the verbs across `star github issue`, `schedule` and `scenario`. Moving an issue is designed in section 10, and this section keeps what a move records on a schedule. The design text was rewritten that day to say what the commands do, in plain language, at the owner's direction; its rulings and history are kept here.
+
+## History
+
+- **The owner's example of 2026-11-04,** `star github schedule --group-by Schedule --account NobleFactor --team engprod --where '{ Schedule: { _eq: 346 } }' --output csv`, became `get` (question 2, 2026-11-11): a group takes no action of its own; `--where` would be a third way to select, beside `--filter` and `--jq`; reshaping is `--jq`'s work; and a schedule's key names its account.
+- **Rule 2 of agent-rules.md,** what lists the open ruling issues under NobleFactor/devlore-cli#463 once the `Epic:` labels were gone, was answered by the report as built: run on 2026-11-11, it returned the 17 open issues GitHub lists under #463, in 26 seconds.
+- **Closed steps are renumbered (question 5, 2026-11-11).** Section 3 said a closed step keeps its number, but on issue tracking, iteration 1, steps 29 (#440) and 35 (#447) were closed between open steps, and both moved down four when #482 to #485 went in after step 22 that day.
+- **The evidence comment (question 6, 2026-11-12)** was built from what GitHub held for issue tracking, iteration 1 (#346): of its 28 closed steps that day, 19 fell under 13 pull requests and 9 had none. Five were finished by merged work but closed by hand, #303, #358, #359, #360 and #446, so they show no pull request; #508 asked the PR script template for a `Closes #N` line.
+- **The option stays (2026-11-11):** Schedule: engprod had 4 options when read that day.
+- **Start-Claude (question 7, 2026-11-12):** its `--schedule new` filed `Schedule: <title>` with the retired `chore` label and a lane table, and made no option or row. It was retired when `new` was built, on 2026-11-16 (#509).
+- **The verbs as built:** `add` (#438) on 2026-11-12, which became `star github issue move` (#511) on 2026-11-15, when `add`, `move` and `remove` were seen to be one act done three ways; `get` and `list` (#510) on 2026-11-15; `new` (#509) and `close` (#512) on 2026-11-16; all four widened to scenarios and built as steps 48 to 51 of #346 in #507's pull request. `plan link` (#557) on 2026-11-15.
+
 ## Completion
 
 - [x] Questions 1 to 8 ruled, 2026-11-11 and 2026-11-12
@@ -41,3 +53,4 @@ its issue the one positional argument and its destination a flag, `--backlog` ke
 - [x] `close` built on 2026-11-16, and proved that day in NobleFactor-sandbox and David-Noble-at-work-sandbox (run 20261116T221107Z) (#512)
 - [x] `plan link` built, with `--all` and `--check`, on 2026-11-15 (#557); every issue brought to its plans by it
   on 2026-11-15, #557's evidence
+- [ ] `open` and `create`, renamed from `new`, and `reopen`, built and proved in both sandboxes (#595)

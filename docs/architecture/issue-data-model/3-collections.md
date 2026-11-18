@@ -230,7 +230,7 @@ for compliance and an agent has reviewed its code, with the team lead's sign-off
   When a step is inserted, moved or taken off, every later step is renumbered, closed or open, so the steps stay
   consecutive whole numbers. Closed steps already sat among open ones: on issue tracking, iteration 1, steps 29
   (#440) and 35 (#447) are closed between open steps, and both moved down four when #482 to #485 went in after step
-  22 that day ([section 8](8-the-schedule-commands.md#changing-a-schedule-add-move-and-remove), question 5).
+  22 that day ([section 8](8-the-schedule-commands.md#what-a-move-records-on-a-schedule), question 5).
 - One issue in two live collections, the plan's question 9. The owner had doubts about it on 2026-10-20. A project holds
   an issue as one row, and a single-select field holds one value, so within a team's Schedule or Scenario project a row
   belongs to one schedule or one scenario. Ruled 2026-11-04: an issue is a row of at most one of its account's Triage,

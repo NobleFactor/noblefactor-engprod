@@ -4,40 +4,55 @@ title: "10. The issue commands"
 
 # 10. The issue commands
 
-What `star github issue` does, verb by verb, for an organization and for a user account: opening an issue, moving it, closing it and reopening it. Sections 8 and 9 designed the commands for a schedule and a scenario, and `star github issue move`, which moves an issue between them (#511). This section designs the rest of the group (#589), as the owner ruled on 2026-11-17: the verbs are `open`, `move`, `close` and `reopen`, symmetric, open and closed being GitHub's own words for an issue's state, and `create` is `open`'s synonym, the same command, since people who use `gh` reach for it.
-
-**Ruled 2026-11-17: the words are synchronized across the board.** A schedule and a scenario are opened, closed and reopened by their own groups' verbs: `star github schedule` and `star github scenario` each have `open`, with `create` its synonym, `close` and `reopen`, so `new` became `open` and `star github scenario retire` became `close` (#595). The `issue` verbs open, close and reopen every type but Schedule and Scenario, and refuse those, naming the group's verb; `move` refuses them too, since a collection's own issue is its own row, not a step.
-
-Every verb follows the model sections 1 to 4 rule: an issue's type, its parent, its Area and its other fields, and its rows on its team's Triage, Backlog, Schedule and Scenario projects. Nothing here makes a project, a field or an option.
+`star github issue` opens, moves, closes and reopens issues, in an organization and in a user account. It has four verbs, `open`, `move`, `close` and `reopen`, and `create` is another name for `open`. They act on epics, features, tasks and bugs. A Schedule or Scenario issue is the record of its collection, and is opened, closed and reopened by its own group's verbs: `star github schedule` ([section 8](8-the-schedule-commands.md)) and `star github scenario` ([section 9](9-the-scenario-commands.md)). Nothing here makes a project, a field or an option.
 
 ## The commands
 
 | Command | Does | Writes to GitHub |
 | --- | --- | --- |
-| `open --type <type> --parent <issue> --area <area> --title <title> --body-file <path> [...]` | Opens an issue of any type but Schedule and Scenario, classified as it is made, in the repository of the clone it runs in | Issue, fields or labels, parent link |
-| `open --template <path> [--set <name>=<value>]...` | The same, from a template | The same |
-| `create ...` | `open`, by its synonym | The same |
-| `move <issue>... ( --schedule ... \| --scenario ... \| --triage \| --backlog ) --reason <text>` | Moves issues to Triage, the Backlog, a schedule or a scenario, from wherever each is (sections 8 and 9; #597) | Rows, amendments, comments, bodies |
+| `open --type <type> --parent <issue> --area <area> --title <title> --body-file <path> [...]` | Opens an issue in the repository of the clone it runs in, classified as it is made | Issue, with its fields or labels and its parent link |
+| `open --template <path> [--set <name>=<value>,...]` | The same, from a template | The same |
+| `create ...` | `open`, by another name | The same |
+| `move <issue>... (--triage \| --backlog \| --schedule <schedule> \| --scenario <scenario> --beat <beat>) --reason <text>` | Puts issues in Triage, in the Backlog, on a schedule or on a scenario, from wherever each is | Rows, a schedule's amendment, comments, bodies |
 | `close <issue>... --evidence <path>` | Closes issues whose work is done, each with its evidence | Comment, issue, rows |
 | `close <issue>... --resolution Declined\|Duplicate\|Invalid --reason <text>` | Closes issues whose work was not done, each with its Resolution | Comment, field or label, issue, rows |
-| `reopen <issue>... --reason <text>` | Reopens issues, with their closed parents and the closed schedule each is a step of | Comments, issues, fields or labels, rows, a Schedule issue's body |
+| `reopen <issue>... --reason <text>` | Reopens issues, with their closed parents and the closed schedules they are steps of | Comments, issues, fields or labels, rows, a Schedule issue's body |
 
-The collection groups' verbs, the same three:
+An `<issue>` is written `<owner>/<repository>#<number>`. Every command names what it acts on, takes star's `--filter`, `--jq` and `--output`, returns one flat record per thing it read or changed, JSON by default, and exits non-zero only on an error. Every command reads all it needs before its first write, so a fault is a refusal with nothing written, and reads every write back. A run that stops partway is run again to finish. `--dry-run` is refused until NobleFactor/devlore-cli#1170 lets a dry run read.
 
-| Command | Does | Writes to GitHub |
-| --- | --- | --- |
-| `schedule open <repository> <name> ...`, or `create` | Opens a schedule: `new` as section 8 gives it, renamed | Issue, option, row |
-| `schedule close <schedule>` | Closes a finished schedule, as section 8 gives it | Row, comment, issue |
-| `schedule reopen <schedule> --reason <text>` | Reopens a closed schedule: its issue, its own row In progress, its every-step criterion unticked | Issue, comment, row, body |
-| `scenario open <repository> <name> ...`, or `create` | Opens a scenario: `new` as section 9 gives it, renamed | Issue, option, row |
-| `scenario close <scenario> --reason <text>` | Closes a scenario the product no longer has: `retire` as section 9 gives it, renamed | Comment, issue, row |
-| `scenario reopen <scenario> --reason <text>` | Reopens a closed scenario: its issue and its own row Open | Issue, comment, row |
+## Where an issue lives
 
-An `<issue>` is written `<owner>/<repository>#<number>`. As in sections 8 and 9, every command names what it acts on, takes star's `--filter`, `--jq` and `--output`, returns one flat record per thing it read or changed, JSON by default, and exits non-zero only on an error. Every command reads all it needs before its first write, so a fault is a refusal with nothing written (#531), and every write is read back. A run that stops partway is run again to finish. `--dry-run` is refused until NobleFactor/devlore-cli#1170 lets a dry run read, as for every command of the extension.
+Each team, and each user account, has four projects: Triage, Backlog, Schedule and Scenario (section 3). An issue is a row of at most one of them. What its type allows decides where it can be:
+
+| Type | Triage | Backlog | A schedule | A scenario |
+| --- | --- | --- | --- | --- |
+| Epic, Feature | Yes | Yes | No | No |
+| Task, Bug | Yes | Yes | Yes | Yes |
+| No type | Yes | No | No | No |
+| Schedule, Scenario | No | No | No | No |
+
+A new issue goes to Triage: the Triage workflow gives every issue opened a Triage row, except an item found while walking a scenario, which it puts on that scenario (section 9). An issue with no type stays in Triage until it is classified. A Schedule or Scenario issue's only row is its own, on its Schedule or Scenario project.
+
+### Epics and features
+
+An epic or a feature goes to Triage when it is opened and to the Backlog once it is classified. It stays on the Backlog until it closes, when `close` removes its row. Nothing moves it when its tasks and bugs are pulled onto a schedule or a scenario.
+
+Its state comes from its children. It is in progress when any issue under it is in progress, and it is ready to close when all of them are closed; `close` says so when it closes the last one. `star github schedule report --by feature` and `--by epic` show where each stands. The Backlog project has a view of its epics and features beside the view of its tasks and bugs.
+
+This is how other issue trackers treat them, read on 2026-11-17. None moves an epic or a feature when its work is pulled into a sprint: only the children move, and the parent's state changes.
+
+| Tracker | Where epics and features live | What goes into a sprint | How their state changes |
+| --- | --- | --- | --- |
+| Azure Boards | Portfolio backlogs, Features and Epics, apart from the product backlog of stories and bugs | Stories and bugs; features and epics "might take one or more sprints" | Shown on their backlog while Proposed, In Progress or Resolved, and hidden once Completed; rollup columns show the children's progress |
+| Jira | An epics panel beside the backlog | Stories, bugs and tasks | Set by hand, or by an automation rule that moves the epic to In Progress when a child moves |
+| Shortcut | Its epics list | Stories; its iteration automations handle stories alone | Auto Start Epic when a story starts, and Auto Complete Epic when every story is done |
+| Linear | Parent issues | Issues | Optionally, the parent is marked done when every sub-issue is |
+
+Moving an epic or a feature off the Backlog when its first task or bug is pulled would record its state by moving its row, and every move of a child would have to check its parents in both directions, since a child can go back to the Backlog. None of these trackers does that.
+
+Sources: [Azure Boards: Use backlogs to manage projects](https://learn.microsoft.com/en-us/azure/devops/boards/backlogs/backlogs-overview), [Azure Boards: Define features and epics](https://learn.microsoft.com/en-us/azure/devops/boards/backlogs/define-features-epics), [Shortcut: Automations](https://www.shortcut.com/help/fields-and-features/automations), [Linear: Parent and sub-issues](https://linear.app/docs/parent-and-sub-issues), and [Atlassian Community: Automation for moving epics to In Progress when any child story is moved](https://community.atlassian.com/t5/Jira-questions/Automation-for-Moving-Epics-to-In-Progress-when-any-of-the-child/qaq-p/2490530).
 
 ## Opening an issue: open, and create
-
-`open` is #338's command, renamed from `file` on 2026-11-17. Two ways to call it:
 
 ```
 star github issue open --type <type> --parent <issue> --area <area> --title <title> --body-file <path>
@@ -45,11 +60,9 @@ star github issue open --type <type> --parent <issue> --area <area> --title <tit
 star github issue open --template <path> [--set <name>=<value>[,<name>=<value>]...] [--directory <path>]
 ```
 
-`--set` takes its pairs comma-separated until star's extension flags can repeat (#315), and `--unique` is a template's `unique`, given as a flag.
+`open` opens its issue in the repository of the clone it runs in, the repository its origin names. `--directory <path>` names another clone, as git's `-C` does. `create` is the same command.
 
-**Ruled 2026-11-17: the issue opens in the repository of the clone `open` runs in,** its origin's, as `star github plan link` reads its own, and `--directory <path>` names another clone, as git's `-C` does. `-C` itself waits on star letting an extension flag take a short name beside its long one (NobleFactor/devlore-cli#1236).
-
-A template is the issue's header and then its body. Its header takes what the flags give, `type`, `parent`, `title`, `area`, `priority`, `severity` and `assignee`, and `unique`; with `--template`, no flag but `--set` and `--directory` is given:
+A template is the issue's header and then its body. The header takes the values the flags give: `type`, `parent`, `title`, `area`, `priority`, `severity`, `assignee` and `unique`. With `--template`, no flag but `--set` and `--directory` is given. Each `{name}` in the header or the body is a blank that `--set` fills; a shell's `${name}` is left alone. `--set` takes its pairs comma-separated, since star's extension flags can't repeat yet (#315).
 
 ```markdown
 ---
@@ -63,55 +76,41 @@ unique: true
 …
 ```
 
-`open` does, in this order:
+`open` does this, in order:
 
-1. **Fills the blanks.** Each `{name}` in the header or body takes its `--set` value; a blank left unfilled is refused.
-2. **Reads what it needs, all before it writes:** the clone and its repository, the account's model, the type, the parent and its type, and the Area, Priority and Severity options; and the type's issue form, from the account's `.github` repository as it stands when the command runs, so a change to the forms (#572) needs no change here.
-3. **Refuses, writing nothing,** an issue without an Area; a type the account doesn't have; a Schedule or Scenario, naming `star github schedule open` or `star github scenario open`; a parent at the wrong level for the type (section 1); a body that lacks a section the type's form asks for, or its Plan and design documents table; a `--severity` on any type but Bug, every other type's being N/A; a directory that is no clone, or whose origin isn't on GitHub; and a repository that takes no part in issue tracking.
-4. **Skips a duplicate.** With `unique`, it looks through the parent's sub-issues, open and closed, for the same title; one found, it says so, opens nothing, and exits 0.
-5. **Opens the issue** with its type, its fields, its assignee and its parent link, in one call. **Ruled 2026-11-17, as proposed:** Priority is Medium when it isn't given, as the issues split from features have been. Severity is N/A on every type but Bug, and a Bug's is Medium unless `--severity` names another, as the Triage workflow starts a bug (section 2). **Ruled 2026-11-17:** no one is assigned unless `--assignee` names someone, so a workflow that opens an issue doesn't assign it to its bot.
-6. **Leaves its row to the Triage workflow.** **Ruled 2026-11-17:** `open` takes no `--project` or `--status`. The workflow gives every issue opened its Triage row, as for an issue opened in GitHub, and an issue is a row of at most one of its account's projects (section 1), so a row `open` made on another project would leave the issue on two. `move --schedule` and `move --scenario` take it from Triage; `move --backlog` takes an issue off a schedule, and doesn't yet take one from Triage.
-7. **Reads it all back,** and fails, naming the value, when any differs from what was asked.
+1. **Fills the blanks.** A blank left unfilled is refused.
+2. **Reads everything it needs:** the clone's repository, the account's model, the type, the parent and its type, the Area, Priority and Severity options, and the type's issue form, from the account's `.github` repository as it stands now.
+3. **Checks the issue,** and refuses it, writing nothing, when it has no Area; its type is one the account doesn't have, or is Schedule or Scenario, which `star github schedule open` and `star github scenario open` open; its parent isn't one level up, or it is an Epic with a parent; its body lacks a section its form requires, or its Plan and design documents table; it is given a Severity and isn't a Bug; the directory is no clone; or the repository takes no part in issue tracking.
+4. **Looks for a duplicate,** with `unique`: when the parent already has a sub-issue, open or closed, with the same title, `open` opens nothing, names that issue, and exits 0.
+5. **Opens the issue** in one call, with its type, its parent, its assignee, and its Area, Priority and Severity. Priority is Medium unless given. A Bug's Severity is Medium unless given, as the Triage workflow starts a bug, and every other type's is N/A. No one is assigned unless `--assignee` names someone.
+6. **Reads it all back,** and fails, naming each value that differs from what it asked for.
 
-In David-Noble-at-work, which has no issue fields, `open` writes the labels that stand in for them: the type's label, `area:`, `priority:` and `severity:` (issue standards, § Labels).
+`open` gives the issue no row: the Triage workflow gives it its Triage row, and `move` places it from there. In David-Noble-at-work, which has no issue types or issue fields, `open` writes the labels that stand in for them: the type's label, `area:`, `priority:` and `severity:`.
 
-Its record is the issue it opened, or found with `unique`: its key, its title, its type, its parent, its Area, Priority and Severity, its assignee, and whether it was `opened` or `found`.
-
-`create` is `open`, declared as an alias once NobleFactor/devlore-cli#1235 lets an extension command name aliases, and until then a second manifest entry with the same implementation.
-
-**Ruled 2026-11-17, as proposed:** retyping an issue is a verb of its own, `star github issue retype <issue> <type>`, designed and built after this section; and the skill that opens issues for an agent, the other half of #338's original body, is an issue of its own, after this section's pull request.
+Its record is the issue it opened, or found with `unique`: its key, title, type, parent, Area, Priority, Severity and assignee, and whether it was `opened` or `found`.
 
 ## Moving an issue: move
 
-`move` is as built (#511): onto, within and off a schedule, as section 8 gives it, and onto and off a scenario, as section 9 gives it. It reads every source it leaves before its first write (#531); it doesn't yet check that a source schedule's issue has its Amendments section, which #594 adds.
+```
+star github issue move <issue>...
+    ( --triage
+    | --backlog
+    | --schedule <schedule> [--after <step>] [--blocked-by <issue>[,<issue>...]] [--assignee <login>]
+    | --scenario <scenario> --beat <beat> )
+    --reason <text>
+```
 
-**Ruled 2026-11-17: `move` puts an issue where it needs to be, from wherever it is (#597).** As built, `--triage` and `--backlog` took an issue only off a schedule or a scenario, `--scenario` refused one on the Backlog, a schedule or another scenario, `--backlog` refused one on a scenario, and every destination refused an epic or a feature; the owner ruled those barriers broken. What an issue's type allows is all that limits a move:
+`move` puts each issue where it is sent, from wherever it is, in the order given, as far as its type allows (§ Where an issue lives). Exactly one destination is given. `--reason` is written where the move is recorded.
 
-| Type | Triage | Backlog | A schedule | A scenario |
-| --- | --- | --- | --- | --- |
-| Epic, Feature | Yes | Yes | No | No |
-| Task, Bug | Yes | Yes | Yes | Yes |
-| No type | Yes | No | No | No |
-| Schedule, Scenario | No | No | No | No |
+An issue leaves the place it was in the same act:
 
-An issue with no type waits in Triage until it is classified, or on the scenario whose walk found it (section 1). A Schedule or Scenario issue is its collection's own record, its row made by `schedule open` or `scenario open`, and `move` refuses it, naming the group. An issue leaves wherever it was as sections 8 and 9 record a move: a schedule's amendment, every later step moving up; a comment on the Scenario issue and a line in the item's body; a Triage or Backlog row removed. An issue already where it is sent is `unchanged`.
+- **Off a schedule:** its row comes off, every later step moves up one, and one line in the Schedule issue's Amendments section records the change ([section 8](8-the-schedule-commands.md#what-a-move-records-on-a-schedule)).
+- **Off a scenario:** a comment on the Scenario issue and a line in the item's body record that it left and where it went, and its row comes off ([section 9](9-the-scenario-commands.md#what-a-move-records-on-a-scenario)).
+- **Out of Triage or the Backlog:** its row comes off.
 
-### Epics and features
+Onto a schedule, it takes the next step, or the steps after `--after`, every later step moving down; `--blocked-by` adds blocked-by links, and an issue from another team's repository is assigned to `--assignee`, a member of the schedule's team. Onto a scenario, it gets the Beat at which it turned up. Into Triage or the Backlog, it gets a row with Status Open, keeping its Priority. An issue already where it is sent is `unchanged`.
 
-**Ruled 2026-11-17, in place of the ruling of 2026-11-04 that an epic or a feature, once classified, leaves Triage for no project (section 1):** an epic or a feature goes to Triage when it is opened, like every new issue, and to the Backlog once it is classified, by `move --backlog`. It stays there until it closes, when `close` removes its row. Nothing moves it when its tasks and bugs are pulled onto a schedule or a scenario. Its state is its children's: it is in progress when any issue under it is in progress, and it can close when all of them are closed, which `close` reports when it closes the last; `star github schedule report --by feature` and `--by epic` show where each stands. The Backlog project shows its epics and features in a view of their own, beside the view of its tasks and bugs, as Jira and Azure Boards keep the two levels apart. `star github triage sweep` returns an epic or a feature that is a row of a Schedule or Scenario project, and no longer one on the Backlog (#597).
-
-**The evidence, read 2026-11-17.** The owner asked how other issue trackers treat an epic or a feature as its work is pulled into a sprint. None moves it: only its children move, and its state changes.
-
-| Tracker | Where epics and features live | What goes into a sprint | How their state changes |
-| --- | --- | --- | --- |
-| Azure Boards | Portfolio backlogs, Features and Epics, apart from the product backlog of stories and bugs | Stories and bugs; features and epics "might take one or more sprints" | Shown on their backlog while Proposed, In Progress or Resolved, and hidden once Completed; rollup columns show the children's progress |
-| Jira | An epics panel beside the backlog | Stories, bugs and tasks | Set by hand, or by an automation rule that moves the epic to In Progress when a child moves |
-| Shortcut | Its epics list | Stories; its iteration automations handle stories alone | Auto Start Epic when a story starts, and Auto Complete Epic when every story is done |
-| Linear | Parent issues | Issues | Optionally, the parent is marked done when every sub-issue is |
-
-Moving an epic or a feature off the Backlog when its first task or bug is pulled, as first proposed, would record its state by moving its row, and every move of a child would have to check its parents both ways, since a child can go back to the Backlog; none of these trackers does that. The simplest thing, which they all do, is to leave it where it is and derive its state.
-
-Sources: [Azure Boards: Use backlogs to manage projects](https://learn.microsoft.com/en-us/azure/devops/boards/backlogs/backlogs-overview), [Azure Boards: Define features and epics](https://learn.microsoft.com/en-us/azure/devops/boards/backlogs/define-features-epics), [Shortcut: Automations](https://www.shortcut.com/help/fields-and-features/automations), [Linear: Parent and sub-issues](https://linear.app/docs/parent-and-sub-issues), and [Atlassian Community: Automation for moving epics to In Progress when any child story is moved](https://community.atlassian.com/t5/Jira-questions/Automation-for-Moving-Epics-to-In-Progress-when-any-of-the-child/qaq-p/2490530).
+`move` reads every place it leaves before its first write, reads the rows again just before that write, and writes nothing if they changed. It refuses, writing nothing, a Schedule or Scenario issue; a type the destination doesn't take; a closed issue; an issue of another account; and the refusals sections 8 and 9 give for a schedule and a scenario.
 
 ## Closing an issue: close
 
@@ -120,20 +119,20 @@ star github issue close <issue>... --evidence <path>
 star github issue close <issue>... --resolution Declined|Duplicate|Invalid --reason <text>
 ```
 
-Exactly one of `--evidence` and `--resolution` is given. An issue whose work was done closes with its evidence; an issue whose work was not done closes as completed with its Resolution saying why, and GitHub's `not_planned` is not used (issue standards, § Resolution, ruled 2026-11-03).
+An issue whose work was done closes with its evidence. An issue whose work was not done closes as completed, with its Resolution saying why; GitHub's "not planned" is not used. Exactly one of `--evidence` and `--resolution` is given.
 
-`close` does, for each issue, in this order:
+For each issue, in order, `close` writes:
 
-1. **The comment:** the evidence file, word for word, headed `## Evidence: <title>` when it has no heading of its own; or `Closed by \`star github issue close\` on <date>, run by <login>, with Resolution <resolution>: <reason>.`
+1. **The comment:** the evidence file, word for word, headed `## Evidence: <title>` when it has no heading of its own; or `Closed by \`star github issue close\` on <date>, run by <login>, with Resolution <resolution>: <reason>`.
 2. **The Resolution,** with `--resolution`: the Resolution field in NobleFactor, the `resolution:<name>` label in David-Noble-at-work.
-3. **The issue closed,** as completed.
-4. **Its rows:** on a Schedule project, Status Closed, the row kept, as a merged step's is (section 8, question 5); on a Scenario project, a comment on the Scenario issue that the item closed, then the row removed, as a closed item leaves its scenario (section 9, question 7); on Triage, the row removed, triage's decision made; on Backlog, the row removed, since nothing is left to schedule.
+3. **The issue,** closed as completed.
+4. **Its rows:** a Schedule row is set Closed and kept, since a schedule keeps its closed steps; a Scenario row is removed, after a comment on the Scenario issue that the item closed, since a closed item leaves its scenario; a Triage or Backlog row is removed.
 
-`close` refuses, writing nothing: neither or both of `--evidence` and `--resolution`; `--resolution` without `--reason`, or with a name its account doesn't have; an evidence file that is missing or empty; and a Schedule or Scenario issue, naming `star github schedule close` or `star github scenario close`. An issue already closed is left as it is, its record `unchanged`.
+`close` doesn't close a parent. A feature or an epic closes with its own evidence, by `close` run on it. When an issue is its parent's last open child, its record names the parent.
 
-**Ruled 2026-11-17, as proposed:** `close` doesn't close a parent when it closes the parent's last open child. A feature or an epic closes with its own evidence, by `close` run on it; when an issue `close` closes is its parent's last open child, its record says so, with the parent's key.
+It refuses, writing nothing: neither or both of `--evidence` and `--resolution`; `--resolution` without `--reason`, or with a name its account doesn't have; `--reason` with `--evidence`; an evidence file that is missing or empty; a Schedule or Scenario issue, which `star github schedule close` and `star github scenario close` close; and an item on a scenario whose option names no Scenario issue. An issue already closed is left as it is, and its record is `unchanged`.
 
-An item closed some other way, by a merge's `Closes` line among them, doesn't run `close`, so its Scenario row stays until #593's recurring check removes it.
+Its records: one for each issue, `closed` with its Resolution and the parent whose last open child it was, or `unchanged`; and one for each row, `row-closed` or `left`. An item closed some other way, such as by a pull request's `Closes` line, keeps its Scenario row until #593's recurring check removes it.
 
 ## Reopening an issue: reopen
 
@@ -141,14 +140,16 @@ An item closed some other way, by a merge's `Closes` line among them, doesn't ru
 star github issue reopen <issue>... --reason <text>
 ```
 
-`reopen` reads, before its first write, each issue, its sub-issue parents up to its epic, and the schedule each closed step was on. Then, for each issue:
+`reopen` reads each issue, its parents up to its epic, and the schedules it is a step of, before its first write. Then, for each issue:
 
-1. **The issue reopened,** its Resolution cleared or its `resolution:` label removed, and a comment: `Reopened by \`star github issue reopen\` on <date>, run by <login>: <reason>.`
-2. **Its rows:** a Schedule row set Open, since no one has taken it up again, its Worktree kept; a Backlog row set Open. An item that left its scenario when it closed goes to its team's Triage project, not back to the scenario, since it moved on when it closed. **Ruled 2026-11-17:** so does every task or bug that has no row on its team's Triage, Backlog, Schedule or Scenario project, as `close` leaves one it took off Triage or Backlog, since the Triage workflow runs when an issue is opened, not when it is reopened. So does an issue with no type and no row, since an untriaged issue waits in Triage (section 1). So does an epic or a feature with no row, since an open one is a row of Triage or the Backlog (§ Epics and features, ruled 2026-11-17).
-3. **Each closed parent,** feature and then epic, reopened the same way, its comment naming the issue that reopened it.
-4. **Each closed schedule** the issue is a step of reopened, as the owner had #346 reopened on 2026-11-17, by what `star github schedule reopen` does: the Schedule issue reopened with its comment, its own row In progress, and the exit criterion that says every step is closed unticked, found by its words: a ticked box whose text begins "Every step" or "Every other step", as the schedules' boxes have said so far; a schedule with none is reopened all the same, and its record says no criterion was unticked. A schedule is in progress as long as one of its steps is open.
+1. **The issue** is reopened, its Resolution cleared or its `resolution:` labels removed, and a comment written: `Reopened by \`star github issue reopen\` on <date>, run by <login>: <reason>`.
+2. **Its rows:** a Schedule row is set Open, its Worktree kept, since no one has taken it up again; a Backlog row is set Open. An issue with no row on its team's four projects, as `close` leaves an issue it took off Triage, the Backlog or a scenario, gets a Triage row, since the Triage workflow runs only when an issue is opened.
+3. **Each closed parent,** its feature and then its epic, is reopened the same way, its comment naming the issue: `Reopened by … for <issue>: <reason>`.
+4. **Each closed schedule** it is a step of is reopened as `star github schedule reopen` reopens one (section 8): the Schedule issue reopened with its comment, its own row set In progress, and its exit criterion that every step is closed unticked. A schedule is in progress while any of its steps is open.
 
-`reopen` refuses, writing nothing, a Schedule or Scenario issue, naming `star github schedule reopen` or `star github scenario reopen`. An issue already open, with open parents and an open schedule, is left as it is, its record `unchanged`.
+An issue already open is not reopened again, and its rows are left as they are; its closed parents and closed schedules are still reopened. An issue with nothing closed about it is `unchanged`, and nothing is written. `reopen` refuses, writing nothing, a Schedule or Scenario issue, which `star github schedule reopen` and `star github scenario reopen` reopen, and a step on a schedule whose option names no Schedule issue.
+
+Its records: one for each issue, parent and schedule reopened, with the Resolution it cleared, the issue it was reopened for, and a schedule's unticked criteria; one for each row set Open or added to Triage; or `unchanged`.
 
 ## How each command runs in each account
 
@@ -158,10 +159,10 @@ star github issue reopen <issue>... --reason <text>
 | Area, Priority, Severity | issue fields | `area:`, `priority:` and `severity:` labels |
 | Resolution | the Resolution field | the `resolution:<name>` label |
 | The forms `open` checks | NobleFactor/.github, `.github/ISSUE_TEMPLATE/` | David-Noble-at-work/.github, the same path |
-| The projects | the team's: Triage, Backlog, Schedule and Scenario | the account's four |
+| The projects | the team's Triage, Backlog, Schedule and Scenario | the account's four |
 
 ## Building it
 
-#338 (`open` and `create`), #590 (`close`) and #587 (`reopen`) are steps 2 to 4 of issue tracking, iteration 2 (#588), after this design, step 1, and #595, step 5, renames the collection groups' `new` and `retire` and adds their `reopen`; all are built with this design in one pull request. Their shared reads and writes go in `issues.star`, beside `steps.star`, which they share with `move`: an issue's rows, its parent chain, its Resolution, its comments; `schedule reopen`'s code is the one `issue reopen` runs for a step's closed schedule. #593 designs the recurring check for items closed some other way, and #594 adds `move`'s Amendments check. #597, step 6, fixes `move`, narrows the sweep's rule on epics and features, and gives each Backlog its view of them, in the same pull request.
+Each verb is a file in the GitHub extension's `commands` directory, `github-issue-<verb>.star`, and `create` is a second manifest entry with `open`'s implementation until NobleFactor/devlore-cli#1235 lets an extension command name an alias. The code they share is in `issues.star`, an issue's Resolution, the scenario a row is under and an issue's parents, and in `steps.star`, which reads an issue and its rows and writes them, as `move` does. `ending.star` closes and reopens a schedule, for `star github schedule` and for `reopen`. Each comment is rendered from a template in the extension's `templates` directory.
 
-**The design was approved by the owner on 2026-11-17,** and the synchronization of the collection groups' verbs ruled the same day.
+The tests are `tests/Test-StarGitHub`, which runs each command against a stand-in for `gh` holding a small world of issues and projects. The work is #338 (`open` and `create`), #590 (`close`), #587 (`reopen`) and #597 (`move`), under feature #332; [the status page](10-the-issue-commands.status.md) records what is built and every ruling.

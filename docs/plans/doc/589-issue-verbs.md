@@ -116,6 +116,7 @@ A new section 10 of the issue data model, `10-the-issue-commands.md`, and its st
 ### 9.2 Phase 2: the design
 
 - [x] Section 10 and its status page written on 2026-11-17, and approved by the owner that day, the collection groups' verbs synchronized the same day; sections 8 and 9 and the issue standards are pointed to it in Phase 4
+- [x] Sections 8, 9 and 10 rewritten on 2026-11-17 to say what the commands do, in plain present-tense language, at the owner's direction; their rulings and history moved to their status pages
 
 ### 9.3 Phase 3: the builds
 
@@ -173,6 +174,7 @@ Departures, each ruled by the owner:
 5. **The assignee, ruled 2026-11-17: no one unless `--assignee` names someone,** so a workflow that opens an issue doesn't assign it to its bot.
 6. **`move`, ruled 2026-11-17: it puts an issue where it needs to be, from wherever it is.** `move --backlog` refused an issue in Triage, so an issue `open` opens could not reach the Backlog by command. The owner ruled the old refusals broken: an epic, a feature, a task or a bug goes to Triage or the Backlog, a task or a bug to a schedule or a scenario, and a Schedule or Scenario issue nowhere. Filed as Bug #597, step 6, and put in this pull request.
 7. **Epics and features, ruled 2026-11-17: on the Backlog until they close, their state their children's.** In place of the ruling of 2026-11-04 that an epic or a feature, once classified, leaves Triage for no project, it goes from Triage to the Backlog and stays there until it closes; nothing moves it when its tasks and bugs are pulled onto a schedule or a scenario. The owner first proposed that it leave the Backlog when its first task or bug went onto a schedule or a scenario, and asked how other trackers do it: Azure Boards, Jira, Shortcut and Linear move none, only its children, and change its state instead (section 10, § Epics and features, with its sources). The owner chose the simplest thing, with that evidence.
+8. **The design docs, directed 2026-11-17: they say what the commands do.** The owner found sections 8, 9 and 10 ran on with one ruling after another, and more talk of what changed between iterations than of the design. They were rewritten in plain present-tense language for the commands this pull request builds, each command's syntax, what it does in order, what it refuses and what it returns, and their rulings and history moved to their status pages.
 
 ## 13. Completion review
 
