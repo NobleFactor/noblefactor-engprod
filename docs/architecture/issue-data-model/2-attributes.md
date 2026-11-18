@@ -140,7 +140,7 @@ issue that isn't fully classified ([section 1](1-hierarchy.md#triage)):
 - a Resolution, or in a user account a `resolution:` label, on an open issue;
 - two labels of one attribute, such as two `priority:` labels, in a user account;
 - `good first issue` on an issue that isn't a task or a bug;
-- an epic or a feature that is a row of a Backlog, Schedule or Scenario project ([section 1](1-hierarchy.md#triage));
+- an epic or a feature that is a row of a Schedule or Scenario project ([section 1](1-hierarchy.md#triage); the Backlog dropped from this rule on 2026-11-17, [section 10](10-the-issue-commands.md#epics-and-features));
 - an issue that is a row of more than one of its account's Triage, Backlog, Schedule and Scenario projects, whichever
   team owns them, or is on more than one schedule or scenario ([section 3](3-collections.md#triage-and-the-backlog)).
 
@@ -151,6 +151,8 @@ across the whole account ([section 1](1-hierarchy.md#triage)). How it will handl
 and of another project, without taking a scheduled item off its schedule, is #436's to design. Every other rule waits
 until a work item logged while walking a scenario moves out, to its team's Triage project or onto a schedule, and gets
 its type and parent.
+
+Superseded in part on 2026-11-17 ([section 10 § Epics and features](10-the-issue-commands.md#epics-and-features), #597): an epic or a feature, once classified, goes from Triage to the Backlog and stays there until it closes, its state its children's, and is never a row of a Schedule or Scenario project; `star github issue move` puts any epic, feature, task or bug in Triage or the Backlog, and any task or bug on a schedule or a scenario, from wherever it is; and the sweep returns an epic or a feature on a Schedule or Scenario project, not one on the Backlog.
 
 The sweep will run every day as a scheduled GitHub Actions workflow in each account's `.github` repository, with the
 credentials the Triage workflow uses, and will comment on each issue it returns, naming the rule it broke. It will block

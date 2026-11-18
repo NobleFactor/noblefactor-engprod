@@ -133,7 +133,10 @@ in the comment on the Scenario issue.
 | On this scenario | `--scenario <scenario> --beat <beat>` | Its Beat set; the body line, when it lacks it; a comment on the Scenario issue |
 | On a scenario | `--triage` | A comment on the Scenario issue, a line in its body, the scenario row deleted and its Triage row added |
 | On a scenario | `--schedule <schedule>` | The same, with the schedule's row, step and amendment as section 8 gives them |
-| On a scenario | `--backlog` | Refused: an item found on a walk is classified in Triage first (ruled 2026-11-04) |
+| On the Backlog | `--scenario <scenario> --beat <beat>` | The same as from Triage, its Backlog row removed (#597, ruled 2026-11-17) |
+| On a schedule | `--scenario <scenario> --beat <beat>` | The same, and the schedule's amendment, every later step moving up, as section 8 gives a step taken off (#597) |
+| On another scenario | `--scenario <scenario> --beat <beat>` | The other scenario's comment and body line, as for `--triage`, then this one's row, Beat, body line and comment (#597) |
+| On a scenario | `--backlog` | A comment on the Scenario issue, a line in its body, the scenario row deleted and its Backlog row added (#597; refused until 2026-11-17, an item found on a walk being classified in Triage first) |
 
 **Onto a scenario.** The Triage workflow puts a new item on its scenario but sets no Beat, and acts only when an issue
 is opened; `--scenario` sets the Beat, and takes an issue that is already open. An item the walker filed with "Found

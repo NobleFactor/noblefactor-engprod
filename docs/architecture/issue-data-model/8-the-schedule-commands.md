@@ -233,6 +233,8 @@ another, and renumbers the steps between, so they stay consecutive. `--after 0` 
 `issue move <issue>... --triage|--backlog --reason <text>` takes open steps off their schedule. Each goes to its
 team's Triage project, or to its Backlog, keeping its Priority, and every later step moves up one.
 
+Since #597, ruled 2026-11-17, `--triage` and `--backlog` take an issue from wherever it is, a schedule, a scenario, Triage, the Backlog or no project, as [section 10 § Moving an issue](10-the-issue-commands.md#moving-an-issue-move) gives it.
+
 **Ruled 2026-11-11, question 5: closed steps.** A move onto a schedule with `--after`, within one, or off one
 renumbers every later step, closed or open, so the steps stay consecutive whole numbers, as #438's ruling of 2026-11-11
 has it. Section 3 said a closed step keeps its number, but closed steps already sit among open ones: on issue

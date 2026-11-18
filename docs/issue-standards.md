@@ -273,6 +273,8 @@ while walking a scenario waits in the scenario until it moves to its team's Tria
 (§ Scenarios). The sweep (#436) will return an issue that is a row of more than one of its account's projects, Scenario
 included, or is on more than one schedule or scenario, to its team's Triage project (§ Well classified).
 
+Superseded in part on 2026-11-17 ([section 10 § Epics and features](architecture/issue-data-model/10-the-issue-commands.md#epics-and-features), #597): an epic or a feature, once classified, goes from Triage to the Backlog and stays there until it closes, its state its children's, and is never a row of a Schedule or Scenario project; `star github issue move` puts any epic, feature, task or bug in Triage or the Backlog, and any task or bug on a schedule or a scenario, from wherever it is; and the sweep returns an epic or a feature on a Schedule or Scenario project, not one on the Backlog.
+
 **Moving an issue to another team.** Ruled 2026-11-04, superseding in part the ruling of 2026-10-22 that work for
 another team gets a tracking issue: an issue on another team's project is assigned to an accountable member of that
 team, and the person whose name is on an issue moves it to another team the way any move is made, in one act, between
@@ -461,6 +463,8 @@ of a scenario and of another of its account's projects, whichever team owns them
 across the account (§ Well classified). Every other rule waits until an item moves out: it gets its type and parent
 then, and moving straight onto a schedule means classifying it first. A scenario never ends: it is kept, updated or
 removed as the product changes, since it has value before, during and after a release.
+
+Superseded in part on 2026-11-17 ([section 10 § Epics and features](architecture/issue-data-model/10-the-issue-commands.md#epics-and-features), #597): an epic or a feature, once classified, goes from Triage to the Backlog and stays there until it closes, its state its children's, and is never a row of a Schedule or Scenario project; `star github issue move` puts any epic, feature, task or bug in Triage or the Backlog, and any task or bug on a schedule or a scenario, from wherever it is; and the sweep returns an epic or a feature on a Schedule or Scenario project, not one on the Backlog.
 
 **A team's Scenario project holds its scenarios**, each its Scenario issue and the tasks and bugs found while walking it
 (ruled 2026-11-04, replacing the 2026-11-03 ruling that the project holds features). It is made from NobleFactor's
@@ -750,6 +754,8 @@ account's projects: every other rule waits until an item found while walking a s
 and parent, and moving it straight onto a schedule means classifying it first (§ Scenarios). Exempt from the parent
 rule: an epic, and a Schedule or Scenario issue, which have none. Exempt from both the type rule and the parent rule: an
 issue waiting in a Triage project. What the audit compares against will be decided with the tooling, #426 and #437.
+
+Superseded in part on 2026-11-17 ([section 10 § Epics and features](architecture/issue-data-model/10-the-issue-commands.md#epics-and-features), #597): an epic or a feature, once classified, goes from Triage to the Backlog and stays there until it closes, its state its children's, and is never a row of a Schedule or Scenario project; `star github issue move` puts any epic, feature, task or bug in Triage or the Backlog, and any task or bug on a schedule or a scenario, from wherever it is; and the sweep returns an epic or a feature on a Schedule or Scenario project, not one on the Backlog.
 
 The sweep will run every day, as a scheduled GitHub Actions workflow in each account's `.github` repository, with the
 credentials the Triage workflow uses, and it will comment on each issue it returns, naming the rule the issue broke. The

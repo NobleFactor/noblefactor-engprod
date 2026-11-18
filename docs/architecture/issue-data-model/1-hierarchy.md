@@ -137,6 +137,8 @@ another team in one act, between its team's Triage project or schedule and the o
 schedule, schedule to triage, or schedule to schedule; and an epic or a feature, once classified, leaves Triage for no
 project (below).
 
+Superseded in part on 2026-11-17 ([section 10 § Epics and features](10-the-issue-commands.md#epics-and-features), #597): an epic or a feature, once classified, goes from Triage to the Backlog and stays there until it closes, its state its children's, and is never a row of a Schedule or Scenario project; `star github issue move` puts any epic, feature, task or bug in Triage or the Backlog, and any task or bug on a schedule or a scenario, from wherever it is; and the sweep returns an epic or a feature on a Schedule or Scenario project, not one on the Backlog.
+
 - An issue is fully classified or it is not. Fully classified is a Type and, below level 0, a parent one level up. An
   issue with no Type, or below level 0 with no parent, is untriaged, and waits in its team's Triage project, or its
   account's in a user account, or in the scenario whose walk found it, until triage classifies it.
@@ -203,6 +205,7 @@ project (below).
   script of #303's closing pull request removes those rows, first commenting on each scenario's Scenario issue naming
   the features it exercised. The sweep (#436) will return an epic or a feature that is a row of a Backlog, Schedule or
   Scenario project to its team's Triage project.
+- Superseded in part on 2026-11-17 ([section 10 § Epics and features](10-the-issue-commands.md#epics-and-features), #597): an epic or a feature, once classified, goes from Triage to the Backlog and stays there until it closes, its state its children's, and is never a row of a Schedule or Scenario project; `star github issue move` puts any epic, feature, task or bug in Triage or the Backlog, and any task or bug on a schedule or a scenario, from wherever it is; and the sweep returns an epic or a feature on a Schedule or Scenario project, not one on the Backlog.
 - Ruled 2026-11-04: one project at a time holds across the whole account. An issue is a row of at most one of its
   account's Triage, Backlog, Schedule and Scenario projects, whichever team owns them, and is on at most one schedule or
   scenario. An issue on another team's project is assigned to an accountable member of that team: GitHub allows up to 10
@@ -240,6 +243,7 @@ project (below).
   and after a release. Its Scenario issue never closes, so it states no evidence of completion (§ How long a level
   lives, below). #453 brought both accounts' Scenario forms to this on 2026-11-14, and with them the Scenario type's
   description and the `scenario` label's in personal and David-Noble-at-work/.github (§ Type, above).
+- Superseded in part on 2026-11-17 ([section 10 § Epics and features](10-the-issue-commands.md#epics-and-features), #597): an epic or a feature, once classified, goes from Triage to the Backlog and stays there until it closes, its state its children's, and is never a row of a Schedule or Scenario project; `star github issue move` puts any epic, feature, task or bug in Triage or the Backlog, and any task or bug on a schedule or a scenario, from wherever it is; and the sweep returns an epic or a feature on a Schedule or Scenario project, not one on the Backlog.
 - Triage gives an issue its Type, its parent and its Area and, for a bug, its severity, and N/A on any other type
   ([section 2](2-attributes.md)). Ruled 2026-11-04: an issue that arrives with no type gets no Severity; when triage
   gives it a type other than Bug, triage sets its Severity to N/A, and the sweep (#436) will catch a miss.

@@ -371,6 +371,8 @@ in Backlog: engprod, Backlog: devlore and the Backlog template; David-Noble-at-w
 sort by, since a user account has no issue fields. That settles how a triage decision is carried out and how an issue is
 kept in one project at a time ([section 3](3-collections.md#triage-and-the-backlog)).
 
+Superseded in part on 2026-11-17 ([section 10 § Epics and features](10-the-issue-commands.md#epics-and-features), #597): an epic or a feature, once classified, goes from Triage to the Backlog and stays there until it closes, its state its children's, and is never a row of a Schedule or Scenario project; `star github issue move` puts any epic, feature, task or bug in Triage or the Backlog, and any task or bug on a schedule or a scenario, from wherever it is; and the sweep returns an epic or a feature on a Schedule or Scenario project, not one on the Backlog.
+
 Ruled 2026-11-03: a new issue reaches its team's Triage project through a GitHub Actions workflow in each repository.
 The workflow runs when an issue is opened or transferred, and uses actions/add-to-project. Since 2026-11-16 it leaves
 out a Schedule or Scenario issue, whose row is on its Schedule or Scenario project: a step before the Triage step reads
@@ -743,6 +745,8 @@ off its schedule, is #436's to design. It will run every day as a scheduled GitH
 rule it broke. The sweep will block no filing and correct nothing by itself: triage fixes the issue by hand. A hierarchy
 type whose description names no level is a fault of the model, not of an issue, and pull and push will check it (#426
 and #437).
+
+Superseded in part on 2026-11-17 ([section 10 § Epics and features](10-the-issue-commands.md#epics-and-features), #597): an epic or a feature, once classified, goes from Triage to the Backlog and stays there until it closes, its state its children's, and is never a row of a Schedule or Scenario project; `star github issue move` puts any epic, feature, task or bug in Triage or the Backlog, and any task or bug on a schedule or a scenario, from wherever it is; and the sweep returns an epic or a feature on a Schedule or Scenario project, not one on the Backlog.
 
 Ruled 2026-11-03: a Schedule or Scenario issue has no parent. Epic is at the top of the hierarchy, and Schedule and
 Scenario are its two peers there.

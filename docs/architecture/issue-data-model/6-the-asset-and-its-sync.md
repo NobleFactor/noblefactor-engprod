@@ -542,6 +542,8 @@ projects:                             # the account's four project templates
   product changes, since it has value before, during and after a release. Both accounts' Scenario forms were brought
   to this in #453, on 2026-11-14.
 
+  Superseded in part on 2026-11-17 ([section 10 § Epics and features](10-the-issue-commands.md#epics-and-features), #597): an epic or a feature, once classified, goes from Triage to the Backlog and stays there until it closes, its state its children's, and is never a row of a Schedule or Scenario project; `star github issue move` puts any epic, feature, task or bug in Triage or the Backlog, and any task or bug on a schedule or a scenario, from wherever it is; and the sweep returns an epic or a feature on a Schedule or Scenario project, not one on the Backlog.
+
   Ruled 2026-11-04: accepted tasks and bugs go out of Triage to the Backlog with their Priority or onto a schedule, and
   from the Backlog onto a schedule highest Priority first; a committed schedule takes one only by its owner's amendment,
   recorded in the Schedule issue. Epics and features are never rows of a Backlog, Schedule or Scenario project: once
@@ -569,6 +571,8 @@ projects:                             # the account's four project templates
   no Priority field to sort by. It also sets the views' visible fields, since read 2026-11-04 they show none of these:
   Area in every view of the Triage projects, Priority in the Backlog projects' views and their By priority view, and
   Labels in David-Noble-at-work's Triage and Backlog views.
+
+  Superseded in part on 2026-11-17 ([section 10 § Epics and features](10-the-issue-commands.md#epics-and-features), #597): an epic or a feature, once classified, goes from Triage to the Backlog and stays there until it closes, its state its children's, and is never a row of a Schedule or Scenario project; `star github issue move` puts any epic, feature, task or bug in Triage or the Backlog, and any task or bug on a schedule or a scenario, from wherever it is; and the sweep returns an epic or a feature on a Schedule or Scenario project, not one on the Backlog.
 - **Ids beside names,** for every project, field and single-select option. GitHub holds a row's single-select value
   as the option's id, not its text, as it holds a label and an issue type on an issue by id: rename the option and
   every row shows the new name; delete it and every row holding it goes blank. With the ids in the model, `diff` and

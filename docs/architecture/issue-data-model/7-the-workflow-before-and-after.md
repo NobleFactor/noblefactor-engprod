@@ -39,6 +39,8 @@ is `scenario`, and the Thread template is the Scenario template.
 | A repository that does not participate | nothing stops the filing; the issue is unplaced in the next report | Ruled 2026-11-03: a repository takes part in the data model when a team has the maintain role on it, in an organization, or when it has the topic issue-model, in a user account. |
 | What it costs | a body composed by hand, three labels, a marker, a table and a grep, and a report afterward to see what went wrong | today, the same body by hand, with the type, the parent and the Area set in GitHub instead of written as labels and markers; later, one command that will not let the session get it wrong |
 
+Superseded in part on 2026-11-17 ([section 10 § Epics and features](10-the-issue-commands.md#epics-and-features), #597): an epic or a feature, once classified, goes from Triage to the Backlog and stays there until it closes, its state its children's, and is never a row of a Schedule or Scenario project; `star github issue move` puts any epic, feature, task or bug in Triage or the Backlog, and any task or bug on a schedule or a scenario, from wherever it is; and the sweep returns an epic or a feature on a Schedule or Scenario project, not one on the Backlog.
+
 The permission does not change: filing is a write to GitHub, and it runs as `gh issue create` runs today, by the owner
 or under a grant.
 
@@ -93,6 +95,8 @@ Scenario issue: 14 that are also rows of a Schedule project, and noblefactor-eng
 of Scenario: devlore. How the sweep later handles an issue in a scenario and in another project, without taking a
 scheduled item off its schedule, is #436's to design.
 
+Superseded in part on 2026-11-17 ([section 10 § Epics and features](10-the-issue-commands.md#epics-and-features), #597): an epic or a feature, once classified, goes from Triage to the Backlog and stays there until it closes, its state its children's, and is never a row of a Schedule or Scenario project; `star github issue move` puts any epic, feature, task or bug in Triage or the Backlog, and any task or bug on a schedule or a scenario, from wherever it is; and the sweep returns an epic or a feature on a Schedule or Scenario project, not one on the Backlog.
+
 Ruled 2026-11-04: a scenario changes no issue's priority; triage sets each issue's Priority. The Backlog shows its order
 in a view named By priority, sorted by Priority, which the script of #303's closing pull request makes in Backlog:
 engprod, Backlog: devlore and the Backlog template. David-Noble-at-work's Backlog has no Priority field to sort by,
@@ -107,6 +111,8 @@ in the Backlog projects' views, By priority among them.
 | What they read | kind labels, epic labels, the markers in bodies, the lane tables | the type (in a user account, its type label, read first and kept), the sub-issue link and the rows of the team's projects. NobleFactor's kind labels, the markers in bodies and the step and beat tables retired from GitHub on 2026-11-03, and the `Epic:` and `Thread:` labels are gone, so nothing reads them |
 | What the audit catches | a missing or doubled label, a missing epic, a marker naming the wrong kind | the sweep (#436), ruled 2026-11-04 and built 2026-11-08, which returns the issue where the audit named the fault, and comments on it naming the rule it broke; its daily run comes with its workflow. As ruled: it will return to its team's Triage project any open issue that isn't fully classified, or that breaks another rule of the model, such as an issue with no Area, an issue other than a Scenario issue with no Evidence of completion section, two labels of one attribute in a user account, an epic or a feature that is a row of a Backlog, Schedule or Scenario project, an issue that is a row of more than one of its account's projects or on more than one schedule or scenario, whichever team owns them, or a resolution on an open issue, in NobleFactor its Resolution field, which the model records among the organization's issue fields, and in David-Noble-at-work a `resolution:` label, the model recording which labels are resolutions. It will leave a scenario's rows alone but for two structural rules, on an epic or a feature in a scenario and on an issue in a scenario and in another of its account's projects; every other rule waits until an item logged while walking the scenario moves out. It will run every day and comment on each issue it returns, naming the rule the issue broke, and it will block no filing and correct nothing by itself. The markers are gone from issue bodies, so nothing reads them |
 | What the report rests on | our text inside GitHub's issues | GitHub's own record of them |
+
+Superseded in part on 2026-11-17 ([section 10 § Epics and features](10-the-issue-commands.md#epics-and-features), #597): an epic or a feature, once classified, goes from Triage to the Backlog and stays there until it closes, its state its children's, and is never a row of a Schedule or Scenario project; `star github issue move` puts any epic, feature, task or bug in Triage or the Backlog, and any task or bug on a schedule or a scenario, from wherever it is; and the sweep returns an epic or a feature on a Schedule or Scenario project, not one on the Backlog.
 
 ## What goes and what stays
 

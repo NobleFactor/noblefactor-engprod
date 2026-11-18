@@ -125,6 +125,8 @@ a user account, summarizes an end-user goal and names the features it exercises;
 found by walking it, each until it moves to Triage or onto a schedule, and Beat orders them by the point in the walk
 where each turned up (ruled 2026-11-04).
 
+Superseded in part on 2026-11-17 ([section 10 § Epics and features](10-the-issue-commands.md#epics-and-features), #597): an epic or a feature, once classified, goes from Triage to the Backlog and stays there until it closes, its state its children's, and is never a row of a Schedule or Scenario project; `star github issue move` puts any epic, feature, task or bug in Triage or the Backlog, and any task or bug on a schedule or a scenario, from wherever it is; and the sweep returns an epic or a feature on a Schedule or Scenario project, not one on the Backlog.
+
 Ruled 2026-11-03: a Schedule or Scenario issue has no parent. Epic is at the top of the hierarchy, and Schedule and
 Scenario are its two peers there.
 
@@ -202,6 +204,8 @@ recording each on its Scenario issue; and deletes the Triage rows of the 30 open
 that are also rows of a Schedule project ([section 5](5-from-todays-scheme.md) § The deltas). How the sweep later
 handles an issue in a scenario and in another project, without taking a scheduled item off its schedule, is #436's to
 design.
+
+Superseded in part on 2026-11-17 ([section 10 § Epics and features](10-the-issue-commands.md#epics-and-features), #597): an epic or a feature, once classified, goes from Triage to the Backlog and stays there until it closes, its state its children's, and is never a row of a Schedule or Scenario project; `star github issue move` puts any epic, feature, task or bug in Triage or the Backlog, and any task or bug on a schedule or a scenario, from wherever it is; and the sweep returns an epic or a feature on a Schedule or Scenario project, not one on the Backlog.
 
 ## Sections
 
@@ -319,6 +323,7 @@ design.
   walking a scenario goes to the scenario instead of to Triage (§ Terms, under Scenario). Ruled 2026-11-03: a repository
   takes part in the data model when a team has the maintain role on it, in an organization, or when it has the topic
   issue-model, in a user account.
+- Superseded in part on 2026-11-17 ([section 10 § Epics and features](10-the-issue-commands.md#epics-and-features), #597): an epic or a feature, once classified, goes from Triage to the Backlog and stays there until it closes, its state its children's, and is never a row of a Schedule or Scenario project; `star github issue move` puts any epic, feature, task or bug in Triage or the Backlog, and any task or bug on a schedule or a scenario, from wherever it is; and the sweep returns an epic or a feature on a Schedule or Scenario project, not one on the Backlog.
 - **Backlog project:** a team's accepted work not yet scheduled, or a user account's, ordered by priority (ruled
   2026-11-03). Work goes from it onto a schedule highest Priority first, and a scenario changes no issue's priority:
   triage sets each issue's Priority (ruled 2026-11-04). It shows its order in a view named By priority, sorted by
@@ -347,6 +352,7 @@ design.
   features it uses". The project's single-select Scenario field names the scenario each row belongs to, with an option
   named for each Scenario issue. There is no project per scenario. Scenarios were called threads until 2026-11-03, and a
   thread had a project of its own (ruled 2026-11-03).
+- Superseded in part on 2026-11-17 ([section 10 § Epics and features](10-the-issue-commands.md#epics-and-features), #597): an epic or a feature, once classified, goes from Triage to the Backlog and stays there until it closes, its state its children's, and is never a row of a Schedule or Scenario project; `star github issue move` puts any epic, feature, task or bug in Triage or the Backlog, and any task or bug on a schedule or a scenario, from wherever it is; and the sweep returns an epic or a feature on a Schedule or Scenario project, not one on the Backlog.
 - **Schedule:** a set of tasks and bugs in the order they are worked, described by an issue of type Schedule, labeled
   `schedule` in a user account; that issue holds the schedule's deliverable and exit criteria. The team's Schedule
   project holds its committed tasks and bugs. Its single-select Schedule field names the schedule each row belongs

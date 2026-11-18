@@ -11,6 +11,8 @@ documents:
     path: docs/architecture/issue-data-model/8-the-schedule-commands.md
   - kind: Design
     path: docs/architecture/issue-data-model/9-the-scenario-commands.md
+  - kind: Design
+    path: docs/architecture/issue-data-model/1-hierarchy.md
 ---
 
 # The star github issue verbs, open, move, close and reopen, designed and built in one pull request
@@ -19,11 +21,11 @@ documents:
 
 ## 1. Role assignments
 
-Owner David Noble. Participant: Claude Code, in the session working [issue tracking, iteration 2 (#588)](https://github.com/NobleFactor/noblefactor-engprod/issues/588), steps 1 to 4. Reviewer: the owner. Observers: none.
+Owner David Noble. Participant: Claude Code, in the session working [issue tracking, iteration 2 (#588)](https://github.com/NobleFactor/noblefactor-engprod/issues/588), steps 1 to 6. Reviewer: the owner. Observers: none.
 
 ## 2. Summary and promised result
 
-`star github issue` has four verbs, ruled by the owner on 2026-11-17: `open`, with `create` its synonym, `move`, `close` and `reopen`. Section 10 of the issue data model designs them, as sections 8 and 9 design the schedule and scenario commands; `move` is as built (#511, #531), and `open`, `close` and `reopen` are built and proved in both sandboxes in this pull request. Out of scope: the filing skill, retyping, and the app's permission to write issue fields (§ 11).
+`star github issue` has four verbs, ruled by the owner on 2026-11-17: `open`, with `create` its synonym, `move`, `close` and `reopen`. Section 10 of the issue data model designs them, as sections 8 and 9 design the schedule and scenario commands; `open`, `close` and `reopen` are built and proved in both sandboxes in this pull request, and `move`, as built (#511, #531), is fixed to put an issue where it needs to be, from wherever it is (#597). Out of scope: the filing skill, retyping, and the app's permission to write issue fields (§ 11).
 
 ## Issue 589
 
@@ -45,6 +47,10 @@ Owner David Noble. Participant: Claude Code, in the session working [issue track
 
 [NobleFactor/noblefactor-engprod#595](https://github.com/NobleFactor/noblefactor-engprod/issues/595), Task, Area Product: the collection groups take the same verbs, `new` renamed `open`, with `create`, `scenario retire` renamed `close`, and `schedule reopen` and `scenario reopen` added; the `issue` verbs refuse Schedule and Scenario issues. Ruled by the owner on 2026-11-17, and put in this pull request.
 
+## Issue 597
+
+[NobleFactor/noblefactor-engprod#597](https://github.com/NobleFactor/noblefactor-engprod/issues/597), Bug, Area Product: `star github issue move` refuses to put an issue where it needs to be. Ruled by the owner on 2026-11-17, and put in this pull request: an epic, a feature, a task or a bug goes to Triage or the Backlog, and a task or a bug to a schedule or a scenario, from wherever it is; an epic or a feature goes from Triage to the Backlog once classified and stays there until it closes; the sweep's rule on epics and features narrows to Schedule and Scenario projects; and each Backlog gets a view of its epics and features.
+
 ## 3. Current state
 
 - `star github issue move` is built (#511) and reads every source before its first write (#531). No other `issue` verb exists; issues are opened, closed and reopened by hand or by a script written for one issue, as on 2026-11-17 for #508, #470 and #346.
@@ -60,9 +66,9 @@ A new section 10 of the issue data model, `10-the-issue-commands.md`, and its st
 
 **Section 10**, verb by verb, as section 9 is written: each verb's syntax, refusals, writes in order and read-backs, and its records, in both accounts.
 
-- `open`: as #338's body gives it, from a template or from flags; each section its type's form asks for, read from the account's `.github` repository when it runs, so #572's changes to the forms need no change here; refused without an Area; `--dry-run` refused until NobleFactor/devlore-cli#1170, as the other commands do.
+- `open`: as #338's body gives it, from a template or from flags, as ruled on 2026-11-17 (§ 12): in the repository of the clone it runs in, `--directory` naming another; no `--project` or `--status`; no assignee unless one is given; each section its type's form asks for, read from the account's `.github` repository when it runs, so #572's changes to the forms need no change here; refused without an Area; `--dry-run` refused until NobleFactor/devlore-cli#1170, as the other commands do.
 - `create`: the same command, declared as an alias once NobleFactor/devlore-cli#1235 lands, and until then a second manifest entry with the same implementation.
-- `move`: as built.
+- `move`: as built, fixed by #597 (§ 12, departures 6 and 7): from wherever an issue is, an epic, a feature, a task or a bug to Triage or the Backlog, a task or a bug to a schedule or a scenario, a Schedule or Scenario issue nowhere, each source left as sections 8 and 9 record a move; `star github triage sweep`'s `epic-on-collection` rule narrowed to Schedule and Scenario projects; `reopen` gives a reopened epic or feature with no row a Triage row; each Backlog project, and the Backlog template, a view of its epics and features.
 - `close <issue>... ( --evidence <file> | --resolution Declined|Duplicate|Invalid --reason <text> )`: the comment, the Resolution or `resolution:` label, the issue closed as completed, its rows Closed; a closed step stays on its schedule, as merged ones do (section 8, question 5), and an item on a scenario leaves it, its row removed and its leaving recorded, as section 9 rules a closed item does (question 7). An item closed some other way, by a merge's `Closes` line among them, is #593's recurring check.
 - `reopen <issue>... --reason <text>`: the issue reopened, its Resolution cleared, its rows Open; each closed parent and each closed schedule or scenario it is on reopened, a schedule's own row In progress and its every-step criterion unticked; an item that left its scenario on closing goes to its team's Triage project, not back to the scenario.
 
@@ -90,13 +96,14 @@ A new section 10 of the issue data model, `10-the-issue-commands.md`, and its st
 | Each verb does what section 10 says | its cases pass | `tests/Test-StarGitHub` | this branch |
 | Each verb works live | the proof's steps pass in both accounts | the proof's records, on each issue | the two sandboxes |
 | `create` runs `open` | `star github issue create --help` is `open`'s | its case | this branch |
+| `move` puts an issue where its type allows, from wherever it is | its cases pass, and the sweep's | `tests/Test-StarGitHub` | this branch |
 
 ## 8. Required completion milestones
 
 | Milestone | Required? | Expected evidence | State/result |
 | --- | --- | --- | --- |
 | Implementation | yes | this branch | Pending |
-| Merge | yes | the pull request, closing #589, #338, #590, #587 and #595 | Pending |
+| Merge | yes | the pull request, closing #589, #338, #590, #587, #595 and #597 | Pending |
 | Deployment | yes: writ deploys the extension's new files | the owner's next `writ deploy` | Pending |
 | Verification | yes | the proof, on each issue | Pending |
 
@@ -116,6 +123,7 @@ A new section 10 of the issue data model, `10-the-issue-commands.md`, and its st
 - [x] `reopen` (#587), with its cases, 129 to 134, built on 2026-11-17 in section 10's order: the issue reopened, its Resolution cleared and its comment, its rows, its closed parents, then its closed schedules, by the code `schedule reopen` will run
 - [ ] `open` and `create` (#338), with its cases
 - [ ] The collection groups' `open`, `close` and `reopen`, `new` and `retire` renamed everywhere they stand (#595), with their cases
+- [ ] `move` fixed, the sweep's rule narrowed, `reopen`'s rows for epics and features, and each Backlog's view of its epics and features (#597), with their cases
 
 ### 9.4 Phase 4: the documentation
 
@@ -123,7 +131,7 @@ A new section 10 of the issue data model, `10-the-issue-commands.md`, and its st
 
 ### 9.5 Phase 5: the proof and the merge
 
-- [ ] Each verb proved in both sandboxes; the pull request merged, closing #589, #338, #590, #587 and #595, each with its evidence
+- [ ] Each verb proved in both sandboxes; the pull request merged, closing #589, #338, #590, #587, #595 and #597, each with its evidence
 
 ## 10. Files and related assets
 
@@ -160,6 +168,11 @@ Departures, each ruled by the owner:
 
 1. **`close`'s order, ruled 2026-11-17: section 10's order stands.** `close` was first built, in b68d022, to change an issue's rows first and close it last, and to change the rows of an issue already closed. The owner ruled the approved order kept: the comment, the Resolution, the issue closed, then its rows; an issue already closed is left as it is. The next commit restored it.
 2. **A reopened issue with no row, ruled 2026-11-17: it goes to Triage.** Section 10 sent an item that left its scenario to Triage and said nothing of a task or bug `close` took off Triage or Backlog. The owner ruled that every reopened task or bug that has no row on its team's four projects gets a Triage row; an epic or a feature gets none. An issue with no type and no row gets one too, since section 1 has an untriaged issue wait in Triage.
+3. **Where `open` opens its issue, ruled 2026-11-17: in the repository of the clone it runs in.** Neither section 10 nor #338 named the repository. The owner ruled that `open` takes it from the clone's origin, as `star github plan link` does, and `--directory <path>` names another clone, as git's `-C` does; `-C` waits on NobleFactor/devlore-cli#1236, filed that day, which lets an extension flag take a short name beside its long one.
+4. **`--project` and `--status`, ruled 2026-11-17: dropped.** The Triage workflow gives every issue opened a Triage row, so a row `open` made on a Backlog project would leave the issue on two of its account's projects, which section 1 forbids. The owner ruled that `open` leaves the row to the workflow, and `move` places the issue from Triage.
+5. **The assignee, ruled 2026-11-17: no one unless `--assignee` names someone,** so a workflow that opens an issue doesn't assign it to its bot.
+6. **`move`, ruled 2026-11-17: it puts an issue where it needs to be, from wherever it is.** `move --backlog` refused an issue in Triage, so an issue `open` opens could not reach the Backlog by command. The owner ruled the old refusals broken: an epic, a feature, a task or a bug goes to Triage or the Backlog, a task or a bug to a schedule or a scenario, and a Schedule or Scenario issue nowhere. Filed as Bug #597, step 6, and put in this pull request.
+7. **Epics and features, ruled 2026-11-17: on the Backlog until they close, their state their children's.** In place of the ruling of 2026-11-04 that an epic or a feature, once classified, leaves Triage for no project, it goes from Triage to the Backlog and stays there until it closes; nothing moves it when its tasks and bugs are pulled onto a schedule or a scenario. The owner first proposed that it leave the Backlog when its first task or bug went onto a schedule or a scenario, and asked how other trackers do it: Azure Boards, Jira, Shortcut and Linear move none, only its children, and change its state instead (section 10, § Epics and features, with its sources). The owner chose the simplest thing, with that evidence.
 
 ## 13. Completion review
 
