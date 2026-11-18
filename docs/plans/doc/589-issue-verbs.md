@@ -121,7 +121,7 @@ A new section 10 of the issue data model, `10-the-issue-commands.md`, and its st
 
 - [x] `close` (#590), with its cases, 122 to 128, built on 2026-11-17 in section 10's order: its comment, its Resolution, the issue closed, then its rows
 - [x] `reopen` (#587), with its cases, 129 to 134, built on 2026-11-17 in section 10's order: the issue reopened, its Resolution cleared and its comment, its rows, its closed parents, then its closed schedules, by the code `schedule reopen` will run
-- [ ] `open` and `create` (#338), with its cases
+- [x] `open` and `create` (#338), with its cases, 135 to 140, built on 2026-11-17 to section 10 as ruled that day: the repository the clone's, `--directory` naming another; everything read before one `createIssue`, its type, parent, assignee and fields, or labels in a user account; no row, the Triage workflow giving it its own; `unique` finding the parent's sub-issue by title; `create` a second manifest entry until NobleFactor/devlore-cli#1235
 - [ ] The collection groups' `open`, `close` and `reopen`, `new` and `retire` renamed everywhere they stand (#595), with their cases
 - [ ] `move` fixed, the sweep's rule narrowed, `reopen`'s rows for epics and features, and each Backlog's view of its epics and features (#597), with their cases
 

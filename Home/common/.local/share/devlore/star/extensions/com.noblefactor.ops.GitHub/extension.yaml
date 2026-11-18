@@ -143,6 +143,112 @@ commands:
         default: ""
         help: "Why the product no longer has the scenario, written in the comment on its Scenario issue; required"
 
+  - name: github.issue.open
+    help: "Open an issue of any type but Schedule and Scenario in the repository of the clone it runs in, or the one --directory names, classified as it is made, from flags or from a template whose blanks --set fills: everything read before the first write, the type's form from the account's .github repository among it, and the issue opened in one call with its type, its parent, its assignee, and its Area, Priority and Severity, the issue fields in an organization or the labels that stand in for them in a user account; its row left to the Triage workflow; read back; return one flat record of the issue opened, or found with --unique; refuses an issue without an Area, a type the account doesn't have, a parent at the wrong level, a body without a section its form requires or its Plan and design documents table, and --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    implementation: commands/github-issue-open.star
+    flags:
+      - name: template
+        type: string
+        default: ""
+        help: "A template: a line ---, its header of type, parent, title, area, priority, severity, assignee and unique, a line ---, then the issue's body, its {name} blanks filled by --set; takes no flag but --set and --directory"
+      - name: set
+        type: string
+        default: ""
+        help: "With --template, the values of its blanks, <name>=<value>, comma-separated; a blank left unfilled is refused"
+      - name: type
+        type: string
+        default: ""
+        help: "The issue's type: Epic, Feature, Task or Bug, as the account's model names them; a Schedule or Scenario issue is opened by its group's open"
+      - name: parent
+        type: string
+        default: ""
+        help: "Its parent, <owner>/<repository>#<number>, one level up, in its own account; an Epic has none, and every other type needs one"
+      - name: title
+        type: string
+        default: ""
+        help: "Its title"
+      - name: body-file
+        type: string
+        default: ""
+        help: "A file holding its body, every section its type's form requires and its Plan and design documents table"
+      - name: area
+        type: string
+        default: ""
+        help: "Its Area, Product or Engineering; required"
+      - name: priority
+        type: string
+        default: ""
+        help: "Its Priority, Urgent, High, Medium or Low; default: Medium"
+      - name: severity
+        type: string
+        default: ""
+        help: "A Bug's Severity, Critical, High, Medium or Low; default: Medium; every other type's is N/A"
+      - name: assignee
+        type: string
+        default: ""
+        help: "Who it is assigned to; default: no one"
+      - name: unique
+        type: bool
+        default: "false"
+        help: "Open nothing when the parent already holds a sub-issue, open or closed, with the same title, and say so"
+      - name: directory
+        type: string
+        default: ""
+        help: "The clone whose repository the issue opens in, as git's -C names one; default: the clone the command runs in"
+
+  - name: github.issue.create
+    help: "The same command as star github issue open, by its synonym (ruled 2026-11-17); an alias once NobleFactor/devlore-cli#1235 lets an extension command name one. Open an issue of any type but Schedule and Scenario in the repository of the clone it runs in, or the one --directory names, classified as it is made, from flags or from a template whose blanks --set fills: everything read before the first write, the type's form from the account's .github repository among it, and the issue opened in one call with its type, its parent, its assignee, and its Area, Priority and Severity, the issue fields in an organization or the labels that stand in for them in a user account; its row left to the Triage workflow; read back; return one flat record of the issue opened, or found with --unique; refuses an issue without an Area, a type the account doesn't have, a parent at the wrong level, a body without a section its form requires or its Plan and design documents table, and --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
+    implementation: commands/github-issue-open.star
+    flags:
+      - name: template
+        type: string
+        default: ""
+        help: "A template: a line ---, its header of type, parent, title, area, priority, severity, assignee and unique, a line ---, then the issue's body, its {name} blanks filled by --set; takes no flag but --set and --directory"
+      - name: set
+        type: string
+        default: ""
+        help: "With --template, the values of its blanks, <name>=<value>, comma-separated; a blank left unfilled is refused"
+      - name: type
+        type: string
+        default: ""
+        help: "The issue's type: Epic, Feature, Task or Bug, as the account's model names them; a Schedule or Scenario issue is opened by its group's open"
+      - name: parent
+        type: string
+        default: ""
+        help: "Its parent, <owner>/<repository>#<number>, one level up, in its own account; an Epic has none, and every other type needs one"
+      - name: title
+        type: string
+        default: ""
+        help: "Its title"
+      - name: body-file
+        type: string
+        default: ""
+        help: "A file holding its body, every section its type's form requires and its Plan and design documents table"
+      - name: area
+        type: string
+        default: ""
+        help: "Its Area, Product or Engineering; required"
+      - name: priority
+        type: string
+        default: ""
+        help: "Its Priority, Urgent, High, Medium or Low; default: Medium"
+      - name: severity
+        type: string
+        default: ""
+        help: "A Bug's Severity, Critical, High, Medium or Low; default: Medium; every other type's is N/A"
+      - name: assignee
+        type: string
+        default: ""
+        help: "Who it is assigned to; default: no one"
+      - name: unique
+        type: bool
+        default: "false"
+        help: "Open nothing when the parent already holds a sub-issue, open or closed, with the same title, and say so"
+      - name: directory
+        type: string
+        default: ""
+        help: "The clone whose repository the issue opens in, as git's -C names one; default: the clone the command runs in"
+
   - name: github.issue.move
     help: "Move issues, in the order given, to one destination: --schedule puts them on a schedule, each with its step, its schedule's option and Status Open, placed in step order and leaving the project it was on, or with --after moves one already there, the steps between renumbered, closed or open; --triage or --backlog takes steps off their schedule to their team's Triage or Backlog project, every later step moving up, and --triage takes items off their scenario; --scenario puts tasks and bugs on a scenario at a Beat, or sets the Beat of one already on it; a schedule's change writes one amendment line in its Schedule issue, and a scenario's a comment on its Scenario issue and a line in the item's body, each naming the date, who ran it and why; return one flat record for each row it added, moved, took off or left; refuses --dry-run until NobleFactor/devlore-cli#1170 lets a dry run read"
     implementation: commands/github-issue-move.star

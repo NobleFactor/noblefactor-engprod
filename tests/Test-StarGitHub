@@ -416,7 +416,8 @@ function base_world {
         issue_fields: {IF_area: {name: "Area", options: {o_product: "Product", o_engineering: "Engineering"}},
             IF_priority: {name: "Priority", options: {o_urgent: "Urgent", o_high_priority: "High", o_medium_priority: "Medium",
                 o_low_priority: "Low"}},
-            IF_resolution: {name: "Resolution", options: {o_declined: "Declined", o_duplicate: "Duplicate", o_invalid: "Invalid"}}},
+            IF_resolution: {name: "Resolution", options: {o_declined: "Declined", o_duplicate: "Duplicate", o_invalid: "Invalid"}},
+            IF_severity: {name: "Severity", options: {o_critical: "Critical", o_high: "High", o_medium: "Medium", o_low: "Low", o_na: "N/A"}}},
         issues: (
             issue("NobleFactor/alpha"; 20; "Schedule"; "Schedule: s1"; {body: body("s1"; "- 2026-11-01, on the owner'"'"'s word: step 4 was added, Task NobleFactor/alpha#24.\n")})
             + issue("NobleFactor/alpha"; 21; "Task"; "the first step"; {state: "CLOSED"})
@@ -688,6 +689,31 @@ elif $op == "starStepFields" then
         | {name: .value, field: {name: .key}}]}}}}}
 elif $op == "starStepClose" then
     {world: ($w | .issues[$i] |= (.state = "CLOSED" | .stateReason = "COMPLETED")), answer: {data: {closeIssue: {issue: {id: $i}}}}}
+elif $op == "starStepRepository" then
+    # A repository's node ID, its issue types, an organization's six, and its labels, the world's or the user account's.
+    {answer: {data: {repository: {id: ("R_" + $repo),
+        issueTypes: {nodes: (if ($repo | startswith("test-user/")) then []
+            else (["Epic", "Feature", "Task", "Bug", "Schedule", "Scenario"] | map({id: ("IT_" + .), name: .})) end)},
+        labels: {nodes: (($w.labels[$repo] // ["epic", "feature", "task", "bug", "schedule", "scenario", "area:product",
+            "area:engineering", "priority:urgent", "priority:high", "priority:medium", "priority:low", "severity:critical",
+            "severity:high", "severity:medium", "severity:low", "severity:n/a"]) | map({id: ("L_" + .), name: .}))}}}}}
+elif $op == "starStepSubIssues" then
+    # An issue's sub-issues, open and closed: every issue whose parent it is.
+    ([$w.issues[] | select(.repo == $repo and (.number | tostring) == $number) | .id][0]) as $pid |
+    {answer: {data: {repository: {issue: {subIssues: {nodes: [$w.issues[] | select(.parent == $pid and $pid != null)
+        | {number, title, repository: {nameWithOwner: .repo}}]}}}}}}
+elif $op == "starStepCreate" then
+    # GitHub's createIssue, its input the JSON star sent: the issue joins the world, numbered after its repository's last.
+    ($body | fromjson | .variables.input) as $in | ($in.repositoryId | ltrimstr("R_")) as $r |
+    (([$w.issues[] | select(.repo == $r) | .number] | max // 0) + 1) as $n |
+    ("I_" + ($r | split("/")[1]) + "_" + ($n | tostring)) as $id |
+    {world: ($w | .issues[$id] = {id: $id, repo: $r, number: $n, title: $in.title, state: "OPEN",
+            type: (($in.issueTypeId // "") | ltrimstr("IT_") | if . == "" then null else . end),
+            labels: [($in.labelIds // [])[] | ltrimstr("L_")], assignees: [($in.assigneeIds // [])[] | ltrimstr("U_")],
+            blockedBy: [], body: $in.body, parent: ($in.parentIssueId // null),
+            fields: (reduce ($in.issueFields // [])[] as $f ({};
+                . + {($w.issue_fields[$f.fieldId].name): $w.issue_fields[$f.fieldId].options[$f.singleSelectOptionId]}))}),
+        answer: {data: {createIssue: {issue: {number: $n}}}}}
 elif $op == "starStepReopen" then
     {world: ($w | .issues[$i] |= (.state = "OPEN" | .stateReason = null)), answer: {data: {reopenIssue: {issue: {id: $i}}}}}
 elif $op == "starStepClearField" then
@@ -981,6 +1007,15 @@ done
 
 [[ "${input}" != - ]] || body="$(cat)"
 
+# A GraphQL call sent with --input, as star github issue open sends createIssue (#338), is recorded with its query and its
+# variables, as a call with -f records them, so that in_order and no_writes find it: its record, the last, is rewritten.
+if [[ "${rest_path}" == graphql && "${input}" == - && -n "${body}" ]]; then
+    last="$(tail -n 1 "${GH_CALLS}")"
+    sed -i '$ d' "${GH_CALLS}"
+    jq -c --arg q "query=$(jq -r '.query // ""' <<<"${body}")" --arg v "variables=$(jq -c '.variables // {}' <<<"${body}")" \
+        '. + [$q, $v]' <<<"${last}" >>"${GH_CALLS}"
+fi
+
 # The rules on a repository's branch, and its head commit's workflow runs, as the case's ci set them.
 ci_path='^repos/([^/]+/[^/]+)/(rules/branches/[^?]+|actions/runs\?head_sha=)'
 if [[ "${rest_path}" =~ ${ci_path} ]]; then
@@ -1199,6 +1234,8 @@ if [[ "${rest_path}" != graphql ]]; then
 fi
 
 query="${vars[query]:-}"
+# A GraphQL call sent with --input, as star github issue open sends createIssue (#338): its query is in the JSON it reads.
+[[ -n "${query}" || -z "${body}" ]] || query="$(jq -r '.query // ""' <<<"${body}")"
 [[ "${query}" =~ (query|mutation)[[:space:]]+(star[A-Za-z]+) ]] || { printf 'stand-in gh: no operation name in %s\n' "${query}" >&2; exit 1; }
 operation_kind="${BASH_REMATCH[1]}" operation="${BASH_REMATCH[2]}"
 login="" owner="" name=""
@@ -4119,6 +4156,167 @@ expect "134 (#587): a step on a schedule whose option names no Schedule issue is
 world
 run_star "${data}" github issue reopen NobleFactor/alpha#21 --reason "R." --dry-run
 expect "134 (#587): and star's --dry-run, until devlore-cli#1170" error "${no_writes}" "1170" text
+
+# 135 to 140: star github issue open, and create, its synonym (#338). They run with the data directory of the schedule
+# new cases, whose NobleFactor has a Priority issue field. Each account's .github repository holds its forms; each run
+# names its clone with --directory, a clone whose origin names the repository; and the world adds #60, a feature, under
+# #61, an epic, both open.
+task_textareas=("problem=Problem" "evidence=Evidence of completion")
+repository NobleFactor/.github \
+    ".github/ISSUE_TEMPLATE/schedule.yml=$(issue_form Schedule 'type: Schedule' "${schedule_textareas[@]}")" \
+    ".github/ISSUE_TEMPLATE/scenario.yml=$(issue_form Scenario 'type: Scenario' "${scenario_textareas[@]}")" \
+    ".github/ISSUE_TEMPLATE/task.yml=$(issue_form Task 'type: Task' "${task_textareas[@]}")" \
+    ".github/ISSUE_TEMPLATE/bug.yml=$(issue_form Bug 'type: Bug' "what=What happens" "evidence=Evidence of completion")" \
+    ".github/ISSUE_TEMPLATE/feature.yml=$(issue_form Feature 'type: Feature' "deliverable=Deliverable" "evidence=Evidence of completion")" \
+    ".github/ISSUE_TEMPLATE/epic.yml=$(issue_form Epic 'type: Epic' "goal=Goal" "evidence=Evidence of completion")"
+repository test-user/.github \
+    ".github/ISSUE_TEMPLATE/schedule.yml=$(issue_form Schedule $'labels:\n- schedule' "${schedule_textareas[@]}")" \
+    ".github/ISSUE_TEMPLATE/scenario.yml=$(issue_form Scenario $'labels:\n- scenario' "${scenario_textareas[@]}")" \
+    ".github/ISSUE_TEMPLATE/task.yml=$(issue_form Task $'labels:\n- task' "${task_textareas[@]}")" \
+    ".github/ISSUE_TEMPLATE/epic.yml=$(issue_form Epic $'labels:\n- epic' "goal=Goal" "evidence=Evidence of completion")"
+for clone in alpha:NobleFactor/alpha personal:test-user/personal nowhere:NobleFactor/nowhere; do
+    git init --quiet --initial-branch=main "${run_directory}/clone-${clone%%:*}"
+    git -C "${run_directory}/clone-${clone%%:*}" remote add origin "https://github.com/${clone#*:}.git"
+done
+mkdir -p -- "${run_directory}/no-clone"
+declare -r documents_table=$'### Plan and design documents\n\n| Kind | Document |\n| --- | --- |\n| Plan | Not yet opened |\n'
+printf '### Problem\n\nIt is missing.\n\n### Evidence of completion\n\nA case.\n\n%s' "${documents_table}" >"${run_directory}/task.md"
+printf '### What happens\n\nIt breaks.\n\n### Evidence of completion\n\nA case.\n\n%s' "${documents_table}" >"${run_directory}/bug.md"
+printf '### Deliverable\n\nA feature.\n\n### Evidence of completion\n\nA demo.\n\n%s' "${documents_table}" >"${run_directory}/feature.md"
+printf '### Goal\n\nAn epic.\n\n### Evidence of completion\n\nA demo.\n\n%s' "${documents_table}" >"${run_directory}/epic.md"
+printf '### Problem\n\nIt is missing.\n\n%s' "${documents_table}" >"${run_directory}/no-evidence.md"
+printf '### Problem\n\nIt is missing.\n\n### Evidence of completion\n\nA case.\n\n### Plan and design documents\n\nNone yet.\n' \
+    >"${run_directory}/no-table.md"
+cat >"${run_directory}/monthly.md" <<'TEMPLATE'
+---
+type: Task
+parent: NobleFactor/alpha#60
+title: "Update CI, {month}: the workflows' actions"
+area: Engineering
+priority: High
+unique: true
+---
+### Problem
+
+The actions for {month} are behind; ${HOME} is left as it is.
+
+### Evidence of completion
+
+The workflows pass.
+
+### Plan and design documents
+
+| Kind | Document |
+| --- | --- |
+| Plan | Not yet opened |
+TEMPLATE
+declare -r open_world="${closed_parents}"' | .issues.I_alpha_60.state = "OPEN" | .issues.I_alpha_61.state = "OPEN"'
+declare -r one_write='([.[] | select(any(.[]; type == "string" and test("mutation star")))] | length) == 1'
+alpha=(--directory "${run_directory}/clone-alpha")
+
+# 135 (#338). A task opened under #60 from flags: its type, its parent, Area Product, Priority Medium and Severity N/A in
+# one createIssue, no one assigned, and no row, since the Triage workflow gives it its Triage row.
+world "${open_world}"
+run_star "${data_new}" github issue open "${alpha[@]}" --type Task --parent NobleFactor/alpha#60 --area Product \
+    --title "A new task" --body-file "${run_directory}/task.md"
+expect "135 (#338): issue open opens NobleFactor/alpha#62, a Task under #60, Medium and N/A by default" ok \
+    'map([.action, .issue, .type, .parent, .area, .priority, .severity, .assignee])
+        == [["opened", "NobleFactor/alpha#62", "Task", "NobleFactor/alpha#60", "Product", "Medium", "N/A", null]]'
+check "135 (#338): #62 holds its type, parent, fields and body, no one assigned, and is a row of no project" world_holds \
+    '(.issues.I_alpha_62 | [.type, .parent, .fields, .assignees, .title, (.body | startswith("### Problem\n\nIt is missing."))])
+        == ["Task", "I_alpha_60", {Area: "Product", Priority: "Medium", Severity: "N/A"}, [], "A new task", true]
+        and ([.projects[].items[] | select(.content == "I_alpha_62")] == [])'
+check "135 (#338): one write, its createIssue" calls_hold "${one_write}"
+
+# 136 (#338). From a template, its blank filled by --set, ${HOME} left as it is, Priority High; and unique: run again,
+# #60 already holds the title, so nothing is opened, and the record names the issue found.
+world "${open_world}"
+run_star "${data_new}" github issue open "${alpha[@]}" --template "${run_directory}/monthly.md" --set month=November
+expect "136 (#338): issue open opens the template's task, its blanks filled" ok \
+    'map([.action, .issue, .title, .area, .priority]) == [["opened", "NobleFactor/alpha#62", "Update CI, November: the workflows'"'"' actions", "Engineering", "High"]]'
+check "136 (#338): its body has November for {month}, and a shell variable as it was" world_holds \
+    '.issues.I_alpha_62.body | contains("The actions for November are behind; ${HOME} is left as it is.")'
+run_star "${data_new}" github issue open "${alpha[@]}" --template "${run_directory}/monthly.md" --set month=November
+expect "136 (#338): run again, it finds #62 under #60, and opens nothing" ok \
+    "${no_writes}"' and map([.action, .issue]) == [["found", "NobleFactor/alpha#62"]]'
+
+# 137 (#338). A bug, its type named in any case: Severity Medium by default, as the Triage workflow starts a bug, and
+# what --severity names when it is given.
+world "${open_world}"
+run_star "${data_new}" github issue open "${alpha[@]}" --type bug --parent NobleFactor/alpha#60 --area product \
+    --title "A bug" --body-file "${run_directory}/bug.md"
+expect "137 (#338): a bug's Severity is Medium by default" ok 'map([.type, .area, .severity]) == [["Bug", "Product", "Medium"]]'
+world "${open_world}"
+run_star "${data_new}" github issue open "${alpha[@]}" --type Bug --parent NobleFactor/alpha#60 --area Product \
+    --severity High --title "A bug" --body-file "${run_directory}/bug.md"
+expect "137 (#338): and High when --severity names it" ok 'map([.type, .severity]) == [["Bug", "High"]]'
+check "137 (#338): #62's Severity is High" world_holds '.issues.I_alpha_62.fields.Severity == "High"'
+
+# 138 (#338). In a user account, an epic, with no parent, assigned: the labels that stand in for its type and fields.
+world
+run_star "${data_new}" github issue open --directory "${run_directory}/clone-personal" --type Epic --area Engineering \
+    --title "A personal epic" --body-file "${run_directory}/epic.md" --assignee test-user
+expect "138 (#338): issue open opens test-user/personal#21, an Epic, assigned to test-user" ok \
+    'map([.action, .issue, .type, .parent, .severity, .assignee]) == [["opened", "test-user/personal#21", "Epic", null, "N/A", "test-user"]]'
+check "138 (#338): #21 carries epic, area:engineering, priority:medium and severity:n/a, and no parent" world_holds \
+    '(.issues.I_personal_21 | [.labels, .assignees, .parent]) == [["epic", "area:engineering", "priority:medium", "severity:n/a"], ["test-user"], null]'
+
+# 139 (#338). create, open's synonym (ruled 2026-11-17): a feature under #61.
+world "${open_world}"
+run_star "${data_new}" github issue create "${alpha[@]}" --type Feature --parent NobleFactor/alpha#61 --area Product \
+    --title "A feature" --body-file "${run_directory}/feature.md"
+expect "139 (#338): issue create opens a Feature under #61, as open does" ok \
+    'map([.action, .issue, .type, .parent]) == [["opened", "NobleFactor/alpha#62", "Feature", "NobleFactor/alpha#61"]]'
+
+# 140 (#338). issue open refuses, writing nothing.
+world "${open_world}"
+run_star "${data_new}" github issue open "${alpha[@]}" --type Schedule --area Product --title "S" --body-file "${run_directory}/task.md"
+expect "140 (#338): a Schedule issue, naming its group's open" error "${no_writes}" \
+    "a Schedule issue is opened by star github schedule open, not by issue open" text
+run_star "${data_new}" github issue open "${alpha[@]}" --area Product --title "T" --body-file "${run_directory}/task.md"
+expect "140 (#338): no --type" error "${no_writes}" "issue open needs --type, or --template" text
+run_star "${data_new}" github issue open "${alpha[@]}" --type Task --parent NobleFactor/alpha#60 --title "T" --body-file "${run_directory}/task.md"
+expect "140 (#338): no --area" error "${no_writes}" "issue open needs --area, or --template" text
+run_star "${data_new}" github issue open "${alpha[@]}" --type Task --area Product --title "T" --body-file "${run_directory}/task.md"
+expect "140 (#338): a task with no parent" error "${no_writes}" "a Task needs a parent, a Feature" text
+run_star "${data_new}" github issue open "${alpha[@]}" --type Task --parent NobleFactor/alpha#61 --area Product --title "T" \
+    --body-file "${run_directory}/task.md"
+expect "140 (#338): a parent at the wrong level" error "${no_writes}" \
+    "NobleFactor/alpha#61 is of type Epic: a Task's parent is a Feature" text
+run_star "${data_new}" github issue open "${alpha[@]}" --type Epic --parent NobleFactor/alpha#61 --area Product --title "E" \
+    --body-file "${run_directory}/epic.md"
+expect "140 (#338): an epic with a parent" error "${no_writes}" "an Epic is at the top of the hierarchy, and has no parent" text
+run_star "${data_new}" github issue open "${alpha[@]}" --type Epic --area Product --title "E" --body-file "${run_directory}/epic.md" --unique
+expect "140 (#338): unique with no parent" error "${no_writes}" "unique looks through the parent's sub-issues, and the issue has no parent" text
+run_star "${data_new}" github issue open "${alpha[@]}" --type Task --parent NobleFactor/alpha#60 --area Product --title "T" \
+    --body-file "${run_directory}/no-evidence.md"
+expect "140 (#338): a body without a section its form requires" error "${no_writes}" \
+    "the body lacks its section Evidence of completion, which the Task form asks for" text
+run_star "${data_new}" github issue open "${alpha[@]}" --type Task --parent NobleFactor/alpha#60 --area Product --title "T" \
+    --body-file "${run_directory}/no-table.md"
+expect "140 (#338): a documents section without its table" error "${no_writes}" \
+    "the body lacks the table of its Plan and design documents section" text
+run_star "${data_new}" github issue open "${alpha[@]}" --type Task --parent NobleFactor/alpha#60 --area Product --severity High \
+    --title "T" --body-file "${run_directory}/task.md"
+expect "140 (#338): --severity on a task" error "${no_writes}" "--severity is for a Bug: a Task's Severity is N/A" text
+run_star "${data_new}" github issue open "${alpha[@]}" --type Task --parent NobleFactor/alpha#60 --area Product --title "T" \
+    --body-file "${run_directory}/task.md" --set month=May
+expect "140 (#338): --set without --template" error "${no_writes}" "--set goes with --template, and it was not given" text
+run_star "${data_new}" github issue open "${alpha[@]}" --template "${run_directory}/monthly.md"
+expect "140 (#338): a blank left unfilled" error "${no_writes}" "a blank is left unfilled: {month}; --set fills each" text
+run_star "${data_new}" github issue open "${alpha[@]}" --template "${run_directory}/monthly.md" --set month=May --area Product
+expect "140 (#338): a flag beside --template" error "${no_writes}" "--template takes no flag but --set and --directory: --area given" text
+run_star "${data_new}" github issue open --directory "${run_directory}/no-clone" --type Task --parent NobleFactor/alpha#60 \
+    --area Product --title "T" --body-file "${run_directory}/task.md"
+expect "140 (#338): a directory that is no clone" error "${no_writes}" "no-clone is no clone" text
+run_star "${data_new}" github issue open --directory "${run_directory}/clone-nowhere" --type Task --parent NobleFactor/alpha#60 \
+    --area Product --title "T" --body-file "${run_directory}/task.md"
+expect "140 (#338): a repository that takes no part" error "${no_writes}" \
+    "NobleFactor/nowhere takes no part in NobleFactor's issue model: no team maintains it" text
+run_star "${data_new}" github issue open "${alpha[@]}" --type Task --parent NobleFactor/alpha#60 --area Product --title "T" \
+    --body-file "${run_directory}/task.md" --dry-run
+expect "140 (#338): and star's --dry-run, until devlore-cli#1170" error "${no_writes}" "1170" text
+check "140 (#315): --set's split carries the #315 TODO" todo_beside github-issue-open.star --set '(value or "").split(",")'
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"

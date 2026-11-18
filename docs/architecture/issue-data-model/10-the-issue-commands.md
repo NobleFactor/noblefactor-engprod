@@ -41,9 +41,11 @@ An `<issue>` is written `<owner>/<repository>#<number>`. As in sections 8 and 9,
 
 ```
 star github issue open --type <type> --parent <issue> --area <area> --title <title> --body-file <path>
-    [--priority <priority>] [--severity <severity>] [--assignee <login>] [--directory <path>]
-star github issue open --template <path> [--set <name>=<value>]... [--directory <path>]
+    [--priority <priority>] [--severity <severity>] [--assignee <login>] [--unique] [--directory <path>]
+star github issue open --template <path> [--set <name>=<value>[,<name>=<value>]...] [--directory <path>]
 ```
+
+`--set` takes its pairs comma-separated until star's extension flags can repeat (#315), and `--unique` is a template's `unique`, given as a flag.
 
 **Ruled 2026-11-17: the issue opens in the repository of the clone `open` runs in,** its origin's, as `star github plan link` reads its own, and `--directory <path>` names another clone, as git's `-C` does. `-C` itself waits on star letting an extension flag take a short name beside its long one (NobleFactor/devlore-cli#1236).
 
@@ -73,7 +75,7 @@ unique: true
 
 In David-Noble-at-work, which has no issue fields, `open` writes the labels that stand in for them: the type's label, `area:`, `priority:` and `severity:` (issue standards, § Labels).
 
-Its record is the issue it opened, or found with `unique`: its key, its title, its type, its parent, its Area, Priority and Severity, and whether it was `opened` or `found`.
+Its record is the issue it opened, or found with `unique`: its key, its title, its type, its parent, its Area, Priority and Severity, its assignee, and whether it was `opened` or `found`.
 
 `create` is `open`, declared as an alias once NobleFactor/devlore-cli#1235 lets an extension command name aliases, and until then a second manifest entry with the same implementation.
 
