@@ -181,12 +181,13 @@ def schedule(key, model, reading = False):
     """
     return _collection(key, model, _SCHEDULE_FIELD, _STEP_FIELD, "a closed schedule takes no step", reading)
 
-def read_schedule(key, model):
+def read_schedule(key, model, reading = False):
     """A schedule as schedule reads it, or what stops it: (schedule, "") or (None, why), never failing on the schedule.
 
-    issue move reads the schedule an issue leaves this way, among its refusals, before it writes anything (#531).
+    issue move reads the schedule an issue leaves this way, among its refusals, before it writes anything (#531); issue
+    reopen reads the schedule a step was on with reading, so that a closed one is read and not refused.
     """
-    return _collection_read(key, model, _SCHEDULE_FIELD, _STEP_FIELD, "a closed schedule takes no step", False)
+    return _collection_read(key, model, _SCHEDULE_FIELD, _STEP_FIELD, "a closed schedule takes no step", reading)
 
 def scenario(key, model, reading = False):
     """A scenario: its Scenario issue, its team's Scenario project with its fields, and its option.
@@ -508,6 +509,11 @@ def _write_body(own, body, check, what = "its amendment"):
         fail(own["key"] + "'s body does not read back with " + what)
     own["body"] = back
 
+def write_body(own, body, what):
+    """An issue's body written whole and read back as written; fails, naming what, when it reads back otherwise."""
+    want = body.replace("\r\n", "\n").strip()
+    _write_body(own, body, lambda back: back.strip() == want, what)
+
 def amend(own, line):
     """The line written at the end of the Schedule issue's Amendments section, unless it is there; read back."""
     if line in own["body"].replace("\r\n", "\n"):
@@ -636,6 +642,17 @@ def close_issue(own):
     _call(
         "mutation starStepClose($i: ID!) { closeIssue(input: {issueId: $i, stateReason: COMPLETED}) { issue { id } } }",
         {"i": own["id"]},
+    )
+
+def reopen_issue(own):
+    """An issue reopened, by its node ID."""
+    _call("mutation starStepReopen($i: ID!) { reopenIssue(input: {issueId: $i}) { issue { id } } }", {"i": own["id"]})
+
+def clear_issue_field(own, field_id):
+    """An issue's issue field cleared, by their IDs."""
+    _call(
+        "mutation starStepClearField($i: ID!, $f: ID!) { deleteIssueFieldValue(input: {issueId: $i, fieldId: $f}) { clientMutationId } }",
+        {"i": own["id"], "f": field_id},
     )
 
 def issue_state(own):

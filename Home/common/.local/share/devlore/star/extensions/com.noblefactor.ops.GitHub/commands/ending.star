@@ -29,13 +29,16 @@ load(
     "option_of",
     "parse_key",
     "project_of",
+    "read_schedule",
     "reads_back",
+    "reopen_issue",
     "rows",
     "scenario",
     "schedule",
     "set_option",
     "today",
     "viewer",
+    "write_body",
 )
 
 _STATUS_FIELD = "Status"
@@ -49,6 +52,12 @@ _RESOLUTION_FAMILY = "resolution"
 # has none, Evidence of completion, since a schedule's exit criteria are its evidence of completion (section 3).
 _CRITERIA = ["Exit criteria", "Evidence of completion"]
 _LEVELS = [2, 3]
+
+# A schedule reopened: its own row In progress, since a step of it is open again, and the exit criterion that says every
+# step is closed unticked, found by its words (section 10, § Reopening an issue): the boxes of the schedules so far say
+# "Every step closed" and "Every other step closed".
+_IN_PROGRESS = "In progress"
+_EVERY_STEP = "^[Ee]very (other )?steps? "
 
 # GitHub's reasons an issue closed, as a step's How it closed names them when it has no Resolution.
 _REASONS = {"completed": "Completed", "not_planned": "Not planned", "duplicate": "Duplicate"}
@@ -203,6 +212,56 @@ def close_schedule(key):
         "steps_merged": len([r for g in merged for r in g["steps"]]),
         "steps_with_no_pull_request": len(unmerged),
     }
+
+def schedule_reopening(key, model):
+    """A closed schedule's reopening, read before anything is written: ({sched, body, criteria}, "") or (None, why).
+
+    body is the Schedule issue's body with every ticked exit criterion that says every step is closed unticked, or None
+    when no ticked criterion says so; criteria are those criteria's words. star github issue reopen reads the schedule
+    of each step it reopens this way, and star github schedule reopen (#595) the schedule it is given.
+    """
+    sched, fault = read_schedule(key, model, reading = True)
+    if fault:
+        return None, fault
+    project = sched["project"]
+    if not [o for o in project["fields"][_STATUS_FIELD]["options"] if o["name"] == _IN_PROGRESS]:
+        return None, project["title"] + "'s " + _STATUS_FIELD + " field has no option " + _IN_PROGRESS + ", for " + key + "'s own row"
+    own = sched["issue"]
+    lines = body_lines(own["body"])
+    found = [s for title in _CRITERIA for s in sections(lines, title, _LEVELS)][:1]
+    every = [c for c in (boxes(lines, found[0]) if found else []) if c["ticked"] and regex.match(pattern = _EVERY_STEP, text = c["text"])]
+    body = None
+    if every:
+        body = own["body"]
+        for c in reversed(every):
+            line = lines[c["line"]]
+            text = line["text"]
+            at = text.find("[")
+            body = body[:line["start"]] + text[:at] + "[ ]" + text[at + 3:] + body[line["text_end"]:]
+    return {"sched": sched, "body": body, "criteria": [c["text"] for c in every]}, ""
+
+def reopen_schedule(plan, body):
+    """A closed schedule reopened as schedule_reopening read it, with its comment, each write read back: its record.
+
+    In section 10's order: the Schedule issue reopened with its comment, its own row In progress, and its every-step
+    criterion unticked. The option was never removed, so the schedule's past rows are under it still.
+    """
+    sched = plan["sched"]
+    own = sched["issue"]
+    project = sched["project"]
+    reopen_issue(own)
+    if issue_state(own)["state"] != "open":
+        fail(own["key"] + " does not read back open after it was reopened")
+    note("reopened " + own["key"])
+    comment(own, body)
+    note("commented on " + own["key"])
+    set_option(project, sched["own_item"], _STATUS_FIELD, option_of(project, _STATUS_FIELD, _IN_PROGRESS))
+    reads_back(sched["own_item"], {"project": project["id"], "schedule": sched["option"]["name"], "status": _IN_PROGRESS}, own["key"])
+    note("set " + own["key"] + "'s own row on " + project["title"] + " " + _IN_PROGRESS)
+    if plan["body"] != None:
+        write_body(own, plan["body"], "its exit criteria unticked")
+        note("unticked " + own["key"] + "'s exit criterion: " + "; ".join(plan["criteria"]))
+    return {"issue": own["key"], "kind": SCHEDULE_KIND, "status": _IN_PROGRESS, "criteria": plan["criteria"]}
 
 def retire_scenario(key, reason):
     """A scenario the product no longer has retired, with its reason: one record of what was done.

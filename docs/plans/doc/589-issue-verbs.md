@@ -113,7 +113,7 @@ A new section 10 of the issue data model, `10-the-issue-commands.md`, and its st
 ### 9.3 Phase 3: the builds
 
 - [x] `close` (#590), with its cases, 122 to 128, built on 2026-11-17 in section 10's order: its comment, its Resolution, the issue closed, then its rows
-- [ ] `reopen` (#587), with its cases
+- [x] `reopen` (#587), with its cases, 129 to 134, built on 2026-11-17 in section 10's order: the issue reopened, its Resolution cleared and its comment, its rows, its closed parents, then its closed schedules, by the code `schedule reopen` will run
 - [ ] `open` and `create` (#338), with its cases
 - [ ] The collection groups' `open`, `close` and `reopen`, `new` and `retire` renamed everywhere they stand (#595), with their cases
 
@@ -159,6 +159,7 @@ Approved by the owner on 2026-11-17.
 Departures, each ruled by the owner:
 
 1. **`close`'s order, ruled 2026-11-17: section 10's order stands.** `close` was first built, in b68d022, to change an issue's rows first and close it last, and to change the rows of an issue already closed. The owner ruled the approved order kept: the comment, the Resolution, the issue closed, then its rows; an issue already closed is left as it is. The next commit restored it.
+2. **A reopened issue with no row, ruled 2026-11-17: it goes to Triage.** Section 10 sent an item that left its scenario to Triage and said nothing of a task or bug `close` took off Triage or Backlog. The owner ruled that every reopened task or bug that has no row on its team's four projects gets a Triage row; an epic or a feature gets none. An issue with no type and no row gets one too, since section 1 has an untriaged issue wait in Triage.
 
 ## 13. Completion review
 

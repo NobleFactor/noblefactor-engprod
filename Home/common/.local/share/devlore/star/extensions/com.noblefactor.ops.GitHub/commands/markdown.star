@@ -115,7 +115,10 @@ def numbered(lines, section):
     return len([i for i in range(section["first"] + 1, section["end"]) if i not in fenced and regex.match(pattern = _ITEM, text = lines[i]["text"])])
 
 def boxes(lines, section):
-    """The task list items a section holds, at any depth, outside a fenced code block: [{"ticked", "text"}], in order."""
+    """The task list items a section holds, at any depth, outside a fenced code block: [{"ticked", "text", "line"}], in order.
+
+    line is the item's index in lines, so that a box can be ticked or unticked where it stands.
+    """
     fenced = _fenced(lines)
     out = []
     for i in range(section["first"] + 1, section["end"]):
@@ -123,5 +126,5 @@ def boxes(lines, section):
             continue
         m = regex.find_submatch(pattern = _BOX, text = lines[i]["text"])
         if m:
-            out.append({"ticked": m[1] != " ", "text": (m[3] or "").strip()})
+            out.append({"ticked": m[1] != " ", "text": (m[3] or "").strip(), "line": i})
     return out

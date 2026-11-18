@@ -688,6 +688,11 @@ elif $op == "starStepFields" then
         | {name: .value, field: {name: .key}}]}}}}}
 elif $op == "starStepClose" then
     {world: ($w | .issues[$i] |= (.state = "CLOSED" | .stateReason = "COMPLETED")), answer: {data: {closeIssue: {issue: {id: $i}}}}}
+elif $op == "starStepReopen" then
+    {world: ($w | .issues[$i] |= (.state = "OPEN" | .stateReason = null)), answer: {data: {reopenIssue: {issue: {id: $i}}}}}
+elif $op == "starStepClearField" then
+    $w.issue_fields[$f] as $field |
+    {world: ($w | .issues[$i].fields |= ((. // {}) | del(.[$field.name]))), answer: {data: {deleteIssueFieldValue: {clientMutationId: null}}}}
 elif $op == "starStepState" then
     {answer: {data: {node: ($w.issues[$node] | {state, stateReason: (.stateReason // (if .state == "CLOSED" then "COMPLETED" else null end))})}}}
 elif $op == "starStepClosing" then
@@ -756,7 +761,7 @@ elif $op == "starStepParent" then
     # An issue's sub-issue parent, its parent the ID a case gives it, and the states of every issue with that parent.
     ([$w.issues[] | select(.repo == $repo and (.number | tostring) == $number)][0].parent // null) as $pid |
     {answer: {data: {repository: {issue: {parent: (if $pid == null then null else $w.issues[$pid] |
-        {number, repository: {nameWithOwner: .repo}, subIssues: {nodes: [$w.issues[] | select(.parent == $pid) | {state}]}} end)}}}}}
+        {number, state, repository: {nameWithOwner: .repo}, subIssues: {nodes: [$w.issues[] | select(.parent == $pid) | {state}]}} end)}}}}}
 elif $op == "restAddLabels" then
     # Labels added to an issue by REST, its number given as issue(number: N), the body {labels: [...]}.
     ([$w.issues[] | select(.repo == $repo and (.number | tostring) == $number) | .id][0]) as $id |
@@ -4012,6 +4017,108 @@ expect "128 (#590): an item on a scenario whose option names no Scenario issue i
     "NobleFactor/alpha#27 is on Scenario: engprod's scenario walk, whose option names no Scenario issue" text
 run_star "${data}" github issue close NobleFactor/alpha#41 --evidence "${run_directory}/evidence-41.md" --dry-run
 expect "128 (#590): and star's --dry-run, until devlore-cli#1170" error "${no_writes}" "1170" text
+
+# The issues reopen's cases add to the world: #60, a closed feature, and #61, its closed epic.
+declare -r closed_parents='.issues.I_alpha_60 = {id: "I_alpha_60", repo: "NobleFactor/alpha", number: 60, title: "a feature",
+        state: "CLOSED", type: "Feature", labels: [], assignees: [], blockedBy: [], body: "", parent: "I_alpha_61"}
+    | .issues.I_alpha_61 = {id: "I_alpha_61", repo: "NobleFactor/alpha", number: 61, title: "an epic", state: "CLOSED",
+        type: "Epic", labels: [], assignees: [], blockedBy: [], body: ""}'
+
+# 129 (#587). issue reopen of #21, a closed step of s1 with Resolution Declined, under the closed feature #60 and epic
+# #61, s1 itself closed with its every-step exit criterion ticked: in section 10's order, #21 reopened, its Resolution
+# cleared and its comment; its row Open; #60 and then #61 reopened, each comment naming #21; and s1 reopened, its own
+# row In progress and its every-step criterion unticked, the other criterion left as it was.
+world "${closed_parents}"'
+    | .issues.I_alpha_21 += {fields: {Resolution: "Declined"}, parent: "I_alpha_60"}
+    | .issues.I_alpha_20.state = "CLOSED"
+    | .issues.I_alpha_20.body = ("## Exit criteria\n\n- [x] Every step closed, or moved to a later schedule by amendment\n"
+        + "- [x] Triage holds only issues that await a decision\n\n" + .issues.I_alpha_20.body)
+    | (.projects.PVT_s_eng.items[] | select(.content == "I_alpha_20") | .values.Status) = "Closed"'
+run_star "${data}" github issue reopen NobleFactor/alpha#21 --reason "Not done after all."
+expect "129 (#587): issue reopen reopens #21, its row, its feature and epic, and its schedule" ok \
+    'map([.action, .issue, .resolution_cleared, .for]) == [["reopened", "NobleFactor/alpha#21", "Declined", null],
+        ["row-opened", "NobleFactor/alpha#21", null, null], ["reopened", "NobleFactor/alpha#60", null, "NobleFactor/alpha#21"],
+        ["reopened", "NobleFactor/alpha#61", null, "NobleFactor/alpha#21"], ["reopened", "NobleFactor/alpha#20", null, "NobleFactor/alpha#21"]]
+        and (.[4].criteria_unticked == ["Every step closed, or moved to a later schedule by amendment"])'
+check "129 (#587): #21 is open with no Resolution, its comment says why, and its row is Open" world_holds \
+    '(.issues.I_alpha_21 | [.state, (.fields.Resolution // null)]) == ["OPEN", null]
+        and .issues.I_alpha_21.comments == ["Reopened by `star github issue reopen` on '"${today}"', run by stand-in: Not done after all."]
+        and (.projects.PVT_s_eng.items[] | select(.content == "I_alpha_21") | .values) == {Schedule: "s1", Step: 1, Status: "Open"}'
+check "129 (#587): #60 and #61 are open, each comment naming #21" world_holds \
+    '[.issues.I_alpha_60, .issues.I_alpha_61] | all(.state == "OPEN" and .comments == ["Reopened by `star github issue reopen` on '"${today}"', run by stand-in, for NobleFactor/alpha#21: Not done after all."])'
+check "129 (#587): s1 is open, its own row In progress, its every-step criterion unticked and the other still ticked" world_holds \
+    '.issues.I_alpha_20.state == "OPEN"
+        and (.projects.PVT_s_eng.items[] | select(.content == "I_alpha_20") | .values.Status) == "In progress"
+        and (.issues.I_alpha_20.body | startswith("## Exit criteria\n\n- [ ] Every step closed, or moved to a later schedule by amendment\n- [x] Triage holds only issues that await a decision\n"))'
+check "129 (#587): #21 reopened, cleared and commented, then its row; then #60, #61, and s1 reopened, told, its row, its body" calls_hold "${in_order}"'
+    in_order([["starStepReopen", "i=I_alpha_21"], ["starStepClearField", "i=I_alpha_21"], ["starStepComment", "s=I_alpha_21"],
+        ["starStepSetOption", "i=IT_alpha_21"], ["starStepReopen", "i=I_alpha_60"], ["starStepReopen", "i=I_alpha_61"],
+        ["starStepReopen", "i=I_alpha_20"], ["starStepComment", "s=I_alpha_20"], ["starStepSetOption", "i=IT_alpha_20"],
+        ["starStepAmend", "i=I_alpha_20"]])'
+
+# 130 (#587). Rows in an organization: #25, closed, its Backlog row Closed, gets that row Open; #41, a closed task with no
+# row left, as close leaves one it took off Triage, gets a Triage row Open (ruled 2026-11-17); and #61, a closed epic,
+# is reopened with no row, since an epic is never a row once classified.
+world "${closed_parents}"'
+    | .issues.I_alpha_25.state = "CLOSED" | .issues.I_alpha_41.state = "CLOSED"
+    | (.projects.PVT_b_eng.items[] | select(.content == "I_alpha_25") | .values.Status) = "Closed"'
+run_star "${data}" github issue reopen NobleFactor/alpha#25 NobleFactor/alpha#41 NobleFactor/alpha#61 --reason "R."
+expect "130 (#587): a Backlog row is set Open, a task with no row goes to Triage, and an epic gets no row" ok \
+    'map([.action, .issue, .project]) == [["reopened", "NobleFactor/alpha#25", null], ["row-opened", "NobleFactor/alpha#25", "Backlog: engprod"],
+        ["reopened", "NobleFactor/alpha#41", null], ["triaged", "NobleFactor/alpha#41", "Triage: engprod"], ["reopened", "NobleFactor/alpha#61", null]]'
+check "130 (#587): #25's Backlog row is Open, #41 is a row of Triage: engprod, Open, and #61 is a row of nothing" world_holds \
+    '(.projects.PVT_b_eng.items[] | select(.content == "I_alpha_25") | .values.Status) == "Open"
+        and (.projects.PVT_t_eng.items[] | select(.content == "I_alpha_41") | .values.Status) == "Open"
+        and ([.projects[].items[] | select(.content == "I_alpha_61")] == [])
+        and ([.issues.I_alpha_25, .issues.I_alpha_41, .issues.I_alpha_61] | all(.state == "OPEN"))'
+
+# 131 (#587). In a user account, the Resolution is the resolution: label, removed; test-user/personal#12, with no row,
+# goes to the account's Triage project.
+world '.issues.I_personal_12 += {state: "CLOSED", labels: ["task", "resolution:duplicate"]}'
+run_star "${data}" github issue reopen test-user/personal#12 --reason "Not a duplicate."
+expect "131 (#587): issue reopen reopens test-user/personal#12, clears its Resolution, and puts it in Triage" ok \
+    'map([.action, .resolution_cleared, .project]) == [["reopened", "Duplicate", null], ["triaged", null, "Triage: test-user"]]'
+check "131 (#587): #12 is open, its resolution:duplicate label gone, its task label kept, a row of Triage: test-user" world_holds \
+    '(.issues.I_personal_12 | [.state, .labels]) == ["OPEN", ["task"]]
+        and (.projects.PVT_t_user.items[] | select(.content == "I_personal_12") | .values.Status) == "Open"'
+
+# 132 (#587). An issue already open is not reopened again, its rows left as they are, but its closed feature is
+# reopened; and one with nothing closed about it is unchanged, nothing written.
+world "${closed_parents}"' | .issues.I_alpha_22.parent = "I_alpha_60" | .issues.I_alpha_61.state = "OPEN"'
+run_star "${data}" github issue reopen NobleFactor/alpha#22 --reason "R."
+expect "132 (#587): #22, open, has its closed feature #60 reopened, and nothing else" ok \
+    'map([.action, .issue, .for]) == [["reopened", "NobleFactor/alpha#60", "NobleFactor/alpha#22"]]'
+check "132 (#587): #22 is not reopened again, and gets no comment" world_holds '(.issues.I_alpha_22.comments // []) == []'
+world
+run_star "${data}" github issue reopen NobleFactor/alpha#24 --reason "R."
+expect "132 (#587): #24, open, on an open schedule, with no parent, is unchanged, and nothing is written" ok \
+    "${no_writes}"' and map([.action, .issue]) == [["unchanged", "NobleFactor/alpha#24"]]'
+
+# 133 (#587). A closed schedule with no every-step criterion, s1 as the base world has it, with no Exit criteria
+# section, is reopened, its own row In progress, and its body is not written.
+world '.issues.I_alpha_20.state = "CLOSED"'
+run_star "${data}" github issue reopen NobleFactor/alpha#23 --reason "R."
+expect "133 (#587): s1 is reopened for #23, with no criterion to untick" ok \
+    'map([.action, .issue]) == [["reopened", "NobleFactor/alpha#23"], ["row-opened", "NobleFactor/alpha#23"], ["reopened", "NobleFactor/alpha#20"]]
+        and .[2].criteria_unticked == []'
+check "133 (#587): s1's body is not written" calls_hold \
+    '([.[] | select(any(.[]; type == "string" and test("mutation starStepAmend")))] | length) == 0'
+
+# 134 (#587). issue reopen refuses, writing nothing: a Schedule issue, naming star github schedule reopen; no --reason; a
+# closed step on a schedule whose option names no Schedule issue; and star's --dry-run.
+world
+run_star "${data}" github issue reopen NobleFactor/alpha#20 --reason "R."
+expect "134 (#587): a Schedule issue is refused, naming its group's reopen" error "${no_writes}" \
+    "NobleFactor/alpha#20 is a Schedule issue: star github schedule reopen reopens it" text
+run_star "${data}" github issue reopen NobleFactor/alpha#21
+expect "134 (#587): no --reason is refused" error "${no_writes}" "issue reopen needs --reason" text
+world '(.projects.PVT_s_eng.fields[] | select(.name == "Schedule") | .options[] | select(.name == "s1") | .description) = ""'
+run_star "${data}" github issue reopen NobleFactor/alpha#21 --reason "R."
+expect "134 (#587): a step on a schedule whose option names no Schedule issue is refused" error "${no_writes}" \
+    "NobleFactor/alpha#21 is on Schedule: engprod's schedule s1, whose option names no Schedule issue" text
+world
+run_star "${data}" github issue reopen NobleFactor/alpha#21 --reason "R." --dry-run
+expect "134 (#587): and star's --dry-run, until devlore-cli#1170" error "${no_writes}" "1170" text
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"

@@ -18,6 +18,7 @@ load(
     "commands/steps.star",
     "SCENARIO_KIND",
     "SCHEDULE_KIND",
+    "clear_issue_field",
     "issue",
     "issue_fields",
     "parse_key",
@@ -86,6 +87,33 @@ def set_resolution(r, plan):
     else:
         set_issue_field(r, plan["field"], plan["option"])
 
+def clearing_plan(model, r):
+    """How an issue's Resolution is cleared, read before any write: {name, field} or {name, labels}; None for none.
+
+    In an organization it is the Resolution issue field, cleared; in a user account, each resolution: label it carries,
+    removed.
+    """
+    if model["user"]:
+        names = _family()
+        labels = [label for label in r["labels"] if label in names]
+        return {"name": names[labels[0]], "labels": labels} if labels else None
+    name = issue_fields(r).get(_RESOLUTION)
+    if name == None:
+        return None
+    field = [f for f in model["fields"] if f["name"] == _RESOLUTION]
+    if not field:
+        fail(r["key"] + " has the Resolution " + name + ", and " + model["account"] + "'s model has no " + _RESOLUTION + " field")
+    return {"name": name, "field": field[0]["id"]}
+
+def clear_resolution(r, plan):
+    """An issue's Resolution cleared as plan gives it: the issue field cleared, or each resolution: label removed."""
+    if "labels" in plan:
+        k = parse_key(r["key"])
+        for label in plan["labels"]:
+            rest("DELETE", "repos/" + k["repo"] + "/issues/" + str(k["number"]) + "/labels/" + label.replace(":", "%3A"))
+    else:
+        clear_issue_field(r, plan["field"])
+
 # ── the scenario an item is on ──────────────────────────────────────────────
 
 def scenario_of(r, row, model):
@@ -105,15 +133,30 @@ def scenario_of(r, row, model):
 # ── an issue's parent ───────────────────────────────────────────────────────
 
 def parent_of(key):
-    """An issue's sub-issue parent and how many of the parent's children are open: {key, open}, or None."""
+    """An issue's sub-issue parent, its state, and how many of its children are open: {key, state, open}, or None."""
     k = parse_key(key)
     query = ("query starStepParent { repository(owner: \"" + k["owner"] + "\", name: \"" + k["name"] + "\") { issue(number: " +
-             str(k["number"]) + ") { parent { number repository { nameWithOwner } subIssues(first: 100) { nodes { state } } } } } }")
+             str(k["number"]) + ") { parent { number state repository { nameWithOwner } subIssues(first: 100) { nodes { state } } } } } }")
     node = json.decode(data = sh("gh api graphql -f query=" + quote(query) + " --jq .data.repository.issue.parent") or "null")
     if node == None:
         return None
     states = [(c.get("state") or "").lower() for c in ((node.get("subIssues") or {}).get("nodes") or [])]
-    return {"key": node["repository"]["nameWithOwner"] + "#" + str(int(node["number"])), "open": len([s for s in states if s == "open"])}
+    return {
+        "key": node["repository"]["nameWithOwner"] + "#" + str(int(node["number"])),
+        "state": (node.get("state") or "").lower(),
+        "open": len([s for s in states if s == "open"]),
+    }
+
+def parents_of(key):
+    """An issue's sub-issue parents, nearest first, up to the one with none: its feature, then its epic."""
+    out = []
+    p = parent_of(key)
+    for _ in range(10):
+        if p == None:
+            break
+        out.append(p)
+        p = parent_of(p["key"])
+    return out
 
 # ── a comment, from a template ──────────────────────────────────────────────
 
