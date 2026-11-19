@@ -4584,5 +4584,28 @@ run_star "${data}" github issue move NobleFactor/alpha#32 --triage --reason "R."
 expect "157 (#531): and to Triage" error "${no_writes}" \
     "NobleFactor/alpha#32 is a step of NobleFactor/alpha#30, which is closed: star github schedule reopen reopens it" text
 
+# 158 (#597). An item moves from one scenario to another of the same project, the usual case, since a team's scenarios
+# are options of its one Scenario project: #27, at beat 1 of walk, goes to walk2, #42's, at beat 2. It keeps its one
+# row, which takes walk2's option and the Beat; walk's issue says it left, walk2's that it joined, its body says both,
+# and both comments are written before the row moves. The proof run 20261119T003953Z found the row deleted.
+world '.issues.I_alpha_42 = (.issues.I_alpha_40 | .id = "I_alpha_42" | .number = 42 | .title = "Scenario: walk2")
+    | (.projects.PVT_c_eng.fields[] | select(.name == "Scenario") | .options) += [{id: "O_walk2", name: "walk2",
+        description: "NobleFactor/alpha#42"}]
+    | .projects.PVT_c_eng.items += [{id: "IT_alpha_42", content: "I_alpha_42", values: {Scenario: "walk2", Status: "Open"}}]'
+run_star "${data}" github issue move NobleFactor/alpha#27 --scenario NobleFactor/alpha#42 --beat 2 --reason "R."
+expect "158 (#597): #27 leaves walk for walk2 on the same project" ok \
+    'map([.action, .project, .scenario, .beat]) == [["left", "Scenario: engprod", "NobleFactor/alpha#40", 1],
+        ["added", "Scenario: engprod", "NobleFactor/alpha#42", 2]]'
+check "158 (#597): #27 keeps its one row, now walk2's at beat 2, and its body says it left walk" world_holds \
+    '[.projects.PVT_c_eng.items[] | select(.content == "I_alpha_27") | [.id, .values.Scenario, .values.Beat]]
+            == [["IT_alpha_27", "walk2", 2]]
+        and (.issues.I_alpha_27.body | contains("Found while walking #42") and contains("Left #40 on '"${today}"' for walk2 (#42)."))'
+check "158 (#597): walk's issue says #27 left, and walk2's that it joined" world_holds \
+    '(.issues.I_alpha_40.comments[-1] | startswith("NobleFactor/alpha#27 left this scenario on '"${today}"' for NobleFactor/alpha#42"))
+        and (.issues.I_alpha_42.comments[-1] | startswith("NobleFactor/alpha#27 joined this scenario on '"${today}"', at beat 2"))'
+check "158 (#597): both comments are written before the row moves, and no row is deleted" calls_hold "${in_order}"'
+    in_order([["starStepComment", "s=I_alpha_42"], ["starStepComment", "s=I_alpha_40"], ["starStepSetOption", "i=IT_alpha_27"]])
+    and ([.[] | select(any(.[]; type == "string" and test("mutation starStepDeleteRow")))] | length) == 0'
+
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"

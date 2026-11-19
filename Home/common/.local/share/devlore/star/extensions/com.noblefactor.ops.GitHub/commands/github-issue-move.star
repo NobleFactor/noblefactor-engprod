@@ -660,20 +660,28 @@ def _onto_scenario(ck, keys, beat, reason):
         if not named and write_line(r, "Found while walking " + _short(ck["key"], r["repo"])):
             _note("wrote in " + r["key"] + "'s body that it was found walking " + ck["key"])
 
-        item = mine["item"] if mine else add_row(scen["project"], r["id"])
+        # An item on another scenario of this project has one row on it, which GitHub gives back for any addition, so
+        # that row takes this scenario's option and Beat: its leaving is recorded first, as a move off a scenario records
+        # it, the comment and then the body's line, so that both are written before the row moves, and it is not deleted.
+        where = scen["option"]["name"] + " (" + _short(ck["key"], r["repo"]) + ")"
+        kept = [row for row in leaving if row["kind"] == SCENARIO_KIND and row["project"]["id"] == scen["project"]["id"]]
+        for row in kept:
+            left = _record_leaving(r, sources[row["item"]], ck["key"], 0, where, login, date, reason)
+            out.append(_record(r["key"], r["type"], r["title"], "left", row["project"]["title"], scenario = left, beat = row["beat"]))
+
+        item = mine["item"] if mine else (kept[0]["item"] if kept else add_row(scen["project"], r["id"]))
         put_beat(scen, item, beat, mine == None)
         place_after(scen["project"], item, previous)
         check_beat(scen, item, beat, r["key"], mine == None)
         _note("put " + r["key"] + " on " + ck["key"] + " at beat " + str(beat))
         previous = item
 
-        # It leaves wherever else it was: a schedule as a move off one records it, another scenario as a move off one
-        # records it, and a Triage or Backlog row removed.
-        for row in leaving:
+        # It leaves wherever else it was: a schedule as a move off one records it, a scenario of another project as a
+        # move off one records it, and a Triage or Backlog row removed.
+        for row in [row for row in leaving if row not in kept]:
             if row["kind"] == SCHEDULE_KIND:
                 out.extend(_take_off(r, row, scen, login, date, reason, sources[row["item"]], model))
             elif row["kind"] == SCENARIO_KIND:
-                where = scen["option"]["name"] + " (" + _short(ck["key"], r["repo"]) + ")"
                 left = _record_leaving(r, sources[row["item"]], ck["key"], 0, where, login, date, reason)
                 delete_row(row["project"]["id"], row["item"])
                 _note("took " + r["key"] + "'s row off " + row["project"]["title"])
