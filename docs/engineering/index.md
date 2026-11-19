@@ -2,7 +2,7 @@
 title: "Engineering documentation"
 status: draft
 created: 2026-10-28
-updated: 2026-11-16
+updated: 2026-11-18
 ---
 
 # Engineering documentation
@@ -41,6 +41,7 @@ See [Roles and responsibilities](process.md#roles-and-responsibilities) for the 
 
 | Document                                                | Owns                                                     |
 | ------------------------------------------------------- | -------------------------------------------------------- |
+| [Agent entry points](agents/commandments.md) | Common commandments and five specialist roles |
 | [Process](process.md)                                   | Workflow transitions and approvals                       |
 | [Work organization](work-organization.md)               | Issues, schedules, scope, ordering and dependencies      |
 | [Work assets](work-assets.md)                           | Required records, locations, relationships and lifecycle |

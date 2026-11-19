@@ -1,7 +1,7 @@
 ---
 title: "Common commandments and five role entry points"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/558
-status: draft
+status: active
 created: 2026-11-18
 updated: 2026-11-18
 documents:
@@ -34,7 +34,7 @@ Keep the common page within 350 words and each role page within 200 words, exclu
 
 ## 3. Current state
 
-The engineering handbook exists. The six role resources do not. The Owner approved the direction of a short common core and role entry points and requested files and PRs instead of issue-only prose.
+The six shared resources and handbook navigation entry are written in this worktree. Publication, final checks and Owner acceptance remain pending. The first committed plan is b323440fbbcbbecdda52243dbd2dbdb95e805b15; PR #601 carries this delivery.
 
 PR #596 remains a draft for the documentation rewrite. Its no-merge condition is unchanged. The Owner-run preparation requires an explicit scoped exception for this additional PR and its worktree; it records that authorization without closing or merging #596.
 
@@ -88,15 +88,25 @@ Shared skill packaging, complete context curation and measured native startup re
 
 Perform a documented read-through against an existing devlore-cli issue to check that the entry points identify a sensible role-specific next action. This is a content review, not proof that five native agents or daemons were started.
 
+### 7.1. Implementation evidence
+
+The shared commandments contain 275 words. Designer, planner, coder, reviewer and auditor contain 139, 149, 141, 150 and 139 words respectively. The shared-plus-role text is 414 to 425 words before repository/host instructions and assignment data. Counts exclude frontmatter, link addresses, formatting markers and numeric section/list markers; headings and link labels count.
+
+Targeted checks pass for the eight changed documents: frontmatter, owner/change-process metadata, local links and anchors, navigation, paragraph layout, word budgets and spelling. The final content hashes and check results are retained in /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.558-role-entry-points/resource-verification.json.
+
+The author reviewed every commandment against the source map and read each role against [Dry-run provider work (#1170)](https://github.com/NobleFactor/devlore-cli/issues/1170). The coder read-through identifies the absent approved plan as a prerequisite rather than treating the issue as implementation permission. Design, planning, review and audit each produce a distinct appropriate next action and handoff. The fixture, source coverage, findings and dispositions are retained in /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.558-role-entry-points/resource-review.json.
+
+This is document verification and author content review. It does not establish independent acceptance, actual native context loading, startup after compaction, daemon capacity or five-agent execution. Owner-run repository checks, final-head CI and review remain required.
+
 ## 8. Completion milestones
 
 Implementation, review, merge, source/reference verification and Owner completion approval are required. Live host installation is not a milestone of this first delivery. Keep #558 open when any of its broader agreed criteria remain outstanding; do not automatically close downstream issues.
 
 ## 9. Phases
 
-- [ ] Commit and publish this plan; obtain Owner review and direction before implementation.
-- [ ] Write the six resources and handbook navigation entry.
-- [ ] Record word counts, source coverage, link checks and a role-by-role content read-through.
+- [x] Commit and publish this plan at b323440fbbcbbecdda52243dbd2dbdb95e805b15; the Owner reviewed it and directed implementation on 2026-11-18.
+- [x] Write the six resources and handbook navigation entry, with ownership and change-process metadata.
+- [x] Record word counts, source coverage, link checks and an author role-by-role content read-through against devlore-cli's dry-run provider issue (#1170).
 - [ ] Run make check, publish the resource commit and inspect final-head CI.
 - [ ] Obtain review, merge authorization, post-merge verification and completion approval; clean up through the Owner-run process.
 
@@ -108,12 +118,16 @@ The seven implementation paths are the six resources in section 5 and `docs/engi
 
 Preserve the closed Handbook consolidation (#420) dependency and ownership under Agent roles (#460), Epic #526 and Schedule #551. Advance this first delivery without declaring #559, #560, #561, #562 or #563 complete. Keep PR #596 and its uncommitted rewrite plan intact.
 
+The base handbook's Agent operation section 8 still routes all issue questions through the broad report. The Owner-approved narrow routing is recorded in PR #596. The common entry point follows that approved rule and links the published passage at f8d7702f971fb9967a7f3bc39a375cea6d3cff50. This preserves the agreed command behavior without expanding this change into the separate handbook rewrite.
+
 ## 12. Approval and departures
 
 The Owner requested this small deliverable and a focused PR on 2026-11-18. Approval of the issue definition does not establish review of a committed implementation plan. The preparation script opens the worktree, commits this plan and opens a draft PR. It stops for Owner review.
 
 Invoking the Owner-run script with `--allow-parallel-pr` explicitly authorizes this one additional worktree/PR and its scoped repository work while #596 remains a draft. That exception does not grant agent execution of Git, PR scripts or merge operations.
 
+On 2026-11-18, the Owner reviewed the committed plan at b323440fbbcbbecdda52243dbd2dbdb95e805b15 in PR #601 and said, “the plan reads well enough. continue”. This approves the recorded scope and directs implementation. The [original Owner-run preparation](https://github.com/NobleFactor/noblefactor-engprod/issues/558#issuecomment-6994753396) records the scoped parallel-work authorization. Git, publication and merge execution remain Owner-run.
+
 ## 13. Completion review
 
-Planning proposal only. The six implementation files have not been written. Record actual delivery and verification here as the work proceeds.
+The six resources and handbook navigation are implemented locally. Targeted document checks, spelling, source coverage and the devlore-cli role read-through passed; their evidence is cited in section 7.1. The Owner-run make check, publication, final-head CI, review, merge, post-merge verification and completion approval remain pending.
