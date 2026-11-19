@@ -29,11 +29,11 @@ Deliver a consistent skill and documentation set for the implemented schedule/sc
 
 ## 1. Roles and authority
 
-Owner: David Noble. Participant: this Codex session, assigned Handbook adoption (#551). The Owner appoints independent review and compliance auditing; neither delegation nor cross-session communication is authorized by this plan. The priority change is recorded in the conversation and Schedule amendment. The Owner's separate implementation-plan approval is recorded in [Approval and departures](#12-approval-and-departures).
+Owner: David Noble. Participant: this Codex session, assigned as coder on Handbook adoption (#551). The Owner appoints independent review and compliance auditing; neither delegation nor cross-session communication is authorized by this plan. The priority change is recorded in the conversation and Schedule amendment. The Owner's separate implementation-plan approval is recorded in [Approval and departures](#12-approval-and-departures).
 
 ## 2. Scope and promised result
 
-One documentation worktree serves the two issues. Start with the skill/index corrections, then reconcile the handbook inventory. Obtain Owner review of the committed plan before implementation. Preserve existing feature ownership and satisfied dependencies. Do not change the command implementation or GitHub configuration under this plan. The Owner's later review correction also covers the definitions and relationships in docs/engineering/work-assets.md, as recorded in Approval and departures.
+One documentation worktree serves the two issues. Start with the skill/index corrections, then reconcile the handbook inventory. Obtain Owner review of the committed plan before implementation. Preserve existing feature ownership and satisfied dependencies. Do not change the command implementation or GitHub configuration under this plan. The Owner's review direction also covers the work-asset definitions and the full documentation rewrite in section 7.4. The complete inventory and review gates are recorded below.
 
 ## Issue 581
 
@@ -94,7 +94,10 @@ Question 4 is settled by the forms-as-authority ruling preserved in the adoption
 | Index and handbook agree with delivered behavior | Review every issue-table row and perform a second pass against sections 8/9 and implemented help |
 | Open questions have explicit dispositions | Owner decisions or existing authoritative rulings linked from the affected issue/plan |
 | Documentation is navigable and preserved | Metadata, spelling, local references, stable anchors and original source hashes pass |
-| Delivery meets repository gates | Run the actual make check target and required GitHub checks for the delivered head |
+| Every inventoried document is covered | The rewrite review records each document's disposition, retained requirements and any relocation |
+| Maintained prose meets the adopted writing guidance | A separate Google-based review records and resolves findings across the complete document bodies |
+| Architecture meets the adopted content guidance | Each architecture set has explicit arc42 coverage and a reviewed explanation of the system |
+| Delivery meets repository gates | Run the actual make check target and required GitHub checks for the rewritten head |
 | The change is adopted and verified | Owner review, merge, live skill/reference verification, issue/project updates and cleanup evidence |
 
 ### 7.1. Implementation verification — 2026-11-17
@@ -114,7 +117,7 @@ The Owner's 2026-11-17 ruling in [Issue filing (#338)](https://github.com/NobleF
 
 The Owner clarified the methodology: designs describe what we want; plans explain how to get there from what exists; schedules order the issues we will carry out. Planning produces issues and a schedule, and each issue references one or more plans. Designs explain the wanted system and its significant design decisions. Transition decisions and migration history belong in plans. All documents must use plain language.
 
-After reviewing the copy in the Issue verbs (#589) worktree, the Owner explicitly directed this session to revise docs/engineering/work-assets.md in its own current worktree. This correction adds the definitions and handoff, states that an issue can use several plans and a plan can cover several issues, removes unnecessary consolidation history and simplifies the prose. Existing storage, linking and approval requirements and incoming anchors are preserved. The broader rewrite of design documents remains separate work.
+After reviewing the copy in the Issue verbs (#589) worktree, the Owner explicitly directed this session to revise docs/engineering/work-assets.md in its own current worktree. This correction adds the definitions and handoff, states that an issue can use several plans and a plan can cover several issues, removes unnecessary consolidation history and simplifies the prose. Existing storage, linking and approval requirements and incoming anchors are preserved. The Owner subsequently required the full rewrite within this PR; sections 7.4 to 7.7 record that scope and its acceptance checks.
 
 The two local changes are this plan and the work-assets document. Earlier gate results remain evidence for their named revisions. The revised candidate must pass document checks, an Owner-run make check, publication to PR #596, fresh CI and review before merge. The previous merge command is replaced while these corrections are pending.
 
@@ -126,7 +129,107 @@ The initial two-file correction was published at 7a30967d21033c140d8cfd7c3897bb8
 
 The Owner also approved Google writing guidance as the basis of the shared writing-and-review skill and arc42 as the basis of architecture content. [Google writing and review (#599)](https://github.com/NobleFactor/noblefactor-engprod/issues/599) and [arc42 architecture content (#600)](https://github.com/NobleFactor/noblefactor-engprod/issues/600) are open at Steps 4 and 5 of Handbook adoption (#551), after this PR's work. They can be planned independently. Their implementation plans, publication and qualification remain separate work. The approved guidance can inform corrections in this PR without claiming that either new deliverable is complete.
 
+### 7.4. Full rewrite and merge condition — 2026-11-18
+
+The Owner requires all documents in the inventory below to be rewritten or given their explicit record-preservation treatment. PR #596 must not merge until the maintained prose meets Google's writing guidance and each architecture set meets arc42's content requirements. The earlier acceptance and passing checks establish their named revisions only. They do not approve the rewrite or satisfy its merge condition.
+
+The inventory includes every document already changed by this PR, every architecture chapter and status companion in this repository, and the shared documentation standard, design template and navigation pages needed to support the rewrite. Review each document's complete body, not only the lines changed for command alignment. Preserve completed plans and source evidence as records; their history is appropriate to their purpose. No architecture chapter or affected handbook page is deferred to a later publication task.
+
+### 7.5. Writing and architecture review
+
+Use the [Google developer documentation style guide](https://developers.google.com/style), [style highlights](https://developers.google.com/style/highlights), [timeless documentation guidance](https://developers.google.com/style/timeless-documentation) and [documentation best practices](https://google.github.io/styleguide/docguide/best_practices.html). Apply purpose, audience, useful organization, descriptive headings, direct sentences, consistent terminology and removal of unnecessary or duplicated material. Do not turn a keyword scan or a shorter word count into proof of good writing. Keep the adopted US English, numbered sections and one physical source line per prose paragraph.
+
+Use the [arc42 content overview](https://arc42.org/overview/) and [architecture-decision guidance](https://docs.arc42.org/section-9/). Review three architecture sets: agent schedules, the issue data model, and the agentic developer workstation. Each set must explain the applicable concerns in the table below, with links to its detailed chapters. Sections may be combined where that makes the explanation clearer. A genuine omission needs a specific reason; empty headings and repeated boilerplate do not establish coverage.
+
+| Architecture concern | Required explanation |
+| --- | --- |
+| Introduction and goals | The problem, users, intended result and most important quality goals |
+| Constraints | Requirements and limits that shape the system |
+| Context and scope | The system boundary, external actors and external systems |
+| Solution strategy | The main approach and why it meets the goals |
+| Components | Responsibilities, relationships and important interfaces |
+| Runtime behavior | Important interactions, normal flows and failure cases |
+| Deployment | Where components run, their connections, storage and access boundaries |
+| Shared concepts | Rules and mechanisms used across components |
+| Design decisions | Significant choices, their reasons, relevant alternatives and consequences |
+| Quality requirements | Observable scenarios or criteria for the qualities that matter |
+| Risks and technical debt | Material uncertainty and known limitations, clearly distinguished from approved behavior |
+| Glossary | Necessary domain terms defined once and used consistently |
+
+Designs describe the wanted system. Significant system choices and their rationale stay in the design. Transition decisions, migration steps, rollout history and raw review exchanges move to plans or their linked evidence. Google's document-lifecycle advice does not replace the local meanings of designs, plans and schedules.
+
+### 7.6. Rewrite method and evidence
+
+1. Commit this plan amendment and review it with the Owner before rewriting the documents.
+2. Build a content map for each architecture set and a source map for its requirements. Read the approved designs, applicable plans, issue decisions, implementation, man pages, completions and tests. Distinguish designed behavior from delivered and verified behavior.
+3. Rewrite each architecture set as a coherent explanation. Rewrite the remaining maintained documents for their own purposes and audiences. Align the handbook, templates, skill, roadmap and user-facing references with those explanations.
+4. Resolve genuine contradictions without inventing requirements. The standalone Claude launcher, proposed assignment commands and five-role workstation have different scopes; explain those scopes and bring substantive unresolved choices to the Owner.
+5. Relocate transition material into this plan or the applicable approved plan, retaining source links to the published revision. Preserve exact Owner source material where its wording matters. Replace a migration-only design page with a clear reference to its plan when that is its proper destination.
+6. Preserve incoming link targets or update their callers with explicit evidence. Keep status companions factual. Update the documentation verifier to cover the full inventory and check any relocated source block in its new destination.
+7. Review the rewritten set separately for writing, arc42 content, retained requirements and cross-document consistency. Record the document and passage for each finding and its resolution. The Owner appoints any independent reviewer; this plan does not grant cross-session contact or delegation.
+8. Run the repository's actual make check and required GitHub checks for the final head. Present the rewrite, coverage evidence and resolved findings for Owner review. Keep the PR a draft until the required review permits it to become ready.
+
+The writing-and-review skill (#599) and architecture guidance (#600) remain separate publication tasks. This PR applies the approved primary guidance directly. Their later completion cannot substitute for this PR's writing and architecture reviews.
+
+### 7.7. Complete document inventory
+
+Every row receives an explicit disposition in the rewrite review. Rewriting a design means rebuilding its explanation and organization, not retaining a historical overlay under arc42 headings.
+
+| Document | Required work |
+| --- | --- |
+| [Home/common/.claude/skills/star-github-schedule-progress/SKILL.md](../../../Home/common/.claude/skills/star-github-schedule-progress/SKILL.md) | Rewrite for its audience and purpose; review Google writing and consistency |
+| [README.md](../../../README.md) | Rewrite for its audience and purpose; review Google writing and consistency |
+| [docs/architecture/agent-schedule/1-session-model.md](../../architecture/agent-schedule/1-session-model.md) | Rewrite as part of its architecture set; review Google writing and arc42 coverage |
+| [docs/architecture/agent-schedule/1-session-model.status.md](../../architecture/agent-schedule/1-session-model.status.md) | Update delivery evidence and links; keep it separate from the design |
+| [docs/architecture/agent-schedule/2-command-line.md](../../architecture/agent-schedule/2-command-line.md) | Rewrite as part of its architecture set; review Google writing and arc42 coverage |
+| [docs/architecture/agent-schedule/2-command-line.status.md](../../architecture/agent-schedule/2-command-line.status.md) | Update delivery evidence and links; keep it separate from the design |
+| [docs/architecture/agent-schedule/2.1-agent-schedule-commands.md](../../architecture/agent-schedule/2.1-agent-schedule-commands.md) | Rewrite as part of its architecture set; review Google writing and arc42 coverage |
+| [docs/architecture/agent-schedule/2.1-agent-schedule-commands.status.md](../../architecture/agent-schedule/2.1-agent-schedule-commands.status.md) | Update delivery evidence and links; keep it separate from the design |
+| [docs/architecture/agent-schedule/3-agent-sandbox.md](../../architecture/agent-schedule/3-agent-sandbox.md) | Rewrite as part of its architecture set; review Google writing and arc42 coverage |
+| [docs/architecture/agent-schedule/3-agent-sandbox.status.md](../../architecture/agent-schedule/3-agent-sandbox.status.md) | Update delivery evidence and links; keep it separate from the design |
+| [docs/architecture/agent-schedule/index.md](../../architecture/agent-schedule/index.md) | Rewrite as part of its architecture set; review Google writing and arc42 coverage |
+| [docs/architecture/agentic-developer-workstation.md](../../architecture/agentic-developer-workstation.md) | Rewrite as part of its architecture set; review Google writing and arc42 coverage |
+| [docs/architecture/issue-data-model/1-hierarchy.md](../../architecture/issue-data-model/1-hierarchy.md) | Rewrite as part of its architecture set; review Google writing and arc42 coverage |
+| [docs/architecture/issue-data-model/1-hierarchy.status.md](../../architecture/issue-data-model/1-hierarchy.status.md) | Update delivery evidence and links; keep it separate from the design |
+| [docs/architecture/issue-data-model/2-attributes.md](../../architecture/issue-data-model/2-attributes.md) | Rewrite as part of its architecture set; review Google writing and arc42 coverage |
+| [docs/architecture/issue-data-model/2-attributes.status.md](../../architecture/issue-data-model/2-attributes.status.md) | Update delivery evidence and links; keep it separate from the design |
+| [docs/architecture/issue-data-model/3-collections.md](../../architecture/issue-data-model/3-collections.md) | Rewrite as part of its architecture set; review Google writing and arc42 coverage |
+| [docs/architecture/issue-data-model/3-collections.status.md](../../architecture/issue-data-model/3-collections.status.md) | Update delivery evidence and links; keep it separate from the design |
+| [docs/architecture/issue-data-model/4-storage-and-reach.md](../../architecture/issue-data-model/4-storage-and-reach.md) | Rewrite as part of its architecture set; review Google writing and arc42 coverage |
+| [docs/architecture/issue-data-model/4-storage-and-reach.status.md](../../architecture/issue-data-model/4-storage-and-reach.status.md) | Update delivery evidence and links; keep it separate from the design |
+| [docs/architecture/issue-data-model/5-from-todays-scheme.md](../../architecture/issue-data-model/5-from-todays-scheme.md) | Rewrite as part of its architecture set; review Google writing and arc42 coverage |
+| [docs/architecture/issue-data-model/5-from-todays-scheme.status.md](../../architecture/issue-data-model/5-from-todays-scheme.status.md) | Update delivery evidence and links; keep it separate from the design |
+| [docs/architecture/issue-data-model/6-the-asset-and-its-sync.md](../../architecture/issue-data-model/6-the-asset-and-its-sync.md) | Rewrite as part of its architecture set; review Google writing and arc42 coverage |
+| [docs/architecture/issue-data-model/6-the-asset-and-its-sync.status.md](../../architecture/issue-data-model/6-the-asset-and-its-sync.status.md) | Update delivery evidence and links; keep it separate from the design |
+| [docs/architecture/issue-data-model/7-the-workflow-before-and-after.md](../../architecture/issue-data-model/7-the-workflow-before-and-after.md) | Rewrite as part of its architecture set; review Google writing and arc42 coverage |
+| [docs/architecture/issue-data-model/7-the-workflow-before-and-after.status.md](../../architecture/issue-data-model/7-the-workflow-before-and-after.status.md) | Update delivery evidence and links; keep it separate from the design |
+| [docs/architecture/issue-data-model/8-the-schedule-commands.md](../../architecture/issue-data-model/8-the-schedule-commands.md) | Rewrite as part of its architecture set; review Google writing and arc42 coverage |
+| [docs/architecture/issue-data-model/8-the-schedule-commands.status.md](../../architecture/issue-data-model/8-the-schedule-commands.status.md) | Update delivery evidence and links; keep it separate from the design |
+| [docs/architecture/issue-data-model/9-the-scenario-commands.md](../../architecture/issue-data-model/9-the-scenario-commands.md) | Rewrite as part of its architecture set; review Google writing and arc42 coverage |
+| [docs/architecture/issue-data-model/9-the-scenario-commands.status.md](../../architecture/issue-data-model/9-the-scenario-commands.status.md) | Update delivery evidence and links; keep it separate from the design |
+| [docs/architecture/issue-data-model/index.md](../../architecture/issue-data-model/index.md) | Rewrite as part of its architecture set; review Google writing and arc42 coverage |
+| [docs/engineering/agent-operation.md](../../engineering/agent-operation.md) | Rewrite for its audience and purpose; review Google writing and consistency |
+| [docs/engineering/index.md](../../engineering/index.md) | Rewrite for its audience and purpose; review Google writing and consistency |
+| [docs/engineering/process.md](../../engineering/process.md) | Rewrite for its audience and purpose; review Google writing and consistency |
+| [docs/engineering/review/adoption-review.md](../../engineering/review/adoption-review.md) | Keep decisions and evidence recoverable; revise maintained explanations and references |
+| [docs/engineering/review/open-decisions.md](../../engineering/review/open-decisions.md) | Keep decisions and evidence recoverable; revise maintained explanations and references |
+| [docs/engineering/work-assets.md](../../engineering/work-assets.md) | Rewrite for its audience and purpose; review Google writing and consistency |
+| [docs/engineering/work-organization.md](../../engineering/work-organization.md) | Rewrite for its audience and purpose; review Google writing and consistency |
+| [docs/github-branch-protection.md](../../github-branch-protection.md) | Rewrite for its audience and purpose; review Google writing and consistency |
+| [docs/guides/pr-script-template.md](../../guides/pr-script-template.md) | Rewrite for its audience and purpose; review Google writing and consistency |
+| [docs/index.md](../../index.md) | Rewrite for its audience and purpose; review Google writing and consistency |
+| [docs/issue-standards.md](../../issue-standards.md) | Rewrite for its audience and purpose; review Google writing and consistency |
+| [docs/plans/doc/420-consolidate-engineering.md](../../plans/doc/420-consolidate-engineering.md) | Preserve the completed record; update a reference only if relocation requires it |
+| [docs/plans/doc/581-schedule-command-consumers.md](../../plans/doc/581-schedule-command-consumers.md) | Maintain the approved approach, transitions, progress and evidence |
+| [docs/roadmaps/agentic-developer-workstation.md](../../roadmaps/agentic-developer-workstation.md) | Rewrite for its audience and purpose; review Google writing and consistency |
+| [docs/standards/documentation.md](../../standards/documentation.md) | Rewrite for its audience and purpose; review Google writing and consistency |
+| [docs/templates/design.md](../../templates/design.md) | Rewrite for its audience and purpose; review Google writing and consistency |
+| [docs/templates/schedule.md](../../templates/schedule.md) | Rewrite for its audience and purpose; review Google writing and consistency |
+
 ## 8. Completion milestones
+
+Preserve the common commandments and five role entry points accepted in PR #601, merged as 967764ae13b015543a2d0667e907b0fd37283875. Integrate the current target through the Owner-run checkpoint script. Review their references when rewriting handbook pages; their publication does not qualify native host loading.
+
 
 Implementation, Owner review, merge and post-merge verification are required. Confirm that the deployed shared skill resolves to the delivered content before claiming it available in another host. This work does not qualify the later five-role host bindings or implement an auditor service.
 
@@ -159,7 +262,18 @@ Implementation, Owner review, merge and post-merge verification are required. Co
 - [x] Verify and publish the initial two-file correction at 7a30967d21033c140d8cfd7c3897bb8cf8b59645; retain the Owner-run gate and publication evidence cited above.
 - [x] Apply the Owner's distinction between design decisions and transition history to work-assets and this plan.
 - [x] Verify the clarification's document scope, metadata, links, anchors and preserved evidence; retain the receipt cited in section 7.3.
-- [ ] Run the Owner's repository gate and publish the clarification, then obtain Owner review and passing current-head CI before merge.
+- [x] Run the Owner's repository gate and publish the clarification at f8d7702f971fb9967a7f3bc39a375cea6d3cff50; its passing publication receipt is recorded above.
+- [ ] Obtain Owner review and passing final-head CI for the full rewrite before merge.
+
+### 9.5. Full documentation rewrite
+
+- [x] Record the Owner's full-rewrite scope, primary sources, complete inventory and no-merge condition.
+- [x] Commit this full-rewrite plan amendment as the next plan checkpoint.
+- [ ] Obtain Owner review of the committed amendment and direction to begin the full rewrite.
+- [ ] Map the architecture content, source requirements and incoming references across the inventory.
+- [ ] Rewrite all maintained documents in the inventory and update the related status and reference records.
+- [ ] Complete and record the writing, arc42, requirement-preservation and consistency reviews; resolve their findings.
+- [ ] Pass make check and final-head CI, obtain Owner review, and satisfy the explicit merge gate.
 
 ## 10. Files and related assets
 
@@ -177,6 +291,8 @@ On 2026-11-17, the Owner explicitly asked: “can you revise work-assets.md righ
 
 On 2026-11-18, the Owner distinguished design decisions from transition history, approved the two adoption tasks, and directed continuation. This authorizes the scoped review correction above. It does not grant agent execution of Git or the PR script, or replace the committed-plan and review requirements for the new tasks.
 
+On 2026-11-18, after publication of f8d7702f971fb9967a7f3bc39a375cea6d3cff50, the Owner required all documents to be rewritten and prohibited merge until they comply with arc42 and Google's standards. PR #596 was returned to draft and its merge gate and Handbook command alignment (#582) were updated. This scope supersedes the earlier deferral of the broader rewrite. The plan amendment must be committed and reviewed before that rewrite begins. Git and PR-script execution remain Owner-run.
+
 ## 13. Completion review
 
-The implementation candidate is written; targeted document, spelling and routing checks and the Owner-run full repository gate passed for the verified content. Integration verification passed. PR #596 is open. The Owner reluctantly accepted its earlier revision and then requested the work-assets correction. The initial correction is published; the clarification recorded in section 7.3 still requires verification, publication and Owner review. Target-branch merge, deployed-content verification and completion approval remain outstanding. Keep the issues open and the plan active until their required milestones and Owner completion approval are recorded. Record established post-merge results immediately on the issues and carry completion-only documentation through the approved follow-up procedure.
+The command-alignment and work-assets revision is published at f8d7702f971fb9967a7f3bc39a375cea6d3cff50. Its Owner-run make check passed; the receipt is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/update-review.hDClvMtf/receipt.json. The full documentation rewrite is required and has not started. Its plan checkpoint, implementation, content reviews, final-head checks and Owner review remain outstanding. Keep PR #596 a draft and both delivery issues open. Merge, deployed-content verification, completion approval and cleanup follow only after the rewrite's merge condition is satisfied.
