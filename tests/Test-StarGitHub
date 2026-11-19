@@ -306,7 +306,7 @@ function run_star {
                 XDG_CACHE_HOME="${cache_home}" XDG_CONFIG_HOME="${run_directory}/config" \
                 XDG_STATE_HOME="${run_directory}/state-home" GH_FIXTURES="${run_directory}/fixtures" \
                 GH_REMOTES="${run_directory}/remotes" GH_CALLS="${run_directory}/calls.jsonl" GH_STATE="${run_directory}/state" \
-                star "$@" ${quiet} 2>"${run_directory}/errors"
+                STAR_TEST_TODAY="${today}" star "$@" ${quiet} 2>"${run_directory}/errors"
     )" || status=$?
     errors="$(<"${run_directory}/errors")"
 }
@@ -607,7 +607,9 @@ function issue_form {
 # so that a backup run again finds the one an earlier run left open; its main's rules, its head commit's workflow runs
 # and its checks are as the case's ci set them.
 #
-# The stand-in for sleep records how long it was asked to wait, among gh's calls, and returns at once.
+# The stand-in for sleep records how long it was asked to wait, among gh's calls, and returns at once. The stand-in for
+# date answers `date -u +%Y-%m-%d`, the day star dates what it writes by, with ${STAR_TEST_TODAY}, the day the suite
+# began, so that a run that crosses midnight UTC dates each write as the cases expect; any other use is the real date's.
 #
 # A write, a REST call with -X or a GraphQL mutation, is recorded among the calls and answered with a new ID; a secret
 # set is remembered, value and all, a newline written as \n, in ${GH_REMOTES}/secrets, on a repository or an
@@ -642,6 +644,15 @@ function write_stand_in {
 printf '%s\0' sleep "$@" | jq -c -R -s 'split("\u0000") | .[:-1]' >>"${GH_CALLS}"
 SLEEP
     chmod +x "${run_directory}/bin/sleep"
+    cat >"${run_directory}/bin/date" <<DATE
+#!/usr/bin/env bash
+if [[ \$# -eq 2 && \$1 == -u && \$2 == +%Y-%m-%d ]]; then
+    printf '%s\\n' "\${STAR_TEST_TODAY:?}"
+    exit 0
+fi
+exec $(command -v date) "\$@"
+DATE
+    chmod +x "${run_directory}/bin/date"
     cat >"${run_directory}/bin/world.jq" <<'JQ'
 # The schedule commands' GitHub: one world that their reads answer from and their writes change. Its issues and its
 # projects are keyed by node ID; a project's items are its rows, in its order, each with its content's ID and its
@@ -1666,6 +1677,9 @@ failures=0
 run_directory=""
 output="" errors="" status=0 quiet="--silent"
 
+# The day the suite began, in UTC: the day the stand-in for date gives star, and the day the cases expect it to write.
+today="$(date -u +%Y-%m-%d)"
+
 Set-Traps cleanup
 run_directory="$(mktemp -d)"
 mkdir -p -- "${run_directory}"/{work,cache,config,state-home,home,remotes}
@@ -2456,7 +2470,6 @@ expect "45: the sweep given noblefactor sweeps NobleFactor's issues as for Noble
 # github issue move --schedule (#511), which star github schedule add became, as
 # docs/plans/doc/507-scenario-commands.md's test plan case 1 has it: each starts from base_world, and reads back what
 # issue move left in it.
-today="$(date -u +%Y-%m-%d)"
 declare -r amendments='def amendments($id): .issues[$id].body | split("\n") | index("## Amendments") as $at
     | .[($at + 1):] | reduce .[] as $line ([]; if ($line | startswith("- ")) then . + [$line]
         elif ($line | startswith("  ")) and length > 0 then .[:-1] + [.[-1] + " " + ($line | ltrimstr("  "))] else . end);'
@@ -4091,8 +4104,9 @@ declare -r closed_parents='.issues.I_alpha_60 = {id: "I_alpha_60", repo: "NobleF
 
 # 129 (#587). issue reopen of #21, a closed step of s1 with Resolution Declined, under the closed feature #60 and epic
 # #61, s1 itself closed with its every-step exit criterion ticked: in section 10's order, #21 reopened, its Resolution
-# cleared and its comment; its row Open; #60 and then #61 reopened, each comment naming #21; and s1 reopened, its own
-# row In progress and its every-step criterion unticked, the other criterion left as it was.
+# cleared and its comment; its row Open; #60 and then #61 reopened, each comment naming #21, and each, with no row, given
+# a Triage row; and s1 reopened, its own row In progress and its every-step criterion unticked, the other criterion left
+# as it was.
 world "${closed_parents}"'
     | .issues.I_alpha_21 += {fields: {Resolution: "Declined"}, parent: "I_alpha_60"}
     | .issues.I_alpha_20.state = "CLOSED"
@@ -4103,21 +4117,25 @@ run_star "${data}" github issue reopen NobleFactor/alpha#21 --reason "Not done a
 expect "129 (#587): issue reopen reopens #21, its row, its feature and epic, and its schedule" ok \
     'map([.action, .issue, .resolution_cleared, .for]) == [["reopened", "NobleFactor/alpha#21", "Declined", null],
         ["row-opened", "NobleFactor/alpha#21", null, null], ["reopened", "NobleFactor/alpha#60", null, "NobleFactor/alpha#21"],
-        ["reopened", "NobleFactor/alpha#61", null, "NobleFactor/alpha#21"], ["reopened", "NobleFactor/alpha#20", null, "NobleFactor/alpha#21"]]
-        and (.[4].criteria_unticked == ["Every step closed, or moved to a later schedule by amendment"])'
+        ["triaged", "NobleFactor/alpha#60", null, null], ["reopened", "NobleFactor/alpha#61", null, "NobleFactor/alpha#21"],
+        ["triaged", "NobleFactor/alpha#61", null, null], ["reopened", "NobleFactor/alpha#20", null, "NobleFactor/alpha#21"]]
+        and (.[6].criteria_unticked == ["Every step closed, or moved to a later schedule by amendment"])'
 check "129 (#587): #21 is open with no Resolution, its comment says why, and its row is Open" world_holds \
     '(.issues.I_alpha_21 | [.state, (.fields.Resolution // null)]) == ["OPEN", null]
         and .issues.I_alpha_21.comments == ["Reopened by `star github issue reopen` on '"${today}"', run by stand-in: Not done after all."]
         and (.projects.PVT_s_eng.items[] | select(.content == "I_alpha_21") | .values) == {Schedule: "s1", Step: 1, Status: "Open"}'
-check "129 (#587): #60 and #61 are open, each comment naming #21" world_holds \
-    '[.issues.I_alpha_60, .issues.I_alpha_61] | all(.state == "OPEN" and .comments == ["Reopened by `star github issue reopen` on '"${today}"', run by stand-in, for NobleFactor/alpha#21: Not done after all."])'
+check "129 (#587): #60 and #61 are open, each comment naming #21, and each a row of Triage: engprod, Open" world_holds \
+    '([.issues.I_alpha_60, .issues.I_alpha_61] | all(.state == "OPEN" and .comments == ["Reopened by `star github issue reopen` on '"${today}"', run by stand-in, for NobleFactor/alpha#21: Not done after all."]))
+        and ([.projects.PVT_t_eng.items[] | select(.content == "I_alpha_60" or .content == "I_alpha_61") | [.content, .values.Status]]
+            == [["I_alpha_60", "Open"], ["I_alpha_61", "Open"]])'
 check "129 (#587): s1 is open, its own row In progress, its every-step criterion unticked and the other still ticked" world_holds \
     '.issues.I_alpha_20.state == "OPEN"
         and (.projects.PVT_s_eng.items[] | select(.content == "I_alpha_20") | .values.Status) == "In progress"
         and (.issues.I_alpha_20.body | startswith("## Exit criteria\n\n- [ ] Every step closed, or moved to a later schedule by amendment\n- [x] Triage holds only issues that await a decision\n"))'
 check "129 (#587): #21 reopened, cleared and commented, then its row; then #60, #61, and s1 reopened, told, its row, its body" calls_hold "${in_order}"'
     in_order([["starStepReopen", "i=I_alpha_21"], ["starStepClearField", "i=I_alpha_21"], ["starStepComment", "s=I_alpha_21"],
-        ["starStepSetOption", "i=IT_alpha_21"], ["starStepReopen", "i=I_alpha_60"], ["starStepReopen", "i=I_alpha_61"],
+        ["starStepSetOption", "i=IT_alpha_21"], ["starStepReopen", "i=I_alpha_60"], ["starStepAddRow", "c=I_alpha_60"],
+        ["starStepReopen", "i=I_alpha_61"], ["starStepAddRow", "c=I_alpha_61"],
         ["starStepReopen", "i=I_alpha_20"], ["starStepComment", "s=I_alpha_20"], ["starStepSetOption", "i=IT_alpha_20"],
         ["starStepAmend", "i=I_alpha_20"]])'
 
@@ -4149,11 +4167,12 @@ check "131 (#587): #12 is open, its resolution:duplicate label gone, its task la
         and (.projects.PVT_t_user.items[] | select(.content == "I_personal_12") | .values.Status) == "Open"'
 
 # 132 (#587). An issue already open is not reopened again, its rows left as they are, but its closed feature is
-# reopened; and one with nothing closed about it is unchanged, nothing written.
+# reopened, and, with no row, given a Triage row; and one with nothing closed about it is unchanged, nothing written.
 world "${closed_parents}"' | .issues.I_alpha_22.parent = "I_alpha_60" | .issues.I_alpha_61.state = "OPEN"'
 run_star "${data}" github issue reopen NobleFactor/alpha#22 --reason "R."
-expect "132 (#587): #22, open, has its closed feature #60 reopened, and nothing else" ok \
-    'map([.action, .issue, .for]) == [["reopened", "NobleFactor/alpha#60", "NobleFactor/alpha#22"]]'
+expect "132 (#587): #22, open, has its closed feature #60 reopened and put in Triage, and nothing else" ok \
+    'map([.action, .issue, .for]) == [["reopened", "NobleFactor/alpha#60", "NobleFactor/alpha#22"],
+        ["triaged", "NobleFactor/alpha#60", null]]'
 check "132 (#587): #22 is not reopened again, and gets no comment" world_holds '(.issues.I_alpha_22.comments // []) == []'
 world
 run_star "${data}" github issue reopen NobleFactor/alpha#24 --reason "R."
@@ -4473,6 +4492,97 @@ run_star "${data}" github triage sweep NobleFactor test-user
 expect "150 (#597): #7's fault names its schedule, and not the Backlog" ok "${entry}"'
     [entry("NobleFactor/alpha#7").faults[] | select(.rule == "epic-on-collection") | .message]
         == ["a Feature is a row of Schedule: engprod; an epic or a feature is on no Schedule or Scenario project"]'
+
+# 151 (#531). Two issues leave one schedule for another: #31 and #32, steps 1 and 2 of s2, go to s1. s2 is renumbered
+# after each, from its rows as the one before left them, so #33 ends at step 1, and #30 gets an amendment for each.
+world
+run_star "${data}" github issue move NobleFactor/alpha#31 NobleFactor/alpha#32 --schedule NobleFactor/alpha#20 --reason "R."
+expect "151 (#531): each take-off from s2 renumbers it as the one before left it" ok \
+    '[.[] | select(.schedule == "NobleFactor/alpha#30") | [.issue, .action, .from_step, .step]]
+        == [["NobleFactor/alpha#31", "taken-off", 1, null], ["NobleFactor/alpha#32", "moved", 2, 1],
+            ["NobleFactor/alpha#33", "moved", 3, 2], ["NobleFactor/alpha#32", "taken-off", 1, null],
+            ["NobleFactor/alpha#33", "moved", 2, 1]]'
+check "151 (#531): s2 runs 1, #33, and s1 has #31 and #32 at steps 5 and 6" world_holds \
+    '[.projects.PVT_s_eng.items[] | select(.values.Schedule == "s2" and .values.Step != null) | [.content, .values.Step]]
+            == [["I_alpha_33", 1]]
+        and ([.projects.PVT_s_eng.items[] | select(.content == "I_alpha_31" or .content == "I_alpha_32") | .values]
+            == [{Schedule: "s1", Status: "Open", Step: 5}, {Schedule: "s1", Status: "Open", Step: 6}])'
+check "151 (#531): #30 is amended for each, neither line lost" world_holds \
+    "${amendments}"' amendments("I_alpha_30")[-2:] == ["- '"${today}"', by stand-in: step 1, Task NobleFactor/alpha#31, s2 " +
+        "first, was taken off, for NobleFactor/alpha#20. Steps 2 to 3 moved up 1, to 1 to 2. R.", "- '"${today}"', by " +
+        "stand-in: step 1, Task NobleFactor/alpha#32, s2 second, was taken off, for NobleFactor/alpha#20. Step 2 moved up 1, " +
+        "to 1. R."]'
+
+# 152 (#531, #597). And for a scenario: #31 and #32 leave s2 for walk, at beat 1, each row off s2, s2 renumbered after
+# each, and #30 amended for each.
+world
+run_star "${data}" github issue move NobleFactor/alpha#31 NobleFactor/alpha#32 --scenario NobleFactor/alpha#40 --beat 1 --reason "R."
+expect "152 (#531, #597): each take-off from s2 onto walk renumbers it as the one before left it" ok \
+    '[.[] | select(.schedule == "NobleFactor/alpha#30") | [.issue, .action, .from_step, .step]]
+        == [["NobleFactor/alpha#31", "taken-off", 1, null], ["NobleFactor/alpha#32", "moved", 2, 1],
+            ["NobleFactor/alpha#33", "moved", 3, 2], ["NobleFactor/alpha#32", "taken-off", 1, null],
+            ["NobleFactor/alpha#33", "moved", 2, 1]]'
+check "152 (#531, #597): s2 runs 1, #33; #31 and #32 are rows of walk at beat 1, and of no schedule" world_holds \
+    '[.projects.PVT_s_eng.items[] | select(.values.Schedule == "s2" and .values.Step != null) | [.content, .values.Step]]
+            == [["I_alpha_33", 1]]
+        and ([.projects.PVT_s_eng.items[] | select(.content == "I_alpha_31" or .content == "I_alpha_32")] == [])
+        and ([.projects.PVT_c_eng.items[] | select(.content == "I_alpha_31" or .content == "I_alpha_32") | .values.Beat] == [1, 1])'
+check "152 (#531, #597): #30 is amended for each, neither line lost" world_holds \
+    "${amendments}"' amendments("I_alpha_30")[-2:] == ["- '"${today}"', by stand-in: step 1, Task NobleFactor/alpha#31, s2 " +
+        "first, was taken off, for NobleFactor/alpha#40. Steps 2 to 3 moved up 1, to 1 to 2. R.", "- '"${today}"', by " +
+        "stand-in: step 1, Task NobleFactor/alpha#32, s2 second, was taken off, for NobleFactor/alpha#40. Step 2 moved up 1, " +
+        "to 1. R."]'
+
+# 153 (#531). An option whose description holds no issue's key is refused, naming what it holds, and nothing is
+# written, whichever way the issue goes.
+world '(.projects.PVT_s_eng.fields[] | select(.name == "Schedule") | .options[] | select(.name == "s2") | .description)
+    = "see NobleFactor/alpha#30"'
+run_star "${data}" github issue move NobleFactor/alpha#32 --schedule NobleFactor/alpha#20 --reason "R."
+expect "153 (#531): s2's option holds no key, so #32 is refused onto s1, nothing written" error "${no_writes}" \
+    "NobleFactor/alpha#32 is on Schedule: engprod's schedule s2, whose option names no Schedule issue: see NobleFactor/alpha#30" text
+run_star "${data}" github issue move NobleFactor/alpha#32 --triage --reason "R."
+expect "153 (#531): and to Triage" error "${no_writes}" \
+    "NobleFactor/alpha#32 is on Schedule: engprod's schedule s2, whose option names no Schedule issue: see NobleFactor/alpha#30" text
+
+# 154 (#531). A move off s1 that stopped once #22's row was deleted leaves its amendment pending; when s1's own row then
+# loses its option, the same command run again refuses, naming the schedule, rather than stopping.
+world '.fail_on = "starStepAmend" | .fail_skip = 1'
+run_star "${data}" github issue move NobleFactor/alpha#22 --triage --reason "Needs a second look."
+expect "154 (#531): a move off a schedule stops as its amendment is settled" error ""
+jq '(.projects.PVT_s_eng.items[] | select(.content == "I_alpha_20") | .values) |= del(.Schedule)' \
+    "${run_directory}/remotes/world.json" >"${run_directory}/remotes/world.next"
+mv -- "${run_directory}/remotes/world.next" "${run_directory}/remotes/world.json"
+run_star "${data}" github issue move NobleFactor/alpha#22 --triage --reason "Needs a second look."
+expect "154 (#531): the pending schedule that can't be read is refused, nothing written" error "${no_writes}" \
+    "NobleFactor/alpha#22 was being taken off the schedule NobleFactor/alpha#20, which issue move can't read: NobleFactor/alpha#20 has 0 rows" text
+
+# 155 (#531). An issue moved within its schedule leaves no scenario, so a scenario it is a row of is not read: #22, on
+# s1 and on walk, whose option names no Scenario issue, moves to step 1, and its walk row is left as it was.
+world '(.projects.PVT_c_eng.fields[] | select(.name == "Scenario") | .options[] | select(.name == "walk") | .description) = ""
+    | .projects.PVT_c_eng.items += [{id: "IT_alpha_22_walk", content: "I_alpha_22", values: {Scenario: "walk", Beat: 1, Status: "Open"}}]'
+run_star "${data}" github issue move NobleFactor/alpha#22 --schedule NobleFactor/alpha#20 --after 0 --reason "R."
+expect "155 (#531): #22 moves within s1, its broken scenario not read" ok \
+    '[.[] | select(.issue == "NobleFactor/alpha#22") | [.action, .from_step, .step]] == [["moved", 2, 1]]'
+check "155 (#531): #22's walk row is as it was" world_holds \
+    '(.projects.PVT_c_eng.items[] | select(.id == "IT_alpha_22_walk") | .values) == {Scenario: "walk", Beat: 1, Status: "Open"}'
+
+# 156 (#531). A scenario's option must name a Scenario issue: walk's names #20, a Schedule issue, so #27 is refused, and
+# nothing is written.
+world '(.projects.PVT_c_eng.fields[] | select(.name == "Scenario") | .options[] | select(.name == "walk") | .description)
+    = "NobleFactor/alpha#20"'
+run_star "${data}" github issue move NobleFactor/alpha#27 --triage --reason "R."
+expect "156 (#531): an item whose scenario option names a Schedule issue is refused, nothing written" error "${no_writes}" \
+    "NobleFactor/alpha#27 is on the scenario NobleFactor/alpha#20, which issue move can't read: NobleFactor/alpha#20 is not a Scenario issue" text
+
+# 157 (#531). An open step of a closed schedule is refused, saying the schedule is closed and how to reopen it: #32, on
+# s2, with #30 closed, whichever way it goes.
+world '.issues.I_alpha_30.state = "CLOSED"'
+run_star "${data}" github issue move NobleFactor/alpha#32 --schedule NobleFactor/alpha#20 --reason "R."
+expect "157 (#531): a step of a closed schedule is refused onto another, nothing written" error "${no_writes}" \
+    "NobleFactor/alpha#32 is a step of NobleFactor/alpha#30, which is closed: star github schedule reopen reopens it" text
+run_star "${data}" github issue move NobleFactor/alpha#32 --triage --reason "R."
+expect "157 (#531): and to Triage" error "${no_writes}" \
+    "NobleFactor/alpha#32 is a step of NobleFactor/alpha#30, which is closed: star github schedule reopen reopens it" text
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"

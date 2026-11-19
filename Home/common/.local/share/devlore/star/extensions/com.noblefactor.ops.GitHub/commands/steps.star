@@ -32,6 +32,8 @@ _SCHEDULE_FIELD = "Schedule"
 _SCENARIO_FIELD = "Scenario"
 _STEP_FIELD = "Step"
 _BEAT_FIELD = "Beat"
+_NO_STEP = "a closed schedule takes no step"
+_NO_ITEM = "a closed scenario takes no item"
 _STATUS_FIELD = "Status"
 _WORKTREE_FIELD = "Worktree"
 _ITERATION_FIELD = "Iteration"
@@ -179,7 +181,7 @@ def schedule(key, model, reading = False):
     The option is the one the Schedule issue's own row carries; fails, naming why, when the issue is not a Schedule issue
     or has no such row, and, unless reading, as get reads a finished schedule, when it is closed.
     """
-    return _collection(key, model, _SCHEDULE_FIELD, _STEP_FIELD, "a closed schedule takes no step", reading)
+    return _collection(key, model, _SCHEDULE_FIELD, _STEP_FIELD, _NO_STEP, reading)
 
 def read_schedule(key, model, reading = False):
     """A schedule as schedule reads it, or what stops it: (schedule, "") or (None, why), never failing on the schedule.
@@ -187,14 +189,14 @@ def read_schedule(key, model, reading = False):
     issue move reads the schedule an issue leaves this way, among its refusals, before it writes anything (#531); issue
     reopen reads the schedule a step was on with reading, so that a closed one is read and not refused.
     """
-    return _collection_read(key, model, _SCHEDULE_FIELD, _STEP_FIELD, "a closed schedule takes no step", reading)
+    return _collection_read(key, model, _SCHEDULE_FIELD, _STEP_FIELD, _NO_STEP, reading)
 
 def read_scenario(key, model, reading = False):
     """A scenario as scenario reads it, or what stops it: (scenario, "") or (None, why), never failing on the scenario.
 
     star github scenario reopen reads the scenario it reopens this way, with reading, so that a closed one is read.
     """
-    return _collection_read(key, model, _SCENARIO_FIELD, _BEAT_FIELD, "a closed scenario takes no item", reading)
+    return _collection_read(key, model, _SCENARIO_FIELD, _BEAT_FIELD, _NO_ITEM, reading)
 
 def scenario(key, model, reading = False):
     """A scenario: its Scenario issue, its team's Scenario project with its fields, and its option.
@@ -203,7 +205,7 @@ def scenario(key, model, reading = False):
     or has no such row, and, unless reading, as get reads a closed scenario, when it is closed: a closed scenario
     takes no item.
     """
-    return _collection(key, model, _SCENARIO_FIELD, _BEAT_FIELD, "a closed scenario takes no item", reading)
+    return _collection(key, model, _SCENARIO_FIELD, _BEAT_FIELD, _NO_ITEM, reading)
 
 def walk(own):
     """How many steps a Scenario issue's walk numbers under its How to walk through it heading; None when it numbers none.

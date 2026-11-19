@@ -13,7 +13,9 @@
 #   2. Its rows: a Schedule row set Open, its Worktree kept, since no one has taken it up again; a Backlog row set Open.
 #      An issue that has no row on its team's Triage, Backlog, Schedule or Scenario project gets a Triage row, since the
 #      Triage workflow runs only when an issue is opened.
-#   3. Each closed parent, its feature and then its epic, reopened the same way, its comment naming the issue.
+#   3. Each closed parent, its feature and then its epic, reopened the same way, its comment naming the issue, and its
+#      rows as the issue's are: one with no row, as close leaves a feature or an epic it took off the Backlog, gets a
+#      Triage row.
 #   4. Each closed schedule it is a step of reopened, by what star github schedule reopen does (ending.star): the
 #      Schedule issue reopened with its comment, its own row In progress, and its every-step exit criterion unticked.
 #
@@ -189,7 +191,9 @@ def run(_command, ctx):
             planned[p["key"]] = True
             pm = model_for(models, parse_key(p["key"])["repo"])
             pr = issue(p["key"], pm)
-            w["parents"].append({"r": pr, "model": pm, "clear": clearing_plan(pm, pr)})
+            changes, faults = _rows(pr, pm, projects)
+            refused.extend(faults)
+            w["parents"].append({"r": pr, "model": pm, "clear": clearing_plan(pm, pr), "changes": changes})
         w["schedules"], faults = _schedules(r, model, planned)
         refused.extend(faults)
         work.append(w)
@@ -212,6 +216,8 @@ def run(_command, ctx):
         for p in w["parents"]:
             _reopen(p["r"], p["model"], p["clear"], body(r["key"]))
             out.append(_record(p["r"]["key"], "reopened", resolution = p["clear"]["name"] if p["clear"] != None else None, reopened_for = r["key"]))
+            for change in p["changes"]:
+                out.append(_change(p["r"], change))
         for s in w["schedules"]:
             done = reopen_schedule(s, body(r["key"]))
             out.append(_record(done["issue"], "reopened", project = s["sched"]["project"]["title"], reopened_for = r["key"], criteria = done["criteria"]))

@@ -260,13 +260,13 @@ Companion to [10. The issue commands](10-the-issue-commands.md). It records the 
 
 **Context and criteria:** A reopened issue is open work, so a closed feature, epic or schedule it belongs to is open again too, and the issue needs a place to be seen.
 
-**Decision:** `reopen` reopens the issue's closed parents, its feature and then its epic, and each closed schedule it is a step of, setting the schedule's own row In progress and unticking its every-step criterion. An issue with no row on its team's four projects gets a Triage row.
+**Decision:** `reopen` reopens the issue's closed parents, its feature and then its epic, and each closed schedule it is a step of, setting the schedule's own row In progress and unticking its every-step criterion. An issue or a parent it reopens with no row on its team's four projects gets a Triage row.
 
 **Reasons:** A schedule is in progress while any of its steps is open. The Triage workflow runs only when an issue is opened, so a reopened issue with no row would be on no board.
 
 **Alternatives:** Reopening the issue alone; sending a reopened item back to the scenario it left.
 
-**Consequences:** A reopened epic or feature goes to Triage, not back to the Backlog, for review.
+**Consequences:** A reopened epic or feature, whether named or reopened for an issue under it, goes to Triage, not back to the Backlog, for review.
 
 **Design links:** [Reopening an issue](10-the-issue-commands.md#reopening-an-issue-reopen); [section 8, Reopening a schedule](8-the-schedule-commands.md#reopening-a-schedule-reopen).
 
