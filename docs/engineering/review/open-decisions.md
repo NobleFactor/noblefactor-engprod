@@ -2,7 +2,7 @@
 title: "Open decisions for review"
 status: draft
 created: 2026-10-28
-updated: 2026-11-17
+updated: 2026-11-18
 ---
 
 # Open decisions for review
@@ -72,7 +72,7 @@ Thoughts?
 
 ## O05 — Accurate assistance disclosure
 
-**Resolved:** Use `Signed-off-by:` for the accountable human and `Assisted-by: <agent name>` for the agent submitting the PR. Attribution for every agent consulted during review is not required. Earlier discussion and the Owner response below are retained as history.
+**Resolved:** Put `Signed-off-by:` for the accountable human and `Assisted-by: <agent name>` for the submitting agent in the PR description. This is permanent policy for all agent hosts. Preserve the trailers in the squash commit; branch commits carry no trailers. Attribution for every agent consulted during review is not required. Earlier discussion and the Owner response below are retained as history.
 
 Contribution terms and templates literally name Claude Code. Decide how to record actual assistance when Codex or several agents contribute, retaining sign-off, disclosure and no false co-authorship. Do not falsely name an assistant to satisfy a literal template.
 

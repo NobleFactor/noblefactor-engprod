@@ -5,7 +5,7 @@ type: Process
 audience: Engineers, agents
 status: Approved
 created: 2026-03-16
-updated: 2026-11-15
+updated: 2026-11-18
 ---
 
 # PR Script Template
@@ -18,7 +18,7 @@ On macOS and Linux the script is bash, [the template below](#template). On Windo
 
 ---
 
-The [PR procedure](../engineering/procedures/pull-request.md) owns review, merge and completion policy. This specification owns the platform-specific script mechanics. Apply the Owner-approved [temporary live-entrypoint overrides](../engineering/index.md#temporary-live-entrypoint-overrides) when choosing the effective disclosure and execution limits for a particular session.
+The [PR procedure](../engineering/procedures/pull-request.md) owns review, merge and completion policy. This specification owns the platform-specific script mechanics. Apply the [PR disclosure requirements](../engineering/procedures/pull-request.md#review-boundary) when preparing the description. Apply the Owner-approved [temporary live-entrypoint overrides](../engineering/index.md#temporary-live-entrypoint-overrides) to the session's execution limits.
 
 <a id="the-pre-flight-command-is-discovered-not-remembered"></a>
 
@@ -456,7 +456,7 @@ git status --short
 ## 4. Rules
 
 1. **Stage by name.** Never `git add -A` or `git add .`.
-2. **Follow the [disclosure requirements](../engineering/procedures/pull-request.md#review-boundary).** The description says AI assisted and ends, before its Time section, with human sign-off and the effective assistance trailer. Populate the submitting agent explicitly, applying any recorded temporary live-entrypoint override. Preserve the two trailers in the squash commit and verify them after delivery. Branch commits carry no trailer. Use the account's maintained PR-body template and retain the prohibition on AI co-authorship and promotional footers.
+2. **Follow the [disclosure requirements](../engineering/procedures/pull-request.md#review-boundary).** The description says AI assisted and ends, before its Time section, with human sign-off and the effective assistance trailer. Name the submitting agent explicitly; assistance disclosure has no temporary host override. Preserve the two trailers in the squash commit and verify them after delivery. Branch commits carry no trailer. Use the account's maintained PR-body template and retain the prohibition on AI co-authorship and promotional footers.
 3. **HEREDOC for messages.** Both commit messages and PR bodies use `cat <<'EOF'` for safe formatting.
 4. **Establish CI results.** The examples require observed passing checks for the qualified head. An empty check list never proves CI is unconfigured. A repository with no configured checks, or an approved conditional-check result, needs that verified policy recorded in the plan and reflected in the generated gate. Retain every required check; uncertainty stops the run.
 5. **Establish merge readiness.** Check the qualified head, clean merge state, review decision and all review conversations. Pin the merge to that head and use ordinary merge authority. Confirm actual merged state before recording delivery; a queued merge is still outstanding. Administrative bypass requires its separate explicit Owner grant under the PR procedure.

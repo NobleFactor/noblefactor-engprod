@@ -2,7 +2,7 @@
 title: "Pull request procedure"
 status: draft
 created: 2026-10-28
-updated: 2026-11-15
+updated: 2026-11-18
 ---
 
 # Pull request procedure
@@ -23,7 +23,7 @@ The [dedicated script specification](../../guides/pr-script-template.md) provide
 
 Retain explicit staging; never stage the whole tree indiscriminately. Verify generated path lists, use safe literal multi-line message construction, check native exit results, and run the repository's actual CI-equivalent entry point. Do not bypass hooks. Check actual CI and mergeability rather than inferring them from a local run.
 
-Retain no rebase, squash merge without automatic delete-branch, target integration before push and canonical-clone sync after cleanup. Obtain the separate [canonical-clone maintenance authorization](../agent-operation.md#owner-supervised-agents-authority-and-progression) before executing cleanup or sync operations that update that clone; a worker’s commit/push grant does not cover them. The PR carries `Signed-off-by:` for the accountable human and `Assisted-by: <agent name>` naming the submitting agent. Attribution for every agent consulted during review is not required. Preserve the disclosure in the squash commit and verify the landed message. Branch commits need not repeat these trailers; retain the prohibition on AI co-authorship and promotional footers.
+Retain no rebase, squash merge without automatic delete-branch, target integration before push and canonical-clone sync after cleanup. Obtain the separate [canonical-clone maintenance authorization](../agent-operation.md#owner-supervised-agents-authority-and-progression) before executing cleanup or sync operations that update that clone; a worker’s commit/push grant does not cover them. The PR description states that AI assisted and carries `Signed-off-by:` for the accountable human and `Assisted-by: <agent name>` naming the submitting agent, such as Codex or Claude Code. This is permanent policy for all agent hosts. Attribution for every agent consulted during review is not required. Preserve these trailers in the squash commit and verify the landed message. Branch commits carry no trailers. Retain the prohibition on AI co-authorship and promotional footers.
 
 Record PR time-open from GitHub timestamps, not estimated effort. Record scheduled-issue state when the merge lands, with stale-read protection and readback, before removing the worktree/script. Where a record changed since inspection, stop and reconcile rather than overwrite it.
 

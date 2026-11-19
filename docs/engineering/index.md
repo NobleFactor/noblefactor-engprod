@@ -67,7 +67,8 @@ At inspection on 2026-11-15, `/Users/david-noble/.claude/CLAUDE.md` and `/Users/
 | Topic | Shared handbook policy | Temporary override in existing live entrypoints |
 | --- | --- | --- |
 | PR concurrency | [One active PR per worktree](process.md#pull-request-and-integration), allowing independent work in separate worktrees | Existing entrypoints permit one PR in flight for a session and restrict that session's other repository writes during delivery. Other workers' PRs do not block the session; the Owner coordinates their work. Sessions retain this restriction until their approved entrypoint cutover. |
-| Assistance disclosure | [Name the submitting agent](procedures/pull-request.md#review-boundary) while retaining human sign-off and AI disclosure | Existing entrypoints literally require `Assisted-by: Claude Code`. Their replacement belongs to the host tasks; adoption of this handbook does not silently rewrite that instruction. |
+
+[PR disclosure](procedures/pull-request.md#review-boundary) is permanent policy and applies to sessions using retained personal instructions. Assistance disclosure is not a temporary override.
 
 On 2026-11-16, the Owner withdrew mandatory agent-authored breach reports and breach-cost estimates in favor of [compliance auditing](agent-operation.md#compliance-auditing). That direction supersedes the older reporting instructions immediately, including retained personal instructions that still repeat them. The host tasks carry the file migration; their delivery is not a condition for honoring the Owner's withdrawal.
 

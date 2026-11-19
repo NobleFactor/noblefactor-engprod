@@ -2,7 +2,7 @@
 title: "Agent operation"
 status: draft
 created: 2026-10-28
-updated: 2026-11-17
+updated: 2026-11-18
 ---
 
 # Agent operation
@@ -94,7 +94,7 @@ Canonical-clone integration maintenance, including updating its target checkout 
 
 Sandbox enforcement is verified separately before it is relied on; approval of this authorization model does not establish that enforcement exists. PR execution authority is separate from permission to commit and push: retain the reviewed-script handoff to the Owner unless an explicit exception authorizes agent execution.
 
-Follow the [PR disclosure requirements](procedures/pull-request.md#review-boundary) and read repository contribution terms before preparing the script. Surface inconsistent contribution terms for the approved documentation process rather than silently claiming compliance with both. During handbook adoption, apply the Owner-approved [temporary live-entrypoint overrides](index.md#temporary-live-entrypoint-overrides) to sessions using the retained personal instructions. The Claude and Codex host tasks own their replacement and qualification; publication alone grants no new execution authority.
+Follow the [PR disclosure requirements](procedures/pull-request.md#review-boundary) and read repository contribution terms before preparing the script. Surface inconsistent contribution terms for the approved documentation process rather than silently claiming compliance with both. The disclosure rule applies to all agent hosts, including sessions using retained personal instructions. Apply the remaining [temporary live-entrypoint overrides](index.md#temporary-live-entrypoint-overrides) to execution limits. The Claude and Codex host tasks own replacement and qualification of the retained instructions; publication alone grants no new execution authority.
 
 <a id="all-agents-tools-and-status"></a>
 
