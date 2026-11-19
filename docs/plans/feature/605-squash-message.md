@@ -1,7 +1,11 @@
 ---
 title: "Each repository squash-merges with the pull request's title and description"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/605
-status: draft
+issues:
+  - https://github.com/NobleFactor/noblefactor-engprod/issues/608
+  - https://github.com/NobleFactor/noblefactor-engprod/issues/606
+  - https://github.com/NobleFactor/noblefactor-engprod/issues/607
+status: active
 created: 2026-11-19
 updated: 2026-11-19
 documents:
@@ -33,11 +37,25 @@ When the owner merges a pull request in GitHub, the commit that lands ends with 
 - A pull request's description ends with the two lines, with nothing after them, so they are the last lines of the commit and git reads them as trailers.
 - The PR script template stops at a pull request that passes CI and is ready to merge. The owner merges in GitHub. The records after the merge, its time and each step's record, are made when the owner asks, by the script's second part.
 
-Out of scope: the PR procedure in the handbook, which Task #582's rewrite owns (see section 11); repositories that take no part in the issue model; and any other repository setting.
+- A pull request names each issue it completes with a closing keyword, so GitHub links it, fills the Linked pull requests column and closes the issue at the merge; an issue whose deployment or verification then fails is reopened (Task #608, ruled 2026-11-19).
+
+Out of scope: the rest of the handbook's PR procedure, which Task #582's rewrite owns (see section 11); repositories that take no part in the issue model; and any other repository setting.
 
 ## Issue 605
 
 [Task #605](https://github.com/NobleFactor/noblefactor-engprod/issues/605): GitHub's squash merge builds the commit message from the branch's commit list in every repository we checked, so PR #604 landed as 643652b with neither trailer.
+
+## Issue 608
+
+[Task #608](https://github.com/NobleFactor/noblefactor-engprod/issues/608): the Linked pull requests column of every project view stays empty, since our pull requests named their issues without a closing keyword whenever work was left after the merge. The owner ruled on 2026-11-19 that a pull request closes the issues it completes, and reopens one whose deployment or verification fails. The process's § Completion and progression, the PR procedure's § Issue closure and the PR script template say so; the column stays.
+
+## Issue 606
+
+[Bug #606](https://github.com/NobleFactor/noblefactor-engprod/issues/606): `star github issue open` takes a documents table whose delimiter row has fewer cells than its header, which GitHub doesn't render as a table. `has_table` in `commands/markdown.star` compares the two rows' cell counts, and a case of `tests/Test-StarGitHub` refuses a mismatch, failing without the fix.
+
+## Issue 607
+
+[Bug #607](https://github.com/NobleFactor/noblefactor-engprod/issues/607): section 10 says a stopped `open` or `reopen` finishes when run again, and neither does. Section 10 says what a rerun of each command finishes and what is done by hand, as it does for `close` under D-009. Finishing a stopped run is designed apart, in Task #609, left in Triage, as the owner's documenter advised and the owner approved on 2026-11-19.
 
 <a id="current-state"></a>
 
@@ -91,7 +109,7 @@ Section 6 of the issue data model, § what an account needs beyond its model, ga
 
 | Milestone | Required? | Expected evidence | State/result |
 | --- | --- | --- | --- |
-| Implementation | Yes | The cases, `make check`, review | Pending |
+| Implementation | Yes | The cases, `make check`, review | Cases 171 to 174 pass, 545 of 545, and those of 171 to 173 fail without their fixes (2026-11-19); `make check` and review pending |
 | Merge | Yes | The pull request, merged by the owner in GitHub | Pending |
 | Deployment | Yes: the setting reaches each repository only through `apply` | `writ deploy`, then `model apply` for NobleFactor and David-Noble-at-work | Pending |
 | Verification | Yes | `diff` showing no difference; a merge in GitHub carrying both trailers | Pending |
@@ -102,12 +120,15 @@ Section 6 of the issue data model, § what an account needs beyond its model, ga
 
 ### 9.1 Phase 1: the plan
 
-- [ ] This plan committed on `feature/605-squash-message` and reviewed with the owner
+- [x] This plan committed on `feature/605-squash-message` and reviewed with the owner: approved 2026-11-19
 
 ### 9.2 Phase 2: the setting and the template
 
-- [ ] `participation.star` reads, compares and applies the setting; section 6 says so; the cases pass
-- [ ] The PR script template stops before the merge, ends the description with the trailers, and adds the time after the merge
+- [x] `participation.star` reads, compares and applies the setting; section 6 says so; the cases pass: 172 to 174, 545 of 545 on 2026-11-19, and 172 and 173 fail without the fix
+- [x] The PR script template stops before the merge, ends the description with the trailers, and adds the time after the merge: its first part stops at a mergeable pull request, and run again after the merge, its second part records it
+- [x] The process, the PR procedure and the template name each issue a pull request completes with a closing keyword, and reopen one whose deployment or verification fails (#608)
+- [x] `has_table` compares the header's and the delimiter's cell counts, with a case (#606): case 171, which fails without the fix
+- [x] Section 10 says what a rerun of `open` and `reopen` finishes and what is done by hand (#607)
 
 ### 9.3 Phase 3: the merge, the deployment and the verification
 
@@ -123,6 +144,9 @@ Section 6 of the issue data model, § what an account needs beyond its model, ga
 - `tests/Test-StarGitHub`: the fixtures and cases.
 - `docs/architecture/issue-data-model/6-the-asset-and-its-sync.md`: the design.
 - `docs/guides/pr-script-template.md`: the template.
+- `docs/engineering/process.md` and `docs/engineering/procedures/pull-request.md`: the closing-keyword rule (#608).
+- `commands/markdown.star` and `tests/Test-StarGitHub`: the table's cell counts (#606).
+- `docs/architecture/issue-data-model/10-the-issue-commands.md`: what a rerun finishes (#607).
 - This plan.
 
 <a id="dependencies-overlaps-and-blockers"></a>
@@ -137,7 +161,11 @@ Section 6 of the issue data model, § what an account needs beyond its model, ga
 
 ## 12. Approval and departures
 
-The owner made #605 the next task on 2026-11-19, and directed work to proceed. This plan awaits the owner's review.
+The owner made #605 the next task on 2026-11-19, and directed work to proceed. The owner approved this plan on 2026-11-19, with #608, #606 and #607 in it, and the work began.
+
+On 2026-11-19 the owner chose that pull requests close the issues they complete, so the Linked pull requests column fills, and directed the fix at once (#608, step 9 of #588, in this worktree). The process and the PR procedure are handbook pages in #596's inventory; the owner directed this change ahead of that rewrite.
+
+On 2026-11-19 the owner put #606 and #607, found by the Codex session's follow-up review of #604, in this worktree as steps 10 and 11, and approved designing automatic recovery apart, in Task #609.
 
 <a id="completion-review"></a>
 

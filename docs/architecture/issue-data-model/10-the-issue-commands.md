@@ -18,7 +18,16 @@ title: "10. The issue commands"
 | `close <issue>... --resolution Declined\|Duplicate\|Invalid --reason <text>` | Closes issues whose work was not done, each with its Resolution | Comment, field or label, issue, rows |
 | `reopen <issue>... --reason <text>` | Reopens issues, with their closed parents and the closed schedules they are steps of | Comments, issues, fields or labels, rows, a Schedule issue's body |
 
-An `<issue>` is written `<owner>/<repository>#<number>`. Every command names what it acts on, takes star's `--filter`, `--jq` and `--output`, returns one flat record per thing it read or changed, JSON by default, and exits non-zero only on an error. Every command reads all it needs before its first write, so a fault is a refusal with nothing written, and reads every write back. A run of `open`, `move` or `reopen` that stops partway is run again to finish. A run of `close` that stops after it closes the issue is not: run again, it finds the issue closed and leaves it as it is, so the issue's rows are changed by hand ([D-009](10-the-issue-commands.decisions.md#d-009)). An issue named twice in one run, in another case or with a leading zero, is refused. `--dry-run` is refused.
+An `<issue>` is written `<owner>/<repository>#<number>`. Every command names what it acts on, takes star's `--filter`, `--jq` and `--output`, returns one flat record per thing it read or changed, JSON by default, and exits non-zero only on an error. Every command reads all it needs before its first write, so a fault is a refusal with nothing written, and reads every write back. A run that stops partway finishes when run again only where the command finds what the run left:
+
+- **`move`** finds the amendment it left pending, and finishes the move.
+- **`open`** with `--unique` finds the issue it opened under the parent, and opens no other. Without `--unique`, it opens a second issue.
+- **`reopen`** that stopped after it reopened the issue finds it open, records `unchanged`, and leaves the issue's Resolution and rows as they were.
+- **`close`** that stopped after it closed the issue finds it closed, records `unchanged`, and leaves its rows as they were ([D-009](10-the-issue-commands.decisions.md#d-009)).
+
+What a rerun leaves is done by hand: a second issue closed as Duplicate, a Resolution cleared, a row set or removed. A command finishing such a run itself is designed apart, in Task #609.
+
+An issue named twice in one run, in another case or with a leading zero, is refused. `--dry-run` is refused.
 
 ## Where an issue lives
 

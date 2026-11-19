@@ -10,7 +10,7 @@ updated: 2026-11-19
 
 # PR Script Template
 
-Standard structure for the PR script that the assigned agent generates, named for the worktree it serves and placed beside it: `~/Workspace/<org>/<worktree>.bash` on macOS and Linux and `<worktree>.ps1` on Windows, where `<worktree>` is the directory `git-open-branch` made, `<clone>.<issue>-<name>`. The script for `~/Workspace/NobleFactor/devlore-cli.1119-broker-specification` is `~/Workspace/NobleFactor/devlore-cli.1119-broker-specification.bash`; `ls ~/Workspace/NobleFactor` shows which worktree each script lands; and `git close-branch` removes the two together when the pull request merges. Ruled 2026-10-21 (#366), retiring `go-<repo>` one level above the repository: a script named for the clone outlived every worktree it served, and the bare `go` belonged to whichever repository last used it. Each script is self-contained: stage, commit, push, create PR, verify CI, verify mergeability, squash merge, record its time and its steps, clean up.
+Standard structure for the PR script that the assigned agent generates, named for the worktree it serves and placed beside it: `~/Workspace/<org>/<worktree>.bash` on macOS and Linux and `<worktree>.ps1` on Windows, where `<worktree>` is the directory `git-open-branch` made, `<clone>.<issue>-<name>`. The script for `~/Workspace/NobleFactor/devlore-cli.1119-broker-specification` is `~/Workspace/NobleFactor/devlore-cli.1119-broker-specification.bash`; `ls ~/Workspace/NobleFactor` shows which worktree each script lands; and `git close-branch` removes the two together when the pull request merges. Ruled 2026-10-21 (#366), retiring `go-<repo>` one level above the repository: a script named for the clone outlived every worktree it served, and the bare `go` belonged to whichever repository last used it. Each script is self-contained, and runs in two parts. The first stages, commits, pushes, creates the PR, verifies CI and mergeability, and stops: the owner merges in GitHub, and the script never merges (ruled 2026-11-19, #605). Run again after the merge, the second records its time and its steps, and cleans up.
 
 A script is read before it is overwritten, whatever it is called: its `cd` says which worktree it serves, and one whose `cd` names another worktree is the wrong file. Only a script that is not there is written from nothing.
 
@@ -155,54 +155,61 @@ cd ~/Workspace/<org>/<clone>.<issue>-<name>
 
 repository='<owner>/<repo>'
 assisting_agent='<submitting agent>'
-# Fill only from the reviewed completion/closure authorization. All other
-# issues remain open for their recorded post-merge obligations.
+# The steps this pull request completes, each named with a closing keyword, which closes it at the merge (ruled
+# 2026-11-19); one that fails its deployment or verification afterwards is reopened with star github issue reopen.
+# A step the pull request only advances is left out, and stays open.
 close_steps=()
 
-# Stage specific files (never git add -A or git add .)
-git add \
-    path/to/file1 \
-    path/to/file2
+# The owner merges in GitHub (ruled 2026-11-19), and this script never merges (#605). It runs in two parts. Until
+# the pull request is merged, it commits, pushes, opens the pull request, and stops when it passes its checks and is
+# ready to merge. Run again after the owner merges, it finds the pull request merged and records the merge: its time,
+# each step's record, the cleanup, and the trailers of the commit that landed.
+if [[ "$(gh pr view <branch> --json state --jq .state 2>/dev/null || true)" != MERGED ]]; then
+    # Stage specific files (never git add -A or git add .)
+    git add \
+        path/to/file1 \
+        path/to/file2
 
-# Nothing left behind: a tracked file still modified after staging is a change this PR silently
-# omits. gh prints "Warning: N uncommitted change" and carries on; the script must not.
-git diff --quiet || {
-    echo "unstaged changes remain; stage them by name or revert them:"
-    git status --short
-    exit 1
-}
+    # Nothing left behind: a tracked file still modified after staging is a change this PR silently
+    # omits. gh prints "Warning: N uncommitted change" and carries on; the script must not.
+    git diff --quiet || {
+        echo "unstaged changes remain; stage them by name or revert them:"
+        git status --short
+        exit 1
+    }
 
-# --- Pre-flight: the repository's own gate, not an approximation of it ---
-#
-# Run what CI runs. Passing here must mean passing there, which is only true if it is literally
-# the same command. Placed before the commit so a failure costs nothing -- no branch, no issue,
-# no PR to recover.
-#
-# set -euo pipefail aborts on a non-zero exit. Do not wrap this in an if.
-.github/scripts/shell-lint.sh
+    # --- Pre-flight: the repository's own gate, not an approximation of it ---
+    #
+    # Run what CI runs. Passing here must mean passing there, which is only true if it is literally
+    # the same command. Placed before the commit so a failure costs nothing -- no branch, no issue,
+    # no PR to recover.
+    #
+    # set -euo pipefail aborts on a non-zero exit. Do not wrap this in an if.
+    .github/scripts/shell-lint.sh
 
-# Commit
-git commit -m "$(
-    cat <<'EOF'
+    # Commit
+    git commit -m "$(
+        cat <<'EOF'
 <type>(<scope>): <summary>
 
 <body>
 EOF
-)"
+    )"
 
-# Pull before the merge: bring the branch current with the target by a merge commit (never a rebase),
-# so CI and the merge gate judge it against the target it will land on.
-git pull --no-rebase --no-edit origin <target>
+    # Pull before the merge: bring the branch current with the target by a merge commit (never a rebase),
+    # so CI and the merge gate judge it against the target it will land on.
+    git pull --no-rebase --no-edit origin <target>
 
-# Push branch
-git push -u origin <branch>
+    # Push branch
+    git push -u origin <branch>
 
-# The description says AI assisted and ends with the two trailers (rule 2). The sign-off comes from git's
-# configuration, never typed. The merge step below writes everything above ## Time into the squash commit.
-# The description's form is kept in the account's pull request template, in its .github repository: NobleFactor's
-# since #431, David-Noble-at-work's since #441 (rule 2).
-description="$(
-    cat <<'EOF'
+    # The description says AI assisted and ends with the two trailers (rule 2). The sign-off comes from git's
+    # configuration, never typed. The repository squash-merges with the pull request's title and description (#605),
+    # so the trailers land in the commit on the target.
+    # The description's form is kept in the account's pull request template, in its .github repository: NobleFactor's
+    # since #431, David-Noble-at-work's since #441 (rule 2).
+    description="$(
+        cat <<'EOF'
 ## Summary
 
 - **Change 1** — description
@@ -215,76 +222,71 @@ description="$(
 
 Written with AI assistance.
 EOF
-)"
-for issue in "${close_steps[@]}"; do
-    description+=$'\n\n'"Closes #${issue}."
-done
-description+=$'\n\n'"Signed-off-by: $(git config user.name) <$(git config user.email)>"
-description+=$'\n'"Assisted-by: ${assisting_agent}"
+    )"
+    for issue in "${close_steps[@]}"; do
+        description+=$'\n\n'"Closes #${issue}."
+    done
+    description+=$'\n\n'"Signed-off-by: $(git config user.name) <$(git config user.email)>"
+    description+=$'\n'"Assisted-by: ${assisting_agent}"
 
-# Create PR
-gh pr create \
-    --title "<type>(<scope>): <summary>" \
-    --body "${description}"$'\n\n## Time\n\n_Filled by the merge step below._'
+    # Create PR
+    gh pr create \
+        --title "<type>(<scope>): <summary>" \
+        --body "${description}"
 
-# --- CI and merge gates ---
-pr_number=$(gh pr view --json number --jq '.number')
-qualified_head=$(gh pr view "${pr_number}" --json headRefOid --jq '.headRefOid')
+    # --- CI and merge gates ---
+    pr_number=$(gh pr view --json number --jq '.number')
+    qualified_head=$(gh pr view "${pr_number}" --json headRefOid --jq '.headRefOid')
 
-# The default requires observed passing checks. A proven no-CI repository
-# needs its reviewed policy reflected here; empty output never proves it.
-gh pr checks "${pr_number}" --watch
-checks=$(gh pr checks "${pr_number}" --json bucket)
-jq -e 'length > 0 and all(.[]; .bucket == "pass")' <<<"${checks}" >/dev/null || {
-    echo 'The observed checks are not all passing. Inspect the current head and CI policy.' >&2
-    exit 1
-}
+    # The default requires observed passing checks. A proven no-CI repository
+    # needs its reviewed policy reflected here; empty output never proves it.
+    gh pr checks "${pr_number}" --watch
+    checks=$(gh pr checks "${pr_number}" --json bucket)
+    jq -e 'length > 0 and all(.[]; .bucket == "pass")' <<<"${checks}" >/dev/null || {
+        echo 'The observed checks are not all passing. Inspect the current head and CI policy.' >&2
+        exit 1
+    }
 
-gate=$(gh pr view "${pr_number}" --json state,headRefOid,mergeStateStatus,reviewDecision)
-jq -e --arg head "${qualified_head}" '
-    .state == "OPEN" and .headRefOid == $head and .mergeStateStatus == "CLEAN" and
-    (.reviewDecision == null or .reviewDecision == "" or .reviewDecision == "APPROVED")
-' <<<"${gate}" >/dev/null || {
-    echo 'The PR head, merge state or review decision is not ready. Stop for review.' >&2
-    exit 1
-}
+    gate=$(gh pr view "${pr_number}" --json state,headRefOid,mergeStateStatus,reviewDecision)
+    jq -e --arg head "${qualified_head}" '
+        .state == "OPEN" and .headRefOid == $head and .mergeStateStatus == "CLEAN" and
+        (.reviewDecision == null or .reviewDecision == "" or .reviewDecision == "APPROVED")
+    ' <<<"${gate}" >/dev/null || {
+        echo 'The PR head, merge state or review decision is not ready. Stop for review.' >&2
+        exit 1
+    }
 
-# Refuse an incomplete thread read rather than overlooking another page.
-# These literal GraphQL/jq programs bind their own variables.
-# shellcheck disable=SC2016
-threads=$(gh api graphql -f owner="${repository%%/*}" -f name="${repository#*/}" -F number="${pr_number}" -f query='
-query($owner: String!, $name: String!, $number: Int!) {
-  repository(owner: $owner, name: $name) { pullRequest(number: $number) {
-    reviewThreads(first: 100) { pageInfo { hasNextPage } nodes { isResolved } }
-  } }
-}')
-jq -e '
-    ((.errors // []) | length) == 0 and .data.repository.pullRequest != null and
-    .data.repository.pullRequest.reviewThreads.pageInfo.hasNextPage == false and
-    all(.data.repository.pullRequest.reviewThreads.nodes[]; .isResolved == true)
-' <<<"${threads}" >/dev/null || {
-    echo 'Review threads are unresolved or were not completely read. Stop for review.' >&2
-    exit 1
-}
+    # Refuse an incomplete thread read rather than overlooking another page.
+    # These literal GraphQL/jq programs bind their own variables.
+    # shellcheck disable=SC2016
+    threads=$(gh api graphql -f owner="${repository%%/*}" -f name="${repository#*/}" -F number="${pr_number}" -f query='
+    query($owner: String!, $name: String!, $number: Int!) {
+      repository(owner: $owner, name: $name) { pullRequest(number: $number) {
+        reviewThreads(first: 100) { pageInfo { hasNextPage } nodes { isResolved } }
+      } }
+    }')
+    jq -e '
+        ((.errors // []) | length) == 0 and .data.repository.pullRequest != null and
+        .data.repository.pullRequest.reviewThreads.pageInfo.hasNextPage == false and
+        all(.data.repository.pullRequest.reviewThreads.nodes[]; .isResolved == true)
+    ' <<<"${threads}" >/dev/null || {
+        echo 'Review threads are unresolved or were not completely read. Stop for review.' >&2
+        exit 1
+    }
 
-# Squash merge -- and nothing else on this line.
+    echo "== #${pr_number} is ready: merge it in GitHub, then run this script again to record the merge."
+    exit 0
+fi
+
+# --- Part two: after the owner's merge in GitHub, the records (#605) ---
 #
-# Always --squash. Never --delete-branch: it deletes the LOCAL branch first, which fails when a
-# linked worktree holds the branch (the normal case under git-open-branch), gh exits non-zero, and
-# set -e ends the script here -- after the merge has already landed, before any cleanup has run.
-# Deletion belongs to git close-branch below, which deletes the remote first so a failure leaves
-# both halves intact.
-#
-# The squash commit's message is the pull request's title and its description up to ## Time, so the two
-# trailers end it and land on the target (rule 2). GitHub's own composition is not used: it is a repository
-# setting, and it is made from the branch's commits, which carry no trailer. The message goes through a file,
-# and the span step below reuses that file; the one trap removes it.
+# The repository squash-merges with the pull request's title and description, `star github model apply` having set it,
+# so the commit that landed ends with the description's two trailers, which the end of this script checks (rule 2).
+# Deletion belongs to git close-branch below, which deletes the remote first so a failure leaves both halves intact.
+# The span step writes the body through a file; the one trap removes it.
+pr_number=$(gh pr view <branch> --json number --jq .number)
 message_file=$(mktemp)
 trap 'rm "${message_file}"' EXIT
-gh pr view "${pr_number}" --json body --jq .body | sed '/^## Time$/,$d' >"${message_file}"
-gh pr merge "${pr_number}" --squash --match-head-commit "${qualified_head}" \
-    --subject "$(gh pr view "${pr_number}" --json title --jq .title) (#${pr_number})" \
-    --body-file "${message_file}"
 
 # A merge queue may defer delivery. Record no merge or closure until GitHub
 # confirms that the merge actually happened.
@@ -368,12 +370,12 @@ set_row() {
 # AFTER the merge and its span, since the records name the squash commit. Guarded on what each record holds (ruled
 # 2026-11-13): the step's row must link this branch, or this pull request when the script runs again; otherwise the
 # step has moved to another worktree, and the script stops. Every step gets the merge record as a comment, once.
-# Closure requires the reviewed close_steps authorization: a step approved to close is closed by the pull request's
-# closing keyword at the merge, so GitHub records the pull request as what closed it, which star github schedule close
-# lists; the merge record is its evidence, and the script sets its row Closed, closing the issue itself only if GitHub
-# has not yet. Every other step stays open, its row In progress, for its post-merge obligations. Each record is read
-# back. A step that moves to another worktree, or closes without a merge, is recorded by this script before git
-# close-branch, its row linking where the work went. Leave the step out only when the pull request lands no step.
+# A step in close_steps is closed by the pull request's closing keyword at the merge, so GitHub records the pull request
+# as what closed it, which star github schedule close lists and the Linked pull requests column shows; the merge record
+# is its evidence, and the script sets its row Closed, closing the issue itself only if GitHub has not yet. Every other
+# step stays open, its row In progress. Each record is read back. A step that moves to another worktree, or closes
+# without a merge, is recorded by this script before git close-branch, its row linking where the work went. Leave the
+# step out only when the pull request lands no step.
 steps=(<issue>)
 link="https://github.com/${repository}/tree/<branch>"
 pr_url="https://github.com/${repository}/pull/${pr_number}"
@@ -458,22 +460,22 @@ git status --short
 ## 4. Rules
 
 1. **Stage by name.** Never `git add -A` or `git add .`.
-2. **Follow the [disclosure requirements](../engineering/procedures/pull-request.md#review-boundary).** The description says AI assisted and ends, before its Time section, with human sign-off and the effective assistance trailer. Populate the submitting agent explicitly, applying any recorded temporary live-entrypoint override. Preserve the two trailers in the squash commit and verify them after delivery. Branch commits carry no trailer. Use the account's maintained PR-body template and retain the prohibition on AI co-authorship and promotional footers.
+2. **Follow the [disclosure requirements](../engineering/procedures/pull-request.md#review-boundary).** The description says AI assisted and ends with human sign-off and the effective assistance trailer; the Time section is appended after the merge. Populate the submitting agent explicitly, applying any recorded temporary live-entrypoint override. The repository squash-merges with the pull request's title and description, which `star github model apply` sets (#605), so the two trailers land in the squash commit; the script's second part verifies them. Branch commits carry no trailer. Use the account's maintained PR-body template and retain the prohibition on AI co-authorship and promotional footers.
 3. **HEREDOC for messages.** Both commit messages and PR bodies use `cat <<'EOF'` for safe formatting.
 4. **Establish CI results.** The examples require observed passing checks for the qualified head. An empty check list never proves CI is unconfigured. A repository with no configured checks, or an approved conditional-check result, needs that verified policy recorded in the plan and reflected in the generated gate. Retain every required check; uncertainty stops the run.
-5. **Establish merge readiness.** Check the qualified head, clean merge state, review decision and all review conversations. Pin the merge to that head and use ordinary merge authority. Confirm actual merged state before recording delivery; a queued merge is still outstanding. Administrative bypass requires its separate explicit Owner grant under the PR procedure.
+5. **Establish merge readiness.** Check the qualified head, clean merge state, review decision and all review conversations, then stop: the owner merges in GitHub. Confirm actual merged state before recording delivery; a queued merge is still outstanding. Administrative bypass requires its separate explicit Owner grant under the PR procedure.
 6. **`git close-branch` for cleanup.** Handles both worktree and regular-branch scenarios. It also **removes the worktree the script is standing in**, so nothing after it may assume `cwd` survives: `cd` to the main clone first. Observed as a spurious exit 128 after a successful merge on devlore-cli#811. It **removes the script itself**, `<worktree>.bash` or `.ps1` beside the worktree (#366); bash reads on from the unlinked file and PowerShell parsed the file before running it, so the lines after it still run. Then it **syncs the main clone** to the target branch, whatever it had checked out, prints what it had and the commit it is at now, and exits 75 when the sync cannot happen (#306).
 7. **Follow the [worktree integration boundary](../engineering/process.md#pull-request-and-integration).** A worktree serves one active PR. During integration it accepts that PR's review or CI corrections; honor any temporary live-entrypoint restriction still applicable to the session.
-8. **Always `--squash`, never `--delete-branch`.** The merge command carries `--squash` and no other deletion flag. `--delete-branch` deletes the local branch first, which fails when a linked worktree holds it, and under `set -e` that aborts the script after the merge and before cleanup. `git close-branch` deletes in the order that survives a failure: remote, then worktree, then local, then the script. Then it syncs the main clone itself (rules 6 and 12).
+8. **The owner merges in GitHub, and the script never does.** The script's first part stops at a pull request that passes its checks and is ready to merge, and prints no merge command; run again after the merge, its second part records it (ruled 2026-11-19, #605). `git close-branch` deletes in the order that survives a failure: remote, then worktree, then local, then the script. Then it syncs the main clone itself (rules 6 and 12).
 9. **The epic report ends a pull request when one is asked for.** Table form, all states, scoped to the epic, feature or thread the pull request served, printed last, after cleanup, so the reader sees the state the merge produced. Not automatic: ruled 2026-09-12 in `development-process.md`, which retired the standing rule of 2026-09-04 that every pull request print one.
 
 10. **Nothing left behind.** After `git add` by name, `git diff --quiet` must pass. A modified tracked file the script did not stage is a change the PR silently omits; #161 merged without the rule above for exactly this reason.
 
-11. **Every pull request records its time.** A `## Time` section in the pull request's own body, written by the merge step from GitHub's own timestamps and verified there: `opened` (the branch's first commit), `submitted` (the pull request's creation), `merged`, and the elapsed hours between them to one decimal. Ruled 2026-09-08. One algorithm for every pull request -- a number computed differently each time is noise, and the value is in the series. It measures how long the work was **open**, review gaps and nights included; it is not effort and must not be read as one. Where a coding agent estimates active time from its own session transcript, that estimate goes in the agent's end-of-PR message, labeled an estimate, and never into the pull request as fact.
+11. **Every pull request records its time.** A `## Time` section in the pull request's own body, appended by the script's second part after the merge, from GitHub's own timestamps, and verified there: `opened` (the branch's first commit), `submitted` (the pull request's creation), `merged`, and the elapsed hours between them to one decimal. Ruled 2026-09-08. One algorithm for every pull request -- a number computed differently each time is noise, and the value is in the series. It measures how long the work was **open**, review gaps and nights included; it is not effort and must not be read as one. Where a coding agent estimates active time from its own session transcript, that estimate goes in the agent's end-of-PR message, labeled an estimate, and never into the pull request as fact.
 
 12. **Pull before and after the merge.** Ruled 2026-09-24. Before the push, the branch takes the target by a merge commit (`git pull --no-rebase`), so what CI passes is what merges. After the merge, `git close-branch` syncs the main clone to the target, the squash commit with it, and exits 75 when it cannot (#306); the script's `git pull --ff-only` then confirms it, finding the clone current. Every script written on 2026-09-24 had to add both pulls by hand; the template owes them.
 
-13. **Record progress as it happens.** First scripts push the plan before linking the branch from its Schedule row, then run plan linking. Merge scripts record the actual PR and squash commit on each step's issue and link its row to the PR. Close only the issues listed in the reviewed closure authorization, after their required evidence is satisfied; otherwise keep the issue Open and the row In progress for post-merge work. Find rows and fields by name, guard current ownership, write each record once and read it back. Inspect plan-link refusal and dropped-row records even when the command exits 0. Cleanup waits until outstanding obligations and evidence have a durable home.
+13. **Record progress as it happens.** First scripts push the plan before linking the branch from its Schedule row, then run plan linking. A PR script's second part records the actual PR and squash commit on each step's issue and links its row to the PR. Name each issue the pull request completes with a closing keyword, so the merge closes it, and set its row Closed; reopen one whose deployment or verification fails afterwards with `star github issue reopen` (ruled 2026-11-19). Keep an issue the pull request only advances Open, its row In progress. Find rows and fields by name, guard current ownership, write each record once and read it back. Inspect plan-link refusal and dropped-row records even when the command exits 0. Cleanup waits until outstanding obligations and evidence have a durable home.
 
 ---
 
@@ -502,14 +504,14 @@ On Windows the PR script is `<worktree>.ps1`, beside the worktree, PowerShell 7,
     PR script for <owner>/<repo>, issue #<n>.
 
 .DESCRIPTION
-    Opens the pull request for <branch>, waits for CI, checks the merge state,
-    squash-merges, records the pull request's time span and the steps it lands, and closes the branch. Every commit is
-    made and pushed; there is nothing to stage. What it is doing goes to the verbose stream: run it with -Verbose to see
-    it.
+    Opens the pull request for <branch>, waits for CI and checks the merge state, then stops: the owner merges in
+    GitHub, and the script never merges (#605). Run again after the merge, it records the pull request's time span and
+    the steps it lands, and closes the branch. Every commit is made and pushed; there is nothing to stage. What it is
+    doing goes to the verbose stream: run it with -Verbose to see it.
 
 .OUTPUTS
-    PSCustomObject: each step's recorded issue state and row status; then the pull request merged, its
-    number, link and squash commit.
+    PSCustomObject: before the merge, the pull request ready to merge, its number and link. After it, each step's
+    recorded issue state and row status; then the pull request merged, its number, link and squash commit.
 
 .EXAMPLE
     & 'C:/Users/<you>/Workspace/<org>/<clone>.<n>-<name>.ps1' -Verbose
@@ -526,7 +528,7 @@ $ErrorActionPreference = 'Stop'
 $branch = '<branch>'
 $repository = '<owner>/<repo>'
 $assistingAgent = '<submitting agent>'
-# Populate only from the reviewed completion/closure authorization.
+# The steps this pull request completes, each closed by its closing keyword at the merge (ruled 2026-11-19).
 $closeSteps = @()
 $worktree = Join-Path -Path $HOME -ChildPath 'Workspace' -AdditionalChildPath '<org>',
     '<clone>.<n>-<name>'
@@ -535,7 +537,6 @@ $scheduleProject = 'Schedule: <team>'
 
 # The pull request's body and squash message go to gh through files, made and removed within the run.
 $bodyFile = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath 'pr-<n>-body.md'
-$squashFile = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath 'pr-<n>-squash.md'
 
 ###########
 # Helper functions
@@ -655,7 +656,8 @@ fieldId: $f, value: {text: $v}}) { projectV2Item { id } } }
 #
 # The description says AI assisted and ends with the trailers (rule 2), the sign-off from git's configuration. Its form
 # is kept in the account's pull request template, in its .github repository: NobleFactor's since #431,
-# David-Noble-at-work's since #441 (rule 2). The merge step below fills the Time section.
+# David-Noble-at-work's since #441 (rule 2). The repository squash-merges with the title and description (#605), so the
+# trailers land on the target; the Time section is appended after the merge.
 #
 # Returns:
 #   - String: the description.
@@ -687,7 +689,7 @@ Written with AI assistance.
     }
 
     $trailers = "Signed-off-by: $signer`nAssisted-by: $assistingAgent"
-    "$description`n`n$trailers`n`n## Time`n`n_Filled by the merge step below._"
+    "$description`n`n$trailers"
 }
 
 # Get-TimeSpanSection gets the pull request's Time section, its three markers from GitHub's own timestamps (rule 11).
@@ -850,87 +852,109 @@ function ConvertTo-Refusal {
 try {
     Push-Location -LiteralPath $worktree
 
-    # --- Pre-flight: nothing left behind, then the target merged in and the branch pushed ---
+    # --- Part one: the owner merges in GitHub, and this script never does (#605, ruled 2026-11-19) ---
+    #
+    # Until the pull request is merged, the script pushes, opens it, and stops when it passes its checks and is ready
+    # to merge. Run again after the owner merges, it finds the pull request merged and records the merge.
+    $state = Invoke-Native -Name gh -Operation "Reading $branch's pull request state" -AllowFailure -ArgumentList 'pr',
+        'view', $branch, '--json', 'state', '--jq', '.state'
 
-    $unstaged = Invoke-Native -Name git -Operation 'Looking for unstaged changes' -AllowFailure -ArgumentList 'diff',
-        '--quiet'
-    $staged = Invoke-Native -Name git -Operation 'Looking for staged changes' -AllowFailure -ArgumentList 'diff',
-        '--cached', '--quiet'
+    if ($state.ExitCode -ne 0 -or $state.Output.Trim() -ne 'MERGED') {
+        # --- Pre-flight: nothing left behind, then the target merged in and the branch pushed ---
 
-    if ($unstaged.ExitCode -ne 0 -or $staged.ExitCode -ne 0) {
-        $status = Invoke-Native -Name git -Operation 'Reading the worktree status' -ArgumentList 'status', '--short'
-        $message = "The worktree is not clean; nothing should be left behind:`n$($status.Output)"
-        throw (ConvertTo-Refusal -Message $message -Id 'WorktreeNotClean' -Target $worktree)
-    }
+        $unstaged = Invoke-Native -Name git -Operation 'Finding unstaged changes' -AllowFailure -ArgumentList 'diff',
+            '--quiet'
+        $staged = Invoke-Native -Name git -Operation 'Finding staged changes' -AllowFailure -ArgumentList 'diff',
+            '--cached', '--quiet'
 
-    $null = Invoke-Native -Name git -Operation 'Merging <default-branch> into the branch' -Narrate -ArgumentList 'pull',
-        '--no-rebase', '--no-edit', 'origin', '<default-branch>'
-    $null = Invoke-Native -Name git -Operation "Pushing $branch" -Narrate -ArgumentList 'push', '-u', 'origin', $branch
+        if ($unstaged.ExitCode -ne 0 -or $staged.ExitCode -ne 0) {
+            $status = Invoke-Native -Name git -Operation 'Reading the worktree status' -ArgumentList 'status', '--short'
+            $message = "The worktree is not clean; nothing should be left behind:`n$($status.Output)"
+            throw (ConvertTo-Refusal -Message $message -Id 'WorktreeNotClean' -Target $worktree)
+        }
 
-    # --- Create the PR ---
+        $null = Invoke-Native -Name git -Operation 'Merging in <default-branch>' -Narrate -ArgumentList 'pull',
+            '--no-rebase', '--no-edit', 'origin', '<default-branch>'
+        $null = Invoke-Native -Name git -Operation "Pushing $branch" -Narrate -ArgumentList 'push', '-u', 'origin',
+            $branch
 
-    Set-Content -LiteralPath $bodyFile -Value (Get-PullRequestBody) -NoNewline
-    $null = Invoke-Native -Name gh -Operation 'Opening the pull request' -Narrate -ArgumentList 'pr', 'create',
-        '--base', '<default-branch>', '--head', $branch, '--body-file', $bodyFile,
-        '--title', '<type>(<scope>): <summary>'
-    $opened = Invoke-Native -Name gh -Operation "Reading $branch's pull request" -ArgumentList 'pr', 'view', $branch,
-        '--json', 'number', '--jq', '.number'
-    $number = [Int32]$opened.Output.Trim()
+        # --- Create the PR ---
 
-    # --- CI and merge gates ---
+        Set-Content -LiteralPath $bodyFile -Value (Get-PullRequestBody) -NoNewline
+        $null = Invoke-Native -Name gh -Operation 'Opening the pull request' -Narrate -ArgumentList 'pr', 'create',
+            '--base', '<default-branch>', '--head', $branch, '--body-file', $bodyFile,
+            '--title', '<type>(<scope>): <summary>'
+        $opened = Invoke-Native -Name gh -Operation "Reading $branch's pull request" -ArgumentList 'pr', 'view',
+            $branch, '--json', 'number', '--jq', '.number'
+        $number = [Int32]$opened.Output.Trim()
 
-    $qualifiedHead = (Invoke-Native -Name gh -Operation "Reading #$number's qualified head" -ArgumentList 'pr',
-            'view', $number, '--json', 'headRefOid', '--jq', '.headRefOid').Output.Trim()
-    $null = Invoke-Native -Name gh -Operation "Waiting for #$number's checks" -Narrate -ArgumentList 'pr', 'checks',
-        $number, '--watch'
-    $answer = Invoke-Native -Name gh -Operation "Reading #$number's check results" -ArgumentList 'pr', 'checks',
-        $number, '--json', 'bucket'
-    $checks = @(ConvertFrom-Json -InputObject $answer.Output)
+        # --- CI and merge gates ---
 
-    if ($checks.Count -eq 0 -or @($checks | Where-Object { $_.bucket -ne 'pass' }).Count -ne 0) {
-        $message = "#$number's observed checks are not all passing; inspect the head and CI policy."
-        throw (ConvertTo-Refusal -Message $message -Id 'ChecksNotEstablished' -Category InvalidResult -Target $number)
-    }
+        $qualifiedHead = (Invoke-Native -Name gh -Operation "Reading #$number's qualified head" -ArgumentList 'pr',
+                'view', $number, '--json', 'headRefOid', '--jq', '.headRefOid').Output.Trim()
+        $null = Invoke-Native -Name gh -Operation "Waiting for #$number's checks" -Narrate -ArgumentList 'pr', 'checks',
+            $number, '--watch'
+        $answer = Invoke-Native -Name gh -Operation "Reading #$number's check results" -ArgumentList 'pr', 'checks',
+            $number, '--json', 'bucket'
+        $checks = @(ConvertFrom-Json -InputObject $answer.Output)
 
-    $answer = Invoke-Native -Name gh -Operation "Reading #$number's merge readiness" -ArgumentList 'pr', 'view',
-        $number, '--json', 'state,headRefOid,mergeStateStatus,reviewDecision'
-    $gate = ConvertFrom-Json -InputObject $answer.Output
-    $headReady = $gate.state -eq 'OPEN' -and $gate.headRefOid -eq $qualifiedHead
-    $reviewReady = $gate.reviewDecision -in @($null, '', 'APPROVED')
+        if ($checks.Count -eq 0 -or @($checks | Where-Object { $_.bucket -ne 'pass' }).Count -ne 0) {
+            $message = "#$number's observed checks are not all passing; inspect the head and CI policy."
+            $refusal = @{ Id = 'ChecksNotEstablished'; Category = 'InvalidResult'; Target = $number }
+            throw (ConvertTo-Refusal -Message $message @refusal)
+        }
 
-    if (-not $headReady -or $gate.mergeStateStatus -ne 'CLEAN' -or -not $reviewReady) {
-        $message = "#$number's head, merge state or review decision is not ready."
-        throw (ConvertTo-Refusal -Message $message -Id 'NotMergeable' -Category InvalidResult -Target $number)
-    }
+        $answer = Invoke-Native -Name gh -Operation "Reading #$number's merge readiness" -ArgumentList 'pr', 'view',
+            $number, '--json', 'state,headRefOid,mergeStateStatus,reviewDecision'
+        $gate = ConvertFrom-Json -InputObject $answer.Output
+        $headReady = $gate.state -eq 'OPEN' -and $gate.headRefOid -eq $qualifiedHead
+        $reviewReady = $gate.reviewDecision -in @($null, '', 'APPROVED')
 
-    $owner, $name = $repository -split '/', 2
-    $query = @'
+        if (-not $headReady -or $gate.mergeStateStatus -ne 'CLEAN' -or -not $reviewReady) {
+            $message = "#$number's head, merge state or review decision is not ready."
+            throw (ConvertTo-Refusal -Message $message -Id 'NotMergeable' -Category InvalidResult -Target $number)
+        }
+
+        $owner, $name = $repository -split '/', 2
+        $query = @'
 query($owner: String!, $name: String!, $number: Int!) {
   repository(owner: $owner, name: $name) { pullRequest(number: $number) {
     reviewThreads(first: 100) { pageInfo { hasNextPage } nodes { isResolved } }
   } }
 }
 '@
-    $answer = Invoke-Native -Name gh -Operation "Reading #$number's review threads" -ArgumentList 'api', 'graphql',
-        '-f', "owner=$owner", '-f', "name=$name", '-F', "number=$number", '-f', "query=$query"
-    $review = ConvertFrom-Json -InputObject $answer.Output
-    $threads = $review.data.repository.pullRequest.reviewThreads
-    $unresolved = @($threads.nodes | Where-Object { -not $_.isResolved })
+        $answer = Invoke-Native -Name gh -Operation "Reading #$number's review threads" -ArgumentList 'api', 'graphql',
+            '-f', "owner=$owner", '-f', "name=$name", '-F', "number=$number", '-f', "query=$query"
+        $review = ConvertFrom-Json -InputObject $answer.Output
+        $threads = $review.data.repository.pullRequest.reviewThreads
+        $unresolved = @($threads.nodes | Where-Object { -not $_.isResolved })
 
-    if ($review.errors -or -not $threads -or $threads.pageInfo.hasNextPage -ne $false -or $unresolved.Count -ne 0) {
-        $message = "#$number's review threads are unresolved or were not completely read."
-        throw (ConvertTo-Refusal -Message $message -Id 'ThreadsNotEstablished' -Category InvalidResult -Target $number)
+        if ($review.errors -or -not $threads -or $threads.pageInfo.hasNextPage -ne $false -or $unresolved.Count -ne 0) {
+            $message = "#$number's review threads are unresolved or were not completely read."
+            $refusal = @{ Id = 'ThreadsNotEstablished'; Category = 'InvalidResult'; Target = $number }
+            throw (ConvertTo-Refusal -Message $message @refusal)
+        }
+
+        $link = (Invoke-Native -Name gh -Operation "Reading #$number's link" -ArgumentList 'pr', 'view', $number,
+                '--json', 'url', '--jq', '.url').Output.Trim()
+        Write-Verbose -Message "#$number is ready: merge it in GitHub, then run this script again to record the merge."
+
+        [PSCustomObject]@{
+            PullRequest = $number
+            Link        = $link
+            State       = 'Ready to merge'
+        }
+        return
     }
 
-    # --- Squash merge: the message is the title and the description up to ## Time (rule 2) ---
+    # --- Part two: after the owner's merge in GitHub, the records (#605) ---
+    #
+    # The repository squash-merges with the pull request's title and description, `star github model apply` having set
+    # it, so the commit that landed ends with the description's two trailers, which the clean-up below checks (rule 2).
 
-    $title = (Invoke-Native -Name gh -Operation "Reading #$number's title" -ArgumentList 'pr', 'view', $number,
-            '--json', 'title', '--jq', '.title').Output.Trim()
-    $description = (Invoke-Native -Name gh -Operation "Reading #$number's description" -ArgumentList 'pr', 'view',
-            $number, '--json', 'body', '--jq', '.body').Output
-    Set-Content -LiteralPath $squashFile -Value ($description -replace '(?s)## Time.*$', '').TrimEnd() -NoNewline
-    $null = Invoke-Native -Name gh -Operation "Merging #$number" -Narrate -ArgumentList 'pr', 'merge', $number,
-        '--squash', '--match-head-commit', $qualifiedHead, '--subject', "$title (#$number)", '--body-file', $squashFile
+    $opened = Invoke-Native -Name gh -Operation "Reading $branch's pull request" -ArgumentList 'pr', 'view', $branch,
+        '--json', 'number', '--jq', '.number'
+    $number = [Int32]$opened.Output.Trim()
 
     $answer = Invoke-Native -Name gh -Operation "Confirming #$number merged" -ArgumentList 'pr', 'view', $number,
         '--json', 'state,mergedAt,mergeCommit'
@@ -961,9 +985,9 @@ query($owner: String!, $name: String!, $number: Int!) {
     #
     # AFTER the merge and its span, since the records name the squash commit. Guarded on what each record holds (ruled
     # 2026-11-13): the step's row must link this branch, or this pull request when the script runs again; otherwise the
-    # step has moved to another worktree, and the script stops. The merge comment is posted once. Closure requires the
-    # reviewed closeSteps authorization: a step approved to close is closed by the pull request's closing keyword, and
-    # here only if GitHub has not yet, its row set Closed; other issues remain open for their post-merge obligations.
+    # step has moved to another worktree, and the script stops. The merge comment is posted once. A step in closeSteps
+    # is closed by the pull request's closing keyword at the merge, and here only if GitHub has not yet, its row set
+    # Closed; a step the pull request only advances stays open.
     # Each record is read back. A step that moves to another worktree, or closes without a merge, is recorded by this
     # script before git close-branch, its row linking where the work went. Left out only when the pull request lands
     # no step.
@@ -1071,7 +1095,7 @@ catch {
     exit 1
 }
 finally {
-    Remove-Item -LiteralPath $bodyFile, $squashFile -ErrorAction Ignore
+    Remove-Item -LiteralPath $bodyFile -ErrorAction Ignore
     Pop-Location
 }
 ```

@@ -54,15 +54,29 @@ def has_text(lines, first, end):
 def has_table(lines, first, end):
     """Whether a section, its heading at first and end exclusive, holds a table outside any fenced code block.
 
-    A table is a header row, then a delimiter row of dashes, each between pipes.
+    A table is a header row, then a delimiter row of dashes, each between pipes, with as many cells as the header has:
+    GitHub renders no table whose two rows differ (GFM's tables, example 203).
     """
     fenced = _fenced(lines)
     for i in range(first + 1, end - 1):
         if i in fenced or i + 1 in fenced:
             continue
-        if lines[i]["text"].strip().startswith("|") and regex.match(pattern = _DELIMITER, text = lines[i + 1]["text"]):
+        header, delimiter = lines[i]["text"], lines[i + 1]["text"]
+        if header.strip().startswith("|") and regex.match(pattern = _DELIMITER, text = delimiter) and _cells(header) == _cells(delimiter):
             return True
     return False
+
+def _cells(text):
+    """How many cells a table row holds.
+
+    The cells are the parts its pipes divide, less a pipe at either end; an escaped pipe, \\|, divides none.
+    """
+    row = text.strip().replace("\\|", "")
+    if row.startswith("|"):
+        row = row[1:]
+    if row.endswith("|"):
+        row = row[:-1]
+    return len(row.split("|"))
 
 def _fenced(lines):
     """The index of every line that opens, closes or sits inside a fenced code block, by its backticks or tildes."""

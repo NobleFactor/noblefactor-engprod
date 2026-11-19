@@ -36,7 +36,7 @@ star github model restore <account> [<revision>] [--prune] [--token <sources>]
 | `get` | Reads the account's model from GitHub and returns it as one record; `-o yaml` renders it as the model file | #426 |
 | `backup` | Writes `get`'s record to `model.yaml` in the account's `.github` repository through a pull request, when `main`'s differs | #426 |
 | `diff` | Compares a model, a file, with the account's model in GitHub, and returns one record for each difference; writes nothing | #437 |
-| `apply` | Makes the account's model in GitHub the model given: a reference, another account's, or a backup; and gives the account what it needs beyond its model, its `.github` files and each participating repository's Triage workflow, variable and secrets; deletes nothing of the account's without `--prune` | #437 |
+| `apply` | Makes the account's model in GitHub the model given: a reference, another account's, or a backup; and gives the account what it needs beyond its model, its `.github` files and each participating repository's Triage workflow, variable, squash-merge setting and secrets; deletes nothing of the account's without `--prune` | #437 |
 | `restore` | Applies the account's backup as it stood at `<revision>` of its `.github` repository, `main` when none is named; deletes nothing of the account's without `--prune` | #437 |
 
 - **`get` returns data.** `show` would be for people; star's `--output`, `--filter` and `--jq` serve them. There is no
@@ -86,13 +86,14 @@ star github model restore <account> [<revision>] [--prune] [--token <sources>]
     value named. The steps for the views of a template or project just made are on its own record.
 - **A new account joins through `apply`** (#437, the owner, 2026-11-10). Beyond the model, an account needs its
   `.github` repository's files, and in each participating repository the Triage workflow, the `TRIAGE_PROJECT_URL`
-  variable naming its team's Triage project, and the secrets the workflow signs in with:
+  variable naming its team's Triage project, its squash-merge setting, and the secrets the workflow signs in with:
   - The files come from the account the model comes from, as its `.github` repository stands: a reference's
     `files_from`, NobleFactor/.github for an organization and David-Noble-at-work/.github for a user account, or a
     backup's own account. Every file but `model.yaml` and the Triage workflow is copied, the source account's name in
     them made the target's, and lands through one pull request; the account's own files are never deleted.
   - Each participating repository's `.github/workflows/triage.yml` is the source's `workflow-templates/triage.yml`,
     landed through a pull request on its default branch, and its variable is set directly.
+  - Each participating repository squash-merges with the pull request's title and description, `PR_TITLE` and `PR_BODY`, so that a merge in GitHub carries the description's `Signed-off-by:` and `Assisted-by:` lines into the commit that lands, as CONTRIBUTING.md requires (#605, the owner, 2026-11-19). GitHub's default takes the commits' messages instead. `apply` sets it with one write per repository and reads it back; the setting needs a repository admin, so a repository the token can't administer is named as a step by hand.
   - The secrets are those the template names. An organization's signs in with a GitHub App, NobleFactor's through the
     organization secrets `NOBLEFACTOR_AUTOMATION_APP_ID` and `NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY`, set on the
     organization, visible to all its repositories; a user account's with a classic token in `ADD_TO_PROJECT_PAT`, set
