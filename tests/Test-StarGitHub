@@ -1202,7 +1202,9 @@ function world_answer {
     if jq -e 'has("world")' <<<"${result}" >/dev/null; then
         jq '.world' <<<"${result}" >"${world}.next" && mv -- "${world}.next" "${world}"
     fi
-    jq -c '.answer' <<<"${result}" | if [[ -n "${jq_program}" ]]; then jq -r -c "${jq_program}"; else cat; fi
+    # --jq prints a null result as gh does, an empty line.
+    jq -c '.answer' <<<"${result}" |
+        if [[ -n "${jq_program}" ]]; then jq -r -c "(${jq_program}) | if . == null then \"\" else . end"; else cat; fi
     exit 0
 }
 

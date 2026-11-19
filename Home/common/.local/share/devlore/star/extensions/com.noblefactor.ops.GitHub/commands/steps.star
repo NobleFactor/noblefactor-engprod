@@ -60,7 +60,8 @@ def parse_key(key):
 def _call(query, variables = {}, jq = "."):
     """A GraphQL call's result through gh, each variable passed apart from the query.
 
-    A string goes with -f, and a number with -F, which gh sends as a JSON number.
+    A string goes with -f, and a number with -F, which gh sends as a JSON number. gh prints a null result as an empty
+    line, which this returns as "", so a caller that decodes a result that can be null reads "" as null.
     """
     args = " ".join([("-F " if type(v) == "int" else "-f ") + quote(k + "=" + str(v)) for k, v in variables.items()])
     return sh("gh api graphql -f query=" + quote(query) + (" " + args if args else "") + " --jq " + quote(jq)).strip()
@@ -105,7 +106,7 @@ def issue(key, model):
              "labels(first: 50) { nodes { name } } assignees(first: 20) { nodes { login } } " +
              "blockedBy(first: 50) { nodes { id number repository { nameWithOwner } } } " +
              "projectItems(first: 20) { nodes { id project { id title number closed } " + _ROW_VALUES + " } } } } }")
-    node = json.decode(data = _call(query, jq = ".data.repository.issue"))
+    node = json.decode(data = _call(query, jq = ".data.repository.issue") or "null")
     if node == None:
         fail("no issue " + k["key"])
     owners = owners_of(model)
@@ -428,7 +429,7 @@ def read_row(item):
     node = json.decode(data = _call(
         "query starStepReadRow { node(id: \"" + item + "\") { ... on ProjectV2Item { project { id } " + _ROW_VALUES + " } } }",
         jq = ".data.node",
-    ))
+    ) or "null")
     if node == None:
         return None
     return {
@@ -705,7 +706,7 @@ def closing_of(key):
              "timelineItems(itemTypes: [CLOSED_EVENT], last: 1) { nodes { ... on ClosedEvent { closer { __typename " +
              "... on PullRequest { " + _PULL + " } ... on Commit { oid associatedPullRequests(first: 5) { nodes { " + _PULL +
              " } } } } } } } } } }")
-    node = json.decode(data = _call(query, jq = ".data.repository.issue"))
+    node = json.decode(data = _call(query, jq = ".data.repository.issue") or "null")
     if node == None:
         fail("no issue " + k["key"])
     events = (node.get("timelineItems") or {}).get("nodes") or []

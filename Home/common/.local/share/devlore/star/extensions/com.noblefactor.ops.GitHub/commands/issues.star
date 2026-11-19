@@ -137,7 +137,9 @@ def parent_of(key):
     k = parse_key(key)
     query = ("query starStepParent { repository(owner: \"" + k["owner"] + "\", name: \"" + k["name"] + "\") { issue(number: " +
              str(k["number"]) + ") { parent { number state repository { nameWithOwner } subIssues(first: 100) { nodes { state } } } } } }")
-    node = json.decode(data = sh("gh api graphql -f query=" + quote(query) + " --jq .data.repository.issue.parent") or "null")
+
+    # gh prints an empty line for a null --jq result, an issue with no parent.
+    node = json.decode(data = sh("gh api graphql -f query=" + quote(query) + " --jq .data.repository.issue.parent").strip() or "null")
     if node == None:
         return None
     states = [(c.get("state") or "").lower() for c in ((node.get("subIssues") or {}).get("nodes") or [])]
