@@ -111,7 +111,7 @@ A new section 10 of the issue data model, `10-the-issue-commands.md`, and its st
 | Implementation | yes | this branch | Done: the cases, the proofs in both sandboxes, and the follow-up review |
 | Merge | yes | the pull request, closing #589, #338, #590, #587, #595 and #597 | PR #604, merged by the owner as 643652b, 2026-11-19 |
 | Deployment | yes: writ deploys the extension's new files | the owner's next `writ deploy` | Done 2026-11-19, with `model apply` of each account's reference |
-| Verification | yes | the proof, on each issue | Done 2026-11-19: each issue closed with its evidence; `reopen`'s first deployed run moved to #609's plan |
+| Verification | yes | the proof, on each issue | Transferred 2026-11-19, not passed: each issue closed with its evidence; `reopen`'s first deployed run moved to #609's plan, its verification |
 
 ## 9. Implementation phases
 
