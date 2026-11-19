@@ -1,5 +1,5 @@
 ---
-title: "star github issue reopen and open finish a run that stopped partway when run again"
+title: "Running star github issue close or reopen again ends where one whole run would, and open checks for no duplicate"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/609
 status: draft
 created: 2026-11-19
@@ -14,7 +14,7 @@ documents:
     text: "Issue tracking, iteration 2"
 ---
 
-# star github issue reopen and open finish a run that stopped partway when run again
+# Running star github issue close or reopen again ends where one whole run would
 
 <a id="role-assignments"></a>
 
@@ -26,69 +26,63 @@ Owner: David Noble. Participant: the Claude Code session assigned to Schedule #5
 
 ## 2. Summary and promised result
 
-At the end, a run of `star github issue reopen` or `star github issue open` that stopped partway is finished by running it again, and section 10 says so:
+The owner ruled on 2026-11-19 that close and all our commands are idempotent: run twice, a command ends where one whole run would have, nothing done twice and nothing left undone. If it's closed, it's closed. At the end:
 
-- `reopen` finishes an open issue whose records still say it is closed: a Resolution, a row whose Status is Closed, or no row on its team's projects. It clears the Resolution, sets each Closed row Open, gives a rowless issue a Triage row, and writes its comment once. It does the same for each parent it reaches.
-- `open` looks for the issue before it opens one, by default: an issue with a parent among all the parent's sub-issues, one without a parent among the repository's issues of its type, each by its exact title. One found is read back as an issue just opened is, and nothing is opened. A flag opens one anyway.
-- If the owner rules so (question 3), `close` finishes a closed issue whose rows still say it is open, the state a stopped run leaves and the one a pull request's closing keyword leaves after every merge since #608.
-- Section 10 says what a rerun of each command finishes, and its paragraph of what is done by hand, which #607 wrote, keeps only what is left. Section 10's decisions record each choice.
-- Cases of `tests/Test-StarGitHub` stop each command partway and show a rerun finishing it, each failing without its change.
+- **`close`**, run on an issue that is already closed, sets whatever one whole run would have and the earlier run didn't: its Schedule row Closed, its Scenario row removed, its Triage or Backlog row removed. An issue already closed with nothing left is `unchanged`, and nothing is written. Its comment and Resolution are written once.
+- **`reopen`**, run on an issue that is already open, does the same the other way: it clears a Resolution still set, and sets a row still Closed back to Open. An issue already open with nothing left is `unchanged`. Its comment is written once.
+- **`open`** checks for no duplicate, now or later, as the owner ruled on 2026-11-19: a model provider will one day ask and answer that question. `--unique` is removed, from the code, the manifest, section 10 and the cases. Run twice, `open` opens two issues; it is the one command that isn't idempotent.
+- **Section 10** says what a second run of each command does, and its paragraph of what is done by hand, which #607 wrote, keeps only `open`'s second issue. Section 10's decisions record each choice.
+- **Cases** of `tests/Test-StarGitHub` stop `close` and `reopen` partway and show a second run ending where one whole run would, each failing without its change.
 
-Out of scope: `move`, whose rerun already finishes its pending amendment; `star github schedule reopen` and `scenario reopen`, whose finishing is the collection groups' (#595); and the PR script template's closing step, which could call `issue close` once `close` finishes, a task of its own.
+Out of scope: `move`, whose second run already finishes; `star github schedule` and `scenario`'s own `close` and `reopen` (#595), which apply the same rule in a task of their own if the owner wants it; and the PR script template's closing step, which could call `issue close` once it does this.
 
 ## Issue 609
 
-[Task #609](https://github.com/NobleFactor/noblefactor-engprod/issues/609): a `reopen` that stops after it reopens an issue, but before it clears the Resolution and sets the rows, records `unchanged` when run again. An `open` without `--unique` that stops after GitHub makes the issue opens a second one when run again. Bug #607 made section 10 say so. The issue's outstanding question: how each command tells a run that stopped from a state someone set by hand.
+[Task #609](https://github.com/NobleFactor/noblefactor-engprod/issues/609): a `reopen` that stops after it reopens an issue, but before it clears the Resolution and sets the rows, does nothing when run again. An `open` without `--unique` that stops after GitHub makes the issue opens a second one when run again. Bug #607 made section 10 say so.
 
 <a id="current-state"></a>
 
 ## 3. Current state
 
-- **`reopen`** (`commands/github-issue-reopen.star`) writes, for a closed issue: the reopening, the Resolution cleared, the comment, then the rows, each read back. For an open issue it plans no Resolution and no row change, so it records `unchanged` unless a parent or a schedule is closed. A run that stops anywhere after the reopening leaves the rest, and a rerun finishes none of it. Its closed parents and schedules are already finished by a rerun, since each is still closed.
-- **`open`** (`commands/github-issue-open.star`) writes once: GitHub's `createIssue`, with the type, parent, assignee, and fields or labels. A run that stops after GitHub makes the issue, but before its answer arrives or the read-back, leaves a whole issue, and a rerun opens another. `--unique` prevents that when the issue has a parent, but it reads only the parent's first 100 sub-issues, returns the one found without reading it back, and is off unless asked for.
-- **`close`** writes the comment, the Resolution, the closure, then the rows (D-009). A run that stops after the closure leaves its rows, and D-009 lists "changing the rows of an issue already closed" among its rejected alternatives. Since #608, a pull request's closing keyword closes its issues at the merge and leaves their rows the same way, and the PR script template sets them with GraphQL of its own.
-- **Section 10**, as #607 corrected it, lists what each rerun finishes and leaves the rest to be done by hand.
-- **The stand-in gh** of `tests/Test-StarGitHub` fails an operation once, through the world's `fail_on`, before it writes; `fail_skip` lets calls through first.
+- **`close`** (`commands/github-issue-close.star`) writes the comment, the Resolution, the closure, then the rows (D-009). Run on an issue already closed, it does nothing, so a run that stopped after the closure leaves the rows as they were. Since #608, a pull request's `Closes` line closes its issues at the merge and leaves their rows the same way; the PR script template sets them with GraphQL of its own.
+- **`reopen`** (`commands/github-issue-reopen.star`) writes the reopening, the Resolution cleared, the comment, then the rows. Run on an issue already open, it does nothing to the issue, so a run that stopped after the reopening leaves the rest. Clicking Reopen on GitHub's page leaves the same: the issue open, its Resolution and its Closed row as they were. Its closed parents and schedules are already handled by a second run, since each is still closed.
+- **`open`** (`commands/github-issue-open.star`) writes once, GitHub's `createIssue`. `--unique` looks through the parent's first 100 sub-issues for the title and opens nothing when it finds it.
+- **The stand-in gh** of `tests/Test-StarGitHub` fails an operation once, through the world's `fail_on`, before it writes.
 
 <a id="design-impact"></a>
 
 ## 4. Design impact
 
-Section 10 changes: its paragraph on runs that stop partway, and its sections on opening, closing and reopening an issue, each saying what a rerun finishes and what it leaves as it is. Section 10's decisions gain D-013, reopen finishes an open issue's closed records; D-014, open looks for the issue before it opens one; and, with question 3, D-015, close finishes a closed issue's open rows, revising D-009's consequence. Each records its reasons, alternatives, consequences and the owner's approval.
+Section 10 changes: its paragraph on runs that stop partway, and its sections on opening, closing and reopening an issue. Its decisions gain D-013, every issue command but `open` is idempotent; and D-014, `open` checks for no duplicate, `--unique` removed. D-013 revises D-009's consequence, that a run which stops after closing the issue leaves its rows by hand.
 
 <a id="proposed-implementation"></a>
 
 ## 5. Proposed implementation
 
-1. **`reopen` finishes an open issue.** For an issue already open, `run` reads what a closed issue's reopening changes: its Resolution, through `clearing_plan`; each row on its team's Triage, Backlog, Schedule or Scenario project whose Status is Closed; and whether it has such a row at all. Each is finished as a closed issue's is, and read back: the Resolution cleared, each Closed row set Open, a rowless issue given a Triage row. A row In progress or Open is left as it is, since only `close` sets Closed. The same holds for each parent the issue reaches. The comment is written when anything is finished, and not when the issue already holds that same comment, so a run that stopped after its comment doesn't write a second. The issue's record is `reopened` when it was closed, `finished` when it was open with something left, and `unchanged` when nothing was.
-2. **`open` looks before it opens.** The search `--unique` makes becomes every run's. An issue with a parent is looked for among all the parent's sub-issues, page by page; one with no parent among the repository's issues of its type, through GitHub's search, its title then matched exactly. One found is read back against what was asked, as a new issue is: its title, type, parent, assignee, and fields or labels. When it matches it is `found` and nothing is opened; when it differs, nothing is opened and the run says what differs. `--allow-duplicate` opens one anyway. `--unique` stays accepted, so the scripts that pass it keep working.
-3. **`close` finishes a closed issue** (question 3). For an issue already closed, `run` reads its rows and changes each the way it changes a closing issue's: a Schedule row set Closed and kept, a Scenario row removed after its comment on the Scenario issue, a Triage or Backlog row removed. Its comment and Resolution are written only if missing. A closed issue whose rows are already right is `unchanged`.
-4. **Section 10 and its decisions,** as section 4 above says.
-5. **The cases.** The stand-in gains `fail_after`, which fails an operation once after it writes, as a lost answer does. Then, each failing without its change:
-   - `reopen` stopped after the reopening: the rerun clears the Resolution, sets the rows Open and writes the comment once.
-   - `reopen` stopped after the comment: the rerun sets the rows and writes no second comment.
-   - `reopen` of an open issue never closed, its rows In progress: `unchanged`, nothing written.
-   - `open` stopped after `createIssue`: the rerun finds the issue, reads it back, and opens nothing.
-   - `open` under a parent with more than 100 sub-issues finds one past the first page; one with no parent is found by its title; one found that differs from what was asked is refused; `--allow-duplicate` opens a second.
-   - With question 3, `close` stopped after the closure: the rerun changes the rows; an issue closed by a closing keyword gets its rows changed the same way.
+1. **`close` on a closed issue.** For an issue already closed, `run` reads its rows as it does a closing issue's, and plans each change one whole run makes: a Schedule row set Closed, a Scenario row removed after its comment on the Scenario issue, a Triage or Backlog row removed. A row already right is left alone. The comment is written only when the issue doesn't already hold it, and the Resolution only when it has none.
+2. **`reopen` on an open issue.** For an issue already open, `run` reads its Resolution and its rows, and plans each change one whole run makes: the Resolution cleared, each row whose Status is Closed set Open. A row Open or In progress is left alone, since only `close` sets a row Closed. The same holds for each parent it reaches. The comment is written only when something changes and the issue doesn't already hold it.
+3. **Records.** An issue that needed nothing is `unchanged`. One a second run completed is `closed` or `reopened` as before, with a field saying it was already so, and each row its `row-closed`, `left` or `row-opened` record.
+4. **`open` without `--unique`.** The flag goes from `github-issue-open.star`, its template header, both entries in `extension.yaml`, section 10, and cases 136 and 140; a template that names `unique` is refused as naming a header it doesn't take.
+5. **Section 10 and its decisions,** as section 4 says.
+6. **The cases,** each failing without its change, through the stand-in's `fail_on`:
+   - `close` stopped after the closure: the second run sets the rows and writes no second comment.
+   - `close` of an issue a `Closes` line closed, its rows untouched: the run sets them.
+   - `close` of an issue closed with nothing left: `unchanged`, nothing written.
+   - `reopen` stopped after the reopening: the second run clears the Resolution, sets the rows Open, and writes the comment once.
+   - `reopen` of an issue never closed, its rows In progress: `unchanged`, nothing written.
+   - `open --unique` refused as an unknown flag.
 
 <a id="alternatives-and-challenges"></a>
 
 ## 6. Alternatives and challenges
 
-The issue asks how a command tells a run that stopped from a state someone set by hand. This plan proposes that it needn't. The model has no open issue with a Resolution or a Closed row, and no closed issue on Triage or the Backlog. Whoever left such a state, a stopped run or a person who reopened the issue in GitHub's own page, the finished state is the right one.
+- **`open` checking for duplicates,** by title or otherwise. Ruled out by the owner, 2026-11-19: a model provider will ask and answer that question.
+- **Leaving a second run to do nothing,** as now. Ruled out by the owner's rule that every command is idempotent.
+- **A mark the first run writes,** so a second run knows it was its own. Not needed: an issue that is closed but still has a row In progress is wrong however it got that way, so a second run sets it right without asking who left it.
 
-- **A marker the run writes first,** a comment or a hidden line in the body, read on a rerun to know the run was its own. Rejected: it adds a write that can itself be lost, and an issue reopened by hand in GitHub, which leaves the same records, should be finished as well.
-- **Leaving reruns to be done by hand,** as section 10 says now. The status quo, which #607 recorded so the design would be true.
-- **`reopen` setting every row Open,** In progress ones too. Rejected: an open issue's In progress row is right, and only `close` sets a row Closed.
-- **`open` looking among open issues only.** It would let an issue be opened again under a title closed before, which `--unique` has refused since #338; this plan keeps that, and `--allow-duplicate` is the way past it.
-- **`open`'s search costs** a call or more on every run. Accepted: a duplicate costs more.
+The owner's question, 1 of 1, answered on 2026-11-19:
 
-Three questions for the owner, 1 of 3 to 3 of 3, each with a recommendation:
-
-1. **Does `reopen` finish an open issue's closed records, whoever left them, without telling a stopped run from a reopening by hand?** Recommended: yes, for the reason above.
-2. **Does `open` look for the issue by default, open and closed, by its exact title, with `--allow-duplicate` to open one anyway, and `--unique` kept as a flag that does nothing more?** Recommended: yes.
-3. **Does `close` get the same finishing, a closed issue's open rows changed, revising D-009's consequence, in this pull request?** Recommended: yes. Every issue command then finishes on a rerun, section 10's paragraph of what is done by hand goes, and an issue a closing keyword closed, which every merge leaves since #608, can be finished by `star github issue close`.
+1. **An issue someone reopened by clicking Reopen on GitHub's page is open, but it still has its Resolution, say Completed, and its Schedule row still says Closed. Should `star github issue reopen`, run on that issue, clear the Resolution and set the row back to Open?** Ruled yes, 2026-11-19: `reopen` clears the Resolution and sets the row back to Open. It's the same as finishing a `reopen` that stopped partway, and the issue ends as a whole run of `reopen` leaves it.
 
 <a id="acceptance-criteria-and-evidence"></a>
 
@@ -96,12 +90,11 @@ Three questions for the owner, 1 of 3 to 3 of 3, each with a recommendation:
 
 | Criterion | Observable result | Evidence/method | Environment/artifact |
 | --- | --- | --- | --- |
-| `reopen` finishes a stopped run | A rerun clears the Resolution, sets the rows and writes one comment | Cases, each failing without the change | `tests/Test-StarGitHub`, `make check` |
-| `reopen` leaves an open issue alone | An open issue never closed is `unchanged`, nothing written | A case | `tests/Test-StarGitHub` |
-| `open` opens no duplicate | A rerun after a stop finds the issue and opens nothing | Cases, each failing without the change | `tests/Test-StarGitHub` |
-| `close` finishes a stopped run, with question 3 | A rerun changes a closed issue's rows | Cases | `tests/Test-StarGitHub` |
-| The design says so | Section 10 and D-013 to D-015 describe each rerun | Read of the merged sections | `docs/architecture/issue-data-model/` |
-| Deployed, it finishes a reopening by hand | An issue reopened in GitHub's page, its Resolution and Closed row left, is finished by the deployed `reopen` | The run's records and the issue read back | NobleFactor-sandbox |
+| `close` is idempotent | A second run ends where one whole run would; an issue with nothing left is `unchanged` | Cases, each failing without the change | `tests/Test-StarGitHub`, `make check` |
+| `reopen` is idempotent | The same | Cases, each failing without the change | `tests/Test-StarGitHub` |
+| `open` has no `--unique` | The flag is refused; nothing in the code, manifest or design names it | A case; a search | `tests/Test-StarGitHub`; the repository |
+| The design says so | Section 10, D-013 and D-014 | Read of the merged sections | `docs/architecture/issue-data-model/` |
+| Deployed, it works | The deployed `reopen` sets right an issue reopened on GitHub's page; the deployed `close` sets right an issue a `Closes` line closed | Each run's records, each issue read back | NobleFactor-sandbox |
 
 <a id="required-completion-milestones"></a>
 
@@ -112,7 +105,7 @@ Three questions for the owner, 1 of 3 to 3 of 3, each with a recommendation:
 | Implementation | Yes | The cases, `make check`, review | Pending |
 | Merge | Yes | The pull request, merged by the owner in GitHub, closing #609 | Pending |
 | Deployment | Yes: the commands reach each machine only through `writ deploy` | `writ deploy` | Pending |
-| Verification | Yes | The deployed `reopen` finishing an issue reopened by hand in NobleFactor-sandbox; it is also the first deployed run of `reopen`, which #589's plan left to this one | Pending |
+| Verification | Yes | The deployed `close` and `reopen` in NobleFactor-sandbox; the `reopen` run is also the first deployed run of `reopen`, which #589's plan left to this one | Pending |
 
 <a id="implementation-phases"></a>
 
@@ -120,36 +113,32 @@ Three questions for the owner, 1 of 3 to 3 of 3, each with a recommendation:
 
 ### 9.1 Phase 1: the plan
 
-- [ ] This plan committed on `feature/609-rerun-finishes`, with #589's and #605's plans completed, and reviewed with the owner, questions 1 to 3 answered
+- [ ] This plan committed on `feature/609-rerun-finishes`, with #589's and #605's plans completed, and reviewed with the owner: every question ruled on 2026-11-19
 
-### 9.2 Phase 2: `reopen`
+### 9.2 Phase 2: `close` and `reopen`
 
-- [ ] `reopen` finishes an open issue's closed records and its parents', its comment written once, with its cases
+- [ ] `close` on a closed issue and `reopen` on an open one end where one whole run would, each comment written once, with their cases
 
 ### 9.3 Phase 3: `open`
 
-- [ ] `open` looks for the issue before it opens one, across every page, with or without a parent; the one found read back; `--allow-duplicate`; with its cases
+- [ ] `--unique` removed from the code, the template header, the manifest and the cases
 
-### 9.4 Phase 4: `close`, with question 3
+### 9.4 Phase 4: the design
 
-- [ ] `close` finishes a closed issue's open rows, its comment and Resolution written only if missing, with its cases
+- [ ] Section 10 says what a second run of each command does; D-013 and D-014 recorded
 
-### 9.5 Phase 5: the design
-
-- [ ] Section 10 says what each rerun finishes; D-013 to D-015 recorded; the commands' help and `extension.yaml` name `--allow-duplicate`
-
-### 9.6 Phase 6: the merge, the deployment and the verification
+### 9.5 Phase 5: the merge, the deployment and the verification
 
 - [ ] The pull request merged by the owner in GitHub
 - [ ] `writ deploy`
-- [ ] In NobleFactor-sandbox, an issue reopened in GitHub's page, its Resolution and Closed row left, finished by the deployed `reopen`, read back; its records posted on #609
+- [ ] In NobleFactor-sandbox, the deployed `reopen` sets right an issue reopened on GitHub's page, and the deployed `close` an issue a `Closes` line closed, each read back; their records posted on #609
 
 <a id="files-and-related-assets"></a>
 
 ## 10. Files and related assets
 
-- `Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/github-issue-reopen.star`, `github-issue-open.star`, and, with question 3, `github-issue-close.star`; `issues.star` for what they share; `extension.yaml` for `--allow-duplicate`.
-- `tests/Test-StarGitHub`: `fail_after` and the cases.
+- `Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/github-issue-close.star`, `github-issue-reopen.star` and `github-issue-open.star`; `issues.star` for what they share; `extension.yaml`, `--unique` removed.
+- `tests/Test-StarGitHub`: the cases.
 - `docs/architecture/issue-data-model/10-the-issue-commands.md` and `10-the-issue-commands.decisions.md`.
 - `docs/plans/doc/589-issue-verbs.md` and `docs/plans/feature/605-squash-message.md`, completed in this branch's first commit, since both their issues are closed.
 
@@ -165,7 +154,9 @@ Three questions for the owner, 1 of 3 to 3 of 3, each with a recommendation:
 
 ## 12. Approval and departures
 
-The owner put #609 on Schedule #588 as step 12, next, on 2026-11-19, so that every issue PR #610 surfaced is done, and directed this plan. It awaits the owner's review and answers to questions 1 to 3 of section 6.
+The owner put #609 on Schedule #588 as step 12, next, on 2026-11-19, so that every issue PR #610 surfaced is done, and directed this plan.
+
+Ruled by the owner on 2026-11-19, on the plan's first draft: close and all our commands are idempotent, and if it's closed, it's closed; `open` checks for no duplicate, now or later, since a model provider will ask and answer that question, and neither `--allow-duplicate` nor `--unique` is kept. The first draft's three questions became the one in section 6, written plainly as the owner asked. On the second draft the owner confirmed `--unique` is removed, and ruled that `reopen`, run on an issue reopened on GitHub's page, clears its Resolution and sets its row back to Open.
 
 <a id="completion-review"></a>
 
