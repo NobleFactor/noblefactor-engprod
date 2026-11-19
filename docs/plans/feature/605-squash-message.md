@@ -169,6 +169,8 @@ On 2026-11-19 the owner put #606 and #607, found by the Codex session's follow-u
 
 Departure, 2026-11-19: PR #610's first run opened the pull request, then stopped at `gh pr checks --watch`, which GitHub answered with no checks a moment after the pull request opened. The template's first part now waits up to five minutes for the first check, and runs again after a stop: it makes no commit when nothing is staged, and opens no pull request when the branch has one open. Both forms; the fix is in this pull request, since the two-part script is its change.
 
+Departure, 2026-11-19: PR #610's second run passed CI, then stopped at the merge gate, GitHub reporting the pull request blocked with its review required, which is the owner's own step before the merge. The first part now takes a pull request blocked by nothing but the owner's review as ready, and says the owner reviews and merges it; rule 5 says so. Both forms, in this pull request.
+
 <a id="completion-review"></a>
 
 ## 13. Completion review

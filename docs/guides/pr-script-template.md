@@ -257,10 +257,13 @@ EOF
         exit 1
     }
 
-    gate=$(gh pr view "${pr_number}" --json state,headRefOid,mergeStateStatus,reviewDecision)
+    # Ready for the owner: open at the head CI passed, in no conflict, and blocked by nothing, or by nothing but the
+    # owner's own review, which the owner gives in GitHub before merging (PR #610's second run).
+    gate=$(gh pr view "${pr_number}" --json state,headRefOid,mergeable,mergeStateStatus,reviewDecision)
     jq -e --arg head "${qualified_head}" '
-        .state == "OPEN" and .headRefOid == $head and .mergeStateStatus == "CLEAN" and
-        (.reviewDecision == null or .reviewDecision == "" or .reviewDecision == "APPROVED")
+        .state == "OPEN" and .headRefOid == $head and .mergeable == "MERGEABLE" and
+        ((.mergeStateStatus == "CLEAN" and (.reviewDecision | IN(null, "", "APPROVED")))
+            or (.mergeStateStatus == "BLOCKED" and .reviewDecision == "REVIEW_REQUIRED"))
     ' <<<"${gate}" >/dev/null || {
         echo 'The PR head, merge state or review decision is not ready. Stop for review.' >&2
         exit 1
@@ -284,7 +287,7 @@ EOF
         exit 1
     }
 
-    echo "== #${pr_number} is ready: merge it in GitHub, then run this script again to record the merge."
+    echo "== #${pr_number} is ready: review and merge it in GitHub, then run this script again to record the merge."
     exit 0
 fi
 
@@ -473,7 +476,7 @@ git status --short
 2. **Follow the [disclosure requirements](../engineering/procedures/pull-request.md#review-boundary).** The description says AI assisted and ends with human sign-off and the effective assistance trailer; the Time section is appended after the merge. Populate the submitting agent explicitly, applying any recorded temporary live-entrypoint override. The repository squash-merges with the pull request's title and description, which `star github model apply` sets (#605), so the two trailers land in the squash commit; the script's second part verifies them. Branch commits carry no trailer. Use the account's maintained PR-body template and retain the prohibition on AI co-authorship and promotional footers.
 3. **HEREDOC for messages.** Both commit messages and PR bodies use `cat <<'EOF'` for safe formatting.
 4. **Establish CI results.** The examples require observed passing checks for the qualified head. An empty check list never proves CI is unconfigured. A repository with no configured checks, or an approved conditional-check result, needs that verified policy recorded in the plan and reflected in the generated gate. Retain every required check; uncertainty stops the run.
-5. **Establish merge readiness.** Check the qualified head, clean merge state, review decision and all review conversations, then stop: the owner merges in GitHub. Confirm actual merged state before recording delivery; a queued merge is still outstanding. Administrative bypass requires its separate explicit Owner grant under the PR procedure.
+5. **Establish merge readiness.** Check the qualified head, the merge state, the review decision and all review conversations, then stop: the owner reviews and merges in GitHub, so a pull request blocked by nothing but the owner's review is ready. Confirm actual merged state before recording delivery; a queued merge is still outstanding. Administrative bypass requires its separate explicit Owner grant under the PR procedure.
 6. **`git close-branch` for cleanup.** Handles both worktree and regular-branch scenarios. It also **removes the worktree the script is standing in**, so nothing after it may assume `cwd` survives: `cd` to the main clone first. Observed as a spurious exit 128 after a successful merge on devlore-cli#811. It **removes the script itself**, `<worktree>.bash` or `.ps1` beside the worktree (#366); bash reads on from the unlinked file and PowerShell parsed the file before running it, so the lines after it still run. Then it **syncs the main clone** to the target branch, whatever it had checked out, prints what it had and the commit it is at now, and exits 75 when the sync cannot happen (#306).
 7. **Follow the [worktree integration boundary](../engineering/process.md#pull-request-and-integration).** A worktree serves one active PR. During integration it accepts that PR's review or CI corrections; honor any temporary live-entrypoint restriction still applicable to the session.
 8. **The owner merges in GitHub, and the script never does.** The script's first part stops at a pull request that passes its checks and is ready to merge, and prints no merge command; run again after the merge, its second part records it (ruled 2026-11-19, #605). `git close-branch` deletes in the order that survives a failure: remote, then worktree, then local, then the script. Then it syncs the main clone itself (rules 6 and 12).
@@ -935,12 +938,16 @@ try {
         }
 
         $answer = Invoke-Native -Name gh -Operation "Reading #$number's merge readiness" -ArgumentList 'pr', 'view',
-            $number, '--json', 'state,headRefOid,mergeStateStatus,reviewDecision'
+            $number, '--json', 'state,headRefOid,mergeable,mergeStateStatus,reviewDecision'
         $gate = ConvertFrom-Json -InputObject $answer.Output
         $headReady = $gate.state -eq 'OPEN' -and $gate.headRefOid -eq $qualifiedHead
-        $reviewReady = $gate.reviewDecision -in @($null, '', 'APPROVED')
+        $headReady = $headReady -and $gate.mergeable -eq 'MERGEABLE'
+        $clean = $gate.mergeStateStatus -eq 'CLEAN' -and $gate.reviewDecision -in @($null, '', 'APPROVED')
+        # Blocked by nothing but the owner's review, which the owner gives in GitHub before merging (PR #610's second
+        # run).
+        $awaitingOwner = $gate.mergeStateStatus -eq 'BLOCKED' -and $gate.reviewDecision -eq 'REVIEW_REQUIRED'
 
-        if (-not $headReady -or $gate.mergeStateStatus -ne 'CLEAN' -or -not $reviewReady) {
+        if (-not $headReady -or -not ($clean -or $awaitingOwner)) {
             $message = "#$number's head, merge state or review decision is not ready."
             throw (ConvertTo-Refusal -Message $message -Id 'NotMergeable' -Category InvalidResult -Target $number)
         }
@@ -967,7 +974,7 @@ query($owner: String!, $name: String!, $number: Int!) {
 
         $link = (Invoke-Native -Name gh -Operation "Reading #$number's link" -ArgumentList 'pr', 'view', $number,
                 '--json', 'url', '--jq', '.url').Output.Trim()
-        Write-Verbose -Message "#$number is ready: merge it in GitHub, then run this script again to record the merge."
+        Write-Verbose -Message "#$number is ready: review and merge it in GitHub, then run this again to record it."
 
         [PSCustomObject]@{
             PullRequest = $number
