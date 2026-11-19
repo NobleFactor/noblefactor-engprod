@@ -1074,8 +1074,10 @@ function respond {
 
 # A repository on the stand-in's GitHub, a bare repository under ${GH_REMOTES}: what GitHub says of it, its files raw at
 # a revision, its default branch's by default, and the git data API's reads and writes, which apply commits through; and
-# its variables, remembered in ${GH_REMOTES}/variables as `variable <repository> <name> <value>`. A path none of these
-# answers is left to the fixtures below.
+# its variables, remembered in ${GH_REMOTES}/variables as `variable <repository> <name> <value>`; and its squash-merge
+# setting, GitHub's default, COMMIT_OR_PR_TITLE and COMMIT_MESSAGES, until a PATCH sets it, remembered in
+# ${GH_REMOTES}/squash as `squash <repository> <title> <message>`, with the token admin unless ${GH_REMOTES}/no-admin names
+# the repository. A path none of these answers is left to the fixtures below.
 repo_path='^repos/([^/]+/[^/?]+)(/(.*))?$'
 if [[ "${rest_path}" =~ ${repo_path} ]]; then
     repo="${BASH_REMATCH[1]}" part="${BASH_REMATCH[3]}" git_dir="${GH_REMOTES}/${BASH_REMATCH[1]}.git"
@@ -1084,8 +1086,23 @@ if [[ "${rest_path}" =~ ${repo_path} ]]; then
     case "${method} ${part}" in
         "GET ")
             [[ -d "${git_dir}" ]] || respond "404 Not Found" "${not_found}"
-            respond "200 OK" "$(jq -cn --arg r "${repo}" --arg m "$(ci_mode "${repo}")" \
-                '{full_name: $r, default_branch: "main", private: ($m == "private")}')"
+            read -r squash_title squash_message < <(awk -v r="${repo}" 'BEGIN { t = "COMMIT_OR_PR_TITLE"; m = "COMMIT_MESSAGES" }
+                $1 == "squash" && $2 == r { t = $3; m = $4 } END { print t, m }' "${GH_REMOTES}/squash" 2>/dev/null ||
+                echo COMMIT_OR_PR_TITLE COMMIT_MESSAGES)
+            admin=true
+            if grep -qxF -- "${repo}" "${GH_REMOTES}/no-admin" 2>/dev/null; then
+                admin=false
+            fi
+            respond "200 OK" "$(jq -cn --arg r "${repo}" --arg m "$(ci_mode "${repo}")" --arg t "${squash_title}" \
+                --arg b "${squash_message}" --argjson a "${admin}" '{full_name: $r, default_branch: "main",
+                private: ($m == "private"), squash_merge_commit_title: $t, squash_merge_commit_message: $b,
+                permissions: {admin: $a}}')"
+            ;;
+        "PATCH ")
+            [[ -d "${git_dir}" ]] || respond "404 Not Found" "${not_found}"
+            printf 'squash %s %s %s\n' "${repo}" "$(jq -r .squash_merge_commit_title <<<"${body}")" \
+                "$(jq -r .squash_merge_commit_message <<<"${body}")" >>"${GH_REMOTES}/squash"
+            respond "200 OK" "$(jq -cn --arg r "${repo}" '{full_name: $r}')"
             ;;
         "GET contents/"*)
             path="${part#contents/}" ref=main
@@ -2384,6 +2401,39 @@ check "39: the private key keeps its lines, its final newline dropped" \
     grep -qxF 'secret Acme NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY -----BEGIN KEY-----\nabc\n-----END KEY-----' "${run_directory}/remotes/secrets"
 check "39: the organization secrets were set visible to all its repositories" bash -c \
     "jq -e 'select(.[0:2] == [\"secret\", \"set\"]) | select(index(\"--org\") != null and index(\"all\") != null)' '${run_directory}/calls.jsonl' >/dev/null"
+
+# 172 to 174 (#605). Each participating repository squash-merges with the pull request's title and description, so a
+# merge in GitHub carries the description's Signed-off-by: and Assisted-by: lines. alpha holds GitHub's default; beta
+# does too, and the token is no admin of it.
+repository NobleFactor/alpha
+repository NobleFactor/beta
+rm -f -- "${run_directory}/remotes/squash"
+printf 'NobleFactor/beta\n' >"${run_directory}/remotes/no-admin"
+run_star "${data}" github model diff noblefactor.json NobleFactor
+expect "172 (#605): a repository squash-merging with GitHub's default is a record, the PR's title and body its model" ok '
+    any(.[]; .kind == "squash" and .path == "NobleFactor/alpha" and .change == "different" and .by_hand == false
+        and .github == {title: "COMMIT_OR_PR_TITLE", message: "COMMIT_MESSAGES"}
+        and .model == {title: "PR_TITLE", message: "PR_BODY"})'
+expect "172 (#605): a repository the token is no admin of is a record by hand" ok '
+    any(.[]; .kind == "squash" and .path == "NobleFactor/beta" and .by_hand == true)'
+
+# 173. apply sets alpha's with one write, which it reads back, and writes nothing to beta, whose admin is told what to do.
+run_star "${data}" github model apply noblefactor.json NobleFactor
+expect "173 (#605): apply sets a repository's squash merges to the PR's title and body, with one write" ok "${writes}"'
+    any(.[]; .kind == "squash" and .path == "NobleFactor/alpha" and .action == "changed"
+        and .value == {title: "PR_TITLE", message: "PR_BODY"})
+    and ([writes[] | select(index("PATCH") != null and any(.[]; type == "string" and test("^repos/NobleFactor/alpha$")))]
+        | length == 1)'
+expect "173 (#605): a repository the token is no admin of is written nothing, its step by hand" ok "${writes}"'
+    any(.[]; .kind == "squash" and .path == "NobleFactor/beta" and .action == "by-hand"
+        and (.steps | length == 1 and (.[0] | test("^a repository admin sets NobleFactor/beta.s squash merges"))))
+    and (any(writes[]; any(.[]; type == "string" and test("^repos/NobleFactor/beta$"))) | not)'
+
+# 174. Run again, diff finds alpha's setting the model's, and no record of it.
+run_star "${data}" github model diff noblefactor.json NobleFactor
+expect "174 (#605): a repository squash-merging with the PR's title and body is no record" ok '
+    (any(.[]; .kind == "squash" and .path == "NobleFactor/alpha") | not)'
+rm -f -- "${run_directory}/remotes/no-admin"
 
 # 40. An Iteration field whose start day or duration differs from the model's is set to the model's, on a template and
 # on each project made from it, each of its iterations, completed ones among them, sent back with its ID, title, start
@@ -4794,6 +4844,29 @@ printf '   \n\n\t\n' >"${run_directory}/blank.md"
 world
 run_star "${data}" github issue close NobleFactor/alpha#22 --evidence "${run_directory}/blank.md"
 expect "170 (#590): evidence of blank space alone is refused, nothing written" error "${no_writes}" "which holds only blank space" text
+
+# 171 (#606). A documents table whose delimiter row has fewer cells than its header is no table, as GitHub renders none,
+# and is refused; nothing is written.
+cat >"${run_directory}/short-delimiter.md" <<'BODY'
+### Problem
+
+It is missing.
+
+### Evidence of completion
+
+A case.
+
+### Plan and design documents
+
+| Kind | Document |
+| --- |
+| Plan | Not yet opened |
+BODY
+world "${open_world}"
+run_star "${data_new}" github issue open "${alpha[@]}" --type Task --parent NobleFactor/alpha#60 --area Product \
+    --title "A new task" --body-file "${run_directory}/short-delimiter.md"
+expect "171 (#606): a delimiter row with fewer cells than the header is no table" error "${no_writes}" \
+    "the table of its Plan and design documents section" text
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"

@@ -44,6 +44,7 @@ KINDS = [
     "file",
     "workflow",
     "variable",
+    "squash",
     "secret",
 ]
 
