@@ -93,9 +93,9 @@ Section 10's decisions gain two entries:
 
 ## 6. Alternatives and challenges
 
-- **Have `open` check for duplicates.** The owner rejected this on 2026-11-19, because a model provider will handle duplicates.
-- **Leave a second run doing nothing.** The owner's rule that every command is idempotent rules this out.
-- **Have the first run leave a marker for the second.** Not needed. An issue that's closed with a row still In progress is wrong however it got that way. So a second run fixes it without asking who left it.
+- **Make `open` check for duplicates.** Rejected. A model provider will handle duplicates later.
+- **Have a second run do nothing.** Rejected. Every command must be idempotent.
+- **Have the first run leave a marker for the second run.** Not needed. A closed issue with a row still In progress is wrong, however it got that way, and a second run fixes it either way.
 
 **The owner's question, 1 of 1**
 
