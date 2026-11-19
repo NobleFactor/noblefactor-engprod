@@ -51,7 +51,7 @@ star github issue open --template <path> [--set <name>=<value>[,<name>=<value>].
 
 `open` opens its issue in the repository of the clone it runs in, the repository its origin names. `--directory <path>` names another clone, as git's `-C` does. `create` is the same command.
 
-A template is the issue's header and then its body. The header takes the values the flags give: `type`, `parent`, `title`, `area`, `priority`, `severity`, `assignee` and `unique`. With `--template`, no flag but `--set` and `--directory` is given. Each `{name}` in the header or the body is a blank that `--set` fills; a shell's `${name}` is left alone. `--set` takes its pairs comma-separated.
+A template is the issue's header and then its body. The header takes the values the flags give: `type`, `parent`, `title`, `area`, `priority`, `severity`, `assignee` and `unique`. With `--template`, no flag but `--set` and `--directory` is given. Each `{name}` in the header or the body is a blank that `--set` fills, once, so a value that holds `{name}` is written as it is; a shell's `${name}` is left alone. A blank in the header is quoted, `parent: "{feature}"`, since YAML reads unquoted braces as structure, and a header it reads so is refused. `--set` takes its pairs comma-separated.
 
 ```markdown
 ---
@@ -115,9 +115,9 @@ For each issue, in order, `close` writes:
 1. **The comment:** the evidence file, word for word, headed `## Evidence: <title>` when it has no heading of its own; or `Closed by \`star github issue close\` on <date>, run by <login>, with Resolution <resolution>: <reason>`.
 2. **The Resolution,** with `--resolution`: the Resolution field in NobleFactor, the `resolution:<name>` label in David-Noble-at-work.
 3. **The issue,** closed as completed.
-4. **Its rows:** a Schedule row is set Closed and kept, since a schedule keeps its closed steps; a Scenario row is removed, after a comment on the Scenario issue that the item closed, since a closed item leaves its scenario; a Triage or Backlog row is removed.
+4. **Its rows:** a Schedule row is set Closed and kept, since a schedule keeps its closed steps; a Scenario row is removed, after a comment on the Scenario issue that the item closed, since a closed item leaves its scenario; a Triage or Backlog row is removed. A row of one of those projects with no option is changed as its project's kind has it, with no Scenario issue to tell. Each row's change, the Schedule project's Closed option among it, is read before the first write.
 
-`close` doesn't close a parent. A feature or an epic closes with its own evidence, by `close` run on it. When an issue is its parent's last open child, its record names the parent.
+`close` doesn't close a parent. A feature or an epic closes with its own evidence, by `close` run on it. When an issue is its parent's last open child, counting those the same run closed before it, its record names the parent.
 
 It refuses, writing nothing: neither or both of `--evidence` and `--resolution`; `--resolution` without `--reason`, or with a name its account doesn't have; `--reason` with `--evidence`; an evidence file that is missing or empty; a Schedule or Scenario issue, which `star github schedule close` and `star github scenario close` close; and an item on a scenario whose option names no Scenario issue. An issue already closed is left as it is, and its record is `unchanged`.
 
@@ -132,7 +132,7 @@ star github issue reopen <issue>... --reason <text>
 `reopen` reads each issue, its parents up to its epic, and the schedules it is a step of, before its first write. Then, for each issue:
 
 1. **The issue** is reopened, its Resolution cleared or its `resolution:` labels removed, and a comment written: `Reopened by \`star github issue reopen\` on <date>, run by <login>: <reason>`.
-2. **Its rows:** a Schedule row is set Open, its Worktree kept, since no one has taken it up again; a Backlog row is set Open. An issue with no row on its team's four projects, as `close` leaves an issue it took off Triage, the Backlog or a scenario, gets a Triage row, since the Triage workflow runs only when an issue is opened.
+2. **Its rows:** each row on its team's Triage, Backlog, Schedule or Scenario project is set Open, a Schedule row's Worktree kept, since no one has taken it up again. An issue with no row on its team's four projects, as `close` leaves an issue it took off Triage, the Backlog or a scenario, gets a Triage row, since the Triage workflow runs only when an issue is opened.
 3. **Each closed parent,** its feature and then its epic, is reopened the same way, its comment naming the issue: `Reopened by … for <issue>: <reason>`. A parent with no row, as `close` leaves a feature or an epic it took off the Backlog, gets a Triage row, as the issue does.
 4. **Each closed schedule** it is a step of is reopened as `star github schedule reopen` reopens one (section 8): the Schedule issue reopened with its comment, its own row set In progress, and its exit criterion that every step is closed unticked. A schedule is in progress while any of its steps is open.
 

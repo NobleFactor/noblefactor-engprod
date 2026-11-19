@@ -91,6 +91,10 @@ def _template(path):
     header = yaml.decode(data = "\n".join(lines[1:ends[0]])) or {}
     if type(header) != "dict":
         fail(path + "'s header is no map of keys to values")
+    braced = sorted([k for k, v in header.items() if type(v) in ["dict", "list"]])
+    if braced:
+        fail(path + "'s header reads " + ", ".join(braced) + " as YAML, not text: quote a blank in the header, " +
+             braced[0] + ": \"{name}\"")
     return header, "\n".join(lines[ends[0] + 1:]).strip("\n") + "\n"
 
 def _sets(value):
@@ -111,9 +115,14 @@ def _fill(text, values, missing):
     for m in regex.find_all_submatch(pattern = _BLANK, text = text, count = -1) or []:
         if m[1] == "" and m[2] not in values:
             missing[m[2]] = True
-    for name, value in values.items():
+
+    # Each blank becomes a slot first, then each slot its value, so that a value holding {name} is not filled again.
+    names = list(values.keys())
+    for i, name in enumerate(names):
         kept = "\u0001" + name + "\u0001"
-        text = text.replace("${" + name + "}", kept).replace("{" + name + "}", value).replace(kept, "${" + name + "}")
+        text = text.replace("${" + name + "}", kept).replace("{" + name + "}", "\u0002" + str(i) + "\u0002").replace(kept, "${" + name + "}")
+    for i, name in enumerate(names):
+        text = text.replace("\u0002" + str(i) + "\u0002", values[name])
     return text
 
 def _named(names, value, what, refused):
@@ -377,7 +386,7 @@ def run(_command, ctx):
         wrong.append("its body")
     if values["assignee"] != "" and values["assignee"].lower() not in [a.lower() for a in back["assignees"]]:
         wrong.append("its assignees " + ", ".join(back["assignees"]))
-    if parent != None and (parent_of(key) or {}).get("key") != parent["key"]:
+    if parent != None and ((parent_of(key) or {}).get("key") or "").lower() != parent["key"].lower():
         wrong.append("its parent " + str((parent_of(key) or {}).get("key")))
     if model["user"]:
         wrong.extend(["no label " + label for label in classes["labels"] if label not in back["labels"]])

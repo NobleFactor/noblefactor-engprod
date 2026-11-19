@@ -1183,6 +1183,10 @@ function world_answer {
             exit 1
         fi
     fi
+    # GitHub takes a repository's name in any case, and answers in its own: the world's.
+    if [[ -n "${repo}" ]]; then
+        repo="$(jq -r --arg r "${repo}" '[.issues[].repo | select(ascii_downcase == ($r | ascii_downcase))][0] // $r' "${world}")"
+    fi
     [[ "${query}" =~ issue\(number:[[:space:]]*([0-9]+)\) ]] && number="${BASH_REMATCH[1]}"
     [[ "${query}" =~ node\(id:[[:space:]]*\"([^\"]+)\" ]] && node="${BASH_REMATCH[1]}"
     [[ "${query}" =~ team\(slug:[[:space:]]*\"([^\"]+)\" ]] && slug="${BASH_REMATCH[1]}"
@@ -4613,6 +4617,119 @@ check "158 (#597): walk's issue says #27 left, and walk2's that it joined" world
 check "158 (#597): both comments are written before the row moves, and no row is deleted" calls_hold "${in_order}"'
     in_order([["starStepComment", "s=I_alpha_42"], ["starStepComment", "s=I_alpha_40"], ["starStepSetOption", "i=IT_alpha_27"]])
     and ([.[] | select(any(.[]; type == "string" and test("mutation starStepDeleteRow")))] | length) == 0'
+
+# 159 to 166: the defects the branch's independent review found on 2026-11-19, a case each.
+declare -r no_closed_option='(.projects.PVT_s_eng.fields[] | select(.name == "Status") | .options) |= map(select(.name != "Closed"))'
+declare -r no_open_option='(.projects.PVT_t_eng.fields[] | select(.name == "Status") | .options) |= map(select(.name != "Open"))'
+
+# 159 (#590). Two children of #60 closed in one run: the second closed is #60's last open child, and its record says so.
+world "${open_world}"' | .issues.I_alpha_22.parent = "I_alpha_60" | .issues.I_alpha_24.parent = "I_alpha_60"'
+printf 'Done.\n' >"${run_directory}/done.md"
+run_star "${data}" github issue close NobleFactor/alpha#22 NobleFactor/alpha#24 --evidence "${run_directory}/done.md"
+expect "159 (#590): the last of #60's children closed in the run names #60" ok \
+    '[.[] | select(.action == "closed") | [.issue, .last_child_of]]
+        == [["NobleFactor/alpha#22", null], ["NobleFactor/alpha#24", "NobleFactor/alpha#60"]]'
+
+# 160 (#590). A Schedule project with no Closed option is refused before the first write: #22 is not commented on, nor
+# closed.
+world "${no_closed_option}"
+run_star "${data}" github issue close NobleFactor/alpha#22 --evidence "${run_directory}/done.md"
+expect "160 (#590): no Closed option on the Schedule project is refused, nothing written" error "${no_writes}" \
+    "Schedule: engprod's Status field has no option Closed, for NobleFactor/alpha#22" text
+
+# 161 (#590). close changes a row of its team's four projects that has no option, as the project's kind has it: #41's
+# row on the Schedule project, with no schedule, is set Closed, and its row on the Scenario project, with no scenario, is
+# removed, no Scenario issue told.
+world '.projects.PVT_s_eng.items += [{id: "IT_alpha_41_s", content: "I_alpha_41", values: {Status: "Open"}}]
+    | .projects.PVT_c_eng.items += [{id: "IT_alpha_41_c", content: "I_alpha_41", values: {Status: "Open"}}]'
+run_star "${data}" github issue close NobleFactor/alpha#41 --evidence "${run_directory}/done.md"
+expect "161 (#590): #41's optionless rows are closed and removed" ok \
+    'map([.action, .project, .scenario]) == [["closed", null, null], ["row-closed", "Schedule: engprod", null],
+        ["left", "Scenario: engprod", null]]'
+check "161 (#590): the Schedule row is Closed, the Scenario row gone, and walk's issue is told nothing" world_holds \
+    '(.projects.PVT_s_eng.items[] | select(.id == "IT_alpha_41_s") | .values.Status) == "Closed"
+        and ([.projects.PVT_c_eng.items[] | select(.id == "IT_alpha_41_c")] == [])
+        and ((.issues.I_alpha_40.comments // []) == [])'
+
+# 162 (#587). A Triage project with no Open option is refused before the first write: #41, closed with no row, is not
+# reopened.
+world '.issues.I_alpha_41.state = "CLOSED" | '"${no_open_option}"
+run_star "${data}" github issue reopen NobleFactor/alpha#41 --reason "R."
+expect "162 (#587): no Open option on the Triage project is refused, nothing written" error "${no_writes}" \
+    "Triage: engprod's Status field has no option Open, for NobleFactor/alpha#41" text
+
+# 163 (#587). reopen sets a Closed Triage row Open, and so gives the issue no second row: #26, closed, its Triage row
+# Closed.
+world '.issues.I_alpha_26.state = "CLOSED" | (.projects.PVT_t_eng.items[] | select(.content == "I_alpha_26") | .values.Status) = "Closed"'
+run_star "${data}" github issue reopen NobleFactor/alpha#26 --reason "R."
+expect "163 (#587): #26's Triage row is set Open" ok \
+    'map([.action, .project]) == [["reopened", null], ["row-opened", "Triage: engprod"]]'
+check "163 (#587): #26 has its one Triage row, Open" world_holds \
+    '[.projects.PVT_t_eng.items[] | select(.content == "I_alpha_26") | .values.Status] == ["Open"]'
+
+# 164 (#338). A parent named in another case than GitHub's is the same parent: the task is opened under #60, and read
+# back as its child.
+world "${open_world}"
+run_star "${data_new}" github issue open "${alpha[@]}" --type Task --parent noblefactor/alpha#60 --area Product \
+    --title "A new task" --body-file "${run_directory}/task.md"
+expect "164 (#338): --parent noblefactor/alpha#60 opens the task under NobleFactor/alpha#60" ok \
+    'map([.action, .issue]) == [["opened", "NobleFactor/alpha#62"]]'
+check "164 (#338): #62's parent is #60" world_holds '.issues.I_alpha_62.parent == "I_alpha_60"'
+
+# 165 (#338). A blank left unquoted in a template's header is read by YAML as braces, not text, and is refused, saying to
+# quote it; nothing is written.
+cat >"${run_directory}/braced.md" <<'TEMPLATE'
+---
+type: Task
+parent: {feature}
+title: "A task"
+area: Engineering
+---
+### Problem
+
+It is missing.
+
+### Evidence of completion
+
+A case.
+
+### Plan and design documents
+
+| Kind | Document |
+| --- | --- |
+| Plan | Not yet opened |
+TEMPLATE
+world "${open_world}"
+run_star "${data_new}" github issue open "${alpha[@]}" --template "${run_directory}/braced.md" --set feature=NobleFactor/alpha#60
+expect "165 (#338): an unquoted blank in the header is refused, saying to quote it" error "${no_writes}" \
+    "header reads parent as YAML, not text: quote a blank in the header" text
+
+# 166 (#338). --set fills each blank once: a value holding another blank's {name} is written as it is.
+cat >"${run_directory}/twice.md" <<'TEMPLATE'
+---
+type: Task
+parent: NobleFactor/alpha#60
+title: "A task for {who}"
+area: Engineering
+---
+### Problem
+
+It is {what}.
+
+### Evidence of completion
+
+A case.
+
+### Plan and design documents
+
+| Kind | Document |
+| --- | --- |
+| Plan | Not yet opened |
+TEMPLATE
+world "${open_world}"
+run_star "${data_new}" github issue open "${alpha[@]}" --template "${run_directory}/twice.md" --set "what={who},who=me"
+expect "166 (#338): the title's blank is filled once" ok 'map(.title) == ["A task for me"]'
+check "166 (#338): {what} holds {who} as it was given" world_holds '.issues.I_alpha_62.body | contains("It is {who}.")'
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"

@@ -10,7 +10,8 @@
 #
 #   1. The issue reopened, its Resolution cleared, the issue field in an organization or each resolution: label in a
 #      user account, and a comment, from templates/issue-reopen.md.template.
-#   2. Its rows: a Schedule row set Open, its Worktree kept, since no one has taken it up again; a Backlog row set Open.
+#   2. Its rows: each row on its team's Triage, Backlog, Schedule or Scenario project set Open, a Schedule row's
+#      Worktree kept, since no one has taken it up again.
 #      An issue that has no row on its team's Triage, Backlog, Schedule or Scenario project gets a Triage row, since the
 #      Triage workflow runs only when an issue is opened.
 #   3. Each closed parent, its feature and then its epic, reopened the same way, its comment naming the issue, and its
@@ -77,7 +78,7 @@ def _rows(r, model, projects):
     """What reopen does to a reopened issue's rows, read before anything is written: (changes, refusals)."""
     changes, refused = [], []
     for row in r["rows"]:
-        if not ((row["kind"] == SCHEDULE_KIND and row["schedule"] != None) or row["kind"] == BACKLOG) or row["status"] == _OPEN:
+        if row["kind"] not in _KINDS or row["status"] == _OPEN:
             continue
         project = project_of(row["project"]["id"])
         found = [o["id"] for o in project["fields"].get(_STATUS, {"options": []})["options"] if o["name"] == _OPEN]
@@ -97,6 +98,8 @@ def _rows(r, model, projects):
         projects[at] = project_named(model, title)
     if projects[at] == None:
         refused.append(model["account"] + " has no project " + title + ", for " + r["key"])
+    elif not [o for o in projects[at]["fields"].get(_STATUS, {"options": []})["options"] if o["name"] == _OPEN]:
+        refused.append(title + "'s " + _STATUS + " field has no option " + _OPEN + ", for " + r["key"])
     else:
         changes.append({"do": "triaged", "project": projects[at]})
     return changes, refused
@@ -172,7 +175,7 @@ def run(_command, ctx):
 
     # Everything read first: each issue, its rows, its Resolution, its closed parents and its closed schedules.
     models = models_for([parse_key(k)["owner"] for k in keys])
-    projects, planned, work, refused = {}, {k: True for k in keys}, [], []
+    projects, planned, work, refused = {}, {k.lower(): True for k in keys}, [], []
     for k in keys:
         model = model_for(models, parse_key(k)["repo"])
         r = issue(k, model)
@@ -186,9 +189,9 @@ def run(_command, ctx):
             w["changes"], faults = _rows(r, model, projects)
             refused.extend(faults)
         for p in parents_of(k):
-            if p["state"] != "closed" or p["key"] in planned:
+            if p["state"] != "closed" or p["key"].lower() in planned:
                 continue
-            planned[p["key"]] = True
+            planned[p["key"].lower()] = True
             pm = model_for(models, parse_key(p["key"])["repo"])
             pr = issue(p["key"], pm)
             changes, faults = _rows(pr, pm, projects)

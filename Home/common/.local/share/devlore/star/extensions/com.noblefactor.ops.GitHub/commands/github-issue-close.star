@@ -48,7 +48,6 @@ load(
     "delete_row",
     "issue",
     "issue_state",
-    "option_of",
     "parse_key",
     "project_of",
     "read_row",
@@ -80,19 +79,29 @@ def _with_heading(text, title):
     return "## Evidence: " + title + "\n\n" + text
 
 def _rows(r, model):
-    """What close does to each of an issue's rows, read before anything is written: (changes, refusals)."""
+    """What close does to each of an issue's rows, read before anything is written: (changes, refusals).
+
+    A row on a Schedule project is set Closed, its project's Closed option read now; a row on a Scenario project leaves
+    the scenario, its Scenario issue told when its option names one; a Triage or Backlog row is removed. A row of one of
+    those projects with no option is changed all the same, as the project's kind has it.
+    """
     changes, refused = [], []
     for row in r["rows"]:
-        if row["kind"] == SCHEDULE_KIND and row["schedule"] != None:
+        if row["kind"] == SCHEDULE_KIND:
             if row["status"] != _CLOSED:
-                changes.append({"row": row, "do": "row-closed"})
+                project = project_of(row["project"]["id"])
+                found = [o["id"] for o in project["fields"].get(_STATUS, {"options": []})["options"] if o["name"] == _CLOSED]
+                if not found:
+                    refused.append(project["title"] + "'s " + _STATUS + " field has no option " + _CLOSED + ", for " + r["key"])
+                else:
+                    changes.append({"row": row, "do": "row-closed", "project": project, "option": found[0]})
         elif row["kind"] == SCENARIO_KIND and row["scenario"] != None:
             source, fault = scenario_of(r, row, model)
             if fault:
                 refused.append(fault)
             else:
                 changes.append({"row": row, "do": "left", "scenario": source})
-        elif row["kind"] in [TRIAGE, BACKLOG]:
+        elif row["kind"] in [TRIAGE, BACKLOG, SCENARIO_KIND]:
             changes.append({"row": row, "do": "left"})
     return changes, refused
 
@@ -101,8 +110,7 @@ def _change(r, change, date, login, resolution):
     row = change["row"]
     title = row["project"]["title"]
     if change["do"] == "row-closed":
-        project = project_of(row["project"]["id"])
-        set_option(project, row["item"], _STATUS, option_of(project, _STATUS, _CLOSED))
+        set_option(change["project"], row["item"], _STATUS, change["option"])
         back = read_row(row["item"])
         if back == None or back["status"] != _CLOSED:
             fail(r["key"] + "'s row on " + title + " reads back " + str(back) + ", not Closed")
@@ -183,6 +191,9 @@ def run(_command, ctx):
     login = viewer()
     date = today()
     out = []
+
+    # Each parent's open children, as read before the first write, less those this run has closed.
+    closed_under = {}
     for w in work:
         r = w["r"]
         if r["state"] == "closed":
@@ -204,7 +215,12 @@ def run(_command, ctx):
         if state["state"] != "closed" or state["reason"] != "completed":
             fail(r["key"] + " reads back " + str(state["state"]) + ", " + str(state["reason"]) + ", not closed as completed")
         note("closed " + r["key"] + " as completed")
-        last = w["parent"]["key"] if w["parent"] != None and w["parent"]["open"] == 1 else None
+        last = None
+        if w["parent"] != None:
+            at = w["parent"]["key"].lower()
+            closed_under[at] = closed_under.get(at, 0) + 1
+            if w["parent"]["open"] - closed_under[at] == 0:
+                last = w["parent"]["key"]
         out.append(_record(r["key"], "closed", resolution = w["plan"]["name"] if w["plan"] != None else None, parent = last))
         for change in w["changes"]:
             out.append(_change(r, change, date, login, resolution if w["plan"] != None else None))
