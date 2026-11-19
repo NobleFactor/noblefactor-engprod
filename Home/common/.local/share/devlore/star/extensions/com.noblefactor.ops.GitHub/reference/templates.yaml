@@ -40,7 +40,7 @@ templates:
           - { name: "Closed", color: "PURPLE", description: "The issue is closed. Closed does not always mean done" }
   - name: "Backlog"
     readme: |-
-      A team's Backlog project holds work that triage accepted and that isn't scheduled yet, ordered by priority.
+      A team's Backlog project holds work that triage accepted and that isn't scheduled yet, ordered by priority, and its epics and features, each until it closes.
 
       - Status is Open, In progress or Closed.
     public: false
@@ -106,7 +106,7 @@ templates:
       - { name: "Beat", type: number }
       - { name: "Scenario", type: single-select, own_options: true }
     views:
-      - name: "View 1"
+      - name: "Default"
         layout: table
         filter: ""
         fields: ["Title", "Assignees", "Status", "Linked pull requests", "Sub-issues progress"]

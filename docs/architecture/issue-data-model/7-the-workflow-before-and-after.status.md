@@ -55,6 +55,8 @@ leaving an issue with no type yet to triage, and adds an issue whose body says "
 open scenario of the account, to that scenario instead of to Triage; NobleFactor's has set the Area field since its
 first run, on 2026-11-11, and section 7 states each as done.
 
+**Revised 2026-11-17 ([section 10](10-the-issue-commands.md#epics-and-features), #597):** an epic or a feature goes from Triage to the Backlog once classified and stays there until it closes, its state its children's, and is never a row of a Schedule or Scenario project; `star github issue move` puts an issue where its type allows, from wherever it is; and the sweep returns an epic or a feature on a Schedule or Scenario project, not one on the Backlog.
+
 ## Completion
 
 - [x] Done in GitHub, 2026-11-01 to 2026-11-03: the types Epic, Feature, Task, Bug, Schedule and Thread in NobleFactor,

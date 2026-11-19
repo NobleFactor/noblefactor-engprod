@@ -2,7 +2,7 @@
 SPDX-License-Identifier: Apache-2.0
 Copyright Noble Factor. All rights reserved.
 
-schedule.md.template: the body star github schedule new files a Schedule issue with (section 8 of the issue data model,
+schedule.md.template: the body star github schedule open files a Schedule issue with (section 8 of the issue data model,
 § Making a schedule: new, ruled 2026-11-11): the sections of the account's Schedule form, in the form's order, each
 headed at level 2, then two of its own, Steps, whose line links the project's view 2 filtered to the schedule's option,
 and Amendments, empty, where each change to the steps writes its line. Rendered by making.star with star's template

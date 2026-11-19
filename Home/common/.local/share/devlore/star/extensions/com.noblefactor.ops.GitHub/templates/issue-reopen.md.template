@@ -1,0 +1,13 @@
+{{- /*
+SPDX-License-Identifier: Apache-2.0
+Copyright Noble Factor. All rights reserved.
+
+issue-reopen.md.template: the comment star github issue reopen writes on each issue it reopens (section 10 of the issue
+data model, § Reopening an issue, ruled 2026-11-17): the issue it was asked to reopen, and each closed parent and closed
+schedule it reopens with it, naming that issue; and star github schedule reopen's on the schedule it reopens (#595).
+When, who ran it, and why. Rendered with star's template module; its whitespace is folded to single spaces after.
+
+  .command, .date, .login, .reason   strings
+  .cause                             the issue a parent or a schedule was reopened for; "" for the one asked for
+*/ -}}
+Reopened by `{{.command}}` on {{.date}}, run by {{.login}}{{if .cause}}, for {{.cause}}{{end}}: {{.reason}}

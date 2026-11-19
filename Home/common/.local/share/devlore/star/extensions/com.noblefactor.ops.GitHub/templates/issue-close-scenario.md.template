@@ -1,0 +1,14 @@
+{{- /*
+SPDX-License-Identifier: Apache-2.0
+Copyright Noble Factor. All rights reserved.
+
+issue-close-scenario.md.template: the comment star github issue close writes on a Scenario issue when it closes one of
+its items, before it removes the item's row: a closed item leaves its scenario (section 9 of the issue data model,
+question 7; section 10, § Closing an issue). Rendered by github-issue-close.star with star's template module; its
+whitespace is folded to single spaces after.
+
+  .issue, .date, .login   strings
+  .resolution             the item's Resolution, when it closed with one; "" when it closed with its evidence
+*/ -}}
+{{.issue}} closed on {{.date}}, {{if .resolution}}with Resolution {{.resolution}}, {{end}}and so left this scenario, by
+`star github issue close`, run by {{.login}}.

@@ -25,7 +25,7 @@ _Start-Claude() {
         schedule)
             # The open schedules of the repository Start-Claude will read a bare number in: the one --directory names
             # earlier on the line, or else the one holding the working directory (#415). new is retired: star github
-            # schedule new makes a schedule (#509). Silent when gh is missing or unauthenticated, or the directory does
+            # schedule open makes a schedule (#509, #595). Silent when gh is missing or unauthenticated, or the directory does
             # not exist. A schedule is an issue of type Schedule, or, in a user account, which has no issue types, one
             # labeled schedule (issue-standards.md § Schedules); each search finds nothing in the other kind of account.
             local directory="${opt_args[--directory]:-${opt_args[-C]:-.}}"

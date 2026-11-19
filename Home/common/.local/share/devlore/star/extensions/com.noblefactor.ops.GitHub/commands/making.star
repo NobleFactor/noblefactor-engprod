@@ -7,7 +7,7 @@
 #
 # docs/plans/doc/507-scenario-commands.md, Requirement 4 (noblefactor-engprod#509), to section 8 of the issue data
 # model, § Making a schedule: new, and section 9, § Making a scenario: new. One implementation serves star github
-# schedule new and star github scenario new; what differs is the kind, its form, its flags and its body's template. In
+# schedule open and star github scenario open, and their create; what differs is the kind, its form, its flags and its body's template. In
 # order, each write read back (section 8, question 3): the team that maintains the repository, and its project of the
 # kind; the issue, titled "<kind>: <name>", its body the sections of the account's form in the form's order, rendered
 # from templates/schedule.md.template or scenario.md.template; the option <name>, added last to the project's field,

@@ -25,7 +25,16 @@ This is the NobleFactor **base layer**: the organization's engineering standards
 
 ### The layer content
 
-`Home/` is what `writ` deploys, laid out as the home directory it lands in. Today it holds the `com.noblefactor.ops.GitHub` star extension — `star github issue move`, `star github schedule list|get|new|close|report`, `star github scenario list|get|new|retire`, `star github plan link`, `star github triage sweep` and `star github model get|diff|apply|backup|restore` — under `Home/common/.local/share/devlore/star/extensions/`, where star looks for a user-scoped extension since devlore-cli#918. `Declare-BashScript` and the `git-*` process commands arrive with #147 and #146.
+`Home/` is what `writ` deploys, laid out as the home directory it lands in. It holds the `com.noblefactor.ops.GitHub` star extension, under `Home/common/.local/share/devlore/star/extensions/`, where star looks for a user's extensions. Its commands:
+
+- `star github issue open|create|move|close|reopen`
+- `star github schedule report|list|get|open|create|close|reopen`
+- `star github scenario list|get|open|create|close|reopen`
+- `star github plan link`
+- `star github triage sweep`
+- `star github model get|diff|apply|backup|restore`
+
+`Declare-BashScript` and the `git-*` process commands arrive with #147 and #146.
 
 ### The star work is not here
 

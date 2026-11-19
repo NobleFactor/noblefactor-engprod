@@ -43,7 +43,7 @@
 .PARAMETER Schedule
     The schedule the session works: <owner>/<repository>#<number>, or a bare <number> in the startup directory's
     repository. The only positional parameter. It is read with gh from its own repository, never the caller's, and
-    an issue that is not a schedule is refused. new is refused, naming star github schedule new, which makes a
+    an issue that is not a schedule is refused. new is refused, naming star github schedule open, which makes a
     schedule: its issue from the account's form, its option and its row. Requires gh. Given with -Resume or
     -Continue, it is the schedule the conversation joins, when the schedule has none or the conversation is already
     its own; a schedule another conversation works, and a conversation on another schedule, are refused.
@@ -1651,10 +1651,10 @@ end {
             Exit-Launch -ErrorId 'OneWayInRequired' -Category InvalidArgument -Message $message
         }
 
-        # -Schedule new is retired: star github schedule new makes a schedule, its issue from the account's form with
+        # -Schedule new is retired: star github schedule open makes a schedule, its issue from the account's form with
         # its option and its row, which this script never made (section 8 of the issue data model, question 7, #509).
         if ($Schedule -ceq 'new') {
-            $message = '-Schedule new is retired: make the schedule with star github schedule new <repository> <name> '
+            $message = '-Schedule new is retired: make the schedule with star github schedule open <repository> <name> '
             $message += '--area Product|Engineering --deliverable <text> --exit-criteria <text> '
             $message += "--evidence <text>, then open its conversation with $scriptName <owner>/<repository>#<number>."
             Exit-Launch -ErrorId 'ScheduleNewRetired' -Category InvalidArgument -Message $message

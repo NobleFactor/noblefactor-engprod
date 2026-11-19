@@ -5,7 +5,7 @@ type: Process
 audience: Engineers, agents
 status: Approved
 created: 2026-03-16
-updated: 2026-11-18
+updated: 2026-11-19
 ---
 
 # PR Script Template
@@ -367,10 +367,13 @@ set_row() {
 #
 # AFTER the merge and its span, since the records name the squash commit. Guarded on what each record holds (ruled
 # 2026-11-13): the step's row must link this branch, or this pull request when the script runs again; otherwise the
-# step has moved to another worktree, and the script stops. The merge comment is posted once. Closure requires the reviewed close_steps authorization;
-# other issues remain open for their post-merge obligations. Each record is read back. A step that moves to another worktree, or closes without a merge,
-# is recorded by this script before git close-branch, its row linking where the work went. Leave the step out only
-# when the pull request lands no step.
+# step has moved to another worktree, and the script stops. Every step gets the merge record as a comment, once.
+# Closure requires the reviewed close_steps authorization: a step approved to close is closed by the pull request's
+# closing keyword at the merge, so GitHub records the pull request as what closed it, which star github schedule close
+# lists; the merge record is its evidence, and the script sets its row Closed, closing the issue itself only if GitHub
+# has not yet. Every other step stays open, its row In progress, for its post-merge obligations. Each record is read
+# back. A step that moves to another worktree, or closes without a merge, is recorded by this script before git
+# close-branch, its row linking where the work went. Leave the step out only when the pull request lands no step.
 steps=(<issue>)
 link="https://github.com/${repository}/tree/<branch>"
 pr_url="https://github.com/${repository}/pull/${pr_number}"
@@ -387,20 +390,21 @@ for step in "${steps[@]}"; do
         exit 1
     }
     record="Merged in #${pr_number} as \`${merged% *}\` on ${merged#* } (UTC)."
-    gh api "repos/${repository}/issues/${step}/comments" --paginate --jq '.[].body' | grep -qxF -- "${record}" ||
-        gh issue comment "${step}" --repo "${repository}" --body "${record}" >/dev/null
     close_allowed=false
     for approved in "${close_steps[@]}"; do
         [[ "${approved}" != "${step}" ]] || close_allowed=true
     done
+    gh api "repos/${repository}/issues/${step}/comments" --paginate --jq '.[].body' | grep -qxF -- "${record}" ||
+        gh issue comment "${step}" --repo "${repository}" --body "${record}" >/dev/null
+    state="$(gh issue view "${step}" --repo "${repository}" --json state --jq .state)"
     expected_state=OPEN
     expected_status='In progress'
     if [[ "${close_allowed}" == true ]]; then
-        [[ "$(gh issue view "${step}" --repo "${repository}" --json state --jq .state)" == CLOSED ]] ||
-            gh issue close "${step}" --repo "${repository}" --reason completed >/dev/null
+        # The closing keyword closed it at the merge; GitHub may take a moment, so it is closed here only if still open.
+        [[ "${state}" == CLOSED ]] || gh issue close "${step}" --repo "${repository}" --reason completed >/dev/null
         expected_state=CLOSED
         expected_status=Closed
-    elif [[ "$(gh issue view "${step}" --repo "${repository}" --json state --jq .state)" != OPEN ]]; then
+    elif [[ "${state}" != OPEN ]]; then
         echo "#${step} is already closed; inspect its completion disposition before changing its row." >&2
         exit 1
     fi
@@ -959,10 +963,12 @@ query($owner: String!, $name: String!, $number: Int!) {
     #
     # AFTER the merge and its span, since the records name the squash commit. Guarded on what each record holds (ruled
     # 2026-11-13): the step's row must link this branch, or this pull request when the script runs again; otherwise the
-    # step has moved to another worktree, and the script stops. The merge comment is posted once. Closure requires the reviewed closeSteps authorization;
-    # other issues remain open for their post-merge obligations. Each record is read back. A step that moves to another worktree, or closes without a merge,
-    # is recorded by this script before git close-branch, its row linking where the work went. Left out only when the
-    # pull request lands no step.
+    # step has moved to another worktree, and the script stops. The merge comment is posted once. Closure requires the
+    # reviewed closeSteps authorization: a step approved to close is closed by the pull request's closing keyword, and
+    # here only if GitHub has not yet, its row set Closed; other issues remain open for their post-merge obligations.
+    # Each record is read back. A step that moves to another worktree, or closes without a merge, is recorded by this
+    # script before git close-branch, its row linking where the work went. Left out only when the pull request lands
+    # no step.
 
     $steps = @(<issue>)
     $link = "https://github.com/$repository/tree/<branch>"

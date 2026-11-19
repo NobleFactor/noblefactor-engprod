@@ -173,7 +173,7 @@ The writing-and-review skill (#599) and architecture guidance (#600) remain sepa
 
 ### 7.7. Complete document inventory
 
-Every row receives an explicit disposition in the rewrite review. Rewriting a design means rebuilding its explanation and organization, not retaining a historical overlay under arc42 headings.
+The refreshed inventory has 51 documents after bringing in the Issue verbs architecture and its decision companions. Every row receives an explicit disposition in the rewrite review. Rewriting a design means rebuilding its explanation and organization, not retaining a historical overlay under arc42 headings.
 
 | Document | Required work |
 | --- | --- |
@@ -204,9 +204,11 @@ Every row receives an explicit disposition in the rewrite review. Rewriting a de
 | [docs/architecture/issue-data-model/7-the-workflow-before-and-after.md](../../architecture/issue-data-model/7-the-workflow-before-and-after.md) | Rewrite as part of its architecture set; review Google writing and arc42 coverage |
 | [docs/architecture/issue-data-model/7-the-workflow-before-and-after.status.md](../../architecture/issue-data-model/7-the-workflow-before-and-after.status.md) | Preserve decisions in a decision companion and progress in the applicable plan; retain incoming references |
 | [docs/architecture/issue-data-model/8-the-schedule-commands.md](../../architecture/issue-data-model/8-the-schedule-commands.md) | Rewrite as part of its architecture set; review Google writing and arc42 coverage |
-| [docs/architecture/issue-data-model/8-the-schedule-commands.status.md](../../architecture/issue-data-model/8-the-schedule-commands.status.md) | Preserve decisions in a decision companion and progress in the applicable plan; retain incoming references |
+| [docs/architecture/issue-data-model/8-the-schedule-commands.decisions.md](../../architecture/issue-data-model/8-the-schedule-commands.decisions.md) | Review significant system choices, reasons, alternatives and consequences; keep progress in plans |
 | [docs/architecture/issue-data-model/9-the-scenario-commands.md](../../architecture/issue-data-model/9-the-scenario-commands.md) | Rewrite as part of its architecture set; review Google writing and arc42 coverage |
-| [docs/architecture/issue-data-model/9-the-scenario-commands.status.md](../../architecture/issue-data-model/9-the-scenario-commands.status.md) | Preserve decisions in a decision companion and progress in the applicable plan; retain incoming references |
+| [docs/architecture/issue-data-model/9-the-scenario-commands.decisions.md](../../architecture/issue-data-model/9-the-scenario-commands.decisions.md) | Review significant system choices, reasons, alternatives and consequences; keep progress in plans |
+| [docs/architecture/issue-data-model/10-the-issue-commands.md](../../architecture/issue-data-model/10-the-issue-commands.md) | Review the delivered issue command contract with its architecture set |
+| [docs/architecture/issue-data-model/10-the-issue-commands.decisions.md](../../architecture/issue-data-model/10-the-issue-commands.decisions.md) | Review significant system choices and their reasons; preserve the accepted write order |
 | [docs/architecture/issue-data-model/index.md](../../architecture/issue-data-model/index.md) | Rewrite as part of its architecture set; review Google writing and arc42 coverage |
 | [docs/engineering/agent-operation.md](../../engineering/agent-operation.md) | Rewrite for its audience and purpose; review Google writing and consistency |
 | [docs/engineering/index.md](../../engineering/index.md) | Rewrite for its audience and purpose; review Google writing and consistency |
@@ -229,13 +231,13 @@ Every row receives an explicit disposition in the rewrite review. Rewriting a de
 
 ### 7.8. Integration checkpoint
 
-Issue verbs (#589), PR #604, merged as 643652b617f6c95414fbd8c7ab958ffc4d422494. Its seven issues have completion evidence and Closed rows on Issue tracking, iteration 2 (#588). The current inventory predates that merge; refresh its paths and dispositions after integration, including section 10 and the new decision companions. Do not treat the existing row count as the final rewrite scope.
+The Owner ran the integration script on 2026-11-19. The actual make check passed before integration: 189 documents checked, one exemption, no frontmatter errors, and every other gate and test passed. The six disclosure and plan files were committed as 5a8383ddc1ede02f009a76eaaca1a4fa17a64bdf. The merge of Issue verbs revision 643652b617f6c95414fbd8c7ab958ffc4d422494 then stopped with twelve documentation conflicts. Its receipt is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/integration-checkpoint/runs/20261119T081313Z/receipt.json.
 
-The Owner-run checkpoint first commits only the six local disclosure and plan corrections, after make check. It then starts a merge of the reviewed Issue verbs revision with no merge commit. The script records the result and stops, leaving any conflicts for inspection and reconciliation. It stops if the assigned issues, worktree, published head or target revision changed. It does not push, merge PR #596, clean up or update the canonical clone.
+The working-file reconciliation combines the delivered command names, Backlog rules, source validation and decision companions with the prior Triage exclusions, Scenario closure and cleanup instructions, link targets, and permanent PR disclosure rule. The inventory now includes section 10 and the three decision companions in place of the deleted section 8 and 9 status pages. Conflict-marker removal does not stage the files or complete the merge.
 
-After that checkpoint, reconcile the overlapping documents against the delivered command semantics and the approved disclosure rule. Refresh the inventory and content map, record the integration result, and prepare the updated plan checkpoint for Owner review. Do not infer full rewrite implementation approval from the approval of merge order and document structure alone.
+The Owner staged the reviewed resolutions and the integrated make check passed. This merge commit completes the reviewed Issue verbs integration. Publication and Owner review remain outstanding. The earlier passing gate verifies the six-file checkpoint, not the integrated result. Review the refreshed plan checkpoint before directing the full rewrite.
 
-Table validation (#606) and Recovery guidance (#607) retain the two residual review findings as Low-severity Bugs in Triage under Feature #332. Recovery guidance should describe the actual retry limits; automatic recovery is separate behavior work. Orphaned links remain within Writ upgrade (NobleFactor/devlore-cli#845). The Claude coder owns Squash-merge configuration (#605), currently In progress; this checkpoint does not alter that worker's worktree or claim its changes delivered.
+Table validation (#606) and Recovery guidance (#607) retain the two residual review findings as Bugs with Severity Low in Triage under Feature #332. Recovery guidance should describe the actual retry limits; automatic recovery is separate behavior work. Orphaned links remain within Writ upgrade (NobleFactor/devlore-cli#845). The Claude coder owns Squash-merge configuration (#605), currently In progress; reconcile later delivered changes without editing that worker's worktree.
 
 ## 8. Completion milestones
 
@@ -286,6 +288,13 @@ Implementation, Owner review, merge and post-merge verification are required. Co
 - [ ] Complete and record the writing, arc42, requirement-preservation and consistency reviews; resolve their findings.
 - [ ] Pass make check and final-head CI, obtain Owner review, and satisfy the explicit merge gate.
 
+### 9.6. Issue verbs integration
+
+- [x] Owner ran make check and committed the six approved disclosure and plan files at 5a8383ddc1ede02f009a76eaaca1a4fa17a64bdf.
+- [x] Reconcile the twelve conflicted working files and refresh the 51-document inventory.
+- [x] Stage the reviewed resolutions, pass the integrated gate and commit the pending merge through the Owner-run script.
+- [ ] Publish the refreshed plan checkpoint and obtain review and direction before the full rewrite.
+
 ## 10. Files and related assets
 
 Primary files are Home/common/.claude/skills/star-github-schedule-progress/SKILL.md and docs/architecture/issue-data-model/index.md. The handbook issue lists docs/issue-standards.md, docs/engineering/work-organization.md, docs/engineering/process.md, docs/templates/schedule.md, docs/guides/pr-script-template.md, README.md, docs/github-branch-protection.md, docs/engineering/review/open-decisions.md, the three agent-schedule architecture pages, and the optional workstation roadmap. Inspect exact current content and incoming references before editing.
@@ -314,4 +323,6 @@ The disclosure correction is prepared locally for PR #596. Its focused validatio
 
 ## 13. Completion review
 
-The command-alignment and work-assets revision is published at f8d7702f971fb9967a7f3bc39a375cea6d3cff50. Its Owner-run make check passed; the receipt is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/update-review.hDClvMtf/receipt.json. The full documentation rewrite is required and has not started. Its plan checkpoint, implementation, content reviews, final-head checks and Owner review remain outstanding. Keep PR #596 a draft and both delivery issues open. Merge, deployed-content verification, completion approval and cleanup follow only after the rewrite's merge condition is satisfied.
+The initial full-rewrite plan checkpoint was published at cbdc89b9d4eb601b7b5c47eb1202b803a6b45c1c. The Owner approved the merge order and document structure. The six-file disclosure and plan checkpoint is committed at 5a8383ddc1ede02f009a76eaaca1a4fa17a64bdf after its Owner-run make check passed.
+
+The working files reconcile the pending Issue verbs merge, and the refreshed inventory has 51 documents. The integrated gate passed, and this merge commit completes the reviewed integration. Publication and review of this checkpoint remain outstanding. The full rewrite has not started. Keep PR #596 a draft and Skill/index update (#581) and Handbook command alignment (#582) open. Merge of the PR, deployed-content verification, completion approval and cleanup follow only after the rewrite's merge condition is satisfied.

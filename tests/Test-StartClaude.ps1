@@ -14,7 +14,7 @@
     checking the schedule's entry in the store, and row 2 of personal#259's plan, a conversation resumed in another
     clone that -Continue finds there (NobleFactor/noblefactor-ops#322); a -Detach wake of a stopped session, which
     keeps the launch's name (NobleFactor/noblefactor-ops#260); and -Schedule new, retired, refused naming star github
-    schedule new, by its message (NobleFactor/noblefactor-engprod#509).
+    schedule open, by its message (NobleFactor/noblefactor-engprod#509, #595).
 
     Each case is an output object whose Result is passed, failed or skipped. A failure ends the run with a terminating
     error, so that run as a process it exits 1.
@@ -875,11 +875,11 @@ name nothing records | no such name | not-found | ConversationNotFound
             -Parameter @{ Resume = 'abcd1234'; Detach = $true; NoRemoteControl = $true }
 
         # -Schedule new is retired (#509; section 8 of the issue data model, question 7): a usage error naming the
-        # command that makes a schedule, star github schedule new; and a -Schedule that is neither a key nor a number is
+        # command that makes a schedule, star github schedule open; and a -Schedule that is neither a key nor a number is
         # refused without offering new.
-        Invoke-StartClaudeCase -Name '-Schedule new: refused, naming star github schedule new' -Expected 'usage' `
+        Invoke-StartClaudeCase -Name '-Schedule new: refused, naming star github schedule open' -Expected 'usage' `
             -ErrorId 'ScheduleNewRetired' -Parameter @{ Schedule = 'new'; Detach = $true } `
-            -MessageLike '-Schedule new is retired: make the schedule with star github schedule new *'
+            -MessageLike '-Schedule new is retired: make the schedule with star github schedule open *'
         Invoke-StartClaudeCase -Name '-Schedule that is neither a key nor a number: refused, new not offered' `
             -Expected 'usage' -ErrorId 'ScheduleMalformed' -Parameter @{ Schedule = 'tomorrow'; Detach = $true } `
             -MessageLike '-Schedule takes <owner>/<repository>#<number> or a bare <number>: tomorrow'

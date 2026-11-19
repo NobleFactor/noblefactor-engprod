@@ -17,7 +17,7 @@
 # (section 9); its changes are recorded in a comment on its Scenario issue and a line in the item's body, which this
 # module writes too. star github issue move uses it (#511), made from `add` (#438); get and list of both groups read
 # through it (collections.star, #510); new of both groups files its issue, sets its issue fields and adds its option
-# through it (making.star, #509); and close and retire close an issue and read how each step closed through it
+# through it (making.star, #509); and schedule close and scenario close close an issue and read how each step closed through it
 # (ending.star, #512).
 
 load("commands/markdown.star", "body_lines", "line_end", "numbered", "sections")
@@ -32,6 +32,8 @@ _SCHEDULE_FIELD = "Schedule"
 _SCENARIO_FIELD = "Scenario"
 _STEP_FIELD = "Step"
 _BEAT_FIELD = "Beat"
+_NO_STEP = "a closed schedule takes no step"
+_NO_ITEM = "a closed scenario takes no item"
 _STATUS_FIELD = "Status"
 _WORKTREE_FIELD = "Worktree"
 _ITERATION_FIELD = "Iteration"
@@ -48,17 +50,22 @@ _LEVELS = [2, 3]
 # ── keys and calls ──────────────────────────────────────────────────────────
 
 def parse_key(key):
-    """owner, repository and number of an issue written <owner>/<repository>#<number>; fails, naming it, otherwise."""
+    """owner, repository and number of an issue written <owner>/<repository>#<number>; fails, naming it, otherwise.
+
+    The key writes the number as a number, without leading zeros. GitHub names an account and a repository in any case,
+    so two keys name one issue when they are the same in lower case.
+    """
     m = regex.find_submatch(pattern = "^([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)#([0-9]+)$", text = key.strip())
     if not m:
         fail("an issue is written <owner>/<repository>#<number>: " + key)
     repo = canonical_repo(m[1] + "/" + m[2])
-    return {"key": repo + "#" + m[3], "repo": repo, "owner": repo.split("/")[0], "name": repo.split("/")[1], "number": int(m[3])}
+    return {"key": repo + "#" + str(int(m[3])), "repo": repo, "owner": repo.split("/")[0], "name": repo.split("/")[1], "number": int(m[3])}
 
 def _call(query, variables = {}, jq = "."):
     """A GraphQL call's result through gh, each variable passed apart from the query.
 
-    A string goes with -f, and a number with -F, which gh sends as a JSON number.
+    A string goes with -f, and a number with -F, which gh sends as a JSON number. gh prints a null result as an empty
+    line, which this returns as "", so a caller that decodes a result that can be null reads "" as null.
     """
     args = " ".join([("-F " if type(v) == "int" else "-f ") + quote(k + "=" + str(v)) for k, v in variables.items()])
     return sh("gh api graphql -f query=" + quote(query) + (" " + args if args else "") + " --jq " + quote(jq)).strip()
@@ -103,7 +110,7 @@ def issue(key, model):
              "labels(first: 50) { nodes { name } } assignees(first: 20) { nodes { login } } " +
              "blockedBy(first: 50) { nodes { id number repository { nameWithOwner } } } " +
              "projectItems(first: 20) { nodes { id project { id title number closed } " + _ROW_VALUES + " } } } } }")
-    node = json.decode(data = _call(query, jq = ".data.repository.issue"))
+    node = json.decode(data = _call(query, jq = ".data.repository.issue") or "null")
     if node == None:
         fail("no issue " + k["key"])
     owners = owners_of(model)
@@ -179,23 +186,31 @@ def schedule(key, model, reading = False):
     The option is the one the Schedule issue's own row carries; fails, naming why, when the issue is not a Schedule issue
     or has no such row, and, unless reading, as get reads a finished schedule, when it is closed.
     """
-    return _collection(key, model, _SCHEDULE_FIELD, _STEP_FIELD, "a closed schedule takes no step", reading)
+    return _collection(key, model, _SCHEDULE_FIELD, _STEP_FIELD, _NO_STEP, reading)
 
-def read_schedule(key, model):
+def read_schedule(key, model, reading = False):
     """A schedule as schedule reads it, or what stops it: (schedule, "") or (None, why), never failing on the schedule.
 
-    issue move reads the schedule an issue leaves this way, among its refusals, before it writes anything (#531).
+    issue move reads the schedule an issue leaves this way, among its refusals, before it writes anything (#531); issue
+    reopen reads the schedule a step was on with reading, so that a closed one is read and not refused.
     """
-    return _collection_read(key, model, _SCHEDULE_FIELD, _STEP_FIELD, "a closed schedule takes no step", False)
+    return _collection_read(key, model, _SCHEDULE_FIELD, _STEP_FIELD, _NO_STEP, reading)
+
+def read_scenario(key, model, reading = False):
+    """A scenario as scenario reads it, or what stops it: (scenario, "") or (None, why), never failing on the scenario.
+
+    star github scenario reopen reads the scenario it reopens this way, with reading, so that a closed one is read.
+    """
+    return _collection_read(key, model, _SCENARIO_FIELD, _BEAT_FIELD, _NO_ITEM, reading)
 
 def scenario(key, model, reading = False):
     """A scenario: its Scenario issue, its team's Scenario project with its fields, and its option.
 
     The option is the one the Scenario issue's own row carries; fails, naming why, when the issue is not a Scenario issue
-    or has no such row, and, unless reading, as get reads a retired scenario, when it is closed: a scenario that is
-    retired is closed, and takes no item.
+    or has no such row, and, unless reading, as get reads a closed scenario, when it is closed: a closed scenario
+    takes no item.
     """
-    return _collection(key, model, _SCENARIO_FIELD, _BEAT_FIELD, "a retired scenario takes no item", reading)
+    return _collection(key, model, _SCENARIO_FIELD, _BEAT_FIELD, _NO_ITEM, reading)
 
 def walk(own):
     """How many steps a Scenario issue's walk numbers under its How to walk through it heading; None when it numbers none.
@@ -398,12 +413,27 @@ def put_beat(scen, item, beat, joining):
         set_option(project, item, _STATUS_FIELD, option_of(project, _STATUS_FIELD, _OPEN))
     set_beat(project, item, beat)
 
+def row_items(r):
+    """The IDs of an issue's rows as GitHub holds them now, read from the issue.
+
+    A row deleted is gone from them; reading a deleted row by its own ID, as read_row does, is an error from GitHub, not
+    null, so a deletion is read back this way.
+    """
+    k = parse_key(r["key"])
+    query = ("query starStepIssue { repository(owner: \"" + k["owner"] + "\", name: \"" + k["name"] + "\") { " +
+             "issue(number: " + str(k["number"]) + ") { projectItems(first: 20) { nodes { id } } } } }")
+    nodes = json.decode(data = _call(query, jq = ".data.repository.issue.projectItems.nodes // []") or "[]") or []
+    return [n["id"] for n in nodes]
+
 def read_row(item):
-    """A row as GitHub holds it now: its project's ID, its Schedule or Scenario option, its Status, its step and its Beat."""
+    """A row as GitHub holds it now: its project's ID, its Schedule or Scenario option, its Status, its step and its Beat.
+
+    The row must be there: GitHub answers a deleted row's ID with an error, which fails; row_items reads a deletion back.
+    """
     node = json.decode(data = _call(
         "query starStepReadRow { node(id: \"" + item + "\") { ... on ProjectV2Item { project { id } " + _ROW_VALUES + " } } }",
         jq = ".data.node",
-    ))
+    ) or "null")
     if node == None:
         return None
     return {
@@ -508,6 +538,11 @@ def _write_body(own, body, check, what = "its amendment"):
         fail(own["key"] + "'s body does not read back with " + what)
     own["body"] = back
 
+def write_body(own, body, what):
+    """An issue's body written whole and read back as written; fails, naming what, when it reads back otherwise."""
+    want = body.replace("\r\n", "\n").strip()
+    _write_body(own, body, lambda back: back.strip() == want, what)
+
 def amend(own, line):
     """The line written at the end of the Schedule issue's Amendments section, unless it is there; read back."""
     if line in own["body"].replace("\r\n", "\n"):
@@ -584,7 +619,7 @@ def open_titled(repo, title):
     """The number of an open issue of repo titled title exactly, among the 100 opened last; None when there is none.
 
     It is read from the repository's issues, newest first, not from GitHub's search, whose index trails a new issue: a
-    run of star github schedule new or scenario new that stopped partway filed its issue moments before.
+    run of star github schedule open or scenario open that stopped partway filed its issue moments before.
     """
     owner, name = repo.split("/")
     query = ("query starStepOpen { repository(owner: \"" + owner + "\", name: \"" + name + "\") { issues(states: [OPEN], " +
@@ -638,6 +673,17 @@ def close_issue(own):
         {"i": own["id"]},
     )
 
+def reopen_issue(own):
+    """An issue reopened, by its node ID."""
+    _call("mutation starStepReopen($i: ID!) { reopenIssue(input: {issueId: $i}) { issue { id } } }", {"i": own["id"]})
+
+def clear_issue_field(own, field_id):
+    """An issue's issue field cleared, by their IDs."""
+    _call(
+        "mutation starStepClearField($i: ID!, $f: ID!) { deleteIssueFieldValue(input: {issueId: $i, fieldId: $f}) { clientMutationId } }",
+        {"i": own["id"], "f": field_id},
+    )
+
 def issue_state(own):
     """An issue's state and the reason it closed, as GitHub holds them now: {"state", "reason"}, lower case; None when open."""
     node = json.decode(data = _call(
@@ -664,7 +710,7 @@ def closing_of(key):
              "timelineItems(itemTypes: [CLOSED_EVENT], last: 1) { nodes { ... on ClosedEvent { closer { __typename " +
              "... on PullRequest { " + _PULL + " } ... on Commit { oid associatedPullRequests(first: 5) { nodes { " + _PULL +
              " } } } } } } } } } }")
-    node = json.decode(data = _call(query, jq = ".data.repository.issue"))
+    node = json.decode(data = _call(query, jq = ".data.repository.issue") or "null")
     if node == None:
         fail("no issue " + k["key"])
     events = (node.get("timelineItems") or {}).get("nodes") or []

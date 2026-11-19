@@ -190,6 +190,7 @@ Brought on 2026-11-04 to that day's rulings on #303. Section 4 now states each o
   Scenario project, and every move is one act. The Backlog's view By priority, sorted by Priority, is made by the script
   of #303's closing pull request in Backlog: engprod, Backlog: devlore and the Backlog template (§ Triage, § A user
   account and § Where each part lives in section 4).
+- **Revised 2026-11-17 ([section 10](10-the-issue-commands.md#epics-and-features), #597):** an epic or a feature goes from Triage to the Backlog once classified and stays there until it closes, its state its children's, and is never a row of a Schedule or Scenario project; `star github issue move` puts an issue where its type allows, from wherever it is; and the sweep returns an epic or a feature on a Schedule or Scenario project, not one on the Backlog.
 - A scenario's rows are the tasks and bugs logged while walking it, beside its Scenario issue's own, each with its Beat,
   the point in the walk where it turned up, in place of the ruling of 2026-11-03 that they are features. The Triage
   workflow will add an item that names its scenario in its body to that scenario instead of to Triage (#448), and the
