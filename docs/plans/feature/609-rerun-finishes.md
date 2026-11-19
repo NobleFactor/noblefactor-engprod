@@ -44,7 +44,7 @@ When the work is done:
 
 - **`close`.** If an issue is closed but its work isn't finished, `close` finishes it. It writes a missing comment, sets the Resolution, and updates the rows: a Schedule row set to Closed, a Scenario row removed after its comment on the Scenario issue, a Triage or Backlog row removed. A row added without a Status is treated the same way. If the issue already has a different Resolution, `close` sets the one asked for and comments on the change. If nothing is left to do, `close` writes nothing.
 - **`reopen`.** If an issue is open but its work isn't finished, `reopen` finishes it. It writes a missing comment, clears the Resolution, sets each Closed row to Open, gives a row without a Status the Status Open, and gives an issue with no row a Triage row. It does the same for each parent it reaches, and finishes each schedule it reopened partway. This also fixes an issue that someone reopened on GitHub's page, which reopens only the issue itself. If nothing is left to do, `reopen` writes nothing.
-- **Comments.** Every comment here is a GitHub comment on an issue. A run writes a comment only if the issue has no comment from the same command since the issue last closed or reopened. So a second run writes no second comment, and a later close or reopen still gets its own.
+- **Comments.** Every comment here is a GitHub comment on an issue, and it is about one issue: the one being closed or reopened. A comment on a Scenario issue is about the child it names. Before it writes a comment, a run looks for one from the same command about the same issue. `close` looks back to that issue's last reopening, or its creation, because `close` comments before the issue closes. `reopen` looks back to its last closing. If the run finds one, it writes nothing. So a second run writes no second comment, a later close or reopen gets its own, and one child's comment never stands in for another's.
 - **`open`.** Each run of `open` opens a new issue. It checks for no duplicate. The `--unique` flag is removed.
 - **The design.** Section 10 and its decisions describe each change in the same commit as the code. D-009's statement that a stopped `close` leaves its rows by hand is superseded.
 
@@ -95,7 +95,7 @@ Section 10's decisions gain two entries:
 
 ## 5. Proposed implementation
 
-1. **The comment rule.** Before it writes a comment on an issue, a command reads every comment on it, page by page, and the issue's last close or reopen event. It writes the comment only if no comment since that event comes from the same command. A comment comes from the same command if it begins with that command's opening words, such as ``Closed by `star github issue close` ``, or, for `close` with `--evidence`, if it is the evidence comment `close` would write, character for character. The rule applies to the issue's own comment, the comment on a Scenario issue, and the comments on parents and schedules. It lives in `steps.star`, beside `comment`.
+1. **The comment rule.** Each comment has a subject: the issue being closed or reopened. The issue's own comment, and the comment on a parent or schedule that `reopen` reopens, have that issue as their subject. The comment `close` writes on a Scenario issue has the child it names as its subject. Before it writes a comment, a command reads every comment on the issue it writes on, page by page, and its subject's close and reopen events. For `close`, the window starts at the subject's last reopen event, or at its creation, since `close` writes its comment before the issue closes. For `reopen`, the window starts at the subject's last close event, since `reopen` writes its comment after the issue reopens. The command writes nothing if a comment in the window comes from the same command about the same subject. A comment comes from the same command if it begins with that command's opening words, such as ``Closed by `star github issue close` `` or ``Reopened by `star github issue reopen` ``, or, for `close` with `--evidence`, if it is the evidence comment `close` would write, character for character. A comment on a Scenario issue is about the same subject if it begins with that child's key. The rule lives in `steps.star`, beside `comment`.
 2. **`close` on a closed issue.** `close` reads the issue's rows and Resolution as it does a closing issue's. It writes a missing comment, then makes each change one complete run makes. A row without a Status is changed as its project's kind has it. A correct row is left alone.
 3. **Resolution in `close`.** No Resolution: `close` sets it. The same Resolution: nothing. A different one: `close` sets the one asked for, and writes a comment that names the old and the new. In a user account, `close` removes every other `resolution:` label and keeps the others.
 4. **`reopen` on an open issue.** `reopen` selects its work by what is unfinished, not by whether the issue is closed. For the issue and each parent it reaches: a missing comment written, the Resolution cleared, each `resolution:` label removed, each Closed row set to Open, a row without a Status set to Open, and a Triage row for an issue with no row. Open and In progress rows, and each row's Worktree, are left alone. For each schedule the issue is a step of: if the Schedule issue is open but its row isn't In progress, or its every-step criterion is still ticked, `reopen` finishes what `ending.star` does, leaving other criteria alone. A parent or schedule shared by two issues in one run is handled once.
@@ -104,6 +104,8 @@ Section 10's decisions gain two entries:
 7. **The tests.** The harness gains `fail_after`, which fails a call once after it writes, as a lost answer does. Each test fails without its fix:
    - `close` stopped after its comment, and stopped after the closed state: a second run finishes, with one comment.
    - `close` stopped after its comment's write was accepted and its answer lost: one comment.
+   - `close` run again after a complete run, its comment written before the close event: no second comment.
+   - Two children of one scenario closed in one run, and again after a stop: each child's comment on the Scenario issue written once, neither standing in for the other.
    - An issue a `Closes` line closed: `close` sets its rows.
    - A row without a Status: `close` and `reopen` each set it.
    - A different Resolution: `close` sets the new one and comments; the same one writes nothing.
@@ -122,7 +124,7 @@ Section 10's decisions gain two entries:
 - **Make `open` check for duplicates.** Rejected. A model provider will handle duplicates later.
 - **Have a second run do nothing.** Rejected. Every command must be idempotent.
 - **Have the first run leave a marker for the second run.** Not needed. A closed issue with a row still In progress is wrong, however it got that way, and a second run fixes it either way.
-- **Match a comment by its full text.** Rejected. The text holds the date and who ran it, so a second run on another day wouldn't match. Matching loosely across the issue's whole history would mistake two real closes for one. The comment rule looks only since the last close or reopen.
+- **Match a comment by its full text.** Rejected. The text holds the date and who ran it, so a second run on another day wouldn't match. Matching loosely across the issue's whole history would mistake two real closes for one. The comment rule looks only within its subject's current close or reopen.
 - **Refuse a different Resolution.** Rejected. A run that asks for Duplicate is an explicit request, and anyone can change the Resolution by hand.
 
 <a id="acceptance-criteria-and-evidence"></a>
@@ -220,7 +222,7 @@ Decisions, 2026-11-19, on revisions 2428a08 to c7dd403:
 Decisions, 2026-11-19, on Codex's review of c7dd403:
 
 - #609 doesn't use a graph. The graph approach is Feature NobleFactor/devlore-cli#1238, with Scenario NobleFactor/devlore-cli#1239 as its prototype.
-- A run writes a comment only if the issue has no comment from the same command since it last closed or reopened.
+- A run writes a comment only if there is none from the same command about the same issue in that issue's current close or reopen. Refined the same day: `close` looks back to the issue's last reopening, since its comment comes before the close event, and a comment on a Scenario issue counts only for the child it names.
 - `close` sets a different Resolution when asked, and comments on the change.
 - `move`'s repeated Scenario comment is Bug #611, outside this task.
 
