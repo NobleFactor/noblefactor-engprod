@@ -908,7 +908,9 @@ def run(_command, ctx):
     if not issues:
         fail("issue move needs one issue or more, <owner>/<repository>#<number>")
     keys = [parse_key(i)["key"] for i in issues]
-    if len({k: True for k in keys}) != len(keys):
+
+    # GitHub names an account and a repository in any case, so a key is compared in lower case.
+    if len({k.lower(): True for k in keys}) != len(keys):
         fail("an issue is named twice: " + ", ".join(keys))
 
     schedule_key = (ctx.args.get("schedule") or "").strip()

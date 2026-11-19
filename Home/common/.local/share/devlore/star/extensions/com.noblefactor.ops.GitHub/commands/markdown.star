@@ -24,6 +24,9 @@ _ITEM = "^ {0,2}[0-9]{1,9}[.)]([ \\t]|$)"
 # line. The second group is the box's mark, and the third its text.
 _BOX = "^[ \\t]*[-*+][ \\t]+\\[( |x|X)\\]([ \\t]+(.*))?$"
 
+# A table's delimiter row: cells of dashes, each with an optional colon at either end, between pipes.
+_DELIMITER = "^ {0,3}\\|? *:?-+:? *(\\| *:?-+:? *)*\\|? *$"
+
 def body_lines(text):
     """A text's lines, each {"start", "end", "text", "text_end"}: its offsets with and without its \\r\\n or \\n."""
     out = []
@@ -43,6 +46,23 @@ def line_end(text):
     """The line end a text uses, \\r\\n or \\n, by its first; \\n when it has none."""
     at = text.find("\n")
     return "\r\n" if at > 0 and text[at - 1] == "\r" else "\n"
+
+def has_text(lines, first, end):
+    """Whether a section, its heading at first and end exclusive, holds a line that is not blank below its heading."""
+    return len([i for i in range(first + 1, end) if lines[i]["text"].strip()]) > 0
+
+def has_table(lines, first, end):
+    """Whether a section, its heading at first and end exclusive, holds a table outside any fenced code block.
+
+    A table is a header row, then a delimiter row of dashes, each between pipes.
+    """
+    fenced = _fenced(lines)
+    for i in range(first + 1, end - 1):
+        if i in fenced or i + 1 in fenced:
+            continue
+        if lines[i]["text"].strip().startswith("|") and regex.match(pattern = _DELIMITER, text = lines[i + 1]["text"]):
+            return True
+    return False
 
 def _fenced(lines):
     """The index of every line that opens, closes or sits inside a fenced code block, by its backticks or tildes."""

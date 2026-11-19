@@ -23,6 +23,7 @@ load(
     "issue_fields",
     "parse_key",
     "project_of",
+    "read_scenario",
     "set_issue_field",
 )
 
@@ -33,6 +34,7 @@ RESOLUTIONS = ["Declined", "Duplicate", "Invalid"]
 _RESOLUTION = "Resolution"
 _RESOLUTION_FAMILY = "resolution"
 _GROUPS = {SCHEDULE_KIND: "schedule", SCENARIO_KIND: "scenario"}
+_KEY = "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+#[0-9]+$"
 
 # ── a collection's own issue ────────────────────────────────────────────────
 
@@ -119,16 +121,22 @@ def clear_resolution(r, plan):
 def scenario_of(r, row, model):
     """The scenario an item's row is under, read before anything is written: ({key, issue}, "") or (None, why not).
 
-    Its Scenario issue is the one its option's description names, as every Scenario option's does.
+    Its Scenario issue is the one its option's description names, as every Scenario option's does, read as scenario reads
+    one, a closed one too: an option that names no issue, or names one that is not a Scenario issue with its own row, is a
+    refusal, so that close tells no other issue that an item left it.
     """
     project = project_of(row["project"]["id"])
     key = ""
     for o in project["fields"].get("Scenario", {"options": []})["options"]:
         if o["name"] == row["scenario"]:
             key = (o.get("description") or "").strip()
-    if key == "":
-        return None, r["key"] + " is on " + row["project"]["title"] + "'s scenario " + str(row["scenario"]) + ", whose option names no Scenario issue"
-    return {"key": key, "issue": issue(key, model)}, ""
+    if not regex.match(pattern = _KEY, text = key):
+        return None, (r["key"] + " is on " + row["project"]["title"] + "'s scenario " + str(row["scenario"]) +
+                      ", whose option names no Scenario issue" + (": " + key if key else ""))
+    scen, fault = read_scenario(key, model, reading = True)
+    if fault:
+        return None, r["key"] + " is on the scenario " + key + ", which close can't read: " + fault
+    return {"key": key, "issue": scen["issue"]}, ""
 
 # ── an issue's parent ───────────────────────────────────────────────────────
 

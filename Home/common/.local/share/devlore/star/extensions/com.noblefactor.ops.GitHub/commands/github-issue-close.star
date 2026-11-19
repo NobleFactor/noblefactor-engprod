@@ -69,7 +69,10 @@ def _evidence_text(path):
     """The evidence file's text; fails, naming the path, when it is missing or empty."""
     if sh("[ -s " + quote(path) + " ] && echo yes || true").strip() != "yes":
         fail("--evidence names " + path + ", which is missing or empty: the evidence is what a comment on the issue shows")
-    return read_text(path).strip()
+    text = read_text(path).strip()
+    if text == "":
+        fail("--evidence names " + path + ", which holds only blank space: the evidence is what a comment on the issue shows")
+    return text
 
 def _with_heading(text, title):
     """The evidence as its comment, headed ## Evidence: <title> when its first line is no heading of its own."""
@@ -144,7 +147,9 @@ def run(_command, ctx):
     if not issues:
         fail("issue close needs one issue or more, <owner>/<repository>#<number>")
     keys = [parse_key(i)["key"] for i in issues]
-    if len({k: True for k in keys}) != len(keys):
+
+    # GitHub names an account and a repository in any case, so a key is compared in lower case.
+    if len({k.lower(): True for k in keys}) != len(keys):
         fail("an issue is named twice: " + ", ".join(keys))
     evidence = (ctx.args.get("evidence") or "").strip()
     resolution = (ctx.args.get("resolution") or "").strip()

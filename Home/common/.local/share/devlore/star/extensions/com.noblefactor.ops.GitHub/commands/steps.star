@@ -50,12 +50,16 @@ _LEVELS = [2, 3]
 # ── keys and calls ──────────────────────────────────────────────────────────
 
 def parse_key(key):
-    """owner, repository and number of an issue written <owner>/<repository>#<number>; fails, naming it, otherwise."""
+    """owner, repository and number of an issue written <owner>/<repository>#<number>; fails, naming it, otherwise.
+
+    The key writes the number as a number, without leading zeros. GitHub names an account and a repository in any case,
+    so two keys name one issue when they are the same in lower case.
+    """
     m = regex.find_submatch(pattern = "^([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)#([0-9]+)$", text = key.strip())
     if not m:
         fail("an issue is written <owner>/<repository>#<number>: " + key)
     repo = canonical_repo(m[1] + "/" + m[2])
-    return {"key": repo + "#" + m[3], "repo": repo, "owner": repo.split("/")[0], "name": repo.split("/")[1], "number": int(m[3])}
+    return {"key": repo + "#" + str(int(m[3])), "repo": repo, "owner": repo.split("/")[0], "name": repo.split("/")[1], "number": int(m[3])}
 
 def _call(query, variables = {}, jq = "."):
     """A GraphQL call's result through gh, each variable passed apart from the query.

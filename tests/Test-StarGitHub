@@ -4731,5 +4731,69 @@ run_star "${data_new}" github issue open "${alpha[@]}" --template "${run_directo
 expect "166 (#338): the title's blank is filled once" ok 'map(.title) == ["A task for me"]'
 check "166 (#338): {what} holds {who} as it was given" world_holds '.issues.I_alpha_62.body | contains("It is {who}.")'
 
+# 167 to 170: the code findings of PR #604's review, a case each.
+
+# 167 (#590, #587, #597). One issue named twice, once in another case or with a leading zero, is refused by close,
+# reopen and move alike, and nothing is written.
+world
+printf 'Done.\n' >"${run_directory}/done.md"
+run_star "${data}" github issue close NobleFactor/alpha#22 noblefactor/ALPHA#022 --evidence "${run_directory}/done.md"
+expect "167 (#590): close refuses one issue named twice in another case and with a leading zero" error "${no_writes}" \
+    "an issue is named twice" text
+world '.issues.I_alpha_23.state = "CLOSED"'
+run_star "${data}" github issue reopen NobleFactor/alpha#23 NobleFactor/alpha#023 --reason "R."
+expect "167 (#587): and reopen" error "${no_writes}" "an issue is named twice" text
+world
+run_star "${data}" github issue move NobleFactor/alpha#41 noblefactor/alpha#41 --triage --reason "R."
+expect "167 (#597): and move" error "${no_writes}" "an issue is named twice" text
+
+# 168 (#590). close reads the scenario an item leaves: walk's option names #41, a Task, so closing #27 is refused, and
+# #41 is told nothing.
+world '(.projects.PVT_c_eng.fields[] | select(.name == "Scenario") | .options[] | select(.name == "walk") | .description)
+    = "NobleFactor/alpha#41"'
+run_star "${data}" github issue close NobleFactor/alpha#27 --evidence "${run_directory}/done.md"
+expect "168 (#590): an item whose scenario option names a Task is refused, nothing written" error "${no_writes}" \
+    "NobleFactor/alpha#27 is on the scenario NobleFactor/alpha#41, which close can't read: NobleFactor/alpha#41 is not a Scenario issue" text
+
+# 169 (#338). open asks for text in each section the form requires, and a table of its documents outside any code
+# block: a body with an empty Problem section, one whose table is a lone pipe, and one whose table is in a code block are
+# each refused, and nothing is written.
+printf '### Problem\n\n### Evidence of completion\n\nA case.\n\n%s' "${documents_table}" >"${run_directory}/empty-problem.md"
+printf '### Problem\n\nIt is missing.\n\n### Evidence of completion\n\nA case.\n\n### Plan and design documents\n\n|\n' \
+    >"${run_directory}/lone-pipe.md"
+cat >"${run_directory}/fenced-table.md" <<'BODY'
+### Problem
+
+It is missing.
+
+### Evidence of completion
+
+A case.
+
+### Plan and design documents
+
+```
+| Kind | Document |
+| --- | --- |
+| Plan | Not yet opened |
+```
+BODY
+world "${open_world}"
+run_star "${data_new}" github issue open "${alpha[@]}" --type Task --parent NobleFactor/alpha#60 --area Product \
+    --title "A new task" --body-file "${run_directory}/empty-problem.md"
+expect "169 (#338): an empty required section is refused" error "${no_writes}" "the body lacks text in its section Problem" text
+run_star "${data_new}" github issue open "${alpha[@]}" --type Task --parent NobleFactor/alpha#60 --area Product \
+    --title "A new task" --body-file "${run_directory}/lone-pipe.md"
+expect "169 (#338): a lone pipe is no table" error "${no_writes}" "the table of its Plan and design documents section" text
+run_star "${data_new}" github issue open "${alpha[@]}" --type Task --parent NobleFactor/alpha#60 --area Product \
+    --title "A new task" --body-file "${run_directory}/fenced-table.md"
+expect "169 (#338): a table in a code block is no table" error "${no_writes}" "the table of its Plan and design documents section" text
+
+# 170 (#590). An evidence file of blank space alone is refused before any write.
+printf '   \n\n\t\n' >"${run_directory}/blank.md"
+world
+run_star "${data}" github issue close NobleFactor/alpha#22 --evidence "${run_directory}/blank.md"
+expect "170 (#590): evidence of blank space alone is refused, nothing written" error "${no_writes}" "which holds only blank space" text
+
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"

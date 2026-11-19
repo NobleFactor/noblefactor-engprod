@@ -29,7 +29,7 @@
 load("commands/access.star", "check_access")
 load("commands/accounts.star", "ORIGIN")
 load("commands/issues.star", "parent_of")
-load("commands/markdown.star", "body_lines", "sections")
+load("commands/markdown.star", "body_lines", "has_table", "has_text", "sections")
 load("commands/model.star", "read_text", "refuse_dry_run")
 load("commands/participation.star", "read_file")
 load("commands/records.star", "quote", "sh")
@@ -149,14 +149,24 @@ def _required(model, kind, refused):
     return out
 
 def _body_faults(body, required):
-    """What a body lacks: each section its form requires, headed at level 2 or 3, and its documents table."""
+    """What a body lacks of what its form requires, each named.
+
+    Each section the form requires, headed at level 2 or 3, with text in it; and the table of its documents, a header row
+    and a delimiter row outside any code block.
+    """
     lines = body_lines(body)
-    out = ["its section " + label for label in required if not sections(lines, label, _LEVELS)]
+    out = []
+    for label in required:
+        found = sections(lines, label, _LEVELS)
+        if not found:
+            out.append("its section " + label)
+        elif label.lower() != _DOCUMENTS.lower() and not has_text(lines, found[0]["first"], found[0]["end"]):
+            out.append("text in its section " + label)
     docs = sections(lines, _DOCUMENTS, _LEVELS)
     if not docs:
         if _DOCUMENTS not in required:
             out.append("its section " + _DOCUMENTS)
-    elif not [i for i in range(docs[0]["first"] + 1, docs[0]["end"]) if lines[i]["text"].lstrip().startswith("|")]:
+    elif not has_table(lines, docs[0]["first"], docs[0]["end"]):
         out.append("the table of its " + _DOCUMENTS + " section")
     return out
 
