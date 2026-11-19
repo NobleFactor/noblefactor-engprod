@@ -30,8 +30,8 @@ The owner ruled on 2026-11-19 that close and all our commands are idempotent: ru
 
 - **`close`**, run on an issue that is already closed, sets whatever one whole run would have and the earlier run didn't: its Schedule row Closed, its Scenario row removed, its Triage or Backlog row removed. An issue already closed with nothing left is `unchanged`, and nothing is written. Its comment and Resolution are written once.
 - **`reopen`**, run on an issue that is already open, does the same the other way: it clears a Resolution still set, and sets a row still Closed back to Open. An issue already open with nothing left is `unchanged`. Its comment is written once.
-- **`open`** checks for no duplicate, now or later, as the owner ruled on 2026-11-19: a model provider will one day ask and answer that question. `--unique` is removed, from the code, the manifest, section 10 and the cases. Run twice, `open` opens two issues; it is the one command that isn't idempotent.
-- **Section 10** says what a second run of each command does, and its paragraph of what is done by hand, which #607 wrote, keeps only `open`'s second issue. Section 10's decisions record each choice.
+- **`open`** checks for no duplicate, now or later, as the owner ruled on 2026-11-19: a model provider will one day ask and answer that question. `--unique` is removed, from the code, the manifest, section 10 and the cases. Each run of `open` opens a new issue, which is what it is for.
+- **Section 10** says what a second run of each command does, and its paragraph of what is done by hand, which #607 wrote, goes. Section 10's decisions record each choice.
 - **Cases** of `tests/Test-StarGitHub` stop `close` and `reopen` partway and show a second run ending where one whole run would, each failing without its change.
 
 Out of scope: `move`, whose second run already finishes; `star github schedule` and `scenario`'s own `close` and `reopen` (#595), which apply the same rule in a task of their own if the owner wants it; and the PR script template's closing step, which could call `issue close` once it does this.
@@ -53,7 +53,7 @@ Out of scope: `move`, whose second run already finishes; `star github schedule` 
 
 ## 4. Design impact
 
-Section 10 changes: its paragraph on runs that stop partway, and its sections on opening, closing and reopening an issue. Its decisions gain D-013, every issue command but `open` is idempotent; and D-014, `open` checks for no duplicate, `--unique` removed. D-013 revises D-009's consequence, that a run which stops after closing the issue leaves its rows by hand.
+Section 10 changes: its paragraph on runs that stop partway, and its sections on opening, closing and reopening an issue. Its decisions gain D-013, every issue command is idempotent; and D-014, `open` checks for no duplicate, `--unique` removed, each of its runs opening a new issue. D-013 revises D-009's consequence, that a run which stops after closing the issue leaves its rows by hand.
 
 <a id="proposed-implementation"></a>
 
@@ -156,7 +156,7 @@ The owner's question, 1 of 1, answered on 2026-11-19:
 
 The owner put #609 on Schedule #588 as step 12, next, on 2026-11-19, so that every issue PR #610 surfaced is done, and directed this plan.
 
-Ruled by the owner on 2026-11-19, on the plan's first draft: close and all our commands are idempotent, and if it's closed, it's closed; `open` checks for no duplicate, now or later, since a model provider will ask and answer that question, and neither `--allow-duplicate` nor `--unique` is kept. The first draft's three questions became the one in section 6, written plainly as the owner asked. On the second draft the owner confirmed `--unique` is removed, and ruled that `reopen`, run on an issue reopened on GitHub's page, clears its Resolution and sets its row back to Open.
+Ruled by the owner on 2026-11-19, on the plan's first draft: close and all our commands are idempotent, and if it's closed, it's closed; `open` checks for no duplicate, now or later, since a model provider will ask and answer that question, and neither `--allow-duplicate` nor `--unique` is kept. On the second draft the owner added that removing `--unique` leaves `open` idempotent: it always opens a new issue, and two with the same title and description come only from someone setting out to make them. The first draft's three questions became the one in section 6, written plainly as the owner asked. On the second draft the owner confirmed `--unique` is removed, and ruled that `reopen`, run on an issue reopened on GitHub's page, clears its Resolution and sets its row back to Open.
 
 <a id="completion-review"></a>
 
