@@ -408,8 +408,23 @@ def put_beat(scen, item, beat, joining):
         set_option(project, item, _STATUS_FIELD, option_of(project, _STATUS_FIELD, _OPEN))
     set_beat(project, item, beat)
 
+def row_items(r):
+    """The IDs of an issue's rows as GitHub holds them now, read from the issue.
+
+    A row deleted is gone from them; reading a deleted row by its own ID, as read_row does, is an error from GitHub, not
+    null, so a deletion is read back this way.
+    """
+    k = parse_key(r["key"])
+    query = ("query starStepIssue { repository(owner: \"" + k["owner"] + "\", name: \"" + k["name"] + "\") { " +
+             "issue(number: " + str(k["number"]) + ") { projectItems(first: 20) { nodes { id } } } } }")
+    nodes = json.decode(data = _call(query, jq = ".data.repository.issue.projectItems.nodes // []") or "[]") or []
+    return [n["id"] for n in nodes]
+
 def read_row(item):
-    """A row as GitHub holds it now: its project's ID, its Schedule or Scenario option, its Status, its step and its Beat."""
+    """A row as GitHub holds it now: its project's ID, its Schedule or Scenario option, its Status, its step and its Beat.
+
+    The row must be there: GitHub answers a deleted row's ID with an error, which fails; row_items reads a deletion back.
+    """
     node = json.decode(data = _call(
         "query starStepReadRow { node(id: \"" + item + "\") { ... on ProjectV2Item { project { id } " + _ROW_VALUES + " } } }",
         jq = ".data.node",

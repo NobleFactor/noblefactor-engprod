@@ -758,8 +758,8 @@ elif $op == "starStepRows" then
     {answer: {data: {node: {items: {pageInfo: {hasNextPage: false, endCursor: null}, nodes: [$w.projects[$node] as $p |
         $p.items[] | {id, content: content($w; .content), fieldValues: {nodes: values_of($p; .)}}]}}}}}
 elif $op == "starStepReadRow" then
-    {answer: {data: {node: ([$w.projects[] as $p | $p.items[] | select(.id == $node) |
-        {project: {id: $p.id}, fieldValues: {nodes: values_of($p; .)}}][0])}}}
+    ([$w.projects[] as $p | $p.items[] | select(.id == $node) | {project: {id: $p.id}, fieldValues: {nodes: values_of($p; .)}}][0])
+    | if . then {answer: {data: {node: .}}} else {error: "Could not resolve to a node with the global id of \($node)"} end
 elif $op == "starStepBody" then {answer: {data: {node: {body: $w.issues[$node].body}}}}
 elif $op == "starStepTeam" then
     {answer: {data: {organization: {team: {members: {nodes: [($w.teams[$slug] // [])[]
@@ -1194,6 +1194,11 @@ function world_answer {
         --arg i "${vars[i]:-}" --arg c "${vars[c]:-}" --arg f "${vars[f]:-}" --arg o "${vars[o]:-}" --arg v "${vars[v]:-}" \
         --arg a "${vars[a]:-}" --arg b "${vars[b]:-}" --arg u "${vars[u]:-}" --arg s "${vars[s]:-}" --arg query "${query}" \
         --arg body "${body}" -f "${BASH_SOURCE[0]%/*}/world.jq" "${world}")" || exit 1
+    # A node GitHub can't resolve, such as a deleted row read by its ID, is an error, and gh exits 1, as they do.
+    if jq -e 'has("error")' <<<"${result}" >/dev/null; then
+        printf 'gh: %s\n' "$(jq -r '.error' <<<"${result}")" >&2
+        exit 1
+    fi
     if jq -e 'has("world")' <<<"${result}" >/dev/null; then
         jq '.world' <<<"${result}" >"${world}.next" && mv -- "${world}.next" "${world}"
     fi

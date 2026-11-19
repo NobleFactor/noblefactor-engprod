@@ -3,7 +3,7 @@ title: "The star github issue verbs, open, move, close and reopen, designed and 
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/589
 status: active
 created: 2026-11-17
-updated: 2026-11-17
+updated: 2026-11-19
 documents:
   - kind: Design
     path: docs/architecture/issue-data-model/10-the-issue-commands.md
@@ -137,9 +137,16 @@ A new section 10 of the issue data model, `10-the-issue-commands.md`, and its st
 - [x] The user documentation brought to the commands on 2026-11-18: every page searched for opening, closing, reopening or moving an issue; the README's list of commands, the issue standards' filing rows and the PR script template's closing step changed; each `star github` command's help one plain line of at most 120 characters, its fuller help waiting on NobleFactor/devlore-cli#1237. The handbook is the documenter's (#599, #600)
 - [x] Sections 8, 9 and 10 given their design-decisions companions on 2026-11-18, from the documenter's writing-and-review skill and arc42 drafts, each significant choice with its reasons, alternatives, consequences and approval; their status pages removed, what is built being this plan's and the plans of #439 and #507
 
-### 9.5 Phase 5: the proof and the merge
+### 9.5 Phase 5: the proof, the merge, the deployment and the completion
 
-- [ ] Each verb proved in both sandboxes; the pull request merged, closing #589, #338, #590, #587, #595 and #597, each with its evidence
+Recorded apart, as the engineering process's § Verify and review results has them: implementation, merge, deployment and verification each establish something different.
+
+- [ ] Each verb proved in both sandboxes, from the branch's committed extension, its run's records kept
+- [ ] The branch reviewed independently: its implementation, its sources and the proof's evidence
+- [ ] The pull request merged, referencing #589, #338, #590, #587, #595, #597 and the Bug of departure 14 without a closing keyword, since each has work left after the merge; each issue records the merge, and its row stays In progress, linking the pull request
+- [ ] `writ deploy` and `star github model apply` of each account's reference model, each read back
+- [ ] Each deployed command run as deployed, on the user's real path
+- [ ] Each issue closed with its evidence, on the owner's completion approval
 
 ## 10. Files and related assets
 
@@ -189,6 +196,8 @@ Departures, each ruled by the owner:
 13. **The suite's date, fixed 2026-11-18.** `make check` failed 15 cases in a run that began just before midnight UTC: `tests/Test-StarGitHub` took the day once, as the cases expect it, and star took it at each write, a day later from case 98 on. The harness now gives star a stand-in for `date` that answers the day the suite began, as it gives star a stand-in for `gh` and `sleep`, so a run that crosses midnight passes.
 14. **Several issues off one schedule, fixed 2026-11-18.** A review of develop's head, #531's merge, found that `move` read each schedule an issue leaves once per row, before its first write, and renumbered and amended it from that read: two issues leaving one schedule in one `--schedule` or `--scenario` run left a gap in its steps and lost the first one's amendment line. `move` now reads each schedule and scenario an issue leaves once, shared by every issue leaving it, and each take-off renumbers from the rows as the one before it left them; those schedules are in the one-act check. The review's refusal faults are fixed with it: an option whose description is no issue's key, a pending schedule that can't be read, and a closed schedule are each refused with nothing written and say why; a scenario's option must name a Scenario issue; and an issue moved within its schedule no longer reads a scenario it doesn't leave. Cases 151 to 157 fail without the fix and pass with it.
 15. **From one scenario to another of the same project, fixed 2026-11-19.** The sandbox proof's first run, 20261119T003953Z, stopped at its step 3i: a task moved from one scenario to another of NobleFactor-sandbox's one Scenario project was left on no project. GitHub gives back an issue's one row on a project for any addition, so `move` gave that row the new scenario's option, then deleted it as the old scenario's row. The cases had moved an item only between two teams' projects. The row is now kept, its leaving recorded before it moves, and case 158 moves an item between two scenarios of one project; it fails without the fix and passes with it.
+16. **A removed row read back from the issue, fixed 2026-11-19.** Tidying the proof's first run, `close` failed after removing a task's scenario row: it read the deleted row back by its own ID, which GitHub answers with an error, not null, and every row `close` removes, from Triage, the Backlog or a scenario, would fail the same way. The stand-in had answered null. `close` now reads a removal back from the issue's own rows, and the stand-in answers a deleted row's ID with GitHub's error, so the cases that remove a row fail without the fix.
+17. **Phase 5 separated, 2026-11-19.** The role entry points of #601 and the process's § Completion and progression put the merge, the deployment, its verification and each issue's completion apart: an issue with work left after the merge is referenced without a closing keyword, and closes on the owner's completion approval. Phase 5 lists them so.
 
 ## 13. Completion review
 

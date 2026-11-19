@@ -52,6 +52,7 @@ load(
     "parse_key",
     "project_of",
     "read_row",
+    "row_items",
     "set_option",
     "today",
     "viewer",
@@ -117,7 +118,7 @@ def _change(r, change, date, login, resolution):
         }))
         note("commented on " + scenario["key"] + " that " + r["key"] + " closed and left it")
     delete_row(row["project"]["id"], row["item"])
-    if read_row(row["item"]) != None:
+    if row["item"] in row_items(r):
         fail(r["key"] + "'s row on " + title + " is still there after it was removed")
     note("took " + r["key"] + "'s row off " + title)
     return _record(r["key"], "left", project = title, scenario = scenario["key"] if scenario != None else None)
