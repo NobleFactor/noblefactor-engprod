@@ -87,7 +87,7 @@ schedule is refused.
 .PP
 .B "\-\-schedule new"
 is refused, naming the command that replaces it: a schedule is made with
-.BR "star github schedule new" ,
+.BR "star github schedule open" ,
 which files its issue from the account's form and gives it its option and its
 row, and its conversation then opened with
 .BR "\-\-schedule <owner>/<repository>#<number>" .
@@ -591,7 +591,7 @@ or a bare
 in the startup directory's repository.
 .B new
 is refused, naming
-.BR "star github schedule new" .
+.BR "star github schedule open" .
 See
 .BR DESCRIPTION .
 .TP
@@ -734,7 +734,7 @@ a malformed
 or
 .BR "\-\-schedule new" ,
 which
-.B star github schedule new
+.B star github schedule open
 replaces;
 a
 .B \-\-shell\-width\-percent
@@ -869,7 +869,7 @@ copy of the one claude picks:
 Make a schedule with star, which files its issue, then open its conversation:
 .PP
 .nf
-\&star github schedule new NobleFactor/noblefactor-engprod 'release 0.2' \e
+\&star github schedule open NobleFactor/noblefactor-engprod 'release 0.2' \e
 \&    --area Engineering --deliverable 'Release 0.2' \e
 \&    --exit-criteria 'It ships' --evidence 'Its release notes'
 \&Start-Claude --schedule NobleFactor/noblefactor-engprod#600

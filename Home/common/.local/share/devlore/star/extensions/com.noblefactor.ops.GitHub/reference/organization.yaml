@@ -225,8 +225,8 @@ teams: []
 # repository's TRIAGE_PROJECT_URL variable names its team's Triage project, and a Triage workflow template in the
 # account's .github repository offers the workflow (ruled 2026-11-03).
 # Ruled 2026-11-04: accepted tasks and bugs go out of Triage to the Backlog with their Priority or onto a schedule.
-# Epics and features are never rows of a Backlog, Schedule or Scenario project: once classified, one leaves Triage for
-# no project, since the hierarchy holds it and its tasks and bugs are what reach the Backlog and the schedules. Every
+# Epics and features go to the Backlog once triage has classified them, and stay there until they close; they are never
+# rows of a Schedule or Scenario project, whose rows are tasks and bugs (section 10, § Epics and features). Every
 # move is one act: the issue gets its row in the project it goes to, with that project's fields set, and loses its row
 # in the project it leaves. Triage removes an issue's Triage row as part of its decision, and the sweep,
 # noblefactor-engprod#436, will remove none: an issue someone closes outside triage stays in its Triage project until
@@ -297,7 +297,7 @@ teams: []
 # A Scenario project's rows are kept in order the same way: under each option of the Scenario field, the Scenario
 # issue's own row first, then its rows by Beat, then any with no beat, and rows with no option last. The Scenario
 # template, like each team's Scenario project, has a second view, "By scenario", made on 2026-11-03 beside its view 1,
-# "View 1": a table grouped by the Scenario field, with no sort, showing Title, Assignees, Status, Linked pull requests,
+# "Default": a table grouped by the Scenario field, with no sort, showing Title, Assignees, Status, Linked pull requests,
 # Sub-issues progress and Beat (read from GitHub on 2026-11-04).
 #
 # Status is a field on a project row, and anyone may set it. Read from GitHub on 2026-11-03, the Status options below
@@ -325,7 +325,7 @@ templates:
     fields:
       - { name: "Area", type: single-select, issue_field: true }
     views:
-      - name: "View 1"
+      - name: "Default"
         layout: table
         filter: ""
         fields: ["Title", "Assignees", "Status", "Linked pull requests", "Sub-issues progress", "Area"]
@@ -345,7 +345,7 @@ templates:
     fields:
       - { name: "Priority", type: single-select, issue_field: true }
     views:
-      - name: "View 1"
+      - name: "Default"
         layout: table
         filter: ""
         fields: ["Title", "Assignees", "Status", "Linked pull requests", "Sub-issues progress", "Priority"]
@@ -354,11 +354,18 @@ templates:
         sort_by: []
       - name: "By priority"
         layout: table
-        filter: ""
+        filter: "type:Task,Bug"
         fields: ["Title", "Assignees", "Status", "Linked pull requests", "Sub-issues progress", "Priority"]
         group_by: []
         vertical_group_by: []
         sort_by: [{ field: "Priority", direction: "asc" }]
+      - name: "Epics and features"
+        layout: table
+        filter: "type:Epic,Feature"
+        fields: ["Title", "Assignees", "Status", "Linked pull requests", "Sub-issues progress", "Priority"]
+        group_by: []
+        vertical_group_by: []
+        sort_by: []
   - name: "Schedule"
     short_description: "The organization's Schedule template: copy it to make a team's Schedule project"
     copy_short_description: "{owner}'s Schedule project: its committed tasks and bugs"

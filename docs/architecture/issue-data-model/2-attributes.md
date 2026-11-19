@@ -140,17 +140,11 @@ issue that isn't fully classified ([section 1](1-hierarchy.md#triage)):
 - a Resolution, or in a user account a `resolution:` label, on an open issue;
 - two labels of one attribute, such as two `priority:` labels, in a user account;
 - `good first issue` on an issue that isn't a task or a bug;
-- an epic or a feature that is a row of a Backlog, Schedule or Scenario project ([section 1](1-hierarchy.md#triage));
+- an epic or a feature that is a row of a Schedule or Scenario project ([section 1](1-hierarchy.md#triage); the Backlog dropped from this rule on 2026-11-17, [section 10](10-the-issue-commands.md#epics-and-features));
 - an issue that is a row of more than one of its account's Triage, Backlog, Schedule and Scenario projects, whichever
   team owns them, or is on more than one schedule or scenario ([section 3](3-collections.md#triage-and-the-backlog)).
 
-The sweep will leave a scenario's rows alone but for the last two rules, which are structural: it will return an epic or
-a feature that is a row of a Scenario project, as it will one on a Backlog or Schedule project, and an issue that is a
-row of a scenario and of another of the account's projects, whichever team owns it, so that one project at a time holds
-across the whole account ([section 1](1-hierarchy.md#triage)). How it will handle an issue that is a row of a scenario
-and of another project, without taking a scheduled item off its schedule, is #436's to design. Every other rule waits
-until a work item logged while walking a scenario moves out, to its team's Triage project or onto a schedule, and gets
-its type and parent.
+The sweep will leave a scenario's rows alone but for the last two rules, which are structural: it will return an epic or a feature that is a row of a Scenario project, as it will one on a Schedule project, and an issue that is a row of a scenario and of another of the account's projects, whichever team owns it, so that one project at a time holds across the whole account ([section 1](1-hierarchy.md#triage)). How it will handle an issue that is a row of a scenario and of another project, without taking a scheduled item off its schedule, is #436's to design. Every other rule waits until a work item logged while walking a scenario moves out and gets its type and parent.
 
 The sweep will run every day as a scheduled GitHub Actions workflow in each account's `.github` repository, with the
 credentials the Triage workflow uses, and will comment on each issue it returns, naming the rule it broke. It will block

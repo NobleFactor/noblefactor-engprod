@@ -41,7 +41,7 @@ def get_collection(kind, key):
     """One schedule's or scenario's rows, a record each, its own issue's row first.
 
     Its other rows follow in the order their step or Beat gives, then any row with none, in the project's order. A
-    closed schedule or a retired scenario is read too. Fails, naming why, when key names no issue, or no issue of kind
+    closed schedule or a closed scenario is read too. Fails, naming why, when key names no issue, or no issue of kind
     with its own row on its account's project of kind.
     """
     k = parse_key(key)

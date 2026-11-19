@@ -40,7 +40,7 @@ _Start_Claude() {
         -s | --schedule)
             # The open schedules of the repository Start-Claude will read a bare number in: the one --directory names
             # earlier on the line, or else the one holding the working directory (#415). new is retired: star github
-            # schedule new makes a schedule (#509). Silent when gh is missing or unauthenticated, or the directory does
+            # schedule open makes a schedule (#509, #595). Silent when gh is missing or unauthenticated, or the directory does
             # not exist: an empty completion is better than an error over the prompt.
             local schedules="" directory="." index
             for ((index = 1; index < COMP_CWORD - 1; index++)); do

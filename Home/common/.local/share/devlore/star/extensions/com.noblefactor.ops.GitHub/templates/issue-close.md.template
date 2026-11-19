@@ -1,0 +1,12 @@
+{{- /*
+SPDX-License-Identifier: Apache-2.0
+Copyright Noble Factor. All rights reserved.
+
+issue-close.md.template: the comment star github issue close writes on an issue it closes with a Resolution, its work
+not done (section 10 of the issue data model, § Closing an issue, ruled 2026-11-17): when, who ran it, the Resolution
+and why. An issue closed with its evidence gets the evidence file instead. Rendered by github-issue-close.star with
+star's template module; its whitespace is folded to single spaces after.
+
+  .date, .login, .resolution, .reason   strings
+*/ -}}
+Closed by `star github issue close` on {{.date}}, run by {{.login}}, with Resolution {{.resolution}}: {{.reason}}

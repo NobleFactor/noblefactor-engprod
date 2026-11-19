@@ -107,6 +107,8 @@ nothing checks the Area there at filing until `star github issue` does (#338). E
 #452, before the sweep runs. The statement of 2026-11-03 that there are no compliance checks is superseded in part: the
 sweep will check the rules every day, and will still block no filing and correct nothing by itself.
 
+**Revised 2026-11-17 ([section 10](10-the-issue-commands.md#epics-and-features), #597):** an epic or a feature goes from Triage to the Backlog once classified and stays there until it closes, its state its children's, and is never a row of a Schedule or Scenario project; `star github issue move` puts an issue where its type allows, from wherever it is; and the sweep returns an epic or a feature on a Schedule or Scenario project, not one on the Backlog.
+
 Ruled on the evening of 2026-11-04, and stated in section 3 the same day (§ The Schedule and Scenario fields, § Triage
 and the Backlog, § The collection's own record: a Schedule or Scenario issue). A Scenario issue states no evidence of
 completion: a scenario never ends, so its issue never closes, and #453 will put how to walk it, the example the Scenario

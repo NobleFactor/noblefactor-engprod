@@ -1,0 +1,11 @@
+{{- /*
+SPDX-License-Identifier: Apache-2.0
+Copyright Noble Factor. All rights reserved.
+
+scenario-close.md.template: the comment star github scenario close writes on a Scenario issue before it closes it
+(section 9 of the issue data model, § Closing a scenario: close): who closed it, when, and why. A scenario serves until
+the product changes, so the reason says what changed. Rendered by ending.star with star's template module.
+
+  .date, .login, .reason   strings: the day, who ran the command, and its --reason
+*/ -}}
+**Closed** by `star github scenario close` on {{.date}}, run by {{.login}}: {{.reason}}

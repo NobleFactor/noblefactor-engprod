@@ -79,6 +79,8 @@ deltas and stage 3 say so. Done 2026-11-14 in #453: the Scenario type's descript
 "Collection: what someone wants to do, how to walk through it, and the features it uses", and both accounts' Scenario
 forms ask for those three things; § The deltas says so.
 
+**Revised 2026-11-17 ([section 10](10-the-issue-commands.md#epics-and-features), #597):** an epic or a feature goes from Triage to the Backlog once classified and stays there until it closes, its state its children's, and is never a row of a Schedule or Scenario project; `star github issue move` puts an issue where its type allows, from wherever it is; and the sweep returns an epic or a feature on a Schedule or Scenario project, not one on the Backlog.
+
 ## Completion
 
 - [x] The task list drawn from the deltas, with the owner -- 2026-10-22, nine tasks: #376 to #380, #361, #363, #338 and

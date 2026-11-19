@@ -9,7 +9,7 @@
 # and row 2 of personal#259's plan, a conversation resumed in another clone that --continue finds there
 # (NobleFactor/noblefactor-ops#322); a --detach wake of a stopped session, which passes no flag and renames the session
 # with its first prompt when claude lists it under another name; a running session so listed, renamed in a viewer
-# (NobleFactor/noblefactor-engprod#384); and --schedule new, retired, refused naming star github schedule new
+# (NobleFactor/noblefactor-engprod#384); and --schedule new, retired, refused naming star github schedule open
 # (NobleFactor/noblefactor-engprod#509). Test-StartClaude.ps1 runs the same cases, from the same table, against
 # Start-Claude.ps1 on Windows.
 
@@ -600,14 +600,14 @@ run_case "--detach with --no-remote-control" usage --detach --no-remote-control 
 run_case "a refusal, run as a process" not-found --detach --resume "no such name"
 
 # --schedule new is retired (#509; section 8 of the issue data model, question 7): a usage error naming the command that
-# makes a schedule, star github schedule new, before anything reads GitHub; and a --schedule that is neither a key nor a
+# makes a schedule, star github schedule open, before anything reads GitHub; and a --schedule that is neither a key nor a
 # number is refused without offering new.
 case_count=$((case_count + 1))
 problem="" written=""
 probe problem "${repository}" usage --detach --schedule new
-retired="--schedule new is retired: make the schedule with star github schedule new <repository> <name>"
-[[ ${written} == *"${retired}"* ]] || problem+="the refusal does not name star github schedule new; "
-report "--schedule new: refused, naming star github schedule new" "${problem}" "${written}"
+retired="--schedule new is retired: make the schedule with star github schedule open <repository> <name>"
+[[ ${written} == *"${retired}"* ]] || problem+="the refusal does not name star github schedule open; "
+report "--schedule new: refused, naming star github schedule open" "${problem}" "${written}"
 case_count=$((case_count + 1))
 problem="" written=""
 probe problem "${repository}" usage --detach --schedule tomorrow
