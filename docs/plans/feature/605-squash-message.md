@@ -167,6 +167,8 @@ On 2026-11-19 the owner chose that pull requests close the issues they complete,
 
 On 2026-11-19 the owner put #606 and #607, found by the Codex session's follow-up review of #604, in this worktree as steps 10 and 11, and approved designing automatic recovery apart, in Task #609.
 
+Departure, 2026-11-19: PR #610's first run opened the pull request, then stopped at `gh pr checks --watch`, which GitHub answered with no checks a moment after the pull request opened. The template's first part now waits up to five minutes for the first check, and runs again after a stop: it makes no commit when nothing is staged, and opens no pull request when the branch has one open. Both forms; the fix is in this pull request, since the two-part script is its change.
+
 <a id="completion-review"></a>
 
 ## 13. Completion review

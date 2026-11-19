@@ -187,8 +187,8 @@ if [[ "$(gh pr view <branch> --json state --jq .state 2>/dev/null || true)" != M
     # set -euo pipefail aborts on a non-zero exit. Do not wrap this in an if.
     .github/scripts/shell-lint.sh
 
-    # Commit
-    git commit -m "$(
+    # Commit what is staged. A run again after a stop, its commit made, has nothing staged, and makes none.
+    git diff --cached --quiet || git commit -m "$(
         cat <<'EOF'
 <type>(<scope>): <summary>
 
@@ -229,14 +229,24 @@ EOF
     description+=$'\n\n'"Signed-off-by: $(git config user.name) <$(git config user.email)>"
     description+=$'\n'"Assisted-by: ${assisting_agent}"
 
-    # Create PR
-    gh pr create \
-        --title "<type>(<scope>): <summary>" \
-        --body "${description}"
+    # Create PR, unless a run before this one opened it
+    if [[ "$(gh pr view <branch> --json state --jq .state 2>/dev/null || true)" != OPEN ]]; then
+        gh pr create \
+            --title "<type>(<scope>): <summary>" \
+            --body "${description}"
+    fi
 
     # --- CI and merge gates ---
     pr_number=$(gh pr view --json number --jq '.number')
     qualified_head=$(gh pr view "${pr_number}" --json headRefOid --jq '.headRefOid')
+
+    # GitHub registers a pull request's checks a moment after it opens, and gh pr checks --watch exits 1 while it
+    # reports none (PR #610's first run), so the script waits up to five minutes for the first.
+    for _ in {1..30}; do
+        reported="$(gh pr checks "${pr_number}" --json name --jq length 2>/dev/null || true)"
+        [[ "${reported:-0}" == 0 ]] || break
+        sleep 10
+    done
 
     # The default requires observed passing checks. A proven no-CI repository
     # needs its reviewed policy reflected here; empty output never proves it.
@@ -878,12 +888,17 @@ try {
         $null = Invoke-Native -Name git -Operation "Pushing $branch" -Narrate -ArgumentList 'push', '-u', 'origin',
             $branch
 
-        # --- Create the PR ---
+        # --- Create the PR, unless a run before this one opened it ---
 
-        Set-Content -LiteralPath $bodyFile -Value (Get-PullRequestBody) -NoNewline
-        $null = Invoke-Native -Name gh -Operation 'Opening the pull request' -Narrate -ArgumentList 'pr', 'create',
-            '--base', '<default-branch>', '--head', $branch, '--body-file', $bodyFile,
-            '--title', '<type>(<scope>): <summary>'
+        $open = Invoke-Native -Name gh -Operation "Finding $branch's pull request" -AllowFailure -ArgumentList 'pr',
+            'view', $branch, '--json', 'state', '--jq', '.state'
+
+        if ($open.ExitCode -ne 0 -or $open.Output.Trim() -ne 'OPEN') {
+            Set-Content -LiteralPath $bodyFile -Value (Get-PullRequestBody) -NoNewline
+            $null = Invoke-Native -Name gh -Operation 'Opening the pull request' -Narrate -ArgumentList 'pr', 'create',
+                '--base', '<default-branch>', '--head', $branch, '--body-file', $bodyFile,
+                '--title', '<type>(<scope>): <summary>'
+        }
         $opened = Invoke-Native -Name gh -Operation "Reading $branch's pull request" -ArgumentList 'pr', 'view',
             $branch, '--json', 'number', '--jq', '.number'
         $number = [Int32]$opened.Output.Trim()
@@ -892,6 +907,21 @@ try {
 
         $qualifiedHead = (Invoke-Native -Name gh -Operation "Reading #$number's qualified head" -ArgumentList 'pr',
                 'view', $number, '--json', 'headRefOid', '--jq', '.headRefOid').Output.Trim()
+
+        # GitHub registers a pull request's checks a moment after it opens, and gh pr checks --watch fails while it
+        # reports none (PR #610's first run), so the script waits up to five minutes for the first.
+        foreach ($attempt in 1..30) {
+            $reported = Invoke-Native -Name gh -Operation "Finding #$number's checks" -AllowFailure -ArgumentList 'pr',
+                'checks', $number, '--json', 'name', '--jq', 'length'
+
+            if ($reported.Output.Trim() -notin @('', '0')) {
+                break
+            }
+
+            Write-Verbose -Message "#$number reports no checks yet, attempt $attempt of 30."
+            Start-Sleep -Seconds 10
+        }
+
         $null = Invoke-Native -Name gh -Operation "Waiting for #$number's checks" -Narrate -ArgumentList 'pr', 'checks',
             $number, '--watch'
         $answer = Invoke-Native -Name gh -Operation "Reading #$number's check results" -ArgumentList 'pr', 'checks',
