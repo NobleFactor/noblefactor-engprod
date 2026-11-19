@@ -1,7 +1,7 @@
 ---
 title: "The star github issue verbs, open, move, close and reopen, designed and built in one pull request"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/589
-status: active
+status: complete
 created: 2026-11-17
 updated: 2026-11-19
 documents:
@@ -108,10 +108,10 @@ A new section 10 of the issue data model, `10-the-issue-commands.md`, and its st
 
 | Milestone | Required? | Expected evidence | State/result |
 | --- | --- | --- | --- |
-| Implementation | yes | this branch | Pending |
-| Merge | yes | the pull request, closing #589, #338, #590, #587, #595 and #597 | Pending |
-| Deployment | yes: writ deploys the extension's new files | the owner's next `writ deploy` | Pending |
-| Verification | yes | the proof, on each issue | Pending |
+| Implementation | yes | this branch | Done: the cases, the proofs in both sandboxes, and the follow-up review |
+| Merge | yes | the pull request, closing #589, #338, #590, #587, #595 and #597 | PR #604, merged by the owner as 643652b, 2026-11-19 |
+| Deployment | yes: writ deploys the extension's new files | the owner's next `writ deploy` | Done 2026-11-19, with `model apply` of each account's reference |
+| Verification | yes | the proof, on each issue | Done 2026-11-19: each issue closed with its evidence; `reopen`'s first deployed run moved to #609's plan |
 
 ## 9. Implementation phases
 
@@ -141,12 +141,12 @@ A new section 10 of the issue data model, `10-the-issue-commands.md`, and its st
 
 Recorded apart, as the engineering process's § Verify and review results has them: implementation, merge, deployment and verification each establish something different.
 
-- [ ] Each verb proved in both sandboxes, from the branch's committed extension, its run's records kept: after the pull request opens, its findings logged as Bugs (departure 21); smoke tests of every command passed in both sandboxes on 96b39c8, and the full proof's steps 1 to 4 in David-Noble-at-work-sandbox on 24679ef
-- [ ] The branch reviewed independently: its implementation, its sources and the proof's evidence
-- [ ] The pull request merged by the owner, after the owner's review, referencing #589, #338, #590, #587, #595, #597 and the Bug of departure 14 without a closing keyword, since each has work left after the merge; each issue records the merge, and its row stays In progress, linking the pull request
-- [ ] `writ deploy` and `star github model apply` of each account's reference model, each read back
-- [ ] Each deployed command run as deployed, on the user's real path
-- [ ] Each issue closed with its evidence, on the owner's completion approval
+- [x] Each verb proved in both sandboxes, from the branch's committed extension, its run's records kept: after the pull request opens, its findings logged as Bugs (departure 21); smoke tests of every command passed in both sandboxes on 96b39c8, and the full proof's steps 1 to 4 in David-Noble-at-work-sandbox on 24679ef: done before the merge, its records kept in each issue's evidence
+- [x] The branch reviewed independently: its implementation, its sources and the proof's evidence: the Codex documenter's review of PR #604, and its follow-up, whose findings became #606 and #607
+- [x] The pull request merged by the owner, after the owner's review, referencing #589, #338, #590, #587, #595, #597 and the Bug of departure 14 without a closing keyword, since each has work left after the merge; each issue records the merge, and its row stays In progress, linking the pull request: PR #604, as 643652b, 2026-11-19, merged in GitHub, without the trailers that #605 then fixed
+- [x] `writ deploy` and `star github model apply` of each account's reference model, each read back: 2026-11-19
+- [ ] Each deployed command run as deployed, on the user's real path: not yet for `reopen`, whose first deployed run moved to #609's plan, its verification; `open`, `move` and `close` ran as deployed on NobleFactor on 2026-11-19
+- [x] Each issue closed with its evidence, on the owner's completion approval: 2026-11-19
 
 ## 10. Files and related assets
 
@@ -206,4 +206,4 @@ Departures, each ruled by the owner:
 
 ## 13. Completion review
 
-Pending.
+Complete 2026-11-19. The owner merged PR #604 as 643652b; `writ deploy` and `model apply` of each account's reference followed; #589, #338, #590, #587, #595, #597 and Bug #602 were closed with their evidence that day. The merge carried no trailers, which Task #605 fixed in PR #610; the follow-up review's findings became Bugs #606 and #607, fixed there too. Outstanding: `reopen` has not yet run as deployed, and its first deployed run is the verification of [#609's plan](../feature/609-rerun-finishes.md), which changes it.
