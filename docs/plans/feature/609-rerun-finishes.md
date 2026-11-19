@@ -22,14 +22,14 @@ documents:
 
 - Owner: David Noble.
 - Participant: the Claude Code session assigned to Schedule #588, as coder.
-- Reviewer: whoever the owner appoints.
+- Reviewer: to be named.
 - Observers: none.
 
 <a id="summary-and-promised-result"></a>
 
 ## 2. Summary and promised result
 
-Every `star github issue` command is idempotent, as the owner ruled on 2026-11-19. Running a command again never leaves its work half done, and never does the same work twice.
+Every `star github issue` command is idempotent. Running a command again never leaves its work half done, and never does the same work twice.
 
 `close` and `reopen` break that rule. If either one stops partway, running it again does nothing, and the work stays half done. This task fixes both commands. It also removes the `--unique` flag from `open`.
 
@@ -97,11 +97,6 @@ Section 10's decisions gain two entries:
 - **Have a second run do nothing.** Rejected. Every command must be idempotent.
 - **Have the first run leave a marker for the second run.** Not needed. A closed issue with a row still In progress is wrong, however it got that way, and a second run fixes it either way.
 
-**The owner's question, 1 of 1**
-
-- **Question:** someone reopens an issue by clicking Reopen on GitHub's page. The issue is open, but it still has its Resolution, for example Completed, and its Schedule row still says Closed. When you run `star github issue reopen` on that issue, should it clear the Resolution and set the row to Open?
-- **Answer:** yes, the owner ruled on 2026-11-19.
-
 <a id="acceptance-criteria-and-evidence"></a>
 
 ## 7. Acceptance criteria and evidence
@@ -121,7 +116,7 @@ Section 10's decisions gain two entries:
 | Milestone | Required? | Expected evidence | State/result |
 | --- | --- | --- | --- |
 | Implementation | Yes | The tests, `make check`, and review | Pending |
-| Merge | Yes | The pull request, merged by the owner in GitHub, closing #609 | Pending |
+| Merge | Yes | The pull request, merged in GitHub, closing #609 | Pending |
 | Deployment | Yes: the commands reach each machine only through `writ deploy` | `writ deploy` | Pending |
 | Verification | Yes | The deployed `close` and `reopen`, run in NobleFactor-sandbox. This is also the first deployed run of `reopen`, which #589's plan left to this one. | Pending |
 
@@ -131,7 +126,7 @@ Section 10's decisions gain two entries:
 
 ### 9.1 Phase 1: the plan
 
-- [ ] Commit this plan on `feature/609-rerun-finishes`, with #589's and #605's plans marked complete, and review it with the owner. The owner answered every question on 2026-11-19.
+- [ ] Commit this plan on `feature/609-rerun-finishes`, with #589's and #605's plans marked complete, and review it.
 
 ### 9.2 Phase 2: `close` and `reopen`
 
@@ -147,7 +142,7 @@ Section 10's decisions gain two entries:
 
 ### 9.5 Phase 5: merge, deployment, and verification
 
-- [ ] The owner merges the pull request in GitHub.
+- [ ] Merge the pull request in GitHub.
 - [ ] Run `writ deploy`.
 - [ ] In NobleFactor-sandbox, run the deployed `reopen` on an issue reopened on GitHub's page, and the deployed `close` on an issue that a `Closes` line closed. Read each issue back, and post the results on #609.
 
@@ -167,7 +162,7 @@ Section 10's decisions gain two entries:
 
 ## 11. Dependencies, overlaps and blockers
 
-- This task is step 12 of Schedule #588. The owner placed it there on 2026-11-19. Nothing blocks it.
+- This task is step 12 of Schedule #588. Nothing blocks it.
 - #589's plan has one open item: run each deployed command as deployed. `open`, `move`, and `close` have run that way on NobleFactor, but `reopen` hasn't. This plan's verification covers it.
 - Each command refuses `--dry-run` until NobleFactor/devlore-cli#1170 is done.
 
@@ -175,16 +170,14 @@ Section 10's decisions gain two entries:
 
 ## 12. Approval and departures
 
-On 2026-11-19, the owner:
+Decisions, 2026-11-19:
 
-- Placed #609 on Schedule #588 as step 12, so that every issue PR #610 surfaced gets done, and asked for this plan.
-- Ruled that `close` and every other command are idempotent: an issue that's closed stays closed.
-- Ruled that `open` won't check for duplicates, now or later, because a model provider will handle that. Neither `--allow-duplicate` nor `--unique` is kept.
-- Ruled that removing `--unique` keeps `open` idempotent. It always opens a new issue, and two issues with the same title and description happen only if someone makes them on purpose.
-- Answered the plan's one remaining question: `reopen` clears the Resolution and sets the row to Open on an issue reopened on GitHub's page.
-- Asked for the plan in plain words.
+- `close` and every other command are idempotent. An issue that's closed stays closed.
+- `open` doesn't check for duplicates, now or later. A model provider will handle that. Neither `--allow-duplicate` nor `--unique` is kept.
+- Removing `--unique` keeps `open` idempotent. It always opens a new issue, and two issues with the same title and description happen only on purpose.
+- `reopen` clears the Resolution and sets the row to Open on an issue someone reopened on GitHub's page.
 
-The owner's approval of this plan is pending.
+Approval: pending.
 
 <a id="completion-review"></a>
 
