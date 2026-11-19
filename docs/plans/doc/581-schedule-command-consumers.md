@@ -93,6 +93,7 @@ Question 4 is settled by the forms-as-authority ruling preserved in the adoption
 | Discovery and broad reporting retain distinct purposes | Verify list help/output; review skill examples for account/team scope and remaining report use cases |
 | Index and handbook agree with delivered behavior | Review every issue-table row and perform a second pass against sections 8/9 and implemented help |
 | Open questions have explicit dispositions | Owner decisions or existing authoritative rulings linked from the affected issue/plan |
+| Methodology/tooling conflicts have explicit resolutions | A scan after the Google/arc42 rewrite records each conflict, evidence, effects and proposed correction; Owner decisions, verified corrections and any remaining tooling work or approved interim workflow are linked |
 | Documentation is navigable and preserved | Metadata, spelling, local references, stable anchors and original source hashes pass |
 | Every inventoried document is covered | The rewrite review records each document's disposition, retained requirements and any relocation |
 | Maintained prose meets the adopted writing guidance | A separate Google-based review records and resolves findings across the complete document bodies |
@@ -161,12 +162,12 @@ Designs describe the wanted system. Significant system choices and their rationa
 ### 7.6. Rewrite method and evidence
 
 1. Commit this plan amendment and review it with the Owner before rewriting the documents.
-2. Build a content map for each architecture set and a source map for its requirements. Read the approved designs, applicable plans, issue decisions, implementation, man pages, completions and tests. Distinguish designed behavior from delivered and verified behavior.
-3. Rewrite each architecture set as a coherent explanation. Rewrite the remaining maintained documents for their own purposes and audiences. Align the handbook, templates, skill, roadmap and user-facing references with those explanations.
-4. Resolve genuine contradictions without inventing requirements. The standalone Claude launcher, proposed assignment commands and five-role workstation have different scopes; explain those scopes and bring substantive unresolved choices to the Owner.
-5. Relocate transition material into this plan or the applicable approved plan, retaining source links to the published revision. Preserve exact Owner source material where its wording matters. Replace a migration-only design page with a clear reference to its plan when that is its proper destination.
-6. Preserve incoming link targets or update their callers with explicit evidence. Put significant system choices and their reasons in decision companions, and delivery progress and transition history in the applicable plans. Preserve the source material when replacing status companions. Refresh the inventory against the integrated Issue verbs work, then update the documentation verifier to cover it and each relocated source block.
-7. Review the rewritten set separately for writing, arc42 content, retained requirements and cross-document consistency. Record the document and passage for each finding and its resolution. The Owner appoints any independent reviewer; this plan does not grant cross-session contact or delegation.
+2. Build a content map for each architecture set and a source map for its requirements. Read the approved designs, applicable plans, issue decisions, implementation, man pages, completions and tests. Distinguish designed behavior from delivered and verified behavior, and the separate scopes of the standalone Claude launcher, proposed assignment commands and five-role workstation.
+3. Rewrite each architecture set as a coherent explanation, applying arc42's content requirements and Google's writing guidance. Rewrite the remaining maintained documents for their own purposes and audiences. Preserve the substance during this pass while improving organization and language. Align the handbook, templates, skill, roadmap and user-facing references.
+4. Relocate transition material into this plan or the applicable approved plan, retaining source links to the published revision. Preserve exact Owner source material where its wording matters. Replace a migration-only design page with a clear reference to its plan when that is its proper destination.
+5. Preserve incoming link targets or update their callers with explicit evidence. Put significant system choices and their reasons in decision companions, and delivery progress and transition history in the applicable plans. Preserve the source material when replacing status companions. Refresh the inventory against the integrated Issue verbs work, then update the documentation verifier to cover it and each relocated source block.
+6. After the rewrite, scan for conflicts between our methodology and actual tooling behavior. Record each conflict with its document passage, methodology requirement, observed behavior, effects and proposed correction. Review the findings with the Owner, agree on the resolutions, record the decisions, and correct and verify the affected documents. Track required tooling changes through the issue process, making the remaining gap and any Owner-approved interim workflow explicit.
+7. Review the corrected set separately for writing, arc42 content, retained requirements and cross-document consistency. Record the document and passage for each finding and its resolution. The Owner appoints any independent reviewer; this plan does not grant cross-session contact or delegation.
 8. Run the repository's actual make check and required GitHub checks for the final head. Present the rewrite, coverage evidence and resolved findings for Owner review. Keep the PR a draft until the required review permits it to become ready.
 
 The writing-and-review skill (#599) and architecture guidance (#600) remain separate publication tasks. This PR applies the approved primary guidance directly. Their later completion cannot substitute for this PR's writing and architecture reviews.
@@ -294,9 +295,11 @@ Implementation, Owner review, merge and post-merge verification are required. Co
 
 - [x] Record the Owner's full-rewrite scope, primary sources, complete inventory and no-merge condition.
 - [x] Commit this full-rewrite plan amendment as the next plan checkpoint.
-- [ ] Obtain Owner review of the committed amendment and direction to begin the full rewrite.
+- [x] Owner approved the amended plan and directed the rewrite on 2026-11-19, as recorded in section 12.
 - [ ] Map the architecture content, source requirements and incoming references across the inventory.
-- [ ] Rewrite all maintained documents in the inventory and update the related status and reference records.
+- [ ] Rewrite all maintained documents for Google writing and arc42 content, preserving their substance and updating related status and reference records.
+- [ ] Scan the rewritten set for conflicts between the methodology and tooling, and record the findings with evidence and proposed corrections.
+- [ ] Review the findings with the Owner, record decisions, and apply and verify the agreed corrections; explicitly track required tooling changes and approved interim handling.
 - [ ] Complete and record the writing, arc42, requirement-preservation and consistency reviews; resolve their findings.
 - [ ] Pass make check and final-head CI, obtain Owner review, and satisfy the explicit merge gate.
 
@@ -305,13 +308,15 @@ Implementation, Owner review, merge and post-merge verification are required. Co
 - [x] Owner ran make check and committed the six approved disclosure and plan files at 5a8383ddc1ede02f009a76eaaca1a4fa17a64bdf.
 - [x] Reconcile the twelve conflicted working files and refresh the 51-document inventory.
 - [x] Stage the reviewed resolutions, pass the integrated gate and commit the pending merge through the Owner-run script.
-- [ ] Publish the refreshed plan checkpoint and obtain review and direction before the full rewrite.
+- [x] Publish the refreshed plan checkpoint at 1cba02d4af302b29ba26868ed99e95097b4eeae6.
+- [x] Owner approved the amended plan and directed the rewrite on 2026-11-19.
 
 ### 9.7. Incorporate the later merge
 
 - [x] Inspect PR #610, its approved plan and all ten incoming paths; prepare the three documentation resolutions while preserving the permanent disclosure rule.
 - [x] Integrate 9bf246b4c074550c03b842bce5111e33ba34800e, pass make check and commit this checkpoint through the Owner-run script.
-- [ ] Publish the refreshed checkpoint, pass current-head CI, and obtain Owner review and direction before the full rewrite.
+- [x] Publish the refreshed checkpoint at 1cba02d4af302b29ba26868ed99e95097b4eeae6 and pass all four current-head CI checks.
+- [x] Owner approved the amended plan and directed the rewrite on 2026-11-19.
 
 ## 10. Files and related assets
 
@@ -321,7 +326,7 @@ Primary files are Home/common/.claude/skills/star-github-schedule-progress/SKILL
 
 Preserve the satisfied #507 links. Preserve Skills (#550), Shared documentation (#419), Epic #526 and Schedule #551 ownership. Issue forms (#572) follows this priority work and retains its separate form decisions; do not silently redesign those forms here. Runtime bugs and missing automation are separate findings, not permission to expand into command implementation.
 
-Issue verbs (#589) was delivered in PR #604 at 643652b617f6c95414fbd8c7ab958ffc4d422494 and is integrated locally as 7b6e64520a6047687fddd28aaf8808b6ff4ce707. Squash-merge configuration (#605), Closing references (#608), Table validation (#606) and Recovery guidance (#607) were delivered in PR #610 at 9bf246b4c074550c03b842bce5111e33ba34800e. Integrate that later revision before publication. Preserve its source plan and implementation unchanged; this worker does not take over their deployment or edit the other worker's worktree. The 51-document rewrite inventory is unchanged; the Squash-merge plan is a supporting reference.
+Issue verbs (#589) was delivered in PR #604 at 643652b617f6c95414fbd8c7ab958ffc4d422494 and is integrated locally as 7b6e64520a6047687fddd28aaf8808b6ff4ce707. Squash-merge configuration (#605), Closing references (#608), Table validation (#606) and Recovery guidance (#607) were delivered in PR #610 at 9bf246b4c074550c03b842bce5111e33ba34800e. That later revision was integrated and published at 1cba02d4af302b29ba26868ed99e95097b4eeae6. Preserve its source plan and implementation unchanged; this worker does not take over their deployment or edit the other worker's worktree. The 51-document rewrite inventory is unchanged; the Squash-merge plan is a supporting reference.
 
 ## 12. Approval and departures
 
@@ -333,14 +338,18 @@ On 2026-11-18, the Owner distinguished design decisions from transition history,
 
 On 2026-11-18, after publication of f8d7702f971fb9967a7f3bc39a375cea6d3cff50, the Owner required all documents to be rewritten and prohibited merge until they comply with arc42 and Google's standards. PR #596 was returned to draft and its merge gate and Handbook command alignment (#582) were updated. This scope supersedes the earlier deferral of the broader rewrite. The plan amendment must be committed and reviewed before that rewrite begins. Git and PR-script execution remain Owner-run.
 
-The Owner approved the Claude coder's recommended merge order: Issue verbs (#589) merges before PR #596, then this worktree integrates develop and refreshes its inventory from the delivered command definitions. The Owner also approved the document structure: designs describe the wanted system, decision companions explain significant choices and their reasons, and plans hold implementation progress and transition history. These decisions settle those review findings; the integration, inventory refresh and rewrite remain outstanding.
+The Owner approved the Claude coder's recommended merge order: Issue verbs (#589) merges before PR #596, then this worktree integrates develop and refreshes its inventory from the delivered command definitions. The Owner also approved the document structure: designs describe the wanted system, decision companions explain significant choices and their reasons, and plans hold implementation progress and transition history. These decisions settled those review findings. The integration and inventory refresh were published at 1cba02d4af302b29ba26868ed99e95097b4eeae6; the full rewrite remains to be done.
 
 The Owner then directed: "Assisted by goes into PR descriptions. Make that change permanent." This authorizes the scoped disclosure correction in this worktree: the PR description names the submitting agent in `Assisted-by:`, keeps the human sign-off, and passes both trailers to the squash commit. Branch commits carry no trailers. Remove the temporary requirement to name Claude Code regardless of the submitting host. Align the handbook, O05 resolution and script specification. This direction supersedes the retained literal Claude Code instruction for this session; migration and qualification of the personal entrypoint files remain with Claude consumption (#562) and Codex consumption (#563). Git and script execution remain Owner-run.
 
-The disclosure correction is committed locally in the six-file checkpoint and retained in the Issue verbs merge. Its focused validation evidence belongs under /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/permanent-pr-disclosure. Publication, final-head CI and merge remain outstanding.
+The disclosure correction is committed locally in the six-file checkpoint and retained in the Issue verbs merge. Its focused validation evidence belongs under /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/permanent-pr-disclosure. Publication and all four CI checks passed at 1cba02d4af302b29ba26868ed99e95097b4eeae6. The PR's merge remains subject to the full-rewrite gate.
+
+On 2026-11-19, the Owner required this rewrite to check and correct the substance by engaging with the Owner whenever our methodology and tooling conflict. The Owner then proposed scanning for those conflicts after rewriting for Google's guidance and arc42. The method, acceptance criteria and checklist follow that sequence: rewrite, scan, review findings with the Owner, then apply and verify the agreed corrections.
+
+On 2026-11-19, after reviewing the scope, method and completion criteria and adding the substantive-review and scan-after-rewrite requirements, the Owner said, "Plan approved. let's go." This approves the 51-document rewrite and directs implementation in this worktree. The sequence is content and source mapping, rewriting for Google and arc42, scanning for methodology/tooling conflicts, reviewing those findings with the Owner, and applying and verifying the agreed corrections. Git and PR-script execution remain Owner-run.
 
 ## 13. Completion review
 
 The initial full-rewrite plan checkpoint was published at cbdc89b9d4eb601b7b5c47eb1202b803a6b45c1c. The Owner approved the merge order and document structure. The six-file disclosure and plan checkpoint is committed at 5a8383ddc1ede02f009a76eaaca1a4fa17a64bdf after its Owner-run make check passed.
 
-The Issue verbs integration is committed locally as 7b6e64520a6047687fddd28aaf8808b6ff4ce707 after its passing gate. The refreshed inventory has 51 documents. Publication stopped because develop advanced through PR #610; the next checkpoint incorporates that revision. The integrated make check passed, and this commit completes that integration. Publication, current-head CI and review of the refreshed plan remain outstanding. The full rewrite has not started. Keep PR #596 a draft and Skill/index update (#581) and Handbook command alignment (#582) open. The Owner merges only after the rewrite's merge condition is satisfied; deployed-content verification, completion approval and cleanup follow.
+The Issue verbs integration is committed as 7b6e64520a6047687fddd28aaf8808b6ff4ce707 after its passing gate. The later PR #610 integration was published in draft PR #596 at 1cba02d4af302b29ba26868ed99e95097b4eeae6. The integrated make check and all four current-head CI checks passed. Progress was recorded on Skill/index update (#581) and Handbook command alignment (#582), and both Schedule rows read back In progress. The run's receipt is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/merge-reconciliation/advance-610/runs/20261119T183441Z/receipt.json. The inventory has 51 documents. The Owner approved the amended plan and directed implementation on 2026-11-19. This checkpoint records that approval. The content and source maps and full rewrite remain to be done. Keep the PR a draft and both issues open. The Owner merges only after the rewrite's merge condition is satisfied; deployed-content verification, completion approval and cleanup follow.
