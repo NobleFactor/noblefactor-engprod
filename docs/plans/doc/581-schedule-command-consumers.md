@@ -235,9 +235,21 @@ The Owner ran the integration script on 2026-11-19. The actual make check passed
 
 The working-file reconciliation combines the delivered command names, Backlog rules, source validation and decision companions with the prior Triage exclusions, Scenario closure and cleanup instructions, link targets, and permanent PR disclosure rule. The inventory now includes section 10 and the three decision companions in place of the deleted section 8 and 9 status pages. Conflict-marker removal does not stage the files or complete the merge.
 
-The Owner staged the reviewed resolutions and the integrated make check passed. This merge commit completes the reviewed Issue verbs integration. Publication and Owner review remain outstanding. The earlier passing gate verifies the six-file checkpoint, not the integrated result. Review the refreshed plan checkpoint before directing the full rewrite.
+The Owner staged the reviewed resolutions, passed the integrated make check and committed the merge as 7b6e64520a6047687fddd28aaf8808b6ff4ce707. Publication stopped before any push because develop had advanced to 9bf246b4c074550c03b842bce5111e33ba34800e. The receipt is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/merge-reconciliation/finish-integration/20261119T175544Z/receipt.json. Both passing gates establish their recorded revisions; the next integration requires its own gate. Review the refreshed plan checkpoint before directing the full rewrite.
 
-Table validation (#606) and Recovery guidance (#607) retain the two residual review findings as Bugs with Severity Low in Triage under Feature #332. Recovery guidance should describe the actual retry limits; automatic recovery is separate behavior work. Orphaned links remain within Writ upgrade (NobleFactor/devlore-cli#845). The Claude coder owns Squash-merge configuration (#605), currently In progress; reconcile later delivered changes without editing that worker's worktree.
+The two residual review findings, Table validation (#606) and Recovery guidance (#607), were subsequently fixed in PR #610. The integration below brings in those fixes. Automatic recovery is separate work in Task #609. Orphaned links remain within Writ upgrade (NobleFactor/devlore-cli#845).
+
+### 7.9. Squash-merge and closing-reference integration
+
+Develop advanced through [Squash-merge configuration (#605), PR #610](https://github.com/NobleFactor/noblefactor-engprod/pull/610), at 9bf246b4c074550c03b842bce5111e33ba34800e. Its [approved plan](../../plans/feature/605-squash-message.md) records the Owner's merge and closing-reference decisions and the fixes for Table validation (#606) and Recovery guidance (#607).
+
+Integrate this revision into the clean local checkpoint 7b6e64520a6047687fddd28aaf8808b6ff4ce707. Preserve the incoming runtime and tests unchanged. Keep the template's two parts: publication and readiness first, then delivery records after the Owner merges in GitHub. Keep the permanent requirement to name the submitting agent in the PR description. Adopt closing references for issues the PR completes, with reopening if deployment or verification fails. References without a closing keyword remain appropriate for partial delivery.
+
+The Section 10 guidance distinguishes the limits of rerunning open, reopen, close and move. Automatic recovery remains in Task #609. The broader PR-procedure rewrite remains part of Handbook command alignment (#582); this integration does not claim that rewrite is complete or that every remaining policy reference is already reconciled.
+
+Prepared resolutions, the previous script and source comparisons are preserved under /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/merge-reconciliation/advance-610. The Owner-run sync-and-publish mode verifies the exact local and remote revisions, merges the inspected target, applies only these reviewed resolutions, runs make check and commits the integration before publishing. It stops if the target advances again or another worker changes the inspected records. It leaves PR #596 a draft, keeps both issues open, and performs no PR merge, worktree cleanup or canonical-clone maintenance.
+
+The integrated make check passed, and this commit completes the reviewed integration of PR #610. Publication, current-head CI and Owner review remain separate milestones.
 
 ## 8. Completion milestones
 
@@ -295,6 +307,12 @@ Implementation, Owner review, merge and post-merge verification are required. Co
 - [x] Stage the reviewed resolutions, pass the integrated gate and commit the pending merge through the Owner-run script.
 - [ ] Publish the refreshed plan checkpoint and obtain review and direction before the full rewrite.
 
+### 9.7. Incorporate the later merge
+
+- [x] Inspect PR #610, its approved plan and all ten incoming paths; prepare the three documentation resolutions while preserving the permanent disclosure rule.
+- [x] Integrate 9bf246b4c074550c03b842bce5111e33ba34800e, pass make check and commit this checkpoint through the Owner-run script.
+- [ ] Publish the refreshed checkpoint, pass current-head CI, and obtain Owner review and direction before the full rewrite.
+
 ## 10. Files and related assets
 
 Primary files are Home/common/.claude/skills/star-github-schedule-progress/SKILL.md and docs/architecture/issue-data-model/index.md. The handbook issue lists docs/issue-standards.md, docs/engineering/work-organization.md, docs/engineering/process.md, docs/templates/schedule.md, docs/guides/pr-script-template.md, README.md, docs/github-branch-protection.md, docs/engineering/review/open-decisions.md, the three agent-schedule architecture pages, and the optional workstation roadmap. Inspect exact current content and incoming references before editing.
@@ -303,7 +321,7 @@ Primary files are Home/common/.claude/skills/star-github-schedule-progress/SKILL
 
 Preserve the satisfied #507 links. Preserve Skills (#550), Shared documentation (#419), Epic #526 and Schedule #551 ownership. Issue forms (#572) follows this priority work and retains its separate form decisions; do not silently redesign those forms here. Runtime bugs and missing automation are separate findings, not permission to expand into command implementation.
 
-Issue verbs (#589) now precedes this rewrite as approved, delivered in PR #604 at 643652b617f6c95414fbd8c7ab958ffc4d422494. Integrate that revision before refreshing the inventory and rewriting its consumers. Squash-merge configuration (#605) is owned by the Claude coder and is In progress; reconcile any later delivered template changes without editing that worker's worktree.
+Issue verbs (#589) was delivered in PR #604 at 643652b617f6c95414fbd8c7ab958ffc4d422494 and is integrated locally as 7b6e64520a6047687fddd28aaf8808b6ff4ce707. Squash-merge configuration (#605), Closing references (#608), Table validation (#606) and Recovery guidance (#607) were delivered in PR #610 at 9bf246b4c074550c03b842bce5111e33ba34800e. Integrate that later revision before publication. Preserve its source plan and implementation unchanged; this worker does not take over their deployment or edit the other worker's worktree. The 51-document rewrite inventory is unchanged; the Squash-merge plan is a supporting reference.
 
 ## 12. Approval and departures
 
@@ -319,10 +337,10 @@ The Owner approved the Claude coder's recommended merge order: Issue verbs (#589
 
 The Owner then directed: "Assisted by goes into PR descriptions. Make that change permanent." This authorizes the scoped disclosure correction in this worktree: the PR description names the submitting agent in `Assisted-by:`, keeps the human sign-off, and passes both trailers to the squash commit. Branch commits carry no trailers. Remove the temporary requirement to name Claude Code regardless of the submitting host. Align the handbook, O05 resolution and script specification. This direction supersedes the retained literal Claude Code instruction for this session; migration and qualification of the personal entrypoint files remain with Claude consumption (#562) and Codex consumption (#563). Git and script execution remain Owner-run.
 
-The disclosure correction is prepared locally for PR #596. Its focused validation evidence belongs under /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/permanent-pr-disclosure. Publication, final-head CI and merge remain outstanding.
+The disclosure correction is committed locally in the six-file checkpoint and retained in the Issue verbs merge. Its focused validation evidence belongs under /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/permanent-pr-disclosure. Publication, final-head CI and merge remain outstanding.
 
 ## 13. Completion review
 
 The initial full-rewrite plan checkpoint was published at cbdc89b9d4eb601b7b5c47eb1202b803a6b45c1c. The Owner approved the merge order and document structure. The six-file disclosure and plan checkpoint is committed at 5a8383ddc1ede02f009a76eaaca1a4fa17a64bdf after its Owner-run make check passed.
 
-The working files reconcile the pending Issue verbs merge, and the refreshed inventory has 51 documents. The integrated gate passed, and this merge commit completes the reviewed integration. Publication and review of this checkpoint remain outstanding. The full rewrite has not started. Keep PR #596 a draft and Skill/index update (#581) and Handbook command alignment (#582) open. Merge of the PR, deployed-content verification, completion approval and cleanup follow only after the rewrite's merge condition is satisfied.
+The Issue verbs integration is committed locally as 7b6e64520a6047687fddd28aaf8808b6ff4ce707 after its passing gate. The refreshed inventory has 51 documents. Publication stopped because develop advanced through PR #610; the next checkpoint incorporates that revision. The integrated make check passed, and this commit completes that integration. Publication, current-head CI and review of the refreshed plan remain outstanding. The full rewrite has not started. Keep PR #596 a draft and Skill/index update (#581) and Handbook command alignment (#582) open. The Owner merges only after the rewrite's merge condition is satisfied; deployed-content verification, completion approval and cleanup follow.

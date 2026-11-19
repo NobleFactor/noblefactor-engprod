@@ -2,7 +2,7 @@
 title: "Pull request procedure"
 status: draft
 created: 2026-10-28
-updated: 2026-11-18
+updated: 2026-11-19
 ---
 
 # Pull request procedure
@@ -47,7 +47,7 @@ The current platform examples refuse absent or failing observed checks, non-clea
 
 ## 4. Issue closure
 
-Apply [Completion and progression](../process.md#completion-and-progression). Before creating the PR body, check whether any required milestone remains after merge; if so, use an issue reference rather than an automatic closing keyword. The concrete script lists the issues whose closure is explicitly authorized and includes closing references only for those issues. Other issues stay Open with their Schedule rows In progress and linked to the merged PR, while required post-merge evidence and Owner acceptance remain outstanding. Every merge is recorded independently of closure.
+Apply [Completion and progression](../process.md#completion-and-progression). The PR body names each issue the PR completes with a closing keyword, `Closes #N`, so GitHub links the PR to the issue and closes it when the Owner merges; the issues the PR only advances are named without one, and stay Open with their Schedule rows In progress and linked to the merged PR. A closed issue whose deployment or verification fails after the merge is reopened with `star github issue reopen`, saying why (ruled 2026-11-19). Every merge is recorded independently of closure.
 
 <a id="documentation-only-completion-follow-up"></a>
 

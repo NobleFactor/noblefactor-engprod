@@ -12,8 +12,10 @@
 # account they come from, there is nothing to compare. A participating repository is one a team maintains, or in a user
 # account one carrying the topic issue-model: its .github/workflows/triage.yml is the source's
 # workflow-templates/triage.yml, its TRIAGE_PROJECT_URL names its team's Triage project, and the secrets the template
-# signs in with are set, on the repository or, in an organization, on the organization. diff reports what is missing or
-# different; apply lands files through pull requests, and sets the variable and the secrets.
+# signs in with are set, on the repository or, in an organization, on the organization. Each participating repository
+# squash-merges with the pull request's title and description, so that a merge in GitHub carries the description's
+# Signed-off-by: and Assisted-by: lines into the commit that lands (#605). diff reports what is missing or different;
+# apply lands files through pull requests, and sets the variable, the squash-merge setting and the secrets.
 
 load("commands/model.star", "escape", "quote", "rest", "sh")
 load("commands/pull.star", "comment", "commit_files", "default_branch", "disclose", "land", "signer")
@@ -23,6 +25,9 @@ load("commands/tokens.star", "fingerprint", "set_secret")
 WORKFLOW = ".github/workflows/triage.yml"
 TEMPLATE = "workflow-templates/triage.yml"
 VARIABLE = "TRIAGE_PROJECT_URL"
+
+# The squash-merge setting every participating repository has: the pull request's title and description (#605).
+SQUASH = {"title": "PR_TITLE", "message": "PR_BODY"}
 
 # The source's files that are not copied: its model, and its own Triage workflow, which WORKFLOW's comparison covers.
 _NOT_COPIED = ["model.yaml", WORKFLOW]
@@ -84,6 +89,16 @@ def _variable(repository):
     body = _read("repos/" + repository + "/actions/variables/" + VARIABLE)
     return None if body == None else json.decode(data = body).get("value")
 
+def _squash(repository):
+    """A repository's squash-merge setting, {title, message}, and whether the token may change it, as admin."""
+    body = _read("repos/" + repository)
+    record = json.decode(data = body) if body != None else {}
+    return {
+        "title": record.get("squash_merge_commit_title"),
+        "message": record.get("squash_merge_commit_message"),
+        "admin": (record.get("permissions") or {}).get("admin") == True,
+    }
+
 def _repository_secrets(repository):
     """The names of a repository's own secrets."""
     out = sh("gh secret list --repo " + quote(repository) + " --json name --jq " + quote(".[].name"))
@@ -112,7 +127,8 @@ def read(model, github, projects, kind):
 
     Returns:
       {source, files: {path: text}, held: {path: text or None}, template, secrets: [name], repositories: {repo:
-      {workflow, variable, project, url, secrets: [name]}}, organization_secrets: {name: visibility}}.
+      {workflow, variable, project, url, secrets: [name], squash: {title, message, admin}}}, organization_secrets:
+      {name: visibility}}.
     """
     account = github["account"]
     source = model.get("files_from") or model.get("account")
@@ -152,6 +168,7 @@ def read(model, github, projects, kind):
             "project": project,
             "url": project_url(kind, account, number) if number != None else None,
             "secrets": _repository_secrets(r),
+            "squash": _squash(r),
         }
     if kind == "organization":
         out["organization_secrets"] = _organization_secrets(account)
@@ -178,7 +195,10 @@ def _record(kind, path, github, model, change = None, by_hand = False):
     }
 
 def compare(state, kind, account):
-    """One record for each file, workflow, variable and secret the account lacks, or holds differently."""
+    """One record for each thing participation needs that the account lacks, or holds differently.
+
+    The things are its files, and each participating repository's workflow, variable, squash-merge setting and secrets.
+    """
     out = []
     if state == None:
         return out
@@ -199,6 +219,9 @@ def compare(state, kind, account):
             have = {"name": VARIABLE, "value": held["variable"]} if held["variable"] != None else None
             want = {"name": VARIABLE, "value": held["url"], "project": held["project"]}
             out.append(_record("variable", r + "/" + VARIABLE, have, want, by_hand = held["project"] == None))
+        have = {"title": held["squash"]["title"], "message": held["squash"]["message"]}
+        if have != SQUASH:
+            out.append(_record("squash", r, have, dict(SQUASH), by_hand = not held["squash"]["admin"]))
     if kind == "organization":
         held = state["organization_secrets"]
         for name in state["secrets"]:
@@ -276,6 +299,24 @@ def _variables(c, records, done):
             rest("PATCH", "repos/" + repository + "/actions/variables/" + VARIABLE, {"name": VARIABLE, "value": value})
         done["variable " + r["path"]] = ("created" if r["change"] == "missing" else "changed", {"value": value})
 
+def _squash_merges(records, done):
+    """Each repository's squash-merge setting, set to the pull request's title and description, and read back.
+
+    A repository the token can't change, since the setting needs admin, is left to its admin, its record by hand.
+    """
+    for r in [r for r in records if r["kind"] == "squash"]:
+        if r["by_hand"]:
+            done["squash " + r["path"]] = ("by-hand", {"steps": [
+                "a repository admin sets " + r["path"] + "'s squash merges to the pull request's title and description",
+            ]})
+            continue
+        rest("PATCH", "repos/" + r["path"], {"squash_merge_commit_title": SQUASH["title"], "squash_merge_commit_message": SQUASH["message"]})
+        back = _squash(r["path"])
+        if {"title": back["title"], "message": back["message"]} != SQUASH:
+            fail(r["path"] + "'s squash-merge setting reads back as " + str(back["title"]) + " and " + str(back["message"]) +
+                 ", not " + SQUASH["title"] + " and " + SQUASH["message"])
+        done["squash " + r["path"]] = ("changed", {"value": dict(SQUASH)})
+
 def token_records(c, state, records):
     """A record for each secret --token sets that the account already holds: diff finds no difference in it, apply replaces it."""
     out = []
@@ -309,10 +350,14 @@ def _secrets(c, records, done):
         done["secret " + r["path"]] = ("created" if r["change"] == "missing" else "changed", {"fingerprint": fingerprint(source)})
 
 def apply(c, state, records, done):
-    """What apply writes beyond the model, in the order each needs the last: the files, the workflows, the variables, the secrets."""
+    """What apply writes beyond the model, in the order each needs the last.
+
+    The order is the files, the workflows, the variables, the squash-merge settings, the secrets.
+    """
     if state == None:
         return
     _files(c, state, records, done)
     _workflows(state, records, done)
     _variables(c, records, done)
+    _squash_merges(records, done)
     _secrets(c, records, done)
