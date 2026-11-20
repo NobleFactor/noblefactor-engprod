@@ -2,7 +2,7 @@
 title: "Pull request procedure"
 status: draft
 created: 2026-10-28
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 # Pull request procedure
@@ -55,7 +55,7 @@ Model-command PRs use this same boundary. Backup, apply and restore may prepare 
 
 Follow [completion and progression](../process.md#completion-and-progression): use closing keywords for issues completed by the PR, ordinary references for partial delivery, and reopen an issue with its reason if deployment or verification fails.
 
-When the Owner requests the script's second part, read actual merged state before bookkeeping. Verify the landed head/message, derive time-open from GitHub timestamps and record each scheduled issue's merge independently of closure. Partial issues remain Open/In progress with the PR linked.
+When the Owner requests the script's second part, read actual merged state before bookkeeping. Read this PR's full mergeCommit.oid from its confirmed merged state and verify that exact commit's message and trailers, even if another worker has advanced the target. Stop if the recorded commit cannot be read. Derive time-open from GitHub timestamps and record each scheduled issue's merge independently of closure. Partial issues remain Open/In progress with the PR linked.
 
 Guard writes against changed records and read them back. Stop and reconcile stale state rather than overwrite it. Record delivery before removing the worktree/script, and move to an existing directory before cleanup. An end-of-PR issue report is printed only when requested and scoped to the served work.
 

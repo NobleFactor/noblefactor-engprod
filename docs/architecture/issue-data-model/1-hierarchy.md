@@ -73,7 +73,7 @@ Triage removes its row as part of the decision. Closing an issue elsewhere does 
 
 ### 3.2 Collection and team boundaries
 
-An issue belongs to at most one managed Triage, Backlog, Schedules or Scenarios project across the account, and to at most one Schedule or Scenario. Epics and Features cannot be rows in Schedules or Scenarios; their executable work reaches those collections through Tasks and Bugs.
+An issue has at most one Backlog, Schedule or Scenario home across the account, and at most one Schedule or Scenario. A Triage row may also flag a fault while that home remains in place; the [issue standard](../../issue-standards.md#placement) defines the rule. Epics and Features cannot be rows in Schedules or Scenarios; their executable work reaches those collections through Tasks and Bugs.
 
 Backlog work is selected in Priority order. Adding work to a committed Schedule requires its Owner's amendment, recorded in the Schedule issue.
 
@@ -89,9 +89,9 @@ A finding may await classification in the Scenario. Before it moves into a Sched
 
 ### 3.4 Validation and sweep
 
-The validation sweep's required behavior is to identify rule violations, comment with the violated rule and return affected issues to the appropriate Triage project. It blocks no filing, silently repairs no issue and removes no Triage row.
+The validation sweep identifies rule violations, comments with the violated rule and adds the affected issue to the appropriate Triage project while preserving its home. It blocks no filing, silently repairs no issue and removes no row. Triage decides the correction.
 
-For Scenario findings, only two structural checks apply while they remain in the Scenario: prohibited Epic/Feature rows and membership in multiple managed projects or collections. The remaining classification checks apply when findings leave. Handling conflicting Scenario and Schedule rows without silently discarding a commitment remains an explicit sweep design question.
+For Scenario findings, only two structural checks apply while they remain in the Scenario: prohibited Epic/Feature rows and membership in multiple Backlog/Schedule/Scenario homes or collections. A temporary Triage fault row is allowed. The remaining classification checks apply when findings leave. Handling conflicting Scenario and Schedule rows without silently discarding a commitment remains an explicit sweep design question.
 
 Queries such as `no:type` and `no:parent-issue` help find missed intake, but are not complete classification tests. Root issues legitimately have no parent; user-account types are labels. [Classification rules](../../issue-standards.md#well-classified) define the complete checks.
 

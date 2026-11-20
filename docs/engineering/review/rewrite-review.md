@@ -9,6 +9,8 @@ updated: 2026-11-20
 
 This record tracks the full rewrite in the [approved plan](../../plans/doc/581-schedule-command-consumers.md#95-full-documentation-rewrite). The input is the 51-document inventory at revision `15bac42fdd60dcadba28111849ae49713a10008a`. A rewritten draft is not a completed content review or implementation evidence.
 
+Current disposition: all 51 inputs have a first-pass rewrite or explicit record-preservation treatment. The nine independent-review findings have locally verified corrections, including the Owner-approved R01/R03/R07 dispositions below. Independent re-review, final content/tooling-gap review and Owner acceptance remain open.
+
 ## 1. Method and evidence
 
 Map requirements and references before changing each architecture set. Rewrite maintained explanations using [Google's writing guidance](https://developers.google.com/style/highlights) and the [arc42 content model](https://arc42.org/overview/). Preserve source wording where material, including the Owner's original assignment proposal.
@@ -143,9 +145,9 @@ Every input receives an explicit disposition. Pending means the substantive rewr
 | [docs/github-branch-protection.md](../../../docs/github-branch-protection.md) | First-pass rewrite recorded; source requirements, examples and incoming headings retained. Content review remains open. |
 | [docs/guides/pr-script-template.md](../../../docs/guides/pr-script-template.md) | First-pass rewrite recorded; source requirements, examples and incoming headings retained. Content review remains open. |
 | [docs/index.md](../../../docs/index.md) | Rewrite maintained guidance or retain historical evidence with explicit current references. First pass recorded; content review remains open. |
-| [docs/issue-standards.md](../../../docs/issue-standards.md) | Complete candidate and source map prepared outside the repository; maintained replacement held for membership decision M08. Pending. |
+| [docs/issue-standards.md](../../../docs/issue-standards.md) | Rewritten from the reviewed candidate with Owner-approved one-home/Triage policy; anchors and original source preserved. Content review remains open. |
 | [docs/plans/doc/420-consolidate-engineering.md](../../../docs/plans/doc/420-consolidate-engineering.md) | Completed record verified byte-for-byte against the inventory; retained unchanged. First-pass disposition recorded. |
-| [docs/plans/doc/581-schedule-command-consumers.md](../../../docs/plans/doc/581-schedule-command-consumers.md) | Maintain approved method, progress and evidence throughout the rewrite. Active. |
+| [docs/plans/doc/581-schedule-command-consumers.md](../../../docs/plans/doc/581-schedule-command-consumers.md) | Maintained as the active execution record for scope, approvals, transitions and verification; no history removed. Final acceptance and delivery remain open. |
 | [docs/roadmaps/agentic-developer-workstation.md](../../../docs/roadmaps/agentic-developer-workstation.md) | Rewrite for the architecture or planner audience; preserve requirements, scenarios and links. First draft prepared; content review remains open. |
 | [docs/standards/documentation.md](../../../docs/standards/documentation.md) | Rewrite maintained guidance or retain historical evidence with explicit current references. First pass recorded; content review remains open. |
 | [docs/templates/design.md](../../../docs/templates/design.md) | Rewrite maintained guidance or retain historical evidence with explicit current references. First pass recorded; content review remains open. |
@@ -288,7 +290,7 @@ The PR-script guide keeps thirteen rule numbers and all eight PowerShell require
 | Finding | Evidence and disposition |
 | --- | --- |
 | M06: packaging validator rejects title | The skill-creator quick_validate.py reports title as an unexpected frontmatter key. Repository Markdown requires title. Preserve it; native Codex packaging/loader qualification remains with Codex consumption (#563). A packaging-tool failure is not evidence of native-loader failure |
-| M07: trailer check can read another worker's merge | Both PR examples use git log --max-count=1 --format=%B without this PR's recorded full mergeCommit.oid after cleanup/sync. Proposed correction: qualify that lookup with the ID. The Owner's inclusion decision is pending; the examples are unchanged |
+| M07: trailer check can read another worker's merge | Both PR examples use git log --max-count=1 --format=%B without this PR's recorded full mergeCommit.oid after cleanup/sync. Owner approved qualifying that lookup with the full recorded ID on 2026-11-20; both examples are corrected. Opposite target/merge trailer states are verified under the [approved correction](#18-approved-dispositions-and-corrections) |
 | Signing scope | Decisions 34/35 require main/release signing and exempt personal repositories; the older main-only source observation is not full enforcement evidence |
 | Tool build provenance | BASE is the installed commit; HEAD is develop. A clean ancestor can still lack the required interface. Dirty/unknown/unmerged builds stay read-only and another session's build is preserved |
 | Script authority and progress | Human merge, separate execution/clone authority, named staging, guarded row writes, closing versus partial references and retained post-merge obligations remain required |
@@ -333,7 +335,7 @@ The standard's placement and classification passages prohibit more than one mana
 
 The earlier first-pass hierarchy/collection prose and a hierarchy decision summary repeat the broader restriction. These drafts need correction after the Owner rules. The issue-standard candidate identifies the unsettled clause rather than creating an implicit decision.
 
-Proposed rule: at most one home among Backlog, Schedule and Scenario, with Triage allowed beside that home for a fault awaiting a decision. The Owner has been asked; no answer or correction is inferred.
+David Noble approved at most one home among Backlog, Schedule and Scenario, with Triage allowed beside that home for a fault awaiting a decision, on 2026-11-20. The [current correction](#18-approved-dispositions-and-corrections) aligns the maintained standard and architecture; the superseded one-project rule remains identified in its decision record.
 
 ### 13.2. M09: User-account capability claims
 
@@ -413,18 +415,44 @@ The [independent review](https://github.com/NobleFactor/noblefactor-engprod/pull
 
 | Finding | Disposition |
 | --- | --- |
-| [R01 High: Triage/home membership](https://github.com/NobleFactor/noblefactor-engprod/pull/596#discussion_r4639687508) | Owner choice pending (M08); the proposed Triage fault overlay is not adopted |
+| [R01 High: Triage/home membership](https://github.com/NobleFactor/noblefactor-engprod/pull/596#discussion_r4639687508) | Owner approved the Triage fault row beside one home on 2026-11-20. The maintained standard and architecture are aligned; HIERARCHY-006 records the decision |
 | [R02 Medium: decision provenance](https://github.com/NobleFactor/noblefactor-engprod/pull/596#discussion_r4639687524) | Local correction adds ordered YAML footers to 68 records in twelve companions; locally verified. Existing IDs, substance and approval evidence are retained, with unknown attribution/dates null |
-| [R03 Medium: landed-trailer lookup](https://github.com/NobleFactor/noblefactor-engprod/pull/596#discussion_r4639687534) | Owner inclusion choice pending (M07); examples remain unchanged |
+| [R03 Medium: landed-trailer lookup](https://github.com/NobleFactor/noblefactor-engprod/pull/596#discussion_r4639687534) | Owner approved the correction on 2026-11-20. Both examples use the full recorded merge commit ID; fixture verification is recorded below |
 | [R04 Medium: Triage-to-Backlog move](https://github.com/NobleFactor/noblefactor-engprod/pull/596#discussion_r4639687547) | Proposal corrected to match move source and regression cases 146–148; locally verified |
 | [R05 Medium: asynchronous placement](https://github.com/NobleFactor/noblefactor-engprod/pull/596#discussion_r4639687560) | Hierarchy distinguishes issue metadata writes from the separately executed intake workflow and row verification; locally verified |
 | [R06 Medium: User-field capabilities](https://github.com/NobleFactor/noblefactor-engprod/pull/596#discussion_r4639687577) | Command decisions and maintained standard describe our supported label profile and preserve original evidence. Native access/adoption/command qualification is not claimed; locally verified |
-| [R07 Medium: draft-review gate](https://github.com/NobleFactor/noblefactor-engprod/pull/596#discussion_r4639687585) | Owner exception choice pending; publication approval is not treated as an implicit waiver |
+| [R07 Medium: draft-review gate](https://github.com/NobleFactor/noblefactor-engprod/pull/596#discussion_r4639687585) | Owner explicitly approved non-draft review on 2026-11-20; plan section 7.22 records the exception and every remaining merge gate |
 | [R08 Low: Scenario cleanup](https://github.com/NobleFactor/noblefactor-engprod/pull/596#discussion_r4639687597) | Handbook limits remaining cleanup to closure outside the issue command and links the authoritative procedure; locally verified |
 | [R09 Low: duplicate session-model tail](https://github.com/NobleFactor/noblefactor-engprod/pull/596#discussion_r4639687617) | Duplicate table/wake prose removed; unique exit/Remote Control details already remain in the lifecycle section. Pandoc renders three tables and the expected section flow |
 
-The original source snapshots remain exact. The issue-standard factual correction does not adopt its pending replacement or resolve membership policy. Recording accepted source contracts without a known approving person or date does not invent approval evidence. The preserved plans and command companions retain the approval records that are known.
+The original source snapshots remain exact. The earlier R06 factual correction was published at bfec2fc; the subsequent Owner-approved membership correction permits replacing the maintained standard with the corrected candidate. Recording accepted source contracts without a known approving person or date does not invent approval evidence. The preserved plans and command companions retain the approval records that are known.
 
-Routine corrections implement the approved rewrite. R01, R03 and R07 require the Owner's explicit dispositions before their dependent changes. Independent re-review and Owner acceptance remain required; no finding is closed by this local draft, and the PR is not ready to merge.
+Routine corrections implement the approved rewrite. David Noble explicitly approved the dispositions for R01, R03 and R07 on 2026-11-20, before their dependent changes. Independent re-review and Owner acceptance remain required; no finding is closed by this local draft, and the PR is not ready to merge.
 
-Focused validation passes for these six corrections, including YAML key order, source/body preservation, links, metadata, paragraph/table layout, spelling and whitespace. The rendered session-model page has three tables and all eight main sections in order. The maintained issue-standard replacement and the three Owner decisions remain outstanding. Current-head CI and independent re-review are required after publication.
+Focused validation passes for these six corrections, including YAML key order, source/body preservation, links, metadata, paragraph/table layout, spelling and whitespace. The rendered session-model page has three tables and all eight main sections in order. The maintained issue-standard replacement and the three Owner dispositions are recorded in section 18. Current-head CI and independent re-review are required after publication.
+
+## 18. Approved dispositions and corrections
+
+On 2026-11-20, David Noble approved the three proposed dispositions individually after their explanations. R01/M08 uses one Backlog, Schedule or Scenario home with a temporary Triage fault row; R03/M07 verifies landed trailers on this PR's full recorded merge commit ID; R07 permits PR #596 to remain non-draft for review. The [plan](../../plans/doc/581-schedule-command-consumers.md#722-approved-review-dispositions) records execution scope and the remaining merge gates.
+
+The [maintained issue standard](../../issue-standards.md) replaces the proposal as the authoritative policy. Hierarchy, attributes, collections, workflow and issue-command context use the same membership meaning. HIERARCHY-006 records the reason and alternative; HIERARCHY-003 is explicitly superseded. Source evidence and established approvals remain preserved.
+
+All 51 inputs now have a first-pass disposition, including the standard and active-plan maintenance. This count describes the rewrite pass; full content reviews, independent re-review, approved tooling-gap handling and Owner acceptance remain required. No issue is closed and no merge is authorized.
+
+The Bash and PowerShell examples retain the full mergeCommit.oid from the confirmed delivery record, use it in git log after cleanup and name it on a trailer failure. The other three executable examples are unchanged. Local regression fixtures check the correct result when the target advances to a commit with the opposite trailer state and when the recorded commit is unavailable. The five examples pass syntax checks after placeholder substitution. Ten fixture checks pass using the exact template fragments, including the earlier behavior as a comparison; source and result hashes are retained in the execution evidence.
+
+PR #596 may remain non-draft under the explicit review exception. It remains blocked from merge until the required findings, reviews, final-head CI and Owner acceptance are satisfied. The exception changes no branch protection or completion requirement.
+
+### 18.1. Verification results
+
+| Recorded PR commit | Later target commit | Corrected Bash and PowerShell result |
+| --- | --- | --- |
+| Both required trailers | Trailers absent | Accept the recorded commit; the previous lookup incorrectly rejected it |
+| Trailers absent | Both required trailers | Refuse the recorded commit; the previous lookup incorrectly accepted it |
+| Recorded object unavailable | A readable target tip | Refuse without falling back to the target tip |
+
+Both opposite-state cases were run against corrected and previous fragments in both shells, plus the unavailable-object case in both shells: ten fixture checks. Bash syntax and the PowerShell parser also accept all five filled examples. The installed Bash and pwsh executed the checks locally; native Windows CI and actual post-merge cleanup are separate evidence.
+
+Metadata, spelling, whitespace, paragraph/table layout, 913 local references, 522 old anchors and exact source checks pass. All 148 structured decision records validate, with explicit reciprocal supersession for the membership decision. The maintained standard's rendered placeholders remain visible. The new guide's SHA-256 is c91d5dba141d9e90c231542ead4238d6d0abe6d02bcbef1d750a1afd2b9071ab.
+
+The complete fixture and verification records are under /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/approved-review-dispositions. Earlier checkpoint CI does not qualify the corrected head; required current-head CI, independent re-review and Owner acceptance remain outstanding.

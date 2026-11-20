@@ -1,7 +1,7 @@
 ---
 title: "Issue attributes"
 status: draft
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 <a id="2-attributes"></a>
@@ -98,7 +98,7 @@ Declining an issue during triage follows this same contract. Collection closure 
 
 The sweep contract checks open issues for missing Area, missing Evidence of completion except on Scenarios, invalid Severity, Resolution on an open issue, conflicting attribute labels and invalid use of `good first issue`. It also checks classification and collection structure.
 
-Epics and Features are permitted in Backlog and prohibited in Schedules and Scenarios. An issue belongs to at most one managed project across the account and at most one Schedule or Scenario.
+Epics and Features are permitted in Backlog and prohibited in Schedules and Scenarios. An issue has at most one Backlog, Schedule or Scenario home across the account, with a temporary Triage fault row allowed under the [placement rule](../../issue-standards.md#placement). It belongs to at most one Schedule or Scenario.
 
 While a finding remains in a Scenario, the sweep applies only those two collection-structure rules. The other checks wait until the finding moves out and is classified. The [hierarchy](1-hierarchy.md#34-validation-and-sweep) records the unresolved handling of conflicting Scenario and Schedule memberships.
 

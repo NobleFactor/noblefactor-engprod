@@ -1,7 +1,7 @@
 ---
 title: "Issue data model"
 status: draft
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 <a id="issue-data-model--one-hierarchy-its-attributes-and-the-collections-that-order-it"></a>
@@ -87,7 +87,7 @@ Qualification uses the dedicated organization and user sandbox accounts. Install
 
 An issue's repository-qualified key is stable while Step numbers change. Type and parent define its product hierarchy; attributes stay with it across moves. Project fields describe collection placement and order.
 
-A classified issue has one Type, the required parent and attributes. Triage and originating Scenarios provide the defined intake exceptions. A managed issue has at most one project membership across its account.
+A classified issue has one Type, the required parent and attributes. Triage and originating Scenarios provide the defined intake exceptions. A managed issue has at most one Backlog, Schedule or Scenario home across its account; a temporary Triage fault row may coexist with it under the [placement rule](../../issue-standards.md#placement).
 
 Closed status and completion evidence are different facts. A Feature's child work can be closed before its independent checks and lead sign-off are complete. A Scenario is retired when its journey no longer applies; it is not a delivery checklist.
 

@@ -5,7 +5,7 @@ type: Process
 audience: Engineers, agents
 status: Draft
 created: 2026-03-16
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 <a id="pr-script-template"></a>
@@ -305,6 +305,7 @@ jq -e '.state == "MERGED" and .mergedAt != null and .mergeCommit.oid != null' <<
     echo 'The PR is not yet merged. Preserve this state and inspect its queue or delivery status.' >&2
     exit 1
 }
+merge_commit=$(jq -r '.mergeCommit.oid' <<<"${delivery}")
 
 # --- The span: every pull request records its time (rule 11) ---
 #
@@ -446,10 +447,10 @@ git pull --ff-only origin <target>
 git log --oneline -1
 
 # The commit that landed carries both trailers (rule 2), or the script says so and fails.
-landed=$(git log --max-count=1 --format=%B)
+landed=$(git log --max-count=1 --format=%B "${merge_commit}" --)
 
 if ! grep --quiet '^Signed-off-by: ' <<<"${landed}" || ! grep --quiet '^Assisted-by: ' <<<"${landed}"; then
-    echo "the squash commit on <target> lacks Signed-off-by or Assisted-by"
+    echo "the squash commit ${merge_commit} lacks Signed-off-by or Assisted-by"
     exit 1
 fi
 
@@ -473,7 +474,7 @@ git status --short
 The rule numbers are stable references used by the examples.
 
 1. **Stage named files.** Never use `git add -A` or `git add .`.
-2. **Disclose assistance.** Follow the [PR disclosure requirements](../engineering/procedures/pull-request.md#review-boundary). Use the account's maintained PR-body template. End the pre-merge description with human Signed-off-by and Assisted-by naming the submitting agent. The repository squash message uses that title/description, and the second script part verifies the landed trailers. Branch commits have no trailers. Do not add AI co-authorship or promotional footers. Append Time after merge.
+2. **Disclose assistance.** Follow the [PR disclosure requirements](../engineering/procedures/pull-request.md#review-boundary). Use the account's maintained PR-body template. End the pre-merge description with human Signed-off-by and Assisted-by naming the submitting agent. The repository squash message uses that title/description, and the second script part verifies the landed trailers against this PR's recorded full mergeCommit.oid. A later commit on the target cannot stand in for that commit; an unreadable recorded commit stops verification. Branch commits have no trailers. Do not add AI co-authorship or promotional footers. Append Time after merge.
 3. **Preserve literal messages.** Use single-quoted heredocs for Bash commit messages and PR bodies; provide multiline bodies through files. Do not let shell interpolation change the text.
 4. **Verify CI on the published head.** Observe passing required checks for the qualified full head ID. An empty list is not evidence of unconfigured CI. A verified no-check policy or approved conditional result must be recorded in the plan and represented explicitly in the gate. Preserve every required check; stop when evidence is incomplete.
 5. **Check readiness, then stop.** Inspect the head, merge state, review decision and all review conversations. A PR waiting solely for the Owner's review can be ready for that review. Stop for the Owner to review and merge in GitHub. A queued merge is outstanding; verify actual merged state before delivery records. Administrative bypass needs a separate explicit Owner grant.
@@ -999,6 +1000,7 @@ query($owner: String!, $name: String!, $number: Int!) {
         $message = "#$number is not yet merged; inspect its queue or delivery status before recording completion."
         throw (ConvertTo-Refusal -Message $message -Id 'MergeOutstanding' -Category InvalidResult -Target $number)
     }
+    $mergeCommit = [String]$delivery.mergeCommit.oid
 
     # --- The span (rule 11) ---
 
@@ -1107,11 +1109,11 @@ query($owner: String!, $name: String!, $number: Int!) {
 
     # The commit that landed carries both trailers (rule 2), or the script says so and fails.
     $landed = (Invoke-Native -Name git -Operation 'Reading the commit that landed' -ArgumentList 'log', '--max-count=1',
-            '--format=%B').Output
+            '--format=%B', $mergeCommit, '--').Output
 
     if ($landed -notmatch '(?m)^Signed-off-by: ' -or $landed -notmatch '(?m)^Assisted-by: ') {
-        $message = 'The squash commit lacks Signed-off-by or Assisted-by.'
-        throw (ConvertTo-Refusal -Message $message -Id 'TrailersMissing' -Category InvalidResult -Target $sha)
+        $message = "The squash commit $mergeCommit lacks Signed-off-by or Assisted-by."
+        throw (ConvertTo-Refusal -Message $message -Id 'TrailersMissing' -Category InvalidResult -Target $mergeCommit)
     }
 
     $null = Invoke-Native -Name git -Operation 'Reading the clone status' -Narrate -ArgumentList 'status', '--short'

@@ -67,9 +67,9 @@ Carry the previously recorded Handbook consolidation (#420) completion-only book
 
 ## 6. Questions and existing decisions
 
-1. Scenario cleanup is manual until recurring automation is delivered; the Owner approved this interim policy on 2026-11-17, and automation is tracked separately in #593.
+1. The issue-close command removes Scenario finding rows. Remaining cleanup after closure through another path is manual until recurring automation (#593) is delivered; section 6.1 preserves the earlier 2026-11-17 interim decision.
 2. Should the PR script invoke schedule close after the last open step? Apply existing Owner-approval and completion gates; the desired automation remains subject to its recorded decision.
-3. Triage-to-Backlog is a verified current implementation limitation; document the supported interface, with further issue-tooling work coordinated separately by the Owner.
+3. Delivered issue move supports Triage-to-Backlog. Section 6.1 preserves the earlier inspection; current guidance follows the delivered command and regression evidence.
 4. Should the Schedule template follow the form's separate Exit criteria and Evidence of completion sections? Consult the existing forms-as-authority ruling and the preserved Issue forms (#572) decisions before treating this as a new policy question.
 
 Bring genuinely unresolved questions to the Owner individually. Answers already established by adopted rules are applied with their source recorded rather than requested again. Question-dependent passages do not prevent independent skill/index work after plan approval.
@@ -168,7 +168,7 @@ Designs describe the wanted system. Significant system choices and their rationa
 5. Preserve incoming link targets or update their callers with explicit evidence. Put significant system choices and their reasons in decision companions, and delivery progress and transition history in the applicable plans. Preserve the source material when replacing status companions. Refresh the inventory against the integrated Issue verbs work, then update the documentation verifier to cover it and each relocated source block.
 6. After the rewrite, scan for conflicts between our methodology and actual tooling behavior. Record each conflict with its document passage, methodology requirement, observed behavior, effects and proposed correction. Review the findings with the Owner, agree on the resolutions, record the decisions, and correct and verify the affected documents. Track required tooling changes through the issue process, making the remaining gap and any Owner-approved interim workflow explicit.
 7. Review the corrected set separately for writing, arc42 content, retained requirements and cross-document consistency. Record the document and passage for each finding and its resolution. The Owner appoints any independent reviewer; this plan does not grant cross-session contact or delegation.
-8. Run the repository's actual make check and required GitHub checks for the final head. Present the rewrite, coverage evidence and resolved findings for Owner review. Keep the PR a draft until the required review permits it to become ready.
+8. Run the repository's actual make check and required GitHub checks for the final head. Present the rewrite, coverage evidence and resolved findings for Owner review. Keep the PR a draft until the required review permits it to become ready, except for the scoped Owner-approved PR #596 review exception in section 7.22.
 
 The writing-and-review skill (#599) and architecture guidance (#600) remain separate publication tasks. This PR applies the approved primary guidance directly. Their later completion cannot substitute for this PR's writing and architecture reviews.
 
@@ -409,11 +409,25 @@ The independent review of e3e40022c49012f59b91a4cdb8993f6bebaf6596, including PR
 
 Within the approved rewrite, correct decision-footer provenance (R02), Triage-to-Backlog guidance (R04), asynchronous intake placement (R05), User-field capability claims (R06), conditional Scenario cleanup (R08), and the duplicate session-model tail (R09). Preserve decision IDs, source bodies and actual approval evidence; use null for unknown attribution or dates. Verify rendered session-model flow as well as source layout.
 
-Three choices await the Owner: the Triage/home membership policy (R01/M08), narrowing both script examples' trailer verification to this PR's full recorded merge commit ID (R03/M07), and an explicit exception permitting independent review of a non-draft PR before its remaining merge gates are satisfied (R07). Publishing a review candidate supplies no answer to those questions. Do not adopt the pending issue standard, change the preserved script examples or waive the draft gate without the required disposition.
+At the initial review-response checkpoint, three choices awaited the Owner: the Triage/home membership policy (R01/M08), exact merge-commit verification in the examples (R03/M07), and non-draft review before the remaining merge gates (R07). These changes were held for explicit approval; section 7.22 records David Noble's later approvals and their scope.
 
 Verify the corrected set's references, metadata, paragraph/table layout, structured footers and immutable sources. Check command claims against the delivered source and tests. Record the final changed-head checks separately from the passing checks on e3e4002, and retain independent re-review and Owner acceptance as merge requirements. This amendment changes no runtime command, protected branch, issue status or other worker's worktree.
 
 Focused checks pass for the six corrections: 68 ordered decision footers with retained approval evidence and explanations, 69 rewritten Markdown files, 898 local references, 522 preserved anchors, 21 immutable source files, 50 original snapshots, eight amendment snapshots and the exact Owner assignment appendix. The maintained issue standard has only the scoped R06 factual correction; its full replacement remains pending M08. Pandoc renders the session-model page with three tables and all eight main sections in order, without the duplicated tail. Current frontmatter, spelling and whitespace checks pass. These documentation checks do not repeat the unchanged runtime suite or qualify a new CI head; current-head CI and independent re-review remain required. The durable verification record is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/review-596-response/verification.json.
+
+### 7.22. Approved review dispositions
+
+On 2026-11-20, David Noble explicitly approved each of the three dispositions explained in this conversation. The first permits a Triage fault row beside one Backlog, Schedule or Scenario home. The second permits correcting both script examples to inspect this PR's full recorded merge commit ID. The third permits PR #596 to remain non-draft for review while its other requirements are unfinished. These approvals resolve the choices in R01/M08, R03/M07 and R07; they do not accept the final documents or authorize merge.
+
+For R01, replace the maintained issue standard with the corrected review candidate, align every active membership passage and preserve the former hierarchy decision as superseded by HIERARCHY-006. The issue standard owns the rule; architecture summaries and companions explain or reference it. A Triage fault row preserves the issue's home and commitment until triage decides the correction. An explicit move to Triage still follows the command's transfer contract. Multiple Backlog/Schedule/Scenario homes remain a violation. The proposal path becomes a retained reference to the maintained standard and its reviewed source.
+
+For R03, retain the full mergeCommit.oid from the confirmed PR delivery result and pass it to git log in both examples. Verify required trailers on that exact commit even if another worker advances the target. Refuse an unreadable recorded commit. Preserve all unrelated example behavior and the three other executable examples. Exercise the actual Bash and PowerShell lookup/check fragments with opposite trailer states on the recorded merge and a later target commit, plus an unavailable-object case. Use isolated local fixtures, not a live PR or project mutation.
+
+For R07, PR #596 may remain non-draft while these corrections and independent review proceed. This is a scoped exception to section 7.6's draft-state instruction. Required reviews, resolved findings, documented tooling-gap dispositions, final-head CI, Owner acceptance and the full-rewrite merge condition still apply. The exception grants no merge, bypass, issue closure, cleanup, cross-worker communication or other-worktree authority.
+
+Record progress and actual checks in this plan and the rewrite review. The 51-input first pass includes the maintained standard and this active plan's explicit record-maintenance disposition; content reviews and completion remain separate. Preserve all captured source bytes, legacy anchors and established approvals. Publish verified corrections to the existing PR under the current publication workflow; request independent re-review without claiming that the original review has accepted them.
+
+Local verification on 2026-11-20 passed for all 70 rewritten/maintained Markdown outputs, 913 local references, 522 legacy anchors and exact preserved sources. All 148 decision footers across fifteen logs/companions validate, including the explicit HIERARCHY-003/HIERARCHY-006 supersession. The five script examples parse after filling their documented placeholders; the three unrelated examples are unchanged. Ten fixture checks exercise actual Bash/PowerShell fragments: both opposite target/merge trailer states under old and corrected behavior, and refusal of an unavailable recorded object. Current frontmatter, spelling and whitespace checks pass. The durable results are /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/approved-review-dispositions/verification.json and /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/approved-review-dispositions/trailer-regressions.json. Runtime files are unchanged; the fixtures do not establish live cleanup, native Windows operation or current-head CI.
 
 ## 8. Completion milestones
 
@@ -470,7 +484,7 @@ Implementation, Owner review, merge and post-merge verification are required. Co
 - [x] Rewrite the reporting skill and two Git reference guides, preserving examples and recording qualification gaps; complete focused checks.
 - [x] Preserve and verify the completed consolidation plan, map the issue-standard candidate and record substantive membership/capability findings.
 - [x] Record the model-publication approval and complete the command chapter, decision companion and delivery reference; verify sources and shared-policy alignment.
-- [ ] Rewrite all maintained documents for Google writing and arc42 content, preserving their substance and updating related status and reference records.
+- [x] Prepare the first-pass rewrite or explicit record-preservation disposition for all 51 inputs, with Google/arc42 content and retained requirements; final content review remains below.
 - [ ] Scan the rewritten set for conflicts between the methodology and tooling, and record the findings with evidence and proposed corrections.
 - [ ] Review the findings with the Owner, record decisions, and apply and verify the agreed corrections; explicitly track required tooling changes and approved interim handling.
 - [ ] Complete and record the writing, arc42, requirement-preservation and consistency reviews; resolve their findings.
@@ -496,7 +510,7 @@ Implementation, Owner review, merge and post-merge verification are required. Co
 - [x] Record David Noble's 2026-11-19 approval, authoritative home, affected references and verification approach before implementation.
 - [x] Add the canonical convention, dated decision and references from common/reviewer instructions and review templates.
 - [x] Verify YAML order and example provenance, dynamic origin values, links, prose layout, spelling and the separate PR requirements.
-- [ ] Publish through the existing Owner-run PR process after the applicable review and rewrite gates.
+- [x] Publish the convention for independent review in the Owner-authorized candidate at 76a6d91; adoption and merge remain subject to the full rewrite gate.
 
 
 ### 9.9. Structured decision records
@@ -504,7 +518,7 @@ Implementation, Owner review, merge and post-merge verification are required. Co
 - [x] Record the researched proposal, Owner approval, canonical home, affected paths and verification approach before implementation.
 - [x] Define the standard, add the template and references, and restructure the handbook decision log without changing its decisions.
 - [x] Verify decision-body preservation, YAML structure and provenance, known dates, links, metadata, layout and spelling.
-- [ ] Publish through the Owner-run PR process after the applicable rewrite and review gates.
+- [x] Publish the structured decision standard for independent review at 76a6d91, with the remaining companion footers corrected at bfec2fc; final adoption and merge remain gated.
 
 ### 9.10. Independent-review publication
 
@@ -522,7 +536,8 @@ Implementation, Owner review, merge and post-merge verification are required. Co
 
 - [x] Read all nine findings and record the reviewed head, scope and pending Owner choices before corrective edits.
 - [x] Correct and locally verify R02, R04, R05, R06, R08 and R09 within the approved rewrite; independent re-review remains required.
-- [ ] Obtain and record Owner dispositions for R01, R03 and R07, then apply and verify the approved changes.
+- [x] Obtain and record David Noble's 2026-11-20 approvals for R01, R03 and R07 before the dependent changes.
+- [x] Apply and locally verify the approved membership, trailer and review-state corrections; independent re-review remains required.
 - [ ] Publish corrections, obtain independent re-review and satisfy the existing merge requirements.
 
 ## 10. Files and related assets
@@ -565,7 +580,11 @@ On 2026-11-19, the Owner directed: “I want you to commit and push all changes.
 
 On 2026-11-19, after the current changes were pushed, the Owner explicitly approved integrating the newer develop containing PR #612. This authorizes the working-branch merge, required documentation reconciliation, verification and push needed for the requested independent review. It grants no protected-branch merge or issue-closure authority.
 
+On 2026-11-20, David Noble approved all three proposed review dispositions individually after their explanations. Section 7.22 records their scope and verification. These are implementation approvals within the existing rewrite; they neither authorize merge nor waive any completion requirement.
+
 ## 13. Completion review
+
+The six routine review corrections were published at bfec2fcadfb8645b858a86ab143c170ae247ec31. The Owner then approved R01/M08, R03/M07 and R07 on 2026-11-20, and their corrections are locally verified. All 51 inputs have a first-pass disposition; content reviews, independent re-review, remaining tooling-gap handling, final-head CI and Owner acceptance remain required. Both issues stay open and the plan stays active. The PR may remain non-draft only under the scoped section 7.22 exception.
 
 The PR #612 integration passed make check with the incoming executable files and tests unchanged. The resolved command documentation preserves both old and new heading targets. Current documentation metadata and spelling are rechecked after recording this result; independent review and Owner acceptance remain outstanding.
 
@@ -573,4 +592,4 @@ The publication candidate passed make check, including frontmatter, spelling, sh
 
 The initial full-rewrite plan checkpoint was published at cbdc89b9d4eb601b7b5c47eb1202b803a6b45c1c. The Owner approved the merge order and document structure. The six-file disclosure and plan checkpoint is committed at 5a8383ddc1ede02f009a76eaaca1a4fa17a64bdf after its Owner-run make check passed.
 
-The Issue verbs integration is committed as 7b6e64520a6047687fddd28aaf8808b6ff4ce707 after its passing gate. The later PR #610 integration was published in draft PR #596 at 1cba02d4af302b29ba26868ed99e95097b4eeae6. The integrated make check and all four current-head CI checks passed. Progress was recorded on Skill/index update (#581) and Handbook command alignment (#582), and both Schedule rows read back In progress. The run's receipt is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/merge-reconciliation/advance-610/runs/20261119T183441Z/receipt.json. The inventory has 51 documents. The Owner approved the amended plan and directed implementation on 2026-11-19. This checkpoint records that approval. The initial architecture coverage outline and all 51 document dispositions are recorded in the rewrite review. The agent-schedule, issue hierarchy and attribute drafts are prepared; detailed mapping and rewriting of the remaining documents, the substantive reviews and final verification remain open. Keep the PR a draft and both issues open. The Owner merges only after the rewrite's merge condition is satisfied; deployed-content verification, completion approval and cleanup follow.
+Historical checkpoint: the Issue verbs integration is committed as 7b6e64520a6047687fddd28aaf8808b6ff4ce707 after its passing gate. The later PR #610 integration was published in draft PR #596 at 1cba02d4af302b29ba26868ed99e95097b4eeae6. The integrated make check and all four current-head CI checks passed. Progress was recorded on Skill/index update (#581) and Handbook command alignment (#582), and both Schedule rows read back In progress. The run's receipt is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/merge-reconciliation/advance-610/runs/20261119T183441Z/receipt.json. The inventory has 51 documents. The Owner approved the amended plan and directed implementation on 2026-11-19. This checkpoint records that approval. The initial architecture coverage outline and all 51 document dispositions are recorded in the rewrite review. The agent-schedule, issue hierarchy and attribute drafts are prepared; detailed mapping and rewriting of the remaining documents, the substantive reviews and final verification remain open. Keep both issues open; the scoped non-draft review exception in section 7.22 governs PR state. The Owner merges only after the rewrite's merge condition is satisfied; deployed-content verification, completion approval and cleanup follow.

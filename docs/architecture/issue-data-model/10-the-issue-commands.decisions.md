@@ -197,7 +197,7 @@ recorded_at: "2026-11-20T15:55:37Z"
 
 ### 2.6. D-006: open gives the issue no row
 
-**Context and criteria:** An issue is a row of at most one of its account's four projects, and the Triage workflow gives every issue opened a Triage row.
+**Context and criteria:** Intake gives an ordinary new issue its initial Triage row; classification and explicit moves establish its home. The [placement rule](../../issue-standards.md#placement) permits a temporary Triage fault row beside one home. Issue creation and intake still need distinct writers to avoid competing placement.
 
 **Decision:** `open` takes no `--project` or `--status`. The Triage workflow gives the issue its row, and `move` places it from there.
 
@@ -221,7 +221,7 @@ proposed_by: null
 approved_by: David Noble
 recorded_by: Codex
 decided_at: "2026-11-17"
-recorded_at: "2026-11-20T15:55:37Z"
+recorded_at: "2026-11-20T16:19:16Z"
 ```
 
 <a id="d-007"></a>

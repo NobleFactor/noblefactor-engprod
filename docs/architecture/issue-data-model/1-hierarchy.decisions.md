@@ -54,6 +54,8 @@ recorded_at: "2026-11-20T15:55:37Z"
 
 ## 3. Keep one managed project membership
 
+This earlier rule is superseded by [HIERARCHY-006](#6-allow-triage-beside-one-home).
+
 An issue belongs to at most one managed project across its account and one Schedule or Scenario. A move transfers membership and records the destination's fields.
 
 **Reason:** The same issue must not appear committed in two places.
@@ -64,13 +66,14 @@ An issue belongs to at most one managed project across its account and one Sched
 
 ```yaml
 id: "HIERARCHY-003"
-status: accepted
+status: superseded
 supersedes: []
+superseded_by: ["HIERARCHY-006"]
 proposed_by: null
 approved_by: null
 recorded_by: Codex
 decided_at: null
-recorded_at: "2026-11-20T15:55:37Z"
+recorded_at: "2026-11-20T16:19:16Z"
 ```
 
 ## 4. Close Features after independent checks
@@ -96,7 +99,7 @@ recorded_at: "2026-11-20T15:55:37Z"
 
 ## 5. Preserve conflicting-collection evidence
 
-The sweep must detect a Scenario finding that also has another managed project row. Its handling must preserve the evidence and an existing Schedule commitment.
+The sweep must detect a Scenario finding that also has another Backlog, Schedule or Scenario home. A temporary Triage fault row is allowed by HIERARCHY-006. Its handling must preserve the evidence and an existing Schedule commitment.
 
 The owning sweep work must define which records are retained or transferred. This rewrite does not choose that recovery policy or claim it is implemented.
 
@@ -108,5 +111,28 @@ proposed_by: null
 approved_by: null
 recorded_by: Codex
 decided_at: null
-recorded_at: "2026-11-20T15:55:37Z"
+recorded_at: "2026-11-20T16:19:16Z"
+```
+
+## 6. Allow Triage beside one home
+
+An issue has one home at most among Backlog, Schedule and Scenario, and may also have a temporary Triage row while a fault needs a decision. The [issue standard](../../issue-standards.md#placement) owns the rule.
+
+**Context and reasons:** A fault discovered after scheduling should remain visible to triage without erasing the issue's placement or approved commitment. The sweep can flag it while preserving work already underway.
+
+**Alternative:** Count Triage in the one-project limit and require removing the home when a fault is found. That disrupts the commitment before triage has decided the correction.
+
+**Consequences:** Multiple homes remain invalid. The sweep adds a Triage row and reports the fault without removing rows or choosing the repair. Triage removes its temporary row after deciding the correction. An explicit move changes placement under the issue-command contract. Recovery of conflicting homes remains separately specified.
+
+**Evidence:** David Noble approved this disposition on 2026-11-20 after review finding R01. The [execution plan](../../plans/doc/581-schedule-command-consumers.md#722-approved-review-dispositions) records the approval and implementation scope; the [review register](../../engineering/review/rewrite-review.md#18-approved-dispositions-and-corrections) links the finding.
+
+```yaml
+id: "HIERARCHY-006"
+status: accepted
+supersedes: ["HIERARCHY-003"]
+proposed_by: Codex
+approved_by: David Noble
+recorded_by: Codex
+decided_at: "2026-11-20"
+recorded_at: "2026-11-20T16:19:16Z"
 ```

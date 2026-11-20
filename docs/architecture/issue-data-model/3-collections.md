@@ -1,7 +1,7 @@
 ---
 title: "Projects and collections"
 status: draft
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 <a id="3-collections"></a>
@@ -37,7 +37,7 @@ Managed projects have no built-in project workflows. The repository Triage workf
 
 A project row represents one issue. Schedule and Scenario are single-select fields: one option identifies each collection in the corresponding project. A row's option joins it to that collection; its parent link still identifies its place in the product hierarchy.
 
-An issue belongs to at most one managed project across its account and at most one Schedule or Scenario. Epics and Features may be in Triage or Backlog, but not in Schedule or Scenario projects. The collection's own issue is the only non-Task/Bug row in its collection.
+An issue has at most one Backlog, Schedule or Scenario home across its account and at most one Schedule or Scenario. A temporary Triage fault row may coexist with that home under the [placement rule](../../issue-standards.md#placement). Epics and Features may be in Triage or Backlog, but not in Schedule or Scenario projects. The collection's own issue is the only non-Task/Bug row in its collection.
 
 ### 2.1 Schedule steps
 
@@ -55,7 +55,7 @@ Use native blocked-by links for dependencies, not a separate project field conta
 
 A Scenario issue describes an end-user goal, a repeatable walk and the Features exercised. Its other rows are Tasks and Bugs found during that walk. Beat N identifies the Nth numbered step; Beat 0 identifies a finding before the first step. The Scenario issue's own row has no Beat.
 
-Findings retain their origin in the body as `Found while walking #N`. A finding leaves the Scenario when it closes or moves to Triage, Backlog, a Schedule or another Scenario. Preserve the origin and the move record; do not retain a second active project membership.
+Findings retain their origin in the body as `Found while walking #N`. A finding leaves the Scenario when it closes or moves to Triage, Backlog, a Schedule or another Scenario. Preserve the origin and the move record; do not retain a second home. A temporary Triage fault row follows the separate placement rule.
 
 A Scenario changes no finding's Priority. Triage owns classification and Priority. Scenario findings have the [intake and sweep exceptions](1-hierarchy.md#33-scenario-findings), but must be classified before entering a Schedule.
 

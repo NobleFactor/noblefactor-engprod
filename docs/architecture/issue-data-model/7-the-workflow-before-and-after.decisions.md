@@ -69,7 +69,7 @@ recorded_at: "2026-11-20T15:55:37Z"
 
 ## 4. Preserve discovery without duplicate commitment
 
-Keep a finding's Scenario origin after moving it into delivery work, while maintaining one managed project membership.
+Keep a finding's Scenario origin after moving it into delivery work, while maintaining one Backlog, Schedule or Scenario home. A temporary Triage fault row follows the [membership decision](1-hierarchy.decisions.md#6-allow-triage-beside-one-home).
 
 **Reason:** The testing walk explains why the work exists but is not a second active delivery queue.
 
@@ -83,7 +83,7 @@ proposed_by: null
 approved_by: null
 recorded_by: Codex
 decided_at: null
-recorded_at: "2026-11-20T15:55:37Z"
+recorded_at: "2026-11-20T16:19:16Z"
 ```
 
 ## 5. Separate closure from completion evidence
