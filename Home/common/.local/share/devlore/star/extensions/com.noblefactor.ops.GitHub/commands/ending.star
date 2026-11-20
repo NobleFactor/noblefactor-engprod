@@ -23,9 +23,11 @@ load(
     "close_issue",
     "closing_of",
     "comment",
+    "current",
     "issue",
     "issue_fields",
     "issue_state",
+    "lifecycle",
     "option_of",
     "parse_key",
     "project_of",
@@ -60,6 +62,10 @@ _LEVELS = [2, 3]
 _IN_PROGRESS = "In progress"
 _OPEN = "Open"
 _EVERY_STEP = "^[Ee]very (other )?steps? "
+
+# The opening words of a reopening's comment, star github issue reopen's or schedule reopen's, by which a second run
+# knows the schedule's current reopening already has one (#609).
+_REOPENED = "Reopened by `star github "
 
 # GitHub's reasons an issue closed, as a step's How it closed names them when it has no Resolution.
 _REASONS = {"completed": "Completed", "not_planned": "Not planned", "duplicate": "Duplicate"}
@@ -240,26 +246,49 @@ def schedule_reopening(key, model):
             text = line["text"]
             at = text.find("[")
             body = body[:line["start"]] + text[:at] + "[ ]" + text[at + 3:] + body[line["text_end"]:]
-    return {"sched": sched, "body": body, "criteria": [c["text"] for c in every]}, ""
+
+    # What a reopening still has to write, so that a schedule reopened partway is finished, and one reopened whole is
+    # left as it is (#609): the comment, unless its history since it last closed holds a reopening's; and its own row,
+    # when it is Closed, which only a closing sets, or has no Status, which a stopped run leaves, or, for a schedule that
+    # has closed before, is anything but In progress (H-F03, Codex's review of PR #612). A schedule that has never closed
+    # keeps the Status its opening gave it.
+    events = lifecycle(own)
+    closed = own["state"] == "closed" or len([e for e in events if e["kind"] in ["closed", "reopened"]]) > 0
+    told = [e for e in current(events, "closed") if e["kind"] == "comment" and e["body"].startswith(_REOPENED)]
+    return {
+        "sched": sched,
+        "body": body,
+        "criteria": [c["text"] for c in every],
+        "comment": closed and not told,
+        "row": own["state"] == "closed" or sched["own_status"] in [_CLOSED, None, ""] or (closed and sched["own_status"] != _IN_PROGRESS),
+    }, ""
+
+def schedule_unfinished(plan):
+    """Whether a schedule, as schedule_reopening read it, has anything of its reopening left to write (#609)."""
+    return plan["sched"]["issue"]["state"] == "closed" or plan["comment"] or plan["row"] or plan["body"] != None
 
 def reopen_schedule(plan, body):
     """A closed schedule reopened as schedule_reopening read it, with its comment, each write read back: its record.
 
     In section 10's order: the Schedule issue reopened with its comment, its own row In progress, and its every-step
-    criterion unticked. The option was never removed, so the schedule's past rows are under it still.
+    criterion unticked. The option was never removed, so the schedule's past rows are under it still. Each is written
+    only if plan says it is left to write, so a schedule reopened partway is finished (#609).
     """
     sched = plan["sched"]
     own = sched["issue"]
     project = sched["project"]
-    reopen_issue(own)
-    if issue_state(own)["state"] != "open":
-        fail(own["key"] + " does not read back open after it was reopened")
-    note("reopened " + own["key"])
-    comment(own, body)
-    note("commented on " + own["key"])
-    set_option(project, sched["own_item"], _STATUS_FIELD, option_of(project, _STATUS_FIELD, _IN_PROGRESS))
-    reads_back(sched["own_item"], {"project": project["id"], "schedule": sched["option"]["name"], "status": _IN_PROGRESS}, own["key"])
-    note("set " + own["key"] + "'s own row on " + project["title"] + " " + _IN_PROGRESS)
+    if own["state"] == "closed":
+        reopen_issue(own)
+        if issue_state(own)["state"] != "open":
+            fail(own["key"] + " does not read back open after it was reopened")
+        note("reopened " + own["key"])
+    if plan["comment"]:
+        comment(own, body)
+        note("commented on " + own["key"])
+    if plan["row"]:
+        set_option(project, sched["own_item"], _STATUS_FIELD, option_of(project, _STATUS_FIELD, _IN_PROGRESS))
+        reads_back(sched["own_item"], {"project": project["id"], "schedule": sched["option"]["name"], "status": _IN_PROGRESS}, own["key"])
+        note("set " + own["key"] + "'s own row on " + project["title"] + " " + _IN_PROGRESS)
     if plan["body"] != None:
         write_body(own, plan["body"], "its exit criteria unticked")
         note("unticked " + own["key"] + "'s exit criterion: " + "; ".join(plan["criteria"]))

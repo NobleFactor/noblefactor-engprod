@@ -5,7 +5,7 @@ issues:
   - https://github.com/NobleFactor/noblefactor-engprod/issues/608
   - https://github.com/NobleFactor/noblefactor-engprod/issues/606
   - https://github.com/NobleFactor/noblefactor-engprod/issues/607
-status: active
+status: complete
 created: 2026-11-19
 updated: 2026-11-19
 documents:
@@ -109,10 +109,10 @@ Section 6 of the issue data model, § what an account needs beyond its model, ga
 
 | Milestone | Required? | Expected evidence | State/result |
 | --- | --- | --- | --- |
-| Implementation | Yes | The cases, `make check`, review | Cases 171 to 174 pass, 545 of 545, and those of 171 to 173 fail without their fixes (2026-11-19); `make check` and review pending |
-| Merge | Yes | The pull request, merged by the owner in GitHub | Pending |
-| Deployment | Yes: the setting reaches each repository only through `apply` | `writ deploy`, then `model apply` for NobleFactor and David-Noble-at-work | Pending |
-| Verification | Yes | `diff` showing no difference; a merge in GitHub carrying both trailers | Pending |
+| Implementation | Yes | The cases, `make check`, review | Cases 171 to 174 pass, 545 of 545, and those of 171 to 173 fail without their fixes; `make check` passed in each run of the PR script; the owner reviewed PR #610 (2026-11-19) |
+| Merge | Yes | The pull request, merged by the owner in GitHub | PR #610, merged by the owner in GitHub as 9bf246b, 2026-11-19 |
+| Deployment | Yes: the setting reaches each repository only through `apply` | `writ deploy`, then `model apply` for NobleFactor and David-Noble-at-work | Done 2026-11-19: six repositories set and read back, and noblefactor-engprod set by the PR script before its merge |
+| Verification | Yes | `diff` showing no difference; a merge in GitHub carrying both trailers | Done 2026-11-19: 9bf246b carries both trailers, and `model diff` finds no difference in either account |
 
 <a id="implementation-phases"></a>
 
@@ -132,9 +132,9 @@ Section 6 of the issue data model, § what an account needs beyond its model, ga
 
 ### 9.3 Phase 3: the merge, the deployment and the verification
 
-- [ ] The pull request merged by the owner in GitHub
-- [ ] `writ deploy`, then `model diff` and `apply` for both accounts, each read back
-- [ ] A merge in GitHub whose landed commit carries both trailers; the issue closed with its evidence on the owner's approval
+- [x] The pull request merged by the owner in GitHub: PR #610, as 9bf246b, 2026-11-19
+- [x] `writ deploy`, then `model diff` and `apply` for both accounts, each read back: 2026-11-19
+- [x] A merge in GitHub whose landed commit carries both trailers; the issue closed with its evidence on the owner's approval: 9bf246b; the issues closed by its closing keywords, their evidence posted 2026-11-19
 
 <a id="files-and-related-assets"></a>
 
@@ -175,4 +175,4 @@ Departure, 2026-11-19: PR #610's second run passed CI, then stopped at the merge
 
 ## 13. Completion review
 
-Pending.
+Complete 2026-11-19. The owner merged PR #610 in GitHub as [9bf246b](https://github.com/NobleFactor/noblefactor-engprod/commit/9bf246b4c074550c03b842bce5111e33ba34800e), which ends with both trailers; its closing keywords closed #605, #608, #606 and #607, each row showing #610 in its Linked pull requests. After `writ deploy`, `model apply` set every participating repository in both accounts, the four By schedule views were sorted by hand, `model diff` found no difference in either account, and `model backup` landed NobleFactor/.github#23 and David-Noble-at-work/.github#18, each with both trailers. The evidence: [#605](https://github.com/NobleFactor/noblefactor-engprod/issues/605#issuecomment-7017549875), [#608](https://github.com/NobleFactor/noblefactor-engprod/issues/608#issuecomment-7017550431), [#606](https://github.com/NobleFactor/noblefactor-engprod/issues/606#issuecomment-7017550829) and [#607](https://github.com/NobleFactor/noblefactor-engprod/issues/607#issuecomment-7017551308). Outstanding: none; Task #609, which #607's correction surfaced, is the next step of #588.

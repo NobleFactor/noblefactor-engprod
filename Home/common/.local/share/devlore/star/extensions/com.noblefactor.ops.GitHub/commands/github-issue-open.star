@@ -17,11 +17,13 @@
 #      group's open; a parent at the wrong level; a body without a section the form requires, or without its Plan and
 #      design documents table; a --severity on any type but Bug; a directory that is no clone; and a repository that
 #      takes no part.
-#   4. With unique, the parent's sub-issues, open and closed, looked through for the title: one found, nothing opened.
-#   5. The issue opened in one call, GitHub's createIssue: its type, its parent, its assignee, and its Area, Priority and
+#   4. The issue opened in one call, GitHub's createIssue: its type, its parent, its assignee, and its Area, Priority and
 #      Severity, the issue fields in an organization, the labels that stand in for them in a user account.
-#   6. Its row left to the Triage workflow, which gives every issue opened its Triage row (ruled 2026-11-17).
-#   7. Everything read back.
+#   5. Its row left to the Triage workflow, which gives every issue opened its Triage row (ruled 2026-11-17).
+#   6. Everything read back.
+#
+# open checks for no duplicate (D-014, #609): each run opens a new issue, which is what it is for. A template whose
+# header names unique, which open no longer takes, is refused, as any header open doesn't take is.
 #
 # Priority is Medium unless given; a bug's Severity is Medium unless given, as the Triage workflow starts one, and every
 # other type's N/A; no one is assigned unless --assignee names someone (each ruled 2026-11-17).
@@ -45,8 +47,8 @@ _MEDIUM = "Medium"
 _NA = "N/A"
 _BUG = "Bug"
 _GROUPS = {"Schedule": "schedule", "Scenario": "scenario"}
-_HEADER = ["type", "parent", "title", "area", "priority", "severity", "assignee", "unique"]
-_FLAGS = ["type", "parent", "title", "body-file", "area", "priority", "severity", "assignee", "unique"]
+_HEADER = ["type", "parent", "title", "area", "priority", "severity", "assignee"]
+_FLAGS = ["type", "parent", "title", "body-file", "area", "priority", "severity", "assignee"]
 
 # A blank: {name}, a letter then letters, digits, - and _; a shell's ${name} is no blank.
 _BLANK = "(\\$?)\\{([A-Za-z][A-Za-z0-9_-]*)\\}"
@@ -214,18 +216,6 @@ def _user(login):
     """A GitHub user's node ID, or "" when there is none."""
     return _call("query starStepUser { user(login: \"" + login + "\") { id } }", {}, ".data.user.id // \"\"")
 
-def _sibling(parent, title):
-    """The key of the parent's sub-issue, open or closed, titled title exactly; "" when it has none."""
-    k = parse_key(parent)
-    query = ("query starStepSubIssues { repository(owner: \"" + k["owner"] + "\", name: \"" + k["name"] + "\") { issue(number: " +
-             str(k["number"]) + ") { subIssues(first: 100) { nodes { number title repository { nameWithOwner } } } } } }")
-    for n in json.decode(data = _call(query, {}, ".data.repository.issue.subIssues.nodes") or "[]") or []:
-        if n.get("title") == title:
-            return canonical_repo(n["repository"]["nameWithOwner"]) + "#" + str(int(n["number"]))
-    return ""
-
-# ── open ────────────────────────────────────────────────────────────────────
-
 def _given(ctx):
     """What the issue is to be, from --template and --set, or from the flags: its header's values and its body."""
     template = (ctx.args.get("template") or "").strip()
@@ -240,8 +230,7 @@ def _given(ctx):
         path = ctx.args.get("body-file").strip()
         if not _exists(path):
             fail("--body-file names " + path + ", which is missing or empty")
-        values = {k: (ctx.args.get(k) or "").strip() for k in _HEADER if k != "unique"}
-        values["unique"] = ctx.args.get("unique") in [True, "true"]
+        values = {k: (ctx.args.get(k) or "").strip() for k in _HEADER}
         return values, read_text(path).replace("\r\n", "\n")
     if flagged:
         fail("--template takes no flag but --set and --directory: " + ", ".join(["--" + f for f in flagged]) + " given")
@@ -254,22 +243,19 @@ def _given(ctx):
     values = {}
     for k in _HEADER:
         v = header.get(k)
-        if k == "unique":
-            values[k] = v == True
-        else:
-            values[k] = _fill(str(v).strip(), filled, missing) if v != None else ""
+        values[k] = _fill(str(v).strip(), filled, missing) if v != None else ""
     body = _fill(body, filled, missing)
     if missing:
         fail("a blank is left unfilled: " + ", ".join(["{" + m + "}" for m in sorted(missing.keys())]) + "; --set fills each")
     return values, body
 
 def run(_command, ctx):
-    """Check the flags and gh's access, read everything, then open the issue, unless unique finds it, and read it back.
+    """Check the flags and gh's access, read everything, then open the issue, and read it back.
 
     Args:
       _command: the command as star names it.
       ctx: the invocation: ctx.args carries --template with --set, or --type, --parent, --title, --body-file, --area,
-        --priority, --severity, --assignee and --unique; and --directory; ctx.dry_run, star's --dry-run, which open
+        --priority, --severity and --assignee; and --directory; ctx.dry_run, star's --dry-run, which open
         refuses until NobleFactor/devlore-cli#1170 lets a dry run read.
     """
     refuse_dry_run(ctx.dry_run)
@@ -324,8 +310,6 @@ def run(_command, ctx):
             if parent["type"] not in [h["name"] for h in above]:
                 refused.append(pk["key"] + " is " + ("of type " + parent["type"] if parent["type"] else "of no type") +
                                ": " + _a(kind) + "'s parent is " + " or ".join([_a(h["name"]) for h in above]))
-    if values["unique"] and values["parent"] == "":
-        refused.append("unique looks through the parent's sub-issues, and the issue has no parent")
     classes = _classes(model, t, values, refused)
     faults = _body_faults(body, _required(model, kind, refused))
     if faults:
@@ -356,11 +340,6 @@ def run(_command, ctx):
         "severity": values["severity"],
         "assignee": values["assignee"] or None,
     }
-    if values["unique"]:
-        found = _sibling(parent["key"], values["title"])
-        if found != "":
-            note(parent["key"] + " already holds " + found + ", titled " + values["title"] + "; nothing was opened")
-            return [dict(record, issue = found, action = "found")]
 
     # The issue, in one call: its type, its parent, its assignee, and its fields or its labels.
     given = {"repositoryId": held["id"], "title": values["title"], "body": body}

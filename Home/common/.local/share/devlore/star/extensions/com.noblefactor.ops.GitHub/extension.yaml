@@ -279,10 +279,6 @@ commands:
         type: string
         default: ""
         help: "Who it is assigned to; default: no one"
-      - name: unique
-        type: bool
-        default: "false"
-        help: "Open nothing when the parent already holds a sub-issue, open or closed, with the same title, and say so"
       - name: directory
         type: string
         default: ""
@@ -332,10 +328,6 @@ commands:
         type: string
         default: ""
         help: "Who it is assigned to; default: no one"
-      - name: unique
-        type: bool
-        default: "false"
-        help: "Open nothing when the parent already holds a sub-issue, open or closed, with the same title, and say so"
       - name: directory
         type: string
         default: ""

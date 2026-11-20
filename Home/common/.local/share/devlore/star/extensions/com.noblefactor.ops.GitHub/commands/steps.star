@@ -166,7 +166,14 @@ def _collection_read(key, model, kind, number, closed, reading):
     option = [o for o in project["fields"][kind]["options"] if o["name"] == rows[0][attr]]
     if len(option) != 1:
         return None, project["title"] + " has no " + kind + " option named " + rows[0][attr]
-    return {"issue": own, "project": project, "option": option[0], "own_item": rows[0]["item"], "field": kind}, ""
+    return {
+        "issue": own,
+        "project": project,
+        "option": option[0],
+        "own_item": rows[0]["item"],
+        "own_status": rows[0]["status"],
+        "field": kind,
+    }, ""
 
 def _collection(key, model, kind, number, closed, reading):
     """A schedule or a scenario: its own issue, its team's project of kind with its fields, and its option.
@@ -586,6 +593,54 @@ def comment(own, body):
     if made == "" or made == "null":
         fail("the comment on " + own["key"] + " was not made")
     return made
+
+# The pages lifecycle reads at most, 100 events each, before it says the history is too long to read.
+_HISTORY_PAGES = 50
+
+# GitHub's timeline items that make an issue's history, by the kind lifecycle gives each.
+_HISTORY_KINDS = {"IssueComment": "comment", "ClosedEvent": "closed", "ReopenedEvent": "reopened"}
+
+def lifecycle(own):
+    """An issue's comments, and its close and reopen events, oldest first, every page of them (#609).
+
+    Each is {kind, at, body}: kind is "comment", "closed" or "reopened"; at is GitHub's time for it, which sorts as text;
+    body is a comment's text, and "" for an event. A comment that a run made and whose answer was lost is among them.
+    """
+    query = ("query starStepLifecycle($s: ID!, $a: String) { node(id: $s) { ... on Issue { timelineItems(first: 100, " +
+             "after: $a, itemTypes: [ISSUE_COMMENT, CLOSED_EVENT, REOPENED_EVENT]) { pageInfo { hasNextPage endCursor } " +
+             "nodes { __typename ... on IssueComment { body createdAt } ... on ClosedEvent { createdAt } " +
+             "... on ReopenedEvent { createdAt } } } } } }")
+    events, after = [], None
+    for _ in range(_HISTORY_PAGES):
+        variables = {"s": own["id"]}
+        if after != None:
+            variables["a"] = after
+        page = json.decode(data = _call(query, variables, ".data.node.timelineItems") or "null")
+        if type(page) != "dict":
+            fail("the history of " + own["key"] + " was not read")
+        for n in page.get("nodes") or []:
+            kind = _HISTORY_KINDS.get(n.get("__typename"))
+            if kind != None:
+                events.append({"kind": kind, "at": n.get("createdAt") or "", "body": n.get("body") or ""})
+        info = page.get("pageInfo") or {}
+        if not info.get("hasNextPage"):
+            return events
+        after = info.get("endCursor")
+    fail("the history of " + own["key"] + " runs past " + str(_HISTORY_PAGES) + " pages of 100")
+
+def current(events, since):
+    """The events of an issue's current close or reopen: those after its last event of kind since, or all of them.
+
+    close looks since the issue last reopened, since its comment comes before the issue closes; reopen looks since the
+    issue last closed, since its comment comes after the issue reopens.
+    """
+    at = [i for i in range(len(events)) if events[i]["kind"] == since]
+    return events[at[-1] + 1:] if at else events
+
+def last_at(events, kind):
+    """The time of an issue's last event of kind, or "" when it has none."""
+    found = [e["at"] for e in events if e["kind"] == kind]
+    return found[-1] if found else ""
 
 def with_line(body, line):
     """A body with line written just above its Plan and design documents heading, or at its end, a blank line around it.
