@@ -4257,13 +4257,16 @@ check "131 (#587): #12 is open, its resolution:duplicate label gone, its task la
     '(.issues.I_personal_12 | [.state, .labels]) == ["OPEN", ["task"]]
         and (.projects.PVT_t_user.items[] | select(.content == "I_personal_12") | .values.Status) == "Open"'
 
-# 132 (#587). An issue already open is not reopened again, its rows left as they are, but its closed feature is
-# reopened, and, with no row, given a Triage row; and one with nothing closed about it is unchanged, nothing written.
+# 132 (#587, #609). An issue already open is not reopened again, its rows left as they are, but its closed feature is
+# reopened, and, with no row, given a Triage row; its epic, open but with no row, is given one too, with no comment,
+# since it has never closed (D-013); and one with nothing closed about it is unchanged, nothing written.
 world "${closed_parents}"' | .issues.I_alpha_22.parent = "I_alpha_60" | .issues.I_alpha_61.state = "OPEN"'
 run_star "${data}" github issue reopen NobleFactor/alpha#22 --reason "R."
-expect "132 (#587): #22, open, has its closed feature #60 reopened and put in Triage, and nothing else" ok \
-    'map([.action, .issue, .for]) == [["reopened", "NobleFactor/alpha#60", "NobleFactor/alpha#22"],
-        ["triaged", "NobleFactor/alpha#60", null]]'
+expect "132 (#587): #22, open, has its closed feature #60 reopened and put in Triage, and its open epic #61 a Triage row" ok \
+    'map([.action, .issue, .for, .already]) == [["reopened", "NobleFactor/alpha#60", "NobleFactor/alpha#22", null],
+        ["triaged", "NobleFactor/alpha#60", null, null], ["reopened", "NobleFactor/alpha#61", "NobleFactor/alpha#22", true],
+        ["triaged", "NobleFactor/alpha#61", null, null]]'
+check "132 (#609): #61, never closed, gets no comment" world_holds '(.issues.I_alpha_61.comments // []) == []'
 check "132 (#587): #22 is not reopened again, and gets no comment" world_holds '(.issues.I_alpha_22.comments // []) == []'
 world
 run_star "${data}" github issue reopen NobleFactor/alpha#24 --reason "R."
@@ -5014,6 +5017,117 @@ check "183 (#609): #12 carries resolution:duplicate alone, and a comment on the 
     '(.issues.I_personal_12.labels | (index("resolution:invalid") == null) and (index("resolution:duplicate") != null))
         and (.issues.I_personal_12.comments[1] | startswith("Resolution changed by `star github issue close`")
             and endswith("from Invalid to Duplicate: The same as #11."))'
+
+# 184 to 191 (#609). reopen is idempotent (D-013): run again, it ends where one complete run would have ended, on the
+# issue, its parents and its schedule, with one comment on each, and an issue with nothing left to do is unchanged.
+# reopen_world is case 129's: #21, a closed step of s1 with Resolution Declined, under the closed feature #60 and epic
+# #61, and s1 closed with its every-step criterion ticked; each closed as GitHub's history records it.
+declare -r reopen_world="${closed_parents}"'
+    | .issues.I_alpha_21 += {fields: {Resolution: "Declined"}, parent: "I_alpha_60"}
+    | .issues.I_alpha_20.state = "CLOSED"
+    | .issues.I_alpha_20.body = ("## Exit criteria\n\n- [x] Every step closed, or moved to a later schedule by amendment\n"
+        + "- [x] Triage holds only issues that await a decision\n\n" + .issues.I_alpha_20.body)
+    | (.projects.PVT_s_eng.items[] | select(.content == "I_alpha_20") | .values.Status) = "Closed"
+    | reduce ("I_alpha_20", "I_alpha_21", "I_alpha_60", "I_alpha_61") as $id (.; .issues[$id].timeline = [{kind: "closed", at: 0, body: ""}])'
+declare -r reopened_whole='(.issues.I_alpha_21 | [.state, (.fields.Resolution // null), (.comments | length)]) == ["OPEN", null, 1]
+    and (.projects.PVT_s_eng.items[] | select(.content == "I_alpha_21") | .values.Status) == "Open"
+    and ([.issues.I_alpha_60, .issues.I_alpha_61] | all(.state == "OPEN" and (.comments | length) == 1))
+    and ([.projects.PVT_t_eng.items[] | select(.content == "I_alpha_60" or .content == "I_alpha_61") | .values.Status] == ["Open", "Open"])
+    and .issues.I_alpha_20.state == "OPEN" and (.issues.I_alpha_20.comments | length) == 1
+    and (.projects.PVT_s_eng.items[] | select(.content == "I_alpha_20") | .values.Status) == "In progress"
+    and (.issues.I_alpha_20.body | startswith("## Exit criteria\n\n- [ ] Every step closed"))'
+
+# 184. Stopped after #21's reopening, when its Resolution's clearing fails: a second run clears it, writes #21's comment
+# once, and finishes the rest.
+world "${reopen_world}"' | .fail_on = "starStepClearField"'
+run_star "${data}" github issue reopen NobleFactor/alpha#21 --reason "Not done after all."
+expect "184 (#609): reopen stops when #21's Resolution's clearing fails, after its reopening" error 'true' "in clear_resolution" text
+run_star "${data}" github issue reopen NobleFactor/alpha#21 --reason "Not done after all."
+expect "184 (#609): run again, reopen finishes #21, already open, and the rest" ok \
+    '.[0] | [.action, .issue, .resolution_cleared, .already] == ["reopened", "NobleFactor/alpha#21", "Declined", true]'
+check "184 (#609): everything is reopened once, each with one comment" world_holds "${reopened_whole}"
+
+# 185. Stopped after #21's comment, when its row's write fails: a second run sets the row and writes no second comment.
+world "${reopen_world}"' | .fail_on = "starStepSetOption"'
+run_star "${data}" github issue reopen NobleFactor/alpha#21 --reason "Not done after all."
+expect "185 (#609): reopen stops when #21's row's write fails, after its comment" error 'true' "in set_option" text
+run_star "${data}" github issue reopen NobleFactor/alpha#21 --reason "Not done after all."
+expect "185 (#609): run again, reopen sets #21's row Open, writing #21 no second comment" ok \
+    '.[0:2] | map([.action, .issue, .already]) == [["reopened", "NobleFactor/alpha#21", true], ["row-opened", "NobleFactor/alpha#21", null]]'
+check "185 (#609): everything is reopened once, each with one comment" world_holds "${reopened_whole}"
+
+# 186. Stopped after the feature #60's comment, when its Triage row's write fails: a second run gives #60 its row and no
+# second comment, and finishes the rest.
+world "${reopen_world}"' | .fail_on = "starStepAddRow"'
+run_star "${data}" github issue reopen NobleFactor/alpha#21 --reason "Not done after all."
+expect "186 (#609): reopen stops when #60's Triage row fails, after #60's comment" error 'true' "in put_open" text
+run_star "${data}" github issue reopen NobleFactor/alpha#21 --reason "Not done after all."
+expect "186 (#609): run again, reopen gives #60 its Triage row and reopens #61 and s1, #21 needing nothing" ok \
+    'map([.action, .issue]) == [["reopened", "NobleFactor/alpha#60"], ["triaged", "NobleFactor/alpha#60"],
+        ["reopened", "NobleFactor/alpha#61"], ["triaged", "NobleFactor/alpha#61"], ["reopened", "NobleFactor/alpha#20"]]'
+check "186 (#609): everything is reopened once, each with one comment" world_holds "${reopened_whole}"
+
+# 187. Stopped after s1's comment, when its own row's write fails: a second run sets s1's row In progress and unticks
+# its criterion, writing it no second comment.
+world "${reopen_world}"' | .fail_on = "starStepSetOption" | .fail_skip = 3'
+run_star "${data}" github issue reopen NobleFactor/alpha#21 --reason "Not done after all."
+expect "187 (#609): reopen stops when s1's own row fails, after s1's comment" error 'true' "in set_option" text
+run_star "${data}" github issue reopen NobleFactor/alpha#21 --reason "Not done after all."
+expect "187 (#609): run again, reopen finishes s1 alone, already open, its criterion unticked" ok \
+    'map([.action, .issue, .already]) == [["reopened", "NobleFactor/alpha#20", true]]
+        and .[0].criteria_unticked == ["Every step closed, or moved to a later schedule by amendment"]'
+check "187 (#609): everything is reopened once, each with one comment" world_holds "${reopened_whole}"
+
+# 188. #21 reopened on GitHub's page, which reopens only the issue: reopen clears its Resolution, sets its row Open, and
+# writes its comment, since its history since it last closed holds none.
+world '.issues.I_alpha_21 += {state: "OPEN", stateReason: null, fields: {Resolution: "Declined"}, timeline: [{kind: "closed", at: 0, body: ""}, {kind: "reopened", at: 0, body: ""}]}
+    | (.projects.PVT_s_eng.items[] | select(.content == "I_alpha_21") | .values.Status) = "Closed"'
+run_star "${data}" github issue reopen NobleFactor/alpha#21 --reason "Reopened on its page."
+expect "188 (#609): an issue reopened on GitHub's page has its Resolution cleared and its row set Open" ok \
+    'map([.action, .issue, .resolution_cleared, .already]) == [["reopened", "NobleFactor/alpha#21", "Declined", true],
+        ["row-opened", "NobleFactor/alpha#21", null, null]]'
+check "188 (#609): #21 has no Resolution, its row is Open, and it holds one comment" world_holds \
+    '(.issues.I_alpha_21 | [(.fields.Resolution // null), (.comments | length)]) == [null, 1]
+        and (.projects.PVT_s_eng.items[] | select(.content == "I_alpha_21") | .values.Status) == "Open"'
+
+# 189. An open issue that has never closed, with no row: reopen gives it a Triage row, and writes no comment.
+world '.issues.I_alpha_70 = {id: "I_alpha_70", repo: "NobleFactor/alpha", number: 70, title: "a task on no board",
+    state: "OPEN", type: "Task", labels: [], assignees: [], blockedBy: [], body: ""}'
+run_star "${data}" github issue reopen NobleFactor/alpha#70 --reason "On no board."
+expect "189 (#609): an open issue on no board gets a Triage row" ok \
+    'map([.action, .issue, .project]) == [["reopened", "NobleFactor/alpha#70", null], ["triaged", "NobleFactor/alpha#70", "Triage: engprod"]]'
+check "189 (#609): #70, never closed, gets no comment" world_holds '(.issues.I_alpha_70.comments // []) == []'
+
+# 190. Run again after a complete run: nothing is left, so reopen writes nothing.
+world "${reopen_world}"
+run_star "${data}" github issue reopen NobleFactor/alpha#21 --reason "Not done after all."
+run_star "${data}" github issue reopen NobleFactor/alpha#21 --reason "Not done after all."
+expect "190 (#609): run again after a complete run, reopen writes nothing" ok "${no_writes}"' and map(.action) == ["unchanged"]'
+
+# 191. In a user account, stopped after removing one of two resolution: labels: a second run removes the other, and
+# writes the comment once.
+world '.issues.I_personal_12 |= (.state = "CLOSED" | .stateReason = "COMPLETED"
+        | .labels += ["resolution:invalid", "resolution:duplicate"] | .timeline = [{kind: "closed", at: 0, body: ""}])
+    | .fail_on = "restRemoveLabel" | .fail_skip = 1'
+run_star "${data}" github issue reopen test-user/personal#12 --reason "Not a duplicate."
+expect "191 (#609): reopen stops when its second label's removal fails" error 'true' "in clear_resolution" text
+run_star "${data}" github issue reopen test-user/personal#12 --reason "Not a duplicate."
+expect "191 (#609): run again, reopen removes the other label, #12 already open" ok \
+    '.[0] | [.action, .issue, .already] == ["reopened", "test-user/personal#12", true]'
+check "191 (#609): #12 carries no resolution: label, and holds one comment" world_holds \
+    '([.issues.I_personal_12.labels[] | select(startswith("resolution:"))] == []) and (.issues.I_personal_12.comments | length) == 1'
+
+# 192. Stopped between adding #60's Triage row and setting its Status: a second run finds the row without a Status and
+# sets it Open, writing #60 no second comment, and finishes the rest. Each Status write is the stand-in's
+# starStepSetOption: #21's row first, then #60's new Triage row.
+world "${reopen_world}"' | .fail_on = "starStepSetOption" | .fail_skip = 1'
+run_star "${data}" github issue reopen NobleFactor/alpha#21 --reason "Not done after all."
+expect "192 (#609): reopen stops when #60's new Triage row's Status fails" error 'true' "in set_option" text
+run_star "${data}" github issue reopen NobleFactor/alpha#21 --reason "Not done after all."
+expect "192 (#609): run again, reopen sets #60's row without a Status Open, and reopens #61 and s1" ok \
+    'map([.action, .issue, .already]) == [["reopened", "NobleFactor/alpha#60", true], ["row-opened", "NobleFactor/alpha#60", null],
+        ["reopened", "NobleFactor/alpha#61", null], ["triaged", "NobleFactor/alpha#61", null], ["reopened", "NobleFactor/alpha#20", null]]'
+check "192 (#609): everything is reopened once, each with one comment" world_holds "${reopened_whole}"
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"

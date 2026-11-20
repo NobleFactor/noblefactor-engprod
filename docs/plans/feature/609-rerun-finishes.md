@@ -182,7 +182,7 @@ Each commit that changes a command's behavior also changes section 10, its decis
 
 ### 9.4 Phase 4: `reopen`
 
-- [ ] `reopen` idempotent for the issue, its parents, and its schedules, with its tests; section 10's § Reopening an issue and D-011.
+- [x] `reopen` idempotent for the issue, its parents, and its schedules, with its tests; section 10's § Reopening an issue and D-011. Cases 132 and 184 to 192 pass, with 594 of 594 on 2026-11-19; without the fix, 132, 184 to 189, 191 and 192 fail, and 190, whose old behavior was already to write nothing on an open issue, passes. D-013 covers `reopen`, and section 8 says a schedule reopened partway is finished.
 
 ### 9.5 Phase 5: `open`
 

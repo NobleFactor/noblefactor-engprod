@@ -22,7 +22,7 @@ Companion to [10. The issue commands](10-the-issue-commands.md). It records the 
 | [D-010](#d-010) | `close` closes no parent | Accepted | [Closing an issue](10-the-issue-commands.md#closing-an-issue-close) |
 | [D-011](#d-011) | `reopen` reopens the issue's closed parents and schedules, and gives an issue with no row a Triage row | Accepted | [Reopening an issue](10-the-issue-commands.md#reopening-an-issue-reopen) |
 | [D-012](#d-012) | Every project's first view is named Default; the Backlog has an Epics and features view | Accepted | [Epics and features](10-the-issue-commands.md#epics-and-features) |
-| [D-013](#d-013) | `close` is idempotent: run again, it ends where one complete run would have ended | Accepted | [Closing an issue](10-the-issue-commands.md#closing-an-issue-close) |
+| [D-013](#d-013) | `close` and `reopen` are idempotent: run again, each ends where one complete run would have ended | Accepted | [Closing an issue](10-the-issue-commands.md#closing-an-issue-close); [Reopening an issue](10-the-issue-commands.md#reopening-an-issue-reopen) |
 
 ## 2. Decision records
 
@@ -261,7 +261,7 @@ Companion to [10. The issue commands](10-the-issue-commands.md). It records the 
 
 **Context and criteria:** A reopened issue is open work, so a closed feature, epic or schedule it belongs to is open again too, and the issue needs a place to be seen.
 
-**Decision:** `reopen` reopens the issue's closed parents, its feature and then its epic, and each closed schedule it is a step of, setting the schedule's own row In progress and unticking its every-step criterion. An issue or a parent it reopens with no row on its team's four projects gets a Triage row.
+**Decision:** `reopen` reopens the issue's closed parents, its feature and then its epic, and each closed schedule it is a step of, setting the schedule's own row In progress and unticking its every-step criterion. An issue or a parent it reopens with no row on its team's four projects gets a Triage row. Since [D-013](#d-013), it also finishes a parent or schedule that is open but still holds what a closing left.
 
 **Reasons:** A schedule is in progress while any of its steps is open. The Triage workflow runs only when an issue is opened, so a reopened issue with no row would be on no board.
 
@@ -299,25 +299,25 @@ Companion to [10. The issue commands](10-the-issue-commands.md). It records the 
 
 <a id="d-013"></a>
 
-### 2.13. D-013: close is idempotent
+### 2.13. D-013: close and reopen are idempotent
 
 **Status:** Accepted.
 
-**Context and criteria:** A run of `close` can stop partway: GitHub refuses a write, GitHub accepts a write whose answer is lost, or the run is killed between two writes. A pull request's `Closes` line also closes an issue, and leaves its rows. Every command is to be idempotent: run again, it never leaves its work half done, and never does the same work twice.
+**Context and criteria:** A run of `close` or `reopen` can stop partway: GitHub refuses a write, GitHub accepts a write whose answer is lost, or the run is killed between two writes. A pull request's `Closes` line also closes an issue, and leaves its rows; clicking Reopen on GitHub's page reopens only the issue itself. Every command is to be idempotent: run again, it never leaves its work half done, and never does the same work twice.
 
-**Decision:** `close`, run on an issue already closed, writes only what one complete run would have written and the earlier run didn't. A comment is written only if the issue's history since it last reopened holds none of its kind; a comment on a Scenario issue counts only for the item it names. The Resolution is set by comparing the one asked for, the one the issue holds, and the one `close` last recorded, and a change of it gets its own comment, written after the change. An issue with nothing left to do is `unchanged`, and nothing is written.
+**Decision:** `close`, run on an issue already closed, writes only what one complete run would have written and the earlier run didn't. A comment is written only if the issue's history since it last reopened holds none of its kind; a comment on a Scenario issue counts only for the item it names. The Resolution is set by comparing the one asked for, the one the issue holds, and the one `close` last recorded, and a change of it gets its own comment, written after the change. `reopen` chooses its work from each issue's records, not its history: an issue, parent or schedule that is open but still holds a Resolution, a Closed row, a row without a Status, no row, a ticked every-step criterion, or no reopening's comment since it last closed gets only what is missing; an issue that has never closed gets no comment. An issue with nothing left to do is `unchanged`, and nothing is written.
 
 **Reasons:** The finished state is right however an issue reached a half-finished one, so a second run needn't know who left it. Looking back only to the last reopening keeps one comment for each close, and lets a later close have its own. Comparing with what `close` last recorded tells a change made by hand from a run that stopped.
 
-**Alternatives:** Leaving a stopped run's rows to be changed by hand ([D-009](#d-009)). A marker each run writes for the next to find. Matching a comment by its full text, which holds the date and who ran it. Refusing a different Resolution, though anyone can change it by hand. Running `close` as a graph that can be undone, which needs a GitHub provider first (NobleFactor/devlore-cli#1238).
+**Alternatives:** Leaving a stopped run's rows to be changed by hand ([D-009](#d-009)), and a stopped `reopen` recording `unchanged`. A marker each run writes for the next to find. Matching a comment by its full text, which holds the date and who ran it. Refusing a different Resolution, though anyone can change it by hand. Running `close` as a graph that can be undone, which needs a GitHub provider first (NobleFactor/devlore-cli#1238).
 
-**Consequences:** `close` reads each issue's history, and each Scenario issue's, before its first write. Two workers changing one issue at the same moment are not covered: the last write wins. The rule doesn't yet cover recovering a stopped `open`, which NobleFactor/devlore-cli#1238 does through a graph, or `move`'s comment on a Scenario issue, which #611 fixes.
+**Consequences:** `close` reads each issue's history, and each Scenario issue's, before its first write; `reopen` reads each issue's, each parent's and each schedule's. Two workers changing one issue at the same moment are not covered: the last write wins. The rule doesn't yet cover recovering a stopped `open`, which NobleFactor/devlore-cli#1238 does through a graph, or `move`'s comment on a Scenario issue, which #611 fixes.
 
-**Design links:** [Closing an issue](10-the-issue-commands.md#closing-an-issue-close).
+**Design links:** [Closing an issue](10-the-issue-commands.md#closing-an-issue-close); [Reopening an issue](10-the-issue-commands.md#reopening-an-issue-reopen).
 
 **Approval evidence:** Approved 2026-11-19 in [the plan for #609](../../plans/feature/609-rerun-finishes.md), § 12, at revision 71f40ef.
 
-**Related decisions:** [D-008](#d-008), [D-009](#d-009).
+**Related decisions:** [D-008](#d-008), [D-009](#d-009), [D-011](#d-011).
 
 ---
 

@@ -166,7 +166,14 @@ def _collection_read(key, model, kind, number, closed, reading):
     option = [o for o in project["fields"][kind]["options"] if o["name"] == rows[0][attr]]
     if len(option) != 1:
         return None, project["title"] + " has no " + kind + " option named " + rows[0][attr]
-    return {"issue": own, "project": project, "option": option[0], "own_item": rows[0]["item"], "field": kind}, ""
+    return {
+        "issue": own,
+        "project": project,
+        "option": option[0],
+        "own_item": rows[0]["item"],
+        "own_status": rows[0]["status"],
+        "field": kind,
+    }, ""
 
 def _collection(key, model, kind, number, closed, reading):
     """A schedule or a scenario: its own issue, its team's project of kind with its fields, and its option.

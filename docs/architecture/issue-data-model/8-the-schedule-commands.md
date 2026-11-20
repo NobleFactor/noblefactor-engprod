@@ -122,7 +122,7 @@ A schedule is in progress while any of its steps is open, so a schedule closed b
 2. Sets its own row In progress.
 3. Unticks its exit criterion that every step is closed: each ticked box of its Exit criteria section whose text begins "Every step" or "Every other step", as the schedules' boxes say. A schedule with no such box is reopened all the same, and its record says no criterion was unticked.
 
-The option was never removed, so the schedule's past rows are under it still. An open schedule is `unchanged`. `star github issue reopen` reopens each closed schedule a reopened issue is a step of the same way, its comment naming the issue (section 10).
+The option was never removed, so the schedule's past rows are under it still. An open schedule is `unchanged`. `star github issue reopen` reopens each closed schedule a reopened issue is a step of the same way, its comment naming the issue, and finishes one it reopened partway, writing only what is left (section 10, D-013).
 
 ## Significant design decisions
 

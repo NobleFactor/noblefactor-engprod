@@ -22,10 +22,10 @@ An `<issue>` is written `<owner>/<repository>#<number>`. Every command names wha
 
 - **`move`** finds the amendment it left pending, and finishes the move.
 - **`open`** with `--unique` finds the issue it opened under the parent, and opens no other. Without `--unique`, it opens a second issue.
-- **`reopen`** that stopped after it reopened the issue finds it open, records `unchanged`, and leaves the issue's Resolution and rows as they were.
+- **`reopen`** run again ends where one complete run would have ended ([D-013](10-the-issue-commands.decisions.md#d-013)): it writes what the earlier run didn't, on the issue, its parents and its schedules, and nothing twice.
 - **`close`** run again ends where one complete run would have ended ([D-013](10-the-issue-commands.decisions.md#d-013)): it writes what the earlier run didn't, and nothing twice.
 
-What a rerun of `open` or `reopen` leaves is done by hand: a second issue closed as Duplicate, a Resolution cleared, a row set.
+What a rerun of `open` leaves is done by hand: a second issue closed as Duplicate.
 
 An issue named twice in one run, in another case or with a leading zero, is refused. `--dry-run` is refused.
 
@@ -142,14 +142,14 @@ star github issue reopen <issue>... --reason <text>
 
 `reopen` reads each issue, its parents up to its epic, and the schedules it is a step of, before its first write. Then, for each issue:
 
-1. **The issue** is reopened, its Resolution cleared or its `resolution:` labels removed, and a comment written: `Reopened by \`star github issue reopen\` on <date>, run by <login>: <reason>`.
-2. **Its rows:** each row on its team's Triage, Backlog, Schedule or Scenario project is set Open, a Schedule row's Worktree kept, since no one has taken it up again. An issue with no row on its team's four projects, as `close` leaves an issue it took off Triage, the Backlog or a scenario, gets a Triage row, since the Triage workflow runs only when an issue is opened.
-3. **Each closed parent,** its feature and then its epic, is reopened the same way, its comment naming the issue: `Reopened by … for <issue>: <reason>`. A parent with no row, as `close` leaves a feature or an epic it took off the Backlog, gets a Triage row, as the issue does.
-4. **Each closed schedule** it is a step of is reopened as `star github schedule reopen` reopens one (section 8): the Schedule issue reopened with its comment, its own row set In progress, and its exit criterion that every step is closed unticked. A schedule is in progress while any of its steps is open.
+1. **The issue** is reopened, its Resolution cleared or its `resolution:` labels removed, and a comment written: `Reopened by \`star github issue reopen\` on <date>, run by <login>: <reason>`. The comment is written only if the issue's history since it last closed holds no reopening's comment, one that begins `Reopened by \`star github`, and an issue that has never closed gets none.
+2. **Its rows:** each Closed row on its team's Triage, Backlog, Schedule or Scenario project, and each without a Status, is set Open, a Schedule row's Worktree kept, since no one has taken it up again. An Open or In progress row is left as it is, since only `close` sets a row Closed. An issue with no row on its team's four projects, as `close` leaves an issue it took off Triage, the Backlog or a scenario, gets a Triage row, since the Triage workflow runs only when an issue is opened.
+3. **Each parent,** its feature and then its epic, is reopened the same way when it is closed, or set right when it is open but still holds what a closing left, its comment naming the issue: `Reopened by … for <issue>: <reason>`. A parent with no row, as `close` leaves a feature or an epic it took off the Backlog, gets a Triage row, as the issue does.
+4. **Each schedule** it is a step of is reopened as `star github schedule reopen` reopens one (section 8): the Schedule issue reopened with its comment, its own row set In progress, and its exit criterion that every step is closed unticked. Each part is written only if it is left to write, so a schedule reopened partway is finished. A schedule is in progress while any of its steps is open.
 
-An issue already open is not reopened again, and its rows are left as they are; its closed parents and closed schedules are still reopened. An issue with nothing closed about it is `unchanged`, and nothing is written. `reopen` refuses, writing nothing, a Schedule or Scenario issue, which `star github schedule reopen` and `star github scenario reopen` reopen, and a step on a schedule whose option names no Schedule issue.
+`reopen` is idempotent ([D-013](10-the-issue-commands.decisions.md#d-013)). It chooses its work from each issue's records, not its history: an issue, parent or schedule that is open but still holds a Resolution, a Closed row, a row without a Status, no row, a ticked every-step criterion, or no reopening's comment since it last closed gets only what is missing. So a run that stopped partway is finished, and so is an issue someone reopened on GitHub's page, which reopens only the issue itself. An issue with nothing left to do is `unchanged`, and nothing is written. `reopen` refuses, writing nothing, a Schedule or Scenario issue, which `star github schedule reopen` and `star github scenario reopen` reopen, and a step on a schedule whose option names no Schedule issue.
 
-Its records: one for each issue, parent and schedule reopened, with the Resolution it cleared, the issue it was reopened for, and a schedule's unticked criteria; one for each row, an issue's or a parent's, set Open or added to Triage; or `unchanged`.
+Its records: one for each issue, parent and schedule reopened or set right, with the Resolution it cleared, the issue it was reopened for, a schedule's unticked criteria, and `already` true when it was open before the run; one for each row, an issue's or a parent's, set Open or added to Triage; or `unchanged`.
 
 ## Significant design decisions
 
