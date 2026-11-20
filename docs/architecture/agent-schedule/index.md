@@ -1,52 +1,93 @@
 ---
-title: "Agent schedules — one conversation for each schedule, opened from anywhere"
+title: "Agent schedules"
+status: draft
+updated: 2026-11-19
 ---
 
-# Agent schedules — one conversation for each schedule, opened from anywhere
+<a id="agent-schedules--one-conversation-for-each-schedule-opened-from-anywhere"></a>
 
-> **Status:** design, 2026-10-15. The agent-schedule feature,
-> [NobleFactor/noblefactor-ops#151](https://github.com/NobleFactor/noblefactor-ops/issues/151): its command line and
-> its agent sandboxing. The [plan][plan-259],
-> David-Noble-at-work/personal#259, holds the requirements, the phases and the owner's rulings, each quoted with its
-> date; Start-Claude(1) is the reference for the options, the files and the exit statuses.
+# Agent schedules
 
-An agent schedule is a GitHub issue whose lane table says what to work next, and the Claude Code conversation that
-works it. Start-Claude, the feature's command line today, starts that conversation in claude's background, or rejoins
-it, and opens a tmux session onto it: the conversation on the left, a shell on the right.
+An agent schedule binds a GitHub Schedule to a persistent agent conversation. A developer can open several terminal views of that conversation, leave them, and return without starting another conversation.
 
-## Sections
+## 1. Purpose and scope
 
-| Section | What it holds | Status |
+The Schedule issue defines the intended result and completion criteria. Its team's Schedules project owns the ordered Step rows. Read those rows with `star github schedule get <owner>/<repository>#<number>`; a local launcher does not keep a second work list.
+
+This architecture covers the standalone Claude launcher, a proposed assignment command interface, and a proposed SBX deployment of that launcher. The [agentic developer workstation](../agentic-developer-workstation.md) defines the broader environment with five role sessions and editor-based access.
+
+| Part | Responsibility | Design |
 | --- | --- | --- |
-| [1. Session model](1-session-model.md) | Every conversation in claude's background, and a tmux session of its own for each start: the model, the processes under ssh and mosh, a start step by step, and leaving | [Built, 2026-10-15](1-session-model.status.md) |
-| [2. Command line](2-command-line.md) | Start-Claude today: its forms, its names, its store, and Windows; and Clear-Claude, removed on 2026-11-12 (#529) | [Built on macOS and Linux](2-command-line.status.md) |
-| [2.1 The agent-schedule commands](2.1-agent-schedule-commands.md) | Get-, New-, Remove-, Set- and Start-AgentSchedule, with the owner's agent-assignment design | [Sketched](2.1-agent-schedule-commands.status.md) |
-| [3. Agent sandbox](3-agent-sandbox.md) | Docker SBX: the owner's draft, the points it does not capture, and its open items | [Draft](3-agent-sandbox.status.md) |
+| Session model | Separate conversation lifetime from terminal views | [Session lifecycle](1-session-model.md) |
+| Launcher | Resolve a schedule or conversation and open a view | [Command interface](2-command-line.md) |
+| Assignment commands | Manage and inspect durable assignments across agent hosts | [Assignment interface proposal](2.1-agent-schedule-commands.md) |
+| Sandbox deployment | Run the shared Claude session and client shells in SBX | [Sandbox proposal](3-agent-sandbox.md) |
 
-## Terms
+The two proposals describe intended interfaces and unresolved choices. They do not establish that those interfaces have been delivered. [Delivery records](1-session-model.status.md) link the implementation plans and preserved evidence.
 
-- **Background session:** a conversation as claude's background service runs it. It has an id of its own, the one
-  `claude --bg` prints and `claude agents` lists, and keeps it across `/clear`, which gives the conversation a new
-  one (seen 2026-10-14: `/clear` gave background session `a35d5856` the conversation `17112509`).
-- **Conversation:** a Claude Code session, its transcript under `${CLAUDE_CONFIG_DIR:-~/.claude}/projects` and its id.
-- **Schedule:** a GitHub issue, `<owner>/<repository>#<number>`, whose lane table says what to work next. One
-  conversation works it.
-- **Store:** one file per schedule, `${XDG_STATE_HOME:-~/.local/state}/agent-schedule/<owner>/<repository>/<number>`,
-  which binds the schedule to its background session.
-- **Viewer:** `claude attach <id>`, a client of a background session. Several attach at once (seen 2026-10-14).
+## 2. Goals and constraints
 
-## Where these documents go
+Opening another view must reuse the intended conversation. Losing a terminal must not stop that conversation. Concurrent starts for one schedule must not create competing bindings.
 
-The owner, 2026-10-15: "We might keep the start-claude design doc in personal and move all of the start-claude go to
-noblefactor-ops in one go." Then, asked to choose between that and two pull requests, base and personal: "the
-first." So they land here, with David-Noble-at-work/personal#259's pull request, and stay until Start-Claude,
-Start-Claude.ps1 and the trees that support them move to noblefactor-ops, Start-Claude to `Home/common.Unix` and
-Start-Claude.ps1 to `Home/common.Windows`, in one pull request; they move with them. That puts the agent-schedule
-commands' design in noblefactor-ops, which NobleFactor/noblefactor-ops#302 asks for.
+The standalone launcher supports Unix terminals and Windows psmux. It uses Claude's public background-session and attachment interfaces. Claude owns its conversation storage and trust checks; the launcher owns the schedule binding and terminal layout.
 
-Their names follow devlore-cli's `docs/architecture`, each file numbered for the section of the feature it holds, with
-a status companion beside it. The owner, 2026-10-15: "Consider renaming to match the devlore-cli docs tree with files
-numbered by the section they contain within the feature that they represent." Then: "I like the tree structure. Go
-for it."
+The assignment and sandbox proposals must preserve those boundaries. They must also distinguish a missing view, a stopped process, an unavailable runtime and a lost conversation. None of those states proves that scheduled work is complete.
 
-[plan-259]: https://github.com/David-Noble-at-work/personal/blob/main/docs/plans/chore/259-start-claude-documents-claude.md
+## 3. Context and components
+
+```mermaid
+flowchart LR
+    developer["Developer terminal"] --> launcher["Start-Claude"]
+    launcher --> binding["Per-schedule binding and lock"]
+    launcher --> views["Terminal views: viewer and shell"]
+    views --> native["Claude background service"]
+    native --> conversation["Persistent conversation"]
+    launcher --> github["GitHub Schedule identity"]
+    agent["Agent in the conversation"] --> progress["star github schedule get"]
+    progress --> github
+```
+
+The diagram shows responsibilities and connections, not process ancestry. Claude's background service owns the conversation process. Each launcher invocation owns a separate terminal view. GitHub remains authoritative for the work and its progress.
+
+## 4. Runtime and deployment
+
+A start resolves the schedule and acquires its binding lock. It discovers the native session, reuses or resumes it, records the background-session ID, then opens a viewer and companion shell unless attachment was disabled. [Session lifecycle](1-session-model.md) defines the refusal and reconnection paths.
+
+On macOS and Linux, the launcher and tmux run on the machine receiving the terminal connection. On Windows, PowerShell and psmux provide the equivalent interface. The [sandbox proposal](3-agent-sandbox.md) places Claude and the shells inside SBX while retaining client terminal layouts outside it.
+
+## 5. Shared concepts
+
+<a id="terms"></a>
+
+| Term | Meaning |
+| --- | --- |
+| Schedule key | Repository-qualified GitHub issue reference, such as `owner/repository#916` |
+| Background session | Native Claude service entry identified by its short ID |
+| Conversation | Native conversation and transcript identity; its UUID differs from the background-session ID |
+| Binding | Local association between a schedule key and a background session |
+| View | A terminal client attached to the background session, with a companion shell |
+| Assignment | Proposed durable record connecting a schedule, execution location and configured agent |
+
+The standalone binding lives at `${XDG_STATE_HOME:-~/.local/state}/agent-schedule/<owner>/<repository>/<number>`. The assignment proposal specifies a separate structured store; its adoption requires an explicit storage decision. Neither store replaces native transcripts or GitHub progress.
+
+## 6. Decisions, quality and risks
+
+Significant choices and unresolved alternatives are in the [session](1-session-model.decisions.md), [command](2-command-line.decisions.md), [assignment](2.1-agent-schedule-commands.decisions.md) and [sandbox](3-agent-sandbox.decisions.md) decision records.
+
+| Situation | Required result |
+| --- | --- |
+| Two starts target the same bound schedule | Both reach the same native session |
+| One viewer closes | The conversation and other viewers remain available |
+| A stored conversation is running in the foreground | The launcher refuses a competing background start |
+| An assignment cannot be resumed | The proposed interface reports failure without creating a replacement |
+| GitHub is unavailable during assignment inspection | Local state remains useful; progress is explicitly unavailable |
+| Two sandbox clients connect | They share one conversation and have separate shell processes |
+
+Native CLI behavior, psmux differences, uncertain connection loss and sandbox credential provisioning require version-specific qualification. A source record of an earlier test does not establish support on another installed version.
+
+<a id="sections"></a>
+<a id="where-these-documents-go"></a>
+
+## 7. References
+
+The chapter decision companions explain significant choices. [Delivery records](1-session-model.status.md) link the implementation plans and source evidence. The [rewrite review](../../engineering/review/rewrite-review.md) maps requirements and documentation coverage.

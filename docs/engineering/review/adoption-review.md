@@ -1,19 +1,21 @@
 ---
 title: "Handbook adoption review"
-status: active
+status: complete
 created: 2026-11-15
-updated: 2026-11-16
+updated: 2026-11-19
 ---
 
 # Handbook adoption review
 
-The preserved review contains findings F01–F19. This record reconciles them with the current draft, subsequent Owner decisions and the live protection check. The [original findings](../../../ENGINEERING-DOCUMENTATION-REVIEW.findings.md) remain unchanged and match the preserved archive at SHA-256 `480cd66afef0fb149322766a4c817a74c74f459a97dabc40f13d462c62bdf8ef`.
+This is the completed review and delivery record for Handbook consolidation (#420). It preserves F01–F21, source comparisons, dated protection/verification results and the Owner's adoption evidence. Its counts and dependency statements describe those recorded candidates, not a fresh check of the current repository or PR.
 
-Handbook consolidation (#420) prepares the adoption candidate. Owner review, repository-gate results and the dispositions below remain separate from publication or completion.
+The [exact pre-rewrite record](sources/rewrite-2026-11-19/handbook-adoption-review.md.txt), [original findings](../../../ENGINEERING-DOCUMENTATION-REVIEW.findings.md) and [completed plan](../../plans/doc/420-consolidate-engineering.md) retain the sources. The original findings' SHA-256 is `480cd66afef0fb149322766a4c817a74c74f459a97dabc40f13d462c62bdf8ef`.
+
+Use [current handbook guidance](../index.md) for requirements and the [rewrite review](rewrite-review.md) for this work's checks. Consolidation was adopted/completed on 2026-11-16; the delivery record in section 6 remains unchanged.
 
 ## 1. Findings and dispositions
 
-| Finding | Current disposition |
+| Finding | Disposition recorded for consolidation |
 | --- | --- |
 | F01 | Authoritative requirement homes are linked from the handbook. Legacy entrypoints preserve anchors and point to those homes. |
 | F02 | Dated cases and their source evidence are preserved; the newer pre-cutover guides are captured separately. |
@@ -35,11 +37,11 @@ Handbook consolidation (#420) prepares the adoption candidate. Owner review, rep
 | F18 | Resolved by the Owner on 2026-11-15: new and revised prose conforms during adoption; [Formatting migration (#570)](https://github.com/NobleFactor/noblefactor-engprod/issues/570) completes every remaining maintained document within this schedule. It remains under Feature #419 and Epic #526 and blocks the closing review (#565); the Schedule project's rows hold their current Steps. No formatting backlog is deferred beyond schedule completion. |
 | F19 | Documentation standards distinguish accepted catalog type values from branch-bound working execution plans, which omit type. The validator's vocabulary is retained. |
 | F20 | The review of Issue forms (#572) exposed a competing handbook body outline: its Acceptance heading would fail the classifier's Evidence of completion check. Resolved in the candidate by directing authors to the account forms and retaining shared context/link guidance and old anchors. The Owner-relayed handoff confirms the forms' authority and the approved Task/Bug required fields. |
-| F21 | The inherited account contribution guide, read on 2026-11-16, still lists the retired chore branch prefix. The settled branch ruling governs this doc branch. Contribution terms (#265) owns the separate account/repository contribution-document work; no edit in that other workstream is included here. |
+| F21 | The inherited account contribution guide listed the retired chore prefix when read for adoption. The settled branch ruling governed the candidate. Contribution terms (#265) subsequently landed in PR #583 as 9d9a789d654635540eaf4ca2ef008b9011c02b2d on 2026-11-17 UTC, and that separate work is already in this follow-up's baseline. |
 
 ## 2. Effective protection dependency
 
-The [live protection read](adoption-protection-2026-11-15.json) records organization review requirements alongside classic branch protection. The organization's one approving review, code-owner and last-push approval requirements remain effective even though the classic rule requires zero approvals. The normal template cannot manufacture eligible reviews. Resolve the adoption PR's review route or obtain its separate, explicit Owner exception before merging.
+The [live protection read](adoption-protection-2026-11-15.json) records organization review requirements alongside classic branch protection. The organization's one approving review, code-owner and last-push approval requirements remain effective even though the classic rule requires zero approvals. The normal template cannot manufacture eligible reviews. The Owner subsequently merged PR #579 on 2026-11-16. This snapshot records the candidate's evaluated requirements; future PRs still need their own current review and merge authority.
 
 No protection configuration was changed by this consolidation. The conservative templates require established checks and review readiness; a concrete repository's verified policy must inform their generation.
 
@@ -49,7 +51,7 @@ The two Bash examples pass syntax, ShellCheck and formatting checks. The PowerSh
 
 The Owner ran the worktree's validation script successfully on 2026-11-15: exit 0 in 166.1722 seconds. It checked 38 documents and 440 local references, preserved source hashes, covered new untracked documentation explicitly, and passed the actual make check gate, including all Test-Here suites. The supplied output reports 172 frontmatter checks with one exemption and no errors, plus five PowerShell files with no findings. The displayed log was truncated; no separate complete log artifact is claimed.
 
-That full-gate result applies to the Owner-tested draft. Subsequent policy and status updates receive document checks; delivery must still satisfy its required gates. Owner adoption and post-merge verification remain outstanding.
+That full-gate result applies to the Owner-tested draft. Subsequent policy and status updates receive document checks; delivery must still satisfy its required gates. Owner adoption and post-merge verification were subsequently completed as recorded in section 6.
 
 ## 4. Final source, content and navigation review
 
@@ -70,3 +72,11 @@ On 2026-11-16, the Owner replaced mandatory breach reporting with [compliance au
 On 2026-11-15, Codex reopened F05 without first reading the preserved review and the Owner's concurrence. The question was withdrawn and the agreed sequence retained. The current agent instruction now explicitly requires consulting preserved decisions and findings before asking whether a policy is unresolved.
 
 On 2026-11-16, during Handbook consolidation (#420), Codex incorrectly enforced the session's one-PR-at-a-time rule across all NobleFactor and personal repositories. The resulting guard blocked publication on other workers' PRs and led to an unnecessary request for an exception. The Owner clarified that the restriction applies to this session's work and that the Owner coordinates other workers. The guard now checks only this session's assigned branches; other workers' PRs do not block it.
+
+## 6. Adoption and completion — 2026-11-16
+
+The Owner merged [PR #579](https://github.com/NobleFactor/noblefactor-engprod/pull/579) at 23:26:25 UTC as 0694bf11684baf7952a7df73911bf5cd7d37637f, adopting the compliance-auditor policy and the reviewed handbook. All four GitHub checks passed for delivered head 2be2c9ab8ca59ba5c932910fcbb0adf90bc5d610. The [completed issue](https://github.com/NobleFactor/noblefactor-engprod/issues/420) records the Owner's closure direction and the successful post-merge verification: 38 documents, 454 local references, 23 reachable active documents, 134 retained anchors, 58 inventory groups and nineteen original rule dispositions, with source and Reviewer evidence preserved.
+
+The Owner-run cleanup exited 0, removed the branch, worktree and sibling script, and synchronized the canonical clone. The issue closed at 23:37:34 UTC and its Schedule row is Closed, linking PR #579. There was no separate runtime deployment. The host-entrypoint, role-context, skills, issue-filing and remaining formatting work stay with their owning issues on Schedule #551.
+
+This completion-only follow-up incorporates evidence already established on the issue. It is not a new delivery milestone for Handbook consolidation (#420).

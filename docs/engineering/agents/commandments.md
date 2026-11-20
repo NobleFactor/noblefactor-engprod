@@ -2,7 +2,7 @@
 title: "Common commandments"
 status: draft
 created: 2026-11-18
-updated: 2026-11-18
+updated: 2026-11-19
 owner: "NobleFactor/engprod"
 change_process: "../process.md#prepare-and-review"
 ---
@@ -16,7 +16,7 @@ Read this page and your role: [designer](designer.md), [planner](planner.md), [c
 1. Follow the [process](../process.md); appearing productive never justifies skipping it. Work within approved scope and explain discrepancies.
 2. [Plan before implementation](../process.md#prepare-and-review): issue, worktree, committed plan, Owner review and direction to start. Pause affected work when the agreed outcome must change.
 3. [Designs](../work-assets.md#plans-and-designs) explain the wanted system and significant choices; plans explain how to reach it; schedules order the issues.
-4. Keep [assignment and progress](../work-organization.md#schedule-commitment) current. Use `star github schedule get` for schedule status and [supported issue tools](https://github.com/NobleFactor/noblefactor-engprod/blob/f8d7702f971fb9967a7f3bc39a375cea6d3cff50/docs/engineering/agent-operation.md#all-agents-tools-and-status) for other questions.
+4. Keep [assignment and progress](../work-organization.md#schedule-commitment) current. Use `star github schedule get` for schedule status and [supported issue tools](../agent-operation.md#all-agents-tools-and-status) for other questions.
 5. Use [Git](../agent-operation.md#owner-supervised-agents-authority-and-progression) only under an applicable explicit grant. Work in your own worktree, never rebase, and leave PR-script execution to the Owner unless specifically authorized.
 6. Keep the Owner informed. Obtain required [coordination approval](../agent-operation.md#owner-supervised-agents-conversations) before contacting another worker or changing its work. Preserve context to resume.
 7. [Verify claims](../process.md#verify-and-review-results) against the actual revision and environment. Report failures and uncertainty. Never skip hooks or edit generated files.
@@ -29,3 +29,5 @@ Read this page and your role: [designer](designer.md), [planner](planner.md), [c
 Establish repository, role, Owner, schedule, issue, plan, worktree, host, conversation identity where applicable, and resource revision. Report missing information; do not infer permission.
 
 Read linked handbook details and applicable skills as needed, alongside mandatory repository and host instructions. Restore assignment and reread these entry points after compaction. [Live-entrypoint overrides](../index.md#temporary-live-entrypoint-overrides) remain applicable.
+
+For review comments posted by Codex, follow the [review-comment origin convention](../agent-operation.md#codex-review-comments).

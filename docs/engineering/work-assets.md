@@ -2,74 +2,98 @@
 title: "Work assets"
 status: draft
 created: 2026-10-28
-updated: 2026-11-15
+updated: 2026-11-19
 ---
 
 # Work assets
 
-[Up: Engineering](index.md)
+[Up: Engineering handbook](index.md)
 
 <a id="identity-and-relationships"></a>
 
 ## 1. Identity and relationships
 
-Each issue links to its plan and applicable designs. Each plan identifies every issue it serves. A worktree and branch identify their originating issue; a PR identifies the issues and approved changes it delivers. Deployment and verification evidence identify the artifact and environment actually evaluated.
+| Asset | Purpose |
+| --- | --- |
+| Design | The system we want: behavior, structure, requirements and significant choices |
+| Plan | How to reach that system from what exists: approach, changes, phases, transitions and verification |
+| Schedule | The committed before → after outcome, ordered issues, dependencies, work locations, progress and approved amendments |
+| Issue | A defined problem, scope and intended result, with parent, applicable schedule and document links |
+| Approval | Who approved which proposal/revision, when, and within what limits |
+| Completion review | Promised and delivered results, evidence, remaining work and approval to finish or continue |
 
-| Asset             | Required content                                                                                                         |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Schedule          | Before/after deliverable, ordered issues, dependencies, current work locations and state, approved amendments            |
-| Issue             | Problem, scope, intended outcome, feature/epic relationship, schedule association where applicable, document table       |
-| Plan              | Intended implementation, design impact, approved approach, phases, acceptance criteria, required milestones and evidence |
-| Design            | Resulting behavior/structure/interfaces, alternatives, tradeoffs and enduring decisions                                  |
-| Approval          | Decision, approver, scope and the revision or proposal approved                                                          |
-| Completion review | Expected versus observed results, evidence, remaining obligations, owner approval or bounded progression authority       |
+Planning produces issues and a schedule that orders them. Each issue links its plans and applicable designs; a plan can cover several issues. [Work organization](work-organization.md#schedule-commitment) defines schedule execution.
 
-Record approval as a dated Owner decision in the plan, identifying the proposal or revision and the scope approved. State the ruling clearly, with its meaning preserved, and retain a link or reference to the original exchange. Quote exact wording when it is material. An approval record is not an implemented authorization mechanism; do not infer a grant from unrelated discussion.
+Branches/worktrees identify their starting issue. A PR names the issues and approved changes it delivers. Verification records identify what was checked, where and with what result.
 
-**Case:** On 2026-10-22, permission to begin a task or open a follow-up was treated as permission for additional commits. Approval records must name their scope ([recorded case, rule 17](review/sources/agent-rules.txt)).
+Use plain language and define necessary terms. Every word should help the reader understand.
 
 <a id="workspace-locations"></a>
 
 ## 2. Workspace locations
 
-Use one organization subtree, `~/Workspace/<org>/`. It contains canonical clone entries, issue-named worktrees and their sibling PR scripts. A layer clone lives at `~/.local/share/devlore/writ/repos/<clone>`; its workspace entry is a symlink. Keep one canonical clone per layer on the chosen PR target branch, usually the default branch. Development branches are checked out in worktrees, not canonical clones.
+Use one organization subtree at `~/Workspace/<org>/` for canonical clone entries, issue-named worktrees and sibling PR scripts. A layer clone lives at `~/.local/share/devlore/writ/repos/<clone>`; the workspace entry is its symlink. Keep one canonical clone per layer on the selected PR target, usually the default branch. Development belongs in worktrees.
 
-A worktree is `<clone>.<issue>-<name>`. Its PR script is `<worktree>.bash` on macOS/Linux or `<worktree>.ps1` on Windows. Read an existing script before overwriting; ensure its target is this worktree. Authorization for one script never extends to another worker's script.
+A worktree is `<clone>.<issue>-<name>`. Its sibling script is `<worktree>.bash` on macOS/Linux or `<worktree>.ps1` on Windows. Read an existing script before replacing it and confirm its target. Permission for one script does not authorize changes to another worker's script.
 
-Branch types are `doc`, `feature`, `fix`, `hotfix`, `refactor` and `release`. The `chore/` prefix was retired on 2026-11-03; historical plans retain their original paths. The branch identifies its issue and is created from the chosen PR target through the supported open-branch procedure. Its type follows the issue's type, or its type label in a user account, under the [maintained open-branch manual](../../Home/common/.local/share/man/man1/git-open-branch.1). The work-item hierarchy is defined in [Work organization](work-organization.md#work-and-identity); branch prefixes describe Git references and do not reintroduce an issue tier.
+Branch types are `doc`, `feature`, `fix`, `hotfix`, `refactor` and `release`. Create the issue-bound branch from the selected target using the [open-branch procedure](procedures/worktrees.md) and [maintained manual](../../Home/common/.local/share/man/man1/git-open-branch.1). Its type follows the issue's type, or its type label for a user account; it adds no issue-hierarchy level.
 
 <a id="plans-and-designs"></a>
 
 ## 3. Plans and designs
 
-Plans live at `docs/plans/<type>/<issue>-<name>.md`, corresponding to the originating branch name. A separately needed plan for an additional issue names that issue. A shared plan carries a stable `## Issue NNN` heading for each issue; use the number alone, with no title or `#` prefix. This is an existing rule, not a new convention introduced by this consolidation. For active plans with title-bearing headings, inventory incoming anchors and preserve or migrate those references before renaming a heading. Leave completed historical plans unchanged unless a specific migration is approved.
+<a id="designs"></a>
 
-Every issue ends with `## Plan and design documents`, a two-column Kind/Document table. It has a plan row from filing, initially “Not yet opened,” and one linked row per applicable design. Add the design-impact determination to the issue and plan, even when no separate design is needed. For an open issue, document links target committed files on the default branch and stable issue anchors. An issue closed by a merged PR links files at that PR's merge commit; files absent there, cross-repository documents and issues closed without such a PR use the default-branch fallback reported by the linking command. Provide the committed review revision separately before merge so approval is possible.
+### 3.1. Designs
 
-Plans are the authority for an issue's document table, under the 2026-11-15 ruling implemented by Plan linking (#557). A plan identifies the issues it serves through its `issue:` field and stable `## Issue NNN` headings. Its `documents:` frontmatter lists related documents, each with `kind` and either a repository-relative `path` or a `url`, plus optional display `text`. The first script runs `star github plan link` after pushing the plan. Inspect its action, reason and dropped-row records: refusal or a dropped row is a finding even when the command exits 0. An issue no plan serves keeps the table it was filed with.
+A design describes the system we want: what people can do, how its parts fit together and the rules it must satisfy. Describe the whole intended system clearly.
 
-New enduring designs belong under `docs/architecture/` within the owning repository. Existing approved locations remain until individually migrated. This draft proposes no new design filename scheme.
+Explain significant choices, alternatives, tradeoffs and consequences using the [decision-record standard](../standards/documentation.md#decision-records). Keep transition decisions, migration steps and change history in plans. When the wanted system changes, revise its design and the plan for reaching it.
+
+Designs belong under `docs/architecture/` in their owning repository. Leave other approved locations in place until a move is approved.
+
+<a id="plans"></a>
+
+### 3.2. Plans
+
+A plan starts with what exists and explains how to reach the design. Record changes, approach, phases, transition decisions, migration steps, completion checks and results. Link the design rather than repeat its system description.
+
+Record each Owner approval with its date, approved proposal/revision, authorized work and source exchange. Preserve exact words when material. Approval applies only to the named scope.
+
+<a id="33-document-formats-and-links"></a>
+
+<a id="document-formats-and-links"></a>
+
+### 3.3. Formats and links
+
+Plans use `docs/plans/<type>/<issue>-<name>.md`, matching the branch that began the work. Additional issue plans name those issues. A shared plan has stable `## Issue NNN` headings: number only, without a title or `#` prefix. Preserve incoming links and completed historical plans unless an explicit migration authorizes changes.
+
+Every issue ends with `## Plan and design documents` and a two-column Kind/Document table. File it with a plan row, using “Not yet opened” until a plan exists. Include all required plans and applicable designs. State design impact in both issue and plan, including when no separate design is needed.
+
+Open issues link committed files on the default branch and stable issue anchors. Issues closed by a merged PR link documents at its merge commit. If the file is absent there, is in another repository, or closure had no such PR, retain a default-branch link and the linking command's explanation. Before merge, provide the committed review revision too.
+
+Plans supply the document table through their `issue:` field and stable issue headings. Their `documents:` entries have `kind` and a repository-relative `path` or `url`, with optional display `text`.
+
+After pushing the first plan, its worktree script runs `star github plan link`. Inspect action, reason and dropped-row records. Report refused issues or dropped rows even if the command exits 0. Preserve the issue's filed table until a plan covers it.
 
 <a id="lifecycle-and-freshness"></a>
 
 ## 4. Lifecycle and freshness
 
-The [documentation standard](../standards/documentation.md#document-families-and-metadata) defines document status vocabulary; [Completion and progression](process.md#completion-and-progression) owns plan completion, issue closure and post-merge updates.
+The [documentation standard](../standards/documentation.md#document-families-and-metadata) defines statuses. [Completion and progression](process.md#completion-and-progression) defines plan completion, issue closure and post-merge records.
 
-Update affected documents in the commit changing the facts they describe: phase boxes, design/status companions, deleted APIs and paths, and user-facing material. Retained history must identify itself as history. The [templates](../templates/index.md) record required information; checked boxes alone do not establish a result.
-
-**Case:** The commit moving six layer files left phase boxes unchanged until a later commit. Update records with the change, not in a cleanup batch ([recorded case, rule 12](review/sources/agent-rules.txt)).
+Update affected documents with the commit that changes their facts, including phase boxes, design/status records, removed APIs/paths and user documentation. Mark historical records clearly. Templates show required structure; boxes alone do not establish completion.
 
 <a id="clone-retirement"></a>
 
 ## 5. Clone retirement
 
-Retirement must leave recoverable copies of unique work, a record of transferred live worktrees and verified registrations or references, and a report of what was saved where. Follow the [clone-retirement procedure](procedures/clone-retirement.md) for the ordered operations.
-
-**Case:** A duplicate clone contained sixteen refs absent from origin, including a stash. Deleting the directory first would have lost that work ([recorded case, rule 8](review/sources/agent-rules.txt)).
+Before retirement, save recoverable unique work, identify transferred worktrees, check registrations/links and report the saved locations. Follow the [clone-retirement procedure](procedures/clone-retirement.md) before deletion.
 
 <a id="layer-script-locations"></a>
 
 ## 6. Layer script locations
 
-Code contributing to or depending on a repository stack belongs in its named `Home/<repository>[.<selector>]` project. Unconditionally deployed, self-contained code belongs in `Home/common[.<selector>]`. `git-*` commands live beside Declare-BashScript in engprod's common project. Context projects keep their scripts and source the base helper in place. Dependency declarations follow [Bash standards](../standards/coding/bash.md).
+Code contributing to or depending on a repository belongs in its named `Home/<repository>[.<selector>]` project. Self-contained code deployed everywhere belongs in `Home/common[.<selector>]`.
+
+The `git-*` commands live beside Declare-BashScript in engprod's common project. Repository-specific projects keep their scripts and source the base helper in place. [Bash standards](../standards/coding/bash.md) defines dependency declarations.

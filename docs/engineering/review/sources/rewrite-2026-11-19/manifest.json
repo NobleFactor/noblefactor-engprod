@@ -1,0 +1,3277 @@
+{
+  "input_revision": "15bac42fdd60dcadba28111849ae49713a10008a",
+  "recorded_date": "2026-11-19",
+  "inputs": {
+    "Home/common/.claude/skills/star-github-schedule-progress/SKILL.md": {
+      "sha256": "3c89bb504b800844d46cf693b02e2e482fda6cbb0aef789056558c99d8d0fc7d",
+      "words": 1076
+    },
+    "README.md": {
+      "sha256": "568fbef48edfe35b41c58e14b7c22e2e23eb48e20ed2ed045acebfc140392b46",
+      "words": 738
+    },
+    "docs/architecture/agent-schedule/1-session-model.md": {
+      "sha256": "0bd6aea458fcf9f235834565341aabc13a409a9ea2b9c2baa82233898826a9e1",
+      "words": 3244
+    },
+    "docs/architecture/agent-schedule/1-session-model.status.md": {
+      "sha256": "71d17dfd919a614c4640ffb4a4c18e1d86596333cde7f188b5559e9612ed764f",
+      "words": 476
+    },
+    "docs/architecture/agent-schedule/2-command-line.md": {
+      "sha256": "f89997e0dc03491c2d4c2d39d15a7017245990dba73b36b08de47207ad6b6865",
+      "words": 741
+    },
+    "docs/architecture/agent-schedule/2-command-line.status.md": {
+      "sha256": "7db885c578bb0d992b41ce8b0cea2b5f0d9c57bfaff460c2ca3d2d4c6325b823",
+      "words": 434
+    },
+    "docs/architecture/agent-schedule/2.1-agent-schedule-commands.md": {
+      "sha256": "083ef4fd8fd08e44d5a6a9eae31baa96ad9442c4dbe7d71fb61120cade0d00ae",
+      "words": 2260
+    },
+    "docs/architecture/agent-schedule/2.1-agent-schedule-commands.status.md": {
+      "sha256": "1dbaa167120257a64160cef0367b546f11021a23f88033f84a7ff7bdb05fdd4f",
+      "words": 88
+    },
+    "docs/architecture/agent-schedule/3-agent-sandbox.md": {
+      "sha256": "d92e2b4d19298db3ee99d1cf49a8eaff73e0acd387932565b9edec3033681ff4",
+      "words": 2247
+    },
+    "docs/architecture/agent-schedule/3-agent-sandbox.status.md": {
+      "sha256": "bba4dfa43a61325fbc5fe32956767444560ab5d87b83fdfcbda1c8b64fa22d56",
+      "words": 89
+    },
+    "docs/architecture/agent-schedule/index.md": {
+      "sha256": "aa1964c8b2e198ef553f3be690e53887cd4df575c2dcf647b6d4b31b3c67f2ca",
+      "words": 548
+    },
+    "docs/architecture/agentic-developer-workstation.md": {
+      "sha256": "c82f6f578387dd17b4ffbda2d3284e30be8a993cc89a6afc5e5f3ef1761af349",
+      "words": 9420
+    },
+    "docs/architecture/issue-data-model/1-hierarchy.md": {
+      "sha256": "192085e0fc512f302a6697b26eae749a7556c12eb2500c12780e611cf75c7545",
+      "words": 4833
+    },
+    "docs/architecture/issue-data-model/1-hierarchy.status.md": {
+      "sha256": "cbf8f98647979ef38a3f5424b45350b2533e7043fc9a5dc131945b3f80467952",
+      "words": 1850
+    },
+    "docs/architecture/issue-data-model/2-attributes.md": {
+      "sha256": "0b9c513820ccd814467a9ded06b265ca782293f8c7fe4314f6cc7fa563f4b75c",
+      "words": 3016
+    },
+    "docs/architecture/issue-data-model/2-attributes.status.md": {
+      "sha256": "e9eb8e839901ab5b6da29f61e07a803942f766b3b77f306eddca85eb7dbe9b96",
+      "words": 1542
+    },
+    "docs/architecture/issue-data-model/3-collections.md": {
+      "sha256": "faf5c11d2611f7c351cbcfa11e2d6bbd4de4696e931a0c290d660c3ce262f2b8",
+      "words": 8092
+    },
+    "docs/architecture/issue-data-model/3-collections.status.md": {
+      "sha256": "e0fa77e674fc2d3129b98acbc04d441a76f5f4e2fa58ec1ab46dc0886d7267e8",
+      "words": 9986
+    },
+    "docs/architecture/issue-data-model/4-storage-and-reach.md": {
+      "sha256": "c8988d08af6ffae9f7d1f005fe9700aafd7a284aa1dacfd1412566192d83f463",
+      "words": 9565
+    },
+    "docs/architecture/issue-data-model/4-storage-and-reach.status.md": {
+      "sha256": "daaffff3a083cd32f3662aa2be6df6120c75682ad40f75e169015e979f20bfa1",
+      "words": 4613
+    },
+    "docs/architecture/issue-data-model/5-from-todays-scheme.md": {
+      "sha256": "d2dbc3d2e38643b8bc195e7abd7809ecebb6e76032c89bde6c1e7aca4d101541",
+      "words": 7630
+    },
+    "docs/architecture/issue-data-model/5-from-todays-scheme.status.md": {
+      "sha256": "e309811b148eda433aea9d32a5dfc4e1a9201bdb052ac6247b84d21adeb5b9e8",
+      "words": 1636
+    },
+    "docs/architecture/issue-data-model/6-the-asset-and-its-sync.md": {
+      "sha256": "f6d34b43d46bfaea2f0af1e9c0074f4b2b5a1f643cef91cc6f78f619c50cc4c5",
+      "words": 12987
+    },
+    "docs/architecture/issue-data-model/6-the-asset-and-its-sync.status.md": {
+      "sha256": "95aaed6c2b4c50ef9676d5e88a3046d704151bae8af8b6fb8925373182c60750",
+      "words": 2470
+    },
+    "docs/architecture/issue-data-model/7-the-workflow-before-and-after.md": {
+      "sha256": "faf7d5363a8a7aa070a8970e38c123d593e900b663c3db8b6eaf5c81750d78f2",
+      "words": 4291
+    },
+    "docs/architecture/issue-data-model/7-the-workflow-before-and-after.status.md": {
+      "sha256": "a5439d13034233eb1043a2f293c913485071def6eb500ab677a498304927f243",
+      "words": 2319
+    },
+    "docs/architecture/issue-data-model/8-the-schedule-commands.md": {
+      "sha256": "5e31b2a9dd56efaa8baa9881663c9a65577f010fce974669df99006f64974615",
+      "words": 2603
+    },
+    "docs/architecture/issue-data-model/8-the-schedule-commands.decisions.md": {
+      "sha256": "f5fff8459d89960d5d17ff37dd1ab1b5a6c740781c52ca8f67cfa59d560da40f",
+      "words": 1443
+    },
+    "docs/architecture/issue-data-model/9-the-scenario-commands.md": {
+      "sha256": "1c19510c59662e187646d4205e6e6dc6e656d7776f24de947c04a4e75810ee59",
+      "words": 1969
+    },
+    "docs/architecture/issue-data-model/9-the-scenario-commands.decisions.md": {
+      "sha256": "de0c0273fdffa1d9a6afaeade9297631f88f4f6c38a879f5dd62034d9b66a39c",
+      "words": 936
+    },
+    "docs/architecture/issue-data-model/10-the-issue-commands.md": {
+      "sha256": "89212aa2f93682a063cf7e9bf7874b8cf859abd0cb227201f4cc734c9772367f",
+      "words": 2824
+    },
+    "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md": {
+      "sha256": "d285b4517ec0a21bc687ebe4b8fa57605d5a96da47eb75fbd50d4ef30e75260c",
+      "words": 2604
+    },
+    "docs/architecture/issue-data-model/index.md": {
+      "sha256": "dae3c3fb2d9015765836366bc7545b6a948f0d417d78f072794cb527d70459a2",
+      "words": 6895
+    },
+    "docs/engineering/agent-operation.md": {
+      "sha256": "2f8c39e2106901a8073f8ee5ebc2a1ea48a7ec0d62d0acdd9650211e08a35a88",
+      "words": 1592
+    },
+    "docs/engineering/index.md": {
+      "sha256": "1fa1a06b898eb562e6780e1411ea9a2d6a4e22d1c40b2faa24bc3c891b973eec",
+      "words": 768
+    },
+    "docs/engineering/process.md": {
+      "sha256": "52c28b698f77a256059c0120419b278316ac3b1035f584033143f9e0f15d67c8",
+      "words": 1498
+    },
+    "docs/engineering/procedures/pull-request.md": {
+      "sha256": "7743e2af458be1db8a7c14c5fab2711483175e17d0d847b0ae56b3a6950e67dc",
+      "words": 782
+    },
+    "docs/engineering/review/adoption-review.md": {
+      "sha256": "af114ab49dd146da285dbe496c06920f7b1ff5f25f5371667125cd0a21443e85",
+      "words": 1443
+    },
+    "docs/engineering/review/open-decisions.md": {
+      "sha256": "a2fc61038d838b05e44c5d6093cd27888e4ad2d1d1dbdd413c3b3c78983934b0",
+      "words": 2902
+    },
+    "docs/engineering/work-assets.md": {
+      "sha256": "a3358fa9abe89e01bc21c18f55a2ee69dc5c3edb8838cb21cbad8c226c169b3e",
+      "words": 1226
+    },
+    "docs/engineering/work-organization.md": {
+      "sha256": "50b3a96994f2d383fac9380927768f7ecc680374e25c85b8f230cf5eb902d4cd",
+      "words": 1158
+    },
+    "docs/github-branch-protection.md": {
+      "sha256": "0e90ec333c3a2bb9ce4224dfc2b7cf0bbce5dd0910d75f95f72a35343ad4c27c",
+      "words": 2333
+    },
+    "docs/guides/pr-script-template.md": {
+      "sha256": "6802224cabc027e3ebb771544a0b6736a8abb9e007f7b36150ad495910a93ef4",
+      "words": 9614
+    },
+    "docs/index.md": {
+      "sha256": "79e62040485e068cef0b23813abfc55a40966b470d36d3f713866af31af17823",
+      "words": 369
+    },
+    "docs/issue-standards.md": {
+      "sha256": "c46e3cc404421d5a95f341dff0b7f94b15bbbae645b517b91d182d007ccaf7d3",
+      "words": 13534
+    },
+    "docs/plans/doc/420-consolidate-engineering.md": {
+      "sha256": "90b4d6c8db2733646b1e8fdf86a8876db1eed73a6ecb3261bd34b3ce1f75669b",
+      "words": 3161
+    },
+    "docs/plans/doc/581-schedule-command-consumers.md": {
+      "sha256": "078a79a45f6deae218815ebeecfac4a139a3aac36be8b82eda658900b79e5d89",
+      "words": 6396
+    },
+    "docs/roadmaps/agentic-developer-workstation.md": {
+      "sha256": "6ad67e5b45f9cde5fffab7e6b58d3fb71e7e0193c4bd85dc2bb0ea83a6a16f3b",
+      "words": 4596
+    },
+    "docs/standards/documentation.md": {
+      "sha256": "be38e33ed00745b4f5b3dc226219669f7c98a62a6baba5d770a7934a74c0cafb",
+      "words": 923
+    },
+    "docs/templates/design.md": {
+      "sha256": "35725d335c9d0d6bedd60a598ac33df140f6411c399ff6aa92d9b2133c2705b6",
+      "words": 160
+    },
+    "docs/templates/schedule.md": {
+      "sha256": "38eadc0ea78d2c425c12bf557ef0b2ee8c0829727c18c492f2bed5cf93b2602a",
+      "words": 489
+    }
+  },
+  "immutable_sources": {
+    "docs/engineering/review/sources/cli-instructions.txt": "9b533a305794da548dc59ee797f94d697a74d71e754b29c2d56956cadf406325",
+    "docs/engineering/review/sources/release-process.txt": "d0bae05f31461d39594201ecd636c5344f3ff18acc5270f7432a04ad039a1495",
+    "docs/engineering/review/sources/agent-rules.txt": "58fc534a01cfe681a3ba9c5da05ce801a6ce28234c997b9401bfddfde52dd03f",
+    "docs/engineering/review/sources/issue-standards.txt": "4a02c5df5ab09974aaf5a25d41faff0f7381afb93a416694e31c0df812d6a447",
+    "docs/engineering/review/sources/powershell-style.txt": "22bc4df2847b5691806763d600c1437f903c6ec6541ec56dec4f94c2ea8b8940",
+    "docs/engineering/review/sources/development-process.txt": "ccfab94823019f4812e1443afeafc748c910feaaed29a0e68c9a2382cff40cc8",
+    "docs/engineering/review/sources/documentation-standards.txt": "e15d0f77b946d7923078552c254c844b4c76b118741aa0a6386e360093942413",
+    "docs/engineering/review/sources/pr-script-template.txt": "eed108c84cb63e1b3ef9de67f67e16589039f3b5101b69bedd8b21301aaf70cf",
+    "docs/engineering/review/sources/plan-template.txt": "920205ceb08f524c4e20c593bde0b612296693c703762485af8f773b5eda5067",
+    "docs/engineering/review/sources/personal-instructions.txt": "3a1f21aafc2f81caa9d37a59dcd5f8b8bec5006d7e9fd7212a7001a832a2cd59",
+    "docs/engineering/review/sources/branch-protection.txt": "b91dcfa3ed024900c04233800fd52f81a4e623ccab6ffb65aa7b8600f56b42c9",
+    "docs/engineering/review/sources/prior-inventory.txt": "5ccdf7647984abde458c827f190dff564a731297058f169a91c304d2358ed88c",
+    "docs/engineering/review/sources/go-style.txt": "45004056b3724b0c35fea58ff8ca44b423044c42db06e6292b91c205ae583025",
+    "docs/engineering/review/sources/adoption-2026-11-15/release-process.txt": "d0bae05f31461d39594201ecd636c5344f3ff18acc5270f7432a04ad039a1495",
+    "docs/engineering/review/sources/adoption-2026-11-15/agent-rules.txt": "659a067518c0e9bb1bdd54d29812aa630da3482caa3032735f14a970431ff850",
+    "docs/engineering/review/sources/adoption-2026-11-15/powershell-style.txt": "22bc4df2847b5691806763d600c1437f903c6ec6541ec56dec4f94c2ea8b8940",
+    "docs/engineering/review/sources/adoption-2026-11-15/development-process.txt": "85d47bef0f4b05ba1b5965fd9da653165ecd531937316ba1ae34361b59dc5d5f",
+    "docs/engineering/review/sources/adoption-2026-11-15/documentation-standards.txt": "e15d0f77b946d7923078552c254c844b4c76b118741aa0a6386e360093942413",
+    "docs/engineering/review/sources/adoption-2026-11-15/pr-script-template.txt": "160aaa2afe349913aad551fc6acd8745fb4ea767daaa25d2b3dd0f38e5a0a354",
+    "docs/engineering/review/sources/adoption-2026-11-15/plan-template.txt": "a6215b7bc2612863746074f1acecc139839fe535d05ab1d75897ad942dc47302",
+    "docs/engineering/review/sources/adoption-2026-11-15/go-style.txt": "45004056b3724b0c35fea58ff8ca44b423044c42db06e6292b91c205ae583025"
+  },
+  "preserved_anchors": [
+    {
+      "path": "docs/architecture/agent-schedule/1-session-model.md",
+      "anchor": "1-session-model--every-conversation-in-claudes-background-a-tmux-session-of-its-own-for-each-start",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/1-session-model.md",
+      "anchor": "the-model",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/1-session-model.md",
+      "anchor": "the-parts-drawn",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/1-session-model.md",
+      "anchor": "the-processes-under-ssh-and-under-mosh",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/1-session-model.md",
+      "anchor": "a-start-step-by-step",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/1-session-model.md",
+      "anchor": "leaving",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/1-session-model.md",
+      "anchor": "typing-into-a-viewer",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/1-session-model.md",
+      "anchor": "clearing-and-retiring-a-conversation",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/1-session-model.md",
+      "anchor": "moving-a-foreground-conversation-into-the-background",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/1-session-model.md",
+      "anchor": "on-psmux-on-windows",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/1-session-model.md",
+      "anchor": "running-in-a-sandbox",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/1-session-model.md",
+      "anchor": "open",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/1-session-model.status.md",
+      "anchor": "1-session-model--status",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/1-session-model.status.md",
+      "anchor": "completion",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/2-command-line.md",
+      "anchor": "2-command-line--start-claude-today",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/2-command-line.md",
+      "anchor": "its-forms",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/2-command-line.md",
+      "anchor": "its-names",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/2-command-line.md",
+      "anchor": "its-store",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/2-command-line.md",
+      "anchor": "clear-claude",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/2-command-line.md",
+      "anchor": "where-it-runs",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/2-command-line.md",
+      "anchor": "windows",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/2-command-line.status.md",
+      "anchor": "2-command-line--status",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/2-command-line.status.md",
+      "anchor": "completion",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/2.1-agent-schedule-commands.md",
+      "anchor": "21-the-agent-schedule-commands--a-claude-sessions-binding-to-its-schedule-as-crud",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/2.1-agent-schedule-commands.md",
+      "anchor": "appendix-the-agent-assignment-design-as-the-owner-wrote-it-2026-10-13",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/2.1-agent-schedule-commands.status.md",
+      "anchor": "21-the-agent-schedule-commands--status",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/2.1-agent-schedule-commands.status.md",
+      "anchor": "completion",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/3-agent-sandbox.md",
+      "anchor": "3-shared-claude-session-with-private-terminals-in-docker-sbx",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/3-agent-sandbox.md",
+      "anchor": "purpose",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/3-agent-sandbox.md",
+      "anchor": "design-decisions",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/3-agent-sandbox.md",
+      "anchor": "architecture",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/3-agent-sandbox.md",
+      "anchor": "session-identity-and-lookup",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/3-agent-sandbox.md",
+      "anchor": "startup-and-attachment-flow",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/3-agent-sandbox.md",
+      "anchor": "start-the-background-session",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/3-agent-sandbox.md",
+      "anchor": "attach-a-client",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/3-agent-sandbox.md",
+      "anchor": "shared-and-private-state",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/3-agent-sandbox.md",
+      "anchor": "lifecycle-and-failure-behavior",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/3-agent-sandbox.md",
+      "anchor": "minimal-implementation-changes",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/3-agent-sandbox.md",
+      "anchor": "validation-before-rollout",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/3-agent-sandbox.md",
+      "anchor": "implementation-details-to-verify",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/3-agent-sandbox.md",
+      "anchor": "what-the-draft-does-not-capture-configuration-and-worktrees",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/3-agent-sandbox.md",
+      "anchor": "open",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/3-agent-sandbox.md",
+      "anchor": "where-it-fits",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/3-agent-sandbox.status.md",
+      "anchor": "3-agent-sandbox--status",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/3-agent-sandbox.status.md",
+      "anchor": "completion",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/index.md",
+      "anchor": "agent-schedules--one-conversation-for-each-schedule-opened-from-anywhere",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/index.md",
+      "anchor": "sections",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/index.md",
+      "anchor": "terms",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/agent-schedule/index.md",
+      "anchor": "where-these-documents-go",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/1-hierarchy.md",
+      "anchor": "1-the-hierarchy",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/1-hierarchy.md",
+      "anchor": "type",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/1-hierarchy.md",
+      "anchor": "parents",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/1-hierarchy.md",
+      "anchor": "triage",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/1-hierarchy.md",
+      "anchor": "how-long-a-level-lives",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/1-hierarchy.md",
+      "anchor": "what-the-hierarchy-does-not-hold",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/2-attributes.md",
+      "anchor": "2-attributes",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/2-attributes.md",
+      "anchor": "the-attributes",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/2-attributes.md",
+      "anchor": "labels-carry-no-values",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/2-attributes.md",
+      "anchor": "not-attributes",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/2-attributes.md",
+      "anchor": "why-an-issue-was-closed",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/1-hierarchy.status.md",
+      "anchor": "1-the-hierarchy--status",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/1-hierarchy.status.md",
+      "anchor": "completion",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/2-attributes.status.md",
+      "anchor": "2-attributes--status",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/2-attributes.status.md",
+      "anchor": "completion",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/3-collections.md",
+      "anchor": "3-collections",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/3-collections.md",
+      "anchor": "four-projects-per-team",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/3-collections.md",
+      "anchor": "the-schedule-and-scenario-fields",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/3-collections.md",
+      "anchor": "triage-and-the-backlog",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/3-collections.md",
+      "anchor": "the-collections-own-record-a-schedule-or-scenario-issue",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/3-collections.md",
+      "anchor": "ownership",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/3-collections.md",
+      "anchor": "collections-belong-to-one-account",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/3-collections.md",
+      "anchor": "a-committed-schedule",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/4-storage-and-reach.md",
+      "anchor": "4-storage-and-reach",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/4-storage-and-reach.md",
+      "anchor": "accounts-organizations-and-individuals",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/4-storage-and-reach.md",
+      "anchor": "an-organizations-account",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/4-storage-and-reach.md",
+      "anchor": "a-user-account",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/4-storage-and-reach.md",
+      "anchor": "triage",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/4-storage-and-reach.md",
+      "anchor": "the-rest-of-the-ruling",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/4-storage-and-reach.md",
+      "anchor": "what-reaches-personal",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/4-storage-and-reach.md",
+      "anchor": "where-each-part-lives",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/4-storage-and-reach.md",
+      "anchor": "where-each-part-is-defined",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/4-storage-and-reach.md",
+      "anchor": "labels",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/4-storage-and-reach.md",
+      "anchor": "the-choice-it-turns-on",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/4-storage-and-reach.md",
+      "anchor": "what-github-does-not-enforce",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/5-from-todays-scheme.md",
+      "anchor": "5-from-todays-scheme",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/5-from-todays-scheme.md",
+      "anchor": "the-line-that-protects-the-running-sessions",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/5-from-todays-scheme.md",
+      "anchor": "the-deltas",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/5-from-todays-scheme.md",
+      "anchor": "what-must-keep-running",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/5-from-todays-scheme.md",
+      "anchor": "the-order-as-the-stages",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/7-the-workflow-before-and-after.md",
+      "anchor": "7-the-workflow-before-and-after",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/7-the-workflow-before-and-after.md",
+      "anchor": "filing-an-issue",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/7-the-workflow-before-and-after.md",
+      "anchor": "product-and-engineering",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/7-the-workflow-before-and-after.md",
+      "anchor": "writing-a-schedule",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/7-the-workflow-before-and-after.md",
+      "anchor": "reporting-progress",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/7-the-workflow-before-and-after.md",
+      "anchor": "what-goes-and-what-stays",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/3-collections.status.md",
+      "anchor": "3-collections--status",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/3-collections.status.md",
+      "anchor": "every-workflow-checked-on-2026-11-04",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/3-collections.status.md",
+      "anchor": "completion",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/4-storage-and-reach.status.md",
+      "anchor": "4-storage-and-reach--status",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/4-storage-and-reach.status.md",
+      "anchor": "completion",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/5-from-todays-scheme.status.md",
+      "anchor": "5-from-todays-scheme--status",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/5-from-todays-scheme.status.md",
+      "anchor": "completion",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/7-the-workflow-before-and-after.status.md",
+      "anchor": "7-the-workflow-before-and-after--status",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/7-the-workflow-before-and-after.status.md",
+      "anchor": "completion",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.md",
+      "anchor": "8-the-schedule-commands",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.md",
+      "anchor": "the-commands",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.md",
+      "anchor": "reading-list-get-and-report",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.md",
+      "anchor": "opening-a-schedule-open-and-create",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.md",
+      "anchor": "what-a-move-records-on-a-schedule",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.md",
+      "anchor": "closing-a-schedule-close",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.md",
+      "anchor": "reopening-a-schedule-reopen",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.md",
+      "anchor": "significant-design-decisions",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.md",
+      "anchor": "start-claude",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.md",
+      "anchor": "how-each-command-runs-in-each-account",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.md",
+      "anchor": "linking-plans-plan-link",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.md",
+      "anchor": "building-it",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.md",
+      "anchor": "changing-a-schedule-add-move-and-remove",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.md",
+      "anchor": "moving-an-issue-issue-move",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/9-the-scenario-commands.md",
+      "anchor": "9-the-scenario-commands",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/9-the-scenario-commands.md",
+      "anchor": "the-commands",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/9-the-scenario-commands.md",
+      "anchor": "reading-list-and-get",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/9-the-scenario-commands.md",
+      "anchor": "opening-a-scenario-open-and-create",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/9-the-scenario-commands.md",
+      "anchor": "what-a-move-records-on-a-scenario",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/9-the-scenario-commands.md",
+      "anchor": "closing-a-scenario-close",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/9-the-scenario-commands.md",
+      "anchor": "reopening-a-scenario-reopen",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/9-the-scenario-commands.md",
+      "anchor": "ongoing-cleanup",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/9-the-scenario-commands.md",
+      "anchor": "significant-design-decisions",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/9-the-scenario-commands.md",
+      "anchor": "how-each-command-runs-in-each-account",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/9-the-scenario-commands.md",
+      "anchor": "building-it",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/9-the-scenario-commands.md",
+      "anchor": "what-two-pieces-already-do",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/9-the-scenario-commands.md",
+      "anchor": "what-the-scenarios-hold-today",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.md",
+      "anchor": "10-the-issue-commands",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.md",
+      "anchor": "the-commands",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.md",
+      "anchor": "where-an-issue-lives",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.md",
+      "anchor": "epics-and-features",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.md",
+      "anchor": "opening-an-issue-open-and-create",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.md",
+      "anchor": "moving-an-issue-move",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.md",
+      "anchor": "closing-an-issue-close",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.md",
+      "anchor": "reopening-an-issue-reopen",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.md",
+      "anchor": "significant-design-decisions",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.md",
+      "anchor": "how-each-command-runs-in-each-account",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.md",
+      "anchor": "building-it",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/index.md",
+      "anchor": "issue-data-model--one-hierarchy-its-attributes-and-the-collections-that-order-it",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/index.md",
+      "anchor": "sections",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/index.md",
+      "anchor": "terms",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.decisions.md",
+      "anchor": "8-the-schedule-commands-design-decisions",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.decisions.md",
+      "anchor": "1-decision-index",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.decisions.md",
+      "anchor": "2-decision-records",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.decisions.md",
+      "anchor": "21-d-001-results-are-selected-and-shaped-by-stars-common-flags",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.decisions.md",
+      "anchor": "22-d-002-a-command-reads-first-and-reads-each-write-back",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.decisions.md",
+      "anchor": "23-d-003-one-command-changes-a-schedules-steps",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.decisions.md",
+      "anchor": "24-d-004-each-change-to-a-schedules-steps-writes-one-amendment-line",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.decisions.md",
+      "anchor": "25-d-005-steps-stay-consecutive-closed-steps-renumbered-with-open-ones",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.decisions.md",
+      "anchor": "26-d-006-close-posts-what-merged-by-pull-request",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.decisions.md",
+      "anchor": "27-d-007-a-closed-schedules-option-stays",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.decisions.md",
+      "anchor": "28-d-008-reopen-sets-the-own-row-in-progress-and-unticks-the-every-step-criterion",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.decisions.md",
+      "anchor": "d-001",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.decisions.md",
+      "anchor": "d-002",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.decisions.md",
+      "anchor": "d-003",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.decisions.md",
+      "anchor": "d-004",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.decisions.md",
+      "anchor": "d-005",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.decisions.md",
+      "anchor": "d-006",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.decisions.md",
+      "anchor": "d-007",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/8-the-schedule-commands.decisions.md",
+      "anchor": "d-008",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/9-the-scenario-commands.decisions.md",
+      "anchor": "9-the-scenario-commands-design-decisions",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/9-the-scenario-commands.decisions.md",
+      "anchor": "1-decision-index",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/9-the-scenario-commands.decisions.md",
+      "anchor": "2-decision-records",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/9-the-scenario-commands.decisions.md",
+      "anchor": "21-d-001-scenarios-have-a-command-group-of-their-own",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/9-the-scenario-commands.decisions.md",
+      "anchor": "22-d-002-beat-n-is-step-n-of-the-walk",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/9-the-scenario-commands.decisions.md",
+      "anchor": "23-d-003-a-move-onto-or-off-a-scenario-is-recorded-in-two-places",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/9-the-scenario-commands.decisions.md",
+      "anchor": "24-d-004-a-closed-item-leaves-its-scenario",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/9-the-scenario-commands.decisions.md",
+      "anchor": "25-d-005-close-closes-a-scenario-as-completed-with-no-resolution",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/9-the-scenario-commands.decisions.md",
+      "anchor": "d-001",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/9-the-scenario-commands.decisions.md",
+      "anchor": "d-002",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/9-the-scenario-commands.decisions.md",
+      "anchor": "d-003",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/9-the-scenario-commands.decisions.md",
+      "anchor": "d-004",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/9-the-scenario-commands.decisions.md",
+      "anchor": "d-005",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md",
+      "anchor": "10-the-issue-commands-design-decisions",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md",
+      "anchor": "1-decision-index",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md",
+      "anchor": "2-decision-records",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md",
+      "anchor": "21-d-001-the-verbs-are-open-move-close-and-reopen",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md",
+      "anchor": "22-d-002-the-issue-verbs-act-on-epics-features-tasks-and-bugs",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md",
+      "anchor": "23-d-003-an-issue-goes-wherever-its-type-allows-from-wherever-it-is",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md",
+      "anchor": "24-d-004-an-epic-or-a-feature-stays-on-the-backlog-until-it-closes",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md",
+      "anchor": "25-d-005-open-opens-its-issue-in-the-clones-repository",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md",
+      "anchor": "26-d-006-open-gives-the-issue-no-row",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md",
+      "anchor": "27-d-007-opens-defaults",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md",
+      "anchor": "28-d-008-work-not-done-closes-as-completed-with-a-resolution",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md",
+      "anchor": "29-d-009-close-writes-the-comment-the-resolution-the-closure-then-the-rows",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md",
+      "anchor": "210-d-010-close-closes-no-parent",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md",
+      "anchor": "211-d-011-reopen-reopens-what-the-issue-belongs-to",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md",
+      "anchor": "212-d-012-every-projects-first-view-is-named-default",
+      "preserved": true
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md",
+      "anchor": "d-001",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md",
+      "anchor": "d-002",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md",
+      "anchor": "d-003",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md",
+      "anchor": "d-004",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md",
+      "anchor": "d-005",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md",
+      "anchor": "d-006",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md",
+      "anchor": "d-007",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md",
+      "anchor": "d-008",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md",
+      "anchor": "d-009",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md",
+      "anchor": "d-010",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md",
+      "anchor": "d-011",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md",
+      "anchor": "d-012",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/agent-operation.md",
+      "anchor": "agent-operation",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/agent-operation.md",
+      "anchor": "1-role-assignments",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/agent-operation.md",
+      "anchor": "2-all-agents-shared-obligations",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/agent-operation.md",
+      "anchor": "21-compliance-auditing",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/agent-operation.md",
+      "anchor": "3-all-agents-writing-for-publication",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/agent-operation.md",
+      "anchor": "4-owner-supervised-agents-assignment-and-responsibility",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/agent-operation.md",
+      "anchor": "5-owner-supervised-agents-knowledge-and-visibility",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/agent-operation.md",
+      "anchor": "6-owner-supervised-agents-conversations",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/agent-operation.md",
+      "anchor": "7-owner-supervised-agents-authority-and-progression",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/agent-operation.md",
+      "anchor": "8-all-agents-tools-and-status",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/agent-operation.md",
+      "anchor": "role-assignments",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/agent-operation.md",
+      "anchor": "all-agents-shared-obligations",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/agent-operation.md",
+      "anchor": "incident-patterns",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/agent-operation.md",
+      "anchor": "compliance-auditing",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/agent-operation.md",
+      "anchor": "all-agents-writing-for-publication",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/agent-operation.md",
+      "anchor": "owner-supervised-agents-assignment-and-responsibility",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/agent-operation.md",
+      "anchor": "owner-supervised-agents-knowledge-and-visibility",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/agent-operation.md",
+      "anchor": "owner-supervised-agents-conversations",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/agent-operation.md",
+      "anchor": "owner-supervised-agents-authority-and-progression",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/agent-operation.md",
+      "anchor": "all-agents-tools-and-status",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/standards/documentation.md",
+      "anchor": "documentation-standards",
+      "preserved": true
+    },
+    {
+      "path": "docs/standards/documentation.md",
+      "anchor": "1-form-and-metadata",
+      "preserved": true
+    },
+    {
+      "path": "docs/standards/documentation.md",
+      "anchor": "11-document-families-and-metadata",
+      "preserved": true
+    },
+    {
+      "path": "docs/standards/documentation.md",
+      "anchor": "12-exemptions",
+      "preserved": true
+    },
+    {
+      "path": "docs/standards/documentation.md",
+      "anchor": "13-language",
+      "preserved": true
+    },
+    {
+      "path": "docs/standards/documentation.md",
+      "anchor": "2-ownership-and-maintenance",
+      "preserved": true
+    },
+    {
+      "path": "docs/standards/documentation.md",
+      "anchor": "21-prose-source-layout",
+      "preserved": true
+    },
+    {
+      "path": "docs/standards/documentation.md",
+      "anchor": "3-section-numbering",
+      "preserved": true
+    },
+    {
+      "path": "docs/standards/documentation.md",
+      "anchor": "4-links-changes-and-history",
+      "preserved": true
+    },
+    {
+      "path": "docs/standards/documentation.md",
+      "anchor": "form-and-metadata",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/standards/documentation.md",
+      "anchor": "document-families-and-metadata",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/standards/documentation.md",
+      "anchor": "exemptions",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/standards/documentation.md",
+      "anchor": "language",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/standards/documentation.md",
+      "anchor": "ownership-and-maintenance",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/standards/documentation.md",
+      "anchor": "prose-source-layout",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/standards/documentation.md",
+      "anchor": "section-numbering",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/standards/documentation.md",
+      "anchor": "links-changes-and-history",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/templates/design.md",
+      "anchor": "design-template",
+      "preserved": true
+    },
+    {
+      "path": "docs/templates/design.md",
+      "anchor": "1-role-assignments",
+      "preserved": true
+    },
+    {
+      "path": "docs/templates/design.md",
+      "anchor": "2-purpose-and-resulting-system",
+      "preserved": true
+    },
+    {
+      "path": "docs/templates/design.md",
+      "anchor": "3-context-and-requirements",
+      "preserved": true
+    },
+    {
+      "path": "docs/templates/design.md",
+      "anchor": "4-structure-and-behavior",
+      "preserved": true
+    },
+    {
+      "path": "docs/templates/design.md",
+      "anchor": "5-alternatives-and-tradeoffs",
+      "preserved": true
+    },
+    {
+      "path": "docs/templates/design.md",
+      "anchor": "6-operational-consequences",
+      "preserved": true
+    },
+    {
+      "path": "docs/templates/design.md",
+      "anchor": "7-decision-and-approval",
+      "preserved": true
+    },
+    {
+      "path": "docs/templates/design.md",
+      "anchor": "8-implementation-relationship",
+      "preserved": true
+    },
+    {
+      "path": "docs/templates/design.md",
+      "anchor": "role-assignments",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/templates/design.md",
+      "anchor": "purpose-and-resulting-system",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/templates/design.md",
+      "anchor": "context-and-requirements",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/templates/design.md",
+      "anchor": "structure-and-behavior",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/templates/design.md",
+      "anchor": "alternatives-and-tradeoffs",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/templates/design.md",
+      "anchor": "operational-consequences",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/templates/design.md",
+      "anchor": "decision-and-approval",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/templates/design.md",
+      "anchor": "implementation-relationship",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/review/decisions.md",
+      "anchor": "decisions-established-in-review",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/review/decisions.md",
+      "anchor": "review-comment-origin-2026-11-19",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "agentic-developer-workstation",
+      "preserved": true,
+      "kind": "heading"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "1-problem",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "1. Problem and goals"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "2-goals-and-scope",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "1.1 Goals"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "3-our-solution",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "4. Solution strategy"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "4-development-workflow",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "6.1 Development workflow"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "41-persistent-specialists",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "5.1 Roles"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "42-begin-with-design-before-scheduling",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "6.1.1 Design and planning"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "43-move-from-designer-to-planner",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "6.1.1 Design and planning"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "44-start-and-work-a-scheduled-environment",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "6.1.2 Scheduled work"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "45-leave-the-desktop-and-continue-from-an-ipad",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "6.1.3 Change devices"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "46-compact-recover-and-continue",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "6.1.4 Compaction and continuity"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "47-merge-increments-and-finish-the-work",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "6.1.5 Merge and completion"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "5-system-architecture",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "5. Components"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "51-components-and-placement",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "5. Components"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "52-identity-authority-and-lifetime",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "8.1 Identity and authority"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "53-common-host-driver-contract",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "5.2 Native host drivers"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "54-editor-instances-and-attachment-views",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "5.3 Editors and profiles"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "55-shared-evidence-archive-and-policy",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "5.4 Evidence and policy services"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "56-workspaces-verification-and-recovery",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "8.2 Durable work and verification"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "disaster-recovery-and-session-succession",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "8.4 Session succession"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "57-initial-physical-deployment",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "7. Deployment"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "58-interaction-lifecycle",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "6. Runtime and development workflow"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "states-that-matter",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "6.2 States and operation records"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "interaction-ownership-and-durable-records",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "6.2 States and operation records"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "eight-stable-startup-combinations",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "6.3 Startup combinations"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "start-or-attach-activity",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "6.4 Environment and role startup"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "interaction-catalog",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "6.4 Environment and role startup"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "i1-prepare-the-environment-and-editor",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "6.4.1 I1. Prepare the environment and editor"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "i2-create-or-resume-a-role-including-concurrent-opens",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "6.4.2 I2. Create or resume a role"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "i3-attach-reconnect-and-release-terminal-views",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "6.5 I3. Views and reconnect"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "i4-work-and-approvals-across-views",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "6.6 I4. Work and approvals"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "i5-stop-suspend-and-resume-at-the-intended-scope",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "6.7 I5. Stop and resume"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "i6-recover-failures-while-preserving-identity",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "6.8 I6. Failure recovery"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "i7-configuration-native-session-controls-and-delegation",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "6.9 I7. Configuration and delegation"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "6-qualification-and-completion",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "10. Quality and acceptance"
+    },
+    {
+      "path": "docs/architecture/agentic-developer-workstation.md",
+      "anchor": "7-decisions-to-resolve-through-the-roadmap",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "11. Risks and open choices"
+    },
+    {
+      "path": "docs/roadmaps/agentic-developer-workstation.md",
+      "anchor": "agentic-developer-workstation--roadmap",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "Agentic developer workstation roadmap"
+    },
+    {
+      "path": "docs/roadmaps/agentic-developer-workstation.md",
+      "anchor": "1-goal-and-success-criteria",
+      "preserved": true,
+      "kind": "heading"
+    },
+    {
+      "path": "docs/roadmaps/agentic-developer-workstation.md",
+      "anchor": "2-epic-structure-and-ownership",
+      "preserved": true,
+      "kind": "heading"
+    },
+    {
+      "path": "docs/roadmaps/agentic-developer-workstation.md",
+      "anchor": "3-integration-features",
+      "preserved": true,
+      "kind": "heading"
+    },
+    {
+      "path": "docs/roadmaps/agentic-developer-workstation.md",
+      "anchor": "4-separate-future-inference-track",
+      "preserved": true,
+      "kind": "heading"
+    },
+    {
+      "path": "docs/roadmaps/agentic-developer-workstation.md",
+      "anchor": "5-delivery-waves-and-gates",
+      "preserved": true,
+      "kind": "heading"
+    },
+    {
+      "path": "docs/roadmaps/agentic-developer-workstation.md",
+      "anchor": "first-actionable-implementation-increment",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "5.1 First actionable implementation increment"
+    },
+    {
+      "path": "docs/roadmaps/agentic-developer-workstation.md",
+      "anchor": "6-scenario-walkthroughs-and-qualification-obligations",
+      "preserved": true,
+      "kind": "heading"
+    },
+    {
+      "path": "docs/roadmaps/agentic-developer-workstation.md",
+      "anchor": "s8--disaster-recovery-after-loss-of-a-native-session",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "6.1 S8. Disaster recovery after loss of a native session"
+    },
+    {
+      "path": "docs/roadmaps/agentic-developer-workstation.md",
+      "anchor": "interaction-acceptance-cases",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "6.2 Interaction acceptance cases"
+    },
+    {
+      "path": "docs/roadmaps/agentic-developer-workstation.md",
+      "anchor": "host-capability-matrix-the-planner-must-obtain",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "6.3 Host capability matrix"
+    },
+    {
+      "path": "docs/roadmaps/agentic-developer-workstation.md",
+      "anchor": "7-planner-handoff-and-cross-epic-contracts",
+      "preserved": true,
+      "kind": "heading"
+    },
+    {
+      "path": "docs/roadmaps/agentic-developer-workstation.md",
+      "anchor": "8-decisions-and-dependencies-to-resolve",
+      "preserved": true,
+      "kind": "heading"
+    },
+    {
+      "path": "docs/roadmaps/agentic-developer-workstation.md",
+      "anchor": "9-review-and-delivery-record",
+      "preserved": true,
+      "kind": "explicit",
+      "destination": "9. Planning and acceptance"
+    },
+    {
+      "path": "docs/engineering/index.md",
+      "anchor": "engineering-documentation",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/index.md",
+      "anchor": "1-purpose-and-authority",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/index.md",
+      "anchor": "2-applicability",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/index.md",
+      "anchor": "3-roles",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/index.md",
+      "anchor": "4-reading-path-and-ownership",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/index.md",
+      "anchor": "5-temporary-live-entrypoint-overrides",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/index.md",
+      "anchor": "purpose-and-authority",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/index.md",
+      "anchor": "applicability",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/index.md",
+      "anchor": "roles",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/index.md",
+      "anchor": "reading-path-and-ownership",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/index.md",
+      "anchor": "temporary-live-entrypoint-overrides",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/process.md",
+      "anchor": "engineering-process",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/process.md",
+      "anchor": "1-work-philosophy",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/process.md",
+      "anchor": "2-roles-and-responsibilities",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/process.md",
+      "anchor": "3-define-the-promised-outcome",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/process.md",
+      "anchor": "4-prepare-and-review",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/process.md",
+      "anchor": "5-implement-the-approved-work",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/process.md",
+      "anchor": "6-verify-and-review-results",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/process.md",
+      "anchor": "7-pull-request-and-integration",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/process.md",
+      "anchor": "8-completion-and-progression",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/process.md",
+      "anchor": "9-preserve-and-clean-up",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/process.md",
+      "anchor": "work-philosophy",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/process.md",
+      "anchor": "roles-and-responsibilities",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/process.md",
+      "anchor": "define-the-promised-outcome",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/process.md",
+      "anchor": "prepare-and-review",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/process.md",
+      "anchor": "implement-the-approved-work",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/process.md",
+      "anchor": "verify-and-review-results",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/process.md",
+      "anchor": "pull-request-and-integration",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/process.md",
+      "anchor": "completion-and-progression",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/process.md",
+      "anchor": "preserve-and-clean-up",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/work-organization.md",
+      "anchor": "work-organization",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/work-organization.md",
+      "anchor": "1-work-and-identity",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/work-organization.md",
+      "anchor": "2-schedule-commitment",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/work-organization.md",
+      "anchor": "3-changing-scheduled-work",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/work-organization.md",
+      "anchor": "4-overlap-and-coordination",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/work-organization.md",
+      "anchor": "5-discoveries-and-blockers",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/work-organization.md",
+      "anchor": "6-persistent-assignments",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/work-organization.md",
+      "anchor": "work-and-identity",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/work-organization.md",
+      "anchor": "schedule-commitment",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/work-organization.md",
+      "anchor": "changing-scheduled-work",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/work-organization.md",
+      "anchor": "overlap-and-coordination",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/work-organization.md",
+      "anchor": "discoveries-and-blockers",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/work-organization.md",
+      "anchor": "persistent-assignments",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/work-assets.md",
+      "anchor": "work-assets",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/work-assets.md",
+      "anchor": "1-identity-and-relationships",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/work-assets.md",
+      "anchor": "2-workspace-locations",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/work-assets.md",
+      "anchor": "3-plans-and-designs",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/work-assets.md",
+      "anchor": "31-designs",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/work-assets.md",
+      "anchor": "32-plans",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/work-assets.md",
+      "anchor": "33-document-formats-and-links",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/work-assets.md",
+      "anchor": "4-lifecycle-and-freshness",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/work-assets.md",
+      "anchor": "5-clone-retirement",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/work-assets.md",
+      "anchor": "6-layer-script-locations",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/work-assets.md",
+      "anchor": "identity-and-relationships",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/work-assets.md",
+      "anchor": "workspace-locations",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/work-assets.md",
+      "anchor": "plans-and-designs",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/work-assets.md",
+      "anchor": "designs",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/work-assets.md",
+      "anchor": "plans",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/work-assets.md",
+      "anchor": "document-formats-and-links",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/work-assets.md",
+      "anchor": "lifecycle-and-freshness",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/work-assets.md",
+      "anchor": "clone-retirement",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/work-assets.md",
+      "anchor": "layer-script-locations",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/agent-operation.md",
+      "anchor": "31-codex-review-comments",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/agent-operation.md",
+      "anchor": "codex-review-comments",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/procedures/pull-request.md",
+      "anchor": "pull-request-procedure",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/procedures/pull-request.md",
+      "anchor": "1-dedicated-pr-script-standard",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/procedures/pull-request.md",
+      "anchor": "2-review-boundary",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/procedures/pull-request.md",
+      "anchor": "3-merge-authorization-and-gates",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/procedures/pull-request.md",
+      "anchor": "4-issue-closure",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/procedures/pull-request.md",
+      "anchor": "5-documentation-only-completion-follow-up",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/procedures/pull-request.md",
+      "anchor": "dedicated-pr-script-standard",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/procedures/pull-request.md",
+      "anchor": "review-boundary",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/procedures/pull-request.md",
+      "anchor": "merge-authorization-and-gates",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/procedures/pull-request.md",
+      "anchor": "issue-closure",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/procedures/pull-request.md",
+      "anchor": "documentation-only-completion-follow-up",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/index.md",
+      "anchor": "engineering-handbook",
+      "preserved": true
+    },
+    {
+      "path": "docs/index.md",
+      "anchor": "1-workflow-and-responsibilities",
+      "preserved": true
+    },
+    {
+      "path": "docs/index.md",
+      "anchor": "2-standards-and-procedures",
+      "preserved": true
+    },
+    {
+      "path": "docs/index.md",
+      "anchor": "3-decisions-and-preservation-evidence",
+      "preserved": true
+    },
+    {
+      "path": "docs/index.md",
+      "anchor": "4-adoption-and-live-entrypoint-transition",
+      "preserved": true
+    },
+    {
+      "path": "README.md",
+      "anchor": "noblefactor-engprod",
+      "preserved": true
+    },
+    {
+      "path": "README.md",
+      "anchor": "what-is-here",
+      "preserved": true
+    },
+    {
+      "path": "README.md",
+      "anchor": "the-standards-claudemd-points-at",
+      "preserved": true
+    },
+    {
+      "path": "README.md",
+      "anchor": "the-layer-content",
+      "preserved": true
+    },
+    {
+      "path": "README.md",
+      "anchor": "the-star-work-is-not-here",
+      "preserved": true
+    },
+    {
+      "path": "README.md",
+      "anchor": "tools",
+      "preserved": true
+    },
+    {
+      "path": "README.md",
+      "anchor": "what-is-not-here-despite-what-this-file-used-to-say",
+      "preserved": true
+    },
+    {
+      "path": "README.md",
+      "anchor": "deploying-it",
+      "preserved": true
+    },
+    {
+      "path": "README.md",
+      "anchor": "ci",
+      "preserved": true
+    },
+    {
+      "path": "README.md",
+      "anchor": "license",
+      "preserved": true
+    },
+    {
+      "path": "docs/templates/schedule.md",
+      "anchor": "schedule-template",
+      "preserved": true
+    },
+    {
+      "path": "docs/templates/schedule.md",
+      "anchor": "1-role-assignments",
+      "preserved": true
+    },
+    {
+      "path": "docs/templates/schedule.md",
+      "anchor": "2-deliverable",
+      "preserved": true
+    },
+    {
+      "path": "docs/templates/schedule.md",
+      "anchor": "exit-criteria",
+      "preserved": true
+    },
+    {
+      "path": "docs/templates/schedule.md",
+      "anchor": "evidence-of-completion",
+      "preserved": true
+    },
+    {
+      "path": "docs/templates/schedule.md",
+      "anchor": "3-mission-and-ownership",
+      "preserved": true
+    },
+    {
+      "path": "docs/templates/schedule.md",
+      "anchor": "4-schedule",
+      "preserved": true
+    },
+    {
+      "path": "docs/templates/schedule.md",
+      "anchor": "41-overlap-and-coordination",
+      "preserved": true
+    },
+    {
+      "path": "docs/templates/schedule.md",
+      "anchor": "5-progression-authority",
+      "preserved": true
+    },
+    {
+      "path": "docs/templates/schedule.md",
+      "anchor": "amendments",
+      "preserved": true
+    },
+    {
+      "path": "docs/templates/schedule.md",
+      "anchor": "plan-and-design-documents",
+      "preserved": true
+    },
+    {
+      "path": "docs/templates/schedule.md",
+      "anchor": "role-assignments",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/templates/schedule.md",
+      "anchor": "deliverable",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/templates/schedule.md",
+      "anchor": "mission-and-ownership",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/templates/schedule.md",
+      "anchor": "ordered-issues",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/templates/schedule.md",
+      "anchor": "overlap-and-coordination",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/templates/schedule.md",
+      "anchor": "progression-authority",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/standards/documentation.md",
+      "anchor": "41-decision-records",
+      "preserved": true
+    },
+    {
+      "path": "docs/standards/documentation.md",
+      "anchor": "decision-records",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "docs/engineering/review/open-decisions.md",
+      "anchor": "open-decisions-for-review",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/review/open-decisions.md",
+      "anchor": "o01--scope-of-pr-serialization",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/review/open-decisions.md",
+      "anchor": "o02--process-work-classification",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/review/open-decisions.md",
+      "anchor": "o03--completion-closure-and-plan-status",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/review/open-decisions.md",
+      "anchor": "o04--git-grants-and-bounded-execution",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/review/open-decisions.md",
+      "anchor": "o05--accurate-assistance-disclosure",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/review/open-decisions.md",
+      "anchor": "o06--signing-intent",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/review/open-decisions.md",
+      "anchor": "o07--visibility-and-intervention-contract",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/review/open-decisions.md",
+      "anchor": "o08--bash-helper-applicability",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/review/open-decisions.md",
+      "anchor": "o09--scope-of-greenfield-policy",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/review/open-decisions.md",
+      "anchor": "o10--duplicate-schedule-membership",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/review/open-decisions.md",
+      "anchor": "o11--changing-the-shape-of-work",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/review/open-decisions.md",
+      "anchor": "deferred-implementation-questions",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/review/adoption-review.md",
+      "anchor": "handbook-adoption-review",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/review/adoption-review.md",
+      "anchor": "1-findings-and-dispositions",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/review/adoption-review.md",
+      "anchor": "2-effective-protection-dependency",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/review/adoption-review.md",
+      "anchor": "3-verification-completed",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/review/adoption-review.md",
+      "anchor": "4-final-source-content-and-navigation-review",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/review/adoption-review.md",
+      "anchor": "5-review-corrections",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/review/adoption-review.md",
+      "anchor": "6-adoption-and-completion--2026-11-16",
+      "preserved": true
+    },
+    {
+      "path": "docs/engineering/review/adoption-review.md",
+      "anchor": "5-recorded-process-breach",
+      "preserved": true,
+      "kind": "explicit"
+    },
+    {
+      "path": "Home/common/.claude/skills/star-github-schedule-progress/SKILL.md",
+      "anchor": "answering-a-question-about-issues"
+    },
+    {
+      "path": "Home/common/.claude/skills/star-github-schedule-progress/SKILL.md",
+      "anchor": "choose-the-command"
+    },
+    {
+      "path": "Home/common/.claude/skills/star-github-schedule-progress/SKILL.md",
+      "anchor": "classification-faults"
+    },
+    {
+      "path": "Home/common/.claude/skills/star-github-schedule-progress/SKILL.md",
+      "anchor": "discover-schedules-and-scenarios"
+    },
+    {
+      "path": "Home/common/.claude/skills/star-github-schedule-progress/SKILL.md",
+      "anchor": "show-a-scenario"
+    },
+    {
+      "path": "Home/common/.claude/skills/star-github-schedule-progress/SKILL.md",
+      "anchor": "status"
+    },
+    {
+      "path": "Home/common/.claude/skills/star-github-schedule-progress/SKILL.md",
+      "anchor": "the-cost"
+    },
+    {
+      "path": "Home/common/.claude/skills/star-github-schedule-progress/SKILL.md",
+      "anchor": "the-invocations"
+    },
+    {
+      "path": "Home/common/.claude/skills/star-github-schedule-progress/SKILL.md",
+      "anchor": "verify-star-first-and-do-not-clobber-it"
+    },
+    {
+      "path": "Home/common/.claude/skills/star-github-schedule-progress/SKILL.md",
+      "anchor": "what-the-report-returns"
+    },
+    {
+      "path": "Home/common/.claude/skills/star-github-schedule-progress/SKILL.md",
+      "anchor": "where-to-run-it"
+    },
+    {
+      "path": "docs/github-branch-protection.md",
+      "anchor": "12426847--protection-for-default-main-develop-and-release"
+    },
+    {
+      "path": "docs/github-branch-protection.md",
+      "anchor": "12427647--signed-commits-for-main"
+    },
+    {
+      "path": "docs/github-branch-protection.md",
+      "anchor": "12515090--restrict-branch-names"
+    },
+    {
+      "path": "docs/github-branch-protection.md",
+      "anchor": "changelog"
+    },
+    {
+      "path": "docs/github-branch-protection.md",
+      "anchor": "context-naming"
+    },
+    {
+      "path": "docs/github-branch-protection.md",
+      "anchor": "github-branch-protection-rules"
+    },
+    {
+      "path": "docs/github-branch-protection.md",
+      "anchor": "implementation-three-organization-rulesets"
+    },
+    {
+      "path": "docs/github-branch-protection.md",
+      "anchor": "managing-rulesets"
+    },
+    {
+      "path": "docs/github-branch-protection.md",
+      "anchor": "only-require-checks-that-run-on-pull-requests"
+    },
+    {
+      "path": "docs/github-branch-protection.md",
+      "anchor": "protected-branches"
+    },
+    {
+      "path": "docs/github-branch-protection.md",
+      "anchor": "protected-repositories"
+    },
+    {
+      "path": "docs/github-branch-protection.md",
+      "anchor": "rationale"
+    },
+    {
+      "path": "docs/github-branch-protection.md",
+      "anchor": "required-checks"
+    },
+    {
+      "path": "docs/github-branch-protection.md",
+      "anchor": "where-tier-2-lives"
+    },
+    {
+      "path": "docs/guides/pr-script-template.md",
+      "anchor": "1-the-pre-flight-command-is-discovered-not-remembered"
+    },
+    {
+      "path": "docs/guides/pr-script-template.md",
+      "anchor": "2-a-worktrees-first-script"
+    },
+    {
+      "path": "docs/guides/pr-script-template.md",
+      "anchor": "3-template"
+    },
+    {
+      "path": "docs/guides/pr-script-template.md",
+      "anchor": "4-rules"
+    },
+    {
+      "path": "docs/guides/pr-script-template.md",
+      "anchor": "5-on-windows-powershell"
+    },
+    {
+      "path": "docs/guides/pr-script-template.md",
+      "anchor": "51-a-worktrees-first-script-in-powershell"
+    },
+    {
+      "path": "docs/guides/pr-script-template.md",
+      "anchor": "a-worktrees-first-script"
+    },
+    {
+      "path": "docs/guides/pr-script-template.md",
+      "anchor": "a-worktrees-first-script-in-powershell"
+    },
+    {
+      "path": "docs/guides/pr-script-template.md",
+      "anchor": "on-windows-powershell"
+    },
+    {
+      "path": "docs/guides/pr-script-template.md",
+      "anchor": "pr-script-template"
+    },
+    {
+      "path": "docs/guides/pr-script-template.md",
+      "anchor": "rules"
+    },
+    {
+      "path": "docs/guides/pr-script-template.md",
+      "anchor": "template"
+    },
+    {
+      "path": "docs/guides/pr-script-template.md",
+      "anchor": "the-pre-flight-command-is-discovered-not-remembered"
+    },
+    {
+      "path": "docs/issue-standards.md",
+      "anchor": "issue-standards"
+    },
+    {
+      "path": "docs/issue-standards.md",
+      "anchor": "the-types"
+    },
+    {
+      "path": "docs/issue-standards.md",
+      "anchor": "product-and-engineering"
+    },
+    {
+      "path": "docs/issue-standards.md",
+      "anchor": "placement"
+    },
+    {
+      "path": "docs/issue-standards.md",
+      "anchor": "what-has-no-parent"
+    },
+    {
+      "path": "docs/issue-standards.md",
+      "anchor": "who-can-do-what"
+    },
+    {
+      "path": "docs/issue-standards.md",
+      "anchor": "three-ways-to-slice-the-work"
+    },
+    {
+      "path": "docs/issue-standards.md",
+      "anchor": "scenarios"
+    },
+    {
+      "path": "docs/issue-standards.md",
+      "anchor": "schedules"
+    },
+    {
+      "path": "docs/issue-standards.md",
+      "anchor": "what-a-schedule-commits-to"
+    },
+    {
+      "path": "docs/issue-standards.md",
+      "anchor": "the-deliverable"
+    },
+    {
+      "path": "docs/issue-standards.md",
+      "anchor": "what-the-audit-checks"
+    },
+    {
+      "path": "docs/issue-standards.md",
+      "anchor": "what-an-empty-level-means"
+    },
+    {
+      "path": "docs/issue-standards.md",
+      "anchor": "triage-classifies-and-adds-attributes"
+    },
+    {
+      "path": "docs/issue-standards.md",
+      "anchor": "evidence-of-completion"
+    },
+    {
+      "path": "docs/issue-standards.md",
+      "anchor": "well-classified"
+    },
+    {
+      "path": "docs/issue-standards.md",
+      "anchor": "the-labels-a-repository-provides"
+    },
+    {
+      "path": "docs/issue-standards.md",
+      "anchor": "what-the-sweep-is-for"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/6-the-asset-and-its-sync.md",
+      "anchor": "6-the-asset-and-its-sync"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/6-the-asset-and-its-sync.md",
+      "anchor": "access"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/6-the-asset-and-its-sync.md",
+      "anchor": "every-operation-reads-first"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/6-the-asset-and-its-sync.md",
+      "anchor": "examples"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/6-the-asset-and-its-sync.md",
+      "anchor": "github-is-the-model"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/6-the-asset-and-its-sync.md",
+      "anchor": "one-model-per-account"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/6-the-asset-and-its-sync.md",
+      "anchor": "participation-a-user-accounts-repositories"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/6-the-asset-and-its-sync.md",
+      "anchor": "recovery"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/6-the-asset-and-its-sync.md",
+      "anchor": "reference-models-read-on-demand"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/6-the-asset-and-its-sync.md",
+      "anchor": "risk"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/6-the-asset-and-its-sync.md",
+      "anchor": "the-asset"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/6-the-asset-and-its-sync.md",
+      "anchor": "the-cache"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/6-the-asset-and-its-sync.md",
+      "anchor": "two-verbs-one-hub"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/6-the-asset-and-its-sync.md",
+      "anchor": "what-this-changes-in-the-task-list"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/6-the-asset-and-its-sync.md",
+      "anchor": "where-star-githubs-proofs-run"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/6-the-asset-and-its-sync.status.md",
+      "anchor": "6-the-asset-and-its-sync--status"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/6-the-asset-and-its-sync.status.md",
+      "anchor": "completion"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.md",
+      "anchor": "1-the-commands"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.md",
+      "anchor": "2-where-an-issue-lives"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.md",
+      "anchor": "3-opening-an-issue-open-and-create"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.md",
+      "anchor": "4-moving-an-issue-move"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.md",
+      "anchor": "5-closing-an-issue-close"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.md",
+      "anchor": "6-reopening-an-issue-reopen"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.md",
+      "anchor": "7-significant-design-decisions"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.md",
+      "anchor": "8-how-each-command-runs-in-each-account"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.md",
+      "anchor": "9-building-it"
+    }
+  ],
+  "snapshots": {
+    "docs/architecture/agent-schedule/1-session-model.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/1-session-model.md.txt",
+      "sha256": "0bd6aea458fcf9f235834565341aabc13a409a9ea2b9c2baa82233898826a9e1"
+    },
+    "docs/architecture/agent-schedule/1-session-model.status.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/1-session-model.status.md.txt",
+      "sha256": "71d17dfd919a614c4640ffb4a4c18e1d86596333cde7f188b5559e9612ed764f"
+    },
+    "docs/architecture/agent-schedule/2-command-line.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/2-command-line.md.txt",
+      "sha256": "f89997e0dc03491c2d4c2d39d15a7017245990dba73b36b08de47207ad6b6865"
+    },
+    "docs/architecture/agent-schedule/2-command-line.status.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/2-command-line.status.md.txt",
+      "sha256": "7db885c578bb0d992b41ce8b0cea2b5f0d9c57bfaff460c2ca3d2d4c6325b823"
+    },
+    "docs/architecture/agent-schedule/2.1-agent-schedule-commands.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/2.1-agent-schedule-commands.md.txt",
+      "sha256": "083ef4fd8fd08e44d5a6a9eae31baa96ad9442c4dbe7d71fb61120cade0d00ae"
+    },
+    "docs/architecture/agent-schedule/2.1-agent-schedule-commands.status.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/2.1-agent-schedule-commands.status.md.txt",
+      "sha256": "1dbaa167120257a64160cef0367b546f11021a23f88033f84a7ff7bdb05fdd4f"
+    },
+    "docs/architecture/agent-schedule/3-agent-sandbox.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/3-agent-sandbox.md.txt",
+      "sha256": "d92e2b4d19298db3ee99d1cf49a8eaff73e0acd387932565b9edec3033681ff4"
+    },
+    "docs/architecture/agent-schedule/3-agent-sandbox.status.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/3-agent-sandbox.status.md.txt",
+      "sha256": "bba4dfa43a61325fbc5fe32956767444560ab5d87b83fdfcbda1c8b64fa22d56"
+    },
+    "docs/architecture/agent-schedule/index.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/index.md.txt",
+      "sha256": "aa1964c8b2e198ef553f3be690e53887cd4df575c2dcf647b6d4b31b3c67f2ca"
+    },
+    "docs/architecture/issue-data-model/1-hierarchy.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/issue-data-model-1-hierarchy.md.txt",
+      "sha256": "192085e0fc512f302a6697b26eae749a7556c12eb2500c12780e611cf75c7545"
+    },
+    "docs/architecture/issue-data-model/2-attributes.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/issue-data-model-2-attributes.md.txt",
+      "sha256": "0b9c513820ccd814467a9ded06b265ca782293f8c7fe4314f6cc7fa563f4b75c"
+    },
+    "docs/architecture/issue-data-model/1-hierarchy.status.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/issue-data-model-1-hierarchy.status.md.txt",
+      "sha256": "cbf8f98647979ef38a3f5424b45350b2533e7043fc9a5dc131945b3f80467952"
+    },
+    "docs/architecture/issue-data-model/2-attributes.status.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/issue-data-model-2-attributes.status.md.txt",
+      "sha256": "e9eb8e839901ab5b6da29f61e07a803942f766b3b77f306eddca85eb7dbe9b96"
+    },
+    "docs/architecture/issue-data-model/3-collections.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/issue-data-model-3-collections.md.txt",
+      "sha256": "faf5c11d2611f7c351cbcfa11e2d6bbd4de4696e931a0c290d660c3ce262f2b8"
+    },
+    "docs/architecture/issue-data-model/4-storage-and-reach.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/issue-data-model-4-storage-and-reach.md.txt",
+      "sha256": "c8988d08af6ffae9f7d1f005fe9700aafd7a284aa1dacfd1412566192d83f463"
+    },
+    "docs/architecture/issue-data-model/5-from-todays-scheme.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/issue-data-model-5-from-todays-scheme.md.txt",
+      "sha256": "d2dbc3d2e38643b8bc195e7abd7809ecebb6e76032c89bde6c1e7aca4d101541"
+    },
+    "docs/architecture/issue-data-model/7-the-workflow-before-and-after.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/issue-data-model-7-the-workflow-before-and-after.md.txt",
+      "sha256": "faf7d5363a8a7aa070a8970e38c123d593e900b663c3db8b6eaf5c81750d78f2"
+    },
+    "docs/architecture/issue-data-model/3-collections.status.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/issue-data-model-3-collections.status.md.txt",
+      "sha256": "e0fa77e674fc2d3129b98acbc04d441a76f5f4e2fa58ec1ab46dc0886d7267e8"
+    },
+    "docs/architecture/issue-data-model/4-storage-and-reach.status.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/issue-data-model-4-storage-and-reach.status.md.txt",
+      "sha256": "daaffff3a083cd32f3662aa2be6df6120c75682ad40f75e169015e979f20bfa1"
+    },
+    "docs/architecture/issue-data-model/5-from-todays-scheme.status.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/issue-data-model-5-from-todays-scheme.status.md.txt",
+      "sha256": "e309811b148eda433aea9d32a5dfc4e1a9201bdb052ac6247b84d21adeb5b9e8"
+    },
+    "docs/architecture/issue-data-model/7-the-workflow-before-and-after.status.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/issue-data-model-7-the-workflow-before-and-after.status.md.txt",
+      "sha256": "a5439d13034233eb1043a2f293c913485071def6eb500ab677a498304927f243"
+    },
+    "docs/architecture/issue-data-model/8-the-schedule-commands.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/issue-data-model-8-the-schedule-commands.md.txt",
+      "sha256": "5e31b2a9dd56efaa8baa9881663c9a65577f010fce974669df99006f64974615"
+    },
+    "docs/architecture/issue-data-model/9-the-scenario-commands.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/issue-data-model-9-the-scenario-commands.md.txt",
+      "sha256": "1c19510c59662e187646d4205e6e6dc6e656d7776f24de947c04a4e75810ee59"
+    },
+    "docs/architecture/issue-data-model/10-the-issue-commands.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/issue-data-model-10-the-issue-commands.md.txt",
+      "sha256": "89212aa2f93682a063cf7e9bf7874b8cf859abd0cb227201f4cc734c9772367f"
+    },
+    "docs/architecture/issue-data-model/index.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/issue-data-model-index.md.txt",
+      "sha256": "dae3c3fb2d9015765836366bc7545b6a948f0d417d78f072794cb527d70459a2"
+    },
+    "docs/architecture/issue-data-model/8-the-schedule-commands.decisions.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/issue-data-model-8-the-schedule-commands.decisions.md.txt",
+      "sha256": "f5fff8459d89960d5d17ff37dd1ab1b5a6c740781c52ca8f67cfa59d560da40f"
+    },
+    "docs/architecture/issue-data-model/9-the-scenario-commands.decisions.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/issue-data-model-9-the-scenario-commands.decisions.md.txt",
+      "sha256": "de0c0273fdffa1d9a6afaeade9297631f88f4f6c38a879f5dd62034d9b66a39c"
+    },
+    "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/issue-data-model-10-the-issue-commands.decisions.md.txt",
+      "sha256": "d285b4517ec0a21bc687ebe4b8fa57605d5a96da47eb75fbd50d4ef30e75260c"
+    },
+    "docs/engineering/agent-operation.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/agent-operation.md.txt",
+      "sha256": "2f8c39e2106901a8073f8ee5ebc2a1ea48a7ec0d62d0acdd9650211e08a35a88"
+    },
+    "docs/standards/documentation.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/documentation-standard.md.txt",
+      "sha256": "be38e33ed00745b4f5b3dc226219669f7c98a62a6baba5d770a7934a74c0cafb"
+    },
+    "docs/templates/design.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/design-template.md.txt",
+      "sha256": "35725d335c9d0d6bedd60a598ac33df140f6411c399ff6aa92d9b2133c2705b6"
+    },
+    "docs/engineering/review/decisions.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/handbook-decisions-before-format.md.txt",
+      "sha256": "9fcd62949f2b75e051d10235f9da4aa2208f3b59c9d66aeafd99af08485318e4"
+    },
+    "docs/architecture/agentic-developer-workstation.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/agentic-developer-workstation.md.txt",
+      "sha256": "c82f6f578387dd17b4ffbda2d3284e30be8a993cc89a6afc5e5f3ef1761af349"
+    },
+    "docs/roadmaps/agentic-developer-workstation.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/agentic-developer-workstation-roadmap.md.txt",
+      "sha256": "6ad67e5b45f9cde5fffab7e6b58d3fb71e7e0193c4bd85dc2bb0ea83a6a16f3b"
+    },
+    "docs/engineering/index.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/handbook-index.md.txt",
+      "sha256": "1fa1a06b898eb562e6780e1411ea9a2d6a4e22d1c40b2faa24bc3c891b973eec"
+    },
+    "docs/engineering/process.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/engineering-process.md.txt",
+      "sha256": "52c28b698f77a256059c0120419b278316ac3b1035f584033143f9e0f15d67c8"
+    },
+    "docs/engineering/work-organization.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/work-organization.md.txt",
+      "sha256": "50b3a96994f2d383fac9380927768f7ecc680374e25c85b8f230cf5eb902d4cd"
+    },
+    "docs/engineering/work-assets.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/work-assets.md.txt",
+      "sha256": "a3358fa9abe89e01bc21c18f55a2ee69dc5c3edb8838cb21cbad8c226c169b3e"
+    },
+    "README.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/repository-readme.md.txt",
+      "sha256": "568fbef48edfe35b41c58e14b7c22e2e23eb48e20ed2ed045acebfc140392b46"
+    },
+    "docs/index.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/documentation-index.md.txt",
+      "sha256": "79e62040485e068cef0b23813abfc55a40966b470d36d3f713866af31af17823"
+    },
+    "docs/engineering/procedures/pull-request.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/pull-request-procedure.md.txt",
+      "sha256": "7743e2af458be1db8a7c14c5fab2711483175e17d0d847b0ae56b3a6950e67dc"
+    },
+    "docs/templates/schedule.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/schedule-template.md.txt",
+      "sha256": "38eadc0ea78d2c425c12bf557ef0b2ee8c0829727c18c492f2bed5cf93b2602a"
+    },
+    "docs/engineering/review/adoption-review.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/handbook-adoption-review.md.txt",
+      "sha256": "af114ab49dd146da285dbe496c06920f7b1ff5f25f5371667125cd0a21443e85"
+    },
+    "docs/engineering/review/open-decisions.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/handbook-review-responses.md.txt",
+      "sha256": "a2fc61038d838b05e44c5d6093cd27888e4ad2d1d1dbdd413c3b3c78983934b0"
+    },
+    "Home/common/.claude/skills/star-github-schedule-progress/SKILL.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/reporting-skill.md.txt",
+      "sha256": "3c89bb504b800844d46cf693b02e2e482fda6cbb0aef789056558c99d8d0fc7d"
+    },
+    "docs/github-branch-protection.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/branch-protection.md.txt",
+      "sha256": "0e90ec333c3a2bb9ce4224dfc2b7cf0bbce5dd0910d75f95f72a35343ad4c27c"
+    },
+    "docs/guides/pr-script-template.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/pr-script-template.md.txt",
+      "sha256": "6802224cabc027e3ebb771544a0b6736a8abb9e007f7b36150ad495910a93ef4"
+    },
+    "docs/issue-standards.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/issue-standards.md.txt",
+      "sha256": "c46e3cc404421d5a95f341dff0b7f94b15bbbae645b517b91d182d007ccaf7d3"
+    },
+    "docs/architecture/issue-data-model/6-the-asset-and-its-sync.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/issue-data-model-6-the-asset-and-its-sync.md.txt",
+      "sha256": "f6d34b43d46bfaea2f0af1e9c0074f4b2b5a1f643cef91cc6f78f619c50cc4c5"
+    },
+    "docs/architecture/issue-data-model/6-the-asset-and-its-sync.status.md": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/issue-data-model-6-the-asset-and-its-sync.status.md.txt",
+      "sha256": "95aaed6c2b4c50ef9676d5e88a3046d704151bae8af8b6fb8925373182c60750"
+    }
+  },
+  "owner_amendments": [
+    {
+      "date": "2026-11-19",
+      "owner": "David Noble",
+      "topic": "Codex review-comment origin",
+      "authority": "docs/engineering/agent-operation.md#codex-review-comments",
+      "paths": [
+        "docs/engineering/agent-operation.md",
+        "docs/engineering/agents/commandments.md",
+        "docs/engineering/agents/reviewer.md",
+        "docs/templates/completion-review.md",
+        "docs/templates/index.md",
+        "docs/templates/review-comment.md",
+        "docs/engineering/review/decisions.md",
+        "docs/plans/doc/581-schedule-command-consumers.md",
+        "docs/engineering/review/rewrite-review.md"
+      ],
+      "original_rewrite_input_count": 51
+    },
+    {
+      "date": "2026-11-19",
+      "owner": "David Noble",
+      "topic": "Structured decision records",
+      "authority": "docs/standards/documentation.md#decision-records",
+      "paths": [
+        "docs/standards/documentation.md",
+        "docs/templates/decision.md",
+        "docs/templates/index.md",
+        "docs/templates/design.md",
+        "docs/plans/doc/581-schedule-command-consumers.md",
+        "docs/engineering/review/rewrite-review.md",
+        "docs/engineering/review/decisions.md"
+      ],
+      "original_rewrite_input_count": 51
+    }
+  ],
+  "additional_inputs": {
+    "docs/engineering/review/decisions.md": {
+      "sha256": "9fcd62949f2b75e051d10235f9da4aa2208f3b59c9d66aeafd99af08485318e4",
+      "scope": "Owner-approved structured-decision amendment; source includes the earlier review-comment addition"
+    }
+  },
+  "amendment_snapshots": {
+    "agent-operation-before-core-rewrite.md.txt": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/agent-operation-before-core-rewrite.md.txt",
+      "sha256": "0e18fa78f2489c6c8ef045573ea78c7d4c55fde11fe31588844529e4d9a93f38",
+      "source": "docs/engineering/agent-operation.md",
+      "scope": "Approved policy additions or shared-entrypoint links before the core rewrite"
+    },
+    "commandments-before-core-link.md.txt": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/commandments-before-core-link.md.txt",
+      "sha256": "1e3829cbc203498dbff878aadd8b8be917acd9856ce927098ef6a82af084443f",
+      "source": "docs/engineering/agents/commandments.md",
+      "scope": "Approved policy additions or shared-entrypoint links before the core rewrite"
+    },
+    "documentation-standard-before-full-rewrite.md.txt": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/documentation-standard-before-full-rewrite.md.txt",
+      "sha256": "1a1cfc392ad7df5763d5c5ac9f3a5352fbd998b6c618974bd0071e2ca7fd3be5",
+      "source": "docs/standards/documentation.md",
+      "scope": "Existing approved additions or prior rewrite before this resource pass"
+    },
+    "design-template-before-arc42.md.txt": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/design-template-before-arc42.md.txt",
+      "sha256": "2cfa0a4e2d969b6493b98db0807b9e90ed45c2ad124c03f5161877033d540188",
+      "source": "docs/templates/design.md",
+      "scope": "Existing approved additions or prior rewrite before this resource pass"
+    },
+    "work-organization-before-open-correction.md.txt": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/work-organization-before-open-correction.md.txt",
+      "sha256": "7fc7dae85c578c497a86485e65c14f31b9b2da91b17dc2467a4fcb6e610c9ef7",
+      "source": "docs/engineering/work-organization.md",
+      "scope": "Existing approved additions or prior rewrite before this resource pass"
+    },
+    "decisions-before-later-approval-records.md.txt": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/decisions-before-later-approval-records.md.txt",
+      "sha256": "bc1707ac105670c79d61f306c05b6b7017d52ce50d7fec5e66991c6a41968e26",
+      "source": "docs/engineering/review/decisions.md",
+      "scope": "Existing approved additions or prior rewrite before this resource pass"
+    },
+    "pr-procedure-before-model-review-boundary.md.txt": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/pr-procedure-before-model-review-boundary.md.txt",
+      "sha256": "f66312bdba041a387192a1e9fca85bc3d62c8a978ff10ab1119ed9657641f68b",
+      "source": "docs/engineering/procedures/pull-request.md",
+      "scope": "Before the Owner-approved model-publication review boundary"
+    },
+    "decisions-before-model-review-boundary.md.txt": {
+      "path": "docs/engineering/review/sources/rewrite-2026-11-19/decisions-before-model-review-boundary.md.txt",
+      "sha256": "6a0dba853efb602496dd13c7733b8b6f1dece9a0f6e9691e53c8d6721ae37f2d",
+      "source": "docs/engineering/review/decisions.md",
+      "scope": "Before the Owner-approved model-publication review boundary"
+    }
+  },
+  "integrations": [
+    {
+      "revision": "2da34a13440277126901537323f5ac1556f6cee1",
+      "pr": "https://github.com/NobleFactor/noblefactor-engprod/pull/612",
+      "prior_review_commit": "76a6d91ab51e5219e1e585ce45fda2614b406af7",
+      "incoming_hashes": {
+        "Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/ending.star": "4fcc0f50d3bceef37cdeee71d28140843bade4a6d47b1153f7a2d2ad9c3d79f0",
+        "Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/github-issue-close.star": "c58b8779d41b6e607a624cefd7a414a7ea53a3d90d95ff145f1098ae41baab47",
+        "Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/github-issue-open.star": "9aa2b825c63b0998ddc673e3893c5ec5dbfb858a2be36aa33327d4a84ae4e991",
+        "Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/github-issue-reopen.star": "d9f44e2a4e3075873fcf4898c1ed0b97a94c88a9fa67e4ac56d430dd72c95aae",
+        "Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/steps.star": "dfb7ec81d8eab6f9c41a73629de9b7d82044e26919c84cae65d09cbd50cf35b3",
+        "Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/extension.yaml": "19c97932a02c39c5ae4b053ee1f02dd82a9e3e1850eb16677c1b2cff78d4aaba",
+        "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md": "cc03cdc1048cd7bf1d8eab96ba9ecb80f97b2ff49f68fdfb94fd705db63c58df",
+        "docs/architecture/issue-data-model/10-the-issue-commands.md": "5ed8af3b16f9dbc3e326a171e9ae00751493c2429abba2036e4d28c10146ccfb",
+        "docs/architecture/issue-data-model/8-the-schedule-commands.md": "07204264402ed6d811e93954147c0448645cdb53a322587d8bfa53e29c6eaf51",
+        "docs/plans/doc/589-issue-verbs.md": "a97bc3bf9aadb9d3cd7b53686f2fe639bcd99c150f9d58f413c8c0a82a6c7fe4",
+        "docs/plans/feature/605-squash-message.md": "5bf0a987c69105478d74ab1bcef3f6d23639d659f50ced109ba4106d9c3a2c56",
+        "docs/plans/feature/609-rerun-finishes.md": "e5ea600c0c27f63ff2274acd72a19e3ae2ef912eadaf3db9db3883cb57b65aeb",
+        "tests/Test-StarGitHub": "7c894d642e5d03f4af4c56c086355280611c93448cccc3cd9d34f69c68bbe5f9"
+      },
+      "resolved_documentation": [
+        "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md",
+        "docs/architecture/issue-data-model/10-the-issue-commands.md",
+        "docs/architecture/issue-data-model/8-the-schedule-commands.md"
+      ],
+      "consumer_updates": [
+        "docs/architecture/issue-data-model/9-the-scenario-commands.md"
+      ]
+    }
+  ]
+}

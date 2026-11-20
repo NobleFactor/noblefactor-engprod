@@ -1,168 +1,140 @@
 ---
-title: "8. The schedule commands"
+title: "Schedule commands"
+status: draft
+updated: 2026-11-19
 ---
 
-# 8. The schedule commands
+<a id="8-the-schedule-commands"></a>
 
-`star github schedule` reads, opens, closes and reopens schedules, in an organization and in a user account. A schedule is three things (section 3): an option of its team's Schedule project's Schedule field, the Schedule issue that option names, and the rows under the option, its steps, numbered in the order they are worked. Putting an issue on a schedule, moving it within one and taking it off is `star github issue move` ([section 10](10-the-issue-commands.md#moving-an-issue-move)); this section says what such a move records on the schedule. Nothing here makes a project: a team's four projects are made with the team. Scenarios have their own commands, in [section 9](9-the-scenario-commands.md).
+# Schedule commands
 
-## The commands
+[Up: Issue data model](index.md)
 
-| Command | Does | Writes to GitHub |
-| --- | --- | --- |
-| `report [<repository>...] [--search <query>]` | Every issue as one flat record | Nothing |
-| `list <account> [--team <team>]` | Every schedule of an account or a team, one record each | Nothing |
-| `get <schedule>` | One schedule's rows in step order, its Schedule issue's own row first | Nothing |
-| `open <repository> <name> ...`, or `create` | Opens a schedule: its Schedule issue, its option and its own row | Issue, option, row |
-| `close <schedule>` | Closes a finished schedule, with its evidence comment | Row, comment, issue |
-| `reopen <schedule> --reason <text>` | Reopens a closed schedule | Issue, comment, row, body |
+`star github schedule` reads and manages a Schedule's own issue, option and row. `star github issue move` manages its Tasks and Bugs. A Schedule is identified by its repository-qualified issue key; its team's Schedule project holds the ordered work.
 
-A `<schedule>` is its Schedule issue's key, `<owner>/<repository>#<number>`, the form a session's `NFEP_AGENT_SCHEDULE` holds. Every command names what it acts on, and none has a default account or schedule.
+<a id="the-commands"></a>
 
-Every command takes star's `--filter`, `--jq` and `--output`, which select, reshape and render its result, so none has flags of its own for that. Each returns one flat record per thing it read or changed, JSON by default, and exits non-zero only on an error. A command that writes reads everything it needs first, so a fault is a refusal with nothing written, and reads each write back, since GitHub promises no stability for the features the model is built on. A run that stops partway is run again to finish. `--dry-run` is refused.
+## 1. Interfaces and shared behavior
 
-For example, one schedule's rows as CSV, and the rows of all of a team's schedules:
+| Command | Result or effect |
+| --- | --- |
+| `report [<repository>...] [--search <query>]` | Flat issue records for broader hierarchy or repository questions |
+| `list <account> [--team <team>]` | One record per Schedule option, with identity, project, owner and open/closed step counts |
+| `get <schedule>` | Its own row first, then work in Step order |
+| `open <repository> <name> ...`, also `create` | Schedule issue, option and own row |
+| `close <schedule>` | Close a completed Schedule and post its evidence |
+| `reopen <schedule> --reason <text>` | Reopen its issue and restore its active row and completion criterion |
 
-```
+A key is `<owner>/<repository>#<number>`, also the form used by `NFEP_AGENT_SCHEDULE`. Commands have no implicit account or Schedule target. Star's `--filter`, `--jq` and `--output` select, reshape and render flat records; JSON is the default output.
+
+Validate prerequisites before writes and read writes back. Remote failures can still leave partial state; these operations are not atomic transactions. The command-specific recovery limits below apply. Commands refuse `--dry-run` while the required reads cannot run under it.
+
+<a id="reading-list-get-and-report"></a>
+
+## 2. Read work
+
+List reads an account's Schedule projects, optionally restricted to one team. A user account has no team selector, so `--team` is refused there.
+
+Get returns Step, issue key, Type, title, issue state, row Status, Worktree, Iteration and blocked-by keys. Its own row has no Step. Work rows without a Step come last and constitute a classification fault.
+
+Report includes each issue's project membership, Schedule and Step. Use it for questions spanning Features, Epics or repositories; use get for one Schedule.
+
+```text
 star github schedule get NobleFactor/noblefactor-engprod#346 --output csv
-star github schedule report --jq '[.[] | select(.home[]?.project == "Schedule: engprod")]'
-```
-
-## Reading: list, get and report
-
-**`list <account> [--team <team>]`** returns one record for each option of the Schedule field of the account's Schedule projects, or the team's: the option's name, its Schedule issue's key, title, state and assignee, the project, and the count of open and closed steps. In David-Noble-at-work it reads Schedule: David-Noble-at-work, and refuses `--team`, since a user account has no teams.
-
-**`get <schedule>`** returns one record for each row under the schedule's option: the step, the issue's key, type, title and state, the row's Status, Worktree and Iteration, and the keys of the issues that block it. The Schedule issue's own row comes first, with no step. Rows come in step order, then any row with no step, which is an error the sweep returns to Triage.
-
-**`report`** returns every issue of the repositories named as one flat record, whose `home` names its schedule and step. GitHub's issue search has no qualifier for a parent, so `--search` narrows to open issues and `--filter` to a parent's children:
-
-```
 star github schedule report NobleFactor/devlore-cli --search is:open --filter parent=NobleFactor/devlore-cli#463 --output table
 ```
 
-## Opening a schedule: open, and create
+<a id="opening-a-schedule-open-and-create"></a>
 
-```
-star github schedule open <repository> <name> --area Product|Engineering --deliverable <text> --exit-criteria <text>
-    --evidence <text> [--priority <priority>] [--assignee <login>]
-```
+## 3. Open a Schedule
 
-`create` is the same command. `open` makes one schedule, in this order, reading each write back:
-
-1. **The team.** The team with the maintain role on `<repository>` owns the schedule, and its project is `Schedule: <team>`. In a user account, the project is `Schedule: <account>`.
-2. **The Schedule issue,** titled `Schedule: <name>`, in `<repository>`: in NobleFactor of type Schedule, with the Area and Priority issue fields; in David-Noble-at-work labeled `schedule`, `area:` and `priority:`. Priority is Medium unless given. It is assigned to `--assignee`, or to whoever runs the command, who then owns the schedule. Its body has the sections of the account's Schedule form, in the form's order, then two of its own:
-
-   ```
-   ## Deliverable
-   ## Exit criteria
-   ## Evidence of completion
-   ## Plan and design documents
-   ## Steps
-   The steps are the rows of [Schedule: <team>](<project>/views/2?filterQuery=schedule%3A%22<name>%22) under the
-   Schedule option "<name>", worked in step order.
-   ## Amendments
-   ```
-
-   The Steps line links the project's view 2, filtered to the option.
-3. **The option** `<name>`, added last to the project's Schedule field, its description the issue's key and its color GRAY. Every existing option is sent back with its ID, so no row loses its value.
-4. **The issue's own row,** with the option, Status Open and no step, placed after the last row that has an option, since a project's rows are kept in its field's order.
-
-`open` refuses, writing nothing, when `<repository>` takes no part (no team maintains it, or, in a user account, it lacks the topic `issue-model`); the team has no Schedule project; the field already has an option named `<name>`; or `--area` or a section of the form is missing. Run again after stopping partway, it finds the open Schedule issue titled `Schedule: <name>`, then the option, then the row, and makes only what is missing.
-
-## What a move records on a schedule
-
-`star github issue move` changes a schedule's steps in one act: the rows, the blocked-by links, and one line at the end of the Schedule issue's Amendments section, which names the date, who ran the command, what changed and the `--reason`:
-
-```
-- 2026-11-11, by David-Noble-at-work: step 43 was added, Task NobleFactor/noblefactor-engprod#507, the design of the
-  scenario commands. <reason>
+```text
+star github schedule open <repository> <name> --area Product|Engineering --deliverable <text> --exit-criteria <text> --evidence <text> [--priority <priority>] [--assignee <login>]
 ```
 
-Every schedule's changes are recorded this way, since nothing in GitHub marks a schedule committed. The command records who ran it, not on whose word, which it can't know.
+Resolve the participating repository and its owning team's Schedule project, or the user account's equivalent. Read the account's Schedule form and validate its required content and metadata.
 
-**The steps stay consecutive whole numbers.** Onto a schedule, an issue takes the next step, or, with `--after <step>`, the step after that one, every later step moving down; `--after 0` makes it the first. Within a schedule, `--after` moves a step to just after another, and the steps between are renumbered. Off a schedule, every later step moves up one. Issues that leave one schedule in the same move come off it in turn, the steps renumbered after each, so they stay consecutive however many leave, and each leaving is in an amendment line. Closed steps are renumbered with open ones, since closed steps sit among open ones and a rule that kept their numbers would refuse almost every `--after`. A move off a schedule refuses, writing nothing, a schedule that is closed, which `star github schedule reopen` reopens first, and one whose option names no Schedule issue.
+Create `Schedule: <name>` with Priority Medium unless supplied, and assign it to the supplied login or command runner. The form owns the body sections; the command adds the Steps link to the filtered By schedule view and an Amendments section.
 
-**Onto a schedule,** each row gets the schedule's option, Status Open and its step, and is placed in step order. `--blocked-by` adds blocked-by links, keeping those the issue has; it takes a comma-separated list. An issue from another team's repository is assigned to `--assignee`, a member of the schedule's team, which the move then requires. Iteration is left for sprint planning. A move onto a schedule refuses, writing nothing, an issue already on it unless `--after` moves it within it; a `--blocked-by` issue of another account; and an `--after` step the schedule doesn't have.
+Create the `<name>` option at the end of the Schedule field, with the issue key as its description and GRAY as its color. Preserve every existing option's ID. Create the issue's own row with that option, Status Open and no Step, positioned after the last collection group.
 
-**A run that stops partway.** The amendment line is written first, ending "(in progress)", and settled last, without the marker. A run that stops partway leaves a line a reader sees is unfinished, and the same command run again finds it and finishes the move. The later rows move from the highest down, which keeps their order if a run stops between them.
+Refuse unsupported participation, missing project or fields, invalid Area, required content left empty or an occupied name that cannot be matched to the same partially created collection. An already complete issue/option/row combination is refused as already present.
 
-## Closing a schedule: close
+A partial open can resume by finding the open issue with the expected title, then the matching option and own row, and creating missing pieces. That lookup is by repository and title with option-identity checks; it is not full equality of every supplied filing value.
 
-`close <schedule>` refuses while any step is open or any exit criterion's box is unticked. The exit criteria are the boxes of the Schedule issue's Exit criteria section, or of its Evidence of completion section when it has none. Then it sets the schedule's own row Closed, writes the evidence comment every Schedule issue asks for, and closes the Schedule issue as completed, in that order, so a run that stops partway leaves the issue open.
+<a id="changing-a-schedule-add-move-and-remove"></a>
+<a id="moving-an-issue-issue-move"></a>
+<a id="what-a-move-records-on-a-schedule"></a>
 
-The comment shows what merged and when: one row for each merged pull request, with the date it merged and the steps it closed, in the order they merged, then each step no merged pull request closed, with how it closed. Every step appears once. For example:
+## 4. Record work changes
 
-> **Evidence of completion**, written by `star github schedule close` on 2026-11-20, run by David-Noble-at-work. All 43 steps of issue tracking, iteration 1 are closed, and its 3 exit criteria are ticked.
->
-> **What merged**
->
-> | Merged | Pull request | Steps it closed |
-> | --- | --- | --- |
-> | 2026-10-23 | #386, every open noblefactor-engprod issue typed from its kind label | 3, Task #380 |
-> | 2026-11-09 | #467, each account's model, every issue as a record | 15, Task #376; 16, Task #379; 17, Task #436; 18, Bug #466 |
->
-> **Closed with no pull request**
->
-> | Step | How it closed |
-> | --- | --- |
-> | 8, Task #361 | Declined, 2026-11-04 |
-> | 29, Bug #440 | Duplicate, 2026-11-09 |
+`star github issue move` adds work, reorders it or removes it. Each change writes an amendment naming the date, command runner, change and reason. The command records who performed it, not who authorized it. Owner commitment remains a process requirement.
 
-- **A step's pull request** is the merged one GitHub records as closing its issue, else the merged one whose commit closed it. A pull request that only mentions an issue doesn't count, since it may not be the issue's work.
-- **How a step closed** is its Resolution where it has one, else GitHub's reason.
-- **The wording** is a template in the extension's `templates` directory, rendered with star's `template` module.
+The amendment is written first with `(in progress)` and settled after the supported move finishes. Pending Schedule amendments support resuming a stopped move; other side effects and recovery limits remain governed by the [issue command contract](10-the-issue-commands.md#moving-an-issue-move).
 
-The option stays. It records which schedule each closed step belonged to: a step is not a sub-issue of its Schedule issue, so its row's Schedule field is the only link between them, and deleting an option blanks every row that held it. GitHub allows at most 50 options in a single-select field, and a team's Schedule field grows by one option per schedule, so how the record is kept once a field nears 50 is decided then.
+Adding work appends it or inserts it after `--after`; `--after 0` inserts first. Moving work reorders it, and removing it closes the gap. Renumber affected open and closed steps so the sequence remains consecutive. Multi-issue removals apply in input order.
 
-## Reopening a schedule: reopen
+A destination row receives its Schedule option, Step and Status Open. `--blocked-by` adds the supplied same-account dependency links without dropping existing ones. Cross-team work requires an accountable assignee in the receiving team. Iteration remains available for sprint planning.
 
-A schedule is in progress while any of its steps is open, so a schedule closed before a step was reopened, or before one was added, is reopened. `reopen <schedule> --reason <text>`, in order:
+Refuse a closed Schedule, a missing Schedule issue identity, an invalid insertion point or prohibited issue/account placement. An issue already on the Schedule needs a valid within-Schedule move rather than a duplicate row.
 
-1. Reopens the Schedule issue, with a comment: `Reopened by \`star github schedule reopen\` on <date>, run by <login>: <reason>`.
-2. Sets its own row In progress.
-3. Unticks its exit criterion that every step is closed: each ticked box of its Exit criteria section whose text begins "Every step" or "Every other step", as the schedules' boxes say. A schedule with no such box is reopened all the same, and its record says no criterion was unticked.
+<a id="closing-a-schedule-close"></a>
 
-The option was never removed, so the schedule's past rows are under it still. An open schedule is `unchanged`. `star github issue reopen` reopens each closed schedule a reopened issue is a step of the same way, its comment naming the issue, and finishes one it reopened partway, writing only what is left (section 10, D-013). It sets the own row of a schedule that has closed before In progress whatever its Status, while a schedule that has never closed keeps the Status its opening gave it, Open.
+## 5. Close a Schedule
 
-## Significant design decisions
+Close refuses while any work step is open or an exit-criterion checkbox is unticked. Read criteria from Exit criteria, falling back to Evidence of completion when that section is absent.
 
-The choices this design rests on, each recorded with its reasons, alternatives and consequences in [the design decisions](8-the-schedule-commands.decisions.md):
+Write in this order: set the collection's own row Closed, post its evidence comment, then close its issue as completed. This keeps the issue open until the earlier writes finish.
 
-- [D-001](8-the-schedule-commands.decisions.md#d-001) and [D-002](8-the-schedule-commands.decisions.md#d-002): results shaped by star's common flags, and every command reading first and reading each write back.
-- [D-003](8-the-schedule-commands.decisions.md#d-003) to [D-005](8-the-schedule-commands.decisions.md#d-005): one command for a schedule's steps, an amendment line for each change, and steps kept consecutive.
-- [D-006](8-the-schedule-commands.decisions.md#d-006) and [D-007](8-the-schedule-commands.decisions.md#d-007): what `close` posts, and the option it keeps.
-- [D-008](8-the-schedule-commands.decisions.md#d-008): what `reopen` sets.
+The evidence groups steps by the merged PR that closed them, in merge order, with each PR's merge date. Then it lists steps closed without a merged PR and their Resolution or GitHub closure reason. Every step appears once. A PR that only mentions an issue is not closure evidence; use GitHub's closing relationship or the commit that closed it.
 
-## Start-Claude
+Keep the Schedule option and closed work rows. Their field value records membership independently of the product parent links. GitHub's [50-option single-select limit](https://docs.github.com/en/issues/planning-and-tracking-with-projects/understanding-fields/about-single-select-fields) requires a retention design before capacity is exhausted; deleting an option would clear row membership.
 
-Start-Claude and Start-Claude.ps1 start a session on a schedule with `--schedule <owner>/<repository>#<number>`. They make no schedule: asked for one, they refuse and name `star github schedule open`.
+A retry after a comment was posted but before closure may post another comment. Readback does not establish exactly-once comment delivery.
 
-## How each command runs in each account
+<a id="reopening-a-schedule-reopen"></a>
 
-| | NobleFactor | David-Noble-at-work |
-| --- | --- | --- |
-| The Schedule issue's kind | type Schedule | label `schedule` |
-| Area and Priority | issue fields | `area:` and `priority:` labels |
-| The schedule's team | the team with the maintain role on the repository | none: the account |
-| The Schedule project | `Schedule: <team>`, projects 26 (engprod) and 29 (devlore) | `Schedule: David-Noble-at-work`, project 7 |
-| The form `open` follows | NobleFactor/.github, `.github/ISSUE_TEMPLATE/schedule.yml` | David-Noble-at-work/.github, the same path |
-| `list --team` | narrows to one team | refused |
+## 6. Reopen a Schedule
 
-The two forms differ only in how they set the kind: `type: Schedule` in NobleFactor's, the label `schedule` in David-Noble-at-work's.
+Reopen the issue and comment with the runner, date and reason. Set its own row In progress. Untick checked Exit criteria whose text begins `Every step` or `Every other step`. With no matching criterion, reopen normally and report that none was unticked.
 
-## Linking plans: plan link
+The option and past rows remain. Reopening a work issue through issue reopen also repairs a containing Schedule left partway reopened. For a Schedule that has closed before, it sets the own row In progress regardless of its present Status; a never-closed Schedule keeps its initial Open Status.
 
-`star github plan link` writes each issue's Plan and design documents section from the plans that serve it, so that an issue traces back to its plans.
+An already-open Schedule returns unchanged. If a prior run stopped after reopening its issue but before updating the row or criteria, this shortcut does not complete those remaining writes. Inspect and repair the incomplete state rather than assume a retry finishes it.
 
-| Command | Does | Writes to GitHub |
-| --- | --- | --- |
-| `plan link <plan>... [--check]` | Writes the section of each issue the plans named serve, from every plan that serves it, each plan a path relative to `docs/plans` in the clone it runs in | The issues' bodies |
-| `plan link --all [--repository <owner/name>,...] [--check]` | The same for every issue a plan under `docs/plans` on each repository's default branch serves, writ's layers when none is named | The issues' bodies |
+<a id="start-claude"></a>
+<a id="how-each-command-runs-in-each-account"></a>
 
-The plans are the authority. A plan names the issues it serves, the one in its `issue:` line and each other in an `## Issue NNN` heading, and the design documents it bears on, in its frontmatter's `documents:`. An issue's section is written from them: a Plan row for each plan that serves it, then each plan's documents. The command finds the section by its heading, `Plan and design documents` at level 2 or 3, and replaces it whole; with no such heading it adds the section, and with two it writes nothing. An issue no plan serves is not touched. `--check` writes nothing, and returns the records the command would.
+## 7. Hosts and account representations
 
-Each record is an issue: the plans that serve it, what was done (`written`, `unchanged`, `appended` or `refused`), the section before and after, and the rows the new section drops. It exits non-zero only on an error, a plan or an issue it can't read or a write that doesn't read back; under `--all` it does every other issue first, then fails naming each error. A link points by the issue's state: an open issue's to the default branch, and one closed by a merged pull request to that pull request's merge commit. `--repository` takes a comma-separated list. Its plan, [557-plan-row.md](../../plans/feature/557-plan-row.md), says what it does in each case.
+Start-Claude and Start-Claude.ps1 attach through the Schedule key and create no Schedule. Their refusal names `star github schedule open` when asked to create one.
 
-## Building it
+Organizations use native Schedule Type, issue fields and the owning team's project. User accounts use the `schedule`, `area:` and `priority:` labels and their account project. Both read `.github/ISSUE_TEMPLATE/schedule.yml` from the account's shared repository.
 
-Each verb is a file in the GitHub extension's `commands` directory, `github-schedule-<verb>.star`, and `create` is another name for `open`, a second manifest entry with `open`'s implementation. Each shares its code with the scenario verb of the same name (section 9): `making.star` opens a schedule or a scenario, `collections.star` reads them, and `ending.star` closes and reopens them; `steps.star` reads and writes rows and amendments for them and for `star github issue move`. The comments and the Schedule issue's body are templates in the extension's `templates` directory, and the tests are `tests/Test-StarGitHub`. How the work reached this design, and what of it is built, is in the plans of [#439](../../plans/doc/439-schedule-commands.md), [#507](../../plans/doc/507-scenario-commands.md) and [#589](../../plans/doc/589-issue-verbs.md).
+<a id="linking-plans-plan-link"></a>
+
+## 8. Link plans
+
+```text
+star github plan link <plan>... [--check]
+star github plan link --all [--repository <owner/name>,...] [--check]
+```
+
+Named plans are relative to `docs/plans` in the current clone. `--all` reads plans on the selected repositories' default branches, using writ's layers when none are supplied. `--repository` accepts a comma-separated list.
+
+A plan serves its `issue:` and each `## Issue NNN` entry. Its frontmatter `documents:` supplies design links. For every served issue, generate the entire Plan and design documents section from all applicable plans: one Plan row per plan, then its documents.
+
+Recognize that section at heading level 2 or 3. Append it when absent; refuse duplicate headings. Leave issues without a serving plan untouched. Check mode writes nothing and returns the proposed changes, including rows that would be dropped.
+
+Records contain issue identity, serving plans, action, before/after section and dropped rows. Actions are written, unchanged, appended or refused. Under `--all`, finish other issues before reporting collected errors. A failed read or mismatched writeback is an error.
+
+Open-issue links target the default branch. Links for an issue closed by a merged PR target that PR's merge commit. The [plan-link design and evidence](../../plans/feature/557-plan-row.md) defines the complete cases.
+
+<a id="significant-design-decisions"></a>
+<a id="building-it"></a>
+
+## 9. Decisions, components and delivery
+
+The [decision companion](8-the-schedule-commands.decisions.md) preserves the accepted choices and their reasons. Shared modules separate collection creation, reading, closure and movement: `making.star`, `collections.star`, `ending.star` and `steps.star`. Command entries and templates expose those operations without a second work model.
+
+Implementation and verification belong to the [Schedule plan](../../plans/doc/439-schedule-commands.md), [Scenario plan](../../plans/doc/507-scenario-commands.md) and [Issue verbs plan](../../plans/doc/589-issue-verbs.md). The [Recovery plan](../../plans/feature/609-rerun-finishes.md) records delivered issue close/reopen behavior. Standalone collection retry limits remain as stated above.
