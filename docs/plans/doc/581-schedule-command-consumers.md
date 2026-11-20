@@ -1,7 +1,7 @@
 ---
 title: "Align schedule and scenario command consumers"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/581
-status: active
+status: complete
 created: 2026-11-16
 updated: 2026-11-20
 documents:
@@ -44,6 +44,10 @@ Skill/index update (#581), under Skills standard and catalog (#550), is the firs
 Handbook command alignment (#582), under Shared documentation (#419), is the second priority. Reconcile the issue's twelve-page inventory against the implemented commands and sections 8 and 9. Separate statements of required behavior from claims about automation that has not been implemented. Resolve affected policy choices before writing an answer into an authoritative document.
 
 ## 3. Current state
+
+PR #596 completed this work and merged as 55dec2b044a2972f1037996c06d887a960d6c8ef on 2026-11-20. The accepted head was 8aa77e7a513dbc7b68e9bb1a9fe0aa4cf68cc32e. Both served issues and their Schedule rows are Closed and link the PR. Installed-skill verification and cleanup are established; section 13 records the evidence.
+
+### 3.1. Earlier baseline
 
 PR #580 merged on 2026-11-17 at 00:12:21 UTC as b75b29ad6e4391c25bec8837164f3f59acb3abec; Scenario commands (#507) is closed. The native dependencies are satisfied. The Owner requested immediate priority on 2026-11-16 local time. The supported issue move command placed these issues at Steps 2 and 3, before Issue forms (#572), preserving the previous steps' relative order. The Schedule project's current rows remain authoritative.
 
@@ -469,7 +473,7 @@ Implementation, Owner review, merge and post-merge verification are required. Co
 
 - [x] Complete document/link/source checks and the Owner-run make check; record the passing result and unchanged-index staging dry run in /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/verify-update.YGz2hbIa/receipt.json. The Owner-run integration gate also passed at 146d7c561c3926a3e1af91e8eca35adeedc6f0e6.
 - [x] Prepare and check the Owner-run publication script, with explicit staging of this verification record, preserved integration evidence, human sign-off and the effective assistance disclosure. The Owner decides publication by reviewing and running that mode.
-- [ ] Obtain review and adoption, merge, verify delivered/deployed content, update issues and Schedule rows, and clean up.
+- [x] Obtain review and adoption, merge, verify delivered/deployed content, update issues and Schedule rows, and clean up.
 
 ### 9.4. Owner review correction
 
@@ -478,7 +482,7 @@ Implementation, Owner review, merge and post-merge verification are required. Co
 - [x] Apply the Owner's distinction between design decisions and transition history to work-assets and this plan.
 - [x] Verify the clarification's document scope, metadata, links, anchors and preserved evidence; retain the receipt cited in section 7.3.
 - [x] Run the Owner's repository gate and publish the clarification at f8d7702f971fb9967a7f3bc39a375cea6d3cff50; its passing publication receipt is recorded above.
-- [ ] Obtain Owner review and passing final-head CI for the full rewrite before merge.
+- [x] Obtain Owner review and passing final-head CI for the full rewrite before merge.
 
 ### 9.5. Full documentation rewrite
 
@@ -500,7 +504,7 @@ Implementation, Owner review, merge and post-merge verification are required. Co
 - [x] Complete the post-rewrite scan and record M01–M10, their evidence, corrections, qualification boundaries and owning follow-ups.
 - [x] Apply the recorded Owner decisions and verify documentation corrections. Track runtime alignment in Task #614 and existing context/host tasks, preserving the approved publication and loading boundaries.
 - [x] Record the author content assessment and independent reviews: R01–R09 are independently verified; R10 is corrected and locally checked, with its independent recheck still required.
-- [ ] Pass make check and final-head CI, obtain Owner review, and satisfy the explicit merge gate.
+- [x] Pass make check and final-head CI, obtain Owner review, and satisfy the explicit merge gate.
 
 ### 9.6. Issue verbs integration
 
@@ -536,13 +540,13 @@ Implementation, Owner review, merge and post-merge verification are required. Co
 
 - [x] Prepare the complete current review candidate, version the pending issue-standard proposal and record the Owner's direct publication instruction.
 - [x] Pass the repository gate for the explicitly staged candidate and preserve its result before committing.
-- [ ] Obtain independent review, resolve required findings and satisfy the existing merge gate.
+- [x] Obtain independent review, resolve required findings and satisfy the existing merge gate.
 
 ### 9.11. Recovery integration
 
 - [x] Inspect the thirteen incoming paths, reconcile the three documentation overlaps and retain their source evidence.
 - [x] Pass the integrated repository gate and commit the merge resolution.
-- [ ] Resolve independent-review findings and obtain the existing completion approvals.
+- [x] Resolve independent-review findings and obtain the existing completion approvals.
 
 ### 9.12. Independent-review response
 
@@ -550,7 +554,7 @@ Implementation, Owner review, merge and post-merge verification are required. Co
 - [x] Correct and locally verify R02, R04, R05, R06, R08 and R09 within the approved rewrite; independent re-review remains required.
 - [x] Obtain and record David Noble's 2026-11-20 approvals for R01, R03 and R07 before the dependent changes.
 - [x] Apply and locally verify the approved membership, trailer and review-state corrections; independent re-review remains required.
-- [ ] Publish corrections, obtain independent re-review and satisfy the existing merge requirements.
+- [x] Publish corrections, obtain independent re-review and satisfy the existing merge requirements.
 
 ### 9.13. Final review
 
@@ -558,7 +562,7 @@ Implementation, Owner review, merge and post-merge verification are required. Co
 - [x] Record the 51-input content assessment and complete M01–M10 dispositions, including the filed runtime follow-up and context-contract handoff.
 - [x] Verify, reply to and resolve all 21 older conversations against published corrections.
 - [x] Publish meaningful verification results in tracked review records; retain new machine evidence under stable names.
-- [ ] Obtain R10 recheck, passing final-head CI and Owner acceptance, then follow the authorized merge/delivery process.
+- [x] Obtain R10 recheck, passing final-head CI and Owner acceptance, then follow the authorized merge/delivery process.
 
 ## 10. Files and related assets
 
@@ -602,7 +606,19 @@ On 2026-11-19, after the current changes were pushed, the Owner explicitly appro
 
 On 2026-11-20, David Noble approved all three proposed review dispositions individually after their explanations. Section 7.22 records their scope and verification. These are implementation approvals within the existing rewrite; they neither authorize merge nor waive any completion requirement.
 
+On 2026-11-20, David Noble accepted the final reviewed head with “you are approved” and directed “Let's get this in.” PR #596 was squash-merged through the ordinary merge path after the exact-head checks and review were verified. The Owner subsequently ran the finishing script successfully. This completion-only amendment records those established results; it introduces no behavior or additional delivery milestone.
+
 ## 13. Completion review
+
+[PR #596](https://github.com/NobleFactor/noblefactor-engprod/pull/596) was accepted at 8aa77e7a513dbc7b68e9bb1a9fe0aa4cf68cc32e and merged as 55dec2b044a2972f1037996c06d887a960d6c8ef at 2026-11-20T20:17:23Z. Independent review verified R01–R10 and all 31 conversations were resolved. All four required accepted-head jobs passed in [CI run 44802544929](https://github.com/NobleFactor/noblefactor-engprod/actions/runs/44802544929).
+
+The exact recorded squash commit has the human sign-off and Codex assistance trailer. GitHub closed Skill/index update (#581) and Handbook command alignment (#582) through the PR references. The supported close command completed their evidence and row records; both Schedule rows read back Closed and linked PR #596. The PR's Time section was appended and read back.
+
+The Owner ran the finishing script on 2026-11-20. At 20:28:36 UTC, the canonical clone was synchronized and the installed schedule-progress skill resolved to the delivered source with SHA-256 e3baf8855476791afd7858c17a18e8d228c26b45dec17181763a35f5b914b8aa. At 20:28:49 UTC, the worktree, sibling script and local/remote branch were verified removed. Post-merge evidence was posted to both issues.
+
+The durable receipt is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/post-merge/receipt.json. Completion criteria are met. Native host qualification, skill publication and the separately tracked runtime work remain with their existing tasks. This follow-up records established results and creates no recursive completion milestone.
+
+### 13.1. Earlier checkpoints
 
 The final content and conflict assessment is recorded in rewrite-review section 19. All 21 older conversations are resolved with published evidence; R01–R09 are independently verified. R10 has a locally verified correction and remains open for independent recheck. M01/M02/M10 are tracked in Model publication (#614); the context freshness question is handed off to Shared context (#558). All four jobs pass at the reviewed 9d8f09d head; final-head CI and Owner acceptance remain required.
 
