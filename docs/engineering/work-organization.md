@@ -2,7 +2,7 @@
 title: "Work organization"
 status: draft
 created: 2026-10-28
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 # Work organization
@@ -19,7 +19,7 @@ Use `owner/repository#number` when a bare number is ambiguous. A Schedule issue 
 
 A Scenario records an end-user goal and walk. Its project contains findings, each associated with its Beat. Beats identify discovery within the walk; Schedule Steps identify execution order.
 
-Move classified findings to Triage or an approved Schedule through `star github issue move`, with the destination and required `--reason`. The command records the move on the Scenario and adds a `Left #N on <date> for <destination>` line to the finding before changing membership. Closed findings leave the Scenario; until [recurring cleanup (#593)](https://github.com/NobleFactor/noblefactor-engprod/issues/593) is delivered, remove their rows manually and verify the result. The [Scenario contract](../issue-standards.md#scenarios) owns representation and cleanup.
+Move classified findings to Triage or an approved Schedule through `star github issue move`, with the destination and required `--reason`. The command records the move on the Scenario and adds a `Left #N on <date> for <destination>` line to the finding before changing membership. Closing a finding through `star github issue close` records its closure on the Scenario and removes its row. Closure through GitHub or a PR reference leaves that work to be completed: rerun issue close for its supported repair, or remove the closed finding row under the [cleanup procedure](../architecture/issue-data-model/9-the-scenario-commands.md#ongoing-cleanup), then verify the result. Preserve the Scenario's own row and option, open findings, and origin/closure evidence. [Recurring cleanup (#593)](https://github.com/NobleFactor/noblefactor-engprod/issues/593) is separate work.
 
 A Schedule can span Features, Epics and repositories within its account. Use a [stand-in issue](../issue-standards.md#placement) for cross-account dependencies. Shared concerns do not permit putting one work item in two schedules.
 

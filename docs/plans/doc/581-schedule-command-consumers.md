@@ -3,7 +3,7 @@ title: "Align schedule and scenario command consumers"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/581
 status: active
 created: 2026-11-16
-updated: 2026-11-19
+updated: 2026-11-20
 documents:
   - kind: "Design: the schedule commands"
     path: docs/architecture/issue-data-model/8-the-schedule-commands.md
@@ -403,6 +403,18 @@ Issue open now creates an issue each invocation and refuses unique. Issue close/
 
 The retained originals remain immutable evidence of their captured revisions. Record the new target and source hashes without rewriting old snapshots. Update current requirement maps and tests, commit the merge resolution, and push the updated review head. Existing M07/M08 policy questions remain unresolved.
 
+### 7.21. Independent-review corrections
+
+The independent review of e3e40022c49012f59b91a4cdb8993f6bebaf6596, including PR #612, requests changes: one High, six Medium and two Low findings. The [response register](../../engineering/review/rewrite-review.md#17-independent-review-of-e3e4002) links each finding and its disposition. None is accepted as resolved merely because a correction has been drafted.
+
+Within the approved rewrite, correct decision-footer provenance (R02), Triage-to-Backlog guidance (R04), asynchronous intake placement (R05), User-field capability claims (R06), conditional Scenario cleanup (R08), and the duplicate session-model tail (R09). Preserve decision IDs, source bodies and actual approval evidence; use null for unknown attribution or dates. Verify rendered session-model flow as well as source layout.
+
+Three choices await the Owner: the Triage/home membership policy (R01/M08), narrowing both script examples' trailer verification to this PR's full recorded merge commit ID (R03/M07), and an explicit exception permitting independent review of a non-draft PR before its remaining merge gates are satisfied (R07). Publishing a review candidate supplies no answer to those questions. Do not adopt the pending issue standard, change the preserved script examples or waive the draft gate without the required disposition.
+
+Verify the corrected set's references, metadata, paragraph/table layout, structured footers and immutable sources. Check command claims against the delivered source and tests. Record the final changed-head checks separately from the passing checks on e3e4002, and retain independent re-review and Owner acceptance as merge requirements. This amendment changes no runtime command, protected branch, issue status or other worker's worktree.
+
+Focused checks pass for the six corrections: 68 ordered decision footers with retained approval evidence and explanations, 69 rewritten Markdown files, 898 local references, 522 preserved anchors, 21 immutable source files, 50 original snapshots, eight amendment snapshots and the exact Owner assignment appendix. The maintained issue standard has only the scoped R06 factual correction; its full replacement remains pending M08. Pandoc renders the session-model page with three tables and all eight main sections in order, without the duplicated tail. Current frontmatter, spelling and whitespace checks pass. These documentation checks do not repeat the unchanged runtime suite or qualify a new CI head; current-head CI and independent re-review remain required. The durable verification record is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/review-596-response/verification.json.
+
 ## 8. Completion milestones
 
 Preserve the common commandments and five role entry points accepted in PR #601, merged as 967764ae13b015543a2d0667e907b0fd37283875. Integrate the current target through the Owner-run checkpoint script. Review their references when rewriting handbook pages; their publication does not qualify native host loading.
@@ -505,6 +517,13 @@ Implementation, Owner review, merge and post-merge verification are required. Co
 - [x] Inspect the thirteen incoming paths, reconcile the three documentation overlaps and retain their source evidence.
 - [x] Pass the integrated repository gate and commit the merge resolution.
 - [ ] Resolve independent-review findings and obtain the existing completion approvals.
+
+### 9.12. Independent-review response
+
+- [x] Read all nine findings and record the reviewed head, scope and pending Owner choices before corrective edits.
+- [x] Correct and locally verify R02, R04, R05, R06, R08 and R09 within the approved rewrite; independent re-review remains required.
+- [ ] Obtain and record Owner dispositions for R01, R03 and R07, then apply and verify the approved changes.
+- [ ] Publish corrections, obtain independent re-review and satisfy the existing merge requirements.
 
 ## 10. Files and related assets
 

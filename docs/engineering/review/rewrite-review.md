@@ -2,7 +2,7 @@
 title: "Documentation rewrite review"
 status: active
 created: 2026-11-19
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 # Documentation rewrite review
@@ -406,3 +406,25 @@ The automatically merged D-013/D-014 records and partial D-009 consequence repla
 The integrated gate and published review head are recorded separately. This merge does not resolve M07 or M08 or claim all issue/role deliverables complete.
 
 The integrated make check passed, including the issue-recovery regression cases. The remaining Scenario reference to issue-open duplicate detection was corrected. Current metadata, spelling, links and source-preservation checks also pass. Upstream code, tests and source plans remain byte-identical to PR #612.
+
+## 17. Independent review of e3e4002
+
+The [independent review](https://github.com/NobleFactor/noblefactor-engprod/pull/596#pullrequestreview-5989025310) covers e3e40022c49012f59b91a4cdb8993f6bebaf6596, including Recovery in PR #612, and requests changes. It reports one High, six Medium and two Low findings. All four CI checks passed for that reviewed head; they do not qualify subsequent corrections.
+
+| Finding | Disposition |
+| --- | --- |
+| [R01 High: Triage/home membership](https://github.com/NobleFactor/noblefactor-engprod/pull/596#discussion_r4639687508) | Owner choice pending (M08); the proposed Triage fault overlay is not adopted |
+| [R02 Medium: decision provenance](https://github.com/NobleFactor/noblefactor-engprod/pull/596#discussion_r4639687524) | Local correction adds ordered YAML footers to 68 records in twelve companions; locally verified. Existing IDs, substance and approval evidence are retained, with unknown attribution/dates null |
+| [R03 Medium: landed-trailer lookup](https://github.com/NobleFactor/noblefactor-engprod/pull/596#discussion_r4639687534) | Owner inclusion choice pending (M07); examples remain unchanged |
+| [R04 Medium: Triage-to-Backlog move](https://github.com/NobleFactor/noblefactor-engprod/pull/596#discussion_r4639687547) | Proposal corrected to match move source and regression cases 146–148; locally verified |
+| [R05 Medium: asynchronous placement](https://github.com/NobleFactor/noblefactor-engprod/pull/596#discussion_r4639687560) | Hierarchy distinguishes issue metadata writes from the separately executed intake workflow and row verification; locally verified |
+| [R06 Medium: User-field capabilities](https://github.com/NobleFactor/noblefactor-engprod/pull/596#discussion_r4639687577) | Command decisions and maintained standard describe our supported label profile and preserve original evidence. Native access/adoption/command qualification is not claimed; locally verified |
+| [R07 Medium: draft-review gate](https://github.com/NobleFactor/noblefactor-engprod/pull/596#discussion_r4639687585) | Owner exception choice pending; publication approval is not treated as an implicit waiver |
+| [R08 Low: Scenario cleanup](https://github.com/NobleFactor/noblefactor-engprod/pull/596#discussion_r4639687597) | Handbook limits remaining cleanup to closure outside the issue command and links the authoritative procedure; locally verified |
+| [R09 Low: duplicate session-model tail](https://github.com/NobleFactor/noblefactor-engprod/pull/596#discussion_r4639687617) | Duplicate table/wake prose removed; unique exit/Remote Control details already remain in the lifecycle section. Pandoc renders three tables and the expected section flow |
+
+The original source snapshots remain exact. The issue-standard factual correction does not adopt its pending replacement or resolve membership policy. Recording accepted source contracts without a known approving person or date does not invent approval evidence. The preserved plans and command companions retain the approval records that are known.
+
+Routine corrections implement the approved rewrite. R01, R03 and R07 require the Owner's explicit dispositions before their dependent changes. Independent re-review and Owner acceptance remain required; no finding is closed by this local draft, and the PR is not ready to merge.
+
+Focused validation passes for these six corrections, including YAML key order, source/body preservation, links, metadata, paragraph/table layout, spelling and whitespace. The rendered session-model page has three tables and all eight main sections in order. The maintained issue-standard replacement and the three Owner decisions remain outstanding. Current-head CI and independent re-review are required after publication.

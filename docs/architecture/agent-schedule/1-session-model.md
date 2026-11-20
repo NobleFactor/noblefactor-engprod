@@ -1,7 +1,7 @@
 ---
 title: "Claude session lifecycle"
 status: draft
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 <a id="1-session-model--every-conversation-in-claudes-background-a-tmux-session-of-its-own-for-each-start"></a>
@@ -137,15 +137,4 @@ Native host versions can change the meaning of resume flags, viewer input and at
 
 ## 8. Decisions and delivery references
 
-The [decision record](1-session-model.decisions.md) explains persistent native sessions, ephemeral views and native discovery. The [delivery references](1-session-model.status.md) identify implementation and verification records. The [pre-rewrite source](../../engineering/review/sources/rewrite-2026-11-19/1-session-model.md.txt) preserves the original requirements and observations.| Native observation | Launcher behavior |
-| --- | --- |
-| Recorded background session is running | Attach to it; never pass its conversation ID to `claude --bg --resume`, which can create a copy |
-| Recorded background session is stopped | Attach to wake the same background session; with `--detach`, wake its conversation through `claude --bg --resume <id>` without additional flags |
-| Selected conversation runs in the foreground | Refuse with 75 |
-| Selected conversation is inactive | Start it with `claude --bg --resume <id>` and store the returned background-session ID |
-| No binding exists for a first Schedule launch | Start a new background conversation in the selected directory and store the ID that Claude returns |
-| Native listing cannot be read | Report the failure; do not infer absence |
-
-A stopped-session wake receives no extra flags, including `--name`: those flags can create a copy. Restore its display name through `/rename` as the wake's first prompt.
-
-A stopped-session wake receives no launch flags, including `--name`: those flags can create a copy. Restore its display name through `/rename` as the wake's first prompt. A new conversation receives Remote Control unless `--no-remote-control` is selected. A successful detached launch exits with 0; native start failures exit with 69 and open no view.
+The [decision record](1-session-model.decisions.md) explains persistent native sessions, ephemeral views and native discovery. The [delivery references](1-session-model.status.md) identify implementation and verification records. The [pre-rewrite source](../../engineering/review/sources/rewrite-2026-11-19/1-session-model.md.txt) preserves the original requirements and observations.

@@ -1,7 +1,7 @@
 ---
 title: "Scenario command decisions"
 status: draft
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 <a id="9-the-scenario-commands-design-decisions"></a>
@@ -9,6 +9,8 @@ updated: 2026-11-19
 # Scenario command decisions
 
 These records explain the [Scenario command design](9-the-scenario-commands.md). Approval evidence links the plans; implementation progress remains in them.
+
+The [decision-record standard](../../standards/documentation.md#decision-records) governs these footers. Unknown attribution and dates remain null; combined approval dates stay in their source evidence. Recording time identifies this revision.
 
 ## 1. Decision index
 
@@ -26,8 +28,6 @@ These records explain the [Scenario command design](9-the-scenario-commands.md).
 
 ### 2.1. D-001: Scenarios have a command group of their own
 
-**Status:** Accepted.
-
 **Context and criteria:** A scenario has beats, not steps; its changes are recorded as comments, not amendments; and it is never closed as done.
 
 **Decision:** `star github scenario` is a group beside `star github schedule`, with `list`, `get`, `open`, `create`, `close` and `reopen`. An item moves onto, within and off a scenario by `star github issue move`.
@@ -44,11 +44,20 @@ These records explain the [Scenario command design](9-the-scenario-commands.md).
 
 **Related decisions:** [section 10, D-002](10-the-issue-commands.decisions.md#d-002).
 
+```yaml
+id: "D-001"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: David Noble
+recorded_by: Codex
+decided_at: null
+recorded_at: "2026-11-20T15:55:37Z"
+```
+
 <a id="d-002"></a>
 
 ### 2.2. D-002: Beat N is step N of the walk
-
-**Status:** Accepted.
 
 **Context and criteria:** An item found while walking a scenario needs a number that says where in the walk it turned up.
 
@@ -64,11 +73,20 @@ These records explain the [Scenario command design](9-the-scenario-commands.md).
 
 **Approval evidence:** The owner, 2026-11-15, recorded in [#507's plan](../../plans/doc/507-scenario-commands.md), § Rulings.
 
+```yaml
+id: "D-002"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: David Noble
+recorded_by: Codex
+decided_at: "2026-11-15"
+recorded_at: "2026-11-20T15:55:37Z"
+```
+
 <a id="d-003"></a>
 
 ### 2.3. D-003: A move onto or off a scenario is recorded in two places
-
-**Status:** Accepted.
 
 **Context and criteria:** A scenario has no Amendments section, and an item should say for itself where it was found and where it went.
 
@@ -86,11 +104,20 @@ These records explain the [Scenario command design](9-the-scenario-commands.md).
 
 **Related decisions:** [section 10, D-003](10-the-issue-commands.decisions.md#d-003).
 
+```yaml
+id: "D-003"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: David Noble
+recorded_by: Codex
+decided_at: "2026-11-15"
+recorded_at: "2026-11-20T15:55:37Z"
+```
+
 <a id="d-004"></a>
 
 ### 2.4. D-004: A closed item leaves its scenario
-
-**Status:** Accepted.
 
 **Context and criteria:** A scenario's rows are the work found on its walk that is still to be done.
 
@@ -108,11 +135,20 @@ These records explain the [Scenario command design](9-the-scenario-commands.md).
 
 **Related decisions:** [D-005](#d-005).
 
+```yaml
+id: "D-004"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: David Noble
+recorded_by: Codex
+decided_at: "2026-11-15"
+recorded_at: "2026-11-20T15:55:37Z"
+```
+
 <a id="d-005"></a>
 
 ### 2.5. D-005: close closes a scenario as completed, with no Resolution
-
-**Status:** Accepted.
 
 **Context and criteria:** A scenario is kept, updated or removed as the product changes, and is never closed as done. A scenario the product no longer has must be removed, and something must say so.
 
@@ -129,6 +165,17 @@ These records explain the [Scenario command design](9-the-scenario-commands.md).
 **Approval evidence:** The owner, 2026-11-15, question 6, recorded in [#507's plan](../../plans/doc/507-scenario-commands.md), § Rulings; the collection interface is recorded in the [Issue verbs plan](../../plans/doc/589-issue-verbs.md).
 
 **Related decisions:** [D-004](#d-004).
+
+```yaml
+id: "D-005"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: David Noble
+recorded_by: Codex
+decided_at: "2026-11-15"
+recorded_at: "2026-11-20T15:55:37Z"
+```
 
 ---
 

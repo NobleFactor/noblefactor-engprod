@@ -2,7 +2,7 @@
 title: "Issue standard review proposal"
 type: Process
 status: Draft
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 <a id="issue-standards"></a>
@@ -154,7 +154,7 @@ Remove the Triage row as part of the decision. Closing an issue elsewhere does n
 
 Use star github issue move with a required --reason. It adds the destination row/fields and removes the source home. Schedule changes record the approved reason as an amendment on each affected Schedule issue. The supported destination flags are --triage, --backlog, --schedule and --scenario; source/destination combinations and refusals are defined by the [issue command contract](../../../architecture/issue-data-model/10-the-issue-commands.md).
 
-Use --after to position scheduled work, --blocked-by to add dependencies, --assignee for the receiving team's accountable member, and --beat with a Scenario destination. The delivered --backlog operation does not move work from Triage; do not promise that route merely because the policy permits an accepted Backlog destination.
+Use --after to position scheduled work, --blocked-by to add dependencies, --assignee for the receiving team's accountable member, and --beat with a Scenario destination. The delivered --backlog operation moves a classified issue from Triage to Backlog, creates its destination row before removing the Triage row, and refuses an untyped issue. Confirm the Type, required parent and attributes before accepting the work; command acceptance alone does not establish full classification.
 
 The accountable assignee moves work between teams and identifies an accountable recipient. Team project access and repository issue access are both required; public visibility alone grants no issue-management authority. Cross-team moves remain within the account.
 

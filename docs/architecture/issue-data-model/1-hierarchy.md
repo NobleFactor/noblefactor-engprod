@@ -1,7 +1,7 @@
 ---
 title: "Issue hierarchy"
 status: draft
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 <a id="1-the-hierarchy"></a>
@@ -53,7 +53,7 @@ New issues go to the responsible team's Triage project, with three exceptions: a
 
 The repository's Triage workflow routes opened or transferred issues. `TRIAGE_PROJECT_URL` identifies its team's Triage project. The shared workflow template belongs in the account's `.github` repository. Account participation and permission rules are defined in [Storage and access](4-storage-and-reach.md).
 
-Issues filed through `star github issue open` receive the required classification and placement through that command. Issue forms and the Triage workflow supply the equivalent inputs on their supported paths. Required metadata must still be checked when a form or workflow cannot enforce it.
+`star github issue open` validates and writes the required issue metadata; it creates no project row. The separately executed Triage workflow routes the new issue to Triage, or to its originating Scenario on the Scenario intake path. Command success therefore does not establish placement: verify the row after intake completes. A pending or failed workflow can leave it absent. Check the workflow result, destination and credentials before using the supported recovery or move operation; do not rerun open to repair placement, because each invocation creates a new issue.
 
 ### 3.1 Triage decisions
 

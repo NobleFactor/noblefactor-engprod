@@ -1,16 +1,16 @@
 ---
 title: "Issue hierarchy decisions"
 status: draft
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 # Issue hierarchy decisions
 
 [Design](1-hierarchy.md) · [Preserved source](../../engineering/review/sources/rewrite-2026-11-19/issue-data-model-1-hierarchy.md.txt)
 
-## 1. Separate work breakdown from collections
+The [decision-record standard](../../standards/documentation.md#decision-records) governs these footers. Unknown attribution and dates remain null; combined approval dates stay in their source evidence. Recording time identifies this revision.
 
-**Status:** Accepted model requirement.
+## 1. Separate work breakdown from collections
 
 Use Epic → Feature → Task or Bug for product and engineering work. Keep Schedule and Scenario as parentless collection types.
 
@@ -20,9 +20,18 @@ Use Epic → Feature → Task or Bug for product and engineering work. Keep Sche
 
 **Consequence:** Collection membership and Scenario origin need their own records. A work item's Feature parent remains meaningful after the item changes projects.
 
-## 2. Classify at intake without losing discoveries
+```yaml
+id: "HIERARCHY-001"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: null
+recorded_by: Codex
+decided_at: null
+recorded_at: "2026-11-20T15:55:37Z"
+```
 
-**Status:** Accepted model requirement.
+## 2. Classify at intake without losing discoveries
 
 Allow unclassified work in Triage and findings in their originating Scenario. Require full classification before committing a finding to a Schedule.
 
@@ -32,9 +41,18 @@ Allow unclassified work in Triage and findings in their originating Scenario. Re
 
 **Consequence:** Validation must distinguish the intake exception from completed classification and apply the Scenario sweep exceptions explicitly.
 
-## 3. Keep one managed project membership
+```yaml
+id: "HIERARCHY-002"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: null
+recorded_by: Codex
+decided_at: null
+recorded_at: "2026-11-20T15:55:37Z"
+```
 
-**Status:** Accepted model requirement.
+## 3. Keep one managed project membership
 
 An issue belongs to at most one managed project across its account and one Schedule or Scenario. A move transfers membership and records the destination's fields.
 
@@ -44,9 +62,18 @@ An issue belongs to at most one managed project across its account and one Sched
 
 **Consequence:** Preserve Scenario origin outside active membership. Partial GitHub writes require explicit command failure handling; one user operation is not an atomic API transaction.
 
-## 4. Close Features after independent checks
+```yaml
+id: "HIERARCHY-003"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: null
+recorded_by: Codex
+decided_at: null
+recorded_at: "2026-11-20T15:55:37Z"
+```
 
-**Status:** Accepted model requirement.
+## 4. Close Features after independent checks
 
 Finishing child Tasks and Bugs is necessary but insufficient for Feature closure. Require an agent compliance audit, agent code review and team-lead sign-off.
 
@@ -56,10 +83,30 @@ Finishing child Tasks and Bugs is necessary but insufficient for Feature closure
 
 **Consequence:** Tooling must not be assumed to enforce the extra gate without evidence. The rewrite's later methodology/tooling scan must check that relationship.
 
-## 5. Preserve conflicting-collection evidence
+```yaml
+id: "HIERARCHY-004"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: null
+recorded_by: Codex
+decided_at: null
+recorded_at: "2026-11-20T15:55:37Z"
+```
 
-**Status:** Open implementation choice.
+## 5. Preserve conflicting-collection evidence
 
 The sweep must detect a Scenario finding that also has another managed project row. Its handling must preserve the evidence and an existing Schedule commitment.
 
 The owning sweep work must define which records are retained or transferred. This rewrite does not choose that recovery policy or claim it is implemented.
+
+```yaml
+id: "HIERARCHY-005"
+status: proposed
+supersedes: []
+proposed_by: null
+approved_by: null
+recorded_by: Codex
+decided_at: null
+recorded_at: "2026-11-20T15:55:37Z"
+```

@@ -1,7 +1,7 @@
 ---
 title: "Issue command decisions"
 status: draft
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 <a id="10-the-issue-commands-design-decisions"></a>
@@ -9,6 +9,8 @@ updated: 2026-11-19
 # Issue command decisions
 
 These records explain the [issue command design](10-the-issue-commands.md). The [Issue verbs plan](../../plans/doc/589-issue-verbs.md) preserves approval evidence and implementation progress.
+
+The [decision-record standard](../../standards/documentation.md#decision-records) governs these footers. Unknown attribution and dates remain null; combined approval dates stay in their source evidence. Recording time identifies this revision.
 
 ## 1. Decision index
 
@@ -35,8 +37,6 @@ These records explain the [issue command design](10-the-issue-commands.md). The 
 
 ### 2.1. D-001: The verbs are open, move, close and reopen
 
-**Status:** Accepted.
-
 **Context and criteria:** The commands change an issue's state and place. Their names should be the words a GitHub user already uses for an issue's state, and should pair up.
 
 **Decision:** The verbs are `open`, `move`, `close` and `reopen`. `create` is another name for `open`, the same command.
@@ -53,11 +53,20 @@ These records explain the [issue command design](10-the-issue-commands.md). The 
 
 **Related decisions:** [D-002](#d-002).
 
+```yaml
+id: "D-001"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: David Noble
+recorded_by: Codex
+decided_at: "2026-11-17"
+recorded_at: "2026-11-20T15:55:37Z"
+```
+
 <a id="d-002"></a>
 
 ### 2.2. D-002: The issue verbs act on epics, features, tasks and bugs
-
-**Status:** Accepted.
 
 **Context and criteria:** A Schedule or Scenario issue is the record of its collection: its row is the collection's own, on its Schedule or Scenario project. One set of words should open, close and reopen every kind of thing.
 
@@ -75,11 +84,20 @@ These records explain the [issue command design](10-the-issue-commands.md). The 
 
 **Related decisions:** [D-001](#d-001).
 
+```yaml
+id: "D-002"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: David Noble
+recorded_by: Codex
+decided_at: "2026-11-17"
+recorded_at: "2026-11-20T15:55:37Z"
+```
+
 <a id="d-003"></a>
 
 ### 2.3. D-003: An issue goes wherever its type allows, from wherever it is
-
-**Status:** Accepted.
 
 **Context and criteria:** Work has to reach the place it belongs in one command, whatever project it is on now. Each project holds only the types that make sense there.
 
@@ -97,11 +115,20 @@ These records explain the [issue command design](10-the-issue-commands.md). The 
 
 **Related decisions:** [D-004](#d-004).
 
+```yaml
+id: "D-003"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: David Noble
+recorded_by: Codex
+decided_at: "2026-11-17"
+recorded_at: "2026-11-20T15:55:37Z"
+```
+
 <a id="d-004"></a>
 
 ### 2.4. D-004: An epic or a feature stays on the Backlog until it closes
-
-**Status:** Accepted.
 
 **Context and criteria:** An epic or a feature classifies work rather than being worked itself. A reader needs to see every open epic and feature, and its state, without a command having to move it as its children move.
 
@@ -126,11 +153,20 @@ These records explain the [issue command design](10-the-issue-commands.md). The 
 
 **Related decisions:** [D-003](#d-003), [D-011](#d-011), [D-012](#d-012). Sources: [Azure Boards: Use backlogs to manage projects](https://learn.microsoft.com/en-us/azure/devops/boards/backlogs/backlogs-overview), [Azure Boards: Define features and epics](https://learn.microsoft.com/en-us/azure/devops/boards/backlogs/define-features-epics), [Shortcut: Automations](https://www.shortcut.com/help/fields-and-features/automations), [Linear: Parent and sub-issues](https://linear.app/docs/parent-and-sub-issues), and [Atlassian Community: Automation for moving epics to In Progress when any child story is moved](https://community.atlassian.com/t5/Jira-questions/Automation-for-Moving-Epics-to-In-Progress-when-any-of-the-child/qaq-p/2490530).
 
+```yaml
+id: "D-004"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: David Noble
+recorded_by: Codex
+decided_at: null
+recorded_at: "2026-11-20T15:55:37Z"
+```
+
 <a id="d-005"></a>
 
 ### 2.5. D-005: open opens its issue in the clone's repository
-
-**Status:** Accepted.
 
 **Context and criteria:** `open` must know which repository to open an issue in, without the person repeating what the clone they're in already says.
 
@@ -146,11 +182,20 @@ These records explain the [issue command design](10-the-issue-commands.md). The 
 
 **Approval evidence:** The owner, 2026-11-17, recorded in [the plan](../../plans/doc/589-issue-verbs.md), § 12, departure 3.
 
+```yaml
+id: "D-005"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: David Noble
+recorded_by: Codex
+decided_at: "2026-11-17"
+recorded_at: "2026-11-20T15:55:37Z"
+```
+
 <a id="d-006"></a>
 
 ### 2.6. D-006: open gives the issue no row
-
-**Status:** Accepted.
 
 **Context and criteria:** An issue is a row of at most one of its account's four projects, and the Triage workflow gives every issue opened a Triage row.
 
@@ -168,11 +213,20 @@ These records explain the [issue command design](10-the-issue-commands.md). The 
 
 **Related decisions:** [D-003](#d-003).
 
+```yaml
+id: "D-006"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: David Noble
+recorded_by: Codex
+decided_at: "2026-11-17"
+recorded_at: "2026-11-20T15:55:37Z"
+```
+
 <a id="d-007"></a>
 
 ### 2.7. D-007: open's defaults
-
-**Status:** Accepted.
 
 **Context and criteria:** Filing needs predictable metadata defaults, and automation should not assign work to its bot unless requested.
 
@@ -188,11 +242,20 @@ These records explain the [issue command design](10-the-issue-commands.md). The 
 
 **Approval evidence:** The owner, 2026-11-17, recorded in [the plan](../../plans/doc/589-issue-verbs.md), § 12, question 2 and departure 5.
 
+```yaml
+id: "D-007"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: David Noble
+recorded_by: Codex
+decided_at: "2026-11-17"
+recorded_at: "2026-11-20T15:55:37Z"
+```
+
 <a id="d-008"></a>
 
 ### 2.8. D-008: Work not done closes as completed, with a Resolution
-
-**Status:** Accepted.
 
 **Context and criteria:** A closed issue must say whether its work was done, and if not, why.
 
@@ -202,7 +265,7 @@ These records explain the [issue command design](10-the-issue-commands.md). The 
 
 **Alternatives:** Closing as "not planned".
 
-**Consequences:** In a user account, which has no issue fields, the Resolution is a `resolution:` label.
+**Consequences:** In the supported user-account profile, the Resolution is a `resolution:` label. This describes our representation, not a restriction on GitHub's native User fields; native adoption, access and command support remain unqualified.
 
 **Design links:** [Closing an issue](10-the-issue-commands.md#closing-an-issue-close).
 
@@ -210,11 +273,22 @@ These records explain the [issue command design](10-the-issue-commands.md). The 
 
 **Related decisions:** [D-009](#d-009).
 
+```yaml
+id: "D-008"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: David Noble
+recorded_by: Codex
+decided_at: "2026-11-03"
+recorded_at: "2026-11-20T15:55:37Z"
+```
+
 <a id="d-009"></a>
 
 ### 2.9. D-009: close writes the comment, the Resolution, the closure, then the rows
 
-**Status:** Accepted. Its consequence, that a run which stops after closing the issue leaves its rows to be changed by hand, is superseded by [D-013](#d-013).
+Its consequence, that a run which stops after closing the issue leaves its rows to be changed by hand, is superseded by [D-013](#d-013).
 
 **Context and criteria:** `close` writes several things, and a reader of the issue should see why it closed before anything else changes.
 
@@ -232,11 +306,20 @@ These records explain the [issue command design](10-the-issue-commands.md). The 
 
 **Related decisions:** [D-008](#d-008).
 
+```yaml
+id: "D-009"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: David Noble
+recorded_by: Codex
+decided_at: "2026-11-17"
+recorded_at: "2026-11-20T15:55:37Z"
+```
+
 <a id="d-010"></a>
 
 ### 2.10. D-010: close closes no parent
-
-**Status:** Accepted.
 
 **Context and criteria:** A feature or an epic has its own evidence of completion, which its last child's evidence isn't.
 
@@ -254,11 +337,20 @@ These records explain the [issue command design](10-the-issue-commands.md). The 
 
 **Related decisions:** [D-011](#d-011).
 
+```yaml
+id: "D-010"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: David Noble
+recorded_by: Codex
+decided_at: "2026-11-17"
+recorded_at: "2026-11-20T15:55:37Z"
+```
+
 <a id="d-011"></a>
 
 ### 2.11. D-011: reopen reopens what the issue belongs to
-
-**Status:** Accepted.
 
 **Context and criteria:** A reopened issue is open work, so a closed feature, epic or schedule it belongs to is open again too, and the issue needs a place to be seen.
 
@@ -276,15 +368,24 @@ These records explain the [issue command design](10-the-issue-commands.md). The 
 
 **Related decisions:** [D-004](#d-004), [D-010](#d-010).
 
+```yaml
+id: "D-011"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: David Noble
+recorded_by: Codex
+decided_at: "2026-11-17"
+recorded_at: "2026-11-20T15:55:37Z"
+```
+
 <a id="d-012"></a>
 
 ### 2.12. D-012: Every project's first view is named Default
 
-**Status:** Accepted.
-
 **Context and criteria:** A project's views should say what each shows, and the Backlog holds both kinds of issue ([D-004](#d-004)).
 
-**Decision:** Every project's first view is named Default and shows every row. Each Backlog also has an Epics and features view. In NobleFactor, the Backlog's By priority view shows its tasks and bugs in Priority order; David-Noble-at-work, which has no Priority field, has no By priority view.
+**Decision:** Every project's first view is named Default and shows every row. Each Backlog also has an Epics and features view. In NobleFactor, the Backlog's By priority view shows its tasks and bugs in Priority order; David-Noble-at-work's supported label profile has no By priority view; its Priority is represented by labels.
 
 **Reasons:** "Default" says what the view is; "View 1" is only GitHub's name for a new project's first view. Work is taken from the Backlog's tasks and bugs in Priority order.
 
@@ -298,11 +399,20 @@ These records explain the [issue command design](10-the-issue-commands.md). The 
 
 **Related decisions:** [D-004](#d-004).
 
+```yaml
+id: "D-012"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: David Noble
+recorded_by: Codex
+decided_at: "2026-11-18"
+recorded_at: "2026-11-20T15:55:37Z"
+```
+
 <a id="d-013"></a>
 
 ### 2.13. D-013: close and reopen are idempotent
-
-**Status:** Accepted.
 
 **Context and criteria:** A run of `close` or `reopen` can stop partway: GitHub refuses a write, GitHub accepts a write whose answer is lost, or the run is killed between two writes. A pull request's `Closes` line also closes an issue, and leaves its rows; clicking Reopen on GitHub's page reopens only the issue itself. Every command is to be idempotent: run again, it never leaves its work half done, and never does the same work twice.
 
@@ -320,11 +430,20 @@ These records explain the [issue command design](10-the-issue-commands.md). The 
 
 **Related decisions:** [D-008](#d-008), [D-009](#d-009), [D-011](#d-011).
 
+```yaml
+id: "D-013"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: David Noble
+recorded_by: Codex
+decided_at: "2026-11-19"
+recorded_at: "2026-11-20T15:55:37Z"
+```
+
 <a id="d-014"></a>
 
 ### 2.14. D-014: open checks for no duplicate
-
-**Status:** Accepted.
 
 **Context and criteria:** `open` has a `--unique` flag that looks among the parent's first 100 sub-issues for one with the same title, and opens nothing when it finds one. A stopped `open` whose issue GitHub made, but whose answer was lost, opens a second issue when run again without the flag.
 
@@ -341,6 +460,17 @@ These records explain the [issue command design](10-the-issue-commands.md). The 
 **Approval evidence:** Approved 2026-11-19 in [the plan for #609](../../plans/feature/609-rerun-finishes.md), § 12, at revision 71f40ef.
 
 **Related decisions:** [D-005](#d-005), [D-013](#d-013).
+
+```yaml
+id: "D-014"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: David Noble
+recorded_by: Codex
+decided_at: "2026-11-19"
+recorded_at: "2026-11-20T15:55:37Z"
+```
 
 ---
 

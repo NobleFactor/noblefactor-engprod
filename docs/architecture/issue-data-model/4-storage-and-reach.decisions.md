@@ -1,16 +1,16 @@
 ---
 title: "Issue storage and access decisions"
 status: draft
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 # Issue storage and access decisions
 
 [Design](4-storage-and-reach.md) · [Preserved source](../../engineering/review/sources/rewrite-2026-11-19/issue-data-model-4-storage-and-reach.md.txt)
 
-## 1. Keep accounts independent
+The [decision-record standard](../../standards/documentation.md#decision-records) governs these footers. Unknown attribution and dates remain null; combined approval dates stay in their source evidence. Recording time identifies this revision.
 
-**Status:** Accepted model requirement.
+## 1. Keep accounts independent
 
 Each account owns its model and work. Managed project rows, parents and blocked-by links stay within that account. Use a local stand-in for work in another account.
 
@@ -20,9 +20,18 @@ Each account owns its model and work. Managed project rows, parents and blocked-
 
 **Consequence:** A shared definition can be applied to another account without copying its live issues or repository label assignments.
 
-## 2. Share files through the account repository
+```yaml
+id: "ACCESS-001"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: null
+recorded_by: Codex
+decided_at: null
+recorded_at: "2026-11-20T15:55:37Z"
+```
 
-**Status:** Accepted model requirement.
+## 2. Share files through the account repository
 
 The public `.github` repository owns forms, workflow templates, PR templates and the model backup. Participating repositories run their own installed Triage workflow.
 
@@ -30,9 +39,18 @@ The public `.github` repository owns forms, workflow templates, PR templates and
 
 **Consequence:** Local overrides and deployed workflow copies need consistency checks. The backup does not become a runtime configuration cache.
 
-## 3. Use equivalent account representations
+```yaml
+id: "ACCESS-002"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: null
+recorded_by: Codex
+decided_at: null
+recorded_at: "2026-11-20T15:55:37Z"
+```
 
-**Status:** Accepted model requirement.
+## 3. Use equivalent account representations
 
 Use native organization issue types and fields. Use lowercase labels and template copies for the user-account model.
 
@@ -42,9 +60,18 @@ Use native organization issue types and fields. Use lowercase labels and templat
 
 **Consequence:** Label exclusivity needs validation; a user-account label does not gain native single-select enforcement.
 
-## 4. Grant access through responsibility
+```yaml
+id: "ACCESS-003"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: null
+recorded_by: Codex
+decided_at: null
+recorded_at: "2026-11-20T15:55:37Z"
+```
 
-**Status:** Accepted model requirement.
+## 4. Grant access through responsibility
 
 The responsible team has Maintain on owned repositories and Write on its four projects. User-account participants need repository collaboration and project Write access.
 
@@ -52,12 +79,32 @@ The responsible team has Maintain on owned repositories and Write on its four pr
 
 **Consequence:** Cross-repository parenting still needs access on both repositories. Project settings and access control remain with the account's administration. Tool access does not waive engineering approval.
 
-## 5. Route intake explicitly
+```yaml
+id: "ACCESS-004"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: null
+recorded_by: Codex
+decided_at: null
+recorded_at: "2026-11-20T15:55:37Z"
+```
 
-**Status:** Accepted model requirement.
+## 5. Route intake explicitly
 
 Repository Actions workflows handle issue intake. Managed projects have no built-in workflows. Collection issues and Scenario findings follow their distinct routing rules.
 
 **Reason:** Shared, inspectable workflow definitions provide consistent intake and credential handling.
 
 **Consequence:** Routing needs repository workflow installation, the destination variable and the correct account credentials. A missing or invalid Scenario destination must remain visible.
+
+```yaml
+id: "ACCESS-005"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: null
+recorded_by: Codex
+decided_at: null
+recorded_at: "2026-11-20T15:55:37Z"
+```
