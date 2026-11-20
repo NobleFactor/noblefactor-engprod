@@ -624,8 +624,10 @@ function issue_form {
 # beside the stand-in, so that a read after a write finds it, as GitHub's would: a project found by its title, a comment
 # kept on its issue, an issue filed, and an issue closed, among them. How an issue closed is what a case gives it: its
 # stateReason, its closedAt, its references, the pull requests GitHub records as closing it, and its closer. The world
-# may name an operation to fail once, fail_on, after letting fail_skip calls of it through, none by default, and
-# another writer's change to make after an operation's first answer, change.
+# may name an operation to fail once, fail_on, after letting fail_skip calls of it through, none by default; one whose
+# write is kept and its answer lost, once, fail_after (#609); and another writer's change to make after an operation's
+# first answer, change. Each issue keeps its history, its comments, closes and reopens at the world's clock, as GitHub's
+# timeline does (#609).
 #
 # star github plan link's operations (#557): starPlanBlobs and starPlanAt answer each aliased object(expression:
 # "<revision>:<path>") with the file's text from the repository's bare repository under ${GH_REMOTES}, or null;
@@ -680,6 +682,15 @@ def issue_node($w; $i):
 def field($w; $p; $f): $w.projects[$p].fields[] | select(.id == $f);
 def set_value($w; $p; $i; $name; $value):
     $w | .projects[$p].items |= map(if .id == $i then .values[$name] = $value else . end);
+# An issue's history, as GitHub's timeline keeps it (#609): each comment, close and reopen in order, at the world's
+# clock, one tick a write, which a case can set to place an issue's history before or after another's.
+def stamp($id; $kind; $b):
+    ((.clock // 0) + 1) as $t | .clock = $t
+    | .issues[$id].timeline = ((.issues[$id].timeline // []) + [{kind: $kind, at: $t, body: $b}]);
+# A tick of the clock as GitHub writes a time, which sorts as text: one second a tick, from noon.
+def pad: (. + 100) | tostring | .[1:];
+def at_time($t): (43200 + $t) as $s |
+    "2026-11-19T\(($s / 3600 | floor) | pad):\((($s % 3600) / 60 | floor) | pad):\(($s % 60) | pad)Z";
 
 . as $w |
 (if $op == "starViewer" then {answer: {data: {viewer: {login: $w.viewer}}}}
@@ -699,7 +710,8 @@ elif $op == "starStepFields" then
     {answer: {data: {node: {issueFieldValues: {nodes: [($w.issues[$node].fields // {}) | to_entries[]
         | {name: .value, field: {name: .key}}]}}}}}
 elif $op == "starStepClose" then
-    {world: ($w | .issues[$i] |= (.state = "CLOSED" | .stateReason = "COMPLETED")), answer: {data: {closeIssue: {issue: {id: $i}}}}}
+    {world: ($w | .issues[$i] |= (.state = "CLOSED" | .stateReason = "COMPLETED") | stamp($i; "closed"; "")),
+        answer: {data: {closeIssue: {issue: {id: $i}}}}}
 elif $op == "starStepRepository" then
     # A repository's node ID, its issue types, an organization's six, and its labels, the world's or the user account's.
     {answer: {data: {repository: {id: ("R_" + $repo),
@@ -726,7 +738,8 @@ elif $op == "starStepCreate" then
                 . + {($w.issue_fields[$f.fieldId].name): $w.issue_fields[$f.fieldId].options[$f.singleSelectOptionId]}))}),
         answer: {data: {createIssue: {issue: {number: $n}}}}}
 elif $op == "starStepReopen" then
-    {world: ($w | .issues[$i] |= (.state = "OPEN" | .stateReason = null)), answer: {data: {reopenIssue: {issue: {id: $i}}}}}
+    {world: ($w | .issues[$i] |= (.state = "OPEN" | .stateReason = null) | stamp($i; "reopened"; "")),
+        answer: {data: {reopenIssue: {issue: {id: $i}}}}}
 elif $op == "starStepClearField" then
     $w.issue_fields[$f] as $field |
     {world: ($w | .issues[$i].fields |= ((. // {}) | del(.[$field.name]))), answer: {data: {deleteIssueFieldValue: {clientMutationId: null}}}}
@@ -783,8 +796,15 @@ elif $op == "starStepFind" then
     {answer: {data: {organization: $found, user: $found}}}
 elif $op == "starStepComment" then
     (($w.issues[$s].comments // []) | length) as $n |
-    {world: ($w | .issues[$s].comments = ((.issues[$s].comments // []) + [$b])),
+    {world: ($w | .issues[$s].comments = ((.issues[$s].comments // []) + [$b]) | stamp($s; "comment"; $b)),
         answer: {data: {addComment: {commentEdge: {node: {id: ("IC_" + $s + "_" + ($n | tostring))}}}}}}
+elif $op == "starStepLifecycle" then
+    # An issue's history, one page: each comment with its body, and each close and reopen, at its time (#609).
+    {answer: {data: {node: {timelineItems: {pageInfo: {hasNextPage: false, endCursor: null},
+        nodes: [($w.issues[$s].timeline // [])[]
+            | if .kind == "comment" then {__typename: "IssueComment", body, createdAt: at_time(.at)}
+              elif .kind == "closed" then {__typename: "ClosedEvent", createdAt: at_time(.at)}
+              else {__typename: "ReopenedEvent", createdAt: at_time(.at)} end]}}}}}
 elif $op == "starStepPlace" then
     # With no row to follow, the row is placed first.
     ($w.projects[$p].items | map(select(.id == $i))[0]) as $it | ($w.projects[$p].items | map(select(.id != $i))) as $rest |
@@ -1222,6 +1242,13 @@ function world_answer {
     fi
     if jq -e 'has("world")' <<<"${result}" >/dev/null; then
         jq '.world' <<<"${result}" >"${world}.next" && mv -- "${world}.next" "${world}"
+    fi
+    # fail_after: the write is kept and its answer lost, once, as when GitHub accepts a call whose answer never arrives
+    # (#609).
+    if [[ "$(jq -r '.fail_after // ""' "${world}")" == "${op}" ]]; then
+        jq '.fail_after = ""' "${world}" >"${world}.next" && mv -- "${world}.next" "${world}"
+        printf 'gh: %s was written and its answer lost, as the case asked\n' "${op}" >&2
+        exit 1
     fi
     # --jq prints a null result as gh does, an empty line.
     jq -c '.answer' <<<"${result}" |
@@ -4123,12 +4150,15 @@ expect "126 (#590): issue close closes test-user/personal#12 with Resolution Dup
 check "126 (#590): #12 carries resolution:duplicate, and is closed as completed" world_holds \
     '(.issues.I_personal_12 | [.state, .stateReason, (.labels | index("resolution:duplicate") != null)]) == ["CLOSED", "COMPLETED", true]'
 
-# 127 (#590). An issue already closed is left as it is (section 10, ruled 2026-11-17): #29, closed, though still a row
-# of Triage: engprod, is unchanged, and nothing is written.
+# 127 (#590, #609). An issue already closed, though still a row of Triage: engprod, gets what one complete run of close
+# would have given it (D-013): its closing comment, since its history holds none, and its Triage row removed.
 world '.projects.PVT_t_eng.items += [{id: "IT_alpha_29", content: "I_alpha_29", values: {Status: "Open"}}]'
 printf 'Done.\n' >"${run_directory}/evidence-29.md"
 run_star "${data}" github issue close NobleFactor/alpha#29 --evidence "${run_directory}/evidence-29.md"
-expect "127 (#590): a closed issue is unchanged, and nothing is written" ok "${no_writes}"' and map(.action) == ["unchanged"]'
+expect "127 (#609): a closed issue still in Triage gets its closing comment, and leaves Triage" ok \
+    'map([.action, .already, .project]) == [["closed", true, null], ["left", null, "Triage: engprod"]]'
+check "127 (#609): #29 holds its evidence, once, and no Triage row" world_holds \
+    '(.issues.I_alpha_29.comments | length) == 1 and ([.projects.PVT_t_eng.items[].content] | index("I_alpha_29")) == null'
 
 # 128 (#590). issue close refuses, writing nothing: a Schedule issue; neither --evidence nor --resolution, and both;
 # --resolution without --reason, and one the account doesn't have; --reason with --evidence; a missing evidence file; an
@@ -4867,6 +4897,123 @@ run_star "${data_new}" github issue open "${alpha[@]}" --type Task --parent Nobl
     --title "A new task" --body-file "${run_directory}/short-delimiter.md"
 expect "171 (#606): a delimiter row with fewer cells than the header is no table" error "${no_writes}" \
     "the table of its Plan and design documents section" text
+
+# 175 to 183 (#609). close is idempotent (D-013): run again, it ends where one complete run would have ended, with one
+# comment of each kind, and an issue with nothing left to do is unchanged. world_set changes the world a run left.
+function world_set {
+    local file="${run_directory}/remotes/world.json"
+    jq "$1" "${file}" >"${file}.next" && mv -- "${file}.next" "${file}"
+}
+declare -r comment_calls='[$calls[] | select(any(.[]; type == "string" and test("mutation starStepComment")))] | length'
+
+# 175. Stopped after its comment, when the Resolution's write fails: a second run writes no second comment, then the
+# Resolution, the closure and the row.
+world '.fail_on = "starStepSetField"'
+run_star "${data}" github issue close NobleFactor/alpha#22 --resolution declined --reason "Not needed now."
+expect "175 (#609): close stops when the Resolution's write fails, after its comment" error 'true' "in set_resolution" text
+run_star "${data}" github issue close NobleFactor/alpha#22 --resolution declined --reason "Not needed now."
+expect "175 (#609): run again, close finishes #22, writing no second comment" ok \
+    'map([.action, .project, .resolution]) == [["closed", null, "Declined"], ["row-closed", "Schedule: engprod", null]]
+        and ('"${comment_calls}"') == 0'
+check "175 (#609): #22 holds one closing comment, Resolution Declined, and its row Closed" world_holds \
+    '(.issues.I_alpha_22 | [.state, .fields.Resolution, (.comments | length)]) == ["CLOSED", "Declined", 1]
+        and (.projects.PVT_s_eng.items[] | select(.content == "I_alpha_22") | .values.Status) == "Closed"'
+
+# 176. Stopped after the closure, when the row's write fails: a second run sets the row, and writes nothing else.
+world '.fail_on = "starStepSetOption"'
+run_star "${data}" github issue close NobleFactor/alpha#22 --resolution declined --reason "Not needed now."
+expect "176 (#609): close stops when the row's write fails, after the closure" error 'true' "in set_option" text
+run_star "${data}" github issue close NobleFactor/alpha#22 --resolution declined --reason "Not needed now."
+expect "176 (#609): run again, close sets #22's row Closed, and writes no comment, Resolution or closure" ok \
+    'map([.action, .already, .project]) == [["closed", true, null], ["row-closed", null, "Schedule: engprod"]]
+        and ([$calls[] | select(any(.[]; type == "string"
+            and test("mutation (starStepComment|starStepSetField|starStepClose)\\(")))] | length) == 0'
+
+# 177. The closing comment written, and its answer lost: a second run finds it, and writes no second one.
+world '.fail_after = "starStepComment"'
+run_star "${data}" github issue close NobleFactor/alpha#22 --resolution declined --reason "Not needed now."
+expect "177 (#609): the closing comment is written and its answer lost" error 'true' "in comment" text
+run_star "${data}" github issue close NobleFactor/alpha#22 --resolution declined --reason "Not needed now."
+expect "177 (#609): run again, close finishes #22, writing no second comment" ok \
+    'map(.action) == ["closed", "row-closed"] and ('"${comment_calls}"') == 0'
+check "177 (#609): #22 holds one comment, and is closed" world_holds \
+    '(.issues.I_alpha_22.comments | length) == 1 and .issues.I_alpha_22.state == "CLOSED"'
+
+# 178. An issue a pull request's Closes line closed, its row left In progress: close writes its evidence, and sets the
+# row Closed.
+world '.issues.I_alpha_22 |= (.state = "CLOSED" | .stateReason = "COMPLETED" | .timeline = [{kind: "closed", at: 0, body: ""}])'
+printf 'Merged in #610.\n' >"${run_directory}/evidence-22.md"
+run_star "${data}" github issue close NobleFactor/alpha#22 --evidence "${run_directory}/evidence-22.md"
+expect "178 (#609): an issue a Closes line closed gets close's comment and its row Closed" ok \
+    'map([.action, .already, .project]) == [["closed", true, null], ["row-closed", null, "Schedule: engprod"]]'
+check "178 (#609): #22 holds its evidence once" world_holds \
+    '(.issues.I_alpha_22.comments | length) == 1 and (.issues.I_alpha_22.comments[0] | endswith("Merged in #610."))'
+
+# 179. Run again after a complete run: nothing is left, so close writes nothing.
+world
+run_star "${data}" github issue close NobleFactor/alpha#22 --resolution declined --reason "Not needed now."
+run_star "${data}" github issue close NobleFactor/alpha#22 --resolution declined --reason "Not needed now."
+expect "179 (#609): run again after a complete run, close writes nothing" ok "${no_writes}"' and map(.action) == ["unchanged"]'
+
+# 180. A different Resolution: close sets it, then comments on the change; the same one again writes nothing; and after
+# someone resets it by hand, the same change gets a comment of its own.
+world
+run_star "${data}" github issue close NobleFactor/alpha#22 --resolution declined --reason "Not needed now."
+run_star "${data}" github issue close NobleFactor/alpha#22 --resolution duplicate --reason "The same as #21."
+expect "180 (#609): a different Resolution is set, and the change gets its comment" ok \
+    'map([.action, .already, .resolution]) == [["closed", true, "Duplicate"]]'
+check "180 (#609): #22 holds Duplicate, and a comment on the change from Declined" world_holds \
+    '.issues.I_alpha_22.fields.Resolution == "Duplicate" and .issues.I_alpha_22.comments[1] == "Resolution changed by `star github issue close` on '"${today}"', run by stand-in, from Declined to Duplicate: The same as #21."'
+run_star "${data}" github issue close NobleFactor/alpha#22 --resolution duplicate --reason "The same as #21."
+expect "180 (#609): the same Resolution again writes nothing" ok "${no_writes}"' and map(.action) == ["unchanged"]'
+world_set '.issues.I_alpha_22.fields.Resolution = "Declined"'
+run_star "${data}" github issue close NobleFactor/alpha#22 --resolution duplicate --reason "Still the same as #21."
+expect "180 (#609): after a reset by hand, the change to Duplicate again" ok 'map([.action, .resolution]) == [["closed", "Duplicate"]]'
+check "180 (#609): #22 holds two comments on a change of its Resolution" world_holds \
+    '([.issues.I_alpha_22.comments[] | select(startswith("Resolution changed by"))] | length) == 2
+        and .issues.I_alpha_22.fields.Resolution == "Duplicate"'
+
+# 181. Stopped between a change of Resolution and its comment: a second run writes only the comment.
+world
+run_star "${data}" github issue close NobleFactor/alpha#22 --resolution declined --reason "Not needed now."
+world_set '.fail_on = "starStepComment"'
+run_star "${data}" github issue close NobleFactor/alpha#22 --resolution duplicate --reason "The same as #21."
+expect "181 (#609): close stops when the change's comment fails, after the change" error 'true' "in comment" text
+run_star "${data}" github issue close NobleFactor/alpha#22 --resolution duplicate --reason "The same as #21."
+expect "181 (#609): run again, close writes only the change's comment" ok \
+    'map([.action, .already]) == [["closed", true]] and ('"${comment_calls}"') == 1
+        and ([$calls[] | select(any(.[]; type == "string" and test("mutation starStepSetField")))] | length) == 0'
+check "181 (#609): #22 holds one comment on the change" world_holds \
+    '([.issues.I_alpha_22.comments[] | select(startswith("Resolution changed by"))] | length) == 1'
+
+# 182. Stopped after the comment on the Scenario issue, when the row's removal fails: a second run removes the row and
+# writes no second comment on #40; another child's comment there stands in for nothing.
+world '.issues.I_alpha_40.comments = ["NobleFactor/alpha#28 closed on 2026-11-18, and so left this scenario, by `star github issue close`, run by stand-in."]
+    | .issues.I_alpha_40.timeline = [{kind: "comment", at: 0, body: .issues.I_alpha_40.comments[0]}]
+    | .fail_on = "starStepDeleteRow"'
+printf '## Evidence: walked\n\nThe walk passes.\n' >"${run_directory}/evidence-27.md"
+run_star "${data}" github issue close NobleFactor/alpha#27 --evidence "${run_directory}/evidence-27.md"
+expect "182 (#609): close stops when the row's removal fails, after #40 is told" error 'true' "in delete_row" text
+run_star "${data}" github issue close NobleFactor/alpha#27 --evidence "${run_directory}/evidence-27.md"
+expect "182 (#609): run again, close removes #27's row, telling #40 nothing more" ok \
+    'map([.action, .already, .project, .scenario]) == [["closed", true, null, null], ["left", null, "Scenario: engprod", "NobleFactor/alpha#40"]]
+        and ('"${comment_calls}"') == 0'
+check "182 (#609): #40 holds one comment on #27, and #28's" world_holds \
+    '([.issues.I_alpha_40.comments[] | select(startswith("NobleFactor/alpha#27 closed on"))] | length) == 1
+        and (.issues.I_alpha_40.comments | length) == 2'
+
+# 183. In a user account, a closed issue's resolution:invalid label becomes resolution:duplicate: the other label
+# removed, the new one added, and the change commented, from what close last recorded.
+world '.issues.I_personal_12 |= (.state = "CLOSED" | .stateReason = "COMPLETED" | .labels += ["resolution:invalid"]
+    | .comments = ["Closed by `star github issue close` on 2026-11-18, run by stand-in, with Resolution Invalid: Not a bug."]
+    | .timeline = [{kind: "comment", at: 0, body: .comments[0]}, {kind: "closed", at: 0, body: ""}])'
+run_star "${data}" github issue close test-user/personal#12 --resolution Duplicate --reason "The same as #11."
+expect "183 (#609): a user account's closed issue changes from Invalid to Duplicate" ok \
+    'map([.action, .already, .resolution]) == [["closed", true, "Duplicate"]]'
+check "183 (#609): #12 carries resolution:duplicate alone, and a comment on the change" world_holds \
+    '(.issues.I_personal_12.labels | (index("resolution:invalid") == null) and (index("resolution:duplicate") != null))
+        and (.issues.I_personal_12.comments[1] | startswith("Resolution changed by `star github issue close`")
+            and endswith("from Invalid to Duplicate: The same as #11."))'
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"

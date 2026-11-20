@@ -18,10 +18,11 @@ Companion to [10. The issue commands](10-the-issue-commands.md). It records the 
 | [D-006](#d-006) | `open` gives the issue no row; the Triage workflow does | Accepted | [Opening an issue](10-the-issue-commands.md#opening-an-issue-open-and-create) |
 | [D-007](#d-007) | `open`'s defaults: Priority Medium, Severity by type, no assignee | Accepted | [Opening an issue](10-the-issue-commands.md#opening-an-issue-open-and-create) |
 | [D-008](#d-008) | Work not done closes as completed, with a Resolution | Accepted | [Closing an issue](10-the-issue-commands.md#closing-an-issue-close) |
-| [D-009](#d-009) | `close` writes the comment, the Resolution, the closure, then the rows | Accepted | [Closing an issue](10-the-issue-commands.md#closing-an-issue-close) |
+| [D-009](#d-009) | `close` writes the comment, the Resolution, the closure, then the rows | Accepted; its consequence superseded by D-013 | [Closing an issue](10-the-issue-commands.md#closing-an-issue-close) |
 | [D-010](#d-010) | `close` closes no parent | Accepted | [Closing an issue](10-the-issue-commands.md#closing-an-issue-close) |
 | [D-011](#d-011) | `reopen` reopens the issue's closed parents and schedules, and gives an issue with no row a Triage row | Accepted | [Reopening an issue](10-the-issue-commands.md#reopening-an-issue-reopen) |
 | [D-012](#d-012) | Every project's first view is named Default; the Backlog has an Epics and features view | Accepted | [Epics and features](10-the-issue-commands.md#epics-and-features) |
+| [D-013](#d-013) | `close` is idempotent: run again, it ends where one complete run would have ended | Accepted | [Closing an issue](10-the-issue-commands.md#closing-an-issue-close) |
 
 ## 2. Decision records
 
@@ -212,7 +213,7 @@ Companion to [10. The issue commands](10-the-issue-commands.md). It records the 
 
 ### 2.9. D-009: close writes the comment, the Resolution, the closure, then the rows
 
-**Status:** Accepted.
+**Status:** Accepted. Its consequence, that a run which stops after closing the issue leaves its rows to be changed by hand, is superseded by [D-013](#d-013).
 
 **Context and criteria:** `close` writes several things, and a reader of the issue should see why it closed before anything else changes.
 
@@ -222,7 +223,7 @@ Companion to [10. The issue commands](10-the-issue-commands.md). It records the 
 
 **Alternatives:** Changing the rows first and closing the issue last, so a run that stops partway leaves the issue open, and changing the rows of an issue already closed.
 
-**Consequences:** A run that stops after closing the issue leaves its rows to be changed by hand.
+**Consequences:** A run that stops after closing the issue leaves its rows to be changed by hand. Superseded by [D-013](#d-013): `close`, run again, changes them.
 
 **Design links:** [Closing an issue](10-the-issue-commands.md#closing-an-issue-close).
 
@@ -295,6 +296,28 @@ Companion to [10. The issue commands](10-the-issue-commands.md). It records the 
 **Approval evidence:** The owner, 2026-11-18, recorded in [the plan](../../plans/doc/589-issue-verbs.md), § 12, departure 9.
 
 **Related decisions:** [D-004](#d-004).
+
+<a id="d-013"></a>
+
+### 2.13. D-013: close is idempotent
+
+**Status:** Accepted.
+
+**Context and criteria:** A run of `close` can stop partway: GitHub refuses a write, GitHub accepts a write whose answer is lost, or the run is killed between two writes. A pull request's `Closes` line also closes an issue, and leaves its rows. Every command is to be idempotent: run again, it never leaves its work half done, and never does the same work twice.
+
+**Decision:** `close`, run on an issue already closed, writes only what one complete run would have written and the earlier run didn't. A comment is written only if the issue's history since it last reopened holds none of its kind; a comment on a Scenario issue counts only for the item it names. The Resolution is set by comparing the one asked for, the one the issue holds, and the one `close` last recorded, and a change of it gets its own comment, written after the change. An issue with nothing left to do is `unchanged`, and nothing is written.
+
+**Reasons:** The finished state is right however an issue reached a half-finished one, so a second run needn't know who left it. Looking back only to the last reopening keeps one comment for each close, and lets a later close have its own. Comparing with what `close` last recorded tells a change made by hand from a run that stopped.
+
+**Alternatives:** Leaving a stopped run's rows to be changed by hand ([D-009](#d-009)). A marker each run writes for the next to find. Matching a comment by its full text, which holds the date and who ran it. Refusing a different Resolution, though anyone can change it by hand. Running `close` as a graph that can be undone, which needs a GitHub provider first (NobleFactor/devlore-cli#1238).
+
+**Consequences:** `close` reads each issue's history, and each Scenario issue's, before its first write. Two workers changing one issue at the same moment are not covered: the last write wins. The rule doesn't yet cover recovering a stopped `open`, which NobleFactor/devlore-cli#1238 does through a graph, or `move`'s comment on a Scenario issue, which #611 fixes.
+
+**Design links:** [Closing an issue](10-the-issue-commands.md#closing-an-issue-close).
+
+**Approval evidence:** Approved 2026-11-19 in [the plan for #609](../../plans/feature/609-rerun-finishes.md), § 12, at revision 71f40ef.
+
+**Related decisions:** [D-008](#d-008), [D-009](#d-009).
 
 ---
 

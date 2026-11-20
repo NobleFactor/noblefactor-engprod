@@ -23,9 +23,9 @@ An `<issue>` is written `<owner>/<repository>#<number>`. Every command names wha
 - **`move`** finds the amendment it left pending, and finishes the move.
 - **`open`** with `--unique` finds the issue it opened under the parent, and opens no other. Without `--unique`, it opens a second issue.
 - **`reopen`** that stopped after it reopened the issue finds it open, records `unchanged`, and leaves the issue's Resolution and rows as they were.
-- **`close`** that stopped after it closed the issue finds it closed, records `unchanged`, and leaves its rows as they were ([D-009](10-the-issue-commands.decisions.md#d-009)).
+- **`close`** run again ends where one complete run would have ended ([D-013](10-the-issue-commands.decisions.md#d-013)): it writes what the earlier run didn't, and nothing twice.
 
-What a rerun leaves is done by hand: a second issue closed as Duplicate, a Resolution cleared, a row set or removed. A command finishing such a run itself is designed apart, in Task #609.
+What a rerun of `open` or `reopen` leaves is done by hand: a second issue closed as Duplicate, a Resolution cleared, a row set.
 
 An issue named twice in one run, in another case or with a leading zero, is refused. `--dry-run` is refused.
 
@@ -121,16 +121,18 @@ An issue whose work was done closes with its evidence. An issue whose work was n
 
 For each issue, in order, `close` writes:
 
-1. **The comment:** the evidence file, word for word, headed `## Evidence: <title>` when it has no heading of its own; or `Closed by \`star github issue close\` on <date>, run by <login>, with Resolution <resolution>: <reason>`.
-2. **The Resolution,** with `--resolution`: the Resolution field in NobleFactor, the `resolution:<name>` label in David-Noble-at-work.
-3. **The issue,** closed as completed.
-4. **Its rows:** a Schedule row is set Closed and kept, since a schedule keeps its closed steps; a Scenario row is removed, after a comment on the Scenario issue that the item closed, since a closed item leaves its scenario; a Triage or Backlog row is removed. A row of one of those projects with no option is changed as its project's kind has it, with no Scenario issue to tell. Each row's change, the Schedule project's Closed option among it, is read before the first write. A run that stops after the issue is closed leaves its rows as they were, to be changed by hand: run again, `close` finds the issue closed and changes nothing ([D-009](10-the-issue-commands.decisions.md#d-009)).
+1. **The comment:** the evidence file, word for word, headed `## Evidence: <title>` when it has no heading of its own; or `Closed by \`star github issue close\` on <date>, run by <login>, with Resolution <resolution>: <reason>`. It is written only if the issue's history since it last reopened, or since it was opened, holds no such comment: one that begins with those words, or the same evidence. The comment comes before the issue closes, so the history is read back to the last reopening, not the last closing.
+2. **The Resolution,** with `--resolution`: the Resolution field in NobleFactor, the `resolution:<name>` label in David-Noble-at-work, any other `resolution:` label removed first. `close` compares the Resolution asked for, the one the issue holds, and the one it last recorded: the new one in its last comment on a change, or else the one its closing comment names. None held: it sets the one asked for. The one asked for, and last recorded: nothing. The one asked for, but another last recorded: the change happened without its comment, so it writes only the comment. Another held: it sets the one asked for, then writes `Resolution changed by \`star github issue close\` on <date>, run by <login>, from <old> to <new>: <reason>`.
+3. **The issue,** closed as completed, unless it is closed.
+4. **Its rows:** a Schedule row is set Closed and kept, since a schedule keeps its closed steps; a Scenario row is removed, after a comment on the Scenario issue that the item closed, since a closed item leaves its scenario; a Triage or Backlog row is removed. A row of one of those projects with no option is changed as its project's kind has it, with no Scenario issue to tell. Each row's change, the Schedule project's Closed option among it, is read before the first write. A row already right is left alone, and the comment on a Scenario issue is written only if its history since the item last reopened holds none that begins with the item's key, so one item's comment never stands in for another's.
+
+`close` is idempotent ([D-013](10-the-issue-commands.decisions.md#d-013)). On an issue already closed, it writes only what one complete run would have written and the earlier run didn't. A run that stopped partway, a write GitHub accepted whose answer was lost, and an issue a pull request's `Closes` line closed each end, run again, as one complete run does. An issue with nothing left to do is `unchanged`, and nothing is written.
 
 `close` doesn't close a parent. A feature or an epic closes with its own evidence, by `close` run on it. When an issue is its parent's last open child, counting those the same run closed before it, its record names the parent.
 
-It refuses, writing nothing: neither or both of `--evidence` and `--resolution`; `--resolution` without `--reason`, or with a name its account doesn't have; `--reason` with `--evidence`; an evidence file that is missing, empty or blank space alone; a Schedule or Scenario issue, which `star github schedule close` and `star github scenario close` close; and an item on a scenario whose option names no Scenario issue, or names one that is not a Scenario issue with its own row. An issue already closed is left as it is, and its record is `unchanged`.
+It refuses, writing nothing: neither or both of `--evidence` and `--resolution`; `--resolution` without `--reason`, or with a name its account doesn't have; `--reason` with `--evidence`; an evidence file that is missing, empty or blank space alone; a Schedule or Scenario issue, which `star github schedule close` and `star github scenario close` close; and an item on a scenario whose option names no Scenario issue, or names one that is not a Scenario issue with its own row.
 
-Its records: one for each issue, `closed` with its Resolution and the parent whose last open child it was, or `unchanged`; and one for each row, `row-closed` or `left`. An item closed some other way, such as by a pull request's `Closes` line, has its Scenario row removed by a recurring check.
+Its records: one for each issue, `closed` with its Resolution, the parent whose last open child it was, and `already` true when it was closed before the run; or `unchanged`; and one for each row, `row-closed` or `left`. An item closed some other way, such as by a pull request's `Closes` line, has its Scenario row removed by a recurring check, or by `close` run on it.
 
 ## Reopening an issue: reopen
 

@@ -1,7 +1,7 @@
 ---
 title: "Make star github issue close and reopen idempotent, and remove open's --unique flag"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/609
-status: draft
+status: active
 created: 2026-11-19
 updated: 2026-11-19
 documents:
@@ -169,16 +169,16 @@ Each commit that changes a command's behavior also changes section 10, its decis
 
 ### 9.1 Phase 1: the plan
 
-- [ ] Commit this plan on `feature/609-rerun-finishes`, with #589's and #605's plans marked complete, and review it. #589's verification reads as transferred to this plan, not as passed.
-- [ ] Rewrite #609's title and body to match the approved plan.
+- [x] Commit this plan on `feature/609-rerun-finishes`, with #589's and #605's plans marked complete, and review it. #589's verification reads as transferred to this plan, not as passed. Approved 2026-11-19, at 71f40ef, after two reviews by Codex.
+- [x] Rewrite #609's title and body to match the approved plan: done 2026-11-19.
 
 ### 9.2 Phase 2: the comment rule
 
-- [ ] The comment rule in `steps.star`, `fail_after` in the harness, and their tests.
+- [x] The comment rule in `steps.star`, `fail_after` in the harness, and their tests: `lifecycle`, `current` and `last_at`; the stand-in keeps each issue's history and can lose a write's answer. Tested through `close`, in Phase 3's commit.
 
 ### 9.3 Phase 3: `close`
 
-- [ ] `close` idempotent, with the Resolution rule and its tests; section 10's § Closing an issue, D-013, and D-009 marked superseded in part.
+- [x] `close` idempotent, with the Resolution rule and its tests; section 10's § Closing an issue, D-013, and D-009 marked superseded in part. Cases 127 and 175 to 183 pass, with 570 of 570 on 2026-11-19; without the fix, 127 and 175 to 178 and 180 to 183 fail, and 179, whose old behavior was already to write nothing, passes.
 
 ### 9.4 Phase 4: `reopen`
 
@@ -234,7 +234,9 @@ Decisions, 2026-11-19, on Codex's review of c7dd403:
 - `close` sets a different Resolution when asked, and comments on the change.
 - `move`'s repeated Scenario comment is Bug #611, outside this task.
 
-Approval: pending.
+Approved 2026-11-19, at revision 71f40ef.
+
+Departure, 2026-11-19: Phases 2 and 3 land in one commit, because only a command can exercise the comment rule, and `close` is the first to use it. The stand-in gh keeps each issue's history, its comments, closes and reopens at one clock, as GitHub's timeline does, so the tests can stop a run at any write.
 
 <a id="completion-review"></a>
 

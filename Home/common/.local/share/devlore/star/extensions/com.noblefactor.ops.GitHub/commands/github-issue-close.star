@@ -19,8 +19,14 @@
 #
 # Everything is read before the first write, so that a fault is a refusal with nothing written (#531); each write is
 # read back, and noted as it is made. A Schedule or Scenario issue is refused, naming its group's close (ruled
-# 2026-11-17, #595). An issue already closed is left as it is, its record unchanged. It doesn't close a parent with its
-# last open child (ruled 2026-11-17); its record names the parent then.
+# 2026-11-17, #595). It doesn't close a parent with its last open child (ruled 2026-11-17); its record names the parent
+# then.
+#
+# close is idempotent (D-013, #609): run again, it ends where one complete run would have ended. On an issue already
+# closed, it writes only what one complete run would have written and the earlier run didn't: its closing comment, its
+# Resolution and the comment on a change of it, and its rows. A comment is written only if the issue's history since it
+# last reopened holds none of its kind, so a second run writes no second one; the comment on a Scenario issue counts
+# only for the child it names. An issue with nothing left to do is unchanged, and nothing is written.
 
 load("commands/access.star", "check_access")
 load(
@@ -28,6 +34,8 @@ load(
     "BACKLOG",
     "RESOLUTIONS",
     "TRIAGE",
+    "clear_resolution",
+    "clearing_plan",
     "collection_refusal",
     "parent_of",
     "render",
@@ -45,9 +53,12 @@ load(
     "SCHEDULE_KIND",
     "close_issue",
     "comment",
+    "current",
     "delete_row",
     "issue",
     "issue_state",
+    "last_at",
+    "lifecycle",
     "parse_key",
     "project_of",
     "read_row",
@@ -61,9 +72,62 @@ _COMMAND = "star github issue close"
 _STATUS = "Status"
 _CLOSED = "Closed"
 
-def _record(key, action, project = None, scenario = None, resolution = None, parent = None):
-    """One flat record of what close did: closed, left, row-closed or unchanged."""
-    return {"issue": key, "action": action, "project": project, "scenario": scenario, "resolution": resolution, "last_child_of": parent}
+# The opening words of close's comments, by which a second run knows them (#609).
+_CLOSING = "Closed by `star github issue close`"
+_CHANGED = "Resolution changed by `star github issue close`"
+
+def _record(key, action, project = None, scenario = None, resolution = None, parent = None, already = None):
+    """One flat record of what close did: closed, left, row-closed or unchanged; already, on an issue already closed."""
+    return {
+        "issue": key,
+        "action": action,
+        "project": project,
+        "scenario": scenario,
+        "resolution": resolution,
+        "last_child_of": parent,
+        "already": already,
+    }
+
+def _closing_found(events, evidence):
+    """Whether an issue's current close holds close's closing comment: one beginning _CLOSING, or the evidence comment."""
+    for e in current(events, "reopened"):
+        if e["kind"] != "comment":
+            continue
+        if e["body"].startswith(_CLOSING) or (evidence != "" and e["body"].strip() == evidence.strip()):
+            return True
+    return False
+
+def _recorded(events):
+    """The Resolution close last recorded in an issue's current close, or None.
+
+    It is the new one in its last change comment, or else the one its closing comment names.
+    """
+    for e in reversed(current(events, "reopened")):
+        body = e["body"]
+        if e["kind"] != "comment":
+            continue
+        if body.startswith(_CHANGED) and " from " in body and " to " in body:
+            return body.split(" from ", 1)[1].split(" to ", 1)[1].split(":", 1)[0].strip()
+        if body.startswith(_CLOSING) and ", with Resolution " in body:
+            return body.split(", with Resolution ", 1)[1].split(":", 1)[0].strip()
+    return None
+
+def _resolution_steps(model, r, plan, events):
+    """What close does to an issue's Resolution, read before any write: (the plan to set or None, the change or None).
+
+    It compares the Resolution asked for, the one the issue holds, and the one close last recorded (#609). None held:
+    set it. The one asked for, and last recorded: nothing. The one asked for, another last recorded: the change happened
+    without its comment, so only the comment. Another held: set it, then comment on the change.
+    """
+    held = resolution_of(model, r)
+    if held == None:
+        return plan, None
+    if held == plan["name"]:
+        last = _recorded(events)
+        if last == None or last == plan["name"]:
+            return None, None
+        return None, {"from": last, "to": plan["name"]}
+    return plan, {"from": held, "to": plan["name"]}
 
 def _evidence_text(path):
     """The evidence file's text; fails, naming the path, when it is missing or empty."""
@@ -103,13 +167,17 @@ def _rows(r, model):
             if fault:
                 refused.append(fault)
             else:
-                changes.append({"row": row, "do": "left", "scenario": source})
+                changes.append({"row": row, "do": "left", "scenario": source, "history": lifecycle(source["issue"])})
         elif row["kind"] in [TRIAGE, BACKLOG, SCENARIO_KIND]:
             changes.append({"row": row, "do": "left"})
     return changes, refused
 
-def _change(r, change, date, login, resolution):
-    """One row's change written and read back: its record."""
+def _change(r, change, date, login, resolution, since):
+    """One row's change written and read back: its record.
+
+    The comment on a Scenario issue is written only if its history since since, when the item last reopened, holds
+    none that begins with the item's key: one child's comment never stands in for another's (#609).
+    """
     row = change["row"]
     title = row["project"]["title"]
     if change["do"] == "row-closed":
@@ -121,13 +189,19 @@ def _change(r, change, date, login, resolution):
         return _record(r["key"], "row-closed", project = title)
     scenario = change.get("scenario")
     if scenario != None:
-        comment(scenario["issue"], render("issue-close-scenario.md.template", {
-            "issue": r["key"],
-            "date": date,
-            "login": login,
-            "resolution": resolution or "",
-        }))
-        note("commented on " + scenario["key"] + " that " + r["key"] + " closed and left it")
+        told = [
+            e
+            for e in change["history"]
+            if e["kind"] == "comment" and e["at"] >= since and e["body"].startswith(r["key"] + " closed on ")
+        ]
+        if not told:
+            comment(scenario["issue"], render("issue-close-scenario.md.template", {
+                "issue": r["key"],
+                "date": date,
+                "login": login,
+                "resolution": resolution or "",
+            }))
+            note("commented on " + scenario["key"] + " that " + r["key"] + " closed and left it")
     delete_row(row["project"]["id"], row["item"])
     if row["item"] in row_items(r):
         fail(r["key"] + "'s row on " + title + " is still there after it was removed")
@@ -169,7 +243,9 @@ def run(_command, ctx):
     text = _evidence_text(evidence) if evidence != "" else ""
     check_access(_COMMAND, scopes = ["project"], dry_run = ctx.dry_run)
 
-    # Everything read first: each issue, its rows, each scenario it is on, its Resolution's form and its parent.
+    # Everything read first: each issue, its history, its rows, each scenario it is on and that scenario's history, its
+    # Resolution's form and what close does to it, and its parent. An issue already closed is read the same way, since
+    # close writes on it what one complete run would have written and the earlier run didn't (#609).
     models = models_for([parse_key(k)["owner"] for k in keys])
     work, refused = [], []
     for k in keys:
@@ -179,9 +255,6 @@ def run(_command, ctx):
         if why != "":
             refused.append(why)
             continue
-        if r["state"] == "closed":
-            work.append({"r": r})
-            continue
         changes, faults = _rows(r, model)
         refused.extend(faults)
         plan = None
@@ -189,7 +262,27 @@ def run(_command, ctx):
             plan, fault = resolution_plan(model, resolution)
             if fault != "":
                 refused.append(k + ": " + fault)
-        work.append({"r": r, "model": model, "changes": changes, "plan": plan, "parent": parent_of(k)})
+        events = lifecycle(r)
+        evidence_comment = _with_heading(text, r["title"]) if text != "" else ""
+        setting, change, others = None, None, []
+        if plan != None:
+            setting, change = _resolution_steps(model, r, plan, events)
+            if setting != None and "label" in plan:
+                held = clearing_plan(model, r)
+                others = [label for label in (held["labels"] if held != None else []) if label != plan["label"]]
+        work.append({
+            "r": r,
+            "model": model,
+            "changes": changes,
+            "plan": plan,
+            "set": setting,
+            "change": change,
+            "others": others,
+            "events": events,
+            "evidence": evidence_comment,
+            "commented": _closing_found(events, evidence_comment),
+            "parent": parent_of(k) if r["state"] != "closed" else None,
+        })
     if refused:
         fail("nothing was written:\n  " + "\n  ".join(refused))
 
@@ -201,32 +294,59 @@ def run(_command, ctx):
     closed_under = {}
     for w in work:
         r = w["r"]
-        if r["state"] == "closed":
+        was_closed = r["state"] == "closed"
+        wrote = False
+
+        # 1. The closing comment, unless the issue's current close holds it.
+        if not w["commented"]:
+            if w["evidence"] != "":
+                comment(r, w["evidence"])
+            else:
+                comment(r, render("issue-close.md.template", {"date": date, "login": login, "resolution": resolution, "reason": reason}))
+            note("commented on " + r["key"])
+            wrote = True
+
+        # 2. The Resolution, each other resolution: label removed first in a user account, then the comment on its change.
+        if w["set"] != None:
+            if w["others"]:
+                clear_resolution(r, {"name": "", "labels": w["others"]})
+            set_resolution(r, w["set"])
+            if resolution_of(w["model"], r) != w["set"]["name"]:
+                fail(r["key"] + " reads back with the Resolution " + str(resolution_of(w["model"], r)) + ", not " + w["set"]["name"])
+            note("set " + r["key"] + "'s Resolution " + w["set"]["name"])
+            wrote = True
+        if w["change"] != None:
+            comment(r, render("issue-close-resolution.md.template", {
+                "date": date,
+                "login": login,
+                "from": w["change"]["from"],
+                "to": w["change"]["to"],
+                "reason": reason,
+            }))
+            note("commented on " + r["key"] + " that its Resolution changed from " + w["change"]["from"] + " to " + w["change"]["to"])
+            wrote = True
+
+        # 3. The issue closed, unless it is.
+        if not was_closed:
+            close_issue(r)
+            state = issue_state(r)
+            if state["state"] != "closed" or state["reason"] != "completed":
+                fail(r["key"] + " reads back " + str(state["state"]) + ", " + str(state["reason"]) + ", not closed as completed")
+            note("closed " + r["key"] + " as completed")
+
+        # 4. Its rows.
+        since = last_at(w["events"], "reopened")
+        rows = [_change(r, change, date, login, resolution if w["plan"] != None else None, since) for change in w["changes"]]
+        if was_closed and not wrote and not rows:
             out.append(_record(r["key"], "unchanged"))
             continue
-
-        if text != "":
-            comment(r, _with_heading(text, r["title"]))
-        else:
-            comment(r, render("issue-close.md.template", {"date": date, "login": login, "resolution": resolution, "reason": reason}))
-        note("commented on " + r["key"])
-        if w["plan"] != None:
-            set_resolution(r, w["plan"])
-            if resolution_of(w["model"], r) != w["plan"]["name"]:
-                fail(r["key"] + " reads back with the Resolution " + str(resolution_of(w["model"], r)) + ", not " + w["plan"]["name"])
-            note("set " + r["key"] + "'s Resolution " + w["plan"]["name"])
-        close_issue(r)
-        state = issue_state(r)
-        if state["state"] != "closed" or state["reason"] != "completed":
-            fail(r["key"] + " reads back " + str(state["state"]) + ", " + str(state["reason"]) + ", not closed as completed")
-        note("closed " + r["key"] + " as completed")
         last = None
         if w["parent"] != None:
             at = w["parent"]["key"].lower()
             closed_under[at] = closed_under.get(at, 0) + 1
             if w["parent"]["open"] - closed_under[at] == 0:
                 last = w["parent"]["key"]
-        out.append(_record(r["key"], "closed", resolution = w["plan"]["name"] if w["plan"] != None else None, parent = last))
-        for change in w["changes"]:
-            out.append(_change(r, change, date, login, resolution if w["plan"] != None else None))
+        named = w["plan"]["name"] if w["plan"] != None else None
+        out.append(_record(r["key"], "closed", resolution = named, parent = last, already = True if was_closed else None))
+        out.extend(rows)
     return out
