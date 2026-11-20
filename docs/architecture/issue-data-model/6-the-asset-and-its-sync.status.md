@@ -2,7 +2,7 @@
 title: "Model command delivery references"
 type: Reference
 status: Draft
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 <a id="6-the-asset-and-its-sync--status"></a>
@@ -27,7 +27,7 @@ The helper also treats a branch-rules 403 on any private repository as no requir
 
 [Backup](../../../Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/github-model-backup.star) assumes the helper has merged, then cleans up, reads main and returns merged. Changing the helper therefore also requires reviewing its callers, pending-PR results, resume behavior and post-merge verification. An isolated change removing one merge call would not complete that work.
 
-This documentation rewrite changes none of those executable paths and claims no new runtime qualification. The helper cannot be treated as a compliant way to publish under the approved policy. Align it through an issue, committed plan and Owner approval before using that path for this workflow.
+This documentation rewrite changes none of those executable paths and claims no new runtime qualification. The helper cannot be treated as a compliant way to publish under the approved policy. [Model publication (#614)](https://github.com/NobleFactor/noblefactor-engprod/issues/614) tracks the required helper/caller alignment. Until its approved plan is delivered, use read-only model inspection and the ordinary Owner-reviewed PR process rather than this incompatible publication path.
 
 <a id="completion"></a>
 

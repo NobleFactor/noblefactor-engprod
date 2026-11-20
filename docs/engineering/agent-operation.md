@@ -2,7 +2,7 @@
 title: "Agent operation"
 status: draft
 created: 2026-10-28
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 # Agent operation
@@ -141,7 +141,7 @@ Apply [effective host overrides](index.md#temporary-live-entrypoint-overrides) t
 | Scenario findings | `star github scenario get` |
 | Collection discovery | The relevant `list` command |
 | Epics, Features, Bugs and searches across issues/repositories | `star github schedule report` |
-| Classification faults | `star github triage sweep`; it can add rows to Triage and requires mutation authority |
+| Classification faults | `star github triage sweep`; it can add Triage rows and post comments, so running it requires authorization for GitHub writes |
 | One issue's full body | Read it after the appropriate collection/report command identifies it |
 
 Resolve the assigned Schedule through the approved assignment procedure and metadata, not branch names or remembered conversation. Host-specific lookup belongs in its binding and grants no additional authority.

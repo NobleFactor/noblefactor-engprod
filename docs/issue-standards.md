@@ -148,7 +148,7 @@ The workflow copies the form's Area into the issue field/label and initializes S
 
 Triage determines Type, parent, Area, Priority and Severity. An accepted issue leaves with valid classification; a Scenario finding must be classified before it enters a Schedule. Decline work with Resolution Declined, or move accepted work to Backlog or an approved Schedule. Accepted Epics/Features go to Backlog.
 
-Remove the Triage row as part of the decision. Closing an issue elsewhere does not itself remove or dispose of a lingering Triage row. The sweep never removes one.
+Remove the Triage row as part of its disposition. `star github issue close` removes Triage and Backlog rows. Closure through GitHub's UI or a PR closing reference can leave a Triage row for triage or the command's documented recovery to resolve. The sweep never removes one.
 
 ### 3.3. Movement and team ownership
 

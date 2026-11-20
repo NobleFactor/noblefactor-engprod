@@ -96,7 +96,7 @@ The [hierarchy's triage contract](1-hierarchy.md#3-intake-and-classification) de
 
 `star github issue move` transfers an issue and its required destination fields as one user operation. It removes the source membership and records the move. Its [command contract](10-the-issue-commands.md) defines supported destinations, validation, write order and partial-failure handling; the underlying requests are not an atomic transaction.
 
-Triage removes its row as part of its decision. A closed issue left there still needs that disposition. The sweep reports violations and returns affected work for triage; it does not silently classify issues or empty Triage.
+Triage removes its row as part of its decision. Command-driven closure removes Triage rows; a row left by GitHub UI or PR closure follows the [Triage cleanup rule](../../issue-standards.md#triage-classifies-and-adds-attributes). The sweep reports violations and returns affected work for triage; it does not silently classify issues or empty Triage.
 
 <a id="ownership"></a>
 <a id="collections-belong-to-one-account"></a>

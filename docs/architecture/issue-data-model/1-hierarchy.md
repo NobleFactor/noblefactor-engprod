@@ -69,7 +69,7 @@ Triage establishes Type, the required parent, Area and the appropriate Severity,
 
 A move creates or updates the destination row and its fields and removes the source row as one user operation. This contract does not make the underlying GitHub calls an atomic transaction. `star github issue move` owns the supported operation and its failure behavior.
 
-Triage removes its row as part of the decision. Closing an issue elsewhere does not itself constitute a triage decision. Keep such a row available for triage to dispose of.
+Triage removes its row as part of the decision. `star github issue close` removes Triage rows; closure through GitHub's UI or a PR closing reference can leave them behind. Apply the [Triage cleanup rule](../../issue-standards.md#triage-classifies-and-adds-attributes) to any remaining row.
 
 ### 3.2 Collection and team boundaries
 

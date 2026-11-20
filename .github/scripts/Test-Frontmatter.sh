@@ -5,10 +5,9 @@
 #
 # Validates the YAML frontmatter this repository's documents carry.
 #
-# Every tracked markdown file must open with frontmatter and declare `title` and `type`, unless it
-# is listed in .github/frontmatter-exempt. Where `status` or `type` is present it must come from the
-# vocabulary already in use — a typo in either is invisible to a reader and silently wrong to a
-# reader who filters on it.
+# Every tracked Markdown file must open with frontmatter and declare `title`, unless it is listed
+# in .github/frontmatter-exempt. Catalog documents also declare `type`. Nonempty `status` and `type`
+# values must use the vocabularies below.
 #
 # The exemption list is explicit rather than pattern-based on purpose: a file lacking frontmatter is
 # a decision, and decisions belong somewhere a reviewer can see them.
