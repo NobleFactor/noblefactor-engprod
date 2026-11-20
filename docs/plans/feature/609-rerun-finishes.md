@@ -1,9 +1,9 @@
 ---
 title: "Make star github issue close and reopen idempotent, and remove open's --unique flag"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/609
-status: active
+status: complete
 created: 2026-11-19
-updated: 2026-11-19
+updated: 2026-11-20
 documents:
   - kind: Design
     path: docs/architecture/issue-data-model/10-the-issue-commands.md
@@ -151,10 +151,10 @@ Each deployed result records the source revision, the `star` build, the deployed
 
 | Milestone | Required? | Expected evidence | State/result |
 | --- | --- | --- | --- |
-| Implementation | Yes | The tests, `make check`, and review | Pending |
-| Merge | Yes | The pull request, merged in GitHub, closing #609 | Pending |
-| Deployment | Yes: the commands reach each machine only through `writ deploy` | `writ deploy` | Pending |
-| Verification | Yes | The deployed `close` and `reopen`, run in both sandboxes. The `reopen` run is also the first deployed run of `reopen`, which #589's plan transferred to this one. | Pending |
+| Implementation | Yes | The tests, `make check`, and review | Done. f0f0120: `make check` passed all 725 checks, all four CI jobs passed, and Codex's re-review cleared its three findings. |
+| Merge | Yes | The pull request, merged in GitHub, closing #609 | Done. #612 merged on 2026-11-20 at 06:23:23 UTC as 2da34a13440277126901537323f5ac1556f6cee1, closing #609. |
+| Deployment | Yes: the commands reach each machine only through `writ deploy` | `writ deploy` | Done. Deployed on 2026-11-20, before 06:40 UTC; the installed commands link into the layer clone at 2da34a1. |
+| Verification | Yes | The deployed `close` and `reopen`, run in both sandboxes. The `reopen` run is also the first deployed run of `reopen`, which #589's plan transferred to this one. | Done. All 17 checks passed on 2026-11-20, 06:40:00 to 06:41:38 UTC, in both sandboxes, [posted on #609](https://github.com/NobleFactor/noblefactor-engprod/issues/609#issuecomment-7050219556). |
 
 <a id="implementation-phases"></a>
 
@@ -190,10 +190,10 @@ Each commit that changes a command's behavior also changes section 10, its decis
 
 ### 9.7 Phase 7: merge, deployment, and verification
 
-- [ ] Merge the pull request in GitHub.
-- [ ] Run `writ deploy`.
-- [ ] In each sandbox, run the deployed `reopen` on an issue reopened on GitHub's page, and the deployed `close` on an issue a `Closes` line closed. Read each issue back, and post the results on #609.
-- [ ] Bring the posted results into this plan's completion review.
+- [x] Merge the pull request in GitHub: #612, as 2da34a1.
+- [x] Run `writ deploy`.
+- [x] In each sandbox, run the deployed `reopen` on an issue reopened on GitHub's page, and the deployed `close` on an issue a `Closes` line closed. Read each issue back, and post the results on #609: [posted](https://github.com/NobleFactor/noblefactor-engprod/issues/609#issuecomment-7050219556).
+- [x] Bring the posted results into this plan's completion review.
 
 <a id="files-and-related-assets"></a>
 
@@ -249,4 +249,11 @@ Departure, 2026-11-19: Phases 2 and 3 land in one commit, because only a command
 
 ## 13. Completion review
 
-Pending.
+Every milestone in § 8 is met, and #609 is closed.
+
+- **Implementation and review:** f0f0120, the last commit of #612, passed `make check` and all four CI jobs. Codex's review of #612 found H-F01, H-F02 and H-F03; H-F01 and H-F03 were fixed, H-F02 was resolved by removing the comment on a change of Resolution, and Codex's re-review cleared all three.
+- **Merge:** #612 merged on 2026-11-20 at 06:23:23 UTC as 2da34a1, closing #609. Its time from first commit to merge was 11.8 hours.
+- **Deployment and verification:** after `writ deploy`, the deployed `reopen` and `close` passed all 17 checks in NobleFactor-sandbox and David-Noble-at-work-sandbox, each on an issue GitHub had reopened or closed on its own, with a second run writing nothing. This was also the first deployed run of `reopen`, which #589's plan transferred here. The results are [posted on #609](https://github.com/NobleFactor/noblefactor-engprod/issues/609#issuecomment-7050219556).
+- **Limitation:** neither sandbox's Triage workflow could run, because neither had its token, so the check added each issue's Triage row itself, as the workflow would. #451 restores the tokens, and #613 alerts when one goes missing.
+- **Outstanding obligations:** none for #609.
+- **Completion approved:** 2026-11-20.
