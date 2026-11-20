@@ -98,7 +98,7 @@ A retry after a comment was posted but before closure may post another comment. 
 
 Reopen the issue and comment with the runner, date and reason. Set its own row In progress. Untick checked Exit criteria whose text begins `Every step` or `Every other step`. With no matching criterion, reopen normally and report that none was unticked.
 
-The option and past rows remain. Reopening a work issue also reopens each closed Schedule containing it through this contract.
+The option and past rows remain. Reopening a work issue through issue reopen also repairs a containing Schedule left partway reopened. For a Schedule that has closed before, it sets the own row In progress regardless of its present Status; a never-closed Schedule keeps its initial Open Status.
 
 An already-open Schedule returns unchanged. If a prior run stopped after reopening its issue but before updating the row or criteria, this shortcut does not complete those remaining writes. Inspect and repair the incomplete state rather than assume a retry finishes it.
 
@@ -137,4 +137,4 @@ Open-issue links target the default branch. Links for an issue closed by a merge
 
 The [decision companion](8-the-schedule-commands.decisions.md) preserves the accepted choices and their reasons. Shared modules separate collection creation, reading, closure and movement: `making.star`, `collections.star`, `ending.star` and `steps.star`. Command entries and templates expose those operations without a second work model.
 
-Implementation and verification belong to the [Schedule plan](../../plans/doc/439-schedule-commands.md), [Scenario plan](../../plans/doc/507-scenario-commands.md) and [Issue verbs plan](../../plans/doc/589-issue-verbs.md). Automatic completion of additional partial operations is separate work in [Recovery (#609)](https://github.com/NobleFactor/noblefactor-engprod/issues/609).
+Implementation and verification belong to the [Schedule plan](../../plans/doc/439-schedule-commands.md), [Scenario plan](../../plans/doc/507-scenario-commands.md) and [Issue verbs plan](../../plans/doc/589-issue-verbs.md). The [Recovery plan](../../plans/feature/609-rerun-finishes.md) records delivered issue close/reopen behavior. Standalone collection retry limits remain as stated above.

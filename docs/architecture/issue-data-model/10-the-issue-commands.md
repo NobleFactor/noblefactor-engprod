@@ -14,6 +14,8 @@ updated: 2026-11-19
 
 <a id="the-commands"></a>
 
+<a id="1-the-commands"></a>
+
 ## 1. Interfaces and result contract
 
 | Command | Effect |
@@ -31,6 +33,8 @@ Issue keys are repository-qualified. Commands return flat records, JSON by defau
 Read prerequisites before writes and read the writes back. Those checks do not make remote operations atomic. The recovery limits in section 6 apply; `--dry-run` is refused while required reads cannot run.
 
 <a id="where-an-issue-lives"></a>
+
+<a id="2-where-an-issue-lives"></a>
 
 ## 2. Placement
 
@@ -53,28 +57,34 @@ Closing an issue reports a parent whose last open child it was, but closes no pa
 
 <a id="opening-an-issue-open-and-create"></a>
 
+<a id="3-opening-an-issue-open-and-create"></a>
+
 ## 3. Open an issue
 
 ```text
-star github issue open --type <type> --parent <issue> --area <area> --title <title> --body-file <path> [--priority <priority>] [--severity <severity>] [--assignee <login>] [--unique] [--directory <path>]
+star github issue open --type <type> --parent <issue> --area <area> --title <title> --body-file <path> [--priority <priority>] [--severity <severity>] [--assignee <login>] [--directory <path>]
 star github issue open --template <path> [--set <name>=<value>,...] [--directory <path>]
 ```
 
 Use the repository named by the clone's origin. `--directory` selects another clone. An Epic has no parent; other hierarchy types require a parent exactly one level above, within the account.
 
-A template has a YAML header followed by its Markdown body. Header keys are type, parent, title, area, priority, severity, assignee and unique. With `--template`, use only `--set` and `--directory` alongside it. Comma-separated substitutions fill `{name}` once; inserted values are not recursively expanded, and shell-style `${name}` remains literal. Quote header placeholders so YAML does not interpret braces as structure. Refuse unfilled or malformed inputs.
+A template has a YAML header followed by its Markdown body. Header keys are type, parent, title, area, priority, severity and assignee. With `--template`, use only `--set` and `--directory` alongside it. Comma-separated substitutions fill `{name}` once; inserted values are not recursively expanded, and shell-style `${name}` remains literal. Quote header placeholders so YAML does not interpret braces as structure. Refuse unfilled or malformed inputs.
 
 Read the account model, parent, metadata options and selected Type's form from its shared `.github` repository. Validate participation, allowed Type, parent level, Area, required body sections and text, and a valid Plan and design documents table outside code blocks. Only Bugs accept an explicit Severity.
 
 Priority defaults to Medium. Bug Severity defaults to Medium; other typed issues have N/A. No assignee is selected unless supplied. Write native organization fields or the corresponding user-account labels, then read back the issue and metadata.
 
-### 3.1 Optional duplicate detection
+<a id="31-optional-duplicate-detection"></a>
 
-With `--unique`, inspect the parent's sub-issues for the same title, whether open or closed. A match returns `found` without opening another issue. This rule is parent-and-title matching, not equality of body, attributes or state. It does not reopen a closed match.
+### 3.1 Creation and recovery
 
-Without that option, ordinary issue open creates a new issue. It is distinct from collection open, which can resume an identifiable partially created collection. Record these semantics accurately rather than infer a general retry or content-deduplication guarantee.
+Each invocation opens a new issue. The open/create commands refuse --unique, and a template header refuses unique. Repeating an issue-open request after its response was lost can therefore create a duplicate; these commands do not compare filings or recover an earlier creation.
+
+The graph-based creation/recovery design is separate work in NobleFactor/devlore-cli#1238. Collection open has its own partial-creation lookup and is not the same operation.
 
 <a id="moving-an-issue-move"></a>
+
+<a id="4-moving-an-issue-move"></a>
 
 ## 4. Move work
 
@@ -92,48 +102,60 @@ Joining a Schedule appends or inserts steps and adds specified same-account bloc
 
 <a id="closing-an-issue-close"></a>
 
+<a id="5-closing-an-issue-close"></a>
+
 ## 5. Close work
 
 Give exactly one of an evidence file or a Resolution. Resolution requires a reason; evidence mode forbids a separate reason and requires a nonblank file. Refuse collection issues and an invalid Scenario identity before writing.
 
-For each issue, preserve this write order:
+Read the issue and relevant histories before writing, then preserve this order:
 
-1. Post the evidence file verbatim, adding an Evidence heading when it lacks one, or the runner/date/Resolution/reason comment.
-2. Set Resolution when the work was not done.
-3. Close the issue as completed.
-4. Update its project rows.
+1. Post the evidence file or closing reason only when no matching comment exists since the issue last reopened, or since creation if it never reopened.
+2. Set the requested Resolution if needed. In the user-account representation, remove competing resolution labels while preserving unrelated labels.
+3. Close the issue as completed if it is still open.
+4. Finish the remaining project-row changes.
 
-Keep Schedule rows and set them Closed. Comment on the Scenario before removing a finding's row. Remove Triage and Backlog rows. An ungrouped row follows its project's kind, without inventing a Scenario to notify.
+Keep Schedule rows and set them Closed. Before removing a Scenario finding's row, comment on its Scenario issue only when the history since this finding last reopened has no matching item-specific closure comment. Another finding's comment does not satisfy that check. Remove Triage and Backlog rows; handle an ungrouped row by its project's kind.
 
-An already-closed issue is unchanged. Do not close a parent automatically; return its identity when this was its last open child. Returned records identify closed or unchanged issues and rows closed or left.
+An already-closed issue can still need its comment, Resolution or row work completed. A retry performs those missing writes, including after a PR closing reference closed the issue, and returns unchanged only when nothing remains. Resolution changes do not add a second explanation automatically; GitHub records the field/label change, and an additional reason requires a separate comment.
 
-A PR's closing reference can close an issue outside this command. Its Scenario row still needs the [defined cleanup](9-the-scenario-commands.md#ongoing-cleanup); do not claim that closure alone removed it.
+Close no parent automatically. Return a parent whose last open child was closed by this run. Results distinguish changed and unchanged issues, identify issues already closed before the invocation, and report rows closed or removed.
 
 <a id="reopening-an-issue-reopen"></a>
 
+<a id="6-reopening-an-issue-reopen"></a>
+
 ## 6. Reopen work and handle partial results
 
-Read the issue, ancestors and containing Schedules before writing. For a closed issue, reopen it, clear Resolution, post the reason, and set existing managed rows Open while retaining a Schedule row's Worktree. With no managed row, add a Triage row.
+Read the issue, ancestors, containing Schedules and relevant histories before writing. Reopen a closed issue and finish incomplete reopening work on an already-open one: clear Resolution, restore Closed or missing-Status rows to Open, preserve Open/In progress rows and a Schedule row's Worktree, and add a Triage row when it has no managed row.
 
-Reopen closed parents from Feature to Epic, with comments identifying the triggering issue. A parent without a row receives a Triage row. Reopen closed containing Schedules through their own contract: issue open, reason recorded, own row In progress and matching every-step criteria unticked.
+Write the reopening reason only when the history since the last closure has no reopening comment. An issue that has never closed gets none. Process parents from Feature to Epic using the same missing-state checks, with comments naming the triggering issue and a Triage row when needed.
 
-An already-open issue's own rows and Resolution are left unchanged, although its closed parents and Schedules are still considered. Refuse collection issues or an invalid containing Schedule identity.
+For containing Schedules, finish reopening the issue, its reason, its own row and matching every-step criteria. A Schedule that has closed before receives own-row Status In progress regardless of its present Status. A never-closed Schedule keeps the Open Status assigned at creation. Preserve its option and past rows.
 
-| Interrupted operation | Retry limit |
+Return unchanged only when no work remains. Refuse collection issues and invalid containing-Schedule identities. Reopen results identify each issue/parent/Schedule changed, cleared Resolution, affected criteria, rows restored or added, and whether the issue was already open.
+
+| Interrupted operation | Recovery contract |
 | --- | --- |
-| Issue open without unique detection | Can create another issue |
-| Issue open with unique detection | May find the same parent/title, including a closed issue; it does not finish arbitrary missing metadata |
-| Schedule movement | Can resume the supported pending-amendment state |
-| Scenario movement | Can repeat a comment after partial recording |
-| Close after issue closure | Returns unchanged and leaves unfinished row cleanup |
-| Reopen after issue reopening | Can leave the issue's Resolution or rows unfinished |
-| Containing Schedule reopen after its issue opens | Can leave its own row or criterion unfinished |
+| Issue open | A repeat creates a new issue; creation recovery remains separate graph work |
+| Schedule movement | Resume the supported pending-amendment state |
+| Scenario movement | A comment can repeat after partial recording; additional recovery remains separate work |
+| Issue close | Complete missing comment, Resolution, closure and row effects |
+| Issue reopen | Complete missing reopening effects on the issue and its parents |
+| Containing Schedule reopening through issue reopen | Complete its remaining row, criterion and comment effects |
+| Standalone Schedule or Scenario reopen | Its already-open shortcut can still leave incomplete effects; inspect its own command contract |
 
-Inspect the known outcome and complete the documented manual repair: close a confirmed duplicate as Duplicate, clear a stale Resolution, set or remove a row, or correct the affected criterion. Do not rerun blindly or claim exactly-once side effects. Automatic recovery beyond those delivered paths is [separate work](https://github.com/NobleFactor/noblefactor-engprod/issues/609).
+These operations do not provide atomic remote transactions or protection against concurrent workers changing the same issue; the last write can win. Distinguish the supported close/reopen recovery from issue creation and Scenario-move gaps. [Creation recovery](https://github.com/NobleFactor/devlore-cli/issues/1238) and [Scenario-move recovery](https://github.com/NobleFactor/noblefactor-engprod/issues/611) retain their separate scope.
 
 <a id="significant-design-decisions"></a>
 <a id="how-each-command-runs-in-each-account"></a>
 <a id="building-it"></a>
+
+<a id="7-significant-design-decisions"></a>
+
+<a id="8-how-each-command-runs-in-each-account"></a>
+
+<a id="9-building-it"></a>
 
 ## 7. Decisions, representations and components
 

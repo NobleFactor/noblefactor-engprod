@@ -2912,6 +2912,42 @@
     {
       "path": "docs/architecture/issue-data-model/6-the-asset-and-its-sync.status.md",
       "anchor": "completion"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.md",
+      "anchor": "1-the-commands"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.md",
+      "anchor": "2-where-an-issue-lives"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.md",
+      "anchor": "3-opening-an-issue-open-and-create"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.md",
+      "anchor": "4-moving-an-issue-move"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.md",
+      "anchor": "5-closing-an-issue-close"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.md",
+      "anchor": "6-reopening-an-issue-reopen"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.md",
+      "anchor": "7-significant-design-decisions"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.md",
+      "anchor": "8-how-each-command-runs-in-each-account"
+    },
+    {
+      "path": "docs/architecture/issue-data-model/10-the-issue-commands.md",
+      "anchor": "9-building-it"
     }
   ],
   "snapshots": {
@@ -3207,5 +3243,35 @@
       "source": "docs/engineering/review/decisions.md",
       "scope": "Before the Owner-approved model-publication review boundary"
     }
-  }
+  },
+  "integrations": [
+    {
+      "revision": "2da34a13440277126901537323f5ac1556f6cee1",
+      "pr": "https://github.com/NobleFactor/noblefactor-engprod/pull/612",
+      "prior_review_commit": "76a6d91ab51e5219e1e585ce45fda2614b406af7",
+      "incoming_hashes": {
+        "Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/ending.star": "4fcc0f50d3bceef37cdeee71d28140843bade4a6d47b1153f7a2d2ad9c3d79f0",
+        "Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/github-issue-close.star": "c58b8779d41b6e607a624cefd7a414a7ea53a3d90d95ff145f1098ae41baab47",
+        "Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/github-issue-open.star": "9aa2b825c63b0998ddc673e3893c5ec5dbfb858a2be36aa33327d4a84ae4e991",
+        "Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/github-issue-reopen.star": "d9f44e2a4e3075873fcf4898c1ed0b97a94c88a9fa67e4ac56d430dd72c95aae",
+        "Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/steps.star": "dfb7ec81d8eab6f9c41a73629de9b7d82044e26919c84cae65d09cbd50cf35b3",
+        "Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/extension.yaml": "19c97932a02c39c5ae4b053ee1f02dd82a9e3e1850eb16677c1b2cff78d4aaba",
+        "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md": "cc03cdc1048cd7bf1d8eab96ba9ecb80f97b2ff49f68fdfb94fd705db63c58df",
+        "docs/architecture/issue-data-model/10-the-issue-commands.md": "5ed8af3b16f9dbc3e326a171e9ae00751493c2429abba2036e4d28c10146ccfb",
+        "docs/architecture/issue-data-model/8-the-schedule-commands.md": "07204264402ed6d811e93954147c0448645cdb53a322587d8bfa53e29c6eaf51",
+        "docs/plans/doc/589-issue-verbs.md": "a97bc3bf9aadb9d3cd7b53686f2fe639bcd99c150f9d58f413c8c0a82a6c7fe4",
+        "docs/plans/feature/605-squash-message.md": "5bf0a987c69105478d74ab1bcef3f6d23639d659f50ced109ba4106d9c3a2c56",
+        "docs/plans/feature/609-rerun-finishes.md": "e5ea600c0c27f63ff2274acd72a19e3ae2ef912eadaf3db9db3883cb57b65aeb",
+        "tests/Test-StarGitHub": "7c894d642e5d03f4af4c56c086355280611c93448cccc3cd9d34f69c68bbe5f9"
+      },
+      "resolved_documentation": [
+        "docs/architecture/issue-data-model/10-the-issue-commands.decisions.md",
+        "docs/architecture/issue-data-model/10-the-issue-commands.md",
+        "docs/architecture/issue-data-model/8-the-schedule-commands.md"
+      ],
+      "consumer_updates": [
+        "docs/architecture/issue-data-model/9-the-scenario-commands.md"
+      ]
+    }
+  ]
 }

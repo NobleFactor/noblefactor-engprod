@@ -393,6 +393,16 @@ Correct the two new blank-line-at-EOF findings before staging. Run the repositor
 
 The reviewer prompt identifies scope, source evidence, known findings and limits. It asks for independent findings on correctness, completeness, Google/arc42 compliance, methodology/tooling consistency and reviewability. It grants no implementation or merge authority.
 
+### 7.20. Integrate the delivered issue-recovery changes
+
+The current 128-file candidate was committed and pushed as 76a6d91ab51e5219e1e585ce45fda2614b406af7. During publication, develop advanced to PR #612's merge 2da34a13440277126901537323f5ac1556f6cee1. The first integration attempt was aborted when the Owner limited the immediate instruction to commit/push. The Owner then explicitly directed that integration be performed.
+
+Merge the target through a merge commit. Preserve its executable files, tests and source plans byte-for-byte. Reconcile the issue-command, Schedule-command and Scenario-command explanations with the delivered behavior and preserve the automatically merged D-013/D-014 decision additions. Keep all old heading targets and the newer upstream numbered targets.
+
+Issue open now creates an issue each invocation and refuses unique. Issue close/reopen repair supported partial state and suppress repeated comments using the delivered history/state checks. Reopening a work issue can complete a partially reopened containing Schedule; standalone collection-reopen limits remain distinct. Creation recovery and Scenario-move recovery retain their separate scope.
+
+The retained originals remain immutable evidence of their captured revisions. Record the new target and source hashes without rewriting old snapshots. Update current requirement maps and tests, commit the merge resolution, and push the updated review head. Existing M07/M08 policy questions remain unresolved.
+
 ## 8. Completion milestones
 
 Preserve the common commandments and five role entry points accepted in PR #601, merged as 967764ae13b015543a2d0667e907b0fd37283875. Integrate the current target through the Owner-run checkpoint script. Review their references when rewriting handbook pages; their publication does not qualify native host loading.
@@ -490,6 +500,12 @@ Implementation, Owner review, merge and post-merge verification are required. Co
 - [x] Pass the repository gate for the explicitly staged candidate and preserve its result before committing.
 - [ ] Obtain independent review, resolve required findings and satisfy the existing merge gate.
 
+### 9.11. Recovery integration
+
+- [x] Inspect the thirteen incoming paths, reconcile the three documentation overlaps and retain their source evidence.
+- [x] Pass the integrated repository gate and commit the merge resolution.
+- [ ] Resolve independent-review findings and obtain the existing completion approvals.
+
 ## 10. Files and related assets
 
 Primary files are Home/common/.claude/skills/star-github-schedule-progress/SKILL.md and docs/architecture/issue-data-model/index.md. The handbook issue lists docs/issue-standards.md, docs/engineering/work-organization.md, docs/engineering/process.md, docs/templates/schedule.md, docs/guides/pr-script-template.md, README.md, docs/github-branch-protection.md, docs/engineering/review/open-decisions.md, the three agent-schedule architecture pages, and the optional workstation roadmap. Inspect exact current content and incoming references before editing.
@@ -528,7 +544,11 @@ On 2026-11-19, the Owner answered yes to the proposed Owner-review-and-merge pol
 
 On 2026-11-19, the Owner directed: “I want you to commit and push all changes. do that immediately.” The Owner also requested a prompt for the independent code reviewer. This is explicit authority for the current agent-run publication, including the necessary inspection, staging, gate, commit, push and PR update in this worktree. No merge, issue closure, cleanup, other-worktree change or pending policy choice is authorized.
 
+On 2026-11-19, after the current changes were pushed, the Owner explicitly approved integrating the newer develop containing PR #612. This authorizes the working-branch merge, required documentation reconciliation, verification and push needed for the requested independent review. It grants no protected-branch merge or issue-closure authority.
+
 ## 13. Completion review
+
+The PR #612 integration passed make check with the incoming executable files and tests unchanged. The resolved command documentation preserves both old and new heading targets. Current documentation metadata and spelling are rechecked after recording this result; independent review and Owner acceptance remain outstanding.
 
 The publication candidate passed make check, including frontmatter, spelling, shell, PowerShell, Starlark and the local test suite. The gate ran on the explicitly staged files. Three inherited whitespace findings in two exact source snapshots remain preserved by hash; maintained changes pass the whitespace check. Independent review and current-head CI are separate.
 

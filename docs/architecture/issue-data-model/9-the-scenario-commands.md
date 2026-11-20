@@ -53,7 +53,7 @@ Create `Scenario: <name>`, with Priority Medium unless supplied and the supplied
 
 Create the option at the end of the Scenario field with the issue key as its description, retaining every existing option ID. Create the own row with Status Open and no Beat.
 
-Refuse missing participation or project support, invalid form inputs and a conflicting collection option. A partially created collection can resume through its open issue title and matching option identity. A completed collection is refused as already present; this is distinct from issue-open duplicate detection.
+Refuse missing participation or project support, invalid form inputs and a conflicting collection option. A partially created collection can resume through its open issue title and matching option identity. A completed collection is refused as already present; this is distinct from issue open, which creates a new issue on every invocation.
 
 <a id="what-a-move-records-on-a-scenario"></a>
 

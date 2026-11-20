@@ -88,7 +88,7 @@ Arc42 coverage is assessed across each architecture set. Detail chapters do not 
 | --- | --- | --- |
 | Schedule reads, opening, movement, closure evidence, reopening and plan links | Schedule command sections 1–9 | Existing command signatures and collection recovery remain distinct from issue-open semantics |
 | Scenario goal, walk, Beat, origin routing, move records, retirement and cleanup | Scenario command sections 1–8 | Manual cleanup is explicit; recurring automation is not claimed delivered |
-| Issue placement, filing modes, templates, unique matching, defaults, movement and write order | Issue command sections 1–6 | Unique remains the delivered parent/title match, including closed matches |
+| Issue placement, filing modes, templates, unique matching, defaults, movement and write order | Issue command sections 1–6 | Updated for PR #612: each issue open creates a new issue; unique is refused; collection partial-open behavior remains separate |
 | Partial-operation behavior | Each command's failure guidance and issue command recovery table | No blanket retry or exactly-once guarantee; additional recovery remains separate work |
 | Accepted decisions, rationale, alternatives and approvals | Three command decision companions | IDs and approval evidence retained; unsupported general retry claims qualified |
 | System scope, components, runtime, deployment, decisions, quality, risks and glossary | Model-set overview | arc42 concerns covered at set level rather than repeated in each detail chapter |
@@ -393,3 +393,16 @@ The published set is a request for substantive review. First-pass coverage remai
 The two whitespace findings from git diff --check were corrected. The publication run records make check, actual head, push and current-head CI separately; earlier passing checks do not qualify this candidate. No executable model helper or PR example behavior was changed, and no issue is closed by this review checkpoint.
 
 The staged publication candidate passed make check. Maintained changes pass git diff --cached --check; the exact handbook-review-responses.md.txt and pull-request-procedure.md.txt snapshots retain three inherited whitespace findings. Their original hashes remain unchanged. These are preserved evidence under the documentation standard, not newly formatted maintained prose.
+
+
+## 16. Integrate PR #612
+
+The Owner approved integration after publication of the 128-file candidate at 76a6d91. Target 2da34a13440277126901537323f5ac1556f6cee1 delivers issue close/reopen recovery and removes unique. All incoming executable files, tests and source plans are retained exactly.
+
+The issue-command chapter now distinguishes new creation from supported partial close/reopen recovery, documents history-based comment checks, Resolution reconciliation, row repair and containing-Schedule recovery, and keeps concurrent-writer and separate creation/move limits explicit. The Schedule chapter distinguishes repair through issue reopen from standalone collection shortcuts.
+
+The automatically merged D-013/D-014 records and partial D-009 consequence replacement are retained. Nine upstream numbered heading targets are added alongside the earlier preserved links. The manifest records the incoming revision and thirteen source hashes; original archived sources remain unchanged.
+
+The integrated gate and published review head are recorded separately. This merge does not resolve M07 or M08 or claim all issue/role deliverables complete.
+
+The integrated make check passed, including the issue-recovery regression cases. The remaining Scenario reference to issue-open duplicate detection was corrected. Current metadata, spelling, links and source-preservation checks also pass. Upstream code, tests and source plans remain byte-identical to PR #612.
