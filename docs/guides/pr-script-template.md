@@ -1,52 +1,46 @@
 ---
-title: PR Script Template
-description: Owner-run Bash and PowerShell script mechanics, from preparation through verified delivery
+title: "PR scripts"
+description: "Owner-run Bash and PowerShell script mechanics, from preparation through verified delivery"
 type: Process
 audience: Engineers, agents
-status: Approved
+status: Draft
 created: 2026-03-16
 updated: 2026-11-19
 ---
 
-# PR Script Template
+<a id="pr-script-template"></a>
 
-Standard structure for the PR script that the assigned agent generates, named for the worktree it serves and placed beside it: `~/Workspace/<org>/<worktree>.bash` on macOS and Linux and `<worktree>.ps1` on Windows, where `<worktree>` is the directory `git-open-branch` made, `<clone>.<issue>-<name>`. The script for `~/Workspace/NobleFactor/devlore-cli.1119-broker-specification` is `~/Workspace/NobleFactor/devlore-cli.1119-broker-specification.bash`; `ls ~/Workspace/NobleFactor` shows which worktree each script lands; and `git close-branch` removes the two together when the pull request merges. Ruled 2026-10-21 (#366), retiring `go-<repo>` one level above the repository: a script named for the clone outlived every worktree it served, and the bare `go` belonged to whichever repository last used it. Each script is self-contained, and runs in two parts. The first stages, commits, pushes, creates the PR, verifies CI and mergeability, and stops: the owner merges in GitHub, and the script never merges (ruled 2026-11-19, #605). Run again after the merge, the second records its time and its steps, and cleans up.
+# PR scripts
 
-A script is read before it is overwritten, whatever it is called: its `cd` says which worktree it serves, and one whose `cd` names another worktree is the wrong file. Only a script that is not there is written from nothing.
+[Up: Engineering documentation](../index.md)
 
-On macOS and Linux the script is bash, [the template below](#template). On Windows it is PowerShell, `<worktree>.ps1`, [its own form](#on-windows-powershell). Bash PR scripts are not written on Windows (ruled 2026-09-21). The owner runs the script: the agent writes it, shows it, and hands over one command, which for a PowerShell script is `& '<script>.ps1' -Verbose`, since what it is doing shows only on the verbose stream ([rule 8](#on-windows-powershell) of its form).
+Generate one self-contained script beside the worktree it serves: /Users/<user>/Workspace/<org>/<clone>.<issue>-<name>.bash on macOS/Linux or the corresponding .ps1 path on Windows. Read an existing script and verify its worktree before replacing it. Follow the [PR procedure](../engineering/procedures/pull-request.md) for authority, review, merge, disclosure and completion.
 
----
+The script has two parts. Before merge it stages named files, commits, integrates the target, pushes, opens/updates the PR, verifies the published head and stops for Owner review and merge in GitHub. When the Owner runs it after merge, it verifies actual delivery, records time and issue progress, then cleans up. It never merges or prints a merge command. Plan approval does not authorize an agent to execute it.
 
-The [PR procedure](../engineering/procedures/pull-request.md) owns review, merge and completion policy. This specification owns the platform-specific script mechanics. Apply the [PR disclosure requirements](../engineering/procedures/pull-request.md#review-boundary) when preparing the description. Apply the Owner-approved [temporary live-entrypoint overrides](../engineering/index.md#temporary-live-entrypoint-overrides) to the session's execution limits.
+Show the prepared script and give the Owner one command to run it. Bash scripts are not written for Windows. PowerShell handoff includes -Verbose. The [effective entrypoint overrides](../engineering/index.md#temporary-live-entrypoint-overrides) still govern the session's execution limits.
 
 <a id="the-pre-flight-command-is-discovered-not-remembered"></a>
 
-## 1. The pre-flight command is discovered, not remembered
+<a id="1-the-pre-flight-command-is-discovered-not-remembered"></a>
 
-The example below shows `.github/scripts/shell-lint.sh`, which is what the `personal` repository's workflow invokes. **Do not copy it.** Read `.github/workflows/*` in the repository you are working in and use what it actually runs:
+## 1. Discover the repository gate
 
-| Repository | CI entry point |
-| --- | --- |
-| `personal` | `.github/scripts/shell-lint.sh`, with `DECLARE_BASHSCRIPT_DIR` naming a directory that holds `Declare-BashScript` (a deployed `~/.local/bin` locally; CI checks out `noblefactor-engprod`) |
-| `devlore-cli` | `make vet-all`, `make lint-all`, `./build/star lint go ./...` |
-| `noblefactor-engprod` | `make check`: every gate, then the tests under `tests/`, which is what `ci.yaml` runs since #268 |
+Read the repository's current CI workflows. Use the build-tool target and flags CI invokes; when a workflow uses an Action, run its wrapped CLI with the corresponding arguments. Do not copy a target from another repository or maintain a partial substitute for the gate.
 
-Where a repository routes through a build tool, call the target rather than the underlying binary: the target is what CI runs and it carries the flags. Where CI uses a GitHub Action rather than a command — `codespell-project/actions-codespell`, say — run the CLI it wraps with the same arguments the workflow passes it.
-
-Read the workflow each time rather than trusting this table. It went stale during the change that introduced it: `noblefactor-engprod` dropped its Go trees and re-based its gate on documents while this edit was in the working tree, turning a `go build` pre-flight into a command with nothing to build.
-
-A command from a tool this organization builds — `writ`, `star` — is verified against develop and installed before it appears in a script or a message: [agent-rules.md](agent-rules.md), rule 1.
-
-This step exists because a hand-rolled subset of the gate will differ from it eventually. On 2026-08-30 a `personal` PR pre-flighted with `shellcheck` alone and failed CI on `shfmt`, after the issue, branch, commit and PR already existed. The remedy is not a longer checklist; it is to stop maintaining a second copy of the gate.
-
----
+Verify locally built organization tools before putting their commands in the script or handoff. Follow [tool verification](../engineering/agent-operation.md#all-agents-tools-and-status), including build provenance, required interfaces and protection of another worker's installed build. Installation or upgrade requires its own authority.
 
 <a id="a-worktrees-first-script"></a>
 
-## 2. A worktree's first script
+<a id="2-a-worktrees-first-script"></a>
 
-A worktree's first script opens the branch, commits the plan and pushes it, then records where each of its steps' work is: In progress, its row on its team's Schedule project linking the branch in its Worktree column ([agent-rules.md](agent-rules.md), rule 19). The link waits for the push, since a link to a branch GitHub doesn't have leads nowhere. Like the merge script's schedule step, it finds each row by its issue and the project's title, and the fields and options by name, so no ID is pasted into a script and none goes stale (rule 13). Beside the rows, it links the plans: `star github plan link`, given each of the worktree's plans by its path relative to `docs/plans`, writes the `Plan and design documents` section of every issue they serve from every plan that serves it, and the script stops unless it exits 0 (#557). Its records say what it did to each issue; an issue refused, or a row the section drops, is a finding for the owner, and exits 0.
+## 2. Publish the plan
+
+The first script opens the issue-bound branch/worktree, commits the plan and pushes it. Only after the push, mark its issues In progress and link their Schedule rows' Worktree fields to the branch. Resolve projects, rows, fields and options by name; guard existing ownership rather than replace another worker's link.
+
+Run star github plan link for each plan, using its path relative to docs/plans. It updates each served issue's Plan and design documents section from the plans serving that issue. A nonzero exit stops the script. Also inspect returned records: refused issues and dropped table rows can accompany exit zero and must be shown to the Owner.
+
+The Bash example supplies the guarded row update:
 
 ```bash
 # The schedule's helpers (agent-rules.md, rule 19). A step's row is found by its issue and its team's Schedule project,
@@ -141,11 +135,14 @@ star github plan link "${plans[@]}" --silent --jq 'map({issue, action, reason, d
 }
 ```
 
----
 
 <a id="template"></a>
 
-## 3. Template
+<a id="3-template"></a>
+
+## 3. Bash delivery template
+
+Adapt the placeholders, explicit files, repository gate, issue completion list and permitted operations to the approved plan. The two-part script stops before Owner review/merge, then records an observed merge on the next Owner-run invocation.
 
 ```bash
 #!/usr/bin/env bash
@@ -466,46 +463,47 @@ git status --short
 # star github schedule report --silent --output table --filter epic=<owner>/<repo>#<n> --jq 'map({issue, type, state, title})'
 ```
 
----
 
 <a id="rules"></a>
 
-## 4. Rules
+<a id="4-rules"></a>
 
-1. **Stage by name.** Never `git add -A` or `git add .`.
-2. **Follow the [disclosure requirements](../engineering/procedures/pull-request.md#review-boundary).** The description says AI assisted and ends with human sign-off and the effective assistance trailer; the Time section is appended after the merge. Name the submitting agent explicitly; assistance disclosure has no temporary host override. The repository squash-merges with the pull request's title and description, which `star github model apply` sets (#605), so the two trailers land in the squash commit; the script's second part verifies them. Branch commits carry no trailer. Use the account's maintained PR-body template and retain the prohibition on AI co-authorship and promotional footers.
-3. **HEREDOC for messages.** Both commit messages and PR bodies use `cat <<'EOF'` for safe formatting.
-4. **Establish CI results.** The examples require observed passing checks for the qualified head. An empty check list never proves CI is unconfigured. A repository with no configured checks, or an approved conditional-check result, needs that verified policy recorded in the plan and reflected in the generated gate. Retain every required check; uncertainty stops the run.
-5. **Establish merge readiness.** Check the qualified head, the merge state, the review decision and all review conversations, then stop: the owner reviews and merges in GitHub, so a pull request blocked by nothing but the owner's review is ready. Confirm actual merged state before recording delivery; a queued merge is still outstanding. Administrative bypass requires its separate explicit Owner grant under the PR procedure.
-6. **`git close-branch` for cleanup.** Handles both worktree and regular-branch scenarios. It also **removes the worktree the script is standing in**, so nothing after it may assume `cwd` survives: `cd` to the main clone first. Observed as a spurious exit 128 after a successful merge on devlore-cli#811. It **removes the script itself**, `<worktree>.bash` or `.ps1` beside the worktree (#366); bash reads on from the unlinked file and PowerShell parsed the file before running it, so the lines after it still run. Then it **syncs the main clone** to the target branch, whatever it had checked out, prints what it had and the commit it is at now, and exits 75 when the sync cannot happen (#306).
-7. **Follow the [worktree integration boundary](../engineering/process.md#pull-request-and-integration).** A worktree serves one active PR. During integration it accepts that PR's review or CI corrections; honor any temporary live-entrypoint restriction still applicable to the session.
-8. **The owner merges in GitHub, and the script never does.** The script's first part stops at a pull request that passes its checks and is ready to merge, and prints no merge command; run again after the merge, its second part records it (ruled 2026-11-19, #605). `git close-branch` deletes in the order that survives a failure: remote, then worktree, then local, then the script. Then it syncs the main clone itself (rules 6 and 12).
-9. **The epic report ends a pull request when one is asked for.** Table form, all states, scoped to the epic, feature or thread the pull request served, printed last, after cleanup, so the reader sees the state the merge produced. Not automatic: ruled 2026-09-12 in `development-process.md`, which retired the standing rule of 2026-09-04 that every pull request print one.
+## 4. Script requirements
 
-10. **Nothing left behind.** After `git add` by name, `git diff --quiet` must pass. A modified tracked file the script did not stage is a change the PR silently omits; #161 merged without the rule above for exactly this reason.
+The rule numbers are stable references used by the examples.
 
-11. **Every pull request records its time.** A `## Time` section in the pull request's own body, appended by the script's second part after the merge, from GitHub's own timestamps, and verified there: `opened` (the branch's first commit), `submitted` (the pull request's creation), `merged`, and the elapsed hours between them to one decimal. Ruled 2026-09-08. One algorithm for every pull request -- a number computed differently each time is noise, and the value is in the series. It measures how long the work was **open**, review gaps and nights included; it is not effort and must not be read as one. Where a coding agent estimates active time from its own session transcript, that estimate goes in the agent's end-of-PR message, labeled an estimate, and never into the pull request as fact.
+1. **Stage named files.** Never use `git add -A` or `git add .`.
+2. **Disclose assistance.** Follow the [PR disclosure requirements](../engineering/procedures/pull-request.md#review-boundary). Use the account's maintained PR-body template. End the pre-merge description with human Signed-off-by and Assisted-by naming the submitting agent. The repository squash message uses that title/description, and the second script part verifies the landed trailers. Branch commits have no trailers. Do not add AI co-authorship or promotional footers. Append Time after merge.
+3. **Preserve literal messages.** Use single-quoted heredocs for Bash commit messages and PR bodies; provide multiline bodies through files. Do not let shell interpolation change the text.
+4. **Verify CI on the published head.** Observe passing required checks for the qualified full head ID. An empty list is not evidence of unconfigured CI. A verified no-check policy or approved conditional result must be recorded in the plan and represented explicitly in the gate. Preserve every required check; stop when evidence is incomplete.
+5. **Check readiness, then stop.** Inspect the head, merge state, review decision and all review conversations. A PR waiting solely for the Owner's review can be ready for that review. Stop for the Owner to review and merge in GitHub. A queued merge is outstanding; verify actual merged state before delivery records. Administrative bypass needs a separate explicit Owner grant.
+6. **Use git close-branch for cleanup.** It handles worktrees and regular branches, removes the worktree and sibling script, and synchronizes the canonical clone to the target. Move to the canonical clone before invoking it; the worktree's directory will disappear. Exit 75 means clone synchronization failed. Cleanup and canonical-clone maintenance require the applicable authority.
+7. **Respect the worktree boundary.** One active PR belongs to a worktree; its integration changes are review/CI corrections for that PR. Apply the [process](../engineering/process.md#pull-request-and-integration) and any effective session override. Another worker's PR does not serialize this session's work.
+8. **Keep merge with the Owner.** The first part never merges or prints a merge command. After the Owner merges in GitHub, the second records delivery. Cleanup deletes the remote branch, worktree, local branch and script in that order, then synchronizes the canonical clone.
+9. **Provide a report when asked.** Print the requested all-state Epic, Feature or Schedule report as a table after cleanup. Scope it to the work served. Reporting is not an automatic final step.
+10. **Leave no tracked changes unstaged.** After named staging, git diff --quiet must pass. Stop when another modified tracked file would be silently omitted.
+11. **Record time from GitHub.** After merge, append and read back a Time section in the PR body. Record opened (the branch's first commit), submitted (PR creation), merged and elapsed hours to one decimal. These measure time the work was open, including review gaps and nights, rather than effort. Label an agent's active-time estimate as an estimate in its final message; do not put it in the PR as fact.
+12. **Integrate before publication and confirm delivery.** Merge the target into the working branch with git pull --no-rebase before pushing; never rebase. After cleanup synchronizes the canonical clone, git pull --ff-only confirms that synchronization. Do not fetch directly into a checked-out target ref. Expose canonical-clone maintenance for separate approval.
+13. **Record progress as it happens.** Push before publishing branch links, then link plans. After observed merge, record the PR and squash commit on each served issue, and link its row to the PR. Closing keywords name only issues this PR completes; GitHub closes them at merge and their rows become Closed. Partial work remains Open/In progress. Reopen an issue with star github issue reopen if deployment or verification subsequently fails. Resolve rows/fields by name, guard ownership, avoid duplicate writes and read records back. Inspect plan-link refusals/dropped rows even at exit zero. Preserve outstanding evidence and obligations outside the worktree before cleanup.
 
-12. **Pull before and after the merge.** Ruled 2026-09-24. Before the push, the branch takes the target by a merge commit (`git pull --no-rebase`), so what CI passes is what merges. After the merge, `git close-branch` syncs the main clone to the target, the squash commit with it, and exits 75 when it cannot (#306); the script's `git pull --ff-only` then confirms it, finding the clone current. Every script written on 2026-09-24 had to add both pulls by hand; the template owes them.
-
-13. **Record progress as it happens.** First scripts push the plan before linking the branch from its Schedule row, then run plan linking. A PR script's second part records the actual PR and squash commit on each step's issue and links its row to the PR. Name each issue the pull request completes with a closing keyword, so the merge closes it, and set its row Closed; reopen one whose deployment or verification fails afterwards with `star github issue reopen` (ruled 2026-11-19). Keep an issue the pull request only advances Open, its row In progress. Find rows and fields by name, guard current ownership, write each record once and read it back. Inspect plan-link refusal and dropped-row records even when the command exits 0. Cleanup waits until outstanding obligations and evidence have a durable home.
-
----
+The published PR, observed merge and post-merge verification establish different milestones. Keep unresolved deployment, verification and completion-review work visible rather than treating cleanup as acceptance.
 
 <a id="on-windows-powershell"></a>
 
-## 5. On Windows: PowerShell
+<a id="5-on-windows-powershell"></a>
 
-On Windows the PR script is `<worktree>.ps1`, beside the worktree, PowerShell 7, written to the [PowerShell style guide](powershell-style-guidelines.md), every section of it: shebang, header, help, `#Requires`, `[CmdletBinding()]` and `param()`, the caller's error action noted and `$ErrorActionPreference = 'Stop'` set, the constants, a helpers region, then the main operation inside `try` and `catch`. It does what the bash template does, in the same order. The rules above hold; these are the ones PowerShell changes.
+## 5. PowerShell delivery template
 
-1. **Every native command runs through `Invoke-Native`.** `$ErrorActionPreference = 'Stop'` doesn't cover a native command's exit code, and there is no `set -e`. `Invoke-Native` runs `git`, `gh` and `star` through .NET's `Process`, each argument passed as one and what the program writes read as UTF-8, as the style guide's § 7 asks of a script that reads a native program's output. What the program writes to standard error goes to the verbose stream, and a non-zero exit is a refusal unless the call allows it. Its argument list comes last, so that a long one breaks after a comma.
-2. **Errors are the style guide's § 7.** The script notes its caller's error action, sets `Stop`, and runs its work in `try`. The `catch` puts the caller's error action back, reports the error with `$PSCmdlet.WriteError` and exits 1. The `finally` removes the files the run made and returns the caller to the directory they ran it from (§ 8). Each refusal is an error record of the script's own, with an id and a category, made by `ConvertTo-Refusal` and thrown inside the work: never a thrown string, never `$PSCmdlet.ThrowTerminatingError`.
-3. **What it is doing goes to the verbose stream; its result is objects.** `Write-Verbose` says what the script is doing, and each step it records and the pull request it merged are output objects. Nothing goes to the host or the information stream, and the script sets no preference but `$ErrorActionPreference`.
-4. **Bodies are single-quoted here-strings.** The PR body and the jq program are `@'...'@`, so PowerShell expands nothing in them. The body goes to `gh` through a file, `--body-file`.
-5. **The `## Time` section is written through a file,** `gh api -X PATCH repos/<owner>/<repo>/pulls/<n> -F body=@<file>`, as every Windows PR script has done. PowerShell has no `printf ... | --body-file -` idiom worth copying, and a file keeps the body byte-for-byte.
-6. **Clean-up runs from the main clone.** `Set-Location` to it before `git close-branch`, because Windows won't delete a directory that is a process's current directory. `git close-branch` also removes this script, which PowerShell parsed in full before running, so the lines after it still run. Then `git pull --ff-only`, which confirms the sync `git close-branch` made of the main clone (rule 12).
-7. **No PATH changes.** The script runs from a pwsh whose `git` is `Git\cmd\git.exe`, Git for Windows' launcher, which gives git's children the `sh` and `bash` they need without putting them on PATH. From a pwsh started by Git Bash, `git` resolves to the raw `Git\clangarm64\bin\git.exe`, and an HTTPS push, a credential helper or `git close-branch` exits 128 with no message. The fix is where the script runs, never a PATH line in it.
-8. **The owner runs it with `-Verbose`.** The command handed over is `! & 'C:/Users/<you>/Workspace/<org>/<clone>.<n>-<name>.ps1' -Verbose`, the script's full path in single quotes with forward slashes. What the script is doing shows only on the verbose stream (rule 3), so without `-Verbose` a run says nothing until it ends.
+Use PowerShell 7 and the [PowerShell style guide](powershell-style-guidelines.md): shebang, header/help, Requires, CmdletBinding/param, saved caller error action, Stop preference, constants, helper region and a main try/catch/finally. Preserve the Bash operation order and the requirements above.
+
+1. **Wrap native programs.** Run git, gh and star through Invoke-Native using .NET Process, distinct arguments and UTF-8 output. Send native stderr to the verbose stream; refuse a nonzero exit unless explicitly allowed. ErrorActionPreference alone does not check native exit codes. Keep ArgumentList last for readable wrapping.
+2. **Return structured errors.** Save the caller's error action and set Stop. Catch restores the caller setting, calls $PSCmdlet.WriteError and exits 1. Finally removes run-created temporary files and restores the caller's directory. Create ErrorRecords with ConvertTo-Refusal; do not throw strings or use ThrowTerminatingError.
+3. **Separate progress and results.** Use Write-Verbose for activity and objects for issue records and observed PR delivery. Write neither to the host nor the information stream; set no preference other than ErrorActionPreference.
+4. **Keep bodies literal.** Use single-quoted here-strings for PR text and jq programs. Pass the body through --body-file.
+5. **Patch Time through a file.** Use gh api PATCH with body=@<file> and UTF-8 content. Preserve actual GitHub timestamps and the exact intended body.
+6. **Leave the worktree before cleanup.** Set-Location to the canonical clone before git close-branch; Windows cannot remove a process's current directory. PowerShell has parsed the script before its deletion. Confirm the clone synchronization with git pull --ff-only.
+7. **Fix the launch environment outside the script.** Do not change PATH. Launch pwsh with Git for Windows' Git/cmd/git.exe launcher available; it supplies the shell environment Git children need. A pwsh launched through Git Bash can resolve raw Git/clangarm64/bin/git.exe and fail with exit 128. Correct that environment rather than hide it in the script.
+8. **Hand over an absolute command with -Verbose.** Use & 'C:/Users/<user>/Workspace/<org>/<clone>.<issue>-<name>.ps1' -Verbose. A host requiring a shell-command prefix adds that prefix separately.
 
 ```powershell
 #!/usr/bin/env pwsh
@@ -1137,11 +1135,14 @@ finally {
 }
 ```
 
+
 <a id="a-worktrees-first-script-in-powershell"></a>
 
-### 5.1. A worktree's first script, in PowerShell
+<a id="51-a-worktrees-first-script-in-powershell"></a>
 
-The same steps as [the bash form's](#a-worktrees-first-script), in a script of its own. Its preamble and helpers region are the merge script's above, less `$mainClone`, which only the merge script's clean-up uses, and less the two files only the merge script makes. Its help says what it does:
+### 5.1. Publish the plan with PowerShell
+
+Use the delivery example's preamble/helpers, omitting the cleanup-only mainClone and its two delivery-only temporary files. Replace the help with:
 
 ```powershell
 <#
@@ -1162,7 +1163,8 @@ The same steps as [the bash form's](#a-worktrees-first-script), in a script of i
 #>
 ```
 
-Its main operation commits the plan, pushes the branch, and then, after the push, records the steps and links the plans. `star github plan link` refuses nothing by its exit: an issue refused, or a row the section drops, is in its records and exits 0, and any other exit stops the script (#557).
+
+Replace the main operation with the following. It commits and pushes the plan, records the rows, and links the plans. Inspect refusal and dropped-row records even if plan link exits zero; any nonzero exit stops the run.
 
 ```powershell
 ###########

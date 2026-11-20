@@ -1,10 +1,14 @@
 ---
-title: "8. The schedule commands: design decisions"
+title: "Schedule command decisions"
+status: draft
+updated: 2026-11-19
 ---
 
-# 8. The schedule commands: design decisions
+<a id="8-the-schedule-commands-design-decisions"></a>
 
-Companion to [8. The schedule commands](8-the-schedule-commands.md). It records the significant choices behind the schedule commands and the reasons for them. How the work reached this design is in the plans of [#439](../../plans/doc/439-schedule-commands.md), [#507](../../plans/doc/507-scenario-commands.md) and [#589](../../plans/doc/589-issue-verbs.md).
+# Schedule command decisions
+
+These records explain the [Schedule command design](8-the-schedule-commands.md). Approval evidence links the plans; implementation progress and migration history remain in those plans.
 
 ## 1. Decision index
 
@@ -41,29 +45,25 @@ Companion to [8. The schedule commands](8-the-schedule-commands.md). It records 
 
 **Approval evidence:** The owner, 2026-11-11, question 2, recorded in [#439's plan](../../plans/doc/439-schedule-commands.md), § Rulings.
 
-**Related decisions:** None.
-
 <a id="d-002"></a>
 
 ### 2.2. D-002: A command reads first and reads each write back
 
 **Status:** Accepted.
 
-**Context and criteria:** GitHub promises no stability for the features the model is built on, and a command that stops partway must leave nothing broken.
+**Context and criteria:** A command depends on several remote resources and can fail between writes. Validation and visible outcomes are necessary for safe recovery.
 
-**Decision:** A command that writes reads everything it needs first, so a fault is a refusal with nothing written, and reads each write back. A run that stops partway is run again to finish.
+**Decision:** Read the prerequisites before the first write and read each write back. The accepted recovery goal requires supported partial operations to be recoverable; it does not establish that every delivered command finishes every interrupted operation on retry. The [command contract](8-the-schedule-commands.md) states the actual recovery paths and limits.
 
 **Reasons:** A refusal before any write is cheap; a half-made change found afterward is not.
 
 **Alternatives:** Writing as it reads, and repairing by hand.
 
-**Consequences:** Each command does more reads than writes.
+**Consequences:** Preflight and readback add remote reads. A failure during mutation can still leave partial state; readback is not a transaction or exactly-once guarantee.
 
 **Design links:** [The commands](8-the-schedule-commands.md#the-commands).
 
 **Approval evidence:** The owner, 2026-11-11, question 3, recorded in [#439's plan](../../plans/doc/439-schedule-commands.md), § Rulings; reads before the first write, #531.
-
-**Related decisions:** None.
 
 <a id="d-003"></a>
 
@@ -115,7 +115,7 @@ Companion to [8. The schedule commands](8-the-schedule-commands.md). It records 
 
 **Status:** Accepted.
 
-**Context and criteria:** Steps are worked in order, and closed steps sit among open ones. On issue tracking, iteration 1, steps 29 (#440) and 35 (#447) were closed between open steps when #482 to #485 went in after step 22.
+**Context and criteria:** Closed steps can lie between open steps. Inserting or moving work must preserve one consecutive sequence without changing issue identities.
 
 **Decision:** The steps are consecutive whole numbers, and every later step, closed or open, moves when a step is added, moved or taken off.
 

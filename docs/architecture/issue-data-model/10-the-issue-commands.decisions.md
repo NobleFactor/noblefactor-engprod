@@ -1,10 +1,14 @@
 ---
-title: "10. The issue commands: design decisions"
+title: "Issue command decisions"
+status: draft
+updated: 2026-11-19
 ---
 
-# 10. The issue commands: design decisions
+<a id="10-the-issue-commands-design-decisions"></a>
 
-Companion to [10. The issue commands](10-the-issue-commands.md). It records the significant choices behind the issue commands and the reasons for them. How the work reached this design is in [the plan](../../plans/doc/589-issue-verbs.md).
+# Issue command decisions
+
+These records explain the [issue command design](10-the-issue-commands.md). The [Issue verbs plan](../../plans/doc/589-issue-verbs.md) preserves approval evidence and implementation progress.
 
 ## 1. Decision index
 
@@ -39,7 +43,7 @@ Companion to [10. The issue commands](10-the-issue-commands.md). It records the 
 
 **Alternatives:** `file` for opening an issue, which pairs with nothing; `create` alone, which doesn't pair with `close`.
 
-**Consequences:** Until star lets an extension command name another name for itself (NobleFactor/devlore-cli#1235), `create` is a second manifest entry with `open`'s implementation, its flags written twice.
+**Consequences:** Create is registered through a second manifest entry sharing open's implementation and flags. Native alias support is tracked in NobleFactor/devlore-cli#1235.
 
 **Design links:** [The commands](10-the-issue-commands.md#the-commands).
 
@@ -61,7 +65,7 @@ Companion to [10. The issue commands](10-the-issue-commands.md). It records the 
 
 **Alternatives:** Letting `issue` verbs open or close a Schedule or Scenario issue, which would leave its option and own row out of step with it.
 
-**Consequences:** `schedule new` and `scenario new` became `open`, and `scenario retire` became `close`; `reopen` joined both groups.
+**Consequences:** The collection groups expose open/create, close and reopen consistently; the issue group also owns movement.
 
 **Design links:** [The commands](10-the-issue-commands.md#the-commands); [section 8](8-the-schedule-commands.md); [section 9](9-the-scenario-commands.md).
 
@@ -110,7 +114,7 @@ Companion to [10. The issue commands](10-the-issue-commands.md). It records the 
 | Shortcut | Its epics list | Stories; its iteration automations handle stories alone | Auto Start Epic when a story starts, and Auto Complete Epic when every story is done |
 | Linear | Parent issues | Issues | Optionally, the parent is marked done when every sub-issue is |
 
-**Alternatives:** Taking an epic or a feature off the Backlog when its first task or bug is pulled onto a schedule or a scenario. That records its state by moving its row, and every move of a child would have to check its parents in both directions, since a child can go back to the Backlog. None of the trackers does it. Leaving it on no project once classified hides it from every board.
+**Alternatives:** Taking an epic or a feature off the Backlog when its first task or bug is pulled onto a schedule or a scenario. That records its state by moving its row, and every move of a child would have to check its parents in both directions, since a child can go back to the Backlog. Leaving it on no project once classified hides it from every board.
 
 **Consequences:** The Backlog holds epics and features beside tasks and bugs, so it has a view of each kind ([D-012](#d-012)). `star github triage sweep` flags an epic or a feature on a Schedule or Scenario project, not one on the Backlog. A reopened epic or feature, which `close` took off the Backlog, goes to Triage ([D-011](#d-011)).
 
@@ -140,8 +144,6 @@ Companion to [10. The issue commands](10-the-issue-commands.md). It records the 
 
 **Approval evidence:** The owner, 2026-11-17, recorded in [the plan](../../plans/doc/589-issue-verbs.md), § 12, departure 3.
 
-**Related decisions:** None.
-
 <a id="d-006"></a>
 
 ### 2.6. D-006: open gives the issue no row
@@ -170,7 +172,7 @@ Companion to [10. The issue commands](10-the-issue-commands.md). It records the 
 
 **Status:** Accepted.
 
-**Context and criteria:** Every issue needs a Priority and a Severity, and a workflow that opens issues shouldn't assign them to its bot.
+**Context and criteria:** Filing needs predictable metadata defaults, and automation should not assign work to its bot unless requested.
 
 **Decision:** Priority is Medium unless given. A Bug's Severity is Medium unless given, as the Triage workflow starts a bug; every other type's Severity is N/A. No one is assigned unless `--assignee` names someone.
 
@@ -183,8 +185,6 @@ Companion to [10. The issue commands](10-the-issue-commands.md). It records the 
 **Design links:** [Opening an issue](10-the-issue-commands.md#opening-an-issue-open-and-create).
 
 **Approval evidence:** The owner, 2026-11-17, recorded in [the plan](../../plans/doc/589-issue-verbs.md), § 12, question 2 and departure 5.
-
-**Related decisions:** None.
 
 <a id="d-008"></a>
 
@@ -288,7 +288,7 @@ Companion to [10. The issue commands](10-the-issue-commands.md). It records the 
 
 **Alternatives:** Keeping GitHub's "View 1".
 
-**Consequences:** `star github model apply` renames each project's first view and adds the Epics and features view when it is next run.
+**Consequences:** Project templates supply Default and the Backlog's separate views. Model application reconciles that configuration.
 
 **Design links:** [Epics and features](10-the-issue-commands.md#epics-and-features).
 

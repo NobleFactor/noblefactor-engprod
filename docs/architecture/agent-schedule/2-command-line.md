@@ -1,45 +1,79 @@
 ---
-title: "2. Command line — Start-Claude, today"
+title: "Start-Claude command interface"
+status: draft
+updated: 2026-11-19
 ---
 
-# 2. Command line — Start-Claude, today
+<a id="2-command-line--start-claude-today"></a>
 
-> **Status:** built on macOS and Linux, 2026-10-15, and on Windows, as Start-Claude.ps1, 2026-10-19 (David-Noble-at-work/personal#273). Companion: [`2-command-line.status.md`](2-command-line.status.md). Feature: [NobleFactor/noblefactor-ops#151](https://github.com/NobleFactor/noblefactor-ops/issues/151). Start-Claude(1) is the reference for every option, file and exit status.
->
-> **Relationship to the neighbors.** [1. Session model](1-session-model.md) owns how a conversation and its tmux sessions live; this section owns the commands a person types: Start-Claude, and Clear-Claude until it was removed on 2026-11-12 (#529). [2.1](2.1-agent-schedule-commands.md) owns the commands that are to follow them.
+# Start-Claude command interface
 
-## Its forms
+[Up: Agent schedules](index.md)
 
-One of three ways in, and the options any of them takes:
+Start-Claude selects a Claude conversation, starts or wakes its native background session, and opens a viewer with a companion shell. `--detach` performs the session operation without opening a view. [Session lifecycle](1-session-model.md) defines identity, locking and connection behavior.
 
-| Form | Opens |
+<a id="its-forms"></a>
+
+## 1. Select a conversation
+
+| Form | Meaning |
 | --- | --- |
-| `Start-Claude --schedule <schedule>` | The existing schedule's conversation: `<owner>/<repository>#<number>`, or a bare `<number>` in the startup directory's repository. `--schedule new` is refused; create the schedule with `star github schedule open` |
-| `Start-Claude --resume <conversation> [--schedule <schedule>]` | The conversation it names, as `claude --resume` takes it but its picker: its id, its background session's short id, its name, or its transcript's absolute path (personal#273's plan, question 12); on that schedule when one is given |
-| `Start-Claude --continue [--schedule <schedule>]` | The conversation claude lists in the startup directory, on that schedule when one is given; with none listed, a copy of the one claude's own `--continue` picks, or, given a schedule, nothing: it refuses (NobleFactor/noblefactor-ops#322) |
+| `Start-Claude --schedule <schedule>` | Reuse the schedule's bound session, or create its first conversation |
+| `Start-Claude --resume <conversation> [--schedule <schedule>]` | Resolve and resume the selected conversation; associate it with the supplied schedule when permitted |
+| `Start-Claude --continue [--schedule <schedule>]` | Select the conversation listed for the startup directory; optionally associate it with the supplied schedule |
 
-- `--directory <directory>`: the startup directory, the root of a clone or of a linked worktree; the current one otherwise.
-- `--detach`: start the conversation in claude's background, or wake it, and open no tmux session.
-- `--no-remote-control`: start the background session without Remote Control; not with `--detach`.
-- `--shell-width-percent <percent>`: the shell pane's width, 1 to 99, and 40 by default.
-- After `--`: arguments for a conversation the launch starts, which its background session keeps.
+A schedule is `<owner>/<repository>#<number>`, or a bare issue number resolved against the startup directory's repository. Create schedules with `star github schedule open <repository> <name>`; `--schedule new` is refused.
 
-## Its names
+The resume selector accepts a conversation ID, background-session short ID, name or absolute transcript path. It does not open the native interactive resume picker.
 
-claude's background session carries `<owner>/<repository>#<number> | <host> | <repository> | <branch> | <title>`, which is also its Remote Control name. Each tmux session onto it carries the schedule's repository and number and its own tmux id, as in `devlore-cli#916 $34`, the same on psmux, which loses a session whose name carries `/` or `|` (the plan for personal#273, question 1). A conversation on no schedule is named for its id, and the one `--continue` hands to claude for the host, the repository and the branch; its tmux session is named for its id.
+With no conversation listed for the directory, `--continue` without a schedule delegates selection to Claude's native continuation path, which may create a copy. With a schedule, the launcher refuses that ambiguous case. It also refuses a conflicting existing schedule binding rather than silently replace it; the binding-conflict exit status is 73.
 
-## Its store
+## 2. Launch options
 
-One file per schedule, `${XDG_STATE_HOME:-~/.local/state}/agent-schedule/<owner>/<repository>/<number>`, holding the background session's short id, with a lock beside it; [1. Session model](1-session-model.md) says how a start reads it.
+| Option | Meaning |
+| --- | --- |
+| `--directory <directory>` | Use the specified clone or linked worktree; otherwise use the current directory |
+| `--detach` | Ensure the background session exists or is awake, then return without tmux |
+| `--no-remote-control` | Disable Remote Control for the background launch; incompatible with `--detach` |
+| `--shell-width-percent <percent>` | Set the companion shell width from 1 through 99; default 40 |
+| `-- <arguments>` | Pass arguments to a conversation created by this launch; they remain with that background session |
 
-## Clear-Claude
+An attached invocation requires a terminal. On macOS, the launcher unlocks the login keychain from that terminal when needed for the stored GitHub and Claude credentials. A launch without a terminal must use `--detach` and still satisfy the credential requirements.
 
-Removed on 2026-11-12, on the owner's word (#529). The agentic engineering environment coming, where the workstation keeps or restores a role's session (Epic #514, Feature #517), leaves a command that clears one little point. Its command, its man page, its bash and zsh completions and `tests/Test-ClearClaude` are gone from this repository. It cleared the conversation Start-Claude runs for a schedule and removed every local record of it (#411); [1. Session model](1-session-model.md#clearing-and-retiring-a-conversation) keeps its design as history.
+<a id="its-names"></a>
+<a id="its-store"></a>
 
-## Where it runs
+## 3. Names, storage and output
 
-Start-Claude runs on macOS and Linux, from a terminal there or as the command of an ssh or mosh connection, and starts nothing with no terminal unless `--detach` is given. On macOS it unlocks the login keychain from a terminal, since gh and claude keep their logins there.
+The [session model](1-session-model.md#4-names-and-viewer-input) defines background and tmux names. Its [binding](1-session-model.md#2-components) stores a background-session short ID under the repository-qualified schedule key, with a neighboring lock.
 
-## Windows
+Both attached and detached forms return that short ID. The Unix command writes it to standard output and sends diagnostics to standard error. [Start-Claude(1)](../../../Home/common.Unix/.local/share/man/man1/Start-Claude.1) is the complete reference for options, files, environment variables and exit statuses.
 
-Start-Claude.ps1 runs on psmux, a native Windows tmux, run as `tmux`, its alias (David-Noble-at-work/personal#273; the owner's ruling of 2026-10-10). Its forms are Start-Claude's, in PowerShell's form: `-Schedule`, `-Resume`, alone or with `-Schedule`, and `-Continue`, with `-Directory`, `-Detach`, `-NoRemoteControl` and `-ShellWidthPercent`, and claude's arguments after the script's own, since PowerShell consumes a bare `--`. It opens from a console, Windows Terminal at the desktop or an ssh session with a terminal; with its input redirected and no `-Detach` it starts nothing, and inside psmux the current client switches to the new session. [1. Session model](1-session-model.md) says where psmux differs from tmux. It narrates and refuses as PowerShell does, after Microsoft's guidance to cmdlet authors (personal#273's plan, question 6): what it does goes to the verbose stream, a warning to the warning stream, and a refusal is a terminating error, not one of Start-Claude's exit statuses. Both scripts return the background session's short id, the one `claude --bg` prints, attached or detached: Start-Claude.ps1 to its output, and Start-Claude on standard output (personal#273's plan, question 11).
+<a id="where-it-runs"></a>
+<a id="windows"></a>
+
+## 4. Platform interfaces
+
+The Unix command runs in a local terminal or through SSH or mosh. The Windows command, Start-Claude.ps1, uses psmux through its `tmux` alias and supports a console, Windows Terminal or an SSH terminal.
+
+| Unix | PowerShell |
+| --- | --- |
+| `--schedule` | `-Schedule` |
+| `--resume` | `-Resume` |
+| `--continue` | `-Continue` |
+| `--directory` | `-Directory` |
+| `--detach` | `-Detach` |
+| `--no-remote-control` | `-NoRemoteControl` |
+| `--shell-width-percent` | `-ShellWidthPercent` |
+
+PowerShell consumes a bare `--`; native Claude arguments follow the script's parameters using its supported parameter handling. PowerShell returns the short ID on the success stream, sends narration to the verbose stream and warnings to the warning stream, and reports refusals as terminating errors with the corresponding error category.
+
+## 5. Decisions and related interfaces
+
+The [command decision record](2-command-line.decisions.md) explains schedule creation, native selection and structured output boundaries. The [assignment interface proposal](2.1-agent-schedule-commands.md) describes the broader command family without making those proposed names part of Start-Claude's interface.
+
+<a id="clear-claude"></a>
+
+## 6. Delivery references
+
+Implementation and deployment evidence is linked from the [delivery references](2-command-line.status.md). The [pre-rewrite source](../../engineering/review/sources/rewrite-2026-11-19/2-command-line.md.txt) retains the earlier document; [Clear-Claude removal](../../plans/refactor/529-remove-clear-claude.md) records that separate transition.

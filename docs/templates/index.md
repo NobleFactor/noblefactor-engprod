@@ -2,7 +2,7 @@
 title: "Work templates"
 status: draft
 created: 2026-10-28
-updated: 2026-10-29
+updated: 2026-11-19
 ---
 
 # Work templates
@@ -15,6 +15,8 @@ These templates implement [Work assets](../engineering/work-assets.md). Replace 
 - [Issue](issue.md)
 - [Plan](plan.md)
 - [Design](design.md)
+- [Decision record](decision.md)
 - [Completion review](completion-review.md)
+- [Review comment](review-comment.md)
 
 The former proposed template filename for scheduled work is replaced with `issue.md` following the approved terminology decision. Existing plan output paths remain `docs/plans/<type>/<issue>-<name>.md`.

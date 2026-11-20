@@ -2,18 +2,20 @@
 title: "Handbook adoption review"
 status: complete
 created: 2026-11-15
-updated: 2026-11-17
+updated: 2026-11-19
 ---
 
 # Handbook adoption review
 
-The preserved review contains findings F01–F19. This record reconciles them with the current draft, subsequent Owner decisions and the live protection check. The [original findings](../../../ENGINEERING-DOCUMENTATION-REVIEW.findings.md) remain unchanged and match the preserved archive at SHA-256 `480cd66afef0fb149322766a4c817a74c74f459a97dabc40f13d462c62bdf8ef`.
+This is the completed review and delivery record for Handbook consolidation (#420). It preserves F01–F21, source comparisons, dated protection/verification results and the Owner's adoption evidence. Its counts and dependency statements describe those recorded candidates, not a fresh check of the current repository or PR.
 
-Handbook consolidation (#420) was adopted and completed on 2026-11-16. The findings and candidate verification below are retained as review evidence; section 6 records the actual merge, post-merge verification, closure and cleanup.
+The [exact pre-rewrite record](sources/rewrite-2026-11-19/handbook-adoption-review.md.txt), [original findings](../../../ENGINEERING-DOCUMENTATION-REVIEW.findings.md) and [completed plan](../../plans/doc/420-consolidate-engineering.md) retain the sources. The original findings' SHA-256 is `480cd66afef0fb149322766a4c817a74c74f459a97dabc40f13d462c62bdf8ef`.
+
+Use [current handbook guidance](../index.md) for requirements and the [rewrite review](rewrite-review.md) for this work's checks. Consolidation was adopted/completed on 2026-11-16; the delivery record in section 6 remains unchanged.
 
 ## 1. Findings and dispositions
 
-| Finding | Current disposition |
+| Finding | Disposition recorded for consolidation |
 | --- | --- |
 | F01 | Authoritative requirement homes are linked from the handbook. Legacy entrypoints preserve anchors and point to those homes. |
 | F02 | Dated cases and their source evidence are preserved; the newer pre-cutover guides are captured separately. |

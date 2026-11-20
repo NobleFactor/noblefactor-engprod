@@ -1,47 +1,24 @@
 ---
-title: "2. Command line — Status"
+title: "Start-Claude delivery references"
+type: Reference
+status: "Superseded by 2-command-line.decisions.md"
+updated: 2026-11-19
 ---
 
-# 2. Command line — Status
+<a id="2-command-line--status"></a>
 
-**Document:** [2-command-line.md](2-command-line.md)
-**Feature:** [NobleFactor/noblefactor-ops#151](https://github.com/NobleFactor/noblefactor-ops/issues/151)
-**Plan:** [259-start-claude-documents-claude.md][plan-259]
-**State:** Start-Claude built on macOS and Linux, its man page and completions with it; Start-Claude.ps1 built on
-Windows with psmux, David-Noble-at-work/personal#273, 2026-10-19. Both moved to noblefactor-ops in
-NobleFactor/noblefactor-ops#312; the store and Start-Claude's helpers took the name `agent-schedule` in
-NobleFactor/noblefactor-ops#321, 2026-10-20.
+# Start-Claude delivery references
 
-**Amended 2026-10-28** (plan [`414-clear-claude-can-remove-a.md`](../../plans/fix/414-clear-claude-can-remove-a.md)):
-§ Clear-Claude's records say what `f0211f4` removes and what it leaves, the job timeline and the paste cache, and name
-the plan, a draft set aside, for the rest.
+[Design](2-command-line.md) · [Architecture decisions](2-command-line.decisions.md)
 
-**Amended 2026-11-12** (#529): Clear-Claude is removed, on the owner's word: its command, man page, completions
-and test. § Clear-Claude says so; the plan of 2026-10-28 is abandoned.
+## 1. Delivery records
 
-## Completion
+The [original launcher plan](https://github.com/David-Noble-at-work/personal/blob/main/docs/plans/chore/259-start-claude-documents-claude.md) and Windows work (David-Noble-at-work/personal#273) own the platform implementation and acceptance records. The preserved source also records relocation, binding-store naming and continuation work.
 
-- [x] Start-Claude: `--schedule`, `--resume`, `--continue`, `--detach`, `--no-remote-control`, `--directory` and
-  `--shell-width-percent`, with Start-Claude(1) and its bash and zsh completions.
-- [x] Start-Claude.ps1 on psmux: David-Noble-at-work/personal#273. `-Schedule`, `-Resume`, alone or with
-  `-Schedule`, `-Continue`, `-Directory`, `-Detach`, `-NoRemoteControl` and `-ShellWidthPercent`; its narration and
-  refusals as section 7 of the PowerShell style guide has them. Built on its branch 2026-10-16 to 19, and tested on
-  danoble-wd11-3: the store (phase 3), the background session and the psmux session (phase 4), and test plan rows 1
-  to 3 and 10 to 12; the rest of its tests are its test scripts', under `tests/`.
-- [x] Both scripts return the background session's short id, attached or detached (personal#273's plan, question 11):
-  built on personal#273's branch, 2026-10-18; tested on Danoble-MBP-A and danoble-wd11-3, test plan rows 11 and 13.
-- [x] `--resume` and `-Resume` take what `claude --resume` takes but its picker: a conversation's id, a background
-  session's short id, a name, or a transcript's absolute path (personal#273's plan, question 12), 2026-10-19.
-- [x] The store's directory, and the directory of Start-Claude's helpers, renamed `agent-schedule`:
-  NobleFactor/noblefactor-ops#321, 2026-10-20. Each host's store moved, its entries with it, on 2026-10-21.
-- [x] `--continue` and `-Continue` take `--schedule` and `-Schedule`, as `--resume` and `-Resume` do, and refuse
-  with one when claude lists no conversation in the startup directory; every way in, with a schedule and without, and
-  personal#259's row 2, are cases in both test scripts: NobleFactor/noblefactor-ops#322, 2026-10-21.
-- [x] Start-Claude and Start-Claude.ps1 moved to noblefactor-ops, with these documents and their test scripts: copied
-  in NobleFactor/noblefactor-ops#312, where make and CI run the tests on Ubuntu, macOS and Windows, and removed from
-  personal in David-Noble-at-work/personal#285.
-- [x] Clear-Claude, on macOS and Linux: `--schedule`, `--directory`, `--clear` and `--retire`, with Clear-Claude(1),
-  its bash and zsh completions, and `tests/Test-ClearClaude` (NobleFactor/noblefactor-engprod#411), 2026-10-27. No
-  Windows counterpart: the owner, 2026-10-27, "Clear-Claude.ps1 is not in this PR." Removed on 2026-11-12 (#529).
+The [unaltered source](../../engineering/review/sources/rewrite-2026-11-19/2-command-line.status.md.txt) preserves the dated status, completion marks, qualifications and issue references. It is historical evidence, not an active checklist.
 
-[plan-259]: https://github.com/David-Noble-at-work/personal/blob/main/docs/plans/chore/259-start-claude-documents-claude.md
+<a id="completion"></a>
+
+## 2. Rewrite evidence
+
+[The rewrite review](../../engineering/review/rewrite-review.md) records source hashes, requirement destinations and reference checks. The [approved rewrite plan](../../plans/doc/581-schedule-command-consumers.md#95-full-documentation-rewrite) owns this documentation work and its remaining review gates.

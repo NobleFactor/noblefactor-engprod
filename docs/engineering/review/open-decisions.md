@@ -1,162 +1,110 @@
 ---
-title: "Open decisions for review"
+title: "Handbook review resolutions and source responses"
 status: draft
 created: 2026-10-28
-updated: 2026-11-18
+updated: 2026-11-19
 ---
 
-# Open decisions for review
+<a id="open-decisions-for-review"></a>
 
-O01–O11 have been resolved through the Owner’s written responses and subsequent review. Each resolution is recorded below; original questions and responses are retained as history. Configuration, enforcement and tool selections remain later topics. Resolution of these questions does not by itself establish that all source documents and executable templates have been fully reconciled.
+# Handbook review resolutions and source responses
 
-## O01 — Scope of PR serialization
+O01–O11 are resolved review questions. This page indexes their decision evidence and current authoritative guidance. The [exact earlier questions, summaries and Owner responses](sources/rewrite-2026-11-19/handbook-review-responses.md.txt) are retained as source evidence, including their chronology and original wording.
 
-**Resolved:** One active PR per worktree. Independent workers may proceed concurrently in their own worktrees. During integration, only review or CI corrections belong in that worktree. Workers must not modify one another’s worktrees. The earlier question and Owner response below are retained as review history.
+The [decision log](decisions.md) records approved choices. Current handbook pages own the resulting instructions. Later decisions can supersede an earlier resolution; reading this source index grants no execution authority and establishes no live configuration.
 
-The existing rule permits one PR in flight and no writes to any repository while it runs. The intended workflow has parallel isolated workers. Decide whether serialization applies to the whole operation, each worker, each repository or an integration phase. Until resolved, the draft does not grant a new concurrency exception.
+<a id="o01--scope-of-pr-serialization"></a>
 
-[david-noble] This rule applies to git worktrees created to close on work items. We don't want two PRs active against the same worktree. An engineer is not likely to do this on his own, but an agent might do this thinking it will accelerate the process. In my experience it does not. In short, then we have:
+## 1. O01 — Scope of PR serialization
 
-- **A single clone** (the primary worktree) on a specific branch. This is usually the default branch. It is always the target branch for each worktree an engineer or agent creates. The clone is read-only to agents.
-  
-- **Many work trees** (the secondary worktrees) on branches and worktrees named for the work items it will close. These worktrees should be removed as soon as the PR that closes these work items is complete. The worktrees are read/write. Agents working different schedules should stay in their own worktrees. Messing with someone else's worktree is a serious breach of process.
+[PR integration](../process.md#pull-request-and-integration) and [effective host overrides](../index.md#temporary-live-entrypoint-overrides) own the current concurrency boundary. The original response distinguishes canonical clones, worker worktrees and independent workers.
 
-In summary, we create worktrees off the target of a PR. A worktree is the unit of work for a PR. Worktrees are many-to-one with an agent. Worktrees may resolve one or more work items on that agent's schedule. Agents should stay away from one another's worktrees.
+[Decision evidence](decisions.md#decision-25). The original question and response remain in the [preserved review](sources/rewrite-2026-11-19/handbook-review-responses.md.txt).
 
-## O02 — Process work classification
+<a id="o02--process-work-classification"></a>
 
-**Resolved:** Product and engineering work share Epic → Feature → Task/Bug. Distinguish purpose through epic or area. Most engineering-productivity issues belong in NobleFactor/noblefactor-engprod; other repositories can use their own epic, with engprod recommended where appropriate. The former chore tier is superseded; migration of existing issues and schedule-container metadata is deferred. Commit/branch conventions are not changed by this decision. The earlier question and Owner response below are retained as review history.
+## 2. O02 — Process work classification
 
-The approved description emphasizes bugs/tasks shaping features in epics. The current hierarchy also has chores as peers of features, with process tasks and bugs under them; schedule issues themselves are special chores. Decide whether to retain that process-work model. Do not silently recategorize issues.
+[Issue standards](../../issue-standards.md) and [work identity](../work-organization.md#work-and-identity) own the shared product/engineering hierarchy, Area and placement. The source discussion compares capability work with work that improves the engineering process.
 
-[david-noble] The distinction between chores and features is a distinction worth discussing. I devised that classification to distinguish process/tooling issues from product issues. In my mind we have three things to worry about when developing software: people, product, and process. Tools support the whole.
+[Decision evidence](decisions.md#decision-26). The original question and response remain in the [preserved review](sources/rewrite-2026-11-19/handbook-review-responses.md.txt).
 
-In my mind there's a big difference between work items that shape the product, and work items that serve the people, product, and process. Here are the questions I'd like to answer:
+<a id="o03--completion-closure-and-plan-status"></a>
 
-- What work brings me closer to shipping? That's the work captured by a feature in our current scheme.
-- What work is helping us to move faster by reducing friction while improving quality, and measuring progress? That's the work capture by a chore in our current scheme.
+## 3. O03 — Completion, closure and plan status
 
-We might do this with a more obvious classification scheme that shows:
+[Completion and progression](../process.md#completion-and-progression) owns readiness, milestones, PR closing references, reopening failures and post-merge records. Earlier closure wording in the preserved response/summary predates the later [Owner closing-reference decision](../../plans/feature/605-squash-message.md#approval-and-departures); it is historical rather than a competing instruction. Decisions 27–30 and 51 preserve the earlier stages.
 
-- How much are we investing in the way we work? Is that a chore, a feature in an area, a feature in an epic dedicated to engineerring efficiency, or something else?
-- How much are we investing in product development? That, I can be clear about. We have epics, feature, and work items (bugs and tasks).
+[Decision evidence](decisions.md#decision-28). The original question and response remain in the [preserved review](sources/rewrite-2026-11-19/handbook-review-responses.md.txt).
 
-Let's resolve this interactively.
+<a id="o04--git-grants-and-bounded-execution"></a>
 
-## O03 — Completion, closure and plan status
+## 4. O04 — Git grants and bounded execution
 
-**Resolved:** PR readiness means all included issues are implemented, documented, tested and reviewed. Issue completion additionally requires agreed merge, deployment and verification milestones. CI, lint and Owner visual code inspection are required; additional testing is negotiated among Participants, Reviewers and the Owner and reported in the PR. A plan remains active until all agreed completion milestones are satisfied, including required post-merge deployment or verification. The final implementation commit records implementation readiness rather than whole-plan completion. The GitHub issue remains open until all agreed completion milestones are satisfied and completion is approved by the Owner or covered by explicit unattended-progression authorization. When post-merge obligations remain, the PR references the issue without automatically closing it. Record post-merge results immediately on the issue, then incorporate them into the plan through a documentation-only follow-up PR. That PR uses lightweight validation of documentation-only scope, document formatting, metadata and links, without builds, code linting or functional tests. Required checks must report a result rather than remain pending. GitHub configuration and tooling implementation are deferred. Earlier discussion below is retained as history.
+[Agent authority](../agent-operation.md#owner-supervised-agents-authority-and-progression) owns bounded grants, exact-command fallback and separate PR/clone authority. The original SBX discussion supplies motivation; it does not establish that enforcement has been qualified.
 
-Separate milestones and issue-specific completion criteria are approved. The old requirement to resolve all issues before opening a PR cannot mean demonstrating that future PRs merge. The old final-commit plan-completion rule also conflicts with post-merge obligations. Decide readiness wording, GitHub closure timing, and where/how post-merge plan updates are committed. Do not equate GitHub auto-close with approved completion by default.
+[Decision evidence](decisions.md#decision-31). The original question and response remain in the [preserved review](sources/rewrite-2026-11-19/handbook-review-responses.md.txt).
 
-[david-noble] I think that what we must do is remove all conflicts regarding what I think is a well articulated policy. My hunch is that the conflicts evolved over time as my workflow gelled. Briefly, we have two levels of completion criteria:
+<a id="o05--accurate-assistance-disclosure"></a>
 
-- `Schedule`
-- `Work item`
+## 5. O05 — Accurate assistance disclosure
 
-PRs close one or more work items in a schedule. You need to pass CI. Adhoc testing outside CI is negotiated between participants, reviewers, and the owner. The results are reported in the PR. I am hardcore about compliance with coding standards and matters of style. I will not compromise on those and yet I find that agents want desperately to avoid compliance. You must pass lint and my visual inspection of the code. Agents should know that they are not done until the code reads like a book. See Knuth's book on Literate Programming. See Kernighan and Plauger's book on the Elements of Programming Style. The latter has been my inspiration since the late 70's when I first developed an interest in programming.
+[PR disclosure](../procedures/pull-request.md#review-boundary) owns the human sign-off, actual submitting-agent disclosure and landed trailers. The source response explains accountability and the separate purposes of assistance disclosure and credit.
 
-Let's resolve this interactively.
+[Decision evidence](decisions.md#decision-32). The original question and response remain in the [preserved review](sources/rewrite-2026-11-19/handbook-review-responses.md.txt).
 
-## O04 — Git grants and bounded execution
+<a id="o06--signing-intent"></a>
 
-**Resolved:** The Owner may explicitly grant a worker bounded authority to commit and push its assigned branch within its own worktree. The grant excludes changes to other worktrees, protected branches, repository configuration and destructive history operations. Verify sandbox enforcement separately before relying on it. Without such a grant, exact-command one-use approval remains the fallback. PR execution authority remains separate. The earlier question and Owner response below are retained as review history.
+## 6. O06 — Signing intent
 
-Single-use exact-command permission is retained for owner-supervised agents. The controller and unattended workflow may need a different bounded authorization model. No such expansion has been assumed; discuss its necessity and limits explicitly.
+[Release and recovery](../release-and-recovery.md#versioning-signing-and-publication) owns the signing scope. Decisions 33–35 retain the preliminary choice, precise protected-branch boundary and personal-repository exception. Original discussion is not proof of live configuration.
 
-[david-noble] We are moving to sbx as a way of protecting ourselves from rogue agents getting careless with git commands. If agents were accountable we would need no such rules. If setting permissions were easier in products like Claude Code we might prefer them to the rules I've put in place.
+[Decision evidence](decisions.md#decision-34). The original question and response remain in the [preserved review](sources/rewrite-2026-11-19/handbook-review-responses.md.txt).
 
-I am hoping that sbx will give me the confidence I need to know that my agents are committing and pushing often, and that they cannot mess with anything outside their worktrees. I think sbx is the sandbox I need.
+<a id="o07--visibility-and-intervention-contract"></a>
 
-Thoughts?
+## 7. O07 — Visibility and intervention contract
 
-## O05 — Accurate assistance disclosure
+[Visibility](../agent-operation.md#owner-supervised-agents-knowledge-and-visibility), [conversations](../agent-operation.md#owner-supervised-agents-conversations) and [assignments](../agent-operation.md#owner-supervised-agents-assignment-and-responsibility) own approved execution/coordination. The source distinguishes worker boundaries, delegated help and tooling responsibilities.
 
-**Resolved:** Put `Signed-off-by:` for the accountable human and `Assisted-by: <agent name>` for the submitting agent in the PR description. This is permanent policy for all agent hosts. Preserve the trailers in the squash commit; branch commits carry no trailers. Attribution for every agent consulted during review is not required. Earlier discussion and the Owner response below are retained as history.
+[Decision evidence](decisions.md#decision-36). The original question and response remain in the [preserved review](sources/rewrite-2026-11-19/handbook-review-responses.md.txt).
 
-Contribution terms and templates literally name Claude Code. Decide how to record actual assistance when Codex or several agents contribute, retaining sign-off, disclosure and no false co-authorship. Do not falsely name an assistant to satisfy a literal template.
+<a id="o08--bash-helper-applicability"></a>
 
-[david-noble] I say that we credit Codex whenever credit is due. Codex is an engineer's reviewer. You participate by assisting engineer's in design. As owners the enineers are accountable. Agents are not accountable and therefore can only ever be listed assistants. We might change this if there ever comes a day when I can reward or punish an agent for their performance. With adequete regulation, perhaps their owners are the ones who will pay for an agent's mistakes. Until that day arrives we stick with the taglines I use for Claude.
+## 8. O08 — Bash helper applicability
 
-A PR is the unit of work that we credit. We do that for the benefit of people (not machines) that contribute. They should know when an agent is involved. 
+[Bash standards](../../standards/coding/bash.md) and the [dedicated PR-script standard](../procedures/pull-request.md#dedicated-pr-script-standard) own applicability. Decisions 37–38 retain the generated-script exception, temporary-script scope and product embedding direction.
 
-We do not credit as a way of promoting an agent's masters. We're not an ad machine for Anthropic, Open AI, or any other business entity. We might keep it simple by saying an agent gets credit for assistance when its the agent that submits a PR. I don't want to haggle over whether say Codex gets credit on the PRs it reviews for Claude.
+[Decision evidence](decisions.md#decision-38). The original question and response remain in the [preserved review](sources/rewrite-2026-11-19/handbook-review-responses.md.txt).
 
-## O06 — Signing intent
+<a id="o09--scope-of-greenfield-policy"></a>
 
-**Resolved:** Working-branch commits may be unsigned. Commits landing on `main` and `release/*` must be signed; `develop` is not included in the required-signing boundary. Personal repositories are exempt from this signing requirement. This precise boundary supersedes the preliminary broader wording about release inclusion. The Owner supplied a GitHub ruleset example with `required_signatures` and branch conditions for `refs/heads/main` and `refs/heads/release/*`. Actual configuration and merge-path verification remain deferred. Earlier discussion and the Owner response below are retained as history.
+## 9. O09 — Scope of greenfield policy
 
-The release guide requires all commits signed and specifies certificate roles; the protection document describes main-only signing enforcement. Decide normative signing scope separately from later configuration verification.
+[Coding standards](../../standards/coding/index.md#greenfield-product-policy) and product-owned guides define the compatibility boundary. The source names the three DevLore repositories and requires an Owner decision for other repositories rather than an assumed compatibility obligation.
 
-[david-noble] It's early for this one. We do want to sign the commits on a release. Let's step through the process together and make a call.
+[Decision evidence](decisions.md#decision-39). The original question and response remain in the [preserved review](sources/rewrite-2026-11-19/handbook-review-responses.md.txt).
 
-## O07 — Visibility and intervention contract
+<a id="o10--duplicate-schedule-membership"></a>
 
-**Resolved:** Execution outside an assigned worktree or collaboration across worker boundaries requires Owner direction. Agents may advise or recommend actions but may not execute them without that direction. Sub-agent delegation within approved work remains permitted. The approved visibility and bounded-conversation requirements remain; monitoring mechanics are a tooling concern. Earlier discussion and the Owner response below are retained as history.
+## 10. O10 — Duplicate schedule membership
 
-Always-available monitoring, full approved conversations and owner knowledge are approved. Define the documentation-level record/notification expectations for ordinary actions, failures and delegation, and what intervention means for already running work. Tool mechanics follow later. Visibility must not be reduced to an after-the-fact summary.
+[Schedule commitment](../work-organization.md#schedule-commitment) and [issue representation](../../issue-standards.md#schedules) own unique membership. The source distinguishes overlapping concerns from placing one work item in two schedules.
 
-[david-noble] This, I feel, is a tooling issue more than a process issue. My greatest concerns are:
+[Decision evidence](decisions.md#decision-42). The original question and response remain in the [preserved review](sources/rewrite-2026-11-19/handbook-review-responses.md.txt).
 
-- Work being done outside a worktree: Execute on orders from an engineer. An agent may advise or recommend actions. An agent may not execute without direction from the owner.
+<a id="o11--changing-the-shape-of-work"></a>
 
-- Work being done through collaboration with another agent: Execute on orders from an engineer. An agent may advise or recommend actions. An agent may not execute without direction from the owner.
+## 11. O11 — Changing the shape of work
 
-Sub-agents are a different matter. An agent may initiate as many sub-agents as it wants. With the right sandbox, I think we'll be fine.
+[Schedule changes](../work-organization.md#changing-scheduled-work) and the [current command reference](../../architecture/issue-data-model/8-the-schedule-commands.md) own amendments and transfers. The preserved response supplies the workflow goals. Earlier delivery notes and retired command spellings remain historical; they do not define current invocation syntax.
 
-Thoughts?
+[Decision evidence](decisions.md#decision-43). The original question and response remain in the [preserved review](sources/rewrite-2026-11-19/handbook-review-responses.md.txt).
 
-## O08 — Bash helper applicability
+<a id="deferred-implementation-questions"></a>
 
-**Resolved:** Maintained Bash tooling follows the Bash standards, whether product tooling or engineering-productivity tooling. Temporary agent execution scripts need not follow maintained-tooling conventions. Generated PR scripts follow the dedicated template and are exempt from sourcing Declare-BashScript. Product-distributed scripts may ship the helper or embed its source, in whole or in part; embedding is encouraged where appropriate, as in devlore-cli’s install.sh. Detailed Bash standards remain separate tracked work. Earlier discussion and the Owner response below are retained as history.
+## 12. Deferred implementation evidence
 
-The shared requirement says every Bash command sources Declare-BashScript, except hooks; existing generated PR scripts do not. Decide whether PR scripts are an explicit exception or must adopt the helper. Do not normalize either implementation as policy by copying it.
+The original review deferred fields/representation, assignment precedence, reporting, protection/configuration, enforcement, approval storage and host/control-plane mechanics. Follow the current issue standards and owning task evidence rather than reopen settled definitions or infer delivery from that historical list.
 
-[david-noble] We have an issue for tracking the work on Bash scripting standards. The standards apply broadly to tooling (product tooling or engineering productivity toooling). I do not care how an agent writes the scripts it needs to do its work.
-
-Most engineering productivity Bash scripts are written when we feel some process pain. They are sometimes written out of necessity, but not often.
-
-Bash scripts that ship with the product are much less common. We have, for example, devlore-cli's `install.sh`. I don't think we have any others. Their use of Declare-BashScript is different. Products can ship `Declare-BashScript`, but they are encouraged to copy the source for Declare-BashScript in whole or in part as devlore-cli's `install.sh` does.
-
-## O09 — Scope of greenfield policy
-
-**Resolved:** The greenfield policy applies to DevLore: devlore-cli, devlore-registry and devlore.noblefactor.com. Do not accommodate superseded development behavior. Other repositories require case-by-case Owner decisions. Agents must not assume compatibility is required; pause affected work when a compatibility question is discovered and obtain an Owner ruling. Earlier discussion and the Owner response below are retained as history.
-
-No-compatibility requirements appear in devlore-cli and the shared Go guide. Determine their scope before presenting them as organization-wide product policy.
-
-[david-noble]
-
-We are working really hard to release a minimally viable product. It is new from the ground up. The greenfield policy applies to that product: DevLore. I do not want contributors to accommodate prior behaviors. DevLore, including devlore-cli, devlore-registry, and devlore.noblefactor.com are the repos to which the greenfield policy applies.
-
-The greenfield policy needs to be considered on a case-by-case basis for any other repos. If an agent discovers a backward compatibility issues, it should inform the owner who should render a decision. An agent should never assume that backward compatibility is a requirement. An agent should pause when it discovers a backward compatibility issue and allow the owner to render a ruling.
-
-## O10 — Duplicate schedule membership
-
-**Resolved:** No two schedules may contain the same work item. Overlap in affected code, features or dependencies is distinct from duplicate work-item membership. Coordinate transfers and keep affected workers informed. Earlier discussion and the Owner response below are retained as history.
-
-The old standard calls unique live membership a future check; the accepted workflow permits overlapping schedules and requires coordination. Decide whether the exact same issue can belong to two live schedules, and how execution responsibility is made unambiguous if it can.
-
-[david-noble] We have an issue tracking spec. You might find and read it. I've got a session dedicated to addressing it. I paused that agent pending the update that this work will bring. In short, it should be true that no two schedules should hold the same work item.
-
-We can discuss this with the agent responsible for issue tracking after these documents are adopted as policy.
-
-## O11 — Changing the shape of work
-
-**Resolved:** Support creating schedules, adding work items, recording discovered issues for triage, and coordinated transfers between schedules. Retain Owner approval for committed schedule changes and the communication boundaries. Update affected records and inform workers so changes to their missions are not surprises. Treat reshaping work as normal, not a planning failure. PR #580 delivered `star github schedule new` and `star github issue move` for schedule creation, additions, transfers and supported moves to Triage. General issue filing remains with Issue filing (#338); cross-worker communication and other undelivered control-plane mechanisms remain separate work. Earlier discussion and the Owner response below are retained as history.
-
-The owner's philosophy requires changes to work to be easy. Existing wording says discovering a needed split is a planning failure, while new decisions explicitly permit approved splits and amendments. This draft removes the characterization of change as failure, preserves approval boundaries, and makes amendments first-class records. Confirm whether further changes to the review/approval flow are needed to support churn without excessive overhead.
-
-[david-noble] I am hopeful that the new issue tracking system will enable us to easily triage, schedule work, and reschedule work by creating, updating, and removing work items as we go. Our requirements in this area will shape the issue tracking system. What I know is that we must be able to:
-
-- Create a schedule
-- Add work items to a schedule.
-- Log an issue and submit it to triage.
-- Move a work item from one schedule to another in a coordinated fashion.
-
-The latter will require communication between active agents. We do not want an agent to be surprised by changes to its schedule.
-
-## Deferred implementation questions
-
-The following list records the original review's deferred implementation scope. Current [Issue standards](../../issue-standards.md) and [Work organization](../work-organization.md) now provide the authoritative issue and project representation; this historical list does not reopen those settled definitions. Host assignment precedence and implementation/configuration evidence remain with their owning tasks.
-
-Which GitHub fields are authoritative; assignment metadata precedence; report schema/headers; required checks and actual protection; read-only enforcement; approval/event storage; adapters and controller/monitor product capabilities. These are not settled by the documentation tree.
+[Adoption review](adoption-review.md) records the completed consolidation. The [rewrite review](rewrite-review.md) tracks the current documentation work and remaining methodology/tooling findings.

@@ -1,17 +1,24 @@
 ---
-title: "3. Agent sandbox — Status"
+title: "SBX session delivery references"
+type: Reference
+status: "Superseded by 3-agent-sandbox.decisions.md"
+updated: 2026-11-19
 ---
 
-# 3. Agent sandbox — Status
+<a id="3-agent-sandbox--status"></a>
 
-**Document:** [3-agent-sandbox.md](3-agent-sandbox.md)
-**Feature:** [NobleFactor/noblefactor-ops#151](https://github.com/NobleFactor/noblefactor-ops/issues/151)
-**Work:** [NobleFactor/noblefactor-ops#305](https://github.com/NobleFactor/noblefactor-ops/issues/305)
-**State:** The owner's draft, 2026-10-15, with the points it does not capture and the review's open items; not
-started.
+# SBX session delivery references
 
-## Completion
+[Design](3-agent-sandbox.md) · [Architecture decisions](3-agent-sandbox.decisions.md)
 
-- [ ] The nine open items ruled.
-- [ ] A start runs the schedule's background session in its sandbox, each tmux session reaching into it through SBX.
-- [ ] The main clones read-only in the sandbox; edits in ephemeral worktrees, pushed before their sandbox ends.
+## 1. Delivery records
+
+[Sandbox integration work](https://github.com/NobleFactor/noblefactor-ops/issues/305) owns implementation and qualification of this proposal. The source records the draft and its open review questions, with implementation incomplete; this rewrite supplies no SBX runtime evidence.
+
+The [unaltered source](../../engineering/review/sources/rewrite-2026-11-19/3-agent-sandbox.status.md.txt) preserves the dated status, completion marks, qualifications and issue references. It is historical evidence, not an active checklist.
+
+<a id="completion"></a>
+
+## 2. Rewrite evidence
+
+[The rewrite review](../../engineering/review/rewrite-review.md) records source hashes, requirement destinations and reference checks. The [approved rewrite plan](../../plans/doc/581-schedule-command-consumers.md#95-full-documentation-rewrite) owns this documentation work and its remaining review gates.

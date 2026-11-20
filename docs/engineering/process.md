@@ -7,7 +7,7 @@ updated: 2026-11-19
 
 # Engineering process
 
-[Up: Engineering](index.md)
+[Up: Engineering handbook](index.md)
 
 <a id="work-philosophy"></a>
 
@@ -17,101 +17,91 @@ updated: 2026-11-19
 >
 > — David Noble
 
-Changes to scope, design and implementation are expected. Make the proposed change and its consequences easy to understand, review and carry through the affected records. Approval keeps the owner informed and in control; it must not become a reason to conceal discoveries or resist necessary change.
+Changes to scope, design and implementation are expected. Explain the change and its consequences so the Owner can review it and the affected records stay current. Approval keeps the Owner informed and in control while allowing the work to evolve.
 
 <a id="roles-and-responsibilities"></a>
 
 ## 2. Roles and responsibilities
 
-This engineering workflow uses RACI responsibilities under these names:
+| Role | RACI responsibility | Work |
+| --- | --- | --- |
+| Owner | Accountable | Owns the outcome and retains final decision authority |
+| Reviewer | Consulted | Challenges proposals and evaluates results, progress, risks and adherence to the plan |
+| Participant | Responsible | Performs the work and provides evidence of its quality and completion |
+| Observer | Informed | Receives updates as a stakeholder affected by the outcome |
 
-| Role            | RACI equivalent | Responsibility                                                                             |
-| --------------- | --------------- | ------------------------------------------------------------------------------------------ |
-| **Owner**       | Accountable     | Owns the outcome and has final decision authority.                                         |
-| **Reviewer**    | Consulted       | Challenges proposals, evaluates results, and advises the Owner.                            |
-| **Participant** | Responsible     | Performs the work and provides evidence of its quality and completion.                     |
-| **Observer** | Informed | Receives relevant updates as a stakeholder affected by the outcome. |
+The engineer is the Owner. Agents can be Reviewers, Participants or Observers. Monitoring and evaluating Participants is review work. Observer assignments are optional; the Owner already receives updates through accountability.
 
-The engineer is the Owner. Agents serve as Observers, Reviewers, or Participants.
+Controllers can support the Owner as Reviewers, with design, planning or code review assigned separately. Persistent workers are Participants with schedules. These execution arrangements do not transfer the Owner's authority.
 
-Observers are stakeholders who need to be kept informed but are neither performing nor reviewing the work in that role. An agent monitoring Participants and evaluating their work serves as a Reviewer, not an Observer. A work item need not have a separately assigned Observer. The Owner receives updates as the accountable person and does not need a second role to be kept informed.
-
-In the proposed arrangement, the agents at the top support the Owner as Reviewers. Reviewing responsibilities include evaluating Participants’ progress, evidence, risks and adherence to the approved plan, and may be divided among separate Reviewers for design, planning and code. The worker agents are Participants, each assigned a schedule defining its mission.
-
-Participants are expected to exercise engineering judgment and speak their minds. They should question assumptions, identify risks, propose alternatives, and challenge designs, plans, and code—including proposals from the Owner or Reviewers. Their responsibility is to produce high-quality outcomes, not merely execute instructions or create the appearance of progress.
-
-Participants should develop and demonstrate the judgment needed to serve as Reviewers. Review authority is entrusted explicitly; it is not assumed. The Owner retains accountability and final decision authority.
+Participants exercise judgment, challenge proposals from the Owner or other agents, identify risks and propose alternatives. They develop review judgment while working; review authority is explicitly assigned.
 
 <a id="define-the-promised-outcome"></a>
 
 ## 3. Define the promised outcome
 
-Work begins with an issue describing the problem and intended result. Place it within the applicable feature and epic, and within an approved schedule when executing scheduled work. Consult [Work organization](work-organization.md#changing-scheduled-work) for definitions, commitments, discoveries and the supported schedule-creation and issue-move commands.
+Start with an issue describing the problem and intended result. Place it within the applicable Feature/Epic and an approved Schedule when executing scheduled work. [Work organization](work-organization.md) defines those relationships.
 
-The owner must be able to understand the design and implementation they will have at the end before implementation starts. A list of activities alone is insufficient.
+Before implementation, the Owner must understand the design and implementation that will result. State observable outcomes and evidence, not only activities.
 
 <a id="prepare-and-review"></a>
 
 ## 4. Prepare and review
 
-The sequence is issue → issue-bound branch and worktree → committed plan → Owner review → explicit direction to start implementation. The plan and design assessment must show the behavior, architecture, implementation and verification the Owner will have at the end.
+Follow this order: issue → issue-bound branch/worktree → committed plan → Owner review → explicit direction to implement.
 
-Prepare the [required assets](work-assets.md). Review the committed proposal with the Owner, resolving its questions one at a time. Challenge assumptions, explain alternatives and disagreements, and record the Owner's dated decisions in the plan. Agreement is not a substitute for reasoning. Once the proposal is understood and approved, ask whether to start implementation and wait for the Owner's direction. Approval of a document structure alone does not approve every implementation choice.
+Prepare the [required assets](work-assets.md). Review the committed proposal, resolve the Owner's questions one at a time, explain alternatives and disagreements, and record dated approvals and their scope in the plan. Obtain the Owner's direction to begin after approval. Approval of a structure alone does not approve unspecified implementation choices.
 
-Follow [Git authority](agent-operation.md#owner-supervised-agents-authority-and-progression) for the plan commit and later commands; preparing a proposal does not grant command authority.
+Follow [Git authority](agent-operation.md#owner-supervised-agents-authority-and-progression) for the plan commit and subsequent commands. Planning or reviewing a proposal does not grant command authority.
 
-**Case:** On 2026-09-09, an agent changed design, code and documentation and then revised the plan to match. The review now precedes implementation rather than ratifying a completed change ([recorded case, rule 10](review/sources/agent-rules.txt)).
+<a id="5-implement-the-approved-work"></a>
 
 <a id="implement-the-approved-work"></a>
 
-## 5. Implement the approved work
+## 5. Implement approved work
 
-Implementation starts only after approval of the plan and applicable design changes. Make routine choices within approved behavior, architecture, scope and verification commitments without requesting approval for each choice.
+Make routine choices within the approved behavior, architecture, scope and verification commitments without seeking approval for each choice.
 
-If a finding calls for departure, pause affected work. Explain the discrepancy, proposed change, alternatives and effect on the promised outcome. Obtain owner approval before proceeding with that departure. Update the approved records; do not rewrite them after the fact to make an unauthorized implementation appear planned.
+When a finding requires departure, pause affected work. Explain the discrepancy, alternatives, proposed change and effect on the promised result. Obtain approval and update the records before taking that departure.
 
-All development occurs in worktrees. Canonical clones are read-only for development. Follow [Coding standards](../standards/coding/index.md). Check changes as made, correct failures, and update affected plans, design/status documents and user documentation in the commit that changes what they describe.
+Develop in worktrees; canonical clones remain read-only for development. Follow [coding standards](../standards/coding/index.md), check changes as made, correct failures and update affected plans, designs/status records and user documentation in the commit that changes their facts.
 
 <a id="verify-and-review-results"></a>
 
 ## 6. Verify and review results
 
-Evaluate the approved acceptance criteria with evidence identifying the revision or artifact, environment, method, time and result. Report failures and limitations. Build success, tests, merge, deployment and operation on the user's real path establish different things.
+Evaluate the agreed criteria with evidence naming the revision/artifact, environment, method, time and result. Report failures and limits. Build success, tests, merge, deployment and operation on the user's actual path establish different facts.
 
-Record implementation, merge, deployment and verification separately. The plan specifies required milestones. For deployed-layer changes, verification includes convergence, resolving deployed links, removing authorized obsolete artifacts and exercising the actual deployed command.
-
-**Case:** In personal#181, a scratch-copy test was reported as working while the user's installed command still rejected the option. A dry run also failed to exercise the live removal path ([recorded case, rule 11](review/sources/agent-rules.txt)).
+The plan identifies required implementation, merge, deployment and verification milestones. Deployed-layer verification includes convergence, resolved installed links, authorized obsolete-artifact removal and exercise of the installed command. A scratch-copy test or dry run does not establish live behavior.
 
 <a id="pull-request-and-integration"></a>
 
 ## 7. Pull request and integration
 
-A worktree serves one PR and may cover multiple approved issues. PR readiness means all included issues are implemented, documented, tested and reviewed; it does not claim that future merge or deployment milestones have occurred. CI and lint must pass, and the Owner visually inspects code for compliance with coding standards and style. Code is not finished until it reads clearly and coherently. Participants, Reviewers and the Owner agree on additional testing, whose results are reported in the PR.
+One worktree serves one PR and can resolve several approved issues. PR readiness requires implementation, documentation, tests and review for all included work. CI/lint must pass; the Owner visually checks code for clear, coherent implementation and style. Participants, Reviewers and the Owner agree on additional tests and report their results in the PR.
 
-One active PR is permitted per worktree. Independent workers may proceed concurrently in their own worktrees. During integration, only review or CI corrections belong in that worktree. Workers must not modify another worker's worktree.
+The shared limit is one active PR per worktree. Independent workers can proceed in their own worktrees. During integration, only review/CI corrections belong there. Never change another worker's worktree. Apply any [effective host override](index.md#temporary-live-entrypoint-overrides) for the affected session.
 
-The [PR procedure](procedures/pull-request.md) owns the dedicated script standard, integration safeguards, disclosure and reporting mechanics. Follow it without treating a script as permission to run it.
-
-**Case:** An agent opened another worktree during a PR's CI wait on 2026-09-08. The Owner has since clarified the boundary as one active PR per worktree, allowing independent workers while preventing unrelated work from entering a PR under integration ([original rule 7](review/sources/agent-rules.txt); [O01 resolution](review/open-decisions.md#o01--scope-of-pr-serialization)).
+The [PR procedure](procedures/pull-request.md) defines script preparation, integration safeguards, disclosure and reporting. A prepared script does not grant permission to run it.
 
 <a id="completion-and-progression"></a>
 
 ## 8. Completion and progression
 
-An issue is complete only when all its agreed completion milestones are satisfied and the Owner approves completion or an explicit unattended-progression grant covers the issue. Until then, the plan remains `active`. A PR names each issue it completes with a closing keyword, so GitHub links the PR to the issue, shows it in the issue's Linked pull requests, and closes the issue at the merge, which the Owner approves by merging; an issue whose deployment or verification then fails is reopened with `star github issue reopen`, its reason recorded (ruled 2026-11-19). A PR that only advances an issue names it without a closing keyword.
+Completion requires the agreed milestones and Owner approval, or an explicit unattended-progression grant covering the issue. The plan remains `active` until those milestones are met.
 
-Record post-merge results immediately on the issue, then incorporate them into the plan through a documentation-only follow-up PR. That follow-up validates documentation-only scope, formatting, metadata and links without rerunning builds, code linting or functional tests. Keep the documentation obligation visible until incorporated. A completion-only documentation follow-up records already established results; it does not create a new delivery milestone requiring another completion follow-up. It still requires the applicable documentation validation, review and merge authorization. If it changes behavior, scope or the approved outcome, it is substantive work rather than completion bookkeeping. This is approved policy; implementation of the lightweight CI path remains deferred and does not authorize bypassing existing checks.
+A PR uses closing keywords for the issues it completes. GitHub links the PR and closes those issues when the Owner merges it. A PR that only advances an issue references it without a closing keyword. If deployment or verification then fails, reopen the issue with `star github issue reopen` and record the reason.
 
-Before advancing to the next issue, obtain the Owner's completion approval unless explicit unattended progression covers a defined schedule portion. Such authorization does not waive other approval requirements. Stop unattended progression on a blocker, a necessary departure from approved commitments or insufficient acceptance evidence; record state and bring the decision to the Owner.
+Record post-merge results immediately on the issue, then incorporate them into the plan through a documentation-only follow-up PR. Validate documentation-only scope, formatting, metadata and links rather than repeat builds, code linting or functional tests. Keep that obligation visible until incorporated. The lightweight CI path remains separately deferred; existing checks still apply.
 
-**Case:** devlore-cli#814 merged with an unfinished plan item because closure was deferred to an event no branch commit could record. O03 now separates readiness, delivery milestones and post-merge documentation instead of marking future work complete ([original development process](review/sources/development-process.txt); [O03 resolution](review/open-decisions.md#o03--completion-closure-and-plan-status)).
+A completion-only follow-up records established results and creates no further delivery milestone or recursive follow-up. It still requires documentation validation, review and merge authority. Changes to behavior, scope or outcome remain substantive work.
+
+Obtain completion approval before advancing unless an explicit grant permits unattended progression through a defined schedule portion. Other approval boundaries remain in force. Stop on a blocker, a required departure or insufficient evidence; record the state and bring the decision to the Owner.
 
 <a id="preserve-and-clean-up"></a>
 
 ## 9. Preserve and clean up
 
-Blocked work is preserved by default. Abandonment or deletion is an explicit decision. After an approved merge or abandonment, promptly remove the worktree and its sibling PR script and close the branch using the supported cleanup procedure. Identify lingering assets when noticed.
+Preserve blocked work and its state. Abandonment or deletion requires an explicit decision.
 
-Ensure needed post-merge obligations and evidence remain recorded outside any worktree that is removed. Cleanup does not itself demonstrate deployment, verification or completion.
-
-**Case:** A worktree was found seven months after its PR merged; a generic sibling script no longer identified the work it served. Prompt cleanup and issue-named scripts make ownership visible ([recorded case, rule 16](review/sources/agent-rules.txt)).
+After approved merge or abandonment, promptly remove the worktree and sibling PR script and close the branch through the supported procedure. Identify lingering assets when found. Keep post-merge obligations and evidence outside a worktree before removing it; cleanup does not establish deployment or completion.

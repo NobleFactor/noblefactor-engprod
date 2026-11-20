@@ -1,12 +1,14 @@
 ---
 name: star-github-schedule-progress
-description: Answer schedule status and next-work questions, show scenarios, discover schedules or scenarios, and report on epics, features, bugs or issue searches using the star GitHub commands.
+description: Report schedule or scenario status, identify next scheduled work, discover collections, and answer epic, feature, bug or issue-search questions with star GitHub commands.
 title: "star github schedule progress"
 ---
 
-# Answering a question about issues
+<a id="answering-a-question-about-issues"></a>
 
-Use the star GitHub commands for issue questions, following [Agent operation](../../../../../docs/engineering/agent-operation.md#all-agents-tools-and-status). A schedule or scenario view comes from its collection command; the broad report serves questions across issues and repositories. Read one issue's body with `gh issue view` only after the appropriate star command has identified it.
+# Report GitHub work status
+
+Follow [Agent operation's tool routing](../../../../../docs/engineering/agent-operation.md#all-agents-tools-and-status). Use collection reads for Schedules/Scenarios and the broad report for questions across issues or repositories. Read an identified issue's full body only after the appropriate star command identifies it.
 
 <a id="the-invocations"></a>
 
@@ -14,62 +16,72 @@ Use the star GitHub commands for issue questions, following [Agent operation](..
 
 | Request | Command |
 | --- | --- |
-| Status, where do we stand, what is next, or show the schedule | `star github schedule get <schedule>` |
-| Show the scenario or its findings | `star github scenario get <scenario>` |
-| What schedules are there | `star github schedule list <account>` |
-| What scenarios are there | `star github scenario list <account>` |
-| An epic, feature, bugs, what covers a symptom, or an issue search | `star github schedule report` |
-| Classification faults | `star github triage sweep` |
+| Schedule status, current work or next work | `star github schedule get <schedule>` |
+| Scenario or its findings | `star github scenario get <scenario>` |
+| Discover Schedules | `star github schedule list <account>` |
+| Discover Scenarios | `star github scenario list <account>` |
+| Epic, Feature, Bugs, symptoms or issue searches | `star github schedule report` |
+| Classification faults | `star github triage sweep`, which requires mutation authority |
 
-A schedule or scenario key is `<owner>/<repository>#<number>`. A list command takes an account, such as `NobleFactor` or `David-Noble-at-work`; `--team <slug>` narrows an organization's results to a team and is refused for a user account. The collection commands are defined in [section 8](../../../../../docs/architecture/issue-data-model/8-the-schedule-commands.md) and [section 9](../../../../../docs/architecture/issue-data-model/9-the-scenario-commands.md).
+Collection keys are `<owner>/<repository>#<number>`. Lists take an account; `--team <slug>` restricts an organization's results and is refused for a user account. [Schedule](../../../../../docs/architecture/issue-data-model/8-the-schedule-commands.md) and [Scenario](../../../../../docs/architecture/issue-data-model/9-the-scenario-commands.md) references own the contracts.
 
-## Status
+<a id="status"></a>
 
-When the Owner asks for status without naming a collection, use the schedule identified by `star-github-schedule-assignment`. Keep its issue key; do not infer an assignment from a branch name, current directory, or similar title.
+## Report the assigned schedule
 
-1. **Status** comes from one `schedule get` call. Return its rows in the order printed, without follow-up lookups or added prose.
-2. **Status on the current issue** uses the same call, selecting the In progress steps and showing their Worktree links.
-3. **What's next?** Use that result to name the next open step, its issue and its Worktree when present, in one sentence.
-4. **What's next, in detail?** Describe the open steps in order and their open blockers, ending with the command's table.
+When no collection is named, resolve the assignment through `star-github-schedule-assignment`. Preserve its issue key; branch names, directories and similar titles do not establish an assignment.
 
-The Schedule issue's own row comes first with no Step, followed by numbered steps and then any rows missing a Step. Records carry `step`, `issue`, `type`, `title`, `state`, `status`, `worktree`, `iteration` and `blocked_by`. The blockers are the open ones. Read a closed schedule with the same command.
+Use one `schedule get` call:
 
 ```bash
 star github schedule get <owner>/<repository>#<number> --silent --output table \
   --jq 'map({step, issue, type, title, state, status, worktree, blocked_by})'
 ```
 
-For status on the current issue, replace the projection with `map(select(.step != null and .status == "In progress") | {step, issue, type, title, state, status, worktree, blocked_by})` in that one call.
+For a status request, return the rows in command order without added prose or follow-up lookups. For current-issue status, select the In progress Steps and include Worktree links in that same call:
+
+```text
+map(select(.step != null and .status == "In progress") |
+  {step, issue, type, title, state, status, worktree, blocked_by})
+```
+
+For “what's next,” identify the next open Step, its issue and Worktree in one sentence. Preserve execution order and report blockers rather than silently reorder work. For detail, describe open Steps and their open blockers in order, ending with the command's table.
+
+The Schedule's own row comes first with no Step, followed by numbered Steps and then rows missing a Step. Records include step, issue, type, title, state, status, worktree, iteration and open blocked_by relationships. The same command reads closed Schedules.
 
 ## Show a scenario
 
-Use one `scenario get` call for the named scenario. Its own issue's row comes first with no Beat, followed by numbered rows in Beat order, then rows missing a Beat. Beat N is step N of the walk; Beat 0 is before its first step. Read a retired scenario with the same command.
+Use one call for the named Scenario:
 
 ```bash
 star github scenario get <owner>/<repository>#<number> --silent --output table \
   --jq 'map({beat, issue, type, title, state, status})'
 ```
 
-## Discover schedules and scenarios
+Its own row has no Beat, followed by numbered Beats and rows missing a Beat. Beat N is walk step N; Beat 0 precedes the walk. The same command reads retired Scenarios.
 
-Name the account explicitly. Preserve the command's project and option names; the issue key identifies the collection to pass to `get`.
+<a id="discover-schedules-and-scenarios"></a>
+
+## Discover collections
+
+Name the account and preserve returned project/option names. Use the issue key for later collection reads:
 
 ```bash
 star github schedule list NobleFactor --team engprod --silent --output table \
   --jq 'map({schedule, issue, title, state, assignee, project, open_steps, closed_steps})'
-star github scenario list NobleFactor --team engprod --silent --output table \
-  --jq 'map({scenario, issue, title, state, assignee, project, open_rows, closed_rows})'
-star github schedule list David-Noble-at-work --silent --output table \
-  --jq 'map({schedule, issue, state, project, open_steps, closed_steps})'
 star github scenario list David-Noble-at-work --silent --output table \
-  --jq 'map({scenario, issue, state, project, open_rows, closed_rows})'
+  --jq 'map({scenario, issue, title, state, assignee, project, open_rows, closed_rows})'
 ```
 
-## What the report returns
+Either collection supports organizational/team or user-account discovery. List reads applicable projects; get reads the selected collection's team project.
 
-The broad report returns a flat record for every issue, open and closed, in the repositories it reads. Records carry issue identity and state; parent, feature and epic; native issue fields; `home` project rows; `in_triage`; labels, assignees, dependencies, projects and timestamps. A list is `[]` when empty. Its `--search` uses GitHub issue-search syntax for body, comment and other criteria outside those fields.
+<a id="what-the-report-returns"></a>
 
-Keep using it for epic, feature, bug and search questions:
+## Report across issues
+
+The broad report reads open and closed issues in named repositories, or writ's configured layer repositories when none are named. Its flat records include identity/state, parents/Feature/Epic, native fields, home rows, Triage membership, labels, assignees, dependencies, projects and timestamps. Empty lists are `[]`.
+
+Use filters for recorded fields and GitHub `--search` syntax for body, comments or other search criteria:
 
 ```bash
 star github schedule report --silent --output table --filter epic=<owner>/<repository>#<number> \
@@ -82,29 +94,40 @@ star github schedule report NobleFactor/devlore-cli --silent --output table --se
   --jq 'map({issue, type, state, title})'
 ```
 
-## Where to run it
+<a id="where-to-run-it"></a>
 
-The commands run anywhere. With no repositories named, the broad report reads the repositories in writ's layers on the Owner's machine. Name repositories as `owner/name` arguments when the question has a narrower scope. Collection `get` reads the one team's project; collection `list` reads the account's applicable projects or one named team's.
+Commands run from any directory. Name repositories as owner/name when narrower scope is needed. Use `--silent` and a `--jq` projection of required fields; present tables to people and retain JSON for evidence. Preserve returned records rather than reconstruct them through ad-hoc issue lists/searches.
 
-Always use `--silent` and a `--jq` projection naming the fields needed. Use `--output table` for a person or JSON for retained evidence; present the command's records rather than reconstructing them with ad-hoc issue-list or search queries.
+<a id="the-cost"></a>
 
-## Verify star first, and do not clobber it
+Output filters do not reduce the report's underlying repository reads. Choose the operation by the question's scope.
 
-Before relying on a locally built command, identify the installed build and compare it with devlore-cli's `develop`, once for the current verification context:
+<a id="verify-star-first-and-do-not-clobber-it"></a>
+
+## Verify the installed build
+
+Once per verification context, identify the installed copy/build and compare its commit with devlore-cli's develop. Confirm the needed command and inspect available dirty/unknown build metadata; a commit alone does not prove a clean build.
 
 ```bash
 build="$(star version --silent --no-pager --output value --jq .commit)"
 gh api "repos/NobleFactor/devlore-cli/compare/$build...develop" --jq .status
 ```
 
-For that base-to-develop comparison, `ahead` or `identical` places the installed build on develop's ancestry. If the build is dirty, unknown, behind or diverged, use it read-only and disclose that limitation. Confirm the needed interface exists. Do not install over another session's working build; the supported release upgrade is `star self upgrade`, when authorized.
+[GitHub compares BASE...HEAD](https://docs.github.com/en/rest/commits/commits#compare-two-commits): here the installed commit is BASE and develop is HEAD.
 
-The collection `get` and `list` commands write nothing. They refuse `--dry-run` until NobleFactor/devlore-cli#1170 allows dry runs to read; use their normal read-only invocation.
+| Comparison status | Meaning |
+| --- | --- |
+| identical | The commits match |
+| ahead | Develop has newer commits; the installed commit is its ancestor |
+| behind | Develop is behind the installed commit; do not assume those installed commits are merged |
+| diverged or unknown | The comparison does not establish that the installed commit is on develop's ancestry |
 
-## Classification faults
+A clean ancestor can still lack a needed interface; verify support rather than describe it as current. Treat dirty, unknown, diverged or comparison-status-behind builds as read-only and disclose the limitation. Do not overwrite another session's working build. `star self upgrade` is the release-upgrade path when authorized.
 
-`star github triage sweep` can add an open issue with a classification fault to its team's Triage project. It is a mutation and requires the applicable authorization. Until NobleFactor/devlore-cli#1170, `--dry-run` reads nothing and cannot prove that a live sweep would pass.
+<a id="classification-faults"></a>
 
-## The cost
+## Read and mutation limits
 
-A collection `get` reads one project. The broad report reads every issue of its repositories and is appropriate for questions across repositories. Choose the command by the question's scope; output filtering alone does not narrow the report's reads.
+Collection get/list operations write nothing. They refuse `--dry-run` until NobleFactor/devlore-cli#1170 supports reads in that mode; use normal read-only calls.
+
+Triage sweep can add an open misclassified issue to its team's Triage project and requires applicable mutation authority. Its dry run currently reads nothing and cannot establish that a live sweep would pass.

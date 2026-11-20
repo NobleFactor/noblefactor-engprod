@@ -2,73 +2,84 @@
 title: "Schedule template"
 status: draft
 created: 2026-10-28
-updated: 2026-11-17
+updated: 2026-11-19
 ---
 
 # Schedule template
 
-[Up: Templates](index.md)
+[Up: Work templates](index.md)
 
-Create a schedule with `star github schedule new <repository> <name>`, supplying the metadata and form-section values required by its help. The command follows the account's Schedule issue form in its `.github` repository, creates the issue, option and own row, and writes the Steps line. Start-Claude's former `--schedule new` is refused. This template describes the content; [Issue standards](../issue-standards.md#schedules) owns the representation. Preserve the literal `## Amendments` and `## Plan and design documents` headings required by the scheduling and document-link conventions.
+Use this content guide with the account's Schedule issue form. `star github schedule open <repository> <name>` uses that form to create the issue, option and own project row; `create` is the same operation. Supply its required Area, deliverable, exit criteria and evidence values, plus optional Priority and assignee.
+
+The form owns the issue body's labels and order. This guide's numbered headings are navigation, not replacement labels. Preserve literal issue headings such as `## Steps`, `## Amendments` and `## Plan and design documents`. [Issue standards](../issue-standards.md#schedules) owns representation.
 
 <a id="role-assignments"></a>
 
 ## 1. Role assignments
 
-[Role assignments](../engineering/process.md#roles-and-responsibilities): Owner [name]; Participants [names and scopes]; Reviewers [names and review scopes]; Observers [stakeholders or none]. A reference to approved schedule assignments may supply this record.
+[Owner; Participants and scopes; Reviewers and review scopes; Observers or none. Link approved assignments where they supply the record.]
 
 <a id="deliverable"></a>
 
 ## 2. Deliverable
 
-Before: [what exists now].
+Before: [what exists].
 
 After: [what the Owner will have when the committed work is complete].
 
-## Exit criteria
+<a id="exit-criteria"></a>
 
-- [ ] [Observable criterion for the promised deliverable.]
-- [ ] [Required milestone and its acceptance evidence.]
+### 2.1 Exit criteria
 
-## Evidence of completion
+[Observable criteria and required milestones, expressed as checkboxes in the form's Exit criteria section.]
 
-[Evidence to retain and where it will be recorded. After all steps are closed and exit criteria are ticked, the Owner reviews completion before authorizing `star github schedule close <schedule>` to write the evidence comment and close the Schedule issue.]
+<a id="evidence-of-completion"></a>
+
+### 2.2 Evidence of completion
+
+[Evidence to retain and its location. All Steps must be closed and exit criteria satisfied before Owner completion review authorizes `star github schedule close <schedule>` to record evidence and close the Schedule issue.]
 
 <a id="mission-and-ownership"></a>
 
 ## 3. Mission and ownership
 
-Owner: [person]. Worker assignment: [identity]. Scope and exclusions: [description]. Approved schedule revision: [reference]. Related features, epics and scenarios: [links].
+[Owner, worker assignment, scope/exclusions, approved revision and related Features/Epics/Scenarios.]
+
+<a id="4-schedule"></a>
 
 <a id="ordered-issues"></a>
 
-## 4. Schedule
+## 4. Steps
 
-Keep the `## Steps` line written by `star github schedule new`, which begins `The steps are the rows of …` and links the project's filtered view. Read its rows with `star github schedule get <owner>/<repository>#<number>`.
+Keep the command-generated `## Steps` section and its filtered-project link. Read the rows with `star github schedule get <owner>/<repository>#<number>`.
 
-The team's Schedule project owns the step records. Tasks and bugs have contiguous Step numbers, Status, Worktree and native blocked-by dependencies. The Schedule issue's own row has no Step. Do not reproduce an authoritative step table or a Next column in this issue.
+The project owns ordered Tasks/Bugs, contiguous Step numbers, Status, Worktree and native blocked-by dependencies. The Schedule issue's own row has no Step. Do not add a competing step table or Next column.
 
 <a id="overlap-and-coordination"></a>
 
-### 4.1. Overlap and coordination
+### 4.1 Overlap and coordination
 
-[Other schedules affecting the same code or dependencies, responsibilities and approved conversation references. Use `star github issue move --schedule <destination> --reason <Owner-approved reason>` for coordinated transfers; the command records amendments on both schedules, and an issue belongs to at most one schedule.]
+[Identify related schedules, responsibilities and approved conversation references. Use the supported issue-move operation and Owner-approved reason for transfers; it records both schedules' amendments. Verify one-Schedule membership.]
 
 <a id="progression-authority"></a>
 
 ## 5. Progression authority
 
-[Default Owner completion review, or an explicit issue range authorized for unattended progression, with conditions and stop triggers.]
+[Record default Owner completion review, or an explicit range for unattended progression with conditions and stop triggers.]
 
-## Amendments
+<a id="amendments"></a>
 
-[Date, Owner approval, proposal or revision approved, and effect on deliverable, scope, order and dependencies. Apply the approved change through `star github issue move`, whose required `--reason` records the Owner's approval in its amendment, then read the rows and amendment back.]
+## 6. Amendments
 
-## Plan and design documents
+[Under the issue's literal `## Amendments` heading, retain dates, Owner approvals, approved proposal/revision and effects on deliverable, scope, order and dependencies. Apply changes through `star github issue move` with the required `--reason`, then read back rows and amendments.]
 
-Add a plan row, initially "Not yet opened", and linked rows for applicable designs.
+<a id="plan-and-design-documents"></a>
+
+## 7. Plan and design documents
+
+[Under the issue's literal `## Plan and design documents` heading, include the required Kind/Document table. Add its plan row with “Not yet opened” until available, and links to every applicable design.]
 
 | Kind | Document |
 | --- | --- |
 | Schedule plan | Not yet opened |
-| Design | [Link each applicable design on its committed default branch] |
+| Design | [Each applicable design on its committed default branch] |

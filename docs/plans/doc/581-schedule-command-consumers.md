@@ -252,6 +252,147 @@ Prepared resolutions, the previous script and source comparisons are preserved u
 
 The integrated make check passed, and this commit completes the reviewed integration of PR #610. Publication, current-head CI and Owner review remain separate milestones.
 
+### 7.10. Architecture rewrite in progress
+
+The first implementation pass covers the nine agent-schedule input documents. It rewrites the overview, native session lifecycle, launcher interface, assignment proposal and SBX proposal, with four decision companions. It retains the status paths as references, preserves the Owner's assignment appendix verbatim and captures the nine original files as immutable source evidence. No native-host, launcher or SBX behavior is changed.
+
+The [rewrite review](../../engineering/review/rewrite-review.md) contains the 51-document dispositions, architecture coverage outline and agent-schedule requirement destinations. Its [manifest](../../engineering/review/sources/rewrite-2026-11-19/manifest.json) identifies the input revision and hashes, the existing source records and preserved anchors. Focused metadata, links, anchor, source-integrity, prose-layout and spelling checks passed. The receipt is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/rewrite-first-pass/verification.json. This is a first draft, not completed content review, repository validation or implementation qualification. The other architecture sets and handbook documents remain pending.
+
+The next draft covers issue hierarchy and attributes, including their retained status references and two decision companions. Four more original files are preserved as source evidence. This brings the rewritten input count to 13 of 51; the remaining model chapters, workstation architecture, handbook material and final content reviews remain open.
+
+This pass also drafts the collections, storage/access and issue workflow chapters and replaces the migration narrative with a retained reference to its plan. Their eight input documents and status records are preserved as original sources. Twenty-one of the 51 inputs now have a first draft or explicit retained-reference disposition. The model-command rewrite is prepared but not written: its helper hardcodes assistance disclosure and merges its own PRs. The shared disclosure policy is settled; the Owner has been asked whether automatic model PR merges remain an exception. Other work continues within approved scope. The full scan and all completion reviews remain open.
+
+The Schedule, Scenario and issue command chapters and model overview now have first drafts. The three existing command decision companions have been reviewed and revised while preserving decision IDs, approval evidence and attribution. Twenty-eight inputs have a first-pass disposition, with original sources retained. The command descriptions distinguish recoverable collection creation, optional parent/title issue matching, pending Schedule moves and the manual repair needed after other partial writes. The model publication question remains pending; no runtime behavior or authority has changed.
+
+### 7.11. Codex review-comment origin
+
+On 2026-11-19, David Noble directed this Handbook adoption work to incorporate an already approved review-comment convention. Its single authoritative home is [Agent operation: Codex review comments](../../engineering/agent-operation.md#codex-review-comments). The common instructions, shared reviewer entry point and review templates link to that definition. The actual originating session, assigned role and reviewer identity are required; the proposing session's example is not a default. PR sign-off and assistance disclosure remain separate.
+
+Implement this narrow Owner-directed addition within Handbook command alignment (#582), preserving the existing architecture rewrite and its no-merge condition. Add the dedicated review-comment template to the catalog and a reference from the completion-review template. Record the Owner and date in the decision log. This change affects shared guidance; native Claude and Codex entrypoint migration and qualification remain with their existing tasks.
+
+The additional paths outside the original 51-input rewrite inventory are docs/engineering/agents/commandments.md, docs/engineering/agents/reviewer.md, docs/engineering/review/decisions.md, docs/templates/completion-review.md, docs/templates/index.md and the new docs/templates/review-comment.md. They are a scoped Owner-approved addition, not a claim that the broader rewrite is complete.
+
+Verify the example's YAML key order and exact source values, its explicit non-default status, links from each applicable consumer, the dated Owner decision, source layout, spelling and preservation of the PR disclosure rule. Preserve the original agent-operation input before this addition so its later full rewrite can retain the new requirement alongside the original source.
+
+
+### 7.12. Structured decision records
+
+On 2026-11-19, the Owner requested decision headlines, explanations including alternatives and available evidence, and YAML attribution/timestamps. The Owner asked for research rather than an immediate change and directed use of arc42 and Google's documentation guidance. After the researched recommendation, the Owner said, “Make the changes,” then, “Add that documentation.” These later instructions authorize implementation; the earlier questions did not.
+
+Define the format once in docs/standards/documentation.md, demonstrate it in the new docs/templates/decision.md, and reference it from the template catalog and design template. Restructure docs/engineering/review/decisions.md with the existing identifiers and approval evidence intact, and record this approval as decision 59. Do not infer missing proposers or approval times. Attribute this formatting pass separately from the historical decisions. Preserve the original standard, design template and pre-format decision log as source evidence.
+
+Verify the 58 existing record bodies, identifiers and known dates; preserve the review-comment decision's anchor; check every footer's YAML fields, order, status, attribution and time precision; check metadata, links, source layout, spelling and unchanged historical evidence. Record progress in the rewrite review and retain the evidence under /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/decision-record-format. This is a scoped addition within Handbook command alignment (#582), not a completed rewrite of the documentation standard or design template. Other architecture decision companions will be brought to the format during their remaining content review.
+
+### 7.13. Workstation architecture and roadmap rewrite
+
+Continue the Owner-approved full rewrite with the workstation architecture and roadmap. Preserve the architecture's RFC/Draft and roadmap's Roadmap/Draft families. Organize the system explanation by arc42 concerns, retain the complete runtime contract and qualification boundaries, and add a structured decision companion. The roadmap retains delivery waves, Feature owners, dependencies, scenario walks and planner handoff; transition/review history belongs here and in the completed source plan.
+
+The source map is recorded in the rewrite review. Preserve R1–R10, D1–D6, S1–S8, I1–I7, G0–G6, five roles, three host paths, eight startup combinations, all seven architecture diagrams and the roadmap graph. Preserve every old heading target, especially 41-persistent-specialists. Archive both exact originals and retain the pre-existing historical source hashes. No runtime capability is claimed qualified by this rewrite.
+
+Use the new decision format for W1–W5 and D1–D6. W1–W3 have explicit Owner approval recorded in the source plan on 2026-11-13; retain their date without inventing a time. Other records remain proposed, with absent proposer/approval metadata left null. The local capture-spool engine remains deferred, including the Owner's preference for one stack end to end.
+
+Current primary host/editor documentation was consulted for documented foundations. It supports the shared-server and editor-instance constraints, while simultaneous native TUI behavior, no-view continuity, identity enforcement and the full SBX/iPad path still require qualification. Extend the focused metadata check to the documentation standard's existing catalog vocabulary rather than changing either document's family to satisfy a narrow check.
+
+This pass does not revise the completed Workstation architecture plan (#521), publish, amend tracker records or implement hosts, editors, lifecycle services or storage. Detailed content reviews and the complete methodology/tooling scan remain open. The focused receipt is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/workstation-rewrite/verification.json.
+
+#### 7.13.1 Retained source review and delivery record
+
+The following record is retained from the source roadmap. Its revision statements describe that earlier publication, not the current rewrite:
+
+This revision replaces the earlier local-inference-first delivery sequence with hosted-model proofs on existing hardware, adds the pre-schedule design transition, makes independent editor instances, guest-side shell profiles, and shared role views explicit, integrates #526's authority, and uses scenario walkthroughs to develop the methodology. Existing Feature ownership is preserved.
+
+On 2026-11-13 the owner approved explicit replacement after original-session restoration is exhausted and identified disaster recovery, including self-inflicted loss, as its driving scenario. S8 records that decision; S6 retains routine recovery of the original session.
+
+During owner review of design PR #544, the owner approved depicting shared native host servers managing sessions and internal execution, then requested the complete interaction lifecycle. The owner then requested filling those gaps with concrete interactions. This revision defines I1–I7 actor/action/outcome walkthroughs, ownership and operation receipts, concurrent startup, reconnect, approval and host lifecycle diagrams, scoped stop/resume, and observable acceptance results. It does not select a local capture-spool storage engine.
+
+Acceptance of the architecture baseline closes A5 only through its normal owner-reviewed evidence on develop. Acceptance of later waves and cooperating Features is separate. The architecture links here for delivery sequencing; this roadmap is the single dependency outline rather than a second implementation plan or schedule database.
+
+### 7.14. Core handbook rewrite
+
+Continue the approved rewrite with the handbook index, process, work organization, work assets and agent operation. Keep each requirement with its owner and preserve all source headings/explicit anchors. The requirement map is in the rewrite review. Preserve the work-philosophy quotation and the Codex review-comment convention verbatim.
+
+Keep the approved issue/worktree/committed-plan/Owner-review/start sequence, completion milestones, closing-keyword and reopening policy, bounded Git grants with exact-command fallback, separate canonical-clone/PR authority, conversation/visibility duties, one-Schedule membership, native dependency/order fields and current issue-command routing. Do not infer that a published role entry point proves host loading or runtime qualification.
+
+The common commandments' issue-tool link pins an earlier commit. Replace that one link with the relative maintained agent-operation section, so role context and its detailed instructions resolve within the same checked-out revision. Do not change its other text or the live personal host files.
+
+Retain the original sources and the current post-amendment agent-operation/commandments texts. The existing original agent-operation snapshot remains unchanged; an additional snapshot preserves the Owner-approved review-comment rule before the full rewrite. Keep dated inspection and incident narratives in source/review evidence rather than requiring them to reconstruct current instructions.
+
+No new mid-session policy-refresh mechanism is selected. Preserve startup/post-compaction reading and assignment resource revision requirements; retain that remaining policy/tooling gap for the full review. The focused receipt is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/core-handbook-rewrite/verification.json.
+
+#### 7.14.1 Retained entrypoint inspection
+
+This observation is retained from the original index as dated evidence; it is not a new inspection or a permanent discovery convention:
+
+At inspection on 2026-11-15, `/Users/david-noble/.claude/CLAUDE.md` and `/Users/david-noble/.Codex/AGENTS.md` both resolved to `/Users/david-noble/.local/share/devlore/writ/repos/personal/Home/common/.claude/CLAUDE.md`. That personal-layer source still contains these explicit instructions:
+
+### 7.15. Shared resources and retained review records
+
+Continue the approved rewrite with the repository README, documentation index, PR procedure, documentation standard, design/Schedule templates and two review records. Preserve the new authoritative decision-format section verbatim, completed consolidation evidence, original Owner responses and all incoming headings.
+
+The PR procedure follows the Owner-approved two-part flow from the Squash-merge plan: publish/check and stop for Owner review/merge in GitHub, then record observed delivery when requested. Distinguish ready for Owner review from all merge requirements satisfied. Preserve human sign-off, actual assistance disclosure, landed trailers, separate authority, stale-read protection and post-merge records.
+
+Document the metadata families as the reference checker implements them: title is required, catalog type is required, and status is validated when nonempty. Preserve the existing vocabularies and catalog-path rule. Its opening code comment still overstates type's applicability; record that source-comment finding separately without changing tooling here. Root README and skill prose use their own heading formats rather than imposing the process/plan/design numbering rule on them.
+
+During source comparison, the source handbook and Schedule template retained the retired schedule-new invocation, and the core draft carried it forward. The extension manifest and github-schedule-open.star establish open/create with no new entry. Correct the maintained references, including work organization, against those sources. Leave historical plans and snapshots intact. The README command groups are checked against extension.yaml and its CI description against ci.yaml.
+
+Make the design template an arc42 content outline with role assignments, structured decision links and delivery references, retaining old anchors. Make the Schedule template a guide to filling the account's authoritative form rather than another body schema. Preserve its literal form-label meanings and project-owned Steps.
+
+Retain the complete consolidation review's recorded findings, metrics, hashes and delivery evidence as historical records. Turn O01–O11 into an evidence index linking original responses and current authoritative homes; the older O03 closure summary and O11 invocation do not override later approved semantics. Record the already approved closing-reference and Owner-merge choices as decisions 60/61 from the explicit 2026-11-19 source plan, without inferring a new approval or a timestamp more precise than the source.
+
+The focused receipt is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/handbook-resources-rewrite/verification.json. Source cases, obsolete README implementation/transition stories and earlier review summaries remain in exact snapshots. No code, deployed instruction, protected-branch configuration or runtime behavior is changed.
+
+### 7.16. Reporting skill and Git reference guides
+
+Continue the approved first pass with the shared status-reporting skill, branch protection reference and PR-script specification. Preserve original inputs and all incoming heading targets. Rewrite the skill's reading path without changing assignment authority, supported routes, returned ordering, scope/cost boundaries or mutation limits.
+
+Use the skill-creator guidance for scope and progressive disclosure. Its packaging validator rejects the repository-required title field; preserve that field and record the failed check as M06 for the native Codex consumption task. This does not prove a Codex-loader failure and does not qualify native host packaging.
+
+Define branch policy separately from dated enforcement observations. Retain the approved main/release signing scope and personal exemption from decisions 34/35; do not claim the old main-only configuration implements it or that GitHub configuration was reread. Preserve rule IDs, baseline/platform/installer requirements, context naming and authority. Correct the source's general platform claim: GitHub organization rulesets can target subsets; our shared baseline is why its check must exist across its target set.
+
+Shorten the PR specification's prose while retaining all thirteen stable rule numbers, eight PowerShell rules and five executable examples byte-for-byte. Keep Owner merge, explicit staging and command authority, actual-head checks, plan-link refusal inspection, guarded progress records, timestamps, cleanup and clone-maintenance boundaries. Historical cases and configuration chronology remain in preserved source, rather than active instructions.
+
+Candidate M07: the Bash and PowerShell examples inspect the latest target commit after cleanup when checking landed trailers. In concurrent work another merge can advance that target. The proposed correction pins the lookup to the full mergeCommit.oid already read for this PR. The Owner has been asked whether to include it; no implementation or approval is inferred while awaiting the answer. The examples remain exact in this first pass.
+
+The focused receipt is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/handbook-final-guides/verification.json. No Git command, PR script, native binding or configuration change is performed.
+
+### 7.17. Issue-standard candidate and substantive findings
+
+Prepare the remaining issue-standard rewrite from its complete source. Map its taxonomy, Area, attributes, labels, intake, movement, Scenario/Schedule behavior, completion evidence, validation and access requirements before replacing the maintained reference. Preserve its detailed dated permission matrix and all original evidence in an exact snapshot. Keep the current standard unchanged while the conflicting membership rule is reviewed with the Owner.
+
+M08: the standard contains both a one-managed-project rule including Triage and the explicit exception allowing Triage beside one Backlog/Schedule/Scenario home. The sweep implements the latter, never removing a home. Earlier rewritten hierarchy/collection passages carried the former rule forward. Ask the Owner which rule to retain and hold those affected passages for the answer. Do not silently infer a supersession from prose dates. The preferred correction preserves one home and permits a fault's Triage row beside it.
+
+M09: current primary GitHub documentation and the live User schema expose issueFields and issueTypes, contradicting retained platform-capability claims. The live account read for David-Noble-at-work returned FORBIDDEN/null for both, so native consumption is not qualified. The proposed documentation correction distinguishes our supported label-based user-account profile from GitHub capability; it does not adopt native user fields/types or change provisioning. Keep the source failures and account-access limit visible for the content review.
+
+The candidate is saved outside the repository at /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/rewrite-first-pass/pending-issue-standard/issue-standards.md. Its membership clause is explicitly unresolved; it is not an approved replacement. Native representation changes require separate planned work.
+
+Verify the completed Handbook consolidation (#420) plan against the inventory input and retain it byte-for-byte. It is a historical record of accepted work, not an active guide to rewrite. Keep this active plan's amendments and progress current. Full consistency/content reviews, Owner decisions, the Owner-run repository gate and publication remain outstanding.
+
+### 7.18. Model-command review boundary and chapter rewrite
+
+On 2026-11-19, David Noble answered yes to the proposal that model-command PRs stop for his review and merge in GitHub. Record decision 62 and place the policy in the shared PR procedure; reference it from the model architecture and decision companion. This settles the policy choice in M02. It grants no Git, command, script, repository configuration or runtime implementation authority.
+
+Finish the model-command chapter and its delivery reference from their complete original sources. Preserve all legacy heading targets, the five command signatures, live authority, model scope/schema, reference adoption, identity, reconciliation/pruning limits, project data, access and secret handling, recovery limits and two-account qualification. Move implementation chronology, retired examples, checklists and measurements to exact source evidence and delivery/plan references.
+
+The architecture defines prepared publication, observed checks on the exact head, Owner review/merge and verified delivery as separate states without inventing a delivered status value or new command flag. Apply/restore may have made direct configuration writes before a file PR; stopping that PR does not imply rollback. Preserve stable resource IDs, account boundaries and the supported label-based user representation.
+
+The source helper still merges automatically and hardcodes Claude Code in its assistance trailer; backup assumes that merge completed before it cleans up and returns merged. Runtime alignment must include the helper, its callers, pending/retry behavior, exact-head evidence, post-merge records and tests through a separately approved plan. This pass changes none of them and treats no current mutating invocation as qualified for the new flow.
+
+Candidate M10: the helper treats a branch-rules 403 on any private repository as no required checks. That is broader than its stated free-user/no-rules rationale and cannot establish the shared policy's verified no-check exception. Record the concrete condition and required alignment; do not silently treat a permission failure as no protection or change the code here.
+
+The model decision companion records established choices with structured footers and actual source precision. Unknown proposers or combined approval dates remain null. The new publication approval names Codex as proposer, David Noble as approver and the known approval date alone; recording time remains separate.
+
+The focused receipt is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/model-publication-rewrite/verification.json. M07 trailer verification and M08 Triage/home membership remain independent pending decisions. The prepared issue-standard candidate, factual capability review, full content checks and Owner-run publication gates remain outstanding.
+
+### 7.19. Publish the current work for independent review
+
+On 2026-11-19, the Owner explicitly directed this agent to commit and push all current changes immediately and supply a prompt for an independent code reviewer. This authorizes this publication run in the assigned worktree. Preserve the approved scope, pending decisions and unfinished evidence; publication is neither acceptance nor merge approval.
+
+Publish the complete current repository changes in PR #596, including source-preservation assets and the issue-standard candidate as a review proposal. The proposal does not replace the maintained issue standard or resolve M08. M07 and M08 remain unanswered; the request to publish is not approval of either recommendation. Record actual gate, commit, push and CI outcomes separately.
+
+Correct the two new blank-line-at-EOF findings before staging. Run the repository's make check on the explicitly staged candidate, preserve hooks and publish without a merge or issue closure. Read back the remote head and update the PR description and scheduled issue progress to describe this actual candidate. The Owner requested independent review of the unfinished work; keep remaining content reviews and merge requirements explicit.
+
+The reviewer prompt identifies scope, source evidence, known findings and limits. It asks for independent findings on correctness, completeness, Google/arc42 compliance, methodology/tooling consistency and reviewability. It grants no implementation or merge authority.
+
 ## 8. Completion milestones
 
 Preserve the common commandments and five role entry points accepted in PR #601, merged as 967764ae13b015543a2d0667e907b0fd37283875. Integrate the current target through the Owner-run checkpoint script. Review their references when rewriting handbook pages; their publication does not qualify native host loading.
@@ -297,6 +438,16 @@ Implementation, Owner review, merge and post-merge verification are required. Co
 - [x] Commit this full-rewrite plan amendment as the next plan checkpoint.
 - [x] Owner approved the amended plan and directed the rewrite on 2026-11-19, as recorded in section 12.
 - [ ] Map the architecture content, source requirements and incoming references across the inventory.
+- [x] Prepare the first agent-schedule architecture draft, its decision companions, retained references and source-preservation record; remaining input documents and content reviews stay open.
+- [x] Prepare the issue hierarchy and attribute drafts, their decision companions, retained references and source evidence; the remaining chapters and reviews stay open.
+- [x] Prepare the collection, storage/access and workflow drafts and retained migration reference, with source preservation; hold the model publication contract for the Owner's ruling.
+- [x] Draft the collection and issue command chapters and model overview, and review their three decision companions with signatures, write order and retry limits checked against source.
+- [x] Prepare the workstation architecture, roadmap and decision companion, preserving requirements, interactions, diagrams and legacy links; complete their focused checks.
+- [x] Rewrite the five core handbook pages and update their shared entrypoint reference, preserving requirements, policy additions and source evidence; complete focused checks.
+- [x] Rewrite the eight resource/review inputs, correct maintained creation-command references and record the later explicit approvals; complete focused preservation and source checks.
+- [x] Rewrite the reporting skill and two Git reference guides, preserving examples and recording qualification gaps; complete focused checks.
+- [x] Preserve and verify the completed consolidation plan, map the issue-standard candidate and record substantive membership/capability findings.
+- [x] Record the model-publication approval and complete the command chapter, decision companion and delivery reference; verify sources and shared-policy alignment.
 - [ ] Rewrite all maintained documents for Google writing and arc42 content, preserving their substance and updating related status and reference records.
 - [ ] Scan the rewritten set for conflicts between the methodology and tooling, and record the findings with evidence and proposed corrections.
 - [ ] Review the findings with the Owner, record decisions, and apply and verify the agreed corrections; explicitly track required tooling changes and approved interim handling.
@@ -317,6 +468,27 @@ Implementation, Owner review, merge and post-merge verification are required. Co
 - [x] Integrate 9bf246b4c074550c03b842bce5111e33ba34800e, pass make check and commit this checkpoint through the Owner-run script.
 - [x] Publish the refreshed checkpoint at 1cba02d4af302b29ba26868ed99e95097b4eeae6 and pass all four current-head CI checks.
 - [x] Owner approved the amended plan and directed the rewrite on 2026-11-19.
+
+### 9.8. Review-comment origin convention
+
+- [x] Record David Noble's 2026-11-19 approval, authoritative home, affected references and verification approach before implementation.
+- [x] Add the canonical convention, dated decision and references from common/reviewer instructions and review templates.
+- [x] Verify YAML order and example provenance, dynamic origin values, links, prose layout, spelling and the separate PR requirements.
+- [ ] Publish through the existing Owner-run PR process after the applicable review and rewrite gates.
+
+
+### 9.9. Structured decision records
+
+- [x] Record the researched proposal, Owner approval, canonical home, affected paths and verification approach before implementation.
+- [x] Define the standard, add the template and references, and restructure the handbook decision log without changing its decisions.
+- [x] Verify decision-body preservation, YAML structure and provenance, known dates, links, metadata, layout and spelling.
+- [ ] Publish through the Owner-run PR process after the applicable rewrite and review gates.
+
+### 9.10. Independent-review publication
+
+- [x] Prepare the complete current review candidate, version the pending issue-standard proposal and record the Owner's direct publication instruction.
+- [x] Pass the repository gate for the explicitly staged candidate and preserve its result before committing.
+- [ ] Obtain independent review, resolve required findings and satisfy the existing merge gate.
 
 ## 10. Files and related assets
 
@@ -348,8 +520,18 @@ On 2026-11-19, the Owner required this rewrite to check and correct the substanc
 
 On 2026-11-19, after reviewing the scope, method and completion criteria and adding the substantive-review and scan-after-rewrite requirements, the Owner said, "Plan approved. let's go." This approves the 51-document rewrite and directs implementation in this worktree. The sequence is content and source mapping, rewriting for Google and arc42, scanning for methodology/tooling conflicts, reviewing those findings with the Owner, and applying and verifying the agreed corrections. Git and PR-script execution remain Owner-run.
 
+On 2026-11-19, David Noble explicitly directed incorporation of the approved Codex review-comment convention into Handbook adoption (#551), with one authoritative definition and references from applicable instructions and templates. This is a scoped addition to the approved handbook work in this worktree. It authorizes the documentation change described in section 7.11; it grants no Git, publication, merge or cross-worktree authority.
+
+On 2026-11-19, after requesting research and specifying arc42 and Google as the references, David Noble directed, “Make the changes,” and, “Add that documentation.” This authorizes the structured decision-record amendment in section 7.12 within this worktree. It does not authorize Git commands, publication, merge, cleanup or edits to another worker's files.
+
+On 2026-11-19, the Owner answered yes to the proposed Owner-review-and-merge policy for model-command PRs. This approves the shared policy and model-documentation amendment in section 7.18. It does not approve automatic merge, a code change or execution of any Git/model/PR command. The separate M07 and M08 questions remain unanswered.
+
+On 2026-11-19, the Owner directed: “I want you to commit and push all changes. do that immediately.” The Owner also requested a prompt for the independent code reviewer. This is explicit authority for the current agent-run publication, including the necessary inspection, staging, gate, commit, push and PR update in this worktree. No merge, issue closure, cleanup, other-worktree change or pending policy choice is authorized.
+
 ## 13. Completion review
+
+The publication candidate passed make check, including frontmatter, spelling, shell, PowerShell, Starlark and the local test suite. The gate ran on the explicitly staged files. Three inherited whitespace findings in two exact source snapshots remain preserved by hash; maintained changes pass the whitespace check. Independent review and current-head CI are separate.
 
 The initial full-rewrite plan checkpoint was published at cbdc89b9d4eb601b7b5c47eb1202b803a6b45c1c. The Owner approved the merge order and document structure. The six-file disclosure and plan checkpoint is committed at 5a8383ddc1ede02f009a76eaaca1a4fa17a64bdf after its Owner-run make check passed.
 
-The Issue verbs integration is committed as 7b6e64520a6047687fddd28aaf8808b6ff4ce707 after its passing gate. The later PR #610 integration was published in draft PR #596 at 1cba02d4af302b29ba26868ed99e95097b4eeae6. The integrated make check and all four current-head CI checks passed. Progress was recorded on Skill/index update (#581) and Handbook command alignment (#582), and both Schedule rows read back In progress. The run's receipt is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/merge-reconciliation/advance-610/runs/20261119T183441Z/receipt.json. The inventory has 51 documents. The Owner approved the amended plan and directed implementation on 2026-11-19. This checkpoint records that approval. The content and source maps and full rewrite remain to be done. Keep the PR a draft and both issues open. The Owner merges only after the rewrite's merge condition is satisfied; deployed-content verification, completion approval and cleanup follow.
+The Issue verbs integration is committed as 7b6e64520a6047687fddd28aaf8808b6ff4ce707 after its passing gate. The later PR #610 integration was published in draft PR #596 at 1cba02d4af302b29ba26868ed99e95097b4eeae6. The integrated make check and all four current-head CI checks passed. Progress was recorded on Skill/index update (#581) and Handbook command alignment (#582), and both Schedule rows read back In progress. The run's receipt is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/merge-reconciliation/advance-610/runs/20261119T183441Z/receipt.json. The inventory has 51 documents. The Owner approved the amended plan and directed implementation on 2026-11-19. This checkpoint records that approval. The initial architecture coverage outline and all 51 document dispositions are recorded in the rewrite review. The agent-schedule, issue hierarchy and attribute drafts are prepared; detailed mapping and rewriting of the remaining documents, the substantive reviews and final verification remain open. Keep the PR a draft and both issues open. The Owner merges only after the rewrite's merge condition is satisfied; deployed-content verification, completion approval and cleanup follow.

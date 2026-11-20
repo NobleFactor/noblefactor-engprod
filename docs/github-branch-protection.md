@@ -1,111 +1,111 @@
 ---
-title: "GitHub Branch Protection Rules"
-description: "Branch protection and required-check policy for all NobleFactor repositories"
+title: "Branch protection"
+description: "Protected branches, required checks and ruleset administration for NobleFactor repositories"
+status: draft
+updated: 2026-11-19
 ---
 
-# GitHub Branch Protection Rules
+<a id="github-branch-protection-rules"></a>
 
-This document defines the branch protection policy for all NobleFactor repositories, and records what is actually enforced today.
+# Branch protection
 
-## Protected Repositories
+[Up: Engineering documentation](index.md)
 
-| Repository | Default Branch |
+Protected branches accept reviewed pull requests through squash merges. Required checks must pass. A configured bypass actor has a technical capability, not standing permission to bypass review or checks; any exception requires explicit Owner authorization.
+
+This document states the policy. [Configuration evidence](#6-configuration-evidence) identifies dated observations; read effective rules before making an enforcement claim or proposing a configuration change.
+
+## 1. Scope
+
+<a id="protected-repositories"></a>
+
+### 1.1. Repositories
+
+| Repository | Default branch |
 | --- | --- |
-| devlore.noblefactor.com | develop |
-| devlore-cli | develop |
-| devlore-registry | develop |
-| noblefactor | main |
-| noblefactor-engprod | develop |
+| NobleFactor/devlore.noblefactor.com | develop |
+| NobleFactor/devlore-cli | develop |
+| NobleFactor/devlore-registry | develop |
+| NobleFactor/noblefactor | main |
+| NobleFactor/noblefactor-engprod | develop |
 
-NobleFactor/.github, the organization's `.github` repository, is where the organization's model file is stored (ruled 2026-11-02), and where its file templates are stored: its issue forms, its pull request template, and its Triage workflow template, which offers each repository the workflow that adds a new issue to its team's Triage project, except a Schedule or Scenario issue whose own row belongs to its collection project (#573). Findings logged while walking a scenario are routed to that scenario instead (ruled 2026-11-04). GitHub serves its default community health files and issue templates to every repository of the account. Ruled 2026-11-03: it gets a `quality-gate` check of its own, so it follows the organization's ruleset like every other repository. What it held on 2026-11-03 is in [section 6](architecture/issue-data-model/6-the-asset-and-its-sync.md#one-model-per-account) of the issue data model design.
+NobleFactor/.github follows the same baseline and provides account-wide community files, issue forms, the PR template and the Triage workflow template. Its model ownership and publication contract are described in the [issue data model](architecture/issue-data-model/6-the-asset-and-its-sync.md#one-model-per-account). Schedule and Scenario own rows belong in their collection projects; findings from a Scenario walk enter that Scenario's route.
 
-## Protected Branches
+<a id="protected-branches"></a>
 
-- `~DEFAULT_BRANCH`
-- `main`
-- `develop`
-- `release/*`
+### 1.2. Branches and names
 
-Branch *names* are constrained everywhere, on every ref — see ruleset 12515090 below.
+Protect the default branch, main, develop and release/*. Working branches use doc/, feature/, fix/, hotfix/, refactor/ or release/ followed by a nonempty name. The recorded branch-name pattern is:
 
-## Implementation: three organization rulesets
-
-Protection is implemented with **organization-level** GitHub rulesets, not per-repository ones. One definition governs every repository in the org; a repository cannot weaken it, and a repository-level ruleset can only add to it.
-
-That distinction matters for required checks and is the reason for the two-tier policy below: an org ruleset can only require a check that **every** repository produces.
-
-### 12426847 — "Protection for default, main, develop, and release/\*"
-
-Applies to `~DEFAULT_BRANCH`, `refs/heads/main`, `refs/heads/develop`, `refs/heads/release/*`.
-
-| Rule | Setting |
-| --- | --- |
-| `deletion` | Protected branches cannot be deleted |
-| `non_fast_forward` | No force-pushes |
-| `required_linear_history` | No merge commits |
-| `pull_request` | Squash only; **1** approving review; dismiss stale reviews on push; **require code-owner review**; require extra approval for unattributed changes |
-| `code_quality` | severity `all` |
-| `required_status_checks` | `quality-gate`; `strict_required_status_checks_policy` **false** |
-| `code_scanning` | CodeQL — alerts threshold `errors`, security alerts `all` |
-
-**Bypass actors:**
-
-| Actor | Mode |
-| --- | --- |
-| `OrganizationAdmin` | `pull_request` |
-| `Integration` id `2791147` (the automation app) | `pull_request` |
-
-`pull_request` mode is an override at merge and nothing else. **Direct pushes to `main`, `develop`, and `release/*` are refused for everyone**, organization admins and the automation app included. Both can still merge a pull request whose required checks are failing or whose review is missing, which is what keeps `gh pr merge --admin` working in the PR scripts and lets the automation app merge its own cross-repository pull requests in devlore-cli's `knowledge-extract`, `docs-publish`, and `release` workflows.
-
-Until 2026-08-26 both actors held `always`, which exempted them from **every** rule in every circumstance — including the `pull_request` rule requiring a pull request at all. A direct push to a protected branch was therefore possible for an admin and for the app, contrary to the policy stated below and to every previous revision of this document. Narrowed deliberately: you must at least look at the CI results.
-
-One workflow relied on the removed behavior. `devlore-registry`'s `update-indexes.yaml` triggers on push to `develop`/`main`/`release/*`, then commits and runs a bare `git push` back into the branch that triggered it. That push is now refused, and the workflow must be reworked to open a pull request as devlore-cli's three already do.
-
-`strict` is deliberately **false**. Enabling it would require every pull request to be current with its base before merging, which on a five-leg matrix means re-running ten checks each time the base advances.
-
-### 12515090 — "Restrict branch names"
-
-Every ref, every repository, **no bypass actors at all** — organization admins included.
-
-```
+```text
 ^(doc|feature|fix|hotfix|refactor|release)/.+$
 ```
 
-A branch outside that set cannot be pushed by anyone. Worth knowing before naming one. Ruled 2026-11-03: the `chore/` branch type is removed from this pattern and from `git open-branch`.
+Use git open-branch to derive the branch prefix from the issue: Bug becomes fix/, a user-account documentation label becomes doc/, and other issues become feature/. Chore is not an offered branch type. Protected branch names and the conditions targeting working branches must both be respected.
 
-The pattern above is the one ruled 2026-11-03, and GitHub has it: the script that changes it ran on 2026-11-03 and read the ruleset back (Managing rulesets, below). Before then, 12515090's pattern was `^(chore|doc|feature|fix|hotfix|refactor|release)/.+$`, last updated 2026-08-26. With no bypass actors, nobody can push a branch named `chore/...` now.
+<a id="implementation-three-organization-rulesets"></a>
 
-Read from GitHub the same day: 10 `chore/` branches are in 8 NobleFactor repositories, and eight of them are left over from merged pull requests. Import-AudioCdMetadata's `chore/add-codeowners` has a pull request, Import-AudioCdMetadata#1, open since 2026-02-03, and noblefactor-engprod's `chore/320-labels-file` has no pull request and was last committed on 2026-10-20. The 10 branches are as they were, and new commits to them would very likely be refused now. On the owner's machine, the worktree for dependency updates (#403) is on `chore/403-dependency-update`, which has never been pushed.
+## 2. Protection rules
 
-`git open-branch` offers no `chore` since 2026-11-13 (#449): not in the script, `Home/common/.local/bin/git-open-branch`, its man page or its bash and zsh completions, and its test, `tests/Test-GitOpenBranch`, shows `-T chore` refused. As approved on 2026-11-04, it takes the branch type from the issue's type, or, in a user account, from its type label: a bug opens as `fix/`, an issue labeled `documentation` as `doc/`, and any other as `feature/`.
+Organization rules establish a baseline; repository rules add requirements and cannot weaken it. GitHub can target organization rulesets at selected repositories. Our baseline targets the shared repository set, so its required check must exist throughout that set.
 
-### 12427647 — "Signed commits for main"
+<a id="12426847--protection-for-default-main-develop-and-release"></a>
 
-`refs/heads/main` only, **no bypass actors**. Commits reaching `main` must be signed.
+### 2.1. Protected branch rules
 
-## Required checks
+Ruleset 12426847, “Protection for default, main, develop, and release/*,” targets the default branch, refs/heads/main, refs/heads/develop and refs/heads/release/*.
 
-**Every required check must pass.** There is no partial credit and no leg that reports for information only. The sole exception is a bypass actor — an organization admin or a repository admin — who may override at merge, having looked at the results.
+| Rule | Requirement |
+| --- | --- |
+| deletion | Refuse deletion of protected branches |
+| non_fast_forward | Refuse force pushes |
+| required_linear_history | Keep protected history linear |
+| pull_request | Require a PR, squash merge and one approval; dismiss stale approvals and require code-owner review and approval for unattributed changes |
+| code_quality | Apply severity all |
+| required_status_checks | Require quality-gate; strict_required_status_checks_policy is false |
+| code_scanning | Require CodeQL with alert threshold errors and security alerts all |
 
-`quality-gate` is the **minimum**, and the only check an *organization* ruleset can require, because it is the only one every repository produces, NobleFactor/.github included: on 2026-11-03 it held its own `.github/workflows/quality-gate.yml`. That is a statement about where a requirement can be declared, not about how much is required: a repository carrying a tier-2 ruleset requires everything in it, and a red leg blocks the merge for anyone who is not a bypass actor.
+The [dated develop read](#6-configuration-evidence) also records last-push approval and resolved review threads in the organization PR rule. These effective requirements compose with repository/classic protection; a lower review count in one layer does not cancel another layer's requirements.
 
-Cross-platform repositories require more. Building for a platform proves the code compiles there; it does not prove it runs. Every supported platform must therefore report **both**:
+The recorded bypass actors are OrganizationAdmin and Integration 2791147, both in pull_request mode. That mode permits an override when merging a PR; it does not permit direct protected-branch pushes. It also grants no authority to an agent. Follow the [PR review boundary](engineering/procedures/pull-request.md#review-boundary); the Owner reviews and merges, and a check/review exception needs separate approval.
+
+Strict checks are disabled to avoid rerunning an entire platform matrix whenever the base advances. This setting does not waive the process requirement to integrate the target into the working branch through a merge before publication. Never rebase.
+
+<a id="12515090--restrict-branch-names"></a>
+
+### 2.2. Working branch names
+
+Ruleset 12515090, “Restrict branch names,” records the pattern in [section 1.2](#12-branches-and-names) with no bypass actors. Administrators are subject to it. Inspect its actual ref conditions when administering it; do not infer those conditions from the protected-branch list.
+
+<a id="12427647--signed-commits-for-main"></a>
+
+### 2.3. Signed commits
+
+The approved signing policy requires signed commits on NobleFactor main and release branches. Develop does not require signing; personal repositories are exempt. The decisions define the [branch boundary](engineering/review/decisions.md#decision-34) and [personal-repository exemption](engineering/review/decisions.md#decision-35); configuration work is deferred.
+
+The earlier source describes ruleset 12427647, “Signed commits for main,” as targeting only refs/heads/main with no bypass actors. That observation does not demonstrate enforcement on release branches. Verify the effective configuration before reporting that the full signing policy is enforced.
+
+<a id="required-checks"></a>
+
+## 3. Required checks
+
+Every required check must pass. A failing platform or installer leg is not informational when required. Cross-compilation, unit tests, end-to-end scenarios and installer tests establish different facts.
 
 | Tier | Scope | Required checks |
 | --- | --- | --- |
-| 1 — baseline | every repository, org ruleset 12426847 | `quality-gate` |
-| 2 — cross-platform | repositories that ship platform-specific binaries, repository ruleset | `test (<goos>-<goarch>)` and `scenario (<goos>-<goarch>)` for **each** supported platform |
-| 2 — installers | repositories that publish an installer, the same repository ruleset | every context of the Installers workflow: the stand-in release it builds and each installer suite on each platform the installer serves |
+| 1: baseline | All repositories in the shared organization baseline | quality-gate |
+| 2: platform behavior | Repositories shipping platform binaries | test (<goos>-<goarch>) and scenario (<goos>-<goarch>) for each supported platform |
+| 2: installers | Repositories publishing installers | The faux release build and every installer suite on every served platform |
 
-**`test (…)`** is the functional suite — unit tests, the whole package set. **`scenario (…)`** is end-to-end — the real binaries driven in a sandbox as an operator would. **`install.sh (…)`** and **`install.ps1 (…)`** are the installer suites — the installer in the pull request installing the build in the pull request, on the platform the installer serves, from a stand-in release the **`faux channel (build)`** job publishes for the run.
+Test checks exercise the package/unit suite. Scenario checks drive the built binaries as an operator would on the target platform. Installer checks run the PR's installer against the PR's build from the run's faux channel (build) release. A successful cross-compile proves compilation; it replaces none of these behavior checks.
 
-Neither substitutes for the other, and neither substitutes for a cross-compile. A green cross-compile says the target builds. A green `test` says its units behave. Only `scenario` says the shipped artifact works on the machine it was built for.
+<a id="context-naming"></a>
 
-### Context naming
+### 3.1. Context names
 
-The check context is the **platform descriptor** — `<goos>-<goarch>` — matching `ALL_PLATFORMS` and the `build/<goos>-<goarch>` directories. Never the runner label.
+Use the platform descriptor, matching ALL_PLATFORMS and build/<goos>-<goarch>, rather than a runner label. Examples include:
 
-```
+```text
 test (darwin-arm64)      scenario (darwin-arm64)
 test (linux-amd64)       scenario (linux-amd64)
 test (linux-arm64)       scenario (linux-arm64)
@@ -113,7 +113,7 @@ test (windows-amd64)     scenario (windows-amd64)
 test (windows-arm64)     scenario (windows-arm64)
 ```
 
-Two reasons the runner label is wrong here. It leaks an implementation detail a required-check name then pins — whether linux/arm64 comes from `ubuntu-24.04-arm` or a successor is not the ruleset's business. And GitHub composes a matrix job's default name from **every** matrix value, so a `matrix.include` carrying any extra key yields `test (windows-11-arm, false)`. Set the name explicitly:
+Set matrix job names explicitly so a runner change or an extra matrix key does not change a required context:
 
 ```yaml
 jobs:
@@ -125,72 +125,84 @@ jobs:
           - { platform: windows-arm64, os: windows-11-arm, race: false }
 ```
 
-Without that, adding one matrix key silently renames every required context, and a required context whose name never arrives blocks **every** merge rather than none.
+A context that never reports can block every merge. Changing a supported platform requires updating both its workflow and the applicable required contexts.
 
-### Only require checks that run on pull requests
+<a id="only-require-checks-that-run-on-pull-requests"></a>
 
-A workflow triggered solely by `push` never reports on a pull request. Requiring one blocks every merge permanently. In devlore-cli, `build-and-release`, `generate-and-pr`, and `sync-install-script` are push-only and must not appear in any required list, even though they show green on `develop`.
+### 3.2. Qualify checks on a pull request
 
-Confirm every context against a real run before writing it into a ruleset:
+Require checks that actually run on PRs. A green default-branch run does not establish this. Inspect the workflow triggers and a real PR's current head, then read its check runs. Paginate if necessary; an incomplete or empty result does not establish that no checks are required.
 
 ```bash
-sha=$(git rev-parse origin/develop)
-gh api "repos/NobleFactor/<repo>/commits/$sha/check-runs" --jq '.check_runs[] | .name' | sort
+gh pr view <number> --repo NobleFactor/<repo> --json headRefOid --jq .headRefOid
+gh api --paginate "repos/NobleFactor/<repo>/commits/<verified-head-oid>/check-runs" --jq '.check_runs[] | .name'
 ```
 
-### Where tier 2 lives
+Replace the placeholder with the observed full head ID. Do not use a remembered ID or substitute the latest target commit. Push-only publication workflows are not PR checks.
 
-In a **repository** ruleset, not the organization one.
+<a id="where-tier-2-lives"></a>
 
-The first instance is **21539972 — "Cross-platform required checks"** on devlore-cli, created 2026-08-26. It requires nineteen contexts — `quality-gate`, the ten platform legs, and since 2026-11-01 the eight Installers contexts — so a repository's full requirement is legible in one place rather than split across two rulesets — over the same refs as the organization ruleset, with `strict` false and both bypass actors at `pull_request`. The Installers contexts, confirmed against the check runs on develop at `fd217da6` before they were written in:
+### 3.3. Repository requirements
 
-```
+Declare repository-specific platform and installer checks in a repository ruleset. Require the complete supported matrix; adding a leg without requiring it leaves that leg unable to block merge.
+
+The source records devlore-cli ruleset 21539972, “Cross-platform required checks,” with nineteen contexts: quality-gate, ten test/scenario legs and eight installer contexts. The recorded installer names are:
+
+```text
 faux channel (build)
-install.ps1 (windows-amd64)      install.sh (darwin-amd64)       install.sh (linux-amd64)
-install.ps1 (windows-arm64)      install.sh (darwin-arm64)       install.sh (linux-arm64)
-                                 install.sh (darwin-arm64, MacPorts)
+install.ps1 (windows-amd64)
+install.ps1 (windows-arm64)
+install.sh (darwin-amd64)
+install.sh (darwin-arm64)
+install.sh (linux-amd64)
+install.sh (linux-arm64)
+install.sh (darwin-arm64, MacPorts)
 ```
 
-They had run on every pull request since devlore-cli#1031 without being able to block one; devlore-cli#1103 merged with both `install.ps1` legs red. Ruled 2026-10-29, devlore-cli#1052: "yes. require all eight." Adding a platform to the Installers matrix adds a context here too, or the new leg runs for information only. `test (darwin-arm64)` exists only in devlore-cli; requiring it org-wide would leave devlore-registry and noblefactor-engprod waiting forever for a check that never arrives, blocking every merge in both.
+This is dated configuration evidence, not a freshly read matrix. Discover the current supported platforms, triggers and contexts before changing the ruleset.
 
-Repository rulesets compose with organization rulesets: the org keeps enforcing squash-only, one review, linear history, CodeQL and `quality-gate` everywhere, and the repository adds its own matrix on top.
+An organization's bypass declaration does not automatically apply to a repository ruleset. Inspect every applicable layer. A repository without a bypass still binds administrators; a bypass in either layer is not permission to ignore the Owner's approval boundary.
 
-Note that the organization's `OrganizationAdmin` bypass does **not** extend to a repository ruleset. A tier-2 ruleset therefore binds admins too, unless it declares its own bypass. That is a deliberate choice either way, and should be made deliberately: without a bypass, `gh pr merge --admin` starts being refused whenever a platform leg is red.
+<a id="managing-rulesets"></a>
 
-## Managing rulesets
+## 4. Administration
 
-These are organization rulesets. The repository endpoints below are **read-only views** of them; edits must go through the organization endpoints, which need the `admin:org` scope.
+Read organization rules through repository views when checking what applies. Change organization rules through the organization endpoint; use the repository endpoint for repository rules. Administration and authentication changes require explicit authority.
 
 ```bash
-# View — works with the repo scope
-gh api repos/NobleFactor/<repo>/rulesets --jq '.[] | {id, name, enforcement, source_type}'
-gh api repos/NobleFactor/<repo>/rulesets/<id>
+# Read effective ruleset summaries and details.
+gh api "repos/NobleFactor/<repo>/rulesets" --jq '.[] | {id, name, enforcement, source_type}'
+gh api "repos/NobleFactor/<repo>/rulesets/<id>"
 
-# Edit — needs admin:org
+# Authorized organization change; the token needs admin:org.
 gh auth refresh -h github.com -s admin:org
-gh api orgs/NobleFactor/rulesets/<id> --method PUT --input ruleset.json
+gh api "orgs/NobleFactor/rulesets/<id>" --method PUT --input ruleset.json
 
-# Repository-level ruleset, for tier-2 checks — the repo scope suffices
-gh api repos/NobleFactor/<repo>/rulesets --method POST --input repo-ruleset.json
+# Authorized repository-specific requirement.
+gh api "repos/NobleFactor/<repo>/rulesets" --method POST --input repo-ruleset.json
 ```
 
-The 2026-11-03 change to 12515090, taking `chore` out of its pattern, is in the script of the issue data model design's worktree (#303), `~/Workspace/NobleFactor/noblefactor-engprod.303-model-cutover.bash`. It sends only the ruleset's rules and reads the ruleset back. It ran on 2026-11-03, and the ruleset read back with the new pattern.
+Prepare a reviewed change for the correct scope, preserve unrelated settings, and read the rule back after applying it. Verify that required contexts arrive on an actual PR. A successful API write alone does not establish that the intended workflow can merge.
 
-## Rationale
+<a id="rationale"></a>
 
-1. **Squash-only merges** — clean, linear history on protected branches.
-2. **Required reviews** — peer review for contributors; admins override review at merge, never the pull request itself.
-3. **No direct pushes, by anyone** — every change carries an audit trail and CI validation, and an override is a decision made after looking at the results, not a way to avoid producing them.
-4. **`quality-gate` everywhere** — one check every repository can honor.
-5. **Per-platform `test` and `scenario` where platforms are shipped** — a cross-compile proves the target builds, not that it runs. Both suites, on the platform itself, or the claim is untested.
-6. **Descriptor-named contexts** — required-check names outlive runner images and matrix keys.
+## 5. Rationale
 
-## Changelog
+| Choice | Reason |
+| --- | --- |
+| Squash merges and linear protected history | Keep the delivered change together and its review traceable |
+| Required PR and review | Preserve review and CI evidence for each protected-branch change |
+| Baseline quality-gate | Give all baseline repositories a common required check |
+| Repository-specific matrices | Require behavior on the platforms each repository serves |
+| Platform descriptors in context names | Keep rules stable across runner-image and matrix-detail changes |
+| Narrow, explicit exceptions | Keep technical bypass capability separate from permission |
 
-- 2026-11-01: The eight Installers contexts added to ruleset 21539972 on devlore-cli, nineteen required contexts in all; the installer row added to the two-tier table (noblefactor-engprod#422, ruled on devlore-cli#1052).
-- 2026-01-27: Initial policy created and applied to all 5 NobleFactor repositories
-- 2026-08-26: Both bypass actors on ruleset 12426847 narrowed from `always` to `pull_request`, so direct pushes to protected branches are refused for everyone including organization admins and the automation app. Recorded the first tier-2 repository ruleset, 21539972 on devlore-cli.
-- 2026-08-25: Rewritten against the live configuration. The previous revision described a per-repository ruleset named "Protect main branches" carrying a single `pull_request` rule and a `RepositoryRole` bypass limited to `pull_request` mode. None of that matches what is enforced: protection is three **organization** rulesets carrying seven rules, and the bypass actors are `OrganizationAdmin` and the automation app at mode **`always`** — every rule, not merely review. Also previously undocumented: `required_status_checks`, `code_scanning`, `code_quality`, `deletion`, `non_fast_forward`, `required_linear_history`, the `~DEFAULT_BRANCH` condition, the org-wide branch-name pattern, and the signed-commits requirement on `main`. Added the two-tier required-check policy and the context-naming rule.
-- 2026-11-03: Ruled that `chore` leaves ruleset 12515090's branch-name pattern, and that NobleFactor/.github gets a `quality-gate` check of its own so it follows ruleset 12426847 like every other repository. The same day, the script of the issue data model design's worktree (#303) took `chore` out of 12515090's pattern and read it back. Recorded that GitHub holds 10 `chore/` branches, as it did before the change, and that `git open-branch` still accepts `chore`.
-- 2026-11-04: Named #449 as the issue that will take `chore` out of `git open-branch`, its man page, its completions and its test, and will have it take the branch type from the issue's type, approved the same day.
-- 2026-11-13: #449 took `chore` out of `git open-branch`, its man page, its completions and its test, and had it take the branch type from the issue's type.
+<a id="changelog"></a>
+
+## 6. Configuration evidence
+
+The [source preserved for this rewrite](engineering/review/sources/rewrite-2026-11-19/branch-protection.md.txt) contains the original configuration reads, rule IDs, incidents and change history. Its observations span several dates and are not a fresh configuration read.
+
+The [adoption protection receipt](engineering/review/adoption-protection-2026-11-15.json), verified at 2026-11-16T00:03:35.225742+00:00, records effective develop rules and the classic protection response. It does not verify main/release signing or the current platform matrix. Configuration changes and unresolved enforcement gaps require their own approved work; this documentation rewrite changes no GitHub rules.
+
+See GitHub's [ruleset overview](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets) and [available rules](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets) for the platform's semantics.

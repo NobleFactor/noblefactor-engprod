@@ -1,10 +1,14 @@
 ---
-title: "9. The scenario commands: design decisions"
+title: "Scenario command decisions"
+status: draft
+updated: 2026-11-19
 ---
 
-# 9. The scenario commands: design decisions
+<a id="9-the-scenario-commands-design-decisions"></a>
 
-Companion to [9. The scenario commands](9-the-scenario-commands.md). It records the significant choices behind the scenario commands and the reasons for them. How the work reached this design is in the plans of [#507](../../plans/doc/507-scenario-commands.md) and [#589](../../plans/doc/589-issue-verbs.md).
+# Scenario command decisions
+
+These records explain the [Scenario command design](9-the-scenario-commands.md). Approval evidence links the plans; implementation progress remains in them.
 
 ## 1. Decision index
 
@@ -60,8 +64,6 @@ Companion to [9. The scenario commands](9-the-scenario-commands.md). It records 
 
 **Approval evidence:** The owner, 2026-11-15, recorded in [#507's plan](../../plans/doc/507-scenario-commands.md), § Rulings.
 
-**Related decisions:** None.
-
 <a id="d-003"></a>
 
 ### 2.3. D-003: A move onto or off a scenario is recorded in two places
@@ -92,7 +94,7 @@ Companion to [9. The scenario commands](9-the-scenario-commands.md). It records 
 
 **Context and criteria:** A scenario's rows are the work found on its walk that is still to be done.
 
-**Decision:** When an item closes, it leaves its scenario: `star github issue close` comments on the Scenario issue that the item closed, then removes its row. An item closed some other way has its row removed by a recurring check.
+**Decision:** A closed finding leaves its Scenario. The issue-close command records the closure on the Scenario issue and removes the row. Closure through another path still requires row cleanup; the [operational contract](9-the-scenario-commands.md#ongoing-cleanup) identifies the maintained procedure and separate automation work.
 
 **Reasons:** A closed row says nothing about the walk's open work.
 
@@ -124,7 +126,7 @@ Companion to [9. The scenario commands](9-the-scenario-commands.md). It records 
 
 **Design links:** [Closing a scenario](9-the-scenario-commands.md#closing-a-scenario-close).
 
-**Approval evidence:** The owner, 2026-11-15, question 6, recorded in [#507's plan](../../plans/doc/507-scenario-commands.md), § Rulings; renamed from `retire` 2026-11-17 (#595).
+**Approval evidence:** The owner, 2026-11-15, question 6, recorded in [#507's plan](../../plans/doc/507-scenario-commands.md), § Rulings; the collection interface is recorded in the [Issue verbs plan](../../plans/doc/589-issue-verbs.md).
 
 **Related decisions:** [D-004](#d-004).
 

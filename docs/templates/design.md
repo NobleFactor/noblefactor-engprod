@@ -2,57 +2,103 @@
 title: "Design template"
 status: draft
 created: 2026-10-28
-updated: 2026-10-29
+updated: 2026-11-19
 ---
 
 # Design template
 
-[Up: Templates](index.md)
+[Up: Work templates](index.md)
 
-<a id="role-assignments"></a>
+Describe the intended system using the [documentation standard](../standards/documentation.md), [Google's writing guidance](https://developers.google.com/style) and [arc42's content model](https://arc42.org/overview/). Cover these concerns across the architecture set; detail chapters can link the overview instead of repeating it.
 
-## 1. Role assignments
-
-[Role assignments](../engineering/process.md#roles-and-responsibilities): Owner [name]; Participants [names and scopes]; Reviewers [names and review scopes]; Observers [stakeholders or none]. A reference to the schedule’s assignments may supply this record.
+<a id="2-purpose-and-resulting-system"></a>
 
 <a id="purpose-and-resulting-system"></a>
 
-## 2. Purpose and resulting system
+## 1. Problem and goals
 
-[The enduring architecture and behavior after the change.]
+[Explain the problem, users/stakeholders, required capabilities and most important quality goals.]
+
+<a id="1-role-assignments"></a>
+
+<a id="role-assignments"></a>
+
+### 1.1 Role assignments
+
+[Name the Owner, Participants and scopes, Reviewers and review scopes, and Observers or none. Approved schedule assignments can supply this record.]
+
+Use the [shared responsibility definitions](../engineering/process.md#roles-and-responsibilities).
+
+## 2. Constraints
+
+[State binding technical, organizational and resource limits, with their sources.]
+
+<a id="3-context-and-requirements"></a>
 
 <a id="context-and-requirements"></a>
 
-## 3. Context and requirements
+## 3. Context and scope
 
-[Problem, constraints, linked issues/plans and current system.]
+[Describe people, neighboring systems, external interfaces, ownership and system boundaries.]
+
+## 4. Solution strategy
+
+[Explain the main approach and how it satisfies the goals and constraints.]
+
+<a id="4-structure-and-behavior"></a>
 
 <a id="structure-and-behavior"></a>
 
-## 4. Structure and behavior
+## 5. Components and interfaces
 
-[Components, responsibilities, data flow, state, interfaces, errors and boundaries.]
+[Describe components, responsibilities, state/data ownership and interfaces. Use a diagram when it clarifies the structure.]
 
-<a id="alternatives-and-tradeoffs"></a>
+## 6. Runtime and development workflow
 
-## 5. Alternatives and tradeoffs
+[Walk important user actions, component interactions, startup/shutdown, approvals and failure/recovery paths. State actors, actions and observable outcomes.]
 
-[Options considered, challenged assumptions, rationale and consequences.]
+<a id="6-operational-consequences"></a>
 
 <a id="operational-consequences"></a>
 
-## 6. Operational consequences
+## 7. Deployment
 
-[Compatibility where applicable, security, deployment, recovery and observability.]
+[Map components to execution environments, machines, storage and network boundaries.]
+
+## 8. Shared concepts
+
+[Explain concepts used across components, such as identity, permissions, security, verification, persistence and recovery.]
+
+<a id="5-alternatives-and-tradeoffs"></a>
+
+<a id="7-decision-and-approval"></a>
+
+<a id="alternatives-and-tradeoffs"></a>
 
 <a id="decision-and-approval"></a>
 
-## 7. Decision and approval
+## 9. Significant decisions
 
-[Owner's understood/approved proposal and revision; unresolved questions.]
+[Link significant choices, their criteria, alternatives, consequences and approval evidence. Use the shared decision-record format in a companion when separate records improve navigation.]
+
+[Decision-record standard](../standards/documentation.md#decision-records) · [Decision template](decision.md)
+
+## 10. Quality requirements
+
+[Give observable quality scenarios and agreed acceptance thresholds. State how the system will be evaluated.]
+
+## 11. Risks and open choices
+
+[Identify unresolved decisions, assumptions, risks and relevant technical debt. State owners and required evidence.]
+
+## 12. Glossary
+
+[Define necessary terms. Prefer plain words where a special term adds no value.]
+
+<a id="8-implementation-relationship"></a>
 
 <a id="implementation-relationship"></a>
 
-## 8. Implementation relationship
+## 13. Delivery references
 
-[Plans delivering the design; identify which parts are proposed, implemented and verified. Keep execution steps in plans.]
+[Link the issues, plans and roadmap that deliver the design. Keep implementation steps, transitions, status checklists and change history in those records. The design describes the wanted system.]
