@@ -24,9 +24,10 @@
 #
 # close is idempotent (D-013, #609): run again, it ends where one complete run would have ended. On an issue already
 # closed, it writes only what one complete run would have written and the earlier run didn't: its closing comment, its
-# Resolution and the comment on a change of it, and its rows. A comment is written only if the issue's history since it
-# last reopened holds none of its kind, so a second run writes no second one; the comment on a Scenario issue counts
-# only for the child it names. An issue with nothing left to do is unchanged, and nothing is written.
+# Resolution, and its rows. A change of Resolution gets no comment of its own: GitHub's history records it (Codex's
+# review of PR #612, H-F02). A comment is written only if the issue's history since it last reopened holds none of its
+# kind, so a second run writes no second one; the comment on a Scenario issue counts only for the child it names. An
+# issue with nothing left to do is unchanged, and nothing is written.
 
 load("commands/access.star", "check_access")
 load(
@@ -74,7 +75,6 @@ _CLOSED = "Closed"
 
 # The opening words of close's comments, by which a second run knows them (#609).
 _CLOSING = "Closed by `star github issue close`"
-_CHANGED = "Resolution changed by `star github issue close`"
 
 def _record(key, action, project = None, scenario = None, resolution = None, parent = None, already = None):
     """One flat record of what close did: closed, left, row-closed or unchanged; already, on an issue already closed."""
@@ -97,37 +97,18 @@ def _closing_found(events, evidence):
             return True
     return False
 
-def _recorded(events):
-    """The Resolution close last recorded in an issue's current close, or None.
+def _resolution_writes(model, r, plan):
+    """What close writes of an issue's Resolution, read before any write: (the plan to set or None, the labels to remove).
 
-    It is the new one in its last change comment, or else the one its closing comment names.
+    It sets the Resolution asked for when the issue doesn't hold it, and writes no comment of its own on the change:
+    GitHub's history records it (#609, Codex's review of PR #612, H-F02). In a user account it removes every other
+    resolution: label whether or not the one asked for needs adding, and keeps the issue's other labels (H-F01).
     """
-    for e in reversed(current(events, "reopened")):
-        body = e["body"]
-        if e["kind"] != "comment":
-            continue
-        if body.startswith(_CHANGED) and " from " in body and " to " in body:
-            return body.split(" from ", 1)[1].split(" to ", 1)[1].split(":", 1)[0].strip()
-        if body.startswith(_CLOSING) and ", with Resolution " in body:
-            return body.split(", with Resolution ", 1)[1].split(":", 1)[0].strip()
-    return None
-
-def _resolution_steps(model, r, plan, events):
-    """What close does to an issue's Resolution, read before any write: (the plan to set or None, the change or None).
-
-    It compares the Resolution asked for, the one the issue holds, and the one close last recorded (#609). None held:
-    set it. The one asked for, and last recorded: nothing. The one asked for, another last recorded: the change happened
-    without its comment, so only the comment. Another held: set it, then comment on the change.
-    """
-    held = resolution_of(model, r)
-    if held == None:
-        return plan, None
-    if held == plan["name"]:
-        last = _recorded(events)
-        if last == None or last == plan["name"]:
-            return None, None
-        return None, {"from": last, "to": plan["name"]}
-    return plan, {"from": held, "to": plan["name"]}
+    if "label" in plan:
+        held = clearing_plan(model, r)
+        others = [label for label in (held["labels"] if held != None else []) if label != plan["label"]]
+        return (plan if plan["label"] not in r["labels"] else None), others
+    return (plan if resolution_of(model, r) != plan["name"] else None), []
 
 def _evidence_text(path):
     """The evidence file's text; fails, naming the path, when it is missing or empty."""
@@ -264,19 +245,15 @@ def run(_command, ctx):
                 refused.append(k + ": " + fault)
         events = lifecycle(r)
         evidence_comment = _with_heading(text, r["title"]) if text != "" else ""
-        setting, change, others = None, None, []
+        setting, others = None, []
         if plan != None:
-            setting, change = _resolution_steps(model, r, plan, events)
-            if setting != None and "label" in plan:
-                held = clearing_plan(model, r)
-                others = [label for label in (held["labels"] if held != None else []) if label != plan["label"]]
+            setting, others = _resolution_writes(model, r, plan)
         work.append({
             "r": r,
             "model": model,
             "changes": changes,
             "plan": plan,
             "set": setting,
-            "change": change,
             "others": others,
             "events": events,
             "evidence": evidence_comment,
@@ -306,24 +283,19 @@ def run(_command, ctx):
             note("commented on " + r["key"])
             wrote = True
 
-        # 2. The Resolution, each other resolution: label removed first in a user account, then the comment on its change.
-        if w["set"] != None:
+        # 2. The Resolution: in a user account each other resolution: label removed first, then the one asked for added;
+        # read back as the one asked for alone. No comment is written on the change; GitHub's history records it.
+        if w["set"] != None or w["others"]:
             if w["others"]:
                 clear_resolution(r, {"name": "", "labels": w["others"]})
-            set_resolution(r, w["set"])
-            if resolution_of(w["model"], r) != w["set"]["name"]:
-                fail(r["key"] + " reads back with the Resolution " + str(resolution_of(w["model"], r)) + ", not " + w["set"]["name"])
-            note("set " + r["key"] + "'s Resolution " + w["set"]["name"])
-            wrote = True
-        if w["change"] != None:
-            comment(r, render("issue-close-resolution.md.template", {
-                "date": date,
-                "login": login,
-                "from": w["change"]["from"],
-                "to": w["change"]["to"],
-                "reason": reason,
-            }))
-            note("commented on " + r["key"] + " that its Resolution changed from " + w["change"]["from"] + " to " + w["change"]["to"])
+                note("removed " + r["key"] + "'s " + ", ".join(w["others"]))
+            if w["set"] != None:
+                set_resolution(r, w["set"])
+                note("set " + r["key"] + "'s Resolution " + w["set"]["name"])
+            back = issue(r["key"], w["model"])
+            held = clearing_plan(w["model"], back) if "label" in w["plan"] else None
+            if resolution_of(w["model"], back) != w["plan"]["name"] or (held != None and held["labels"] != [w["plan"]["label"]]):
+                fail(r["key"] + " reads back with the Resolution " + str(resolution_of(w["model"], back)) + ", not " + w["plan"]["name"] + " alone")
             wrote = True
 
         # 3. The issue closed, unless it is.

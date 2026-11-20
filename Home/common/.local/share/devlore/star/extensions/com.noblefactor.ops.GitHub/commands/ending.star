@@ -249,7 +249,9 @@ def schedule_reopening(key, model):
 
     # What a reopening still has to write, so that a schedule reopened partway is finished, and one reopened whole is
     # left as it is (#609): the comment, unless its history since it last closed holds a reopening's; and its own row,
-    # when it is Closed, which only a closing sets, or has no Status, which a stopped run leaves.
+    # when it is Closed, which only a closing sets, or has no Status, which a stopped run leaves, or, for a schedule that
+    # has closed before, is anything but In progress (H-F03, Codex's review of PR #612). A schedule that has never closed
+    # keeps the Status its opening gave it.
     events = lifecycle(own)
     closed = own["state"] == "closed" or len([e for e in events if e["kind"] in ["closed", "reopened"]]) > 0
     told = [e for e in current(events, "closed") if e["kind"] == "comment" and e["body"].startswith(_REOPENED)]
@@ -258,7 +260,7 @@ def schedule_reopening(key, model):
         "body": body,
         "criteria": [c["text"] for c in every],
         "comment": closed and not told,
-        "row": own["state"] == "closed" or sched["own_status"] in [_CLOSED, None, ""],
+        "row": own["state"] == "closed" or sched["own_status"] in [_CLOSED, None, ""] or (closed and sched["own_status"] != _IN_PROGRESS),
     }, ""
 
 def schedule_unfinished(plan):

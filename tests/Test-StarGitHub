@@ -4970,36 +4970,38 @@ run_star "${data}" github issue close NobleFactor/alpha#22 --resolution declined
 run_star "${data}" github issue close NobleFactor/alpha#22 --resolution declined --reason "Not needed now."
 expect "179 (#609): run again after a complete run, close writes nothing" ok "${no_writes}"' and map(.action) == ["unchanged"]'
 
-# 180. A different Resolution: close sets it, then comments on the change; the same one again writes nothing; and after
-# someone resets it by hand, the same change gets a comment of its own.
+# 180. A different Resolution: close sets it and writes no comment of its own on the change, GitHub's history being its
+# record (H-F02); the same one again writes nothing; and after someone resets it by hand, close sets it again.
 world
 run_star "${data}" github issue close NobleFactor/alpha#22 --resolution declined --reason "Not needed now."
 run_star "${data}" github issue close NobleFactor/alpha#22 --resolution duplicate --reason "The same as #21."
-expect "180 (#609): a different Resolution is set, and the change gets its comment" ok \
-    'map([.action, .already, .resolution]) == [["closed", true, "Duplicate"]]'
-check "180 (#609): #22 holds Duplicate, and a comment on the change from Declined" world_holds \
-    '.issues.I_alpha_22.fields.Resolution == "Duplicate" and .issues.I_alpha_22.comments[1] == "Resolution changed by `star github issue close` on '"${today}"', run by stand-in, from Declined to Duplicate: The same as #21."'
+expect "180 (#609): a different Resolution is set, with no comment on the change" ok \
+    'map([.action, .already, .resolution]) == [["closed", true, "Duplicate"]] and ('"${comment_calls}"') == 0'
+check "180 (#609): #22 holds Duplicate and its one closing comment" world_holds \
+    '.issues.I_alpha_22.fields.Resolution == "Duplicate" and (.issues.I_alpha_22.comments | length) == 1'
 run_star "${data}" github issue close NobleFactor/alpha#22 --resolution duplicate --reason "The same as #21."
 expect "180 (#609): the same Resolution again writes nothing" ok "${no_writes}"' and map(.action) == ["unchanged"]'
 world_set '.issues.I_alpha_22.fields.Resolution = "Declined"'
 run_star "${data}" github issue close NobleFactor/alpha#22 --resolution duplicate --reason "Still the same as #21."
-expect "180 (#609): after a reset by hand, the change to Duplicate again" ok 'map([.action, .resolution]) == [["closed", "Duplicate"]]'
-check "180 (#609): #22 holds two comments on a change of its Resolution" world_holds \
-    '([.issues.I_alpha_22.comments[] | select(startswith("Resolution changed by"))] | length) == 2
-        and .issues.I_alpha_22.fields.Resolution == "Duplicate"'
+expect "180 (#609): after a reset by hand, close sets Duplicate again, with no comment" ok \
+    'map([.action, .resolution]) == [["closed", "Duplicate"]] and ('"${comment_calls}"') == 0'
+check "180 (#609): #22 holds Duplicate, and still its one closing comment" world_holds \
+    '.issues.I_alpha_22.fields.Resolution == "Duplicate" and (.issues.I_alpha_22.comments | length) == 1'
 
-# 181. Stopped between a change of Resolution and its comment: a second run writes only the comment.
-world
-run_star "${data}" github issue close NobleFactor/alpha#22 --resolution declined --reason "Not needed now."
-world_set '.fail_on = "starStepComment"'
-run_star "${data}" github issue close NobleFactor/alpha#22 --resolution duplicate --reason "The same as #21."
-expect "181 (#609): close stops when the change's comment fails, after the change" error 'true' "in comment" text
-run_star "${data}" github issue close NobleFactor/alpha#22 --resolution duplicate --reason "The same as #21."
-expect "181 (#609): run again, close writes only the change's comment" ok \
-    'map([.action, .already]) == [["closed", true]] and ('"${comment_calls}"') == 1
-        and ([$calls[] | select(any(.[]; type == "string" and test("mutation starStepSetField")))] | length) == 0'
-check "181 (#609): #22 holds one comment on the change" world_holds \
-    '([.issues.I_alpha_22.comments[] | select(startswith("Resolution changed by"))] | length) == 1'
+# 181. In a user account, an issue holding the resolution: label asked for and another: close removes the other, keeps
+# its other labels, and a repeat writes nothing (H-F01).
+declare -r user_no_writes='([$calls[] | select(any(.[]; type == "string" and (test("mutation star") or . == "-X")))] | length) == 0'
+world '.issues.I_personal_12 |= (.state = "CLOSED" | .stateReason = "COMPLETED"
+        | .labels = ["task", "resolution:duplicate", "resolution:invalid"]
+        | .comments = ["Closed by `star github issue close` on 2026-11-18, run by stand-in, with Resolution Duplicate: A duplicate."]
+        | .timeline = [{kind: "comment", at: 0, body: .comments[0]}, {kind: "closed", at: 0, body: ""}])'
+run_star "${data}" github issue close test-user/personal#12 --resolution Duplicate --reason "A duplicate."
+expect "181 (#609): close removes the other resolution: label, the one asked for already there" ok \
+    'map([.action, .already, .resolution]) == [["closed", true, "Duplicate"]]'
+check "181 (#609): #12 carries task and resolution:duplicate alone, and its one closing comment" world_holds \
+    '(.issues.I_personal_12.labels | sort) == ["resolution:duplicate", "task"] and (.issues.I_personal_12.comments | length) == 1'
+run_star "${data}" github issue close test-user/personal#12 --resolution Duplicate --reason "A duplicate."
+expect "181 (#609): run again, close writes nothing" ok "${user_no_writes}"' and map(.action) == ["unchanged"]'
 
 # 182. Stopped after the comment on the Scenario issue, when the row's removal fails: a second run removes the row and
 # writes no second comment on #40; another child's comment there stands in for nothing.
@@ -5018,17 +5020,32 @@ check "182 (#609): #40 holds one comment on #27, and #28's" world_holds \
         and (.issues.I_alpha_40.comments | length) == 2'
 
 # 183. In a user account, a closed issue's resolution:invalid label becomes resolution:duplicate: the other label
-# removed, the new one added, and the change commented, from what close last recorded.
+# removed and the new one added, with no comment on the change (H-F02).
 world '.issues.I_personal_12 |= (.state = "CLOSED" | .stateReason = "COMPLETED" | .labels += ["resolution:invalid"]
     | .comments = ["Closed by `star github issue close` on 2026-11-18, run by stand-in, with Resolution Invalid: Not a bug."]
     | .timeline = [{kind: "comment", at: 0, body: .comments[0]}, {kind: "closed", at: 0, body: ""}])'
 run_star "${data}" github issue close test-user/personal#12 --resolution Duplicate --reason "The same as #11."
 expect "183 (#609): a user account's closed issue changes from Invalid to Duplicate" ok \
-    'map([.action, .already, .resolution]) == [["closed", true, "Duplicate"]]'
-check "183 (#609): #12 carries resolution:duplicate alone, and a comment on the change" world_holds \
+    'map([.action, .already, .resolution]) == [["closed", true, "Duplicate"]] and ('"${comment_calls}"') == 0'
+check "183 (#609): #12 carries resolution:duplicate alone, and its one closing comment" world_holds \
     '(.issues.I_personal_12.labels | (index("resolution:invalid") == null) and (index("resolution:duplicate") != null))
-        and (.issues.I_personal_12.comments[1] | startswith("Resolution changed by `star github issue close`")
-            and endswith("from Invalid to Duplicate: The same as #11."))'
+        and (.issues.I_personal_12.comments | length) == 1'
+
+# 193. In a user account, stopped between removing the old resolution: label and adding the new one: one retry finishes,
+# and the next run writes nothing (H-F02).
+world '.issues.I_personal_12 |= (.state = "CLOSED" | .stateReason = "COMPLETED" | .labels += ["resolution:invalid"]
+    | .comments = ["Closed by `star github issue close` on 2026-11-18, run by stand-in, with Resolution Invalid: Not a bug."]
+    | .timeline = [{kind: "comment", at: 0, body: .comments[0]}, {kind: "closed", at: 0, body: ""}])
+    | .fail_on = "restAddLabels"'
+run_star "${data}" github issue close test-user/personal#12 --resolution Duplicate --reason "The same as #11."
+expect "193 (#609): close stops when adding resolution:duplicate fails, after removing resolution:invalid" error 'true' "in set_resolution" text
+run_star "${data}" github issue close test-user/personal#12 --resolution Duplicate --reason "The same as #11."
+expect "193 (#609): one retry adds resolution:duplicate" ok 'map([.action, .already, .resolution]) == [["closed", true, "Duplicate"]]'
+check "193 (#609): #12 carries resolution:duplicate alone, and its one closing comment" world_holds \
+    '([.issues.I_personal_12.labels[] | select(startswith("resolution:"))] == ["resolution:duplicate"])
+        and (.issues.I_personal_12.comments | length) == 1'
+run_star "${data}" github issue close test-user/personal#12 --resolution Duplicate --reason "The same as #11."
+expect "193 (#609): the next run writes nothing" ok "${user_no_writes}"' and map(.action) == ["unchanged"]'
 
 # 184 to 191 (#609). reopen is idempotent (D-013): run again, it ends where one complete run would have ended, on the
 # issue, its parents and its schedule, with one comment on each, and an issue with nothing left to do is unchanged.
@@ -5140,6 +5157,20 @@ expect "192 (#609): run again, reopen sets #60's row without a Status Open, and 
     'map([.action, .issue, .already]) == [["reopened", "NobleFactor/alpha#60", true], ["row-opened", "NobleFactor/alpha#60", null],
         ["reopened", "NobleFactor/alpha#61", null], ["triaged", "NobleFactor/alpha#61", null], ["reopened", "NobleFactor/alpha#20", null]]'
 check "192 (#609): everything is reopened once, each with one comment" world_holds "${reopened_whole}"
+
+# 194 (#609). H-F03, from Codex's review of #612: s1 open, its own row Open, its history a close and a reopen. Reopening
+# its closed step #21 sets s1's own row In progress and writes s1's comment once; a repeat writes nothing. A schedule
+# that has never closed keeps Open, as case 132 has it.
+world '.issues.I_alpha_21.timeline = [{kind: "closed", at: 0, body: ""}]
+    | .issues.I_alpha_20.timeline = [{kind: "closed", at: 0, body: ""}, {kind: "reopened", at: 0, body: ""}]'
+run_star "${data}" github issue reopen NobleFactor/alpha#21 --reason "Not done after all."
+expect "194 (#609): reopening #21 sets s1's own row In progress, s1 already open" ok \
+    '[.[] | select(.issue == "NobleFactor/alpha#20")] | map([.action, .already]) == [["reopened", true]]'
+check "194 (#609): s1's own row is In progress, and s1 holds one comment" world_holds \
+    '(.projects.PVT_s_eng.items[] | select(.content == "I_alpha_20") | .values.Status) == "In progress"
+        and ((.issues.I_alpha_20.comments // []) | length) == 1'
+run_star "${data}" github issue reopen NobleFactor/alpha#21 --reason "Not done after all."
+expect "194 (#609): a repeat writes nothing" ok "${no_writes}"' and map(.action) == ["unchanged"]'
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"
