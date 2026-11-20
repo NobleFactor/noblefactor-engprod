@@ -186,7 +186,7 @@ Each commit that changes a command's behavior also changes section 10, its decis
 
 ### 9.5 Phase 5: `open`
 
-- [ ] `--unique` removed, with its tests; section 10's § Opening an issue and D-014; section 10's headings numbered.
+- [x] `--unique` removed, with its tests; section 10's § Opening an issue and D-014; section 10's headings numbered, each with an anchor that keeps its old link target. Cases 136 and 140 pass, with 595 of 595 on 2026-11-19; without the change, 140's two checks fail, and 136, whose template no longer names `unique`, passes.
 
 ### 9.6 Phase 6: merge, deployment, and verification
 

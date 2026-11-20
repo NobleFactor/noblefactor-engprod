@@ -6,7 +6,9 @@ title: "10. The issue commands"
 
 `star github issue` opens, moves, closes and reopens issues, in an organization and in a user account. It has four verbs, `open`, `move`, `close` and `reopen`, and `create` is another name for `open`. They act on epics, features, tasks and bugs. A Schedule or Scenario issue is the record of its collection, and is opened, closed and reopened by its own group's verbs: `star github schedule` ([section 8](8-the-schedule-commands.md)) and `star github scenario` ([section 9](9-the-scenario-commands.md)). Nothing here makes a project, a field or an option.
 
-## The commands
+<a id="the-commands"></a>
+
+## 1. The commands
 
 | Command | Does | Writes to GitHub |
 | --- | --- | --- |
@@ -21,15 +23,15 @@ title: "10. The issue commands"
 An `<issue>` is written `<owner>/<repository>#<number>`. Every command names what it acts on, takes star's `--filter`, `--jq` and `--output`, returns one flat record per thing it read or changed, JSON by default, and exits non-zero only on an error. Every command reads all it needs before its first write, so a fault is a refusal with nothing written, and reads every write back. A run that stops partway finishes when run again only where the command finds what the run left:
 
 - **`move`** finds the amendment it left pending, and finishes the move.
-- **`open`** with `--unique` finds the issue it opened under the parent, and opens no other. Without `--unique`, it opens a second issue.
+- **`open`** opens a new issue each run, and checks for no duplicate ([D-014](10-the-issue-commands.decisions.md#d-014)). Run again after a stop, it opens another; recovering a stopped `open` is the graph's, in NobleFactor/devlore-cli#1238.
 - **`reopen`** run again ends where one complete run would have ended ([D-013](10-the-issue-commands.decisions.md#d-013)): it writes what the earlier run didn't, on the issue, its parents and its schedules, and nothing twice.
 - **`close`** run again ends where one complete run would have ended ([D-013](10-the-issue-commands.decisions.md#d-013)): it writes what the earlier run didn't, and nothing twice.
 
-What a rerun of `open` leaves is done by hand: a second issue closed as Duplicate.
-
 An issue named twice in one run, in another case or with a leading zero, is refused. `--dry-run` is refused.
 
-## Where an issue lives
+<a id="where-an-issue-lives"></a>
+
+## 2. Where an issue lives
 
 Each team, and each user account, has four projects: Triage, Backlog, Schedule and Scenario (section 3). An issue is a row of at most one of them. What its type allows decides where it can be:
 
@@ -42,7 +44,9 @@ Each team, and each user account, has four projects: Triage, Backlog, Schedule a
 
 A new issue goes to Triage: the Triage workflow gives every issue opened a Triage row, except an item found while walking a scenario, which it puts on that scenario (section 9). An issue with no type stays in Triage until it is classified. A Schedule or Scenario issue's only row is its own, on its Schedule or Scenario project.
 
-### Epics and features
+<a id="epics-and-features"></a>
+
+### 2.1. Epics and features
 
 An epic or a feature goes to Triage when it is opened and to the Backlog once it is classified. It stays on the Backlog until it closes, when `close` removes its row. Nothing moves it when its tasks and bugs are pulled onto a schedule or a scenario.
 
@@ -50,17 +54,19 @@ Its state comes from its children. It is in progress when any issue under it is 
 
 Other issue trackers do the same: none moves an epic or a feature when its work is pulled into a sprint. The comparison, and the alternative it rules out, are in [D-004](10-the-issue-commands.decisions.md#d-004).
 
-## Opening an issue: open, and create
+<a id="opening-an-issue-open-and-create"></a>
+
+## 3. Opening an issue: open, and create
 
 ```
 star github issue open --type <type> --parent <issue> --area <area> --title <title> --body-file <path>
-    [--priority <priority>] [--severity <severity>] [--assignee <login>] [--unique] [--directory <path>]
+    [--priority <priority>] [--severity <severity>] [--assignee <login>] [--directory <path>]
 star github issue open --template <path> [--set <name>=<value>[,<name>=<value>]...] [--directory <path>]
 ```
 
 `open` opens its issue in the repository of the clone it runs in, the repository its origin names. `--directory <path>` names another clone, as git's `-C` does. `create` is the same command.
 
-A template is the issue's header and then its body. The header takes the values the flags give: `type`, `parent`, `title`, `area`, `priority`, `severity`, `assignee` and `unique`. With `--template`, no flag but `--set` and `--directory` is given. Each `{name}` in the header or the body is a blank that `--set` fills, once, so a value that holds `{name}` is written as it is; a shell's `${name}` is left alone. A blank in the header is quoted, `parent: "{feature}"`, since YAML reads unquoted braces as structure, and a header it reads so is refused. `--set` takes its pairs comma-separated.
+A template is the issue's header and then its body. The header takes the values the flags give: `type`, `parent`, `title`, `area`, `priority`, `severity` and `assignee`. With `--template`, no flag but `--set` and `--directory` is given. Each `{name}` in the header or the body is a blank that `--set` fills, once, so a value that holds `{name}` is written as it is; a shell's `${name}` is left alone. A blank in the header is quoted, `parent: "{feature}"`, since YAML reads unquoted braces as structure, and a header it reads so is refused. `--set` takes its pairs comma-separated.
 
 ```markdown
 ---
@@ -68,7 +74,6 @@ type: Task
 parent: NobleFactor/devlore-cli#1019
 title: "Update CI, {month}: the workflows' actions and the golangci-lint pin"
 area: Engineering
-unique: true
 ---
 ### Problem
 …
@@ -79,15 +84,18 @@ unique: true
 1. **Fills the blanks.** A blank left unfilled is refused.
 2. **Reads everything it needs:** the clone's repository, the account's model, the type, the parent and its type, the Area, Priority and Severity options, and the type's issue form, from the account's `.github` repository when it runs.
 3. **Checks the issue,** and refuses it, writing nothing, when it has no Area; its type is one the account doesn't have, or is Schedule or Scenario, which `star github schedule open` and `star github scenario open` open; its parent isn't one level up, or it is an Epic with a parent; its body lacks a section its form requires, or text in it, or a Plan and design documents table, a header row and a delimiter row outside any code block; it is given a Severity and isn't a Bug; the directory is no clone; or the repository takes no part in issue tracking.
-4. **Looks for a duplicate,** with `unique`: when the parent already has a sub-issue, open or closed, with the same title, `open` opens nothing, names that issue, and exits 0.
-5. **Opens the issue** in one call, with its type, its parent, its assignee, and its Area, Priority and Severity. Priority is Medium unless given. A Bug's Severity is Medium unless given, as the Triage workflow starts a bug, and every other type's is N/A. No one is assigned unless `--assignee` names someone.
-6. **Reads it all back,** and fails, naming each value that differs from what it asked for.
+4. **Opens the issue** in one call, with its type, its parent, its assignee, and its Area, Priority and Severity. Priority is Medium unless given. A Bug's Severity is Medium unless given, as the Triage workflow starts a bug, and every other type's is N/A. No one is assigned unless `--assignee` names someone.
+5. **Reads it all back,** and fails, naming each value that differs from what it asked for.
+
+`open` checks for no duplicate ([D-014](10-the-issue-commands.decisions.md#d-014)): each run opens a new issue. It refuses `--unique`, and a template whose header names `unique`.
 
 `open` gives the issue no row: the Triage workflow gives it its Triage row, and `move` places it from there. In David-Noble-at-work, which has no issue types or issue fields, `open` writes the labels that stand in for them: the type's label, `area:`, `priority:` and `severity:`.
 
-Its record is the issue it opened, or found with `unique`: its key, title, type, parent, Area, Priority, Severity and assignee, and whether it was `opened` or `found`.
+Its record is the issue it opened: its key, title, type, parent, Area, Priority, Severity and assignee, and `opened`.
 
-## Moving an issue: move
+<a id="moving-an-issue-move"></a>
+
+## 4. Moving an issue: move
 
 ```
 star github issue move <issue>...
@@ -110,7 +118,9 @@ Onto a schedule, it takes the next step, or the steps after `--after`, every lat
 
 `move` reads every place it leaves before its first write, each once however many issues leave it, reads the rows again just before that write, and writes nothing if they changed. It refuses, writing nothing, a Schedule or Scenario issue; a type the destination doesn't take; a closed issue; an issue of another account; and the refusals sections 8 and 9 give for a schedule and a scenario.
 
-## Closing an issue: close
+<a id="closing-an-issue-close"></a>
+
+## 5. Closing an issue: close
 
 ```
 star github issue close <issue>... --evidence <path>
@@ -134,7 +144,9 @@ It refuses, writing nothing: neither or both of `--evidence` and `--resolution`;
 
 Its records: one for each issue, `closed` with its Resolution, the parent whose last open child it was, and `already` true when it was closed before the run; or `unchanged`; and one for each row, `row-closed` or `left`. An item closed some other way, such as by a pull request's `Closes` line, has its Scenario row removed by a recurring check, or by `close` run on it.
 
-## Reopening an issue: reopen
+<a id="reopening-an-issue-reopen"></a>
+
+## 6. Reopening an issue: reopen
 
 ```
 star github issue reopen <issue>... --reason <text>
@@ -151,7 +163,9 @@ star github issue reopen <issue>... --reason <text>
 
 Its records: one for each issue, parent and schedule reopened or set right, with the Resolution it cleared, the issue it was reopened for, a schedule's unticked criteria, and `already` true when it was open before the run; one for each row, an issue's or a parent's, set Open or added to Triage; or `unchanged`.
 
-## Significant design decisions
+<a id="significant-design-decisions"></a>
+
+## 7. Significant design decisions
 
 The choices this design rests on, each recorded with its reasons, alternatives and consequences in [the design decisions](10-the-issue-commands.decisions.md):
 
@@ -162,7 +176,9 @@ The choices this design rests on, each recorded with its reasons, alternatives a
 - [D-011](10-the-issue-commands.decisions.md#d-011): what `reopen` reopens with the issue.
 - [D-012](10-the-issue-commands.decisions.md#d-012): every project's first view named Default, and the Backlog's views.
 
-## How each command runs in each account
+<a id="how-each-command-runs-in-each-account"></a>
+
+## 8. How each command runs in each account
 
 | | NobleFactor | David-Noble-at-work |
 | --- | --- | --- |
@@ -172,7 +188,9 @@ The choices this design rests on, each recorded with its reasons, alternatives a
 | The forms `open` checks | NobleFactor/.github, `.github/ISSUE_TEMPLATE/` | David-Noble-at-work/.github, the same path |
 | The projects | the team's Triage, Backlog, Schedule and Scenario | the account's four |
 
-## Building it
+<a id="building-it"></a>
+
+## 9. Building it
 
 Each verb is a file in the GitHub extension's `commands` directory, `github-issue-<verb>.star`, and `create` is another name for `open`, a second manifest entry with `open`'s implementation. The code they share is in `issues.star`, an issue's Resolution, the scenario a row is under and an issue's parents, and in `steps.star`, which reads an issue and its rows and writes them, as `move` does. `ending.star` closes and reopens a schedule, for `star github schedule` and for `reopen`. Each comment is rendered from a template in the extension's `templates` directory.
 

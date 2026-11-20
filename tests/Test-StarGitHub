@@ -4336,7 +4336,6 @@ parent: NobleFactor/alpha#60
 title: "Update CI, {month}: the workflows' actions"
 area: Engineering
 priority: High
-unique: true
 ---
 ### Problem
 
@@ -4370,8 +4369,8 @@ check "135 (#338): #62 holds its type, parent, fields and body, no one assigned,
         and ([.projects[].items[] | select(.content == "I_alpha_62")] == [])'
 check "135 (#338): one write, its createIssue" calls_hold "${one_write}"
 
-# 136 (#338). From a template, its blank filled by --set, ${HOME} left as it is, Priority High; and unique: run again,
-# #60 already holds the title, so nothing is opened, and the record names the issue found.
+# 136 (#338, #609). From a template, its blank filled by --set, ${HOME} left as it is, Priority High; and run again, it
+# opens a second issue, since open checks for no duplicate (D-014).
 world "${open_world}"
 run_star "${data_new}" github issue open "${alpha[@]}" --template "${run_directory}/monthly.md" --set month=November
 expect "136 (#338): issue open opens the template's task, its blanks filled" ok \
@@ -4379,8 +4378,7 @@ expect "136 (#338): issue open opens the template's task, its blanks filled" ok 
 check "136 (#338): its body has November for {month}, and a shell variable as it was" world_holds \
     '.issues.I_alpha_62.body | contains("The actions for November are behind; ${HOME} is left as it is.")'
 run_star "${data_new}" github issue open "${alpha[@]}" --template "${run_directory}/monthly.md" --set month=November
-expect "136 (#338): run again, it finds #62 under #60, and opens nothing" ok \
-    "${no_writes}"' and map([.action, .issue]) == [["found", "NobleFactor/alpha#62"]]'
+expect "136 (#609): run again, it opens a second issue, #63" ok 'map([.action, .issue]) == [["opened", "NobleFactor/alpha#63"]]'
 
 # 137 (#338). A bug, its type named in any case: Severity Medium by default, as the Triage workflow starts a bug, and
 # what --severity names when it is given.
@@ -4429,7 +4427,21 @@ run_star "${data_new}" github issue open "${alpha[@]}" --type Epic --parent Nobl
     --body-file "${run_directory}/epic.md"
 expect "140 (#338): an epic with a parent" error "${no_writes}" "an Epic is at the top of the hierarchy, and has no parent" text
 run_star "${data_new}" github issue open "${alpha[@]}" --type Epic --area Product --title "E" --body-file "${run_directory}/epic.md" --unique
-expect "140 (#338): unique with no parent" error "${no_writes}" "unique looks through the parent's sub-issues, and the issue has no parent" text
+expect "140 (#609): --unique is no flag of open's" error "${no_writes}" "unknown flag: --unique" text
+cat >"${run_directory}/unique.md" <<'TEMPLATE'
+---
+type: Task
+parent: NobleFactor/alpha#60
+title: "A task"
+area: Product
+unique: true
+---
+### Problem
+
+It is missing.
+TEMPLATE
+run_star "${data_new}" github issue open "${alpha[@]}" --template "${run_directory}/unique.md"
+expect "140 (#609): a template whose header names unique is refused" error "${no_writes}" "header has unique" text
 run_star "${data_new}" github issue open "${alpha[@]}" --type Task --parent NobleFactor/alpha#60 --area Product --title "T" \
     --body-file "${run_directory}/no-evidence.md"
 expect "140 (#338): a body without a section its form requires" error "${no_writes}" \

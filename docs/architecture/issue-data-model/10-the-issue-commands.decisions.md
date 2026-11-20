@@ -23,6 +23,7 @@ Companion to [10. The issue commands](10-the-issue-commands.md). It records the 
 | [D-011](#d-011) | `reopen` reopens the issue's closed parents and schedules, and gives an issue with no row a Triage row | Accepted | [Reopening an issue](10-the-issue-commands.md#reopening-an-issue-reopen) |
 | [D-012](#d-012) | Every project's first view is named Default; the Backlog has an Epics and features view | Accepted | [Epics and features](10-the-issue-commands.md#epics-and-features) |
 | [D-013](#d-013) | `close` and `reopen` are idempotent: run again, each ends where one complete run would have ended | Accepted | [Closing an issue](10-the-issue-commands.md#closing-an-issue-close); [Reopening an issue](10-the-issue-commands.md#reopening-an-issue-reopen) |
+| [D-014](#d-014) | `open` checks for no duplicate; each run opens a new issue | Accepted | [Opening an issue](10-the-issue-commands.md#opening-an-issue-open-and-create) |
 
 ## 2. Decision records
 
@@ -318,6 +319,28 @@ Companion to [10. The issue commands](10-the-issue-commands.md). It records the 
 **Approval evidence:** Approved 2026-11-19 in [the plan for #609](../../plans/feature/609-rerun-finishes.md), § 12, at revision 71f40ef.
 
 **Related decisions:** [D-008](#d-008), [D-009](#d-009), [D-011](#d-011).
+
+<a id="d-014"></a>
+
+### 2.14. D-014: open checks for no duplicate
+
+**Status:** Accepted.
+
+**Context and criteria:** `open` has a `--unique` flag that looks among the parent's first 100 sub-issues for one with the same title, and opens nothing when it finds one. A stopped `open` whose issue GitHub made, but whose answer was lost, opens a second issue when run again without the flag.
+
+**Decision:** `open` checks for no duplicate, and `--unique` is removed. Each run of `open` opens a new issue, which is what it is for, so `open` is idempotent in its own sense: its result is a new issue every time. `open` and `create` refuse `--unique`, and a template whose header names `unique`.
+
+**Reasons:** Two issues with the same title and description happen only when someone sets out to make them. A model provider will judge duplicates later, by more than a title.
+
+**Alternatives:** Making `--unique` the default, its search extended past the first page and to issues without a parent. A flag to open one anyway. Matching on the whole filing rather than the title.
+
+**Consequences:** A stopped `open` whose answer was lost leaves an issue that a second run doesn't find. Recovering it is the graph approach of NobleFactor/devlore-cli#1238, with Scenario NobleFactor/devlore-cli#1239 as its prototype.
+
+**Design links:** [Opening an issue](10-the-issue-commands.md#opening-an-issue-open-and-create).
+
+**Approval evidence:** Approved 2026-11-19 in [the plan for #609](../../plans/feature/609-rerun-finishes.md), § 12, at revision 71f40ef.
+
+**Related decisions:** [D-005](#d-005), [D-013](#d-013).
 
 ---
 
