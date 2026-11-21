@@ -1,7 +1,7 @@
 ---
 title: "Issue storage and access decisions"
 status: draft
-updated: 2026-11-20
+updated: 2026-11-21
 ---
 
 # Issue storage and access decisions
@@ -135,3 +135,31 @@ recorded_by: Claude Code
 decided_at: "2026-11-20"
 recorded_at: "2026-11-21T03:00:00Z"
 ```
+
+<a id="access-007"></a>
+
+## 7. Check each token where it is read, and raise its incident there
+
+Each participating repository runs a daily credentials check that proves its token through the same secret its workflows read, and raises, repeats and clears that repository's incidents itself, with the run's own token. An incident is one issue per repository and condition, assigned to the owner; it closes only when the condition's own test passes through the same secret.
+
+Scope: every repository that takes part in triage, and its Triage workflow.
+
+**Reason:** A healthy copy of a token elsewhere, in Key Vault or another repository, proves nothing about the secret a workflow reads, so the check runs where the workflow does. A workflow's own token can write issues only in its own repository, and is the one credential that never depends on the token being checked, so the incident lives there. Both sandboxes ran broken for days because nothing checked their tokens at all.
+
+**Alternatives:** One central monitor writing every incident in a single repository was rejected: it would need a credential of its own, which could itself fail, and it couldn't read a private repository's secrets. Alerting from the Triage workflow alone was rejected: it runs only when an issue opens, so it can't repeat or warn ahead of expiry.
+
+**Consequence:** Every participating repository carries the check and its configuration, landed from its account's `.github` like the Triage workflow. Incidents are spread across repositories, each assigned to the owner, so GitHub notifies him of each. A check that stops is caught only for public repositories, by noblefactor-engprod's watch.
+
+Evidence: [#613's plan, §§ 5 and 12](../../plans/feature/613-token-alerts.md#approval-and-departures), approved on 2026-11-21 in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`, and `tests/Test-CredentialsCheck`.
+
+```yaml
+id: "ACCESS-007"
+status: accepted
+supersedes: []
+proposed_by: Claude Code
+approved_by: David Noble
+recorded_by: Claude Code
+decided_at: "2026-11-21"
+recorded_at: "2026-11-21T09:00:00Z"
+```
+

@@ -232,7 +232,7 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 
 ### 9.4 Phase 4: the documents
 
-- [ ] Section 4 § 4.1, its decision record, and the guide.
+- [x] Section 4 § 4.1, its decision record ACCESS-007, and the guide's § 7a, Alerts.
 
 <a id="phase-5-merge-landing-and-verification"></a>
 
