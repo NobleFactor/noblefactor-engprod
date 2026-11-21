@@ -1,15 +1,17 @@
 ---
-title: "Agentic developer workstation decisions"
+title: "Agentic developer workstation architecture decisions"
 status: draft
 created: 2026-11-19
 updated: 2026-11-20
 ---
 
-# Agentic developer workstation decisions
+<a id="agentic-developer-workstation-decisions"></a>
+
+# Agentic developer workstation architecture decisions
 
 [System design](agentic-developer-workstation.md) · [Roadmap](../roadmaps/agentic-developer-workstation.md)
 
-These records use the [shared decision format](../standards/documentation.md#decision-records). W1–W3 record explicit Owner-approved boundaries from the source plan; W6 records the approved environment-configuration boundary. The overall design remains Draft. W4/W5 are design proposals; D1–D6 remain unresolved. Metadata records approval of a choice separately from its implementation or qualification.
+These architecture decision records (ADRs) use the [shared decision format](../standards/documentation.md#decision-records). W1–W3 record explicit Owner-approved boundaries from the source plan; W6 records the approved environment-configuration boundary; W7 records the approved one-off independent audit path. The overall design remains Draft. W4/W5 are design proposals; D1–D6 remain unresolved. Metadata records approval of a choice separately from its implementation or qualification.
 
 <a id="w1"></a>
 
@@ -122,7 +124,7 @@ recorded_at: '2026-11-20T02:02:55Z'
 
 ## 6. Resolve continuity from design to implementation schedules
 
-Design runs on a schedule with separate design and roadmap issues. The Designer delivers the design, its decision records and roadmap directly. The [role-deliverables decision](../engineering/review/decisions.md#decision-64) records this requirement.
+Design runs on a schedule with separate design and roadmap issues. The Designer delivers the design, its architecture decisions and roadmap directly. The [role-deliverables decision](../engineering/review/decisions.md#decision-64) records this requirement.
 
 The remaining open choice is how runtime references and evidence carry from that design schedule into one or several implementation schedules. Preserve source identities, approved access and one active sandbox per schedule; do not silently move a role session between schedules.
 

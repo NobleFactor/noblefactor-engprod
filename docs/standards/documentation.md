@@ -2,7 +2,7 @@
 title: "Documentation standards"
 status: draft
 created: 2026-10-28
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 # Documentation standards
@@ -91,6 +91,10 @@ When replacing a document, name its successor and migrate references while retai
 <a id="decision-records"></a>
 
 ### 4.1 Decision records
+
+<a id="architecture-decisions"></a>
+
+Name the Designer's deliverable **Architecture decisions**. Document each significant architectural choice as an **architecture decision record (ADR)**. Expand the abbreviation on first use. The collection explains the choices behind a design; it can be a companion document or linked individual ADRs. The same record format also applies to handbook policy and process decisions, which are not architectural choices.
 
 Apply this format to handbook decisions and architecture decision records. [Arc42](https://docs.arc42.org/section-9/) supplies the decision content; [Google's writing guidance](https://developers.google.com/style) supplies the presentation. Use the [decision template](../templates/decision.md). Templates demonstrate this standard and do not introduce separate requirements.
 

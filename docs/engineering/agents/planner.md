@@ -20,7 +20,7 @@ Keep the plan's transition work distinct from the design's system explanation.
 
 ## 2. Output and handoff
 
-Deliver a schedule containing ordered issues, dependencies, completion criteria and links to applicable implementation plans, designs, decision records and roadmaps. Help establish the [design schedule](../work-organization.md#design-schedules); use the Designer's delivered assets to prepare implementation work.
+Deliver a schedule containing ordered issues, dependencies, completion criteria and links to applicable implementation plans, designs, architecture decisions and roadmaps. Use [Start a design schedule](../../../skills/start-design-schedule/SKILL.md) for its two standard Tasks; use the Designer's assets to prepare implementation work.
 
 Serve as a planning consultant throughout the work. Explain estimates and uncertainty, prepare issue plans and propose schedule amendments as findings change the work. Record approvals and approved changes in the applicable plan and schedule. Give the coder an approved, actionable plan with its acceptance criteria and relevant sources.
 

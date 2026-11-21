@@ -1119,7 +1119,7 @@ A Designer owes a design, its decision records, and a roadmap, not a plan for wr
 
 The [role deliverables](../work-assets.md#role-deliverables) are authoritative; the [design start rule](../process.md#prepare-and-review) makes the Designer's approved assignment sufficient to draft those assets. Requiring a separate implementation plan to write a design delayed the actual deliverables. The scoped Designer rule takes precedence over retained host instructions requiring a plan for every task. Implementation planning and other approval boundaries remain in force.
 
-David Noble directed the correction and supplied the exact Designer statement on 2026-11-20. The [source](sources/role-context-2026-11-20/owner-direction.txt) preserves both instructions. The [implementation record](../../plans/doc/558-role-entry-points.md#role-deliverables-correction) owns publication and host-alignment work; this decision does not establish that a running agent has loaded the correction.
+David Noble directed the correction and supplied the exact Designer statement on 2026-11-20. The [source](sources/role-context-2026-11-20/owner-direction.txt) identifies the original role direction and preserves the exact revised Designer statement. The [implementation record](../../plans/doc/558-role-entry-points.md#role-deliverables-correction) owns publication and host-alignment work; this decision does not establish that a running agent has loaded the correction.
 
 ```yaml
 id: '64'
@@ -1130,4 +1130,23 @@ approved_by: David Noble
 recorded_by: Codex
 decided_at: '2026-11-20T20:22:39.061-08:00'
 recorded_at: '2026-11-21T04:25:16.563983+00:00'
+```
+
+<a id="decision-65"></a>
+
+## 65. Name the deliverable Architecture decisions and use ADRs
+
+Name the Designer's deliverable **Architecture decisions**. Document individual significant choices as **architecture decision records (ADRs)**, following [arc42 section 9](https://docs.arc42.org/section-9/) and [Google Cloud's ADR guidance](https://docs.cloud.google.com/architecture/architecture-decision-records). The [documentation standard](../../standards/documentation.md#architecture-decisions) owns the terminology and format.
+
+David Noble directed immediate adoption in this PR without another issue. This clarifies the Designer deliverable named in decision 64; its other requirements remain in force. His question about Roadmap does not approve a name change. The [Owner source](sources/role-context-2026-11-20/owner-direction.txt) identifies the direction and its complete native message. Preserve historical quotations.
+
+```yaml
+id: '65'
+status: accepted
+supersedes: []
+proposed_by: David Noble
+approved_by: David Noble
+recorded_by: Codex
+decided_at: '2026-11-20T21:02:38.158-08:00'
+recorded_at: '2026-11-21T05:09:21.453468+00:00'
 ```

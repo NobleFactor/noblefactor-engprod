@@ -303,3 +303,64 @@ text_sha256: 625072e2192fd73fdf9b6832d5f82ce829b92276e15839da20d9b973b7459fa0
 
 Here is a revised statement for the Designer job: A Designer owes a design, its decision records, and a roadmap, not a plan for writing a design.
 === END MESSAGE 22 ===
+
+Immediate nomenclature direction. Message 23 is a verbatim opening excerpt. The full message, including the requested deliverable name and the separate Roadmap inquiry, is retained in the native Codex rollout above and /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.558-role-context/nomenclature/owner-direction.json; complete message SHA-256: 67fa04642b53cabbd8b37e5741dfe6eb94443d997c1736b71bc458ab66a26908. The published spelling Architecture decisions corrects a typographical error in the requested name.
+
+=== MESSAGE 23: user ===
+recorded_at: 2026-11-21T05:02:38.158Z
+text_sha256: c1b019d224a67978ef58fcb7349c62d57285542680cdea899d4337a10348a719
+
+we must adopt that nomenclature immediately. no time to report a bug or a task. Let's just get it in. We use the nomenclature ADR elsewhere.
+=== END MESSAGE 23 ===
+
+Common design-schedule Task proposal and starter-skill approval. These are exact selected messages from the originating Codex rollout named above, not external review text.
+
+=== MESSAGE 24: user ===
+recorded_at: 2026-11-21T05:16:12.098Z
+text_sha256: 83a03ce62cf3ae63c1552ab69358bbaefe2f9ee792a0a238c22042532bbaed14
+
+I'm working on the design for the evidence archive and arrived at this construct for a design schedule.
+
+I propose two Tasks for `Schedule: evidence archive design (#619)`:
+
+1. **Design the Evidence Archive subsystem and record its architectural decisions**. Define boundaries, components, interfaces, data flows, integrity, security, recovery, and significant choices with alternatives.
+
+2. **Produce the Evidence Archive roadmap for planning". Identify capabilities, dependencies, useful delivery increments, acceptance evidence and unresolved choices for the Planner.
+
+I would like to turn these into the common tasks for every design schedule. The outputs drive planning.
+
+Where would we put them. is it a skill?
+=== END MESSAGE 24 ===
+
+=== MESSAGE 25: assistant ===
+recorded_at: 2026-11-21T05:17:06.113Z
+text_sha256: eac532bbf3b4f5672a125a0a9f96dce6f9eaadeb0cf09dd252ba2227e8834781
+
+**Put the two Task definitions in a design-schedule template, and use a skill to apply it.**
+
+The separation should be:
+
+| Home | Responsibility |
+|---|---|
+| Handbook: **Design schedules** | Requires the design, Architecture decisions and roadmap, with separate design and roadmap issues. |
+| **Design-schedule template** | Defines the two standard Tasks, their required content and completion evidence. |
+| A small **Start a design schedule** skill | Reads the template, fills in the subsystem and scope, and uses existing `star github` commands to establish the Schedule and Tasks. |
+
+I propose the template at `/Users/david-noble/Workspace/NobleFactor/noblefactor-engprod.558-role-context/docs/templates/design-schedule.md`, with these reusable titles:
+
+1. **Design `<subsystem>` and record its Architecture decisions.**
+2. **Produce the `<subsystem>` roadmap for planning.**
+
+Your descriptions supply their scope. Each Task should also specify its outputs and completion evidence: linked assets, technical review, compliance audit, your approval and the merged PR. One PR can deliver both Tasks.
+
+The roadmap can develop alongside the design. At handoff, they must agree and give the Planner enough information to propose implementation issues and schedules.
+
+The template supplies content; the existing account issue forms continue to define field labels. The skill references the shared requirements rather than duplicating them.
+=== END MESSAGE 25 ===
+
+=== MESSAGE 26: user ===
+recorded_at: 2026-11-21T05:35:35.534Z
+text_sha256: 12a425f5d5d54e7f56805ad30b37f474e07f9d4067af37c9cfb07cce369a364c
+
+awesome. let's do that now, if it makes sense. What do you think?
+=== END MESSAGE 26 ===

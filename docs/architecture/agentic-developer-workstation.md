@@ -76,7 +76,7 @@ Native host servers own their sessions, primary agents and delegated execution. 
 
 The launcher, access routing, policy distribution and private archive run outside schedule sandboxes. Their logical separation permits them to remain available when a sandbox stops; they may share a physical machine with SBX.
 
-A design runs on a schedule with separate design and roadmap issues. The Designer supplies the design, its decision records and a roadmap directly from the approved problem and scope. The Planner uses these assets to prepare implementation issues, plans and schedules and remains a consultant throughout. [D1](agentic-developer-workstation.decisions.md#d1) covers continuity from a design schedule into implementation schedules.
+A design runs on a schedule with separate design and roadmap issues. The Designer supplies the design, its architecture decisions and a roadmap directly from the approved problem and scope. The Planner uses these assets to prepare implementation issues, plans and schedules and remains a consultant throughout. [D1](agentic-developer-workstation.decisions.md#d1) covers continuity from a design schedule into implementation schedules.
 
 <a id="5-system-architecture"></a>
 
@@ -166,7 +166,7 @@ The role-session group represents five contexts distributed among selected hosts
 
 | Role | Work it leads | Authority boundary |
 | --- | --- | --- |
-| Designer | Design documents, their decision records, and a roadmap | Proposes design; edits authorized design assets |
+| Designer | Design documents, their architecture decisions, and a roadmap | Proposes design; edits authorized design assets |
 | Planner | Schedules, issue plans, dependencies, amendments and ongoing planning advice | Proposes commitments; applies only authorized tracker changes |
 | Coder | Implementation, debugging, tests, and correction of findings | Writes the assigned workspace within current authorization |
 | Compliance auditor | Standards checks, early findings, and final compliance evidence | Reads identified source/policy and records findings; does not rewrite the implementation it audits |
@@ -276,7 +276,7 @@ The runtime distinguishes environment readiness, editor access, server readiness
 
 #### 6.1.1 Design and planning
 
-The Owner approves a design schedule with at least two issues: design and roadmap. The Designer works from the agreed problem and scope and produces the design, its decision records and roadmap directly, without a plan for writing them. The Owner reviews these assets. The handoff identifies accepted requirements, remaining proposals, interface owners, dependencies and the first useful increment.
+The Owner approves a design schedule with at least two issues: design and roadmap. The Designer works from the agreed problem and scope and produces the design, its architecture decisions and roadmap directly, without a plan for writing them. The Owner reviews these assets. The handoff identifies accepted requirements, remaining proposals, interface owners, dependencies and the first useful increment.
 
 The planner proposes Tasks/Bugs under their owning Features, retains cross-owner dependencies, and creates one or more bounded schedules through the approved process. Each implementation issue receives its plan before implementation begins.
 
@@ -701,7 +701,9 @@ Record original/successor IDs, binding revision, approval, cutover time and evid
 
 Views resolve the new binding; a returning old runtime does not regain authority. Retain original identity even when its conversation is lost. [Scenario S8](../roadmaps/agentic-developer-workstation.md#s8--disaster-recovery-after-loss-of-a-native-session) qualifies this contract for each host.
 
-## 9. Significant decisions
+<a id="9-significant-decisions"></a>
+
+## 9. Architecture decisions
 
 The [decision companion](agentic-developer-workstation.decisions.md) records editor access, native server ownership, session succession, environment role configuration and one-off independent audits. It also records the proposed schedule/runtime and shared-archive choices and the unresolved D1–D6 decisions.
 

@@ -43,7 +43,9 @@ The [Schedule template](../templates/schedule.md) records deliverable, assignmen
 
 ### 2.1. Design schedules
 
-Every design runs on an Owner-approved schedule with at least two issues: one for the design and its decision records, and a separate issue for the roadmap. Preserve each issue's native Feature/Epic ownership. These are ordinary work issues, not new issue types.
+Every design runs on an Owner-approved schedule with at least two issues: one for the design and its architecture decisions, and a separate issue for the roadmap. Preserve each issue's native Feature/Epic ownership. These are ordinary work issues, not new issue types.
+
+The [design-schedule template](../templates/design-schedule.md) defines the two common Task bodies and their completion evidence. The [Start a design schedule skill](../../skills/start-design-schedule/SKILL.md) applies that template through the existing GitHub commands; the template owns content and the account forms own field labels.
 
 The design schedule identifies the problem, scope, assigned Designer and completion evidence. The Designer produces those assets directly; a plan for writing the design is not a prerequisite. The Planner helps establish the schedule, then uses the accepted design and roadmap to propose implementation issues, their plans and one or more implementation schedules. The Planner remains a consultant as the work evolves.
 

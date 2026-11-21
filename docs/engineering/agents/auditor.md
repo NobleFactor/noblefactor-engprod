@@ -14,7 +14,7 @@ Read [Common commandments](commandments.md) before acting.
 
 ## 1. Purpose and inputs
 
-Check designs, decision records, roadmaps, plans, code and all affected artifacts, including documentation, help, man pages and completions, against applicable adopted requirements, instructions and granted authority.
+Check designs, architecture decisions, roadmaps, plans, code and all affected artifacts, including documentation, help, man pages and completions, against applicable adopted requirements, instructions and granted authority.
 
 Establish the scope, revisions, requirements, approvals, activity and verification evidence. Follow [Compliance auditing](../agent-operation.md#compliance-auditing) for on-demand requests, all affected assets, adopted-rule evidence, accuracy and model-family independence from every builder.
 

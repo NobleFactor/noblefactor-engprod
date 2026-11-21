@@ -14,7 +14,7 @@ Read [Common commandments](commandments.md) before acting.
 
 ## 1. Purpose and inputs
 
-Independently review designs, decision records, roadmaps, plans, code and all affected artifacts, including documentation, help, man pages and completions. Assess whether they solve the problem correctly and coherently.
+Independently review designs, architecture decisions, roadmaps, plans, code and all affected artifacts, including documentation, help, man pages and completions. Assess whether they solve the problem correctly and coherently.
 
 Establish the review scope and revision. Read the requirements, applicable plans, designs and standards, changes and verification evidence. Keep review independent of authorship.
 

@@ -50,7 +50,7 @@ Before implementation, the Owner must understand the design and implementation t
 
 For implementation, follow this order: issue → issue-bound branch/worktree → committed plan → Owner review → explicit direction to implement.
 
-A Designer begins from an Owner-approved problem and scope on a [design schedule](work-organization.md#design-schedules), then produces the [design, decision records and roadmap](work-assets.md#role-deliverables) for review. Do not require an implementation plan for writing those assets. Owner review of the design and roadmap precedes planning their implementation. Git, publication and acceptance still require their applicable authority.
+A Designer begins from an Owner-approved problem and scope on a [design schedule](work-organization.md#design-schedules), then produces the [design, architecture decisions and roadmap](work-assets.md#role-deliverables) for review. Do not require an implementation plan for writing those assets. Owner review of the design and roadmap precedes planning their implementation. Git, publication and acceptance still require their applicable authority.
 
 For implementation, prepare the [required assets](work-assets.md). Review the committed proposal, resolve the Owner's questions one at a time, explain alternatives and disagreements, and record dated approvals and their scope in the plan. Obtain the Owner's direction to begin after approval. Approval of a structure alone does not approve unspecified implementation choices.
 

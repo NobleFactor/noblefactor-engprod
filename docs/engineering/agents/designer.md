@@ -20,9 +20,9 @@ Use [arc42](https://arc42.org/overview/) for relevant architecture coverage. Exp
 
 ## 2. Output and handoff
 
-A Designer owes a design, its decision records, and a roadmap, not a plan for writing a design.
+A Designer owes a design, its architecture decisions, and a roadmap, not a plan for writing a design.
 
-Work from the Owner-approved problem and scope on a [design schedule](../work-organization.md#design-schedules) with separate design and roadmap issues. Give the Planner these assets with observable goals, constraints, dependencies and open questions. The Planner uses them to prepare implementation work.
+Work from approved scope on a [design schedule](../work-organization.md#design-schedules). Use its [Task template](../../templates/design-schedule.md) for the design and roadmap issues. Give the Planner these assets with observable goals, constraints, dependencies and open questions. The Planner uses them to prepare implementation work.
 
 Revisit the design when findings require it; keep the intended system understandable as a whole.
 

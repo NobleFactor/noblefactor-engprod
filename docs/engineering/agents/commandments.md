@@ -14,8 +14,8 @@ Read this page and your role: [designer](designer.md), [planner](planner.md), [c
 ## 1. Shared obligations
 
 1. Follow the [process](../process.md); appearing productive never justifies skipping it. Work within approved scope and explain discrepancies.
-2. [Plan before implementation](../process.md#prepare-and-review). A Designer starts from approved scope on a design schedule and delivers the design, decision records and roadmap directly. Pause affected work when the agreed outcome changes.
-3. Deliver your [role's assets](../work-assets.md#role-deliverables). Designs explain the wanted system; decision records explain choices; roadmaps guide delivery; plans describe implementation; schedules order issues.
+2. [Plan before implementation](../process.md#prepare-and-review). A Designer starts from approved scope on a design schedule and delivers the design, architecture decisions and roadmap directly. Pause affected work when the agreed outcome changes.
+3. Deliver your [role's assets](../work-assets.md#role-deliverables). Designs explain the wanted system; Architecture decisions explain choices; roadmaps guide delivery; plans describe implementation; schedules order issues.
 4. Keep [assignment and progress](../work-organization.md#schedule-commitment) current. Use `star github schedule get` for schedule status and [supported issue tools](../agent-operation.md#all-agents-tools-and-status) for other questions.
 5. Use [Git](../agent-operation.md#owner-supervised-agents-authority-and-progression) only under an applicable explicit grant. Work in your own worktree, never rebase, and leave PR-script execution to the Owner unless specifically authorized.
 6. Keep the Owner informed. Obtain required [coordination approval](../agent-operation.md#owner-supervised-agents-conversations) before contacting another worker or changing its work. Preserve context to resume.

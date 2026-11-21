@@ -114,7 +114,7 @@ Use [Portable tooling (#152)](https://github.com/NobleFactor/noblefactor-engprod
 
 | Proposed scenario | Walk and evidence to retain | Main requirements |
 | --- | --- | --- |
-| S1 — Design leads to implementation schedules | Start on a design schedule with separate design and roadmap issues; deliver and review the design, decision records and roadmap; the Planner proposes implementation issues/plans and schedules and remains a consultant; preserve evidence across the handoff | R1, R2, R10 |
+| S1 — Design leads to implementation schedules | Start on a design schedule with separate design and roadmap issues; deliver and review the design, architecture decisions and roadmap; the Planner proposes implementation issues/plans and schedules and remains a consultant; preserve evidence across the handoff | R1, R2, R10 |
 | S2 — Five roles use three hosts | Create one schedule sandbox and selected host servers; open profiles to create roles on demand, inspect server/session bindings, perform bounded work, detach and resume; qualify shared-server session separation and host-managed execution | R2, R3, R6, R9 |
 | S3 — Leave the desktop for an iPad | Walk the eight stable editor/server/binding startup combinations; open two profiles on the desktop and corresponding iPad views; exercise concurrent opens, uncertain responses, pending approval, last-view detach, and connection loss against the same sessions | R1, R2, R4 |
 | S4 — The schedule changes during delivery | Discover a dependency, propose an amendment, update the owner-approved steps, merge increments, retain useful contexts, and complete independent closing review | R1, R2, R7, R10 |

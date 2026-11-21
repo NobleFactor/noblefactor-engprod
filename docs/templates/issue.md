@@ -2,7 +2,7 @@
 title: "Issue template"
 status: draft
 created: 2026-10-28
-updated: 2026-11-15
+updated: 2026-11-20
 ---
 
 # Issue template
@@ -39,7 +39,7 @@ Identify scope, repository, native feature/epic relationship, schedule assignmen
 <a id="architecture-and-design-impact"></a>
 <a id="4-architecture-and-design-impact"></a>
 
-Record the architecture/design impact and related links, or the reasoned no-change determination, in the issue and its plan under [Plans and designs](../engineering/work-assets.md#plans-and-designs).
+Record the architecture/design impact and related links, or the reasoned no-change determination, in the issue and any applicable implementation plan under [Plans and designs](../engineering/work-assets.md#plans-and-designs).
 
 <a id="acceptance"></a>
 <a id="5-acceptance"></a>
@@ -50,4 +50,4 @@ Use the selected form's Evidence of completion section where its type requires o
 
 <a id="plan-and-design-documents"></a>
 
-Every filed issue carries its Plan and design documents table under [Work assets](../engineering/work-assets.md#plans-and-designs), with a plan placeholder until available and links to applicable designs. Plans subsequently supply the authoritative rows through plan linking. Verify native metadata and project records through the supported filing path as well as checking the Markdown body.
+Every filed issue carries its Plan and design documents table under [Work assets](../engineering/work-assets.md#plans-and-designs), with a plan placeholder where required and links to applicable designs. Designer Tasks use the [design-schedule template](design-schedule.md), record their plan as not required, and link the design, Architecture decisions and roadmap. Plans subsequently supply the authoritative rows through plan linking. Verify native metadata and project records through the supported filing path as well as checking the Markdown body.
