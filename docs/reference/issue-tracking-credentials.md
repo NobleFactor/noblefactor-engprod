@@ -130,7 +130,7 @@ A token already in the vault under those names is adopted: checked, and its reco
 
    `apply` sets both as organization secrets, visible to all repositories. Store the key where you keep secrets, then delete the downloaded file.
 
-These are the permissions NobleFactor's app has. The Triage workflow itself needs only Issues, Projects and Issue fields.
+These are the permissions NobleFactor's app has. The Triage workflow itself needs only Issues, Projects and Issue fields. A sandbox organization gets the same permissions, so that a proof there means what it would in production. A sandbox never installs a production app or holds a production key.
 
 <a id="making-a-user-accounts-token"></a>
 
@@ -188,4 +188,4 @@ gh run list --repo <owner>/<repository> --workflow triage.yml --limit 5
 - **A user account uses a classic token.** A GitHub App can't be granted a user account's projects, and a fine-grained token can't reach them either; only a classic token with the `project` scope can, with `repo` for a private repository. One token serves all the account's participating repositories.
 - **The `gh` logins** are what `star` runs as: `repo` for private repositories and their issues, `project` for projects, `admin:org` for an organization's secrets and variables, and `workflow` to land workflow files.
 
-Any NobleFactor workflow that must write beyond its own repository can mint a token the same way, from the same two organization secrets. It gets exactly the app's permissions. A new permission is added on the app's page and then accepted on each installation.
+Any NobleFactor workflow that must write beyond its own repository can mint a token the same way, from the same two organization secrets. It gets exactly the app's permissions. A new permission is added on the app's page and then accepted on each installation, production's and the sandbox's alike.

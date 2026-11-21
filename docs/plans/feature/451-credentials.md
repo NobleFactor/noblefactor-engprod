@@ -56,7 +56,7 @@ At the end:
 3. **A secret's value can come from Key Vault,** as `vault:<vault>/<name>`, beside today's `env:` and `file:`.
 4. **`star github token make <account>` makes an account's token** where GitHub allows it, and says what to do where GitHub doesn't. It asks for nothing at a prompt: each value it needs comes from a source named on its command line. It can be stopped and run again at any step without losing a working credential.
 5. **The credentials are inventoried.** Section 4 and a user guide list each credential: its account and kind, where it is held, the processes that use it and the permissions each needs as they stand, its expiry or rotation date, its warning margin, and how it is renewed. The help of `apply`, `restore` and `token make` names the guide.
-6. **Verification is in the field.** After the merge and `writ deploy`, the commands' first runs on the real accounts are the verification, by the path § 5.6 sets. There are no sandbox runs (§ 12, 2026-11-21).
+6. **Both sandboxes have their tokens,** set up the same way as the real accounts, each proven by a Triage run that succeeds.
 
 Out of scope:
 
@@ -85,13 +85,13 @@ Read on 2026-11-20, at develop 55dec2b:
 - **The models,** `reference/organization.yaml`, `reference/user.yaml` and each account's `model.yaml`, say nothing about tokens.
 - **Star's extension format** has one-line help only: devlore-cli's `cmd/star/extension/command.go` has a `Help` field and nothing longer.
 - **Since #596, the status companions of sections 3, 4 and 6 are superseded references,** and each section's decisions are in its `.decisions.md` file.
-- **A draft inventory and a bootstrap script for the sandboxes, unused since the sandbox tests were dropped (§ 12),** are in `~/Workspace/NobleFactor/scratch/noblefactor-engprod.451-credentials/`: `credentials.md` and `set-sandbox-credentials.bash`.
+- **A draft inventory and a bootstrap script for the sandboxes** are in `~/Workspace/NobleFactor/scratch/noblefactor-engprod.451-credentials/`: `credentials.md` and `set-sandbox-credentials.bash`.
 
 <a id="design-impact"></a>
 
 ## 4. Design impact
 
-- **[Section 4](../../architecture/issue-data-model/4-storage-and-reach.md), § 4.1 Credentials:** becomes the inventory of § 2, item 5, and states the rule: every account identifies its token.
+- **[Section 4](../../architecture/issue-data-model/4-storage-and-reach.md), § 4.1 Credentials:** becomes the inventory of § 2, item 5, the sandboxes included, and states the rule: every account identifies its token.
 - **[Section 6](../../architecture/issue-data-model/6-the-asset-and-its-sync.md), § 1.1 Model record, § 5 Reconcile a model and § 8 Access and secret handling:** the model's `token` record; the preflight and refusal of `apply`, `restore` and `diff`; what `get` and `backup` write; `vault:` sources; `token make`.
 - **Decision records:**
   - In [`4-storage-and-reach.decisions.md`](../../architecture/issue-data-model/4-storage-and-reach.decisions.md): every account identifies its token, and `apply` refuses an account that doesn't. Its uses and permissions are free to change. Where `star` can't make a token, the refusal and the help say how.
@@ -114,14 +114,14 @@ Each model gains one record:
 token:
   kind: github-app
   secrets:
-    NOBLEFACTOR_AUTOMATION_APP_ID: vault:kv-nf-engprod-prd/NobleFactor--NOBLEFACTOR-AUTOMATION-APP-ID
-    NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY: vault:kv-nf-engprod-prd/NobleFactor--NOBLEFACTOR-AUTOMATION-APP-PRIVATE-KEY
+    NOBLEFACTOR_AUTOMATION_APP_ID: vault:kv-nf-engprod-dev/NobleFactor-sandbox--NOBLEFACTOR-AUTOMATION-APP-ID
+    NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY: vault:kv-nf-engprod-dev/NobleFactor-sandbox--NOBLEFACTOR-AUTOMATION-APP-PRIVATE-KEY
 
 # A user account
 token:
   kind: classic-token
   secrets:
-    ADD_TO_PROJECT_PAT: vault:kv-david-noble-at-work/David-Noble-at-work--ADD-TO-PROJECT-PAT
+    ADD_TO_PROJECT_PAT: vault:kv-nf-engprod-dev/David-Noble-at-work-sandbox--ADD-TO-PROJECT-PAT
 ```
 
 - `kind` is `github-app` or `classic-token`.
@@ -162,7 +162,7 @@ If any check fails, the command writes nothing and exits non-zero. Its message n
 **New, adopted or replaced.**
 
 - **New:** the account has no token, at any binding or in the vault. `token make` creates one.
-- **Adopted:** a working token is already in the vault under the record's names, as one made before `token make` existed is. `token make` verifies it, creates nothing, and prints the `token` record.
+- **Adopted:** a working token is already in the vault under the record's names, as Phase 2's bootstrap leaves the sandboxes. `token make` verifies it, creates nothing, and prints the `token` record.
 - **Replaced,** only with `--replace`: `token make` creates the new credential as new versions of the same vault secrets. The working credential is left in place. GitHub's secrets change only when `apply` runs. The old key or token is revoked by hand, only after every consumer is verified on the new one.
 - Without `--replace`, `token make` refuses an account whose token works.
 
@@ -188,9 +188,16 @@ The token's permissions and scopes live in the extension's templates, not the mo
 
 <a id="the-sandboxes"></a>
 
-### 5.5 Verification in the field
+### 5.5 The sandboxes
 
-There are no sandbox runs (§ 12, 2026-11-21). After the merge and `writ deploy`, the deployed commands' first runs on the real accounts are the verification: `star github model diff`, then `apply` of each account's own model with its `token` record, by the path § 5.6 sets, and `star github token make` where an account's token is to be made or adopted. Each run's records, and each issue or secret read back, are posted on #451.
+Phase 2 fixes the sandboxes before the rest of the work, under its own limited authorization (§ 6, question 6). Its scope:
+
+- Create NobleFactor-sandbox's app by hand on GitHub, as the draft inventory describes, with the same permissions as NobleFactor's.
+- Make David-Noble-at-work-sandbox's classic token by hand.
+- Run `set-sandbox-credentials.bash org` and `set-sandbox-credentials.bash user`. The script stores each value in `kv-nf-engprod-dev` under the names in § 5.1, sets the secrets from the vault, and proves each account with a Triage run on a test issue.
+- Close each proof issue with `star github issue close` and the run as its evidence, which also removes its Triage row.
+
+Once §§ 5.1 to 5.4 land, `token make` adopts these credentials (§ 5.4), each sandbox's model gets its `token` record, and `apply` runs against it as this work's verification.
 
 <a id="live-verification-path"></a>
 
@@ -265,7 +272,7 @@ Questions for you, 6 of them:
 3. **The command's name, `star github token make`.** My call: yes. Codex has no technical objection.
 4. **A devlore-cli feature for longer extension help.** My call: file it now. Codex agrees, and notes that it doesn't solve the input question, which § 5.4 answers.
 5. **The app-key rotation interval and the classic-token warning margin,** which the inventory records and #613 enforces. My call: rotate app keys yearly; warn 14 days before a classic token expires.
-6. **Phase 2 before the plan is approved.** Moot: on 2026-11-21 the sandbox tests were dropped, and with them Phase 2 (§ 12).
+6. **Phase 2 before the plan is approved,** limited to the scope in § 5.5. My call: yes, since both sandboxes are broken now. Codex agrees it can be authorized separately, once the bootstrap discrepancies it found are fixed, and they are.
 
 <a id="acceptance-criteria-and-evidence"></a>
 
@@ -273,11 +280,12 @@ Questions for you, 6 of them:
 
 | Criterion | Observable result | Evidence/method | Environment/artifact |
 | --- | --- | --- | --- |
-| Preflight and refusal | `apply` and `restore` write nothing, exit non-zero, and name what is missing or unreadable, and how to fix it, for every condition in § 5.7 | The cases | Stand-in gh |
-| Vault source | A secret set from `vault:`; its value in no record | The cases; the field runs of § 5.5 | Stand-in gh and az; the real accounts, by the path in § 5.6 |
+| Preflight and refusal | `apply` and `restore` write nothing, exit non-zero, and name what is missing or unreadable, and how to fix it, for every condition in § 5.7 | The cases; a live run against a sandbox's model with its record removed | Stand-in gh; NobleFactor-sandbox, by the path in § 5.6 |
+| Vault source | A secret set from `vault:`; its value in no record | The case; a live `apply` of each sandbox's model | Stand-in gh and az; both sandboxes, by the path in § 5.6 |
 | `get` and `backup` | `held` only where every binding holds the secret; a recorded `vault:` locator kept | The cases | Stand-in gh |
-| Making a token | An app made from its manifest and stored; a working token adopted; a user token checked and stored; each partial result reported with its next command | The cases; the field runs of § 5.5 | Stand-ins; the real accounts |
-| The inventory | Every credential listed with the entries of § 5.8 | Review, and the comment of § 5.8 on #451 | This branch, then develop |
+| Making a token | An app made from its manifest and stored; the sandboxes' credentials adopted; a user token checked and stored; each partial result reported with its next command | The cases; live `token make` in both sandboxes | Stand-ins; both sandboxes |
+| The sandboxes | Each sandbox's Triage run succeeds, and its proof issue is closed with its evidence | Phase 2's runs, posted on #451 | Both sandboxes |
+| The inventory | Every credential listed with the entries of § 5.8, the sandboxes included | Review, and the comment of § 5.8 on #451 | This branch, then develop |
 
 <a id="required-completion-milestones"></a>
 
@@ -288,7 +296,7 @@ Questions for you, 6 of them:
 | Implementation | Yes | The commits of §§ 9.3 to 9.6, reviewed | Pending |
 | Merge | Yes | The pull request and the commit it lands | Pending |
 | Deployment | Yes, `writ deploy`, for the extension to run | The deployed extension | Pending |
-| Verification | Yes, in the field | § 5.5's runs on the real accounts, by § 5.6's path, posted on #451 | Pending |
+| Verification | Yes, in both sandboxes | § 7's live checks, posted on #451 | Pending |
 
 <a id="implementation-phases"></a>
 
@@ -304,8 +312,8 @@ Questions for you, 6 of them:
 
 ### 9.2 Phase 2: the sandboxes' tokens
 
-Dropped on 2026-11-21, with the sandbox tests (§ 12).
-
+- [ ] NobleFactor-sandbox's app made and its secrets set with `set-sandbox-credentials.bash org`, proven by a Triage run, and the proof issue closed with its evidence.
+- [ ] David-Noble-at-work-sandbox's token made and set with `set-sandbox-credentials.bash user`, proven the same way.
 
 <a id="phase-3-the-record-and-the-refusal"></a>
 
@@ -335,7 +343,7 @@ Dropped on 2026-11-21, with the sandbox tests (§ 12).
 
 ### 9.7 Phase 7: merge, deployment and verification
 
-- [ ] Merged and deployed; § 5.5's field verification, by the path in § 5.6; the evidence and the inventory comment posted on #451.
+- [ ] Merged and deployed; § 7's live checks in both sandboxes, by the path in § 5.6; the evidence and the inventory comment posted on #451.
 
 <a id="files-and-related-assets"></a>
 
@@ -350,6 +358,7 @@ Dropped on 2026-11-21, with the sandbox tests (§ 12).
 - `docs/architecture/issue-data-model/4-storage-and-reach.md` and `4-storage-and-reach.decisions.md`.
 - `docs/architecture/issue-data-model/6-the-asset-and-its-sync.md` and `6-the-asset-and-its-sync.decisions.md`.
 - `docs/reference/issue-tracking-credentials.md`: new.
+- Outside the repository, for Phase 2 only: `~/Workspace/NobleFactor/scratch/noblefactor-engprod.451-credentials/set-sandbox-credentials.bash`.
 
 <a id="dependencies-overlaps-and-blockers"></a>
 
@@ -359,6 +368,7 @@ Dropped on 2026-11-21, with the sandbox tests (§ 12).
 - **#613,** the alerts: it reads the inventory and the `token` record, and acts on the renewal dates and warning margins this work sets. It follows this work.
 - **NobleFactor/devlore-cli#1136,** the command provider: `token make` doesn't need it, since it takes named sources; prompting inside `star` would.
 - **Longer help in star** depends on devlore-cli (question 4).
+- **Phase 2** waits on you: its own authorization, and you signed in to GitHub as each sandbox's owner.
 
 <a id="approval-and-departures"></a>
 
@@ -374,7 +384,6 @@ Dropped on 2026-11-21, with the sandbox tests (§ 12).
   6. The bootstrap script now writes the vault names of § 5.1.
   7. The documentation impact names the decision files, not the superseded status companions, and records the change to MODEL-005 as a new decision (§ 4).
   8. The bootstrap proof closes its issue with `star github issue close` and its evidence (§ 5.5).
-- **Decided 2026-11-21: no sandbox tests.** Setting up the sandboxes' credentials takes the same manual effort every time and can't be reproduced cheaply. Until GitHub offers a way to automate it, commands are verified in the field, on the real accounts, and the sandbox accounts NobleFactor-sandbox and David-Noble-at-work-sandbox are deleted. This drops Phase 2 and the sandbox checks of §§ 7 to 9, and [MODEL-010](../../architecture/issue-data-model/6-the-asset-and-its-sync.decisions.md#model-010) supersedes MODEL-006. David Noble, in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`.
 - The rule this plan carries out, decided 2026-11-20: every account identifies its token, and `apply` refuses an account that doesn't. Its uses and permissions are free to change. Where `star` can't make a token, the refusal and the help say how.
 
 <a id="completion-review"></a>

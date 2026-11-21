@@ -128,9 +128,8 @@ Evidence: the original Where star github's proofs run section and its delivery r
 
 ```yaml
 id: MODEL-006
-status: superseded
+status: accepted
 supersedes: []
-superseded_by: [MODEL-010]
 proposed_by: null
 approved_by: David Noble
 recorded_by: Codex
@@ -222,35 +221,8 @@ decided_at: null
 recorded_at: '2026-11-21T03:00:00Z'
 ```
 
-<a id="model-010"></a>
-
-## 10. Verify model commands in the field, not in sandboxes
-
-Live proofs of the model commands run on the accounts the commands serve, once a change is deployed. There are no sandbox accounts: NobleFactor-sandbox and David-Noble-at-work-sandbox are deleted. A proof run still reaches no publication path that merges a pull request by itself.
-
-Scope: every live proof of `star github` commands, replacing [MODEL-006](#model-006) whole.
-
-**Reason:** A sandbox is only useful with the same credentials as production, and setting those up takes the same manual steps on GitHub every time: an app, its key, its installation, a classic token. They can't be reproduced cheaply, and both sandboxes ran broken for days unnoticed. Until GitHub offers a way to automate that setup, the effort buys less than verifying in the field.
-
-**Alternatives:** Keeping the sandboxes, set up by hand once and kept current, was rejected: the setup can't be repeated cheaply, and a sandbox that drifts proves nothing. Scripting the setup was rejected for now: a classic token can't be made by a script, and an app's manifest flow still needs a person in the browser.
-
-**Consequence:** A change is proved by its first runs on the real accounts, after the merge and deployment, by a path that changes nothing that would land a pull request by itself. The test suite's stand-ins remain the proof before the merge. Live mistakes are found and fixed in the field.
-
-Evidence: the Owner's decision of 2026-11-21 in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`, recorded in [#451's plan, § 12](../../plans/feature/451-credentials.md#approval-and-departures).
-
-```yaml
-id: MODEL-010
-status: accepted
-supersedes: [MODEL-006]
-proposed_by: David Noble
-approved_by: David Noble
-recorded_by: Claude Code
-decided_at: '2026-11-21'
-recorded_at: '2026-11-21T08:00:00Z'
-```
-
 <a id="7-shared-review-policy"></a>
 
-## 11. Shared review policy
+## 10. Shared review policy
 
 Model-command publication uses the [shared Owner review boundary](../../engineering/procedures/pull-request.md#merge-authorization-and-gates). [Handbook decision 62](../../engineering/review/decisions.md#decision-62) records the Owner's approval. The model design references that policy; it does not define an automatic-merge exception.
