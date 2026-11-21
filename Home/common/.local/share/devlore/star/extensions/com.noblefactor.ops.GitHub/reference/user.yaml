@@ -33,6 +33,14 @@ account: user
 # workflow template and quality gate, every file but its model.yaml (ruled 2026-11-10, noblefactor-engprod#437).
 files_from: David-Noble-at-work
 
+# The token the account's Triage workflow signs in with: one classic token with the repo and project scopes, made by
+# the account, in the repository secret the workflow template names on each participating repository. Every account
+# identifies its token, and apply refuses one that doesn't (decided 2026-11-20, noblefactor-engprod#451). A reference
+# names no source: applying it takes the secret's from --token. An account's own model names it, env:, file: or
+# held; it names no use and no permission, which are free to change.
+token:
+  kind: classic-token
+
 # Type labels, carried by every repository of the account; type names are capitalized and labels lowercase. A type's
 # level is the "Level N:" its label's description begins with; within a level, the order here is the render order; the
 # leaf marked unplanned is the one found rather than planned. A label whose description begins "Collection:" has no

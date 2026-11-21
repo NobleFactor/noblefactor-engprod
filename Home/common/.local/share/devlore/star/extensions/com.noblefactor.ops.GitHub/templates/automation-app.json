@@ -1,0 +1,12 @@
+{
+  "public": false,
+  "default_permissions": {
+    "contents": "write",
+    "issues": "write",
+    "metadata": "read",
+    "pull_requests": "write",
+    "organization_projects": "write",
+    "issue_fields": "read"
+  },
+  "default_events": []
+}

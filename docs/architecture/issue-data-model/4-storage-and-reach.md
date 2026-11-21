@@ -1,7 +1,7 @@
 ---
 title: "Issue model storage and access"
 status: draft
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 <a id="4-storage-and-reach"></a>
@@ -103,6 +103,8 @@ Keep body parsing bounded, handle normal line endings and end-of-body conditions
 The organization workflow uses the account's automation GitHub App. NobleFactor supplies `NOBLEFACTOR_AUTOMATION_APP_ID` and `NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY` as organization secrets available to the participating repositories. The workflow needs project writes, issue writes and issue-field reads; the configured App may have other responsibilities outside this workflow.
 
 The user-account workflow uses the repository secret `ADD_TO_PROJECT_PAT` for project access. Its configured path uses a classic token with `project` and, for private repositories, `repo`. The workflow's own `GITHUB_TOKEN` has `issues: write` for label updates.
+
+Every account that takes part in triage identifies its token, and `star github model apply` refuses an account that doesn't, before it writes anything ([ACCESS-006](4-storage-and-reach.decisions.md#access-006)). Which token an account has, and what it's used for and permits, can change; that it has one can't. The model's token record ([section 6, § 1.1](6-the-asset-and-its-sync.md#the-asset)) names the token and where each value comes from, and the [credentials guide](../../reference/issue-tracking-credentials.md) says how to make, check and renew each kind.
 
 A token acts with its issuing account's access; its reach can exceed this workflow's needs. Do not treat a repository secret as proof that the token is restricted to that repository. Secret values do not belong in model files or logs. Renewal replaces the GitHub secret; the credential inventory owns renewal procedures and access review.
 

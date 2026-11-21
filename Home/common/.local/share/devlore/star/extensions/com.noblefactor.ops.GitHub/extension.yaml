@@ -473,7 +473,7 @@ commands:
       - name: token
         type: string
         default: ""
-        help: "Each Triage workflow secret's source, <SECRET>=env:<NAME> or <SECRET>=file:<path>, comma-separated, or bare for one"
+        help: "Each Triage workflow secret's source, <SECRET>=env:<NAME>, file:<path> or vault:<vault>/<name>, comma-separated, or bare for one"
 
   - name: github.model.restore
     help: "Apply an account's backup, model.yaml in its .github repository at main or the revision named, as apply does"
@@ -500,6 +500,30 @@ commands:
     args:
       - name: account
         help: "The account, an organization or a user; required"
+
+  - name: github.token.make
+    help: "Make or adopt an account's issue-tracking token, stored in Key Vault; see docs/reference/issue-tracking-credentials.md"
+    implementation: commands/github-token-make.star
+    args:
+      - name: account
+        help: "The account, an organization or a user; required"
+    flags:
+      - name: vault
+        type: string
+        default: ""
+        help: "The Key Vault the token's values go in, each named <account>--<SECRET>; required"
+      - name: code
+        type: string
+        default: ""
+        help: "An organization's: the address GitHub sent the browser to, or its code, from env:<NAME> or file:<path>"
+      - name: from
+        type: string
+        default: ""
+        help: "A user account's classic token, or an organization's new private key, from env:<NAME> or file:<path>"
+      - name: replace
+        type: bool
+        default: "false"
+        help: "Make a new token in place of a working one, as new versions of the same vault secrets"
 
 config:
   path: github
