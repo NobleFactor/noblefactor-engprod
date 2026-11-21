@@ -1,10 +1,16 @@
 ---
-title: "8. The schedule commands: design decisions"
+title: "Schedule command decisions"
+status: draft
+updated: 2026-11-20
 ---
 
-# 8. The schedule commands: design decisions
+<a id="8-the-schedule-commands-design-decisions"></a>
 
-Companion to [8. The schedule commands](8-the-schedule-commands.md). It records the significant choices behind the schedule commands and the reasons for them. How the work reached this design is in the plans of [#439](../../plans/doc/439-schedule-commands.md), [#507](../../plans/doc/507-scenario-commands.md) and [#589](../../plans/doc/589-issue-verbs.md).
+# Schedule command decisions
+
+These records explain the [Schedule command design](8-the-schedule-commands.md). Approval evidence links the plans; implementation progress and migration history remain in those plans.
+
+The [decision-record standard](../../standards/documentation.md#decision-records) governs these footers. Unknown attribution and dates remain null; combined approval dates stay in their source evidence. Recording time identifies this revision.
 
 ## 1. Decision index
 
@@ -25,8 +31,6 @@ Companion to [8. The schedule commands](8-the-schedule-commands.md). It records 
 
 ### 2.1. D-001: Results are selected and shaped by star's common flags
 
-**Status:** Accepted.
-
 **Context and criteria:** Readers need to narrow, reshape and render results, the same way on every command.
 
 **Decision:** No command has its own flags for selecting, grouping or rendering. star's `--filter`, `--jq` and `--output` do that work, and `get` returns one schedule by its key.
@@ -41,35 +45,49 @@ Companion to [8. The schedule commands](8-the-schedule-commands.md). It records 
 
 **Approval evidence:** The owner, 2026-11-11, question 2, recorded in [#439's plan](../../plans/doc/439-schedule-commands.md), § Rulings.
 
-**Related decisions:** None.
+```yaml
+id: "D-001"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: David Noble
+recorded_by: Codex
+decided_at: "2026-11-11"
+recorded_at: "2026-11-20T15:55:37Z"
+```
 
 <a id="d-002"></a>
 
 ### 2.2. D-002: A command reads first and reads each write back
 
-**Status:** Accepted.
+**Context and criteria:** A command depends on several remote resources and can fail between writes. Validation and visible outcomes are necessary for safe recovery.
 
-**Context and criteria:** GitHub promises no stability for the features the model is built on, and a command that stops partway must leave nothing broken.
-
-**Decision:** A command that writes reads everything it needs first, so a fault is a refusal with nothing written, and reads each write back. A run that stops partway is run again to finish.
+**Decision:** Read the prerequisites before the first write and read each write back. The accepted recovery goal requires supported partial operations to be recoverable; it does not establish that every delivered command finishes every interrupted operation on retry. The [command contract](8-the-schedule-commands.md) states the actual recovery paths and limits.
 
 **Reasons:** A refusal before any write is cheap; a half-made change found afterward is not.
 
 **Alternatives:** Writing as it reads, and repairing by hand.
 
-**Consequences:** Each command does more reads than writes.
+**Consequences:** Preflight and readback add remote reads. A failure during mutation can still leave partial state; readback is not a transaction or exactly-once guarantee.
 
 **Design links:** [The commands](8-the-schedule-commands.md#the-commands).
 
 **Approval evidence:** The owner, 2026-11-11, question 3, recorded in [#439's plan](../../plans/doc/439-schedule-commands.md), § Rulings; reads before the first write, #531.
 
-**Related decisions:** None.
+```yaml
+id: "D-002"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: David Noble
+recorded_by: Codex
+decided_at: "2026-11-11"
+recorded_at: "2026-11-20T15:55:37Z"
+```
 
 <a id="d-003"></a>
 
 ### 2.3. D-003: One command changes a schedule's steps
-
-**Status:** Accepted.
 
 **Context and criteria:** Adding a step, moving one and taking one off are one act, moving an issue from where it is to somewhere else.
 
@@ -87,11 +105,20 @@ Companion to [8. The schedule commands](8-the-schedule-commands.md). It records 
 
 **Related decisions:** [D-004](#d-004).
 
+```yaml
+id: "D-003"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: David Noble
+recorded_by: Codex
+decided_at: "2026-11-15"
+recorded_at: "2026-11-20T15:55:37Z"
+```
+
 <a id="d-004"></a>
 
 ### 2.4. D-004: Each change to a schedule's steps writes one amendment line
-
-**Status:** Accepted.
 
 **Context and criteria:** A schedule's steps change, and a reader needs to see when, by whom and why. Nothing in GitHub marks a schedule committed.
 
@@ -109,13 +136,22 @@ Companion to [8. The schedule commands](8-the-schedule-commands.md). It records 
 
 **Related decisions:** [D-003](#d-003).
 
+```yaml
+id: "D-004"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: David Noble
+recorded_by: Codex
+decided_at: "2026-11-11"
+recorded_at: "2026-11-20T15:55:37Z"
+```
+
 <a id="d-005"></a>
 
 ### 2.5. D-005: Steps stay consecutive, closed steps renumbered with open ones
 
-**Status:** Accepted.
-
-**Context and criteria:** Steps are worked in order, and closed steps sit among open ones. On issue tracking, iteration 1, steps 29 (#440) and 35 (#447) were closed between open steps when #482 to #485 went in after step 22.
+**Context and criteria:** Closed steps can lie between open steps. Inserting or moving work must preserve one consecutive sequence without changing issue identities.
 
 **Decision:** The steps are consecutive whole numbers, and every later step, closed or open, moves when a step is added, moved or taken off.
 
@@ -131,11 +167,20 @@ Companion to [8. The schedule commands](8-the-schedule-commands.md). It records 
 
 **Related decisions:** [D-004](#d-004).
 
+```yaml
+id: "D-005"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: David Noble
+recorded_by: Codex
+decided_at: "2026-11-11"
+recorded_at: "2026-11-20T15:55:37Z"
+```
+
 <a id="d-006"></a>
 
 ### 2.6. D-006: close posts what merged, by pull request
-
-**Status:** Accepted.
 
 **Context and criteria:** Every Schedule issue asks for its evidence of completion, which should show what was delivered and when.
 
@@ -153,11 +198,20 @@ Companion to [8. The schedule commands](8-the-schedule-commands.md). It records 
 
 **Related decisions:** [D-007](#d-007).
 
+```yaml
+id: "D-006"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: David Noble
+recorded_by: Codex
+decided_at: "2026-11-12"
+recorded_at: "2026-11-20T15:55:37Z"
+```
+
 <a id="d-007"></a>
 
 ### 2.7. D-007: A closed schedule's option stays
-
-**Status:** Accepted.
 
 **Context and criteria:** A step isn't a sub-issue of its Schedule issue, so its row's Schedule field is the only link between them. Deleting an option blanks every row that held it.
 
@@ -175,11 +229,20 @@ Companion to [8. The schedule commands](8-the-schedule-commands.md). It records 
 
 **Related decisions:** [D-006](#d-006).
 
+```yaml
+id: "D-007"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: David Noble
+recorded_by: Codex
+decided_at: "2026-11-11"
+recorded_at: "2026-11-20T15:55:37Z"
+```
+
 <a id="d-008"></a>
 
 ### 2.8. D-008: reopen sets the own row In progress and unticks the every-step criterion
-
-**Status:** Accepted.
 
 **Context and criteria:** A schedule is in progress while any of its steps is open, so one closed before a step was reopened or added has to be reopened.
 
@@ -196,6 +259,17 @@ Companion to [8. The schedule commands](8-the-schedule-commands.md). It records 
 **Approval evidence:** The owner, 2026-11-17 (#595), recorded in [#589's plan](../../plans/doc/589-issue-verbs.md), § 2, Issue 595.
 
 **Related decisions:** [section 10, D-011](10-the-issue-commands.decisions.md#d-011).
+
+```yaml
+id: "D-008"
+status: accepted
+supersedes: []
+proposed_by: null
+approved_by: David Noble
+recorded_by: Codex
+decided_at: "2026-11-17"
+recorded_at: "2026-11-20T15:55:37Z"
+```
 
 ---
 

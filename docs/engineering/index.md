@@ -1,11 +1,13 @@
 ---
-title: "Engineering documentation"
+title: "Engineering handbook"
 status: draft
 created: 2026-10-28
-updated: 2026-11-18
+updated: 2026-11-19
 ---
 
-# Engineering documentation
+<a id="engineering-documentation"></a>
+
+# Engineering handbook
 
 [Up: Documentation](../index.md)
 
@@ -13,64 +15,70 @@ updated: 2026-11-18
 
 ## 1. Purpose and authority
 
-The authoritative home of organization-wide engineering process, standards and templates is `noblefactor-engprod`. Repository instructions link to shared requirements and state local requirements or approved exceptions. Each shared requirement has one authoritative home.
+NobleFactor's shared engineering process, standards and templates live in `noblefactor-engprod`. Each requirement has one authoritative home. Repository and host instructions link to shared requirements and state local facts or approved exceptions.
 
-This draft reorganizes existing requirements and incorporates the owner's recorded decisions. The original eleven questions are resolved in the [decision review](review/open-decisions.md). Remaining reconciliation findings and substantive questions are tracked in the [conflict register](review/conflicts.md). Publication and cutover from existing documents require review; copying a requirement does not resolve a conflict.
+The handbook explains the current requirements. Its [decision records](review/decisions.md), [review resolutions](review/open-decisions.md) and [conflict register](review/conflicts.md) preserve approval evidence and unresolved questions. Publishing a draft does not establish adoption or resolve a conflict.
 
 <a id="applicability"></a>
 
 ## 2. Applicability
 
-- **Everyone:** engineers and agents performing engineering work.
-- **All agents:** automated participants, including controllers, workers and sub-agents.
-- **Owner-supervised agents:** agents working within the owner's personal workflow. The owner is the person approving missions, outcomes and departures.
+Shared process and standards apply to people and agents unless a section limits its audience:
 
-Shared process and standards apply to everyone unless a section declares a narrower audience. Agent operation labels its additional duties. A repository variation names the affected requirement, its scope, rationale and approval. It does not silently weaken a shared requirement.
+- Everyone: engineers and agents performing engineering work.
+- All agents: controllers, workers and delegated agents.
+- Owner-supervised agents: agents working within the Owner's personal workflow.
 
-Personal repositories follow the shared workflow and asset requirements by default. The Owner may explicitly direct an exception, recorded with the affected requirement and scope. Their [signing exemption](release-and-recovery.md#versioning-signing-and-publication) does not imply exemption from the rest of the process.
+A repository variation identifies the requirement, affected scope, reason and approval. Personal repositories follow the shared workflow and asset requirements unless the Owner explicitly directs an exception. Their [signing exemption](release-and-recovery.md#versioning-signing-and-publication) applies only to signing.
+
+<a id="3-roles"></a>
 
 <a id="roles"></a>
 
-## 3. Roles
+## 3. Responsibilities and specialist roles
 
-See [Roles and responsibilities](process.md#roles-and-responsibilities) for the authoritative RACI definitions and expectations.
+[Process](process.md#roles-and-responsibilities) defines Owner, Reviewer, Participant and Observer responsibilities. The engineer is the Owner and retains final decision authority.
+
+Agents begin with the [common commandments](agents/commandments.md), their assigned specialist role and mandatory repository/host instructions. Follow the linked guidance and applicable skills for the task. A role identifies work and reading; it grants no additional authority.
+
+<a id="4-reading-path-and-ownership"></a>
 
 <a id="reading-path-and-ownership"></a>
 
-## 4. Reading path and ownership
+## 4. Reading paths and document ownership
 
-| Document                                                | Owns                                                     |
-| ------------------------------------------------------- | -------------------------------------------------------- |
-| [Agent entry points](agents/commandments.md) | Common commandments and five specialist roles |
-| [Process](process.md)                                   | Workflow transitions and approvals                       |
-| [Work organization](work-organization.md)               | Issues, schedules, scope, ordering and dependencies      |
-| [Work assets](work-assets.md)                           | Required records, locations, relationships and lifecycle |
-| [Agent operation](agent-operation.md)                   | Agent-specific authority, visibility and coordination    |
-| [Release and recovery](release-and-recovery.md)         | Additional release and recovery requirements             |
-| [Documentation standard](../standards/documentation.md) | Document form, metadata and maintenance                  |
-| [Coding standards](../standards/coding/index.md)        | Shared and language-specific code requirements           |
-| [Procedures](procedures/index.md)                       | Mechanics for satisfying requirements                    |
-| [Templates](../templates/index.md)                      | Structures for recording required information            |
+| Resource | Owns |
+| --- | --- |
+| [Agent entry points](agents/commandments.md) | Common context and the designer, planner, coder, reviewer and compliance-auditor entry points |
+| [Process](process.md) | Work transitions, approvals and completion |
+| [Work organization](work-organization.md) | Issues, schedules, scope, ordering and dependencies |
+| [Work assets](work-assets.md) | Designs, plans, approvals, locations, links and lifecycle |
+| [Agent operation](agent-operation.md) | Agent authority, visibility, coordination, reading and tool routing |
+| [Release and recovery](release-and-recovery.md) | Additional release, signing and recovery requirements |
+| [Documentation standard](../standards/documentation.md) | Writing, metadata, source layout, links and decision-record format |
+| [Coding standards](../standards/coding/index.md) | Shared and language-specific code requirements |
+| [Procedures](procedures/index.md) | Mechanics for satisfying the process |
+| [Templates](../templates/index.md) | Structures for recording required information |
+| [Review records](review/decisions.md) | Decisions, supporting evidence, supersession and adoption findings |
 
-The process says when a step may occur; standards say what must be true; procedures say how to perform it. Templates introduce no policy. Existing incidents remain rationale and regression examples.
+Process defines when work proceeds; standards define required content and conditions; procedures describe mechanics. Templates demonstrate requirements rather than create policy. Historical evidence supports review without requiring readers to reconstruct their instructions from history.
 
-Unresolved scope questions do not grant exceptions. Surface them to the owner before affected work. Historical source material is evidence of previous requirements, not permission to choose between conflicting instructions.
+<a id="5-temporary-live-entrypoint-overrides"></a>
 
 <a id="temporary-live-entrypoint-overrides"></a>
 
-## 5. Temporary live-entrypoint overrides
+## 5. Effective host instructions
 
-The Owner approved this transition on 2026-11-15. Handbook consolidation (#420) reconciles and publishes the shared requirements, with the temporary overrides below. [Claude consumption (#562)](https://github.com/NobleFactor/noblefactor-engprod/issues/562) and [Codex consumption (#563)](https://github.com/NobleFactor/noblefactor-engprod/issues/563) own migration and qualification of the live host entry documents. Publishing the handbook does not grant new authority to a running session.
+Owner-supervised sessions still using retained personal entrypoints permit one PR in flight for that session and restrict its other repository writes during delivery. Other workers' PRs do not block the session; the Owner coordinates them. This scoped override remains until its approved host cutover is delivered and verified or the Owner explicitly disposes of it.
 
-At inspection on 2026-11-15, `/Users/david-noble/.claude/CLAUDE.md` and `/Users/david-noble/.Codex/AGENTS.md` both resolved to `/Users/david-noble/.local/share/devlore/writ/repos/personal/Home/common/.claude/CLAUDE.md`. That personal-layer source still contains these explicit instructions:
+The shared default remains [one active PR per worktree](process.md#pull-request-and-integration). [PR assistance disclosure](procedures/pull-request.md#review-boundary) and [compliance auditing without breach-cost estimates](agent-operation.md#compliance-auditing) are permanent policy, including for sessions using retained instructions.
 
-| Topic | Shared handbook policy | Temporary override in existing live entrypoints |
-| --- | --- | --- |
-| PR concurrency | [One active PR per worktree](process.md#pull-request-and-integration), allowing independent work in separate worktrees | Existing entrypoints permit one PR in flight for a session and restrict that session's other repository writes during delivery. Other workers' PRs do not block the session; the Owner coordinates their work. Sessions retain this restriction until their approved entrypoint cutover. |
-| Assistance disclosure | [Name the submitting agent](procedures/pull-request.md#review-boundary) while retaining human sign-off and AI disclosure | Existing entrypoints literally require `Assisted-by: Claude Code`. Their replacement belongs to the host tasks; adoption of this handbook does not silently rewrite that instruction. |
+[Claude consumption (#562)](https://github.com/NobleFactor/noblefactor-engprod/issues/562) and [Codex consumption (#563)](https://github.com/NobleFactor/noblefactor-engprod/issues/563) own live entrypoint migration and qualification. They coordinate any shared personal-layer source through that repository's issue, plan and PR process, replace duplicated shared policy with references, and verify installed paths and effective instructions. Keep each host's outstanding obligation visible.
 
-On 2026-11-16, the Owner withdrew mandatory agent-authored breach reports and breach-cost estimates in favor of [compliance auditing](agent-operation.md#compliance-auditing). That direction supersedes the older reporting instructions immediately, including retained personal instructions that still repeat them. The host tasks carry the file migration; their delivery is not a condition for honoring the Owner's withdrawal.
+Publishing the handbook, editing an entrypoint and loading it in a running session are separate milestones. Publication grants no new execution authority. Bring any additional live-instruction conflict to the Owner before choosing a definition. The [adoption records](review/adoption-review.md) and [rewrite plan](../plans/doc/581-schedule-command-consumers.md#714-core-handbook-rewrite) preserve transition evidence.
 
-These are scoped, temporary Owner-directed overrides for the affected personal entrypoints. The shared policies have already been decided. Record any additional live-instruction conflict with the Owner before choosing a definition. Policy approval, an entrypoint edit and successful loading by a session are separate facts.
+## 6. Revisions
 
-The host tasks must coordinate changes to their shared source through the personal repository's issue, plan and PR process, replace embedded shared policy with references to authoritative resources, and verify the installed paths and effective instructions. Remove an override only after its host cutover is delivered and verified, or the Owner explicitly disposes of it. Keep the other host's outstanding obligation visible. This observed shared source path is evidence for this transition, rather than a permanent discovery convention.
+Handbook revisions follow the [engineering process](process.md#prepare-and-review). Update the authoritative requirement and its affected references in the same change. Record approved choices using the [decision-record standard](../standards/documentation.md#decision-records); keep transition work and execution approvals in the plan.
+
+Use stable links, preserve superseded evidence and distinguish publication from effective host loading. [Agent operation](agent-operation.md#all-agents-shared-obligations) defines startup and post-compaction reading. Apply approved scope and existing loading requirements when a document changes; do not infer new permissions from its publication.

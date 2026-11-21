@@ -1,35 +1,41 @@
 ---
 title: "noblefactor-engprod"
-description: "The NobleFactor base layer: engineering standards, process tooling and star extensions, deployed by DevLore's writ"
+description: "NobleFactor engineering process, standards and deployed base-layer tools"
+updated: 2026-11-19
 ---
 
 # noblefactor-engprod
 
-This is the NobleFactor **base layer**: the organization's engineering standards, the tooling that
-runs its process, and the `star` extensions that ship with them. Every NobleFactor machine deploys
-it with DevLore's `writ`; every NobleFactor repository's `CLAUDE.md` points into it.
+This repository supplies NobleFactor's engineering handbook, standards, templates and process tools. Its `Home/` tree is a DevLore base layer deployed with `writ`.
 
-## What is here
+<a id="the-standards-claudemd-points-at"></a>
 
-### The standards CLAUDE.md points at
+## Engineering handbook
 
-| Document | Defines |
+Start with the [handbook](docs/engineering/index.md). Agents use the [common commandments and assigned role](docs/engineering/agents/commandments.md), together with mandatory repository/host instructions.
+
+| Resource | Purpose |
 | --- | --- |
-| [docs/documentation-standards.md](docs/documentation-standards.md) | Frontmatter: the two document families and their vocabularies |
-| [docs/guides/development-process.md](docs/guides/development-process.md) | How work is organized: one worktree, issue triage, plans, documents on every commit |
-| [docs/plans/TEMPLATE.md](docs/plans/TEMPLATE.md) | The plan document every task begins with |
-| [docs/guides/pr-script-template.md](docs/guides/pr-script-template.md) | The PR script format |
-| [docs/guides/go-style-guidelines.md](docs/guides/go-style-guidelines.md) | Go file layout, naming, comments, tests |
-| [docs/github-branch-protection.md](docs/github-branch-protection.md) | Branch protection and required checks |
-| [docs/guides/agent-rules.md](docs/guides/agent-rules.md) | The agents' document: rules whose only audience is a coding agent, each with the day it was broken |
+| [Engineering process](docs/engineering/process.md) | Plans, review, implementation, delivery and approvals |
+| [Work organization](docs/engineering/work-organization.md) | Issue ownership, schedules, dependencies and amendments |
+| [Work assets](docs/engineering/work-assets.md) | Designs, plans, document links, locations and completion evidence |
+| [Documentation standard](docs/standards/documentation.md) | Writing, metadata, source layout and structured decisions |
+| [Coding standards](docs/standards/coding/index.md) | Shared and language-specific code requirements |
+| [Templates](docs/templates/index.md) | Reusable structures for work records |
+| [PR script specification](docs/guides/pr-script-template.md) | Owner-run Bash and PowerShell delivery scripts |
+| [Branch protection](docs/github-branch-protection.md) | Required checks and protected-branch policy |
 
-`.github/scripts/Test-Frontmatter.sh` is the reference implementation of the frontmatter standard.
-Repositories adopting the gate should use that script rather than a variant, so a document valid in
-one repository is valid in all of them.
+Repository instructions reference shared requirements and record approved local variations. The [documentation index](docs/index.md) also links designs, roadmaps and preserved review evidence.
 
-### The layer content
+<a id="what-is-here"></a>
 
-`Home/` is what `writ` deploys, laid out as the home directory it lands in. It holds the `com.noblefactor.ops.GitHub` star extension, under `Home/common/.local/share/devlore/star/extensions/`, where star looks for a user's extensions. Its commands:
+<a id="the-layer-content"></a>
+
+## Deployed layer
+
+`Home/` mirrors the home-directory paths that `writ` deploys. It includes shell process helpers, Git workflow commands and the `com.noblefactor.ops.GitHub` extension under `Home/common/.local/share/devlore/star/extensions/`.
+
+The extension provides these command groups:
 
 - `star github issue open|create|move|close|reopen`
 - `star github schedule report|list|get|open|create|close|reopen`
@@ -38,65 +44,35 @@ one repository is valid in all of them.
 - `star github triage sweep`
 - `star github model get|diff|apply|backup|restore`
 
-`Declare-BashScript` and the `git-*` process commands arrive with #147 and
-#146.
+The [issue-model command references](docs/architecture/issue-data-model/index.md) define their contracts. `create` is another spelling of `open`, not a separate issue lifecycle. Check the installed command's help and build before using a documented operation.
 
-### The star work is not here
+<a id="the-star-work-is-not-here"></a>
 
-`star` was a product of this repository until March 2026. Its code moved to **devlore-cli**, the Go
-and Starlark were removed on 2026-08-27 (#130), and the design documents followed on 2026-09-24
-(#228) — the three that describe code still shipping went with it, as `docs/architecture/9.1`, `9.2`
-and `9.3` there; the rest described retired implementations and were deleted.
+<a id="tools"></a>
 
-An earlier revision of this section kept those documents deliberately, saying the reasoning outlived
-the code. An audit on 2026-09-23 found that one sentence covering three different things: records of
-retired code, the **only** written design of code that ships in devlore-cli, and guides that were
-never records at all. The first was worth keeping and the second was in the wrong repository, which
-is not a distinction one sentence can carry.
+<a id="what-is-not-here-despite-what-this-file-used-to-say"></a>
 
-Anything about `star` belongs in devlore-cli. What stays here is
-`docs/plans/feature/140-star-report-epics.md`, which designs the extension this layer ships, and
-`docs/plans/feature/566-remove-go-code.md`, which charters the CI gate this repository still runs.
+## Product and repository tools
 
-### Tools
+[devlore-cli](https://github.com/NobleFactor/devlore-cli) owns the `star` and `writ` binaries and their product documentation. This repository owns the extension and base-layer assets it deploys.
 
-The repository's own tools, not deployed, are in `bin/`, each with its manual in `share/man/man1`, which `--help`
-shows, and its completion in `share/bash-completion/completions`: `Test-Here` and `Test-OnHosts`, which `make test`
-runs, and `Test-Here.ps1`, their Windows half. The hosting setup tools live with the site they build, in
-NobleFactor/devlore.noblefactor.com's `bin/`.
+Repository-only tools live in `bin/`, with manuals in `share/man/man1/` and completions in `share/bash-completion/completions/`. They include `Test-Here`, `Test-OnHosts` and the Windows `Test-Here.ps1` entry point. Site-hosting tools belong to their owning site repository.
 
-## What is not here, despite what this file used to say
+<a id="deploying-it"></a>
 
-Earlier revisions of this README described an `nf-ops` binary with key-ceremony, signing, and
-registry-audit commands, and a `cmd/nf-ops` / `internal/{ceremony,signing,index,audit}` layout. None
-of that was ever built. The only command this repository ever held was `cmd/star`, a copy left
-behind by the March move — which devlore-registry's CI went on building for five months, producing
-the wrong binary and the failure tracked as devlore-cli#695.
+## Deployment
 
-Release signing and key management remain unimplemented. When they are built, they need an ADR
-before a README.
+Use [DevLore's installation and deployment documentation](https://github.com/NobleFactor/devlore-cli#install) to register this repository as the base layer and deploy it. Team and personal layers can be registered above it. `writ` combines layer content into the home directory; a higher layer wins when layers supply the same path.
 
-## Deploying it
+Verify the installed product's supported registration/deployment syntax rather than copy a command from a different release. Source examples and installed behavior are separate evidence.
 
-`writ` is DevLore's environment deployer, part of [devlore-cli](https://github.com/NobleFactor/devlore-cli).
-Register this repository as the base layer, then deploy. `common` and the projects named for the
-configured layers — here, `noblefactor-engprod` — are implicit; nothing is named unless it is extra:
+<a id="ci"></a>
 
-```bash
-writ repo set base https://github.com/NobleFactor/noblefactor-engprod.git
-writ deploy
-```
+## Verification
 
-Layers above it — a team repository, a personal one — are registered the same way and deployed
-together. `writ` merges them into one home directory, and where two layers provide the same path
-the higher layer wins. Until devlore-cli#791 and devlore-cli#850 ship, the binary still spells
-these two lines `writ repo add` and `writ deploy common`.
+Use the repository's Makefile targets for its checks and tests. [CI](.github/workflows/ci.yaml) runs `make check` on Linux, `make test` on macOS and PowerShell tests on Windows arm64/amd64. Preserve the `quality-gate` check name required by protection policy.
 
-## CI
-
-One job, `quality-gate`: frontmatter validation and spelling. The name is fixed — organization
-ruleset 12426847 requires that context on every repository, so renaming it would leave a required
-check that never arrives.
+[The frontmatter checker](.github/scripts/Test-Frontmatter.sh) is the reference implementation for the shared document families. Repositories adopting that gate use the same script. Spelling, shell/Starlark checks and tests follow the current Makefile and CI configuration.
 
 ## License
 

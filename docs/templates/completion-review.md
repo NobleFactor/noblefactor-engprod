@@ -2,7 +2,7 @@
 title: "Completion review template"
 status: draft
 created: 2026-10-28
-updated: 2026-10-29
+updated: 2026-11-19
 ---
 
 # Completion review template
@@ -58,3 +58,7 @@ updated: 2026-10-29
 ## 8. Records and cleanup
 
 [Schedule state, issue closure reason, document updates and worktree/script cleanup; do not claim completion of pending operations.]
+
+## 9. Posted review comments
+
+[For a comment posted by Codex, follow the review-comment origin convention](../engineering/agent-operation.md#codex-review-comments). The [review comment template](review-comment.md) guides individual findings.
