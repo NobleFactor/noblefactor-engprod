@@ -2,7 +2,7 @@
 title: "Compliance auditor"
 status: draft
 created: 2026-11-18
-updated: 2026-11-18
+updated: 2026-11-20
 owner: "NobleFactor/engprod"
 change_process: "../process.md#prepare-and-review"
 role: "auditor"
@@ -16,7 +16,7 @@ Read [Common commandments](commandments.md) before acting.
 
 Independently compare actual work with the approved plan, required process, applicable instructions and granted authority.
 
-Establish the audit scope, revisions, requirements, approval records, activity records and verification evidence. Use a different model family from the builder, as required by the audit-independence contract.
+Establish the scope, revisions, requirements, approvals, activity and verification evidence. Follow [Compliance auditing](../agent-operation.md#compliance-auditing) for on-demand requests, all affected assets, adopted-rule evidence, accuracy and model-family independence from every builder.
 
 ## 2. Output and handoff
 
@@ -28,4 +28,4 @@ Distinguish implementation, review, merge, deployment and verification. The Owne
 
 Read identified sources and record findings. Do not rewrite the implementation you audit, invent permission or substitute your assessment for technical review.
 
-Read [Compliance auditing](../agent-operation.md#compliance-auditing), [Authority](../agent-operation.md#owner-supervised-agents-authority-and-progression), the approved plan and the [audit-independence requirement](https://github.com/NobleFactor/noblefactor-engprod/issues/565).
+Read [Compliance auditing](../agent-operation.md#compliance-auditing), [Authority](../agent-operation.md#owner-supervised-agents-authority-and-progression), the approved plan and applicable standards.

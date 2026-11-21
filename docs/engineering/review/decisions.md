@@ -2,7 +2,7 @@
 title: "Decisions established in review"
 status: draft
 created: 2026-10-28
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 # Decisions established in review
@@ -1088,4 +1088,25 @@ approved_by: David Noble
 recorded_by: Codex
 decided_at: '2026-11-19'
 recorded_at: '2026-11-20T04:27:07Z'
+```
+
+<a id="decision-63"></a>
+
+## 63. Use on-demand audits and qualify accuracy before universal blocking
+
+Use the existing Compliance auditor when the Owner requests an audit. Include every changed file and every asset that might be affected, including code, tests, configuration, designs, plans, documentation, examples, help, completions and man pages outside the diff. A requested audit can follow successful pre-commit checks and applies to the identified candidate. Defer the universal blocking gate.
+
+The [compliance policy](../agent-operation.md#compliance-auditing) is the authoritative home for scope, timing, actual-model independence, findings and corrective verification. Shared role definitions and templates link there. The [environment configuration decision](../../architecture/agentic-developer-workstation.decisions.md#w6) applies these requirements to sandbox configuration and routing. External reviews and their verification belong on the PR introducing the changes, with saved copies outside Git.
+
+David Noble explicitly clarified scope and timing on 2026-11-20 and approved the related design amendment. The [preserved source](sources/role-context-2026-11-20/owner-direction.txt) retains those messages and the preceding proposal. His Reviewer-session ruling explicitly defers universal blocking while on-demand runs provide experience. Mandatory findings need an adopted requirement, applicability and direct evidence; external suggestions are not automatically requirements. Deterministic tools establish mechanical facts, while the auditor judges context-dependent obligations. Before universal blocking, the Owner reviews confirmed findings, false positives and independently known missed defects, requires reliable accuracy and a low false-positive rate, and separately approves criteria and activation. No numerical threshold is selected. Automatic trigger wiring is owned by [Continuous compliance (#519)](https://github.com/NobleFactor/noblefactor-engprod/issues/519); implementation does not itself activate a gate. David Noble also approved publishing this policy with PR #616's design amendment and permitting a request-specific one-off audit by an eligible third model family when the assigned auditor is ineligible. Preserve the assigned session and binding; require approval for each actual one-off assignment. [W7](../../architecture/agentic-developer-workstation.decisions.md#w7) records the architecture decision. Owner authority and technical review remain separate.
+
+```yaml
+id: '63'
+status: accepted
+supersedes: []
+proposed_by: David Noble
+approved_by: David Noble
+recorded_by: Codex
+decided_at: '2026-11-20'
+recorded_at: '2026-11-21T03:54:25.329872+00:00'
 ```

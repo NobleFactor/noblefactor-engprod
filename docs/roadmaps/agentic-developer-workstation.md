@@ -3,7 +3,7 @@ title: "Agentic developer workstation roadmap"
 type: Roadmap
 status: Draft
 created: 2026-11-11
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 <a id="agentic-developer-workstation--roadmap"></a>
@@ -41,11 +41,15 @@ DevLore owns the lifecycle product interface. Identify its reviewed contract and
 
 | Feature | Deliverable in this roadmap | Principal integration |
 | --- | --- | --- |
-| [A1 — Developer control and schedule continuity (#517)](https://github.com/NobleFactor/noblefactor-engprod/issues/517) | Launcher, environment/role bindings, editor shell profiles and role-view attachment, retained sessions, safe replacement and reconciliation | Host drivers #459, roles #460, checkpoints #494 |
+| [A1 — Developer control and schedule continuity (#517)](https://github.com/NobleFactor/noblefactor-engprod/issues/517) | Versioned environment role configuration, launcher, environment/role bindings, editor shell profiles and role-view attachment, retained sessions, safe replacement and reconciliation | Host drivers #459, roles #460, checkpoints #494 |
 | [A2 — Protected workspaces and cross-platform execution (#518)](https://github.com/NobleFactor/noblefactor-engprod/issues/518) | Durable private workspaces, controlled writers, immutable inputs, identified build/test targets | SBX/permanent-work contract #458 |
-| [A3 — Continuous compliance and exact-snapshot commit gate (#519)](https://github.com/NobleFactor/noblefactor-engprod/issues/519) | Coherent-edit findings, correction/recheck, deterministic and model evidence, permission bound to actual integrated inputs | #456 methodology and A2 snapshots; #457 retains closing review |
+| [A3 — Continuous compliance and exact-snapshot commit gate (#519)](https://github.com/NobleFactor/noblefactor-engprod/issues/519) | On-demand audit routing and accuracy evidence, future commit requests after successful pre-commit checks, findings/correction/recheck, deterministic and model evidence, permission bound to the exact candidate | #456 methodology and A2 snapshots; #457 retains closing review; universal blocking requires a separate Owner activation decision |
 | [A4 — Engineering-service operations and recovery (#520)](https://github.com/NobleFactor/noblefactor-engprod/issues/520) | Supervision, access, credentials, quotas, telemetry, restoration, editor-service and lifecycle integration | Archive operations #496; eventual DevLore lifecycle |
 | [A5 — Workstation architecture and delivery plan (#521)](https://github.com/NobleFactor/noblefactor-engprod/issues/521) | Reviewed architecture, roadmap, ownership, decisions, acceptance criteria, and first actionable increment | The existing documents and cooperating epics |
+
+When the assigned auditor is ineligible, the Owner can authorize a one-off audit by an eligible third model family without replacing that role's session or binding. If no eligible assessor is available, the request remains unresolved.
+
+Begin compliance work with Owner-requested audits. Use confirmed findings, false positives and independently known missed defects to establish accuracy and a low false-positive rate. The Owner approves the criteria and activation before a universal blocking rollout. [Hook-wiring Task #617](https://github.com/NobleFactor/noblefactor-engprod/issues/617) remains separate implementation work under #519; filing or implementing it does not enable the gate.
 
 A1/A4 integrate editor backends, shell profiles and attachment; A2 supplies sandbox/workspace protections. The common driver remains owned by [Agent hosts (#459)](https://github.com/NobleFactor/noblefactor-engprod/issues/459). Native servers manage sessions and internal execution; lifecycle integration manages the selected servers and authoritative role bindings.
 
@@ -188,13 +192,14 @@ A roadmap can produce several schedules, each with one execution sandbox and sha
 
 | Contract | Minimum information and invariant | Owner |
 | --- | --- | --- |
+| Environment role configuration | Versioned Schedule/workspace and per-role host/model settings; shared resource revisions; actual model and load evidence; compatible changes preserve one role binding | A1 (#517), using native-host application from #459; its delivery plan is not yet opened |
 | Environment/role binding | Schedule/environment/role identity; host-server instance and native session ID; binding revision; creation intent/outcome; assignment; one authoritative session; approved and fenced disaster-recovery succession | A1 with #459 |
 | Editor/view attachment | Separate client/editor-server/view states; identity/endpoint; profile and guest launcher; authenticated scope; native ID and binding revision; independent presentation; I1–I4 startup, reconnect, history/submission reconciliation, and no-view behavior | A1/A4 with #459 |
 | Runtime operation receipt | Operation/target identity; actor and authority reference; expected binding revision; requested action; pending/unknown/completed result; observed native outcome and evidence references | A1/A4 with #459 |
 | Workspace/review input | Repository/base/snapshot; writer authority; permanent storage; identified checks and integrated content | A2 with #458 |
 | Reading set | Approved common/role requirements, versions, measured size, scope, and startup/post-compaction load evidence | #526/#528; role authority from #460 |
 | Evidence/checkpoint | Original locators, capture watermarks/gaps, policy/source identity, decisions/uncertainty, pending operations, next action, and recovery approval/original-successor trace | #490/#494, integrated by A1 |
-| Compliance receipt | Snapshot/base, policy/check environment, coverage, verdict, findings, correction and supersession | A3; closing review remains #456/#457 |
+| Compliance receipt | Snapshot/base, actual builder/auditor model families, one-off assignment approval and original binding reference when applicable, adopted requirement/check revisions, all changed and affected assets, verdict, findings, correction and supersession; requests on demand or through an enabled trigger after successful pre-commit checks | A3 (#519); accuracy evidence and separate Owner activation precede universal blocking; closing review remains #456/#457 |
 | Lifecycle/recovery | Environment/host-server desired and observed states; native host ownership of execution; I5 target scope and stale-request fencing; retained state; I6 outcome reconciliation; compatible restore manifests; restore-before-replace policy, approval, succession records, and release rules | A4 with DevLore and #496 |
 | Methodology change | Scenario evidence, proposed procedure/rule/skill, authoritative home, review and adoption | #526 with #456 |
 

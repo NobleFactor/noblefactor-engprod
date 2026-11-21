@@ -249,16 +249,16 @@ Each environment has a versioned configuration applied to its active SBX sandbox
 
 | Record | Responsibility and location |
 | --- | --- |
-| Shared policy and defaults | The handbook and shared role resources define responsibilities, audit scope, independence, triggers and authority; policy distribution runs outside schedule sandboxes |
+| Shared policy and defaults | The handbook's [compliance policy](../engineering/agent-operation.md#compliance-auditing) and shared role resources define responsibilities, audit scope, independence, triggers and authority; policy distribution runs outside schedule sandboxes |
 | Environment configuration | The control plane retains the approved configuration and its source revision outside the sandbox and makes the applicable settings and resources available inside it |
 | Role binding and observed state | The control plane retains the selected daemon, original conversation ID, binding revision, actual model and loaded resource evidence for each environment/role |
 | External review and audit records | The PR introducing the changes holds the external reviews, findings and corrective verification; review text is kept outside repository commits |
 
 The control plane uses DevLore to manage the environment and selected native hosts. Each role resolves through one authoritative environment/role binding. Host selection is a setting in that binding, not a second identity under which another copy of the role can be created. Additional terminal views attach to the same native conversation.
 
-Configuration states the intended model; the host reports the model actually used. Record provider, model identifier and family against the affected work. The Compliance auditor must use a different model family from every builder of the candidate. A distinct host name or role label does not establish that independence. If the configured auditor is ineligible or its model is unknown, report the conflict to the Owner and retain the existing binding while it is resolved.
+Configuration states the intended model; the host reports the model actually used. Record provider, model identifier and family against the affected work. The Compliance auditor must use a different model family from every builder of the candidate. A distinct host name or role label does not establish that independence. If the configured auditor is ineligible or its model is unknown, report the conflict to the Owner and retain the existing binding. The Owner may authorize a [one-off audit](#compliance-audit-flow) by an eligible third model family for the identified candidate, preserving the assigned auditor's conversation and binding.
 
-Reviewed settings changes follow [I7](#i7-configuration-native-session-controls-and-delegation). Compatible changes preserve conversation identity. A different host preference does not authorize a new role conversation or bypass [session succession](#84-session-succession). The [configuration decision](agentic-developer-workstation.decisions.md#w6) records the responsibilities; file formats and implementation steps belong in the delivery plan.
+Reviewed settings changes follow [I7](#i7-configuration-native-session-controls-and-delegation). Compatible changes preserve conversation identity. A different host preference does not authorize a new role conversation or bypass [session succession](#84-session-succession). The [configuration decision](agentic-developer-workstation.decisions.md#w6) records the responsibilities. [Developer control (#517)](https://github.com/NobleFactor/noblefactor-engprod/issues/517) owns configuration formats, revisions and durable bindings; [Agent hosts (#459)](https://github.com/NobleFactor/noblefactor-engprod/issues/459) owns application through the native hosts. Their implementation plans define delivery.
 
 <a id="58-interaction-lifecycle"></a>
 
@@ -624,9 +624,13 @@ Native delegation creates children under the primary session's assignment and pe
 
 ### 6.10 Compliance audits
 
-An audit is requested on demand or during a commit after the existing pre-commit checks pass. The request identifies the exact changes, base and candidate versions, builder model evidence, applicable requirements and check results. The request resolves the environment's Compliance auditor through its existing role binding and checks independence before the assessment begins.
+[Continuous compliance (#519)](https://github.com/NobleFactor/noblefactor-engprod/issues/519) owns audit routing and commit-trigger implementation under the [handbook compliance policy](../engineering/agent-operation.md#compliance-auditing). The role-context work supplies policy and shared role resources.
 
-The auditor checks every changed file and all assets that might be affected, including files outside the diff. Coverage includes source code, tests, configuration, designs, plans, documentation, examples, help text, completions and man pages. The assessment follows the shared [compliance requirements](../engineering/agent-operation.md#compliance-auditing) and identifies its scope, evidence, findings and limitations.
+An audit is requested on demand or through an enabled commit trigger after the existing pre-commit checks pass. The shared compliance policy governs which requests are required and when blocking is enabled. The request identifies the exact changes, base and candidate versions, builder model evidence, applicable requirements and check results. The request resolves the environment's Compliance auditor through its existing role binding and checks independence before the assessment begins.
+
+If that auditor helped build the candidate or its independence cannot be established, report the conflict. The Owner may authorize a one-off assessment by an eligible third model family independent of every builder. Give that assessor a request-specific assignment rather than a second persistent environment/role binding. Keep the assigned auditor's conversation and binding unchanged. Record the approval, exact candidate/base, original binding reference, actual assessor/model and results with the audit request and introducing PR. If no eligible assessor is available, report the audit as unresolved; do not change the binding or claim an independent pass.
+
+The auditor checks every changed file and all assets that might be affected, including files outside the diff. Coverage includes source code, tests, configuration, designs, plans, documentation, examples, help text, completions and man pages. The assessment follows the shared [compliance requirements](../engineering/agent-operation.md#compliance-auditing) and identifies its scope, evidence, findings and limitations. Mandatory findings cite applicable adopted rules and direct evidence. Deterministic tools establish mechanical facts; the auditor uses their results to assess context-dependent obligations.
 
 Record the reviewed versions, actual auditor model, requirement revisions, findings and corrective verification with the PR that introduces the changes. Reports produced before a PR exists remain outside Git and are attached when that PR is opened. External review text is not committed to the repository. Changed inputs require the affected checks and findings to be rechecked; unresolved mandatory findings and missing required evidence remain visible to the Owner.
 
@@ -699,9 +703,9 @@ Views resolve the new binding; a returning old runtime does not regain authority
 
 ## 9. Significant decisions
 
-The [decision companion](agentic-developer-workstation.decisions.md) records editor access, native server ownership, session succession and environment role configuration. It also records the proposed schedule/runtime and shared-archive choices and the unresolved D1–D6 decisions.
+The [decision companion](agentic-developer-workstation.decisions.md) records editor access, native server ownership, session succession, environment role configuration and one-off independent audits. It also records the proposed schedule/runtime and shared-archive choices and the unresolved D1–D6 decisions.
 
-The [workstation delivery plan](../plans/doc/521-workstation-design.md) and [role-context plan](../plans/doc/558-role-entry-points.md) define implementation and verification work.
+The [role-context plan](../plans/doc/558-role-entry-points.md) owns shared policy and role documentation. The [roadmap](../roadmaps/agentic-developer-workstation.md#3-integration-features) assigns configuration delivery to #517 with native-host integration from #459, and commit-trigger implementation to #519; each needs its own approved implementation plan.
 
 <a id="6-qualification-and-completion"></a>
 
@@ -711,9 +715,9 @@ Qualify all three host paths and five independent roles in one SBX environment. 
 
 Exercise schedule amendments and repeated PR merges, evidence use before compaction, startup/post-compaction reading, original-session restoration, approved succession with visible gaps, and DevLore lifecycle management. Accept the methodology and its use on real assignments alongside the platform.
 
-Exercise audit requests on demand and after pre-commit checks, including a changed asset that makes an unchanged help page, completion or man page stale. Demonstrate model-family conflicts, preservation of the existing role binding, and PR review records kept outside commits.
+Exercise audit requests on demand and after pre-commit checks, including a changed asset that makes an unchanged help page, completion or man page stale. Demonstrate a candidate with several builder model families, an ineligible bound auditor, and an Owner-approved one-off assessment that preserves the existing role binding. Demonstrate an unresolved request when no eligible assessor is available, and keep PR review records outside commits.
 
-Measure accepted-change latency, blocking intervals, human interventions, repeated investigations, correction cycles, confirmed audit findings, false positives, known missed defects, capture gaps and recovery results. Agree numerical quality, response and recovery thresholds with the Owner before using them as gates.
+Measure accepted-change latency, blocking intervals, human interventions, repeated investigations, correction cycles, confirmed audit findings, false positives, known missed defects, capture gaps and recovery results. Agree numerical quality, response and recovery thresholds with the Owner before using them as gates. Universal blocking audits require Owner approval of accuracy evidence and activation; model confidence alone cannot enable them.
 
 Architecture handoff acceptance establishes a buildable baseline and first actionable increment for Workstation architecture and delivery plan (#521). System delivery is established through the [roadmap gates](../roadmaps/agentic-developer-workstation.md#5-delivery-waves-and-gates), with each host/editor path's capability evidence.
 

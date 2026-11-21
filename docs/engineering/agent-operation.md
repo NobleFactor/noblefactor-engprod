@@ -37,7 +37,25 @@ Bring contradictions among code, plan, design and issue to the Owner immediately
 
 ### 2.1 Compliance auditing
 
-The compliance auditor compares work evidence with the approved plan, process and instructions. Findings identify the requirement, evidence and disposition; the auditor rechecks corrective evidence. Participants provide accurate status and cooperate. The Owner retains decision authority.
+The Owner requests compliance audits on demand. A universal blocking audit for every change or commit is deferred. A requested audit may follow successful pre-commit checks, but it does not activate an automatic commit gate. An audit identifies its exact candidate; changes to that candidate require the affected checks to be repeated. Report failed, unavailable or incomplete audits and their limits rather than count them as passes.
+
+Start with every changed file and follow its effects into every asset that might be affected, including files outside the diff. Scope includes code, tests, configuration, generated outputs, designs, plans, schedules, handbook and user documentation, examples, help text, completions and man pages. Check the applicable approved plan, adopted standards, process, instructions and authority. A mandatory finding must cite an adopted requirement, its applicable scope and source revision, and direct evidence that it is unmet. Apply adopted Google writing guidance and the relevant arc42 content; an external suggestion is not automatically a mandatory requirement.
+
+Deterministic checks establish mechanical facts such as formatting, spelling, metadata, schema validity and test results within their coverage. Use their actual output as evidence. The auditor applies judgment to context-dependent obligations, affected assets and consistency; it does not replace a tool result with a model assertion. Technical review remains separate.
+
+Give the auditor the candidate and base revisions, changes, successful pre-commit results when applicable, assignment, approval records and applicable requirement revisions. The auditor records the assets checked, method, time, results and limits. A plan checkpoint checks its plan and affected assets; a completion-only follow-up checks its records against established results. Neither is evidence that future implementation has been tested.
+
+The agent performing the audit uses a different model family from every agent that built the candidate. Record the actual provider, model and family against the reviewed work, including material model changes. A host name or intended configuration does not prove independence. Unknown model evidence prevents a verified independence claim; report it to the Owner before treating the audit as independent.
+
+If the assigned auditor helped build the candidate or its independence is unknown, the Owner may authorize a one-off audit by an eligible third model family independent of every builder. Identify the exact candidate, actual assessor/model, approval and results. Preserve the assigned auditor's session and role binding; the one-off assignment applies only to that audit. If no eligible assessor is available, report the audit as unresolved. This path does not waive independence or authorize an automatic replacement.
+
+Each finding identifies severity, requirement and source revision, location, observed evidence, consequence, requested correction, disposition and verification needed. Distinguish a violation, missing evidence and a recommendation. Missing evidence is not a verified pass or, by itself, proof of a violation. Existing adopted requirements and approval boundaries still apply; model findings do not create a new automatic gate. Recheck corrections against the changed revision; earlier review does not cover later edits. The Owner receives unresolved findings and verification limits and retains decision authority.
+
+Record external technical reviews, compliance findings and corrective verification on the PR introducing the changes. Keep saved copies and pre-PR reports outside Git, then attach the findings when the PR exists. Do not commit external review text. This requirement does not itself grant an agent permission to post a review or contact another session.
+
+Before enabling a universal blocking audit, the Owner reviews observed accuracy from on-demand runs: confirmed findings, false positives and independently known missed defects, with the reviewed cases and limitations. Require evidence of reliable results and a low false-positive rate; confidence claimed by a model or passing CI is insufficient. The Owner approves the acceptance criteria and activation separately. No numerical accuracy threshold has been agreed.
+
+[Decision 63](review/decisions.md#decision-63) records the approved scope, evidence rules and deferred gate. [Continuous compliance (#519)](https://github.com/NobleFactor/noblefactor-engprod/issues/519) owns future trigger wiring and the exact-candidate commit check. Neither this policy nor a hook implementation enables universal blocking without the Owner's activation decision.
 
 Agents need not write a separate breach narrative for each mistake. Neither agents nor auditors estimate breach costs. Honest errors/blockers, corrective work and completion evidence remain required.
 

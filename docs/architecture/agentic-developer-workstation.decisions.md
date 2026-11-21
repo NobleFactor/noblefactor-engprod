@@ -250,9 +250,9 @@ Give each environment a versioned role configuration: its Schedule, selected hos
 
 Keeping host choices in the environment configuration allows different assignments to use suitable models without changing role responsibilities. Treating a host choice as another role identity could create competing conversations. Desired settings and observed model/session state therefore remain distinct. Compatible configuration changes preserve the original session; replacement retains the existing Owner-approval requirement.
 
-Audit requests run on demand or after pre-commit checks and reach the bound auditor. Independence is checked against the actual model families used to build the candidate. The check covers changed and potentially affected assets. External reviews and corrective verification are recorded on the PR introducing the change; reports produced before the PR exists stay outside Git until it is opened.
+Audit requests run on demand or through an enabled trigger after successful pre-commit checks and reach the bound auditor. Shared policy governs required requests and activation of blocking checks. Independence is checked against the actual model families used to build the candidate. The check covers changed and potentially affected assets. External reviews and corrective verification are recorded on the PR introducing the change; reports produced before the PR exists stay outside Git until it is opened.
 
-The Owner chose to record this boundary now rather than defer it, approving the focused design amendment on 2026-11-20. The [approval record](../plans/doc/558-role-entry-points.md#environment-role-configuration-approval) preserves the scope. [Environment configuration](agentic-developer-workstation.md#environment-role-configuration) and [audit flow](agentic-developer-workstation.md#compliance-audit-flow) describe the intended system. Configuration formats and implementation remain delivery-plan work.
+The Owner chose to record this boundary now rather than defer it, approving the focused design amendment on 2026-11-20. The [approval record](../plans/doc/558-role-entry-points.md#environment-role-configuration-approval) preserves the scope. [Environment configuration](agentic-developer-workstation.md#environment-role-configuration) and [audit flow](agentic-developer-workstation.md#compliance-audit-flow) describe the intended system. [Developer control (#517)](https://github.com/NobleFactor/noblefactor-engprod/issues/517) owns configuration planning and durable bindings, using [Agent hosts (#459)](https://github.com/NobleFactor/noblefactor-engprod/issues/459) for native-host application. [Continuous compliance (#519)](https://github.com/NobleFactor/noblefactor-engprod/issues/519) owns audit routing, trigger wiring and the exact-candidate commit check. The [handbook policy](../engineering/agent-operation.md#compliance-auditing) defines the requirements; those open Features require separate implementation plans.
 
 ```yaml
 id: W6
@@ -261,6 +261,29 @@ supersedes: []
 proposed_by: Codex
 approved_by: David Noble
 recorded_by: Codex
-decided_at: '2026-11-21T00:35:21.678Z'
-recorded_at: '2026-11-21T00:39:47.723106Z'
+decided_at: '2026-11-20T16:35:21.678-08:00'
+recorded_at: '2026-11-21T03:17:57.600877+00:00'
+```
+
+<a id="w7"></a>
+
+## 13. Allow an approved one-off audit without replacing the assigned auditor
+
+When the assigned auditor helped build a candidate or its independence is unknown, the Owner can authorize one audit by an eligible third model family independent of every builder. The assignment covers the identified candidate and does not create a second persistent environment/role binding. Preserve the assigned auditor's conversation and binding.
+
+Several model families can contribute to one candidate, leaving its assigned auditor ineligible. A different model in the retained session was considered, but host support and observed model evidence still govern whether that works. Leaving every such request unresolved preserves independence but provides no assessment. The approved one-off path obtains an independent assessment without switching the retained session.
+
+Record the Owner's request-specific approval, candidate/base, original binding reference, actual assessor/model and result with the audit and introducing PR. If no eligible assessor is available, the audit remains unresolved. This decision does not waive independence, qualify a host or authorize automatic agent creation.
+
+[Audit flow](agentic-developer-workstation.md#compliance-audit-flow) defines the system interaction. The [handbook policy](../engineering/agent-operation.md#compliance-auditing) owns auditor authority. The [approval record](../plans/doc/558-role-entry-points.md#compliance-policy-and-one-off-audit-approval) preserves David Noble's acceptance of this proposal. This extends W6's audit routing while retaining its one-binding rule.
+
+```yaml
+id: W7
+status: accepted
+supersedes: []
+proposed_by: Codex
+approved_by: David Noble
+recorded_by: Codex
+decided_at: '2026-11-20T19:40:10.105-08:00'
+recorded_at: '2026-11-21T03:54:25.329872+00:00'
 ```
