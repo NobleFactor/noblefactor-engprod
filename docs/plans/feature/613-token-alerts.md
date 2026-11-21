@@ -154,7 +154,7 @@ The Triage template gains a last step, `if: failure()`, that runs the same scrip
 
 ### 5.4 Landing
 
-The workflow, its script and its permissions file are added to NobleFactor/.github's and David-Noble-at-work/.github's templates, then landed in each participating repository by `star github model apply`, as the Triage workflow is. Because `apply` merges its own pull requests until #614 lands, the landing waits for #614, or you land it by hand (§ 6, question 3).
+The workflow, its script and its permissions file, whose source is this repository's `workflow-templates/`, are added to NobleFactor/.github's and David-Noble-at-work/.github's templates, then landed in each participating repository by `star github model apply`, as the Triage workflow is. Because `apply` merges its own pull requests until #614 lands, the landing waits for #614, or you land it by hand (§ 6, question 3).
 
 <a id="tests"></a>
 
@@ -220,7 +220,7 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 
 ### 9.2 Phase 2: the check and its tests
 
-- [ ] `credentials-check.sh`, `credentials-check.json` and `credentials-check.yml` in both accounts' templates; `tests/Test-CredentialsCheck`.
+- [x] `workflow-templates/credentials-check.sh` and `credentials-check.json`, and the workflow for each kind of account, `credentials-check.organization.yml` and `credentials-check.user.yml`; `tests/Test-CredentialsCheck`, 32 cases, all passing. Writing the suite found that a check unable to reach GitHub raised a credential incident: `call` exited inside a command substitution, which ended only the subshell. `call` now returns 2, and each caller exits 2 (#621).
 
 <a id="phase-3-the-triage-step"></a>
 
@@ -245,7 +245,7 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 
 ## 10. Files and related assets
 
-- NobleFactor/.github and David-Noble-at-work/.github: `workflow-templates/credentials-check.yml`, `credentials-check.sh`, `credentials-check.json`, and `triage.yml`'s failure step. This repository holds their source, beside the Triage template's.
+- `workflow-templates/` in this repository, new: the source of `credentials-check.sh`, `credentials-check.json`, `credentials-check.organization.yml` and `credentials-check.user.yml`, and of each account's Triage template, `triage.organization.yml` and `triage.user.yml`, copied from NobleFactor/.github and David-Noble-at-work/.github with the failure step added. No copy of the Triage template lived here before; § 5.4 lands each in its account's `.github` and each participating repository.
 - `tests/Test-CredentialsCheck`: new.
 - `docs/architecture/issue-data-model/4-storage-and-reach.md`, `4-storage-and-reach.decisions.md`, `docs/reference/issue-tracking-credentials.md`.
 
