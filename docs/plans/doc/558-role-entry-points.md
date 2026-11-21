@@ -29,7 +29,7 @@ Owner: David Noble. Participant: this Codex session. The Owner appoints reviewer
 
 Finish the shared context contract and the five specialist roles: designer, planner, coder, reviewer and compliance auditor. Preserve the small common commandments and role entry points, and make their assignment, applicable reading, source/version evidence, authority and handoffs explicit.
 
-Apply the Owner-approved code-and-documentation compliance assessment and keep roles independent of host/model preferences. Retain Claude/Codex qualification as this Schedule's runtime scope. Shared-skill publication, additional host qualification, model deployment and the five-native-agent exercise remain separately owned.
+Define the existing Compliance auditor's checks, their scope and their triggers. Keep roles independent of host/model preferences. Retain Claude/Codex qualification as this Schedule's runtime scope. Shared-skill publication, additional host qualification, model deployment and the five-native-agent exercise remain separately owned.
 
 ## Issue 558
 
@@ -49,7 +49,7 @@ On 2026-11-20, David Noble supplied Terminal-First Development Roles and its evi
 
 The shared contract refines the five persistent specialists in the [workstation design](../../architecture/agentic-developer-workstation.md), while preserving its distinction between role, host, primary conversation and attachment. The new contract is a reference for reading, assignment and handoffs, not a new host service. Distinguish specialist roles from the process's RACI responsibilities: Owner, Reviewer, Participant and Observer. A specialist Reviewer or Compliance auditor is an assignment of work, not a transfer of the Owner's accountability or automatic authority.
 
-Keep enduring requirements, assignment data and host-specific loading distinct. Designs continue to describe the wanted system; this plan retains transition work, progress and approval history. Bring any conflict with the accepted architecture or tooling to the Owner before changing the affected definition.
+Keep enduring requirements, assignment data and host-specific loading distinct. The Owner-approved [environment configuration](../../architecture/agentic-developer-workstation.md#environment-role-configuration) amendment states how role context, host/model choices and one durable role binding fit together. Designs continue to describe the wanted system; this plan retains transition work, progress and approval history. Bring any conflict with the accepted architecture or tooling to the Owner before changing the affected definition.
 
 ## 5. Proposed implementation
 
@@ -69,9 +69,9 @@ Use the existing startup and post-compaction reading requirements. The record di
 
 ### 5.2. Compliance assessment
 
-Update the existing compliance-auditing section of Agent operation as the authoritative policy home. Proposed coverage, pending the Owner disposition in section 5.2.1: every proposed change receives a compliance assessment appropriate to its scope, including code and documentation where affected. The assessment checks the applicable approved plan, standards, process and authority; available CI and static-analysis results supply evidence for their particular checks.
+Update the existing compliance-auditing section of Agent operation as the authoritative policy home. The existing Compliance auditor checks work on demand and during a commit after the pre-commit checks pass. The check covers every changed file and every other asset that might be affected by those changes. It checks the applicable approved plan, standards, process and authority; test, lint and CI results provide evidence.
 
-The auditor inspects affected source and documentation outside the diff, including examples, defaults, commands, errors, interfaces and operational instructions. Apply the adopted Google guidance and relevant arc42 content to affected documents. Identify adopted requirements and their applicability rather than treating every suggestion in an external guide as mandatory.
+Cover all assets: source code, tests, configuration, designs, plans, schedules, handbook and user documentation, examples, help text, completions and man pages. Start with the changes and follow their effects through dependencies, interfaces, generated outputs and descriptions. Check affected assets outside the diff as well. Apply the adopted Google guidance and relevant arc42 content to affected documents. Cite the applicable adopted requirement rather than treating every suggestion in an external guide as mandatory.
 
 Each finding identifies severity, the applicable requirement and source revision, location, observed evidence, consequence, requested correction, disposition and verification needed. Distinguish a violation, missing evidence and a recommendation. Unmet mandatory requirements block acceptance until corrected or covered by an explicit Owner-approved exception. Missing evidence cannot be recorded as a verified pass. The Owner retains the decision authority and must have the unresolved findings and verification limits.
 
@@ -79,15 +79,19 @@ Keep technical review and compliance audit distinct. Require an agent conducting
 
 Record David Noble's 2026-11-20 policy decision in the handbook decision log using its established structure and actual attribution. Do not add a required GitHub status check, change branch protection, automate merging or mandate OpenCode as the auditor host.
 
-### 5.2.1. Scope and interim operation: proposed Owner disposition
+<a id="521-scope-and-interim-operation-proposed-owner-disposition"></a>
 
-A plan checkpoint assesses the proposal's scope, requirement coverage, evidence, process and authority. It does not claim the later implementation's tests or operation. A completion-only follow-up checks documentation scope, established results, metadata, formatting and links, following Engineering process's existing lightweight completion rules; it creates no additional delivery milestone.
+#### 5.2.1. Audit triggers
 
-Proposed interim operation: the Owner appoints an assessor for an explicitly scoped manual assessment. It may operate before the later host-loading qualification, but records the assessor, reviewed revision, applicable requirements, methods, results and limitations. An agent audit still establishes its actual model-family independence and the context it read. This does not claim the host or five-agent exercise qualified.
+Use one way to request an audit, either directly on demand or from the commit process. Give the auditor the changed files and their reviewed versions, the diff, the pre-commit results, the assignment and the applicable requirements. The auditor follows the effects into other assets and records what it checked, its findings and any missing evidence.
 
-If no assessor is appointed or required evidence is missing, record the assessment as pending and stop before acceptance. The Owner appoints the assessor, resolves the missing evidence or approves a specific exception. A failed or unavailable assessment is not a pass.
+Proposed commit wiring: run the existing pre-commit checks, then call the auditor locally before the pre-commit hook returns. The audit result must apply to the version being committed; changes after that check require another check. Describe how a failed or unavailable audit is reported and how the existing Owner exception authority applies. Do not silently treat an unavailable check as a pass.
 
-This is the proposed answer to independent-review finding R05. The Owner will decide its operation during review of the committed plan. On 2026-11-20, David Noble explicitly directed that publication is not blocked. Publish the draft checkpoint with this question clearly marked; adoption and implementation of the interim policy await the Owner's decision.
+Git's [hook reference](https://git-scm.com/docs/githooks#_pre_commit) supports this ordering within the pre-commit hook. The installed shared hook currently ends by handing control to a repository hook with exec; a call placed after that exec would never run. The hook driver must regain control after successful checks before it can invoke the auditor. Document the trigger contract here and hand off its wiring for a separate issue and approved plan in the repository that owns the hooks. This documentation checkpoint does not install the trigger.
+
+A plan checkpoint checks the plan and the assets it affects. A completion-only follow-up checks its changed records and any affected assets against established results. Their changed content determines the work to inspect; neither requires pretending that future implementation has already been tested.
+
+David Noble's 2026-11-20 clarification resolves the scope and timing question in R05: use the existing auditor, check on demand or after pre-commit checks during a commit, and cover all changed and potentially affected assets. Auditor qualification is not a reason to defer this requirement.
 
 ### 5.3. Host and model preferences
 
@@ -100,6 +104,10 @@ Use [Codex instructions](https://learn.chatgpt.com/docs/agent-configuration/agen
 ### 5.4. Completion records
 
 Incorporate the established PR #601 completion record into this plan. Keep its documented squash-trailer finding visible and do not rewrite published history. Incorporate PR #596's established final review, merge, issue/Schedule closure, installed-skill verification and cleanup into its existing plan. These documentation-only records create no further delivery milestone.
+
+### 5.5. Environment configuration design amendment
+
+Update the workstation design and its decision companion with shared policy, per-environment role configuration, one authoritative native-session binding per environment/role, actual-model audit independence and audit routing. External reviews belong on the PR introducing the changes; keep saved copies outside Git. Preserve existing anchors and update the components diagram and affected workflow/quality descriptions. Configuration schemas, host integration and lifecycle implementation remain separate control-plane work.
 
 ## 6. Alternatives and limits
 
@@ -126,7 +134,8 @@ The 2026-11-19 verification confirmed all eight reviewed hashes and 58 local ref
 | Roles and context are complete | Specialist roles are distinguished from Owner, Reviewer, Participant and Observer RACI responsibilities; all five roles identify purpose, inputs, outputs, authority, escalation, handoffs and reading; common and role pages retain their word budgets | Requirement map and role-by-role substantive review |
 | Assignment is explicit | The example covers the overview, common material, role material, skills, assignment, source revisions and read evidence | Filled example against a real scheduled change, including a pre-Schedule design |
 | Identity and independence are supported | Host, actual model family, native conversation and exact session name remain distinct; unknowns prevent unsupported claims | Walkthrough with a changed or unknown model |
-| Audit checks code and documents together | Findings cite applicable requirements and examine affected material outside the diff | Stale-documentation fixture, correction and recheck |
+| Audit covers all affected assets | The audit starts with every changed file and checks every other asset that might be affected, including designs, plans, help, completions and man pages | Impact map, stale-documentation fixture, correction and recheck |
+| Audit timing is clear | Requests can be made on demand; the proposed commit trigger runs after successful pre-commit checks and identifies the checked versions and results | Trigger contract and hook-integration handoff; no claim that this checkpoint installs it |
 | Evidence and judgment stay distinct | Passing CI does not hide a correctness defect; missing evidence and inapplicable requirements are reported accurately | Reviewer/auditor walkthrough and dispositions |
 | Publication differs from loading | Published but unread resources are not claimed as effective session context | Source/revision walkthrough with a changed resource |
 | Ownership is preserved | Shared requirements have one authoritative home and downstream tasks retain their scope | Link/requirement review and explicit task handoffs |
@@ -134,7 +143,7 @@ The 2026-11-19 verification confirmed all eight reviewed hashes and 58 local ref
 
 Use one real scheduled change as the main fixture, selecting and identifying it in the review record before the walkthrough. Include cases for stale documentation outside a diff, an unknown or inapplicable standard, a correctness defect despite passing checks, a material model change, and published context not shown to be read. These are document walkthroughs; the later five-native-agent exercise remains with #565.
 
-Record source-to-requirement coverage and substantive findings in docs/engineering/review/role-context-review.md. Validate links, metadata, YAML, paragraph layout and word budgets, then review whether the documents are complete and understandable. Syntax and formatting checks alone do not establish usability.
+Record source-to-requirement coverage and the author's walkthrough results in docs/engineering/review/role-context-review.md. Record external technical reviews, compliance findings and corrective verification on the PR introducing the changes; keep local copies outside Git. Link the PR from the delivery record instead of committing external review text. Validate links, metadata, YAML, paragraph layout and word budgets, then review whether the documents are complete and understandable. Syntax and formatting checks alone do not establish usability.
 
 ## 8. Completion milestones
 
@@ -162,14 +171,15 @@ Apply the established completion-only documentation process to observed post-mer
 ### 9.2. Completion planning
 
 - [x] Review the supplied Terminal-First Development Roles and evidence notes against the five-role contract and official host documentation.
-- [x] Record David Noble's 2026-11-20 approval of the proposed refinements and retained runtime scope.
+- [x] Record David Noble's 2026-11-20 direction to proceed, retained runtime scope and clarification of audit scope and timing.
+- [x] Apply the Owner-approved workstation design amendment for environment role configuration and audit routing, with decision W6.
 - [ ] Commit and publish this amended plan, update its issue/Schedule links and obtain Owner review of the committed revision before implementation.
 
 ### 9.3. Shared contract and policy
 
 - [ ] Publish the context contract and structured assignment example, preserving the small common and role entry points.
 - [ ] Clarify all five roles and handoffs, including source/model identity, authority and missing-evidence behavior.
-- [ ] Publish the approved compliance-assessment policy, finding template support and dated decision in their authoritative homes.
+- [ ] Publish the approved audit scope, on-demand and commit triggers, finding template support and dated decision in their authoritative homes. Hand off the missing hook wiring for separate planning.
 
 ### 9.4. Verification and delivery
 
@@ -179,9 +189,9 @@ Apply the established completion-only documentation process to observed post-mer
 
 ## 10. Files and related assets
 
-Modify docs/plans/doc/558-role-entry-points.md, docs/engineering/agents/commandments.md, the five existing role pages, docs/engineering/agent-operation.md, docs/engineering/index.md, docs/engineering/work-organization.md, docs/engineering/review/decisions.md, docs/templates/index.md and docs/templates/review-comment.md. Create docs/engineering/agents/context.md, docs/templates/agent-context.md and docs/engineering/review/role-context-review.md. Update docs/plans/doc/581-schedule-command-consumers.md only with established completion evidence.
+Modify docs/architecture/agentic-developer-workstation.md, docs/architecture/agentic-developer-workstation.decisions.md, docs/plans/doc/558-role-entry-points.md, docs/engineering/agents/commandments.md, the five existing role pages, docs/engineering/agent-operation.md, docs/engineering/index.md, docs/engineering/work-organization.md, docs/engineering/review/decisions.md, docs/templates/index.md and docs/templates/review-comment.md. Create docs/engineering/agents/context.md, docs/templates/agent-context.md and docs/engineering/review/role-context-review.md. Update docs/plans/doc/581-schedule-command-consumers.md only with established completion evidence.
 
-The preparation checkpoint changes the two existing plan files and preserves the exact Owner-provided source, proposal and response in docs/engineering/review/sources/role-context-2026-11-20/owner-direction.txt. Implementation paths follow after review of the committed amendment. Update phase state and affected documents in the commit that establishes their facts.
+The preparation checkpoint changes the two existing plan files, the approved workstation design and decision companion, and preserves the exact Owner-provided source, proposal and direction in docs/engineering/review/sources/role-context-2026-11-20/owner-direction.txt. Role-contract implementation follows review of the committed amendment; the focused design update has the explicit approval recorded below. Update phase state and affected documents in the commit that establishes their facts.
 
 ## 11. Dependencies and overlaps
 
@@ -199,13 +209,19 @@ For that historical PR, invoking its Owner-run script with `--allow-parallel-pr`
 
 On 2026-11-18, the Owner reviewed the committed plan at b323440fbbcbbecdda52243dbd2dbdb95e805b15 in PR #601 and said, “the plan reads well enough. continue”. That approved the recorded first-delivery scope and directed implementation. The [original Owner-run preparation](https://github.com/NobleFactor/noblefactor-engprod/issues/558#issuecomment-6994753396) records the scoped parallel-work authorization. Git, publication and merge execution remain Owner-run.
 
-On 2026-11-20, David Noble supplied the two proposal documents and replied, “Let's run with that,” after the Coder's completion recommendation. The [preserved source](../../engineering/review/sources/role-context-2026-11-20/owner-direction.txt) contains the exact material, recommendation, Owner reply and the Coder's interpretation, with their native conversation timestamps. The reply is a broad direction to proceed, not two separately recorded answers. The recommended scope retains five roles and Claude/Codex qualification, treats additional host/model assignments as candidates, and strengthens model/context evidence and compliance assessment. The interim operation and activation of the universal assessment requirement remain the explicit R05 Owner choice in section 5.2.1.
+On 2026-11-20, David Noble supplied the two proposal documents and replied, “Let's run with that,” after the Coder's completion recommendation. The [preserved source](../../engineering/review/sources/role-context-2026-11-20/owner-direction.txt) contains the exact material, recommendation, Owner reply and the Coder's interpretation, with their native conversation timestamps. The reply is a broad direction to proceed, not two separately recorded answers. The recommended scope retains five roles and Claude/Codex qualification, treats additional host/model assignments as candidates, and strengthens model/context evidence and compliance assessment. The later clarification of audit scope and timing is recorded below and in section 5.2.1.
 
-This approves the described refinement. The amended implementation plan must be committed and presented before implementation under the existing process. Git and PR-script execution remain Owner-run; no additional host qualification, automatic merge, branch-protection change or cross-worker communication is authorized.
+That broad reply directed work on the draft; the later clarification states the audit requirement. The amended implementation plan must be committed and presented before implementation under the existing process. Git and PR-script execution remain Owner-run; no additional host qualification, automatic merge, branch-protection change or cross-worker communication is authorized.
 
 This worktree also records the already established PR #601 and PR #596 completion results. Their documentation-only records create no new delivery milestone and do not close #558 before this contract is complete.
 
-On 2026-11-20, after the independent review, David Noble stated, “Publication is NOT blocked by anything,” and directed creation of the PR script using the established process and templates. This authorizes preparing and publishing the draft for review with R05 recorded as an open question; it does not select the interim policy or waive the implementation, review or merge requirements.
+On 2026-11-20, after the independent review, David Noble stated, “Publication is NOT blocked by anything,” and directed creation of the PR script using the established process and templates. That direction authorized publishing the draft with the then-open R05 question. The later clarification resolves audit scope and timing; implementation, review and merge requirements still apply.
+
+On 2026-11-20, David Noble clarified that the Compliance auditor already exists, checks work on demand or during a commit after the pre-commit checks run, and covers all changed files and all assets that might be affected. He explicitly included designs, plans, documentation, help text, completions and man pages. The exact messages are preserved in the linked Owner source. Section 5.2.1 records the proposed trigger wiring; no live hook change is claimed.
+
+<a id="environment-role-configuration-approval"></a>
+
+On 2026-11-20, David Noble approved the proposed focused design amendment with, “go for it. let's make that change now.” Its scope is shared policy and per-environment role configuration, one durable binding per environment/role, auditor independence and triggers, and review evidence attached to the PR. This approves the design update; configuration formats and control-plane implementation remain separate planning work. He then requested that all worktree changes be committed and pushed through this worktree's Owner-run script. The exact direction is preserved in the linked Owner source.
 
 ## 13. Completion review
 

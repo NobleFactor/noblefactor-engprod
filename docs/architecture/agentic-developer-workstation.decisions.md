@@ -2,14 +2,14 @@
 title: "Agentic developer workstation decisions"
 status: draft
 created: 2026-11-19
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 # Agentic developer workstation decisions
 
 [System design](agentic-developer-workstation.md) · [Roadmap](../roadmaps/agentic-developer-workstation.md)
 
-These records use the [shared decision format](../standards/documentation.md#decision-records). W1–W3 record explicit Owner-approved boundaries from the source plan. The overall design remains Draft. W4/W5 are design proposals; D1–D6 remain unresolved. Metadata records approval of a choice separately from its implementation or qualification.
+These records use the [shared decision format](../standards/documentation.md#decision-records). W1–W3 record explicit Owner-approved boundaries from the source plan; W6 records the approved environment-configuration boundary. The overall design remains Draft. W4/W5 are design proposals; D1–D6 remain unresolved. Metadata records approval of a choice separately from its implementation or qualification.
 
 <a id="w1"></a>
 
@@ -240,4 +240,27 @@ approved_by: null
 recorded_by: Codex
 decided_at: null
 recorded_at: '2026-11-20T02:02:55Z'
+```
+
+<a id="w6"></a>
+
+## 12. Configure environment roles under shared policy
+
+Give each environment a versioned role configuration: its Schedule, selected hosts and model settings, workspace and shared resource references. The handbook owns the common requirements. The control plane retains the configuration and one authoritative native-session binding per environment/role, and uses DevLore for lifecycle management.
+
+Keeping host choices in the environment configuration allows different assignments to use suitable models without changing role responsibilities. Treating a host choice as another role identity could create competing conversations. Desired settings and observed model/session state therefore remain distinct. Compatible configuration changes preserve the original session; replacement retains the existing Owner-approval requirement.
+
+Audit requests run on demand or after pre-commit checks and reach the bound auditor. Independence is checked against the actual model families used to build the candidate. The check covers changed and potentially affected assets. External reviews and corrective verification are recorded on the PR introducing the change; reports produced before the PR exists stay outside Git until it is opened.
+
+The Owner chose to record this boundary now rather than defer it, approving the focused design amendment on 2026-11-20. The [approval record](../plans/doc/558-role-entry-points.md#environment-role-configuration-approval) preserves the scope. [Environment configuration](agentic-developer-workstation.md#environment-role-configuration) and [audit flow](agentic-developer-workstation.md#compliance-audit-flow) describe the intended system. Configuration formats and implementation remain delivery-plan work.
+
+```yaml
+id: W6
+status: accepted
+supersedes: []
+proposed_by: Codex
+approved_by: David Noble
+recorded_by: Codex
+decided_at: '2026-11-21T00:35:21.678Z'
+recorded_at: '2026-11-21T00:39:47.723106Z'
 ```

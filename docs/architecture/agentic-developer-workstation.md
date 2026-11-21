@@ -3,7 +3,7 @@ title: "Agentic developer workstation"
 type: RFC
 status: Draft
 created: 2026-11-11
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 # Agentic developer workstation
@@ -95,6 +95,7 @@ flowchart TB
         Control["Launcher and control plane<br/>Environment and role/session bindings<br/>DevLore lifecycle management"]
         Access["Authenticated access and connection routing"]
         Policy["Approved handbook, rules, skills and role reading sets"]
+        Config["Environment configuration<br/>Role hosts, models and resource revisions"]
         Evidence["Private evidence capture and scoped retrieval"]
         Catalog[("PostgreSQL catalog and provenance")]
         Originals[("Original records, artifacts and checkpoints<br/>Storage layout to decide")]
@@ -146,6 +147,8 @@ flowchart TB
     Access --> EditorB
     Control -->|"Manage environment and host-server lifecycle"| SBX
     Control <--> GitHub
+    Policy -->|Requirements and resource references| Config
+    Config -->|Approved role settings| Control
     Policy --> Primary
     Policy --> Children
     Primary <-->|"Scoped evidence retrieval"| Evidence
@@ -237,6 +240,25 @@ A protected permanent capture spool holds available transcripts, tool calls/resu
 Retrieval offers scoped search, bounded results, exact-source reads, citation resolution and surrounding-context expansion. Authorization covers snippets, counts, artifacts and expanded context. Ordinary readers have read-only access; agents use the scoped API rather than raw archive mounts or unrestricted database credentials. The archive owns retention, redaction, deletion, backup and index rebuilding.
 
 The handbook supplies approved common/role reading sets and host entry points. Evidence explains prior work; extracted claims become policy through review. [Role entry points (#528)](https://github.com/NobleFactor/noblefactor-engprod/issues/528) owns measured startup/post-compaction reading. Required reading changes through that review process.
+
+<a id="environment-role-configuration"></a>
+
+### 5.5 Environment role configuration
+
+Each environment has a versioned configuration applied to its active SBX sandbox. It identifies the Schedule, each role's approved host and model settings, its workspace, and references to common context, role instructions and skills. Shared defaults support consistent setup; environment choices remain subject to the shared requirements.
+
+| Record | Responsibility and location |
+| --- | --- |
+| Shared policy and defaults | The handbook and shared role resources define responsibilities, audit scope, independence, triggers and authority; policy distribution runs outside schedule sandboxes |
+| Environment configuration | The control plane retains the approved configuration and its source revision outside the sandbox and makes the applicable settings and resources available inside it |
+| Role binding and observed state | The control plane retains the selected daemon, original conversation ID, binding revision, actual model and loaded resource evidence for each environment/role |
+| External review and audit records | The PR introducing the changes holds the external reviews, findings and corrective verification; review text is kept outside repository commits |
+
+The control plane uses DevLore to manage the environment and selected native hosts. Each role resolves through one authoritative environment/role binding. Host selection is a setting in that binding, not a second identity under which another copy of the role can be created. Additional terminal views attach to the same native conversation.
+
+Configuration states the intended model; the host reports the model actually used. Record provider, model identifier and family against the affected work. The Compliance auditor must use a different model family from every builder of the candidate. A distinct host name or role label does not establish that independence. If the configured auditor is ineligible or its model is unknown, report the conflict to the Owner and retain the existing binding while it is resolved.
+
+Reviewed settings changes follow [I7](#i7-configuration-native-session-controls-and-delegation). Compatible changes preserve conversation identity. A different host preference does not authorize a new role conversation or bypass [session succession](#84-session-succession). The [configuration decision](agentic-developer-workstation.decisions.md#w6) records the responsibilities; file formats and implementation steps belong in the delivery plan.
 
 <a id="58-interaction-lifecycle"></a>
 
@@ -367,7 +389,7 @@ The developer can browse work before starting any role. Authentication, storage 
 
 #### 6.4.2 I2. Create or resume a role
 
-The profile supplies logical environment/role identity and reviewed configuration. Ensure server readiness under environment/host coordination, then read binding and creation intent under environment/role coordination.
+The profile supplies logical environment/role identity. Resolve its approved environment configuration, ensure server readiness under environment/host coordination, then read binding and creation intent under environment/role coordination.
 
 For a never-created role, record one intent and request creation with approved context. Associate any native startup-created session with that intent and role configuration. Persist the confirmed native ID and binding before reporting ready. If creation succeeds but binding persistence fails, retain the pending operation and reconcile it before another creation.
 
@@ -598,6 +620,16 @@ Managed clients address the recorded native ID. Native new/fork/switch controls 
 
 Native delegation creates children under the primary session's assignment and permissions. Preserve parent/child identities and available evidence. A child does not become another top-level role or end its parent on completion. The control plane observes this work through the driver.
 
+<a id="compliance-audit-flow"></a>
+
+### 6.10 Compliance audits
+
+An audit is requested on demand or during a commit after the existing pre-commit checks pass. The request identifies the exact changes, base and candidate versions, builder model evidence, applicable requirements and check results. The request resolves the environment's Compliance auditor through its existing role binding and checks independence before the assessment begins.
+
+The auditor checks every changed file and all assets that might be affected, including files outside the diff. Coverage includes source code, tests, configuration, designs, plans, documentation, examples, help text, completions and man pages. The assessment follows the shared [compliance requirements](../engineering/agent-operation.md#compliance-auditing) and identifies its scope, evidence, findings and limitations.
+
+Record the reviewed versions, actual auditor model, requirement revisions, findings and corrective verification with the PR that introduces the changes. Reports produced before a PR exists remain outside Git and are attached when that PR is opened. External review text is not committed to the repository. Changed inputs require the affected checks and findings to be rechecked; unresolved mandatory findings and missing required evidence remain visible to the Owner.
+
 <a id="57-initial-physical-deployment"></a>
 
 ## 7. Deployment
@@ -667,9 +699,9 @@ Views resolve the new binding; a returning old runtime does not regain authority
 
 ## 9. Significant decisions
 
-The [decision companion](agentic-developer-workstation.decisions.md) records the editor access boundary, native server ownership and approved session succession. It also records the proposed schedule/runtime and shared-archive choices and the unresolved D1–D6 decisions.
+The [decision companion](agentic-developer-workstation.decisions.md) records editor access, native server ownership, session succession and environment role configuration. It also records the proposed schedule/runtime and shared-archive choices and the unresolved D1–D6 decisions.
 
-Design explanations describe the intended system. The [delivery plan](../plans/doc/521-workstation-design.md) and current [rewrite plan](../plans/doc/581-schedule-command-consumers.md) retain implementation, transition and review history.
+The [workstation delivery plan](../plans/doc/521-workstation-design.md) and [role-context plan](../plans/doc/558-role-entry-points.md) define implementation and verification work.
 
 <a id="6-qualification-and-completion"></a>
 
@@ -679,7 +711,9 @@ Qualify all three host paths and five independent roles in one SBX environment. 
 
 Exercise schedule amendments and repeated PR merges, evidence use before compaction, startup/post-compaction reading, original-session restoration, approved succession with visible gaps, and DevLore lifecycle management. Accept the methodology and its use on real assignments alongside the platform.
 
-Measure accepted-change latency, blocking intervals, human interventions, repeated investigations, correction cycles, capture gaps and recovery results. Agree numerical quality, response and recovery thresholds with the Owner before using them as gates.
+Exercise audit requests on demand and after pre-commit checks, including a changed asset that makes an unchanged help page, completion or man page stale. Demonstrate model-family conflicts, preservation of the existing role binding, and PR review records kept outside commits.
+
+Measure accepted-change latency, blocking intervals, human interventions, repeated investigations, correction cycles, confirmed audit findings, false positives, known missed defects, capture gaps and recovery results. Agree numerical quality, response and recovery thresholds with the Owner before using them as gates.
 
 Architecture handoff acceptance establishes a buildable baseline and first actionable increment for Workstation architecture and delivery plan (#521). System delivery is established through the [roadmap gates](../roadmaps/agentic-developer-workstation.md#5-delivery-waves-and-gates), with each host/editor path's capability evidence.
 
@@ -708,6 +742,7 @@ The [roadmap](../roadmaps/agentic-developer-workstation.md#8-decisions-and-depen
 | Native host | Claude, Codex or OpenCode service owning conversation execution |
 | Native session | Host-owned conversation identified by a persistent native ID |
 | Role binding | Durable mapping from environment/role to host server and native session |
+| Environment configuration | Versioned host/model choices, workspace and shared resource references for the environment's roles |
 | Assignment | Bounded objective, issue/step, source, permissions and recorded outcome |
 | Editor backend | Guest-side service accepting editor connections and owning terminals |
 | View | One attachment's presentation of a role session |
