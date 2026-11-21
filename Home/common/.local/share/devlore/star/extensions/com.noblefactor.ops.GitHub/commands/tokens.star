@@ -13,6 +13,11 @@
 # pipeline, carriage returns and the final newline dropped and a private key's other lines kept, and so never enters
 # Starlark or a record; a record shows the first 12 hexadecimal digits of its SHA-256.
 #
+# #451 (decided 2026-11-20) amends decision 15, MODEL-005 since #596, in part: a source may also be
+# vault:<vault>/<name>, a secret in Azure Key Vault. star reads it with az, the one other tool it calls for a secret, in
+# the same pipeline, so its value never enters Starlark either. Whether az is signed in and the vault holds the secret
+# is asked before anything is written; a vault's name is 3 to 24 letters, digits and hyphens, a secret's 1 to 127.
+#
 # On Windows, where a file has no mode, file: reads the file's ACL with powershell.exe's Get-Acl, part of Windows, and
 # refuses a file anyone but its owner, SYSTEM and Administrators can read (the owner, 2026-11-10). That half is untested
 # until the command provider replaces the shell provider (NobleFactor/devlore-cli#1136, #474).
@@ -20,7 +25,11 @@
 load("commands/model.star", "quote", "sh")
 
 # What a source is told when it is refused.
-_FORMS = "--token takes <SECRET>=env:<NAME> or <SECRET>=file:<path>, comma-separated, or a bare env:<NAME> or file:<path>"
+_FORMS = ("--token takes <SECRET>=env:<NAME>, <SECRET>=file:<path> or <SECRET>=vault:<vault>/<name>, comma-separated, " +
+          "or a bare env:<NAME>, file:<path> or vault:<vault>/<name>")
+
+# The sources --token names, by their prefixes.
+_SOURCES = ["env:", "file:", "vault:"]
 
 # The prefixes GitHub gives its tokens, so that a token's value on the command line is named as one.
 _TOKEN_PREFIXES = ["ghp_", "gho_", "ghu_", "ghs_", "ghr_", "github_pat_"]
@@ -29,7 +38,8 @@ _TOKEN_PREFIXES = ["ghp_", "gho_", "ghu_", "ghs_", "ghr_", "github_pat_"]
 _WINDOWS_READERS = ["S-1-5-18", "S-1-5-32-544"]
 
 # Lines kept, carriage returns and the final newline dropped: a token is one line, an App's private key several.
-_CLEAN = "awk 'BEGIN { ORS = \"\" } { sub(/\\r$/, \"\"); if (NR > 1) printf \"\\n\"; print }'"
+# star github token make cleans a value the same way before it stores one (#451).
+CLEAN = "awk 'BEGIN { ORS = \"\" } { sub(/\\r$/, \"\"); if (NR > 1) printf \"\\n\"; print }'"
 
 def _identifier(s):
     """Whether s is a shell variable's or a secret's name: a letter or an underscore, then letters, digits and underscores."""
@@ -40,8 +50,21 @@ def _identifier(s):
             return False
     return True
 
+def _vault(source):
+    """A vault: source's (vault, name), or None when either breaks Key Vault's naming rules."""
+    rest = source[len("vault:"):]
+    if rest.count("/") != 1:
+        return None
+    vault, name = rest.split("/")
+    if not (3 <= len(vault) and len(vault) <= 24 and 1 <= len(name) and len(name) <= 127) or not vault[0].isalpha():
+        return None
+    for c in (vault + name).elems():
+        if not (c.isalnum() or c == "-") or ord(c) > 127:
+            return None
+    return vault, name
+
 def _refuse_value(source):
-    """Fails on a source that is neither env: nor file:, naming a token's value as one, which the shell's history holds."""
+    """Fails on a source of no form --token takes, naming a token's value as one, which the shell's history holds."""
     if source == "-":
         fail("--token takes no -: star's shell provider gives an extension's commands no standard input " +
              "(NobleFactor/devlore-cli#1136); " + _FORMS)
@@ -64,7 +87,7 @@ def parse(spec):
         if entry == "":
             continue
         secret, source = "", entry
-        if not (entry.startswith("env:") or entry.startswith("file:")) and "=" in entry:
+        if not any([entry.startswith(s) for s in _SOURCES]) and "=" in entry:
             secret, source = entry.split("=", 1)
             if not _identifier(secret):
                 fail("--token names a secret by something that is no secret's name, before its =; " + _FORMS)
@@ -74,6 +97,10 @@ def parse(spec):
         elif source.startswith("file:"):
             if source[len("file:"):] == "":
                 fail("--token file: names no file; " + _FORMS)
+        elif source.startswith("vault:"):
+            if _vault(source) == None:
+                fail("--token " + source + " names no Key Vault secret: a vault 3 to 24 letters, digits and hyphens, a " +
+                     "secret 1 to 127; " + _FORMS)
         else:
             _refuse_value(source)
         out.append((secret, source))
@@ -95,31 +122,55 @@ def _windows_readers(path):
     out = sh("powershell.exe -NoProfile -NonInteractive -Command " + quote(script) + " | tr -d '\\r'")
     return [line for line in out.split("\n") if line.strip() != ""]
 
-def check(sources):
-    """Fails unless every source can be read as decision 15 requires: a variable that is set, a file only its owner reads.
+def problem(source):
+    """What keeps a source from being read as MODEL-005 requires, or None.
 
-    Reads no value: whether a variable is set is asked of the shell, and a file's mode or ACL of the file system.
+    A source must be a variable that is set or a file only its owner reads. Reads no value: whether a variable is set is
+    asked of the shell, and a file's mode or ACL of the file system. A source of another form is named as one star
+    cannot read (#451).
     """
+    if source.startswith("env:"):
+        name = source[len("env:"):]
+        if not _identifier(name):
+            return source + " names no environment variable; " + _FORMS
+        if sh("[ -n \"${" + name + ":-}\" ] && echo set || echo unset").strip() != "set":
+            return source + ": the environment variable " + name + " is not set, or is empty"
+        return None
+    if source.startswith("vault:"):
+        parts = _vault(source)
+        if parts == None:
+            return source + " names no Key Vault secret; " + _FORMS
+        if sh("az account show -o none >/dev/null 2>&1 && echo yes || echo no").strip() != "yes":
+            return source + ": az is not signed in to Azure; run az login"
+        held = sh("az keyvault secret show --vault-name " + quote(parts[0]) + " --name " + quote(parts[1]) +
+                  " --query id -o tsv >/dev/null 2>&1 && echo yes || echo no").strip()
+        if held != "yes":
+            return source + ": Key Vault " + parts[0] + " holds no secret " + parts[1] + " that az can read"
+        return None
+    if not source.startswith("file:"):
+        return source + " is no source star can read; " + _FORMS
+    path = source[len("file:"):]
+    if sh("[ -f " + quote(path) + " ] && [ -r " + quote(path) + " ] && echo yes || echo no").strip() != "yes":
+        return source + ": " + path + " is not a file this account can read"
+    if _windows():
+        others = _windows_readers(path)
+        if others:
+            return (source + ": others can read " + path + ": " + ", ".join(others) +
+                    "; let its owner alone read it, SYSTEM and Administrators aside")
+        return None
+    if sh("[ -O " + quote(path) + " ] && echo yes || echo no").strip() != "yes":
+        return source + ": " + path + " belongs to another account; a token file is its owner's alone"
+    mode = sh("stat -c %a " + quote(path) + " 2>/dev/null || stat -f %Lp " + quote(path)).strip()
+    if len(mode) < 2 or mode[-2:] != "00":
+        return source + ": others can read " + path + ", mode " + mode + "; chmod 600 " + path
+    return None
+
+def check(sources):
+    """Fails unless every source --token names can be read as MODEL-005 requires (problem)."""
     for _, source in sources:
-        if source.startswith("env:"):
-            name = source[len("env:"):]
-            if sh("[ -n \"${" + name + ":-}\" ] && echo set || echo unset").strip() != "set":
-                fail("--token " + source + ": the environment variable " + name + " is not set, or is empty")
-            continue
-        path = source[len("file:"):]
-        if sh("[ -f " + quote(path) + " ] && [ -r " + quote(path) + " ] && echo yes || echo no").strip() != "yes":
-            fail("--token " + source + ": " + path + " is not a file this account can read")
-        if _windows():
-            others = _windows_readers(path)
-            if others:
-                fail("--token " + source + ": others can read " + path + ": " + ", ".join(others) +
-                     "; let its owner alone read it, SYSTEM and Administrators aside")
-            continue
-        if sh("[ -O " + quote(path) + " ] && echo yes || echo no").strip() != "yes":
-            fail("--token " + source + ": " + path + " belongs to another account; a token file is its owner's alone")
-        mode = sh("stat -c %a " + quote(path) + " 2>/dev/null || stat -f %Lp " + quote(path)).strip()
-        if len(mode) < 2 or mode[-2:] != "00":
-            fail("--token " + source + ": others can read " + path + ", mode " + mode + "; chmod 600 " + path)
+        found = problem(source)
+        if found:
+            fail("--token " + found)
 
 def for_secrets(sources, names, where):
     """{secret: source} for the secrets a template uses, failing on a secret it does not use or a bare source it cannot take.
@@ -142,17 +193,20 @@ def for_secrets(sources, names, where):
         out[secret] = source
     return out
 
-def _read(source):
+def reader(source):
     """The shell command that writes a source's value to its standard output, never into Starlark."""
     if source.startswith("env:"):
         return "printf %s \"${" + source[len("env:"):] + "}\""
+    if source.startswith("vault:"):
+        vault, name = _vault(source)
+        return "az keyvault secret show --vault-name " + quote(vault) + " --name " + quote(name) + " --query value -o tsv"
     return "cat " + quote(source[len("file:"):])
 
 def fingerprint(source):
     """The first 12 hexadecimal digits of the SHA-256 of the value a source holds, as it is set."""
-    return sh(_read(source) + " | " + _CLEAN + " | { sha256sum 2>/dev/null || shasum -a 256; } | cut -c1-12").strip()
+    return sh(reader(source) + " | " + CLEAN + " | { sha256sum 2>/dev/null || shasum -a 256; } | cut -c1-12").strip()
 
 def set_secret(name, source, repository = None, organization = None):
     """Sets a secret from its source through one pipeline: on a repository, or on an organization, visible to all its repositories."""
     target = ("--repo " + quote(repository)) if repository else ("--org " + quote(organization) + " --visibility all")
-    sh(_read(source) + " | " + _CLEAN + " | gh secret set " + quote(name) + " " + target)
+    sh(reader(source) + " | " + CLEAN + " | gh secret set " + quote(name) + " " + target)

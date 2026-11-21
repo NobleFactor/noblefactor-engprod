@@ -1,7 +1,7 @@
 ---
 title: "Model command decisions"
 status: draft
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 # Model command decisions
@@ -138,6 +138,91 @@ recorded_at: '2026-11-20T04:27:07Z'
 ```
 
 
-## 7. Shared review policy
+<a id="model-007"></a>
+
+## 7. Record the account's token in its model, held per binding
+
+The model's `token` record names the account's issue-tracking token: its kind, `github-app` for an organization or `classic-token` for a user account, and for each secret the Triage workflow template signs in with, where its value comes from. A source is `env:<NAME>`, `file:<path>`, or `held`, a secret GitHub holds at every binding. A binding is each place a workflow reads the secret: a user account's repository secret in each participating repository, or an organization's secret, which must reach each participating repository, or that repository's own secret of the same name. The record names no use and no permission.
+
+Scope: the model record, get, backup, diff, apply and restore, in organizations and user accounts.
+
+**Reason:** [ACCESS-006](4-storage-and-reach.decisions.md#access-006) requires every account to identify its token, and the model is where an account's configuration is identified and backed up. GitHub never reveals a secret's value, so get can record only that a secret is held, and where the backup said it comes from. Judging held per binding catches a secret present in one repository and missing in another, and an organization secret that doesn't reach a participating repository; judging it by the secret's presence alone would pass both.
+
+**Alternatives:** Recording uses and permissions was rejected: they change as the work does, and the credentials guide records them as they stand. Recording only the secrets' names was rejected: it would not say where a missing value comes from. Keeping recorded locators in backup alone was rejected: backup writes what get returns, byte for byte, so get keeps them.
+
+**Consequence:** Get reads the account's Triage workflow template, the secret listings of each binding, and its current backup. A backup keeps a recorded locator while GitHub holds the secret everywhere, and drops a secret GitHub doesn't hold everywhere, so restoring that backup is refused until the secret is set again.
+
+Evidence: [#451's plan, § 5.1](../../plans/feature/451-credentials.md#the-token-record), and the cases 195 to 205 in `tests/Test-StarGitHub`.
+
+```yaml
+id: MODEL-007
+status: proposed
+supersedes: []
+proposed_by: Claude Code
+approved_by: null
+recorded_by: Claude Code
+decided_at: null
+recorded_at: '2026-11-21T03:00:00Z'
+```
+
+<a id="model-008"></a>
+
+## 8. Read a secret from Azure Key Vault with az
+
+A secret's source may be `vault:<vault>/<name>`, a secret in Azure Key Vault, beside `env:` and `file:`. `star` reads it with `az keyvault secret show --query value -o tsv`, piped straight to `gh secret set` in the same pipeline the other sources use, so the value never enters Starlark, a record or a call. Before any write, `star` checks that `az` is signed in and that the vault holds the secret; a vault's name must be 3 to 24 letters, digits and hyphens, and a secret's 1 to 127.
+
+Scope: `--token` and the model's token record, for apply and restore.
+
+This amends [MODEL-005](#model-005) in part. MODEL-005 stays as recorded: token arguments name a source, never a value, and values stay outside Starlark and model data. What changes is its exclusion of every other tool: `az` may now read a secret.
+
+**Reason:** NobleFactor keeps its secrets in Key Vault, one vault per team and environment, so a model that records where its token comes from should be able to name the vault secret itself. Without it, each apply needs the value copied into an environment variable or a file first, which is the step the vault exists to remove.
+
+**Alternatives:** Copying each vault secret to a protected file before apply was rejected: it leaves a second copy of the value on disk. Reading the vault through Azure's REST API in Starlark was rejected: the value would enter Starlark.
+
+**Consequence:** Apply and restore depend on `az` and an Azure sign-in when a source names a vault, and refuse, naming `az login`, when there is none. A model's token record can name a vault secret, and a backup keeps that locator ([MODEL-007](#model-007)).
+
+Evidence: [#451's plan, § 5.3](../../plans/feature/451-credentials.md#vault-sources), and the cases 206 to 210 in `tests/Test-StarGitHub`.
+
+```yaml
+id: MODEL-008
+status: proposed
+supersedes: []
+proposed_by: Claude Code
+approved_by: null
+recorded_by: Claude Code
+decided_at: null
+recorded_at: '2026-11-21T03:00:00Z'
+```
+
+<a id="model-009"></a>
+
+## 9. Make a token without prompting, and finish it by running again
+
+`star github token make` takes every value it needs from a source named on its command line, `env:<NAME>` or `file:<path>`, and never prompts. For an organization it creates the app through GitHub's manifest flow: it opens a local page that posts the manifest, you confirm, and you give it the address GitHub sends the browser to, whose state it checks before exchanging the code. It writes the key to a file only you can read before storing anything, and deletes that file only once both values are stored and checked by hash. For a user account it opens the new-token page and stores the token you make, once it has checked the token's login and scopes. Each run reports what exists and the next command. It never rolls back: an app, a key and a vault secret stay, a run again finishes what is left, and a working token already in the vault is adopted. `--replace` makes new values as new versions of the same vault secrets, leaving GitHub's secrets as they are until apply runs.
+
+Scope: the token command, for organizations and user accounts.
+
+**Reason:** An extension's commands get no standard input until [NobleFactor/devlore-cli#1136](https://github.com/NobleFactor/devlore-cli/issues/1136), so a prompt inside `star` can't work; named sources work the same with or without a terminal. A token is made in steps that cross the browser, and any step can stop, so each run must be safe to repeat and must never destroy a working credential. Writing the key to a protected file first means a failed store loses nothing.
+
+**Alternatives:** A local web server to receive the manifest's redirect was rejected: `star`'s runtime has none, and the code arrives in the browser's address. Rolling back an app or a stored value on failure was rejected: a half-made credential is recoverable by running again, while a rollback can destroy the only copy of a key.
+
+**Consequence:** Making an organization's token takes three runs and two clicks; a user account's, two runs and the token page. A lost key is replaced by generating a new one on the app's page and storing it with `--from`.
+
+Evidence: [#451's plan, § 5.4](../../plans/feature/451-credentials.md#making-a-token), and the cases 211 to 220 in `tests/Test-StarGitHub`.
+
+```yaml
+id: MODEL-009
+status: proposed
+supersedes: []
+proposed_by: Claude Code
+approved_by: null
+recorded_by: Claude Code
+decided_at: null
+recorded_at: '2026-11-21T03:00:00Z'
+```
+
+<a id="7-shared-review-policy"></a>
+
+## 10. Shared review policy
 
 Model-command publication uses the [shared Owner review boundary](../../engineering/procedures/pull-request.md#merge-authorization-and-gates). [Handbook decision 62](../../engineering/review/decisions.md#decision-62) records the Owner's approval. The model design references that policy; it does not define an automatic-merge exception.
