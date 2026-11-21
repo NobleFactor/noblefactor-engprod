@@ -3,7 +3,7 @@ title: "Agentic developer workstation"
 type: RFC
 status: Draft
 created: 2026-11-11
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 # Agentic developer workstation
@@ -230,7 +230,7 @@ Publish authenticated editor endpoints. Keep native agent endpoints on guest-loc
 
 ### 5.4 Evidence and policy services
 
-The archive runs outside schedule sandboxes with its own service identity and durable storage. PostgreSQL is the preferred catalog, provenance and full-text platform. Placement of large originals remains the archive owner's decision.
+The [archive design](engineering-evidence-archive.md) and [roadmap](../roadmaps/engineering-evidence-archive.md) define the proposed capture, custody, retrieval and recovery contracts for review. The archive runs outside schedule sandboxes with its own service identity and durable storage. PostgreSQL is the preferred catalog, provenance and full-text platform. Placement of large originals remains the archive owner's decision.
 
 A protected permanent capture spool holds available transcripts, tool calls/results, attachments and work artifacts incrementally. Preserve originals, source identity/ranges, hashes, parser versions, capture watermarks and explicit gaps before deriving indexes or summaries. Capture is idempotent. Local durable acknowledgment and backup recoverability are separate facts.
 
@@ -645,7 +645,7 @@ Auditors read identified immutable inputs; reviewers verify separate identified 
 
 ### 8.3 Capture and restoration
 
-An archive outage uses bounded permanent spooling with visible lag/coverage. Block transitions requiring evidence that is not securely preserved. On return, reconcile delivery receipts and preserve evidence identity. The local spool storage engine remains undecided. Its evaluation should consider the Owner's preference for one stack end to end.
+An archive outage uses bounded permanent spooling with visible lag/coverage. Block transitions requiring evidence that is not securely preserved. On return, reconcile delivery receipts and preserve evidence identity. The local spool storage engine remains undecided. Evaluate integrity, performance, reliability, security and maintenance for each store; [W6](agentic-developer-workstation.decisions.md#w6) records the Owner's withdrawal of the earlier storage-uniformity preference.
 
 Machine sleep suspends local execution when it occurs; it is not an application checkpoint. A viewing laptop's sleep only affects its view when SBX runs elsewhere. Restore compatible workspace, configuration, archive, checkpoint and binding manifests after reboot or runtime replacement. A sandbox template alone is not a complete backup, and live processes are not assumed to survive.
 

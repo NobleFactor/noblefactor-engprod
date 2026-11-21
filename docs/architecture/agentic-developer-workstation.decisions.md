@@ -2,14 +2,14 @@
 title: "Agentic developer workstation decisions"
 status: draft
 created: 2026-11-19
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 # Agentic developer workstation decisions
 
 [System design](agentic-developer-workstation.md) · [Roadmap](../roadmaps/agentic-developer-workstation.md)
 
-These records use the [shared decision format](../standards/documentation.md#decision-records). W1–W3 record explicit Owner-approved boundaries from the source plan. The overall design remains Draft. W4/W5 are design proposals; D1–D6 remain unresolved. Metadata records approval of a choice separately from its implementation or qualification.
+These records use the [shared decision format](../standards/documentation.md#decision-records). W1–W3 record explicit Owner-approved boundaries from the source plan. W6 records the Owner-approved removal of a storage constraint. The overall design remains Draft. W4/W5 are design proposals; D1–D6 remain unresolved. Metadata records approval of a choice separately from its implementation or qualification.
 
 <a id="w1"></a>
 
@@ -103,7 +103,7 @@ Place capture/retrieval services, provenance/catalog and retained originals outs
 
 Keeping the only evidence copy inside a disposable runtime would couple retention and cross-schedule retrieval to that runtime's lifetime. A shared service preserves an independent storage and authorization boundary. Its outage still requires bounded spooling, visible gaps and blocked evidence-dependent transitions.
 
-The [source plan](../plans/doc/521-workstation-design.md#current-state) records shared placement and preferred PostgreSQL catalog/provenance. The [archive contract](agentic-developer-workstation.md#55-shared-evidence-archive-and-policy) preserves the proposal. Original-artifact layout and spool implementation remain [D4](#d4).
+The [source plan](../plans/doc/521-workstation-design.md#current-state) records shared placement and preferred PostgreSQL catalog/provenance. The [archive contract](agentic-developer-workstation.md#55-shared-evidence-archive-and-policy) preserves the proposal. The [archive design](engineering-evidence-archive.md) and its [decision records](engineering-evidence-archive.decisions.md) provide concrete proposals; original-artifact layout and spool implementation remain [D4](#d4) until accepted.
 
 ```yaml
 id: W5
@@ -183,9 +183,9 @@ recorded_at: '2026-11-20T02:02:55Z'
 
 ## 9. Resolve archive storage and recovery acknowledgments
 
-Resolve original-artifact placement, catalog/provenance boundaries, retention, authorization, capture acknowledgments and restoration. The local capture-spool storage engine is also undecided.
+The [archive design](engineering-evidence-archive.md) and [roadmap](../roadmaps/engineering-evidence-archive.md) address original-artifact placement, catalog/provenance boundaries, retention, authorization, capture acknowledgments and restoration as proposals. The local capture-spool storage engine is also undecided.
 
-PostgreSQL remains the preferred shared catalog platform. The Owner deferred the spool implementation choice and expressed a preference for one stack end to end; the [source plan's open questions](../plans/doc/521-workstation-design.md#open-questions) preserve that direction. Evaluate implementation options without presenting a particular local database or queue as selected.
+The local spool engine and central storage layout remain open. Evaluate integrity, performance, reliability, security and maintenance for each component. [W6](#w6) removes the earlier storage-uniformity preference; no database or queue is selected by that correction.
 
 Archive owners (#490/#492/#496), integrated with continuity/checkpoints, establish minimal durability in Wave 1 and the full contract before G3. Demonstrate citation-preserving restore and distinguish recoverable native state from evidence-based reconstruction, including S8's gaps and approval trace.
 
@@ -240,4 +240,25 @@ approved_by: null
 recorded_by: Codex
 decided_at: null
 recorded_at: '2026-11-20T02:02:55Z'
+```
+
+<a id="w6"></a>
+
+## 12. Evaluate each evidence store by its requirements
+
+The capture/outbox and central archive may use different storage engines. Choose according to integrity, performance, reliability, security and maintenance cost. Storage-engine uniformity has no independent priority in that evaluation.
+
+The Owner explicitly withdrew the earlier preference on 2026-11-20 in the design conversation. This changes only that evaluation constraint. D4's storage, retention, authorization, receipt and recovery decisions remain unresolved; this record approves no engine, deployment or implementation. Retaining the former preference as a requirement would contradict the Owner's correction.
+
+The earlier direction remains available in repository history. This is a partial change to D4's context, rather than supersession of its entire unresolved contract.
+
+```yaml
+id: W6
+status: accepted
+supersedes: []
+proposed_by: David Noble
+approved_by: David Noble
+recorded_by: Codex
+decided_at: '2026-11-20'
+recorded_at: '2026-11-21T04:17:39Z'
 ```
