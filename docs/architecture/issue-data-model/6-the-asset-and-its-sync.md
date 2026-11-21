@@ -216,7 +216,7 @@ A source file must be readable only by its owner, mode 600 or stricter on Unix. 
 | Finish publication checks | Leave the PR for Owner review; perform no automatic merge |
 | Observe delivery while another PR advances the target | Verify this PR's recorded full merge commit, its content and trailers |
 
-Live command proofs use the dedicated organization `NobleFactor-sandbox` and user account `David-Noble-at-work-sandbox`, with their own run-specific issues and collection options. Those environments qualify both account paths without treating production changes as test fixtures. Windows and host-prompt limitations need their own evidence.
+Live command proofs run in the field, on the accounts the commands serve, once a change is deployed ([MODEL-010](6-the-asset-and-its-sync.decisions.md#model-010)). A proof run reaches no publication path that merges a pull request by itself. The sandbox accounts are retired. Windows and host-prompt limitations need their own evidence.
 
 Model drift, destructive deletion, text references after renames and partial remote writes remain operational risks. Source observations and completed tests are retained in the delivery records; this design does not establish a new successful deployment.
 
