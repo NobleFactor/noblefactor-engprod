@@ -69,7 +69,7 @@ Waves express dependencies and exit evidence. The planner proposes focused sched
 
 | Wave | Useful increment and owners | Exit evidence |
 | --- | --- | --- |
-| **0 — Review and hand off** | A5: accept problem/goals, architecture, scenarios, open decisions, and the first implementation increment; identify the pre-schedule transition | **G0:** owner-reviewed baseline, responsibilities, walkthrough scope, and actionable work for the planner |
+| **0 — Review and hand off** | A5: accept problem/goals, architecture, scenarios, open decisions, and the first implementation increment; use a design schedule with separate design and roadmap issues | **G0:** owner-reviewed baseline, responsibilities, walkthrough scope, and actionable work for the planner |
 | **1 — Prove agents in SBX** | #459/#460/#458 with A1/A2/A4: one schedule environment, five separate role contexts, all three host paths through editor-launched SBX profiles, durable work, current required reading, minimal capture/checkpoint, and supervision | **G1:** versioned server/session/binding manifest; bounded work on each host; first-use role creation and later detach/reattach to the same session; host-managed agent execution; permanent work survives an ordinary restart; gaps and unsupported capabilities are explicit |
 | **2 — Prove multi-device views** | A1/A2/A4: launcher outside the stopped sandbox; independent editor servers and role shell profiles inside it; authenticated desktop and iPad editor connections | **G2:** all eight stable startup combinations and I1–I4 interaction outcomes; concurrent opens converge on the same roles; uncertain creation/submission outcomes are reconciled; scoped view/editor/host controls preserve unaffected work; cross-view approvals resolve consistently; native endpoints stay private; clipboard, resizing, and browser suspension have demonstrated behavior |
 | **3 — Integrate evidence and role continuity** | #491–#496/#528 with A1/A4: PostgreSQL catalog, scoped retrieval, citation expansion, reviewed reading sets, pre-compaction consultation, and recoverable checkpoints | **G3:** retrieve a rejected approach and its original result; correct a checkpoint using earlier evidence; restore unfinished work; qualify startup/post-compaction reading on each supported host; prove scoped access, idempotency, citation-preserving restore, and owner-approved session succession after exhausted restoration |
@@ -108,13 +108,13 @@ A missing host capability becomes classified work and an Owner-reviewed dependen
 
 ## 6. Scenario walkthroughs and qualification obligations
 
-The first proposed schedule walks S1–S3 using available capabilities and authorized bounded prototypes. Its result is observed methodology, capability evidence and classified implementation gaps. A correctly identified blocker is useful evidence while the corresponding deployment gate remains open.
+The first proposed implementation schedule walks S1–S3 using available capabilities and authorized bounded prototypes. Its result is observed methodology, capability evidence and classified implementation gaps. A correctly identified blocker is useful evidence while the corresponding deployment gate remains open.
 
 Use [Portable tooling (#152)](https://github.com/NobleFactor/noblefactor-engprod/issues/152) and its [membership record](https://github.com/NobleFactor/noblefactor-engprod/issues/152#issuecomment-6661940131) as the pattern: a developer journey, cross-owner dependencies, retained evidence and discovered work that moves into execution schedules. The [Scenarios project](https://github.com/orgs/NobleFactor/projects/27/views/2) holds persistent Scenario records. S1–S8 below are proposed narrative IDs.
 
 | Proposed scenario | Walk and evidence to retain | Main requirements |
 | --- | --- | --- |
-| S1 — Design becomes scheduled work | Start without a schedule; review design/roadmap; planner proposes issues/plans and one or several schedules; demonstrate the environment transition without duplicate planning authority | R1, R2, R10 |
+| S1 — Design leads to implementation schedules | Start on a design schedule with separate design and roadmap issues; deliver and review the design, decision records and roadmap; the Planner proposes implementation issues/plans and schedules and remains a consultant; preserve evidence across the handoff | R1, R2, R10 |
 | S2 — Five roles use three hosts | Create one schedule sandbox and selected host servers; open profiles to create roles on demand, inspect server/session bindings, perform bounded work, detach and resume; qualify shared-server session separation and host-managed execution | R2, R3, R6, R9 |
 | S3 — Leave the desktop for an iPad | Walk the eight stable editor/server/binding startup combinations; open two profiles on the desktop and corresponding iPad views; exercise concurrent opens, uncertain responses, pending approval, last-view detach, and connection loss against the same sessions | R1, R2, R4 |
 | S4 — The schedule changes during delivery | Discover a dependency, propose an amendment, update the owner-approved steps, merge increments, retain useful contexts, and complete independent closing review | R1, R2, R7, R10 |
@@ -211,7 +211,7 @@ Use the [current planning commands](../architecture/issue-data-model/8-the-sched
 
 | Decision | Resolve by | Required result |
 | --- | --- | --- |
-| D1 — Pre-schedule runtime and transition | Wave 0 / S1 | Reviewed representation and adoption/split behavior; no artificial schedule prerequisite or silent exception to schedule isolation |
+| D1 — Design-to-implementation continuity | Wave 0 / S1 | Reviewed evidence/runtime handoff from a design schedule into implementation schedules, preserving each schedule's isolation |
 | D2 — Editor and transport | Before G2 | Pinned editor/backend, role profiles and guest launcher, independent instance/client/view state, authenticated desktop/iPad path, private native endpoints, all eight startup combinations, and demonstrated coexistence/resource budget |
 | D3 — Host capability and input/approval behavior | Wave 1, completed for each claimed capability before its gate | Evidence matrix; shared-server role configuration; supported lifecycle hooks; native session discovery and switch handling; creation/submission reconciliation; subscription policy; explicit failures and S8 succession enforcement |
 | D4 — Archive layout and recovery | Minimal durability in Wave 1; full contract before G3 | Original/catalog boundary, authorization, retention, capture acknowledgments, native restore versus evidence reconstruction, and S8 evidence/gap trace |

@@ -39,6 +39,14 @@ Update records when work starts, moves, merges or closes. Push before linking Wo
 
 The [Schedule template](../templates/schedule.md) records deliverable, assignments, board link, amendments and documents. Use `star github schedule get <schedule>` for current rows and `star github schedule list <account>` for discovery, with `--team <slug>` for one organizational team.
 
+<a id="design-schedules"></a>
+
+### 2.1. Design schedules
+
+Every design runs on an Owner-approved schedule with at least two issues: one for the design and its decision records, and a separate issue for the roadmap. Preserve each issue's native Feature/Epic ownership. These are ordinary work issues, not new issue types.
+
+The design schedule identifies the problem, scope, assigned Designer and completion evidence. The Designer produces those assets directly; a plan for writing the design is not a prerequisite. The Planner helps establish the schedule, then uses the accepted design and roadmap to propose implementation issues, their plans and one or more implementation schedules. The Planner remains a consultant as the work evolves.
+
 <a id="changing-scheduled-work"></a>
 
 ## 3. Changing scheduled work
@@ -61,7 +69,7 @@ Overlap grants no duplicate writes, duplicate schedule membership or cross-worke
 
 ## 5. Discoveries and blockers
 
-Log discovered work when found and link it from the plan. State ownership, whether it blocks the approved result and what decision is needed. Nonblocking work goes to Triage or a later Schedule unless the Owner adds it to the current commitment.
+Log discovered work when found and link it from the relevant design, roadmap or plan. State ownership, whether it blocks the approved result and what decision is needed. Nonblocking work goes to Triage or a later Schedule unless the Owner adds it to the current commitment.
 
 The Triage workflow initially places filed issues, except Schedule/Scenario issues and findings routed to a Scenario. Supported moves use `star github issue move`, the destination and `--reason`.
 
@@ -73,7 +81,7 @@ Do not evade an external blocking defect to claim progress. Obtain approval befo
 
 ## 6. Persistent assignments
 
-An Owner-supervised worker receives a Schedule as its mission. Its assignment identifies the current issue, plan, repository and worktree. Resume that assignment with its approvals and state; advancing issues does not require a new conversation.
+An Owner-supervised worker receives a Schedule as its mission. Its assignment identifies the current issue, applicable plan, repository and worktree. Resume that assignment with its approvals and state; advancing issues does not require a new conversation.
 
 Role, assignment, native conversation and terminal view have separate identities. The [shared role entry points](agents/commandments.md) define each specialist's context; the [workstation architecture](../architecture/agentic-developer-workstation.md#41-persistent-specialists) describes persistent runtime roles. Role assets, host loading and runtime qualification are separate milestones.
 

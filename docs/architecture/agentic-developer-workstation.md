@@ -76,7 +76,7 @@ Native host servers own their sessions, primary agents and delegated execution. 
 
 The launcher, access routing, policy distribution and private archive run outside schedule sandboxes. Their logical separation permits them to remain available when a sandbox stops; they may share a physical machine with SBX.
 
-Design can begin under an existing Epic or Feature before an execution schedule exists. The designer supplies the architecture and roadmap; the planner proposes issues, plans and schedules. The runtime representation of that design context remains [D1](agentic-developer-workstation.decisions.md#d1).
+A design runs on a schedule with separate design and roadmap issues. The Designer supplies the design, its decision records and a roadmap directly from the approved problem and scope. The Planner uses these assets to prepare implementation issues, plans and schedules and remains a consultant throughout. [D1](agentic-developer-workstation.decisions.md#d1) covers continuity from a design schedule into implementation schedules.
 
 <a id="5-system-architecture"></a>
 
@@ -166,8 +166,8 @@ The role-session group represents five contexts distributed among selected hosts
 
 | Role | Work it leads | Authority boundary |
 | --- | --- | --- |
-| Designer | Problem, goals, architecture, interfaces, workflow, and roadmap | Proposes design; edits authorized design assets |
-| Planner | Issue decomposition, dependencies, proposed schedules, and amendments | Proposes commitments; applies only authorized tracker changes |
+| Designer | Design documents, their decision records, and a roadmap | Proposes design; edits authorized design assets |
+| Planner | Schedules, issue plans, dependencies, amendments and ongoing planning advice | Proposes commitments; applies only authorized tracker changes |
 | Coder | Implementation, debugging, tests, and correction of findings | Writes the assigned workspace within current authorization |
 | Compliance auditor | Standards checks, early findings, and final compliance evidence | Reads identified source/policy and records findings; does not rewrite the implementation it audits |
 | Reviewer | Correctness, regression risk, design fit, and verification | Reviews identified inputs independently and participates in closing review |
@@ -276,13 +276,13 @@ The runtime distinguishes environment readiness, editor access, server readiness
 
 #### 6.1.1 Design and planning
 
-The developer brings a problem to the designer, who reads requirements and evidence and produces the architecture, workflow, roadmap, scenario proposals and bounded questions. The Owner reviews them. The handoff identifies accepted requirements, remaining proposals, interface owners, dependencies and the first useful increment.
+The Owner approves a design schedule with at least two issues: design and roadmap. The Designer works from the agreed problem and scope and produces the design, its decision records and roadmap directly, without a plan for writing them. The Owner reviews these assets. The handoff identifies accepted requirements, remaining proposals, interface owners, dependencies and the first useful increment.
 
-The planner proposes Tasks/Bugs under their owning Features, retains cross-owner dependencies, and creates one or more bounded schedules through the approved process. Each issue receives its plan before work begins.
+The planner proposes Tasks/Bugs under their owning Features, retains cross-owner dependencies, and creates one or more bounded schedules through the approved process. Each implementation issue receives its plan before implementation begins.
 
 A Scenario describes an experience; a Schedule orders the Tasks/Bugs that advance or walk it. [Portable tooling (#152)](https://github.com/NobleFactor/noblefactor-engprod/issues/152) and its [project-membership record](https://github.com/NobleFactor/noblefactor-engprod/issues/152#issuecomment-6661940131) illustrate a journey spanning owners while discovered work moves into Triage or schedules with its origin retained. Apply the [current Scenario model](../issue-standards.md#scenarios).
 
-The first proposed schedule walks selected scenarios and records gaps in tooling and method. Its steps are Tasks/Bugs linked to persistent Scenario records. The [Scenarios project](https://github.com/orgs/NobleFactor/projects/27/views/2) is the team's collection; roadmap scenario IDs identify proposed narratives, not filed records.
+The first proposed implementation schedule walks selected scenarios and records gaps in tooling and method. Its steps are Tasks/Bugs linked to persistent Scenario records. The [Scenarios project](https://github.com/orgs/NobleFactor/projects/27/views/2) is the team's collection; roadmap scenario IDs identify proposed narratives, not filed records.
 
 <a id="44-start-and-work-a-scheduled-environment"></a>
 
@@ -656,7 +656,7 @@ The first proof uses a qualified existing machine. Logical services do not requi
 
 | Object | Owner and lifetime |
 | --- | --- |
-| Design context | Existing epic/feature and versioned assets before schedule commitment; runtime representation remains open |
+| Design context | Design schedule, owning Epic/Feature, design and roadmap issues, and versioned assets |
 | Schedule | GitHub's durable commitment and execution order |
 | Development environment | Stable schedule-scoped identity; one active SBX binding, recoverable across replacement |
 | Role/agent | Logical specialist identity within the environment |
@@ -727,7 +727,7 @@ Architecture handoff acceptance establishes a buildable baseline and first actio
 
 | ID | Open decision | Resolution owner and evidence |
 | --- | --- | --- |
-| D1 | Pre-schedule runtime and transition into one or several schedules | Designer/planner under #521/#517; walk design-to-planning without inventing a schedule prerequisite |
+| D1 | Continuity from a design schedule into implementation schedules | Designer/planner under #517; preserve source/evidence identity and one sandbox per schedule |
 | D2 | Editor/backend product, shell profiles, independent instances, transport, and per-client routing | #517/#520; demonstrate simultaneous desktop/iPad access, all eight startup combinations, and profile-launched role views inside SBX |
 | D3 | Exact host capabilities, shared-server configuration, and input/approval behavior | #459 with #517; qualify session separation, creation discovery, native session-switch handling, and versioned failure behavior |
 | D4 | Original-artifact layout, retention, and recovery acknowledgments | #490/#492/#496; scoped retrieval and a complete restore |

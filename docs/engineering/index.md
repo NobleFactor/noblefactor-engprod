@@ -2,7 +2,7 @@
 title: "Engineering handbook"
 status: draft
 created: 2026-10-28
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 <a id="engineering-documentation"></a>
@@ -70,6 +70,8 @@ Process defines when work proceeds; standards define required content and condit
 ## 5. Effective host instructions
 
 Owner-supervised sessions still using retained personal entrypoints permit one PR in flight for that session and restrict its other repository writes during delivery. Other workers' PRs do not block the session; the Owner coordinates them. This scoped override remains until its approved host cutover is delivered and verified or the Owner explicitly disposes of it.
+
+For Designer assignments, the Owner's [deliverables rule](work-assets.md#role-deliverables) overrides retained instructions saying every task needs a plan. Begin from approved scope on a design schedule; produce the design, decision records and roadmap. This scoped exception does not waive implementation planning, Git approval or other roles' existing requirements. Host tasks must align their installed entrypoints; publication does not prove a running session has loaded the correction.
 
 The shared default remains [one active PR per worktree](process.md#pull-request-and-integration). [PR assistance disclosure](procedures/pull-request.md#review-boundary) and [compliance auditing without breach-cost estimates](agent-operation.md#compliance-auditing) are permanent policy, including for sessions using retained instructions.
 

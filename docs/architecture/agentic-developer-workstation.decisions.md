@@ -82,7 +82,7 @@ Use one durable logical environment and one active SBX sandbox for each committe
 
 The proposal implements the Owner's schedule-centered continuity requirement. Per-PR or per-device sandboxes would discard useful contexts or create competing writable environments. A replacement runtime restores the same environment binding after the old runtime is reconciled or fenced.
 
-The [source plan's goals and requirements](../plans/doc/521-workstation-design.md#goals) preserve the constraint. The [identity model](agentic-developer-workstation.md#52-identity-authority-and-lifetime) describes the proposed bindings. The design remains Draft; pre-schedule runtime representation is [D1](#d1).
+The [source plan's goals and requirements](../plans/doc/521-workstation-design.md#goals) preserve the constraint. The [identity model](agentic-developer-workstation.md#52-identity-authority-and-lifetime) describes the proposed bindings. The design remains Draft; continuity from design to implementation schedules is [D1](#d1).
 
 ```yaml
 id: W4
@@ -118,13 +118,15 @@ recorded_at: '2026-11-20T02:02:55Z'
 
 <a id="d1"></a>
 
-## 6. Resolve the pre-schedule runtime
+<a id="6-resolve-the-pre-schedule-runtime"></a>
 
-Design starts under an existing Epic or Feature before a committed schedule exists. The open choice is how to identify its runtime and move into one or several execution environments.
+## 6. Resolve continuity from design to implementation schedules
 
-Evaluate adoption of an existing design environment into the first schedule and separate environments when planning produces several schedules. Preserve design/evidence identity without inventing a new issue type, requiring an artificial schedule to begin design, or weakening one active sandbox per committed schedule.
+Design runs on a schedule with separate design and roadmap issues. The Designer delivers the design, its decision records and roadmap directly. The [role-deliverables decision](../engineering/review/decisions.md#decision-64) records this requirement.
 
-The source design leaves this unresolved. Designer/planner work under Workstation architecture (#521) and Developer control (#517) resolves it through [S1 and Wave 0](../roadmaps/agentic-developer-workstation.md#6-scenario-walkthroughs-and-qualification-obligations).
+The remaining open choice is how runtime references and evidence carry from that design schedule into one or several implementation schedules. Preserve source identities, approved access and one active sandbox per schedule; do not silently move a role session between schedules.
+
+Designer/planner work under [Developer control (#517)](https://github.com/NobleFactor/noblefactor-engprod/issues/517) resolves that continuity contract through [S1 and Wave 0](../roadmaps/agentic-developer-workstation.md#6-scenario-walkthroughs-and-qualification-obligations).
 
 ```yaml
 id: D1
@@ -134,7 +136,7 @@ proposed_by: null
 approved_by: null
 recorded_by: Codex
 decided_at: null
-recorded_at: '2026-11-20T02:02:55Z'
+recorded_at: '2026-11-21T04:25:16.563983+00:00'
 ```
 
 <a id="d2"></a>

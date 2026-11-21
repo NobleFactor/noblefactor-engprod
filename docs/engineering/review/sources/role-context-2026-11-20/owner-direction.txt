@@ -285,3 +285,21 @@ text_sha256: 73d91b9c9f9be611b5c98b09d73554b77e845bc461bb40b04de879097b6fff0e
 
 Yes, I approve both
 === END MESSAGE 20 ===
+
+Owner direction on role deliverables and the Designer start rule, from the originating Codex rollout named above. Message 21 is a verbatim opening excerpt through the Designer bullet; message 22 is the complete revised Designer instruction. The complete message 21 remains in the native source and /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.558-role-context/role-deliverables/owner-role-direction.json, with SHA-256 48c7c52a9315f58bf38f3c37a98376022a4f60e8ca087b2ae59a6a5c57b28a48. These are Owner directions, not external reviews.
+
+=== MESSAGE 21: user ===
+recorded_at: 2026-11-21T04:19:04.169Z
+text_sha256: f800c3244b1565f28712c9a495858781306df35b28239f6e45170695f1a1c88a
+
+I see that some other agents are deeply confused about deliverables for each role.
+
+- designer => one or more design documents and a roadmap. Hence, every design should be done on a schedule that includes at least two issues: design + roadmap.
+=== END MESSAGE 21 ===
+
+=== MESSAGE 22: user ===
+recorded_at: 2026-11-21T04:22:39.061Z
+text_sha256: 625072e2192fd73fdf9b6832d5f82ce829b92276e15839da20d9b973b7459fa0
+
+Here is a revised statement for the Designer job: A Designer owes a design, its decision records, and a roadmap, not a plan for writing a design.
+=== END MESSAGE 22 ===

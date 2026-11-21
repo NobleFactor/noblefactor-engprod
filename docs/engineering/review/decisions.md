@@ -1110,3 +1110,24 @@ recorded_by: Codex
 decided_at: '2026-11-20'
 recorded_at: '2026-11-21T03:54:25.329872+00:00'
 ```
+
+<a id="decision-64"></a>
+
+## 64. Deliver role assets directly and start design on a design schedule
+
+A Designer owes a design, its decision records, and a roadmap, not a plan for writing a design. Every design runs on a schedule with at least two issues: design and roadmap. The Planner delivers schedules and remains a planning consultant throughout. The Reviewer reviews all affected assets; the Compliance auditor checks those assets against applicable adopted requirements. The Coder delivers implementation, tests, updated assets and verification evidence.
+
+The [role deliverables](../work-assets.md#role-deliverables) are authoritative; the [design start rule](../process.md#prepare-and-review) makes the Designer's approved assignment sufficient to draft those assets. Requiring a separate implementation plan to write a design delayed the actual deliverables. The scoped Designer rule takes precedence over retained host instructions requiring a plan for every task. Implementation planning and other approval boundaries remain in force.
+
+David Noble directed the correction and supplied the exact Designer statement on 2026-11-20. The [source](sources/role-context-2026-11-20/owner-direction.txt) preserves both instructions. The [implementation record](../../plans/doc/558-role-entry-points.md#role-deliverables-correction) owns publication and host-alignment work; this decision does not establish that a running agent has loaded the correction.
+
+```yaml
+id: '64'
+status: accepted
+supersedes: []
+proposed_by: David Noble
+approved_by: David Noble
+recorded_by: Codex
+decided_at: '2026-11-20T20:22:39.061-08:00'
+recorded_at: '2026-11-21T04:25:16.563983+00:00'
+```
