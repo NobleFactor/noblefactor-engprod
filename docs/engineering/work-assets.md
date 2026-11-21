@@ -2,7 +2,7 @@
 title: "Work assets"
 status: draft
 created: 2026-10-28
-updated: 2026-11-19
+updated: 2026-11-21
 ---
 
 # Work assets
@@ -15,18 +15,38 @@ updated: 2026-11-19
 
 | Asset | Purpose |
 | --- | --- |
+| Research findings | Evidence, conclusions and remaining uncertainty from investigation |
 | Design | The system we want: behavior, structure, requirements and significant choices |
+| Architecture decisions | Significant architectural choices documented as architecture decision records (ADRs), with context, alternatives, reasons, status and consequences |
+| Decision record | A significant policy or process choice, its reasons, alternatives, consequences and attribution |
+| Roadmap | Useful delivery increments, dependencies and outcomes handed to the planner |
 | Plan | How to reach that system from what exists: approach, changes, phases, transitions and verification |
 | Schedule | The committed before → after outcome, ordered issues, dependencies, work locations, progress and approved amendments |
 | Issue | A defined problem, scope and intended result, with parent, applicable schedule and document links |
 | Approval | Who approved which proposal/revision, when, and within what limits |
 | Completion review | Promised and delivered results, evidence, remaining work and approval to finish or continue |
 
+An [enabler Feature](../issue-standards.md#enabler-features) can own Tasks producing these assets to enable later capabilities. Its Feature issue identifies the outcome; the documents and findings supply its evidence.
+
 Planning produces issues and a schedule that orders them. Each issue links its plans and applicable designs; a plan can cover several issues. [Work organization](work-organization.md#schedule-commitment) defines schedule execution.
 
 Branches/worktrees identify their starting issue. A PR names the issues and approved changes it delivers. Verification records identify what was checked, where and with what result.
 
 Use plain language and define necessary terms. Every word should help the reader understand.
+
+<a id="role-deliverables"></a>
+
+### 1.1. Role deliverables
+
+| Role | Deliverables |
+| --- | --- |
+| Designer | One or more design documents, [Architecture decisions](../standards/documentation.md#architecture-decisions), and a roadmap |
+| Planner | A schedule of ordered issues, dependencies, completion criteria and links to implementation plans; planning advice and proposed amendments throughout the work |
+| Coder | The implemented change, appropriate tests, updated affected assets and verification evidence |
+| Reviewer | Findings, corrective rechecks and an acceptance recommendation covering designs, architecture decisions, roadmaps, plans, code and affected artifacts, including help, man pages and completions |
+| Compliance auditor | An assessment of those assets against applicable adopted requirements, with cited evidence, findings, corrective rechecks and unresolved compliance gaps |
+
+A Designer owes a design, its architecture decisions, and a roadmap, not a plan for writing a design. Work starts from the Owner-approved problem and scope on a [design schedule](work-organization.md#design-schedules). The planner uses the delivered assets to prepare implementation work and remains available as a planning consultant.
 
 <a id="workspace-locations"></a>
 
@@ -68,7 +88,7 @@ Record each Owner approval with its date, approved proposal/revision, authorized
 
 Plans use `docs/plans/<type>/<issue>-<name>.md`, matching the branch that began the work. Additional issue plans name those issues. A shared plan has stable `## Issue NNN` headings: number only, without a title or `#` prefix. Preserve incoming links and completed historical plans unless an explicit migration authorizes changes.
 
-Every issue ends with `## Plan and design documents` and a two-column Kind/Document table. File it with a plan row, using “Not yet opened” until a plan exists. Include all required plans and applicable designs. State design impact in both issue and plan, including when no separate design is needed.
+Every issue ends with `## Plan and design documents` and a two-column Kind/Document table. For work requiring an implementation plan, include a plan row, using “Not yet opened” until that plan exists. For a Designer assignment, the plan row states “Not required: Designer deliverables” and the table links the design, architecture decisions and roadmap. Include all required plans and applicable designs. State design impact in the issue and any applicable implementation plan, including when no separate design is needed. A Designer records the design scope in the design issue without creating a plan for it.
 
 Open issues link committed files on the default branch and stable issue anchors. Issues closed by a merged PR link documents at its merge commit. If the file is absent there, is in another repository, or closure had no such PR, retain a default-branch link and the linking command's explanation. Before merge, provide the committed review revision too.
 

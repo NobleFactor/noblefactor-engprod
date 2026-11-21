@@ -2,7 +2,7 @@
 title: "Design template"
 status: draft
 created: 2026-10-28
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 # Design template
@@ -77,9 +77,11 @@ Use the [shared responsibility definitions](../engineering/process.md#roles-and-
 
 <a id="decision-and-approval"></a>
 
-## 9. Significant decisions
+<a id="9-significant-decisions"></a>
 
-[Link significant choices, their criteria, alternatives, consequences and approval evidence. Use the shared decision-record format in a companion when separate records improve navigation.]
+## 9. Architecture decisions
+
+[Link the Architecture decisions deliverable. Each architecture decision record (ADR) explains a significant choice, its context, alternatives, reasons, status and consequences. Use the shared record format in a companion or linked individual ADRs.]
 
 [Decision-record standard](../standards/documentation.md#decision-records) · [Decision template](decision.md)
 

@@ -2,7 +2,7 @@
 title: "Schedule template"
 status: draft
 created: 2026-10-28
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 # Schedule template
@@ -11,7 +11,7 @@ updated: 2026-11-19
 
 Use this content guide with the account's Schedule issue form. `star github schedule open <repository> <name>` uses that form to create the issue, option and own project row; `create` is the same operation. Supply its required Area, deliverable, exit criteria and evidence values, plus optional Priority and assignee.
 
-The form owns the issue body's labels and order. This guide's numbered headings are navigation, not replacement labels. Preserve literal issue headings such as `## Steps`, `## Amendments` and `## Plan and design documents`. [Issue standards](../issue-standards.md#schedules) owns representation.
+For a design schedule, use the [design-schedule template](design-schedule.md) for its two standard Tasks and handoff. The form owns the issue body's labels and order. This guide's numbered headings are navigation, not replacement labels. Preserve literal issue headings such as `## Steps`, `## Amendments` and `## Plan and design documents`. [Issue standards](../issue-standards.md#schedules) owns representation.
 
 <a id="role-assignments"></a>
 
@@ -77,9 +77,9 @@ The project owns ordered Tasks/Bugs, contiguous Step numbers, Status, Worktree a
 
 ## 7. Plan and design documents
 
-[Under the issue's literal `## Plan and design documents` heading, include the required Kind/Document table. Add its plan row with “Not yet opened” until available, and links to every applicable design.]
+[Under the issue's literal `## Plan and design documents` heading, include the required Kind/Document table. For implementation work, add its plan row with “Not yet opened” until available. A design schedule records “Not required: Designer deliverables” and links its design, Architecture decisions and roadmap.]
 
 | Kind | Document |
 | --- | --- |
-| Schedule plan | Not yet opened |
+| Schedule plan | Not yet opened for implementation work; not required for Designer deliverables |
 | Design | [Each applicable design on its committed default branch] |

@@ -1,15 +1,17 @@
 ---
-title: "Agentic developer workstation decisions"
+title: "Agentic developer workstation architecture decisions"
 status: draft
 created: 2026-11-19
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
-# Agentic developer workstation decisions
+<a id="agentic-developer-workstation-decisions"></a>
+
+# Agentic developer workstation architecture decisions
 
 [System design](agentic-developer-workstation.md) · [Roadmap](../roadmaps/agentic-developer-workstation.md)
 
-These records use the [shared decision format](../standards/documentation.md#decision-records). W1–W3 record explicit Owner-approved boundaries from the source plan. The overall design remains Draft. W4/W5 are design proposals; D1–D6 remain unresolved. Metadata records approval of a choice separately from its implementation or qualification.
+These architecture decision records (ADRs) use the [shared decision format](../standards/documentation.md#decision-records). W1–W3 record explicit Owner-approved boundaries from the source plan; W6 records the approved environment-configuration boundary; W7 records the approved one-off independent audit path. The overall design remains Draft. W4/W5 are design proposals; D1–D6 remain unresolved. Metadata records approval of a choice separately from its implementation or qualification.
 
 <a id="w1"></a>
 
@@ -82,7 +84,7 @@ Use one durable logical environment and one active SBX sandbox for each committe
 
 The proposal implements the Owner's schedule-centered continuity requirement. Per-PR or per-device sandboxes would discard useful contexts or create competing writable environments. A replacement runtime restores the same environment binding after the old runtime is reconciled or fenced.
 
-The [source plan's goals and requirements](../plans/doc/521-workstation-design.md#goals) preserve the constraint. The [identity model](agentic-developer-workstation.md#52-identity-authority-and-lifetime) describes the proposed bindings. The design remains Draft; pre-schedule runtime representation is [D1](#d1).
+The [source plan's goals and requirements](../plans/doc/521-workstation-design.md#goals) preserve the constraint. The [identity model](agentic-developer-workstation.md#52-identity-authority-and-lifetime) describes the proposed bindings. The design remains Draft; continuity from design to implementation schedules is [D1](#d1).
 
 ```yaml
 id: W4
@@ -118,13 +120,15 @@ recorded_at: '2026-11-20T02:02:55Z'
 
 <a id="d1"></a>
 
-## 6. Resolve the pre-schedule runtime
+<a id="6-resolve-the-pre-schedule-runtime"></a>
 
-Design starts under an existing Epic or Feature before a committed schedule exists. The open choice is how to identify its runtime and move into one or several execution environments.
+## 6. Resolve continuity from design to implementation schedules
 
-Evaluate adoption of an existing design environment into the first schedule and separate environments when planning produces several schedules. Preserve design/evidence identity without inventing a new issue type, requiring an artificial schedule to begin design, or weakening one active sandbox per committed schedule.
+Design runs on a schedule with separate design and roadmap issues. The Designer delivers the design, its architecture decisions and roadmap directly. The [role-deliverables decision](../engineering/review/decisions.md#decision-64) records this requirement.
 
-The source design leaves this unresolved. Designer/planner work under Workstation architecture (#521) and Developer control (#517) resolves it through [S1 and Wave 0](../roadmaps/agentic-developer-workstation.md#6-scenario-walkthroughs-and-qualification-obligations).
+The remaining open choice is how runtime references and evidence carry from that design schedule into one or several implementation schedules. Preserve source identities, approved access and one active sandbox per schedule; do not silently move a role session between schedules.
+
+Designer/planner work under [Developer control (#517)](https://github.com/NobleFactor/noblefactor-engprod/issues/517) resolves that continuity contract through [S1 and Wave 0](../roadmaps/agentic-developer-workstation.md#6-scenario-walkthroughs-and-qualification-obligations).
 
 ```yaml
 id: D1
@@ -134,7 +138,7 @@ proposed_by: null
 approved_by: null
 recorded_by: Codex
 decided_at: null
-recorded_at: '2026-11-20T02:02:55Z'
+recorded_at: '2026-11-21T04:25:16.563983+00:00'
 ```
 
 <a id="d2"></a>
@@ -240,4 +244,50 @@ approved_by: null
 recorded_by: Codex
 decided_at: null
 recorded_at: '2026-11-20T02:02:55Z'
+```
+
+<a id="w6"></a>
+
+## 12. Configure environment roles under shared policy
+
+Give each environment a versioned role configuration: its Schedule, selected hosts and model settings, workspace and shared resource references. The handbook owns the common requirements. The control plane retains the configuration and one authoritative native-session binding per environment/role, and uses DevLore for lifecycle management.
+
+Keeping host choices in the environment configuration allows different assignments to use suitable models without changing role responsibilities. Treating a host choice as another role identity could create competing conversations. Desired settings and observed model/session state therefore remain distinct. Compatible configuration changes preserve the original session; replacement retains the existing Owner-approval requirement.
+
+Audit requests run on demand or through an enabled trigger after successful pre-commit checks and reach the bound auditor. Shared policy governs required requests and activation of blocking checks. Independence is checked against the actual model families used to build the candidate. The check covers changed and potentially affected assets. External reviews and corrective verification are recorded on the PR introducing the change; reports produced before the PR exists stay outside Git until it is opened.
+
+The Owner chose to record this boundary now rather than defer it, approving the focused design amendment on 2026-11-20. The [approval record](../plans/doc/558-role-entry-points.md#environment-role-configuration-approval) preserves the scope. [Environment configuration](agentic-developer-workstation.md#environment-role-configuration) and [audit flow](agentic-developer-workstation.md#compliance-audit-flow) describe the intended system. [Developer control (#517)](https://github.com/NobleFactor/noblefactor-engprod/issues/517) owns configuration planning and durable bindings, using [Agent hosts (#459)](https://github.com/NobleFactor/noblefactor-engprod/issues/459) for native-host application. [Continuous compliance (#519)](https://github.com/NobleFactor/noblefactor-engprod/issues/519) owns audit routing, trigger wiring and the exact-candidate commit check. The [handbook policy](../engineering/agent-operation.md#compliance-auditing) defines the requirements; those open Features require separate implementation plans.
+
+```yaml
+id: W6
+status: accepted
+supersedes: []
+proposed_by: Codex
+approved_by: David Noble
+recorded_by: Codex
+decided_at: '2026-11-20T16:35:21.678-08:00'
+recorded_at: '2026-11-21T03:17:57.600877+00:00'
+```
+
+<a id="w7"></a>
+
+## 13. Allow an approved one-off audit without replacing the assigned auditor
+
+When the assigned auditor helped build a candidate or its independence is unknown, the Owner can authorize one audit by an eligible third model family independent of every builder. The assignment covers the identified candidate and does not create a second persistent environment/role binding. Preserve the assigned auditor's conversation and binding.
+
+Several model families can contribute to one candidate, leaving its assigned auditor ineligible. A different model in the retained session was considered, but host support and observed model evidence still govern whether that works. Leaving every such request unresolved preserves independence but provides no assessment. The approved one-off path obtains an independent assessment without switching the retained session.
+
+Record the Owner's request-specific approval, candidate/base, original binding reference, actual assessor/model and result with the audit and introducing PR. If no eligible assessor is available, the audit remains unresolved. This decision does not waive independence, qualify a host or authorize automatic agent creation.
+
+[Audit flow](agentic-developer-workstation.md#compliance-audit-flow) defines the system interaction. The [handbook policy](../engineering/agent-operation.md#compliance-auditing) owns auditor authority. The [approval record](../plans/doc/558-role-entry-points.md#compliance-policy-and-one-off-audit-approval) preserves David Noble's acceptance of this proposal. This extends W6's audit routing while retaining its one-binding rule.
+
+```yaml
+id: W7
+status: accepted
+supersedes: []
+proposed_by: Codex
+approved_by: David Noble
+recorded_by: Codex
+decided_at: '2026-11-20T19:40:10.105-08:00'
+recorded_at: '2026-11-21T03:54:25.329872+00:00'
 ```

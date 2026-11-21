@@ -3,7 +3,7 @@ title: "Agentic developer workstation"
 type: RFC
 status: Draft
 created: 2026-11-11
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 # Agentic developer workstation
@@ -76,7 +76,7 @@ Native host servers own their sessions, primary agents and delegated execution. 
 
 The launcher, access routing, policy distribution and private archive run outside schedule sandboxes. Their logical separation permits them to remain available when a sandbox stops; they may share a physical machine with SBX.
 
-Design can begin under an existing Epic or Feature before an execution schedule exists. The designer supplies the architecture and roadmap; the planner proposes issues, plans and schedules. The runtime representation of that design context remains [D1](agentic-developer-workstation.decisions.md#d1).
+A design runs on a schedule with separate design and roadmap issues. The Designer supplies the design, its architecture decisions and a roadmap directly from the approved problem and scope. The Planner uses these assets to prepare implementation issues, plans and schedules and remains a consultant throughout. [D1](agentic-developer-workstation.decisions.md#d1) covers continuity from a design schedule into implementation schedules.
 
 <a id="5-system-architecture"></a>
 
@@ -95,6 +95,7 @@ flowchart TB
         Control["Launcher and control plane<br/>Environment and role/session bindings<br/>DevLore lifecycle management"]
         Access["Authenticated access and connection routing"]
         Policy["Approved handbook, rules, skills and role reading sets"]
+        Config["Environment configuration<br/>Role hosts, models and resource revisions"]
         Evidence["Private evidence capture and scoped retrieval"]
         Catalog[("PostgreSQL catalog and provenance")]
         Originals[("Original records, artifacts and checkpoints<br/>Storage layout to decide")]
@@ -146,6 +147,8 @@ flowchart TB
     Access --> EditorB
     Control -->|"Manage environment and host-server lifecycle"| SBX
     Control <--> GitHub
+    Policy -->|Requirements and resource references| Config
+    Config -->|Approved role settings| Control
     Policy --> Primary
     Policy --> Children
     Primary <-->|"Scoped evidence retrieval"| Evidence
@@ -163,8 +166,8 @@ The role-session group represents five contexts distributed among selected hosts
 
 | Role | Work it leads | Authority boundary |
 | --- | --- | --- |
-| Designer | Problem, goals, architecture, interfaces, workflow, and roadmap | Proposes design; edits authorized design assets |
-| Planner | Issue decomposition, dependencies, proposed schedules, and amendments | Proposes commitments; applies only authorized tracker changes |
+| Designer | Design documents, their architecture decisions, and a roadmap | Proposes design; edits authorized design assets |
+| Planner | Schedules, issue plans, dependencies, amendments and ongoing planning advice | Proposes commitments; applies only authorized tracker changes |
 | Coder | Implementation, debugging, tests, and correction of findings | Writes the assigned workspace within current authorization |
 | Compliance auditor | Standards checks, early findings, and final compliance evidence | Reads identified source/policy and records findings; does not rewrite the implementation it audits |
 | Reviewer | Correctness, regression risk, design fit, and verification | Reviews identified inputs independently and participates in closing review |
@@ -238,6 +241,25 @@ Retrieval offers scoped search, bounded results, exact-source reads, citation re
 
 The handbook supplies approved common/role reading sets and host entry points. Evidence explains prior work; extracted claims become policy through review. [Role entry points (#528)](https://github.com/NobleFactor/noblefactor-engprod/issues/528) owns measured startup/post-compaction reading. Required reading changes through that review process.
 
+<a id="environment-role-configuration"></a>
+
+### 5.5 Environment role configuration
+
+Each environment has a versioned configuration applied to its active SBX sandbox. It identifies the Schedule, each role's approved host and model settings, its workspace, and references to common context, role instructions and skills. Shared defaults support consistent setup; environment choices remain subject to the shared requirements.
+
+| Record | Responsibility and location |
+| --- | --- |
+| Shared policy and defaults | The handbook's [compliance policy](../engineering/agent-operation.md#compliance-auditing) and shared role resources define responsibilities, audit scope, independence, triggers and authority; policy distribution runs outside schedule sandboxes |
+| Environment configuration | The control plane retains the approved configuration and its source revision outside the sandbox and makes the applicable settings and resources available inside it |
+| Role binding and observed state | The control plane retains the selected daemon, original conversation ID, binding revision, actual model and loaded resource evidence for each environment/role |
+| External review and audit records | The PR introducing the changes holds the external reviews, findings and corrective verification; review text is kept outside repository commits |
+
+The control plane uses DevLore to manage the environment and selected native hosts. Each role resolves through one authoritative environment/role binding. Host selection is a setting in that binding, not a second identity under which another copy of the role can be created. Additional terminal views attach to the same native conversation.
+
+Configuration states the intended model; the host reports the model actually used. Record provider, model identifier and family against the affected work. The Compliance auditor must use a different model family from every builder of the candidate. A distinct host name or role label does not establish that independence. If the configured auditor is ineligible or its model is unknown, report the conflict to the Owner and retain the existing binding. The Owner may authorize a [one-off audit](#compliance-audit-flow) by an eligible third model family for the identified candidate, preserving the assigned auditor's conversation and binding.
+
+Reviewed settings changes follow [I7](#i7-configuration-native-session-controls-and-delegation). Compatible changes preserve conversation identity. A different host preference does not authorize a new role conversation or bypass [session succession](#84-session-succession). The [configuration decision](agentic-developer-workstation.decisions.md#w6) records the responsibilities. [Developer control (#517)](https://github.com/NobleFactor/noblefactor-engprod/issues/517) owns configuration formats, revisions and durable bindings; [Agent hosts (#459)](https://github.com/NobleFactor/noblefactor-engprod/issues/459) owns application through the native hosts. Their implementation plans define delivery.
+
 <a id="58-interaction-lifecycle"></a>
 
 ## 6. Runtime and development workflow
@@ -254,13 +276,13 @@ The runtime distinguishes environment readiness, editor access, server readiness
 
 #### 6.1.1 Design and planning
 
-The developer brings a problem to the designer, who reads requirements and evidence and produces the architecture, workflow, roadmap, scenario proposals and bounded questions. The Owner reviews them. The handoff identifies accepted requirements, remaining proposals, interface owners, dependencies and the first useful increment.
+The Owner approves a design schedule with at least two issues: design and roadmap. The Designer works from the agreed problem and scope and produces the design, its architecture decisions and roadmap directly, without a plan for writing them. The Owner reviews these assets. The handoff identifies accepted requirements, remaining proposals, interface owners, dependencies and the first useful increment.
 
-The planner proposes Tasks/Bugs under their owning Features, retains cross-owner dependencies, and creates one or more bounded schedules through the approved process. Each issue receives its plan before work begins.
+The planner proposes Tasks/Bugs under their owning Features, retains cross-owner dependencies, and creates one or more bounded schedules through the approved process. Each implementation issue receives its plan before implementation begins.
 
 A Scenario describes an experience; a Schedule orders the Tasks/Bugs that advance or walk it. [Portable tooling (#152)](https://github.com/NobleFactor/noblefactor-engprod/issues/152) and its [project-membership record](https://github.com/NobleFactor/noblefactor-engprod/issues/152#issuecomment-6661940131) illustrate a journey spanning owners while discovered work moves into Triage or schedules with its origin retained. Apply the [current Scenario model](../issue-standards.md#scenarios).
 
-The first proposed schedule walks selected scenarios and records gaps in tooling and method. Its steps are Tasks/Bugs linked to persistent Scenario records. The [Scenarios project](https://github.com/orgs/NobleFactor/projects/27/views/2) is the team's collection; roadmap scenario IDs identify proposed narratives, not filed records.
+The first proposed implementation schedule walks selected scenarios and records gaps in tooling and method. Its steps are Tasks/Bugs linked to persistent Scenario records. The [Scenarios project](https://github.com/orgs/NobleFactor/projects/27/views/2) is the team's collection; roadmap scenario IDs identify proposed narratives, not filed records.
 
 <a id="44-start-and-work-a-scheduled-environment"></a>
 
@@ -367,7 +389,7 @@ The developer can browse work before starting any role. Authentication, storage 
 
 #### 6.4.2 I2. Create or resume a role
 
-The profile supplies logical environment/role identity and reviewed configuration. Ensure server readiness under environment/host coordination, then read binding and creation intent under environment/role coordination.
+The profile supplies logical environment/role identity. Resolve its approved environment configuration, ensure server readiness under environment/host coordination, then read binding and creation intent under environment/role coordination.
 
 For a never-created role, record one intent and request creation with approved context. Associate any native startup-created session with that intent and role configuration. Persist the confirmed native ID and binding before reporting ready. If creation succeeds but binding persistence fails, retain the pending operation and reconcile it before another creation.
 
@@ -598,6 +620,20 @@ Managed clients address the recorded native ID. Native new/fork/switch controls 
 
 Native delegation creates children under the primary session's assignment and permissions. Preserve parent/child identities and available evidence. A child does not become another top-level role or end its parent on completion. The control plane observes this work through the driver.
 
+<a id="compliance-audit-flow"></a>
+
+### 6.10 Compliance audits
+
+[Continuous compliance (#519)](https://github.com/NobleFactor/noblefactor-engprod/issues/519) owns audit routing and commit-trigger implementation under the [handbook compliance policy](../engineering/agent-operation.md#compliance-auditing). The role-context work supplies policy and shared role resources.
+
+An audit is requested on demand or through an enabled commit trigger after the existing pre-commit checks pass. The shared compliance policy governs which requests are required and when blocking is enabled. The request identifies the exact changes, base and candidate versions, builder model evidence, applicable requirements and check results. The request resolves the environment's Compliance auditor through its existing role binding and checks independence before the assessment begins.
+
+If that auditor helped build the candidate or its independence cannot be established, report the conflict. The Owner may authorize a one-off assessment by an eligible third model family independent of every builder. Give that assessor a request-specific assignment rather than a second persistent environment/role binding. Keep the assigned auditor's conversation and binding unchanged. Record the approval, exact candidate/base, original binding reference, actual assessor/model and results with the audit request and introducing PR. If no eligible assessor is available, report the audit as unresolved; do not change the binding or claim an independent pass.
+
+The auditor checks every changed file and all assets that might be affected, including files outside the diff. Coverage includes source code, tests, configuration, designs, plans, documentation, examples, help text, completions and man pages. The assessment follows the shared [compliance requirements](../engineering/agent-operation.md#compliance-auditing) and identifies its scope, evidence, findings and limitations. Mandatory findings cite applicable adopted rules and direct evidence. Deterministic tools establish mechanical facts; the auditor uses their results to assess context-dependent obligations.
+
+Record the reviewed versions, actual auditor model, requirement revisions, findings and corrective verification with the PR that introduces the changes. Reports produced before a PR exists remain outside Git and are attached when that PR is opened. External review text is not committed to the repository. Changed inputs require the affected checks and findings to be rechecked; unresolved mandatory findings and missing required evidence remain visible to the Owner.
+
 <a id="57-initial-physical-deployment"></a>
 
 ## 7. Deployment
@@ -620,7 +656,7 @@ The first proof uses a qualified existing machine. Logical services do not requi
 
 | Object | Owner and lifetime |
 | --- | --- |
-| Design context | Existing epic/feature and versioned assets before schedule commitment; runtime representation remains open |
+| Design context | Design schedule, owning Epic/Feature, design and roadmap issues, and versioned assets |
 | Schedule | GitHub's durable commitment and execution order |
 | Development environment | Stable schedule-scoped identity; one active SBX binding, recoverable across replacement |
 | Role/agent | Logical specialist identity within the environment |
@@ -665,11 +701,13 @@ Record original/successor IDs, binding revision, approval, cutover time and evid
 
 Views resolve the new binding; a returning old runtime does not regain authority. Retain original identity even when its conversation is lost. [Scenario S8](../roadmaps/agentic-developer-workstation.md#s8--disaster-recovery-after-loss-of-a-native-session) qualifies this contract for each host.
 
-## 9. Significant decisions
+<a id="9-significant-decisions"></a>
 
-The [decision companion](agentic-developer-workstation.decisions.md) records the editor access boundary, native server ownership and approved session succession. It also records the proposed schedule/runtime and shared-archive choices and the unresolved D1–D6 decisions.
+## 9. Architecture decisions
 
-Design explanations describe the intended system. The [delivery plan](../plans/doc/521-workstation-design.md) and current [rewrite plan](../plans/doc/581-schedule-command-consumers.md) retain implementation, transition and review history.
+The [decision companion](agentic-developer-workstation.decisions.md) records editor access, native server ownership, session succession, environment role configuration and one-off independent audits. It also records the proposed schedule/runtime and shared-archive choices and the unresolved D1–D6 decisions.
+
+The [role-context plan](../plans/doc/558-role-entry-points.md) owns shared policy and role documentation. The [roadmap](../roadmaps/agentic-developer-workstation.md#3-integration-features) assigns configuration delivery to #517 with native-host integration from #459, and commit-trigger implementation to #519; each needs its own approved implementation plan.
 
 <a id="6-qualification-and-completion"></a>
 
@@ -679,7 +717,9 @@ Qualify all three host paths and five independent roles in one SBX environment. 
 
 Exercise schedule amendments and repeated PR merges, evidence use before compaction, startup/post-compaction reading, original-session restoration, approved succession with visible gaps, and DevLore lifecycle management. Accept the methodology and its use on real assignments alongside the platform.
 
-Measure accepted-change latency, blocking intervals, human interventions, repeated investigations, correction cycles, capture gaps and recovery results. Agree numerical quality, response and recovery thresholds with the Owner before using them as gates.
+Exercise audit requests on demand and after pre-commit checks, including a changed asset that makes an unchanged help page, completion or man page stale. Demonstrate a candidate with several builder model families, an ineligible bound auditor, and an Owner-approved one-off assessment that preserves the existing role binding. Demonstrate an unresolved request when no eligible assessor is available, and keep PR review records outside commits.
+
+Measure accepted-change latency, blocking intervals, human interventions, repeated investigations, correction cycles, confirmed audit findings, false positives, known missed defects, capture gaps and recovery results. Agree numerical quality, response and recovery thresholds with the Owner before using them as gates. Universal blocking audits require Owner approval of accuracy evidence and activation; model confidence alone cannot enable them.
 
 Architecture handoff acceptance establishes a buildable baseline and first actionable increment for Workstation architecture and delivery plan (#521). System delivery is established through the [roadmap gates](../roadmaps/agentic-developer-workstation.md#5-delivery-waves-and-gates), with each host/editor path's capability evidence.
 
@@ -689,7 +729,7 @@ Architecture handoff acceptance establishes a buildable baseline and first actio
 
 | ID | Open decision | Resolution owner and evidence |
 | --- | --- | --- |
-| D1 | Pre-schedule runtime and transition into one or several schedules | Designer/planner under #521/#517; walk design-to-planning without inventing a schedule prerequisite |
+| D1 | Continuity from a design schedule into implementation schedules | Designer/planner under #517; preserve source/evidence identity and one sandbox per schedule |
 | D2 | Editor/backend product, shell profiles, independent instances, transport, and per-client routing | #517/#520; demonstrate simultaneous desktop/iPad access, all eight startup combinations, and profile-launched role views inside SBX |
 | D3 | Exact host capabilities, shared-server configuration, and input/approval behavior | #459 with #517; qualify session separation, creation discovery, native session-switch handling, and versioned failure behavior |
 | D4 | Original-artifact layout, retention, and recovery acknowledgments | #490/#492/#496; scoped retrieval and a complete restore |
@@ -708,6 +748,7 @@ The [roadmap](../roadmaps/agentic-developer-workstation.md#8-decisions-and-depen
 | Native host | Claude, Codex or OpenCode service owning conversation execution |
 | Native session | Host-owned conversation identified by a persistent native ID |
 | Role binding | Durable mapping from environment/role to host server and native session |
+| Environment configuration | Versioned host/model choices, workspace and shared resource references for the environment's roles |
 | Assignment | Bounded objective, issue/step, source, permissions and recorded outcome |
 | Editor backend | Guest-side service accepting editor connections and owning terminals |
 | View | One attachment's presentation of a role session |

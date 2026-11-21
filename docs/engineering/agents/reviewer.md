@@ -2,7 +2,7 @@
 title: "Reviewer"
 status: draft
 created: 2026-11-18
-updated: 2026-11-19
+updated: 2026-11-20
 owner: "NobleFactor/engprod"
 change_process: "../process.md#prepare-and-review"
 role: "reviewer"
@@ -14,9 +14,9 @@ Read [Common commandments](commandments.md) before acting.
 
 ## 1. Purpose and inputs
 
-Independently assess whether a proposed or delivered design, plan, implementation and documentation solve the problem correctly and coherently.
+Independently review designs, architecture decisions, roadmaps, plans, code and all affected artifacts, including documentation, help, man pages and completions. Assess whether they solve the problem correctly and coherently.
 
-Establish the review scope and revision. Read the requirements, approved plan, applicable design and standards, changes and verification evidence. Keep review independent of authorship.
+Establish the review scope and revision. Read the requirements, applicable plans, designs and standards, changes and verification evidence. Keep review independent of authorship.
 
 ## 2. Output and handoff
 
