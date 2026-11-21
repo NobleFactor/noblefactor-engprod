@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright Noble Factor. All rights reserved.
 
-"""An account's issue-tracking token: the model's token record, the preflight of apply and restore, and what get writes."""
+"""An account's issue-tracking token: its token record, the preflight of apply and restore, and what get writes."""
 
 # credentials.star
 #
@@ -106,15 +106,16 @@ def installed(account, source):
 def how(account, kind, names):
     """How to make the account's token and name it, as the refusal says."""
     if kind == "organization":
-        make = ("create " + account + "'s GitHub App at https://github.com/organizations/" + account +
-                "/settings/apps/new with the permissions the guide lists, install it on all of " + account +
-                "'s repositories, and generate its private key")
+        make = ("as an owner of " + account + ", click your profile picture, then Your organizations, Settings " +
+                "beside " + account + ", Developer settings, GitHub Apps and New GitHub App; give it the permissions " +
+                "the guide lists, install it on all of " + account + "'s repositories, and generate its private key")
     else:
         make = ("signed in to GitHub as " + account + ", make a classic token at " +
                 "https://github.com/settings/tokens/new with the repo and project scopes")
     named = ",".join([n + "=env:<NAME>" for n in names])
-    return ("To make the token, " + make + ". Then name where each value comes from, with --token " + named +
-            " or file:<path> in place of env:, or in the model's token record; a secret GitHub already holds " +
+    return ("To make the token, run star github token make " + account + " --vault <vault>; or by hand, " + make +
+            ". Then name where each value comes from, with --token " + named + " or file:<path> or " +
+            "vault:<vault>/<name> in place of env:, or in the model's token record; a secret GitHub already holds " +
             "everywhere is recorded as " + HELD + ". The guide: " + GUIDE)
 
 def refusal(account, kind, names, problems):

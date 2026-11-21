@@ -5334,7 +5334,7 @@ expect "195 (#451): an organization's unidentified token is refused, and nothing
     (writes | length) == 0' 'NOBLEFACTOR_AUTOMATION_APP_ID has no source: the model.s token record names none, and --token names none' text
 expect "195 (#451): the refusal names the second secret too" error "" 'NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY has no source' text
 expect "195 (#451): the refusal says how to make the app, and names the guide" error "" \
-    'organizations/Acme/settings/apps/new.*issue-tracking-credentials' text
+    'star github token make Acme --vault <vault>; or by hand.*Developer settings, GitHub Apps and New GitHub App.*issue-tracking-credentials' text
 
 # 196 (#451). A user account's unidentified token is refused the same way, with how to make a classic token.
 sed -i '/^secret test-user\//d' "${secrets}"

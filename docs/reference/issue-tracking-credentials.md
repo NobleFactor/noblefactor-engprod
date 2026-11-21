@@ -108,7 +108,7 @@ A token already in the vault under those names is adopted: checked, and its reco
 
 ## 5. Making an organization's token by hand
 
-1. Sign in to github.com as an owner of the organization, and open `https://github.com/organizations/<organization>/settings/apps/new`.
+1. Sign in to github.com as an owner of the organization. Click your profile picture, then **Your organizations**, then **Settings** beside the organization, then **Developer settings** and **GitHub Apps** in the left sidebar, then **New GitHub App**.
 2. Fill in the form:
    - **GitHub App name:** `<organization>-automation`, in lowercase.
    - **Homepage URL:** `https://github.com/<organization>`.
