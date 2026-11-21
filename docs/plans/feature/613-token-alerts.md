@@ -1,7 +1,7 @@
 ---
 title: "Every process that depends on a token alerts us when the token expires or goes missing, until it is fixed"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/613
-status: draft
+status: approved
 created: 2026-11-21
 updated: 2026-11-21
 documents:
@@ -208,7 +208,7 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 
 ### 9.1 Phase 1: the plan
 
-- [ ] This plan reviewed by Codex and approved by you, then #613's body rewritten to match.
+- [x] This plan approved on 2026-11-21 (§ 12). #613's body is rewritten to match with the pull request.
 
 <a id="phase-1b-issue-621"></a>
 
@@ -259,7 +259,7 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 
 ## 12. Approval and departures
 
-- This plan is a draft, not yet approved.
+- **Approved, 2026-11-21.** David Noble approved this plan at revision 2856d6a, for #613 and #621, in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`, and directed the work to proceed phase by phase, each committed and pushed, and then the pull request opened for the full set. The three calls of § 6 are taken as § 6 makes them: incidents in the repository whose binding failed, assigned to David-Noble-at-work; daily, and 14 days ahead; and the check landed by hand before #614.
 - **No sandbox runs, decided 2026-11-21.** Setting up the sandboxes' credentials takes the same manual effort every time, so until GitHub offers a way to automate it, work is verified in the field and the sandbox accounts are deleted. #613's evidence, which names the sandboxes, is replaced by § 7.
 
 <a id="completion-review"></a>
