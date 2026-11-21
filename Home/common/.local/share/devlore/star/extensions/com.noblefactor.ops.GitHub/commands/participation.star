@@ -71,7 +71,7 @@ def _paths(repository, branch):
              quote(".tree[] | select(.type == \"blob\") | .path"))
     return [p for p in out.split("\n") if p != ""]
 
-def _secrets_of(template):
+def secrets_of(template):
     """The secrets a workflow signs in with: each secrets.NAME it names, GitHub's own GITHUB_TOKEN aside."""
     names = []
     for piece in template.split("secrets.")[1:]:
@@ -99,15 +99,95 @@ def _squash(repository):
         "admin": (record.get("permissions") or {}).get("admin") == True,
     }
 
+# What a listing answers in place of its output when GitHub refuses it (#451).
+_UNREADABLE = "__star_listing_refused__"
+
+def _listing(command):
+    """A listing's output, or None when GitHub refuses it: the signed-in account can't administer what it lists (#451).
+
+    A refused listing is told from an empty one, since a secret missing and a secret that can't be seen are different
+    faults with different remedies.
+    """
+    out = sh("{ " + command + "; } 2>/dev/null || echo " + _UNREADABLE)
+    return None if out.strip().endswith(_UNREADABLE) else out
+
 def _repository_secrets(repository):
-    """The names of a repository's own secrets."""
-    out = sh("gh secret list --repo " + quote(repository) + " --json name --jq " + quote(".[].name"))
-    return [n for n in out.split("\n") if n != ""]
+    """The names of a repository's own secrets, or None when GitHub refuses the listing."""
+    out = _listing("gh secret list --repo " + quote(repository) + " --json name --jq " + quote(".[].name"))
+    return None if out == None else [n for n in out.split("\n") if n != ""]
 
 def _organization_secrets(organization):
-    """An organization's secrets: {name: visibility}."""
-    out = sh("gh secret list --org " + quote(organization) + " --json name,visibility")
+    """An organization's secrets, {name: visibility}, or None when GitHub refuses the listing."""
+    out = _listing("gh secret list --org " + quote(organization) + " --json name,visibility")
+    if out == None:
+        return None
     return {s["name"]: (s.get("visibility") or "").lower() for s in json.decode(data = out or "[]")}
+
+def _reaching(repository):
+    """The names of the organization secrets a repository's workflows can read, or None when GitHub refuses the listing.
+
+    An organization secret whose visibility is not all reaches only the repositories it is shared with (#451).
+    """
+    out = _listing("gh api --paginate " + quote("repos/" + repository + "/actions/organization-secrets") + " --jq " +
+                   quote(".secrets[].name"))
+    return None if out == None else [n for n in out.split("\n") if n != ""]
+
+def secrets_held(kind, account, repositories, names):
+    """What GitHub holds of the secrets a template signs in with, read for every place a workflow reads one (#451).
+
+    Args:
+      kind: "organization" or "user".
+      account: the account.
+      repositories: the participating repositories.
+      names: the secrets the template signs in with.
+
+    Returns:
+      {repositories: {repo: {secrets: [name] or None, reaching: [name] or None, read only when needed}},
+      organization_secrets: {name: visibility} or None, in an organization}.
+    """
+    out = {"repositories": {r: {"secrets": _repository_secrets(r)} for r in repositories}, "organization_secrets": {}}
+    if kind != "organization":
+        return out
+    held = _organization_secrets(account)
+    out["organization_secrets"] = held
+    if held != None and any([n in held and held[n] != "all" for n in names]):
+        for r in repositories:
+            out["repositories"][r]["reaching"] = _reaching(r)
+    return out
+
+def bindings(state, kind, account, name):
+    """Each place a workflow reads a secret, and whether GitHub holds it there: [(path, "held", "missing" or "unreadable")].
+
+    In a user account, a place is each participating repository's own secret. In an organization, it is the organization
+    secret, which must reach each participating repository, or that repository's own secret of the same name; with no
+    participating repository, it is the organization secret alone (#451).
+    """
+    repositories = state.get("repositories") or {}
+    if kind != "organization":
+        out = []
+        for r in sorted(repositories):
+            own = repositories[r].get("secrets")
+            out.append((r + "/" + name, "unreadable" if own == None else ("held" if name in own else "missing")))
+        return out
+    held = state.get("organization_secrets")
+    if not repositories:
+        return [(account + "/" + name, "unreadable" if held == None else ("held" if name in held else "missing"))]
+    out = []
+    for r in sorted(repositories):
+        own = repositories[r].get("secrets")
+        path = r + "/" + name
+        if own != None and name in own:
+            out.append((path, "held"))
+        elif held == None:
+            out.append((path, "unreadable"))
+        elif name not in held:
+            out.append((path, "unreadable" if own == None else "missing"))
+        elif held[name] == "all":
+            out.append((path, "held"))
+        else:
+            reaching = repositories[r].get("reaching")
+            out.append((path, "unreadable" if reaching == None else ("held" if name in reaching else "missing")))
+    return out
 
 def project_url(kind, account, number):
     """A project's link, as a workflow's project-url takes it."""
@@ -156,7 +236,7 @@ def read(model, github, projects, kind):
     if TEMPLATE not in paths:
         return out
     out["template"] = read_file(origin, TEMPLATE, branch)
-    out["secrets"] = _secrets_of(out["template"])
+    out["secrets"] = secrets_of(out["template"])
     by_name = {p["name"]: p for p in projects if not p.get("template")}
     for r in sorted((github.get("labels") or {}).get("repositories") or {}):
         owner = _owner_of(r, github, kind)
@@ -167,11 +247,12 @@ def read(model, github, projects, kind):
             "variable": _variable(r),
             "project": project,
             "url": project_url(kind, account, number) if number != None else None,
-            "secrets": _repository_secrets(r),
             "squash": _squash(r),
         }
-    if kind == "organization":
-        out["organization_secrets"] = _organization_secrets(account)
+    held = secrets_held(kind, account, sorted(out["repositories"]), out["secrets"])
+    for r, h in held["repositories"].items():
+        out["repositories"][r].update(h)
+    out["organization_secrets"] = held["organization_secrets"]
     return out
 
 # ── comparing ───────────────────────────────────────────────────────────────
@@ -225,17 +306,21 @@ def compare(state, kind, account):
     if kind == "organization":
         held = state["organization_secrets"]
         for name in state["secrets"]:
-            everywhere = state["repositories"] and all([name in h["secrets"] for h in state["repositories"].values()])
+            places = [s for _, s in bindings(state, kind, account, name)]
             want = {"name": name, "visibility": "all"}
-            if name in held and held[name] != "all":
+            if all([s == "held" for s in places]):
+                continue
+            if "unreadable" in places:
+                out.append(_record("secret", account + "/" + name, None, want, change = "unreadable"))
+            elif name in held:
                 out.append(_record("secret", account + "/" + name, {"name": name, "visibility": held[name]}, want))
-            elif name not in held and not everywhere:
+            else:
                 out.append(_record("secret", account + "/" + name, None, want))
         return out
-    for r in sorted(state["repositories"]):
-        for name in state["secrets"]:
-            if name not in state["repositories"][r]["secrets"]:
-                out.append(_record("secret", r + "/" + name, None, {"name": name}))
+    for name in state["secrets"]:
+        for path, s in bindings(state, kind, account, name):
+            if s != "held":
+                out.append(_record("secret", path, None, {"name": name}, change = "unreadable" if s == "unreadable" else None))
     return out
 
 # ── applying ────────────────────────────────────────────────────────────────
@@ -332,17 +417,17 @@ def token_records(c, state, records):
     return out
 
 def _secrets(c, records, done):
-    """Each secret the template signs in with: set from --token, or named as a step by hand."""
+    """Each secret the template signs in with, set from its source: --token's, or the one the model's token record names.
+
+    The preflight has refused an account whose token is not identified, so every secret a record names has a source;
+    one recorded as held needs no write, and the preflight has proved it held everywhere (#451).
+    """
     for r in [r for r in records if r["kind"] == "secret"]:
         name = r["model"]["name"]
         where = r["path"][:-len("/" + name)]
-        source = c["tokens"].get(name)
-        if source == None:
-            scope = ("--org " + where + " --visibility all") if c["kind"] == "organization" else ("--repo " + where)
-            command = "gh secret set " + name + " " + scope
-            done["secret " + r["path"]] = ("by-hand", {"steps": ["set the secret " + name + ", which the Triage workflow signs in " +
-                                                                 "with, from a source only you can read: " + command]})
-            continue
+        source = c["tokens"].get(name) or c["recorded"].get(name)
+        if source in [None, "held"]:
+            fail(r["path"] + " needs a write, and its token record names no source to write it from")
         if c["kind"] == "organization":
             set_secret(name, source, organization = where)
         else:

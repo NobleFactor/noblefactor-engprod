@@ -22,11 +22,14 @@
 # starts on the model's start day, and one whose start day or duration differs is set to the model's, each of its
 # iterations sent back with its ID so that no row loses its sprint (ruled 2026-11-11). What GitHub's API cannot write,
 # a type's pinned fields, a view's grouping and sort, is a step by hand, named in the record; the steps for the parts of
-# a template or project just made are on its own record.
+# a template or project just made are on its own record. Before its first write, apply runs credentials.star's
+# preflight, and refuses an account whose Triage workflow signs in with a token the model doesn't identify, or that
+# GitHub doesn't hold where its record says (#451, decided 2026-11-20).
 #
 # Issue types and issue fields are written through GitHub's REST calls, which take the database IDs get records; the
 # rest through GraphQL, each mutation's input written as literals, so that every value is in the call star narrates.
 
+load("commands/credentials.star", "HELD", "preflight", "recorded", "refusal")
 load(
     "commands/model.star",
     "escape",
@@ -642,6 +645,12 @@ def apply_model(source, account, prune, sources = []):
         "made": {},
         "tokens": for_secrets(sources, names, where),
     }
+
+    # The preflight, before the first write: the account's token identified and held where its record says (#451).
+    problems = preflight(account, kind, state, model, c["tokens"])
+    if problems:
+        fail(refusal(account, kind, names, problems))
+    c["recorded"] = {n: s for n, s in recorded(model).items() if s != HELD}
     records = records + token_records(c, state, records)
 
     # TODO(NobleFactor/devlore-cli#1219): ask before applying, showing what will change, defaulting to yes (#470).

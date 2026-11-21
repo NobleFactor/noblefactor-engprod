@@ -613,7 +613,10 @@ function issue_form {
 #
 # A write, a REST call with -X or a GraphQL mutation, is recorded among the calls and answered with a new ID; a secret
 # set is remembered, value and all, a newline written as \n, in ${GH_REMOTES}/secrets, on a repository or an
-# organization, so that a case can read back the token it was given.
+# organization, so that a case can read back the token it was given. An organization secret is visible to all its
+# repositories unless ${GH_REMOTES}/secret-visibility says otherwise, as `<organization> <name> selected
+# <repository>,<repository>`; and a listing of a repository's or an organization's secrets, and of the organization
+# secrets that reach a repository, is refused, HTTP 403, for one ${GH_REMOTES}/secrets-refused names (#451).
 #
 # Any repository under ${GH_REMOTES} answers what apply reads and writes of it (#437): GitHub's record of it, its files
 # raw at a revision, the git data API apply commits through, a ref, a commit, a tree, and its variables, remembered in
@@ -655,6 +658,77 @@ fi
 exec $(command -v date) "\$@"
 DATE
     chmod +x "${run_directory}/bin/date"
+    cat >"${run_directory}/bin/az" <<'AZ'
+#!/usr/bin/env bash
+# The stand-in for Azure's CLI, as star reads a vault: source (#451): az account show succeeds unless
+# ${GH_REMOTES}/az-signed-out exists, and az keyvault secret show answers --query id or --query value from
+# ${GH_REMOTES}/vault, a line `vault <vault> <name> <value>` for each secret, a newline in the value written \n. Its calls
+# are recorded among gh's, never a value.
+printf '%s\0' az "$@" | jq -c -R -s 'split("\u0000") | .[:-1]' >>"${GH_CALLS}"
+case "$1 $2" in
+    "account show")
+        [[ ! -e "${GH_REMOTES}/az-signed-out" ]] || { printf "ERROR: Please run 'az login' to setup account.\n" >&2; exit 1; }
+        exit 0
+        ;;
+    "keyvault secret")
+        if [[ "$3" == set ]]; then
+            vault="" name="" file="" tags=() expires=""
+            shift 3
+            while (($#)); do
+                case "$1" in
+                    --vault-name) vault="$2" && shift ;;
+                    --name) name="$2" && shift ;;
+                    --file) file="$2" && shift ;;
+                    --expires) expires="$2" && shift ;;
+                    --tags) while [[ $# -gt 1 && "$2" != --* ]]; do tags+=("$2") && shift; done ;;
+                esac
+                shift
+            done
+            value="$(cat "${file}" && printf x)" && value="${value%x}"
+            printf 'vault %s %s %s\n' "${vault}" "${name}" "${value//$'\n'/\\n}" >>"${GH_REMOTES}/vault"
+            for tag in "${tags[@]}"; do
+                printf 'tag %s %s %s %s\n' "${vault}" "${name}" "${tag%%=*}" "${tag#*=}" >>"${GH_REMOTES}/vault-tags"
+            done
+            [[ -z "${expires}" ]] || printf 'expires %s %s %s\n' "${vault}" "${name}" "${expires}" >>"${GH_REMOTES}/vault-tags"
+            exit 0
+        fi
+        vault="" name="" query=""
+        shift 3
+        while (($#)); do
+            case "$1" in
+                --vault-name) vault="$2" && shift ;;
+                --name) name="$2" && shift ;;
+                --query) query="$2" && shift ;;
+            esac
+            shift
+        done
+        line="$(awk -v v="${vault}" -v n="${name}" '$1 == "vault" && $2 == v && $3 == n { $1 = $2 = $3 = ""; l = substr($0, 4) } END { print l }' \
+            "${GH_REMOTES}/vault" 2>/dev/null)"
+        [[ -n "${line}" ]] || { printf '(SecretNotFound) A secret with (name/id) %s was not found in this key vault.\n' "${name}" >&2; exit 1; }
+        case "${query}" in
+            id) printf 'https://%s.vault.azure.net/secrets/%s/0\n' "${vault}" "${name}" ;;
+            value) printf '%b\n' "${line}" ;;
+            tags.*)
+                tag="${query#tags.}" tag="${tag//\"/}"
+                awk -v v="${vault}" -v n="${name}" -v k="${tag}" '$1 == "tag" && $2 == v && $3 == n && $4 == k { t = $5 } END { print t }' \
+                    "${GH_REMOTES}/vault-tags" 2>/dev/null
+                ;;
+        esac
+        exit 0
+        ;;
+esac
+printf 'stand-in az: %s is not answered\n' "$*" >&2
+exit 2
+AZ
+    chmod +x "${run_directory}/bin/az"
+    for opener in open xdg-open; do
+        cat >"${run_directory}/bin/${opener}" <<'OPEN'
+#!/usr/bin/env bash
+# The stand-in for a browser opener (#451): it records what it was asked to open among gh's calls, and opens nothing.
+printf '%s\0' "$(basename "$0")" "$@" | jq -c -R -s 'split("\u0000") | .[:-1]' >>"${GH_CALLS}"
+OPEN
+        chmod +x "${run_directory}/bin/${opener}"
+    done
     cat >"${run_directory}/bin/world.jq" <<'JQ'
 # The schedule commands' GitHub: one world that their reads answer from and their writes change. Its issues and its
 # projects are keyed by node ID; a project's items are its rows, in its order, each with its content's ID and its
@@ -970,8 +1044,16 @@ case "${1:-} ${2:-}" in
         ;;
     "secret list")
         repo="$(option --repo "$@")" org="$(option --org "$@")"
-        awk -v r="${repo:-${org}}" '$1 == "secret" && $2 == r { print $3 }' "${GH_REMOTES}/secrets" 2>/dev/null |
-            jq -R -s -c '[split("\n")[] | select(. != "") | {name: ., visibility: "all"}] | unique' | filtered "$@"
+        if grep -qxF -- "${repo:-${org}}" "${GH_REMOTES}/secrets-refused" 2>/dev/null; then
+            printf 'failed to get secrets: HTTP 403: Resource not accessible by integration\n' >&2
+            exit 1
+        fi
+        awk -v r="${repo:-${org}}" '$1 == "secret" && $2 == r { print $3 }' "${GH_REMOTES}/secrets" 2>/dev/null | sort -u |
+            while read -r name; do
+                seen="$(awk -v o="${org}" -v n="${name}" '$1 == o && $2 == n { v = $3 } END { print v }' \
+                    "${GH_REMOTES}/secret-visibility" 2>/dev/null)"
+                jq -cn --arg n "${name}" --arg v "${seen:-all}" '{name: $n, visibility: $v}'
+            done | jq -s -c '.' | filtered "$@"
         exit 0
         ;;
     "pr merge")
@@ -1098,6 +1180,39 @@ function respond {
 # setting, GitHub's default, COMMIT_OR_PR_TITLE and COMMIT_MESSAGES, until a PATCH sets it, remembered in
 # ${GH_REMOTES}/squash as `squash <repository> <title> <message>`, with the token admin unless ${GH_REMOTES}/no-admin names
 # the repository. A path none of these answers is left to the fixtures below.
+# star github token make's reads (#451): a manifest's code exchanged for its app, from ${GH_REMOTES}/manifest-codes as
+# `code <code> <id> <slug>`, each code good once; an organization's installations, from ${GH_REMOTES}/installations as
+# `installation <organization> <app id> <slug>`; and the user a token belongs to, with its scopes and expiry, from
+# ${GH_REMOTES}/tokens as `token <value> <login> <scopes,comma-separated> <expiry>`, when GH_TOKEN is one of them.
+if [[ "${method} ${rest_path}" =~ ^POST\ app-manifests/([^/]+)/conversions$ ]]; then
+    code="${BASH_REMATCH[1]}"
+    line="$(awk -v c="${code}" '$1 == "code" && $2 == c { print $3, $4 }' "${GH_REMOTES}/manifest-codes" 2>/dev/null)"
+    [[ -n "${line}" ]] || respond "404 Not Found" '{"message": "Not Found"}'
+    awk -v c="${code}" '!($1 == "code" && $2 == c)' "${GH_REMOTES}/manifest-codes" >"${GH_REMOTES}/manifest-codes.next"
+    mv -- "${GH_REMOTES}/manifest-codes.next" "${GH_REMOTES}/manifest-codes"
+    respond "201 Created" "$(jq -cn --argjson i "${line%% *}" --arg s "${line#* }" '{id: $i, slug: $s,
+        html_url: ("https://github.com/apps/" + $s), client_id: "Iv1.client", client_secret: "client-secret",
+        pem: "-----BEGIN RSA PRIVATE KEY-----\nmanifest\n-----END RSA PRIVATE KEY-----\n"}')"
+fi
+if [[ "${method} ${rest_path}" =~ ^GET\ orgs/([^/]+)/installations ]]; then
+    respond "200 OK" "$(awk -v o="${BASH_REMATCH[1]}" '$1 == "installation" && $2 == o { print $3, $4 }' \
+        "${GH_REMOTES}/installations" 2>/dev/null | jq -R -s -c '[split("\n")[] | select(. != "") | split(" ")
+            | {app_id: (.[0] | tonumber), app_slug: .[1]}] | {total_count: length, installations: .}')"
+fi
+if [[ "${method} ${rest_path}" == "GET user" && -n "${GH_TOKEN:-}" ]] &&
+    line="$(awk -v k="${GH_TOKEN}" '$1 == "token" && $2 == k { $1 = $2 = ""; print substr($0, 3) }' "${GH_REMOTES}/tokens" 2>/dev/null)" &&
+    [[ -n "${line}" ]]; then
+    read -r login scopes expiry <<<"${line}"
+    answer="$(jq -cn --arg l "${login}" '{login: $l}')"
+    if ((include)); then
+        printf 'HTTP/2.0 200 OK\r\nX-Oauth-Scopes: %s\r\nGitHub-Authentication-Token-Expiration: %s\r\n\r\n%s' \
+            "${scopes//,/, }" "${expiry}" "${answer}"
+    else
+        printf '%s' "${answer}"
+    fi
+    exit 0
+fi
+
 repo_path='^repos/([^/]+/[^/?]+)(/(.*))?$'
 if [[ "${rest_path}" =~ ${repo_path} ]]; then
     repo="${BASH_REMATCH[1]}" part="${BASH_REMATCH[3]}" git_dir="${GH_REMOTES}/${BASH_REMATCH[1]}.git"
@@ -1188,6 +1303,22 @@ if [[ "${rest_path}" =~ ${repo_path} ]]; then
                 "${GH_REMOTES}/variables" 2>/dev/null)"
             [[ -n "${value}" ]] || respond "404 Not Found" "${not_found}"
             respond "200 OK" "$(jq -cn --arg n "${name}" --arg v "${value}" '{name: $n, value: $v}')"
+            ;;
+        "GET actions/organization-secrets"*)
+            ! grep -qxF -- "${repo}" "${GH_REMOTES}/secrets-refused" 2>/dev/null ||
+                respond "403 Forbidden" '{"message": "Resource not accessible by integration"}'
+            owner="${repo%%/*}"
+            reaching="$(awk -v o="${owner}" '$1 == "secret" && $2 == o { print $3 }' "${GH_REMOTES}/secrets" 2>/dev/null |
+                sort -u | while read -r name; do
+                    seen="$(awk -v o="${owner}" -v n="${name}" '$1 == o && $2 == n { v = $3 " " $4 } END { print v }' \
+                        "${GH_REMOTES}/secret-visibility" 2>/dev/null)"
+                    case "${seen%% *}" in
+                        "" | all) printf '%s\n' "${name}" ;;
+                        selected) [[ ",${seen#* }," != *",${repo},"* ]] || printf '%s\n' "${name}" ;;
+                    esac
+                done)"
+            respond "200 OK" "$(jq -R -s -c '[split("\n")[] | select(. != "") | {name: .}] | {total_count: length, secrets: .}' \
+                <<<"${reaching}")"
             ;;
         "POST actions/variables" | "PATCH actions/variables/"*)
             printf 'variable %s %s %s\n' "${repo}" "$(jq -r .name <<<"${body}")" "$(jq -r .value <<<"${body}")" >>"${GH_REMOTES}/variables"
@@ -2219,13 +2350,22 @@ user_template=$'name: Triage\ntoken: ${{ secrets.ADD_TO_PROJECT_PAT }}'
 
 # 29. A new organization joins through apply: the model, its teams' projects, its .github repository's files from the
 # reference account's as it stands, NobleFactor's name in them its own, and its repository's Triage workflow and
-# variable; the App's secrets, which it has none of, named as steps by hand.
+# variable, and the App's secrets from --token. With no token named, apply refuses, and writes nothing (#451).
 repository NobleFactor/.github ".github/ISSUE_TEMPLATE/task.yml=name: Task" "workflow-templates/triage.yml=${org_template}" \
     "CONTRIBUTING.md=# Contributing to NobleFactor" "model.yaml=version: 1" ".github/workflows/triage.yml=${org_template}"
 repository Acme/site
 repository Acme/app
 repository Acme/docs
 run_star "${data}" github model apply "${reference}/organization.yaml" Acme
+expect "29 (#451): with no token named, apply refuses a new organization, and writes nothing" error "${writes}"'
+    (writes | length) == 0' 'NOBLEFACTOR_AUTOMATION_APP_ID has no source' text
+export APP_ID=12345
+printf -- '-----BEGIN KEY-----\nabc\n-----END KEY-----\n' >"${run_directory}/work/app.pem"
+chmod 600 "${run_directory}/work/app.pem"
+printf 'installation Acme 12345 acme-automation\n' >>"${run_directory}/remotes/installations"
+run_star "${data}" github model apply "${reference}/organization.yaml" Acme \
+    --token NOBLEFACTOR_AUTOMATION_APP_ID=env:APP_ID,NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY=file:app.pem
+unset APP_ID
 expect "29: apply of the reference brings a new organization into the model" ok '
     any(.[]; .kind == "issue-type" and .path == "Task" and .action == "changed")
     and any(.[]; .kind == "issue-type" and .path == "Epic" and .action == "created")
@@ -2265,11 +2405,10 @@ expect "29: a template or project made says on its own record what its views sti
     and (steps("project"; "Schedule: web") | length == 2 and (.[0] | test("^set the Schedule: web/By schedule view.s group by to "))
         and (.[1] | test("^set the Schedule: web/By schedule view.s sort by to .*Step")))
     and steps("project"; "Triage: web") == []'
-expect "29: the App's secrets, missing, are steps by hand, set on the organization" ok '
+expect "29: the App's secrets, missing, are set on the organization from --token" ok '
     ([.[] | select(.kind == "secret") | {path, action}] | sort_by(.path)) == [
-        {path: "Acme/NOBLEFACTOR_AUTOMATION_APP_ID", action: "by-hand"},
-        {path: "Acme/NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY", action: "by-hand"}]
-    and ([.[] | select(.kind == "secret") | .steps[0]] | all(test("gh secret set NOBLEFACTOR_AUTOMATION_APP_[A-Z_]+ --org Acme")))'
+        {path: "Acme/NOBLEFACTOR_AUTOMATION_APP_ID", action: "created"},
+        {path: "Acme/NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY", action: "created"}]'
 expect "29: every branch apply opens has a prefix NobleFactor's ruleset allows, the .github files' doc/, a workflow's feature/" ok '
     [$calls[] | select(.[0:2] == ["pr", "create"]) | .[index("--head") + 1]] as $heads
     | ($heads | length) == 4 and ($heads | map(select(. == "doc/issue-model-files")) | length) == 1
@@ -2298,22 +2437,23 @@ run_star "${data}" github model apply "${reference}/organization.yaml" Acme --to
 expect "29b: a secret the template does not use is refused, and nothing written" error "${writes}"'(writes | length) == 0' \
     'ADD_TO_PROJECT_PAT, which .* does not use' text
 
-# 30. A new user account joins through apply: with no --token, it names the missing secret to set by hand, and makes the
-# rest; with --token env:<NAME>, it sets the secret on each repository, showing the token's fingerprint, not the token.
+# 30. A new user account joins through apply: with no --token, apply refuses, names the secret, and writes nothing
+# (#451); with --token env:<NAME>, it makes the rest and sets the secret on each repository, showing the token's
+# fingerprint, not the token.
 repository David-Noble-at-work/.github ".github/ISSUE_TEMPLATE/task.yml=name: Task" "workflow-templates/triage.yml=${user_template}" \
     "README.md=# David-Noble-at-work's .github"
 repository test-user/personal
 run_star "${data}" github model apply "${reference}/user.yaml" test-user
-expect "30: with no --token, apply names the missing secret to set by hand, and makes the rest" ok '
-    any(.[]; .kind == "secret" and .path == "test-user/personal/ADD_TO_PROJECT_PAT" and .action == "by-hand"
-        and (.steps[0] | test("gh secret set ADD_TO_PROJECT_PAT --repo test-user/personal")))
-    and any(.[]; .kind == "workflow" and .path == "test-user/personal" and .action == "created")
+expect "30 (#451): with no --token, apply refuses a new user account, names its secret, and writes nothing" error "${writes}"'
+    (writes | length) == 0' 'ADD_TO_PROJECT_PAT has no source' text
+run_star "${data}" github model apply "${reference}/user.yaml" test-user --token env:SITE_TOKEN
+unset SITE_TOKEN
+expect "30: with --token, apply makes the rest" ok '
+    any(.[]; .kind == "workflow" and .path == "test-user/personal" and .action == "created")
     and any(.[]; .kind == "file" and .path == "test-user/.github/.github/ISSUE_TEMPLATE/task.yml" and .action == "created")
     and any(.[]; .kind == "file" and .path == "test-user/.github/README.md" and .action == "changed")'
 check "30: test-user/.github's README names test-user" shows test-user/.github README.md "# test-user's .github"
 check "30: test-user/personal holds the Triage workflow" shows test-user/personal .github/workflows/triage.yml "${user_template}"
-run_star "${data}" github model apply "${reference}/user.yaml" test-user --token env:SITE_TOKEN
-unset SITE_TOKEN
 fingerprint="$(printf %s token-for-site | { sha256sum 2>/dev/null || shasum -a 256; } | cut -c1-12)"
 expect "30: --token env:<NAME> sets the secret, its record showing the token's fingerprint and never the token" ok "
     any(.[]; .kind == \"secret\" and .path == \"test-user/personal/ADD_TO_PROJECT_PAT\" and .action == \"created\"
@@ -2352,10 +2492,10 @@ check "33: the secret is the file's token" grep -qxF "secret test-user/personal 
 run_star "${data}" github model apply "${reference}/user.yaml" test-user --token file:no-such-token
 expect "33: a token file that is not there is refused, and nothing written" error "${writes}"'(writes | length) == 0' 'no-such-token' text
 
-# 34. No token's value is taken on the command line, nor a source but env: and file:.
-for token in ghp_0123456789abcdefghijABCDEFGHIJ012345 vault:kv-acme/site; do
+# 34. No token's value is taken on the command line, nor a source but env:, file: and vault: (#451).
+for token in ghp_0123456789abcdefghijABCDEFGHIJ012345 secret:kv-acme/site; do
     run_star "${data}" github model apply "${reference}/organization.yaml" Acme --token "${token}"
-    expect "34: --token ${token%%_*} is refused, and nothing written" error "${writes}"'(writes | length) == 0' 'env:|file:' text
+    expect "34: --token ${token%%[_:]*} is refused, and nothing written" error "${writes}"'(writes | length) == 0' 'env:.*file:.*vault:' text
 done
 
 # 35. A reference names every attribute, a deliberate none written as one: an attribute left out is refused, named, and
@@ -2411,7 +2551,7 @@ run_star "${data}" github model diff noblefactor.json NobleFactor
 expect "38: the organization's secrets, visible to all its repositories, are no difference" ok '[.[] | select(.kind == "secret")] == []'
 
 # 39. An organization's App secrets come from --token, each named: set on the organization, visible to all its
-# repositories, a private key's lines kept.
+# repositories, a private key's lines kept; case 29 set them, so --token replaces them.
 export APP_ID=12345
 printf -- '-----BEGIN KEY-----\nabc\n-----END KEY-----\n' >"${run_directory}/work/app.pem"
 chmod 600 "${run_directory}/work/app.pem"
@@ -2421,8 +2561,8 @@ run_star "${data}" github model apply "${reference}/organization.yaml" Acme \
 unset APP_ID
 expect "39: each named secret is set on the organization, its fingerprint shown" ok '
     ([.[] | select(.kind == "secret") | {path, action, f: (.fingerprint | length)}] | sort_by(.path)) == [
-        {path: "Acme/NOBLEFACTOR_AUTOMATION_APP_ID", action: "created", f: 12},
-        {path: "Acme/NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY", action: "created", f: 12}]'
+        {path: "Acme/NOBLEFACTOR_AUTOMATION_APP_ID", action: "changed", f: 12},
+        {path: "Acme/NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY", action: "changed", f: 12}]'
 check "39: the App's ID is set on the organization" grep -qxF "secret Acme NOBLEFACTOR_AUTOMATION_APP_ID 12345" "${run_directory}/remotes/secrets"
 check "39: the private key keeps its lines, its final newline dropped" \
     grep -qxF 'secret Acme NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY -----BEGIN KEY-----\nabc\n-----END KEY-----' "${run_directory}/remotes/secrets"
@@ -2445,7 +2585,11 @@ expect "172 (#605): a repository the token is no admin of is a record by hand" o
     any(.[]; .kind == "squash" and .path == "NobleFactor/beta" and .by_hand == true)'
 
 # 173. apply sets alpha's with one write, which it reads back, and writes nothing to beta, whose admin is told what to do.
-run_star "${data}" github model apply noblefactor.json NobleFactor
+# NobleFactor's .github holds the Triage template since case 38, which set both secrets on the organization, so the
+# model applied records its token as held (#451).
+jq '.token = {kind: "github-app", secrets: {NOBLEFACTOR_AUTOMATION_APP_ID: "held", NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY: "held"}}' \
+    "${run_directory}/work/noblefactor.json" >"${run_directory}/work/held-nf.json"
+run_star "${data}" github model apply held-nf.json NobleFactor
 expect "173 (#605): apply sets a repository's squash merges to the PR's title and body, with one write" ok "${writes}"'
     any(.[]; .kind == "squash" and .path == "NobleFactor/alpha" and .action == "changed"
         and .value == {title: "PR_TITLE", message: "PR_BODY"})
@@ -5171,6 +5315,270 @@ check "194 (#609): s1's own row is In progress, and s1 holds one comment" world_
         and ((.issues.I_alpha_20.comments // []) | length) == 1'
 run_star "${data}" github issue reopen NobleFactor/alpha#21 --reason "Not done after all."
 expect "194 (#609): a repeat writes nothing" ok "${no_writes}"' and map(.action) == ["unchanged"]'
+
+# 195 to 205 (#451). Every account identifies the token its Triage workflow signs in with, and apply and restore refuse
+# one that doesn't, or whose token isn't where its record says, before they write anything. NobleFactor's alpha and
+# beta take part; its token is recorded as held. held_nf is NobleFactor's own model with that record. NobleFactor's
+# .github holds the Triage workflow template again, which cases 135 to 140 replaced with their issue forms.
+repository NobleFactor/.github "workflow-templates/triage.yml=${org_template}" "CONTRIBUTING.md=# Contributing to NobleFactor"
+held_token='{kind: "github-app", secrets: {NOBLEFACTOR_AUTOMATION_APP_ID: "held", NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY: "held"}}'
+jq ".token = ${held_token}" <<<"${model_nf}" >"${run_directory}/work/held-nf.json"
+secrets="${run_directory}/remotes/secrets"
+nf_secrets=$'secret NobleFactor NOBLEFACTOR_AUTOMATION_APP_ID 1\nsecret NobleFactor NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY k'
+
+# 195 (#451). An organization whose model, a reference, names no source, and whose secrets GitHub doesn't hold: refused,
+# each secret named, with how to make the app and the guide.
+sed -i '/^secret Acme /d' "${secrets}"
+run_star "${data}" github model apply "${reference}/organization.yaml" Acme
+expect "195 (#451): an organization's unidentified token is refused, and nothing written" error "${writes}"'
+    (writes | length) == 0' 'NOBLEFACTOR_AUTOMATION_APP_ID has no source: the model.s token record names none, and --token names none' text
+expect "195 (#451): the refusal names the second secret too" error "" 'NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY has no source' text
+expect "195 (#451): the refusal says how to make the app, and names the guide" error "" \
+    'star github token make Acme --vault <vault>; or by hand.*Developer settings, GitHub Apps and New GitHub App.*issue-tracking-credentials' text
+
+# 196 (#451). A user account's unidentified token is refused the same way, with how to make a classic token.
+sed -i '/^secret test-user\//d' "${secrets}"
+run_star "${data}" github model apply "${reference}/user.yaml" test-user
+expect "196 (#451): a user account's unidentified token is refused, and nothing written" error "${writes}"'
+    (writes | length) == 0' 'ADD_TO_PROJECT_PAT has no source' text
+expect "196 (#451): the refusal says how to make a classic token" error "" 'settings/tokens/new with the repo and project scopes' text
+
+# 197 (#451). A secret recorded as held, held in one participating repository and not the other: refused, the other named.
+sed -i '/^secret NobleFactor /d' "${secrets}"
+printf 'secret NobleFactor/alpha NOBLEFACTOR_AUTOMATION_APP_ID 1\nsecret NobleFactor/alpha NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY k\n' >>"${secrets}"
+run_star "${data}" github model apply held-nf.json NobleFactor
+expect "197 (#451): held in alpha alone is refused, beta named, and nothing written" error "${writes}"'
+    (writes | length) == 0' 'NOBLEFACTOR_AUTOMATION_APP_ID is recorded as held, and GitHub doesn.t hold it at NobleFactor/beta/NOBLEFACTOR_AUTOMATION_APP_ID' text
+sed -i '/^secret NobleFactor\/alpha /d' "${secrets}"
+
+# 198 (#451). An organization secret visible to selected repositories that leave one out: refused, that one named.
+printf '%s\n' "${nf_secrets}" >>"${secrets}"
+printf 'NobleFactor NOBLEFACTOR_AUTOMATION_APP_ID selected NobleFactor/alpha\n' >"${run_directory}/remotes/secret-visibility"
+run_star "${data}" github model apply held-nf.json NobleFactor
+expect "198 (#451): a secret shared with alpha alone is refused, beta named, and nothing written" error "${writes}"'
+    (writes | length) == 0' 'GitHub doesn.t hold it at NobleFactor/beta/NOBLEFACTOR_AUTOMATION_APP_ID' text
+printf 'NobleFactor NOBLEFACTOR_AUTOMATION_APP_ID selected NobleFactor/alpha,NobleFactor/beta\n' >"${run_directory}/remotes/secret-visibility"
+run_star "${data}" github model diff held-nf.json NobleFactor
+expect "198 (#451): shared with every participating repository, the secret is no difference" ok '[.[] | select(.kind == "secret" or .kind == "token")] == []'
+rm -f -- "${run_directory}/remotes/secret-visibility"
+
+# 199 (#451). A listing GitHub refuses is unreadable, reported apart from a missing secret.
+printf 'NobleFactor\nNobleFactor/beta\n' >"${run_directory}/remotes/secrets-refused"
+run_star "${data}" github model apply held-nf.json NobleFactor
+expect "199 (#451): a refused listing is refused as unreadable, and nothing written" error "${writes}"'
+    (writes | length) == 0' 'NOBLEFACTOR_AUTOMATION_APP_ID: GitHub refused to list the secrets at NobleFactor/alpha/NOBLEFACTOR_AUTOMATION_APP_ID, NobleFactor/beta/NOBLEFACTOR_AUTOMATION_APP_ID' text
+run_star "${data}" github model diff held-nf.json NobleFactor
+expect "199 (#451): diff records the organization secret as unreadable" ok '
+    any(.[]; .kind == "secret" and .path == "NobleFactor/NOBLEFACTOR_AUTOMATION_APP_ID" and .change == "unreadable")'
+rm -f -- "${run_directory}/remotes/secrets-refused"
+
+# 200 (#451). restore of a backup that records the token as held, one secret now missing: refused, nothing written.
+commit_model NobleFactor "$(cat "${run_directory}/work/held-nf.json")" >/dev/null
+sed -i '/^secret NobleFactor NOBLEFACTOR_AUTOMATION_APP_ID /d' "${secrets}"
+run_star "${data}" github model restore NobleFactor
+expect "200 (#451): restore of a held backup with a secret missing is refused, and nothing written" error "${writes}"'
+    (writes | length) == 0' 'NOBLEFACTOR_AUTOMATION_APP_ID is recorded as held, and GitHub doesn.t hold it at NobleFactor/alpha' text
+printf 'secret NobleFactor NOBLEFACTOR_AUTOMATION_APP_ID 1\n' >>"${secrets}"
+
+# 201 (#451). A token held everywhere passes: apply sets no secret.
+run_star "${data}" github model apply held-nf.json NobleFactor
+expect "201 (#451): a token held everywhere passes the preflight, and apply sets no secret" ok '
+    [.[] | select(.kind == "secret" or .kind == "token")] == []
+    and ([$calls[] | select(.[0:2] == ["secret", "set"])] | length) == 0'
+
+# 202 (#451). get writes the token record: held, or the source the current backup records; a secret not held everywhere
+# is left out.
+run_star "${data}" github model get NobleFactor
+expect "202 (#451): get records NobleFactor's token as held" ok ".token == ${held_token}"
+commit_model NobleFactor "$(jq '.token.secrets.NOBLEFACTOR_AUTOMATION_APP_ID = "vault:kv-nf-engprod-prd/NobleFactor--NOBLEFACTOR-AUTOMATION-APP-ID"' \
+    "${run_directory}/work/held-nf.json")" >/dev/null
+run_star "${data}" github model get NobleFactor
+expect "202 (#451): get keeps the source the backup records for a secret GitHub holds" ok '
+    .token.secrets == {NOBLEFACTOR_AUTOMATION_APP_ID: "vault:kv-nf-engprod-prd/NobleFactor--NOBLEFACTOR-AUTOMATION-APP-ID",
+        NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY: "held"}'
+sed -i '/^secret NobleFactor NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY /d' "${secrets}"
+run_star "${data}" github model get NobleFactor
+expect "202 (#451): get leaves out a secret GitHub doesn't hold everywhere" ok '.token.secrets | has("NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY") | not'
+printf 'secret NobleFactor NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY k\n' >>"${secrets}"
+
+# 203 (#451). diff of a model with no token record reports each secret as unidentified.
+run_star "${data}" github model diff noblefactor.json NobleFactor
+expect "203 (#451): diff reports each secret the model names no source for" ok '
+    [.[] | select(.kind == "token") | {path, change}] == [
+        {path: "NobleFactor/NOBLEFACTOR_AUTOMATION_APP_ID", change: "unidentified"},
+        {path: "NobleFactor/NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY", change: "unidentified"}]'
+
+# 204 (#451). A token record of the wrong kind is refused.
+jq '.token.kind = "classic-token"' "${run_directory}/work/held-nf.json" >"${run_directory}/work/wrong-kind.json"
+run_star "${data}" github model apply wrong-kind.json NobleFactor
+expect "204 (#451): a token record of the wrong kind is refused, and nothing written" error "${writes}"'
+    (writes | length) == 0' 'token record says its kind is classic-token; an organization.s token is github-app' text
+
+# 205 (#451). A recorded source that can't be read is refused, the source named.
+jq '.token.secrets.NOBLEFACTOR_AUTOMATION_APP_ID = "env:STAR_TEST_NOT_SET"' "${run_directory}/work/held-nf.json" \
+    >"${run_directory}/work/unset-source.json"
+run_star "${data}" github model apply unset-source.json NobleFactor
+expect "205 (#451): a recorded source that can't be read is refused, and nothing written" error "${writes}"'
+    (writes | length) == 0' 'the token record.s source env:STAR_TEST_NOT_SET: the environment variable STAR_TEST_NOT_SET is not set' text
+
+# 206 to 210 (#451). A secret's value can come from Azure Key Vault, vault:<vault>/<name>, read with az in the same
+# pipeline as env: and file:, so its value never enters a record or a call.
+vault="${run_directory}/remotes/vault"
+printf 'vault kv-nf-engprod-dev Acme--NOBLEFACTOR-AUTOMATION-APP-ID 67890\n' >"${vault}"
+printf 'installation Acme 67890 acme-automation\n' >>"${run_directory}/remotes/installations"
+printf 'vault kv-nf-engprod-dev Acme--NOBLEFACTOR-AUTOMATION-APP-PRIVATE-KEY -----BEGIN KEY-----\\nvault\\n-----END KEY-----\n' >>"${vault}"
+acme_vault="NOBLEFACTOR_AUTOMATION_APP_ID=vault:kv-nf-engprod-dev/Acme--NOBLEFACTOR-AUTOMATION-APP-ID"
+acme_vault+=",NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY=vault:kv-nf-engprod-dev/Acme--NOBLEFACTOR-AUTOMATION-APP-PRIVATE-KEY"
+
+# 206 (#451). --token names each secret's vault source: set on the organization, its fingerprint shown, its value in no
+# record and no call.
+vault_id="$(printf %s 67890 | { sha256sum 2>/dev/null || shasum -a 256; } | cut -c1-12)"
+run_star "${data}" github model apply "${reference}/organization.yaml" Acme --token "${acme_vault}"
+expect "206 (#451): each secret is set from Key Vault, its fingerprint shown" ok "
+    any(.[]; .kind == \"secret\" and .path == \"Acme/NOBLEFACTOR_AUTOMATION_APP_ID\" and .fingerprint == \"${vault_id}\")
+    and (tostring | test(\"67890\") | not)"
+check "206 (#451): the App's ID is the vault's" grep -qxF "secret Acme NOBLEFACTOR_AUTOMATION_APP_ID 67890" "${secrets}"
+check "206 (#451): the private key keeps its lines" \
+    grep -qxF 'secret Acme NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY -----BEGIN KEY-----\nvault\n-----END KEY-----' "${secrets}"
+check "206 (#451): no call carries a value the vault holds" bash -c "! grep -qE '67890|BEGIN KEY' '${run_directory}/calls.jsonl'"
+
+# 207 (#451). The model's token record names a vault source, and a binding lacks the secret: apply sets it from the vault.
+sed -i '/^secret NobleFactor NOBLEFACTOR_AUTOMATION_APP_ID /d' "${secrets}"
+printf 'vault kv-nf-engprod-prd NobleFactor--NOBLEFACTOR-AUTOMATION-APP-ID 2791147\n' >>"${vault}"
+printf 'installation NobleFactor 2791147 noblefactor-automation\n' >>"${run_directory}/remotes/installations"
+jq '.token.secrets.NOBLEFACTOR_AUTOMATION_APP_ID = "vault:kv-nf-engprod-prd/NobleFactor--NOBLEFACTOR-AUTOMATION-APP-ID"' \
+    "${run_directory}/work/held-nf.json" >"${run_directory}/work/vault-nf.json"
+run_star "${data}" github model apply vault-nf.json NobleFactor
+expect "207 (#451): a missing secret is set from the vault source the token record names" ok '
+    any(.[]; .kind == "secret" and .path == "NobleFactor/NOBLEFACTOR_AUTOMATION_APP_ID" and .action == "created")'
+check "207 (#451): NobleFactor's App ID is the vault's" grep -qxF "secret NobleFactor NOBLEFACTOR_AUTOMATION_APP_ID 2791147" "${secrets}"
+
+# 208 (#451). A vault source the vault doesn't hold is refused, named, and nothing written.
+run_star "${data}" github model apply "${reference}/organization.yaml" Acme \
+    --token "NOBLEFACTOR_AUTOMATION_APP_ID=vault:kv-nf-engprod-dev/No-Such-Secret,NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY=vault:kv-nf-engprod-dev/Acme--NOBLEFACTOR-AUTOMATION-APP-PRIVATE-KEY"
+expect "208 (#451): a secret the vault doesn't hold is refused, and nothing written" error "${writes}"'
+    (writes | length) == 0' 'Key Vault kv-nf-engprod-dev holds no secret No-Such-Secret' text
+
+# 209 (#451). With az signed out, a vault source is refused, az login named, and nothing written.
+touch "${run_directory}/remotes/az-signed-out"
+run_star "${data}" github model apply "${reference}/organization.yaml" Acme --token "${acme_vault}"
+expect "209 (#451): with az signed out, a vault source is refused, and nothing written" error "${writes}"'
+    (writes | length) == 0' 'az is not signed in to Azure; run az login' text
+rm -f -- "${run_directory}/remotes/az-signed-out"
+
+# 210 (#451). A vault source that breaks Key Vault's naming rules is refused before anything is read.
+run_star "${data}" github model apply "${reference}/organization.yaml" Acme --token "NOBLEFACTOR_AUTOMATION_APP_ID=vault:kv/a_b"
+expect "210 (#451): a malformed vault source is refused, and nothing written" error "${writes}"'
+    (writes | length) == 0' 'names no Key Vault secret' text
+
+# 211 to 220 (#451). star github token make makes an account's token where GitHub allows it, stores it in Key Vault, and
+# adopts one already there; it asks nothing at a prompt, each value coming from a source on its command line.
+state_dir="${run_directory}/state-home/star/token-make"
+
+# 211 (#451). An organization's first run writes the app's manifest and a page that posts it to GitHub, and opens it.
+run_star "${data}" github token make Acme --vault kv-acme-test
+expect "211 (#451): the first run starts the manifest flow and names the next command" ok '
+    .[0].action == "started" and (.[0].next | test("--code env:CODE"))'
+check "211 (#451): the page posts the manifest to Acme's new-app page, its state with it" grep -qE \
+    'action="https://github.com/organizations/Acme/settings/apps/new\?state=[0-9a-f]{32}"' "${state_dir}/Acme/manifest.html"
+check "211 (#451): the manifest asks for the extension's permissions, and names the app for Acme" bash -c \
+    "grep -q '&quot;organization_projects&quot;:&quot;write&quot;' '${state_dir}/Acme/manifest.html' && grep -q 'acme-automation' '${state_dir}/Acme/manifest.html'"
+check "211 (#451): the page was opened" bash -c "jq -e 'select(.[0] == \"open\" or .[0] == \"xdg-open\")' '${run_directory}/calls.jsonl' >/dev/null"
+
+# 212 (#451). A redirect whose state isn't the first run's is refused, and the code is not spent.
+printf 'code c0de 4242 acme-automation\n' >"${run_directory}/remotes/manifest-codes"
+export CODE="https://github.com/Acme?code=c0de&state=0123456789abcdef0123456789abcdef"
+run_star "${data}" github token make Acme --vault kv-acme-test --code env:CODE
+expect "212 (#451): a redirect from another start is refused" error "" 'state isn.t the one the first run made' text
+
+# 213 (#451). The redirect's code is exchanged for the app; its ID and key are stored, the key file gone, the install
+# page opened, and no value in any call.
+CODE="https://github.com/Acme?code=c0de&state=$(cat "${state_dir}/Acme/state" 2>/dev/null || true)"
+export CODE
+run_star "${data}" github token make Acme --vault kv-acme-test --code env:CODE
+unset CODE
+expect "213 (#451): the code is exchanged, the app created, and its install page named" ok '
+    .[0].action == "created" and .[0].app == "acme-automation"
+    and .[0].install == "https://github.com/apps/acme-automation/installations/new"'
+check "213 (#451): the vault holds the App's ID" grep -qxF "vault kv-acme-test Acme--NOBLEFACTOR-AUTOMATION-APP-ID 4242" "${vault}"
+check "213 (#451): the vault holds the private key, its lines kept" grep -qxF \
+    'vault kv-acme-test Acme--NOBLEFACTOR-AUTOMATION-APP-PRIVATE-KEY -----BEGIN RSA PRIVATE KEY-----\nmanifest\n-----END RSA PRIVATE KEY-----' "${vault}"
+check "213 (#451): no key file is left behind" bash -c "! ls '${state_dir}/Acme/'*.pem 2>/dev/null"
+check "213 (#451): no call carries the key" bash -c "! grep -q 'BEGIN RSA' '${run_directory}/calls.jsonl'"
+
+# 214 (#451). Before the app is installed, a run says so; once it is, the token is adopted and its record printed.
+run_star "${data}" github token make Acme --vault kv-acme-test
+expect "214 (#451): an app not yet installed is named, with its install link" ok '
+    .[0].action == "not-installed" and (.[0].next | test("apps/acme-automation/installations/new"))'
+printf 'installation Acme 4242 acme-automation\n' >"${run_directory}/remotes/installations"
+run_star "${data}" github token make Acme --vault kv-acme-test
+expect "214 (#451): an installed app is adopted, and its token record printed" ok '
+    .[0].action == "adopted" and .[0].token == {kind: "github-app", secrets: {
+        NOBLEFACTOR_AUTOMATION_APP_ID: "vault:kv-acme-test/Acme--NOBLEFACTOR-AUTOMATION-APP-ID",
+        NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY: "vault:kv-acme-test/Acme--NOBLEFACTOR-AUTOMATION-APP-PRIVATE-KEY"}}'
+
+# 215 (#451). A key the vault lacks is named, with how to store a new one; --from stores it.
+sed -i '/^vault kv-acme-test Acme--NOBLEFACTOR-AUTOMATION-APP-PRIVATE-KEY /d' "${vault}"
+run_star "${data}" github token make Acme --vault kv-acme-test
+expect "215 (#451): a missing key is named, with the command that stores a new one" ok '
+    .[0].action == "incomplete" and .[0].missing == "NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY" and (.[0].next | test("--from file:"))'
+printf -- '-----BEGIN RSA PRIVATE KEY-----\nnew\n-----END RSA PRIVATE KEY-----\n' >"${run_directory}/work/new.pem"
+chmod 600 "${run_directory}/work/new.pem"
+run_star "${data}" github token make Acme --vault kv-acme-test --from file:new.pem
+expect "215 (#451): --from stores the new key, and the token record is printed" ok '.[0].action == "stored" and .[0].token.kind == "github-app"'
+check "215 (#451): the vault holds the new key" grep -qxF \
+    'vault kv-acme-test Acme--NOBLEFACTOR-AUTOMATION-APP-PRIVATE-KEY -----BEGIN RSA PRIVATE KEY-----\nnew\n-----END RSA PRIVATE KEY-----' "${vault}"
+
+# 216 (#451). A user account's first run opens GitHub's new-token page with its note and scopes filled in.
+run_star "${data}" github token make test-user --vault kv-user-test
+expect "216 (#451): the first run opens the new-token page, its scopes repo and project" ok '
+    .[0].action == "started" and (.[0].page | test("^https://github.com/settings/tokens/new\\?scopes=repo,project&description="))
+    and (.[0].next | test("--from env:TOKEN"))'
+
+# 217 (#451). A token is checked before it is stored: another account's and one short of a scope are refused.
+printf 'token tok-other someone-else repo,project 2027-01-01 00:00:00 UTC\n' >"${run_directory}/remotes/tokens"
+printf 'token tok-short test-user repo 2027-01-01 00:00:00 UTC\n' >>"${run_directory}/remotes/tokens"
+printf 'token tok-good test-user repo,project 2027-01-01 00:00:00 UTC\n' >>"${run_directory}/remotes/tokens"
+export TOKEN=tok-other
+run_star "${data}" github token make test-user --vault kv-user-test --from env:TOKEN
+expect "217 (#451): another account's token is refused, and nothing stored" error "" 'belongs to someone-else, not test-user' text
+export TOKEN=tok-short
+run_star "${data}" github token make test-user --vault kv-user-test --from env:TOKEN
+expect "217 (#451): a token short of a scope is refused, the scope named" error "" 'lacks the project scope' text
+check "217 (#451): neither was stored" bash -c "! grep -q 'kv-user-test' '${vault}'"
+
+# 218 (#451). A good token is stored with its expiry, and its record printed; run again, it is adopted.
+export TOKEN=tok-good
+run_star "${data}" github token make test-user --vault kv-user-test --from env:TOKEN
+unset TOKEN
+expect "218 (#451): a good token is stored, its expiry and record shown" ok '
+    .[0].action == "stored" and .[0].expires == "2027-01-01 00:00:00 UTC"
+    and .[0].token == {kind: "classic-token", secrets: {ADD_TO_PROJECT_PAT: "vault:kv-user-test/test-user--ADD-TO-PROJECT-PAT"}}'
+check "218 (#451): the vault holds the token, and its expiry" bash -c \
+    "grep -qxF 'vault kv-user-test test-user--ADD-TO-PROJECT-PAT tok-good' '${vault}' && grep -qxF 'expires kv-user-test test-user--ADD-TO-PROJECT-PAT 2027-01-01T00:00:00Z' '${run_directory}/remotes/vault-tags'"
+check "218 (#451): no call carries the token" bash -c "! grep -q 'tok-good' '${run_directory}/calls.jsonl'"
+run_star "${data}" github token make test-user --vault kv-user-test
+expect "218 (#451): run again, the token in the vault is adopted" ok '.[0].action == "adopted" and .[0].token.kind == "classic-token"'
+
+# 219 (#451). With az signed out, token make is refused before it does anything.
+touch "${run_directory}/remotes/az-signed-out"
+run_star "${data}" github token make test-user --vault kv-user-test
+expect "219 (#451): with az signed out, token make is refused" error "" 'az is not signed in to Azure; run az login' text
+rm -f -- "${run_directory}/remotes/az-signed-out"
+
+# 220 (#451). --code is an organization's, and a vault is no source for a value going into one.
+run_star "${data}" github token make test-user --vault kv-user-test --code env:HOME
+expect "220 (#451): --code on a user account is refused" error "" 'code is an organization.s: a user account.s token comes with' text
+run_star "${data}" github token make Acme --vault kv-acme-test --from vault:kv-acme-test/Acme--X
+expect "220 (#451): a vault source for --from is refused" error "" 'the value is going into the vault' text
+
+# 221 (#451). An organization's app, its ID named, that isn't installed on the organization is refused, nothing written.
+export APP_ID=55555
+run_star "${data}" github model apply "${reference}/organization.yaml" Acme \
+    --token NOBLEFACTOR_AUTOMATION_APP_ID=env:APP_ID,NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY=file:app.pem
+unset APP_ID
+expect "221 (#451): an app not installed on the organization is refused, and nothing written" error "${writes}"'
+    (writes | length) == 0' 'NOBLEFACTOR_AUTOMATION_APP_ID: the app whose ID it names isn.t installed on Acme' text
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"

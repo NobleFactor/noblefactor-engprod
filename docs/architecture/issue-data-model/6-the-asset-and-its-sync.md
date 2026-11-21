@@ -1,7 +1,7 @@
 ---
 title: "Issue model commands and recovery"
 status: draft
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 <a id="6-the-asset-and-its-sync"></a>
@@ -36,6 +36,9 @@ Each model command requires an explicit account. The extension's general account
 | `teams` | Organization teams, attributes and repository relationships |
 | `labels` | Label definitions for participating repositories |
 | `projects` | Organization templates or user-account template copies, including fields, options, views and shared copy configuration |
+| `token` | The account's issue-tracking token: its kind, and for each secret its Triage workflow signs in with, where the value comes from: `env:`, `file:`, `vault:` or `held`; never its uses or permissions |
+
+The token record appears when the account's `.github` repository holds a Triage workflow template ([MODEL-007](6-the-asset-and-its-sync.decisions.md#model-007)). A secret is `held` when GitHub holds it at every binding, each place a workflow reads it: a user account's repository secret in each participating repository, or an organization's secret, which must reach each participating repository, or that repository's own secret of the same name. Get writes, for each secret held at every binding, the source the account's current backup records, or `held`; it leaves out a secret not held everywhere. A reference records the kind alone.
 
 The schema version is 1. The record excludes issues, issue-level values, project rows, projects created from templates, built-in project workflows and organization default labels. Those exclusions define the backup's recovery limits.
 
@@ -94,6 +97,8 @@ Use `by_hand` to identify changes the integration cannot make through its suppor
 
 Apply reads live state, creates missing resources, changes differing resources and preserves identity during renames. It does not delete and recreate a resource merely to change its name.
 
+Before its first write, apply, and restore, run a preflight ([ACCESS-006](4-storage-and-reach.decisions.md#access-006)). The model, or `--token`, must name a source for every secret the account's Triage workflow signs in with; every binding must be listable; a secret recorded as `held` must be held at every binding; and every named source must be readable. Any failure refuses the whole operation and writes nothing. The refusal names each failure, tells a binding GitHub refuses to list from a missing secret, and says how to make the token, with a link to the [credentials guide](../../reference/issue-tracking-credentials.md).
+
 | Scope | Reconciliation contract |
 | --- | --- |
 | Issue types and fields | Preserve existing IDs; send complete option lists with existing option IDs |
@@ -101,7 +106,7 @@ Apply reads live state, creates missing resources, changes differing resources a
 | Templates | Create missing definitions and reconcile fields, options and supported views |
 | Team or user projects | Create required copies and reconcile configuration while retaining their execution data |
 | Teams and grants | Use the same account's backup; add or raise grants, never delete teams or remove or lower roles |
-| Shared files and repository setup | Publish file changes through PRs and report direct settings, secrets and manual work |
+| Shared files and repository setup | Publish file changes through PRs, set direct settings and secrets from their named sources, and report manual work |
 
 A new empty project can be brought exactly to its definition, including removal of native defaults and built-in workflows, without `--prune`. That rule applies to resources the operation just created, not to pre-existing account data.
 
@@ -187,7 +192,11 @@ Every GitHub operation checks the active `gh` access before its requests. It doe
 
 The configured scope checks require `read:project` for get and diff, plus `repo` for backup. Apply and restore check `repo`, `project`, `admin:org` and `workflow`. These checks do not replace repository, organization or project permissions.
 
-`--token` names secret sources, never values: `<SECRET>=env:<NAME>` or `<SECRET>=file:<path>`, comma-separated, or a bare source when the workflow uses one secret. Reject literal secret values, unknown secrets and unsupported sources before writes.
+`--token` names secret sources, never values: `<SECRET>=env:<NAME>`, `<SECRET>=file:<path>` or `<SECRET>=vault:<vault>/<name>`, comma-separated, or a bare source when the workflow uses one secret. A `vault:` source is a secret in Azure Key Vault, which `star` reads with `az`, the one other tool it calls for a secret ([MODEL-008](6-the-asset-and-its-sync.decisions.md#model-008)); before any write, `star` checks that `az` is signed in and the vault holds the secret, and refuses a source that breaks Key Vault's naming rules. Reject literal secret values, unknown secrets and unsupported sources before writes.
+
+`--token` replaces the source the model's token record names. Diff reports a secret the token record names no source for as a `token` record, `unidentified`, beside the `secret` records for a secret missing or unreadable at a binding.
+
+`star github token make <account> --vault <vault>` makes the account's token where GitHub allows it and stores each value in the vault as `<account>--<SECRET>` ([MODEL-009](6-the-asset-and-its-sync.decisions.md#model-009)). For an organization it creates the GitHub App from a manifest, its permissions in the extension's `templates/automation-app.json`; for a user account, which GitHub gives no way to make a token for from a script, it opens the new-token page with its note and scopes filled in, then checks and stores the token you make. It takes the manifest's code and a classic token from a named source, never a prompt. A working token already in the vault is adopted; `--replace` makes a new one as new versions of the same vault secrets. Nothing is rolled back: each run reports what exists and the next command, and running again finishes what is left.
 
 A source file must be readable only by its owner, mode 600 or stricter on Unix. Windows uses ACL inspection and requires platform qualification. Secret values pass directly from their source to the GitHub secret operation, outside Starlark records. A receipt contains only the first 12 hexadecimal digits of the value's SHA-256.
 

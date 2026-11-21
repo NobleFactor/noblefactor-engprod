@@ -108,3 +108,30 @@ recorded_by: Codex
 decided_at: null
 recorded_at: "2026-11-20T15:55:37Z"
 ```
+
+<a id="access-006"></a>
+
+## 6. Require every account to identify its issue-tracking token
+
+Every account that takes part in triage identifies the token its Triage workflow signs in with, and `star github model apply`, and `restore`, refuse an account that doesn't, or whose token isn't held where its record says, before they write anything. Which token an account has, and what it's used for and permits, are free to change; that it has one is not. Where `star` can't make the token, its refusal and its help say exactly what to do.
+
+Scope: every organization and user account that apply or restore reaches, the sandboxes included.
+
+**Reason:** Both sandboxes ran for days with no Triage token, every Triage run failing, and nothing reported it: apply set up each account and listed the missing secrets as steps by hand. A refusal before any write makes a missing token impossible to set up past.
+
+**Alternatives:** Listing a missing token as a step by hand was the earlier behavior, and is how the sandboxes broke unnoticed. Recording the token's uses and permissions in the rule was rejected: they change as the work does.
+
+**Consequence:** Applying a reference takes each secret's source from `--token`; applying an account's own model takes it from the model's token record ([MODEL-007](6-the-asset-and-its-sync.decisions.md#model-007)). An account whose token is missing can't be applied until the token is made and named. Alerts for a token that expires or disappears later are [#613](https://github.com/NobleFactor/noblefactor-engprod/issues/613)'s.
+
+Evidence: the Owner's direction on 2026-11-20, in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`, recorded in [#451's plan, § 12](../../plans/feature/451-credentials.md#approval-and-departures).
+
+```yaml
+id: "ACCESS-006"
+status: accepted
+supersedes: []
+proposed_by: David Noble
+approved_by: David Noble
+recorded_by: Claude Code
+decided_at: "2026-11-20"
+recorded_at: "2026-11-21T03:00:00Z"
+```
