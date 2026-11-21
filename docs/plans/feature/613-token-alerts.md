@@ -214,7 +214,7 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 
 ### 9.1b Issue 621: the access diagnostics
 
-- [ ] `access.star` as § 621.1 sets out; its cases; section 6, § 8; the deployed command checked as § 621.3 says.
+- [x] `access.star` as § 621.1 sets out; its cases, 222 to 234; section 6, § 8. The suite passes all 685 checks, 27 of them #621's. The deployed command's check of § 621.3 moves to § 9.5, after the merge.
 
 <a id="phase-2-the-check"></a>
 
@@ -239,6 +239,7 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 ### 9.5 Phase 5: merge, landing and verification
 
 - [ ] Merged; the templates landed in each participating repository; two days of passing checks posted on #613.
+- [ ] Deployed with `writ deploy`; the deployed command, run with `HTTPS_PROXY` at a port nothing listens on, names GitHub as unreachable and no credential fault; posted on #621.
 
 <a id="files-and-related-assets"></a>
 
