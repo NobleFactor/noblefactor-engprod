@@ -180,12 +180,14 @@ Use diff to inspect the selected backup against live state before restoration. P
 
 ## 8. Access and secret handling
 
-Every GitHub operation checks the active `gh` access before its requests. It does not sign in, refresh credentials or add scopes on the user's behalf.
+Every GitHub operation checks the active `gh` access before its requests, and stops before any other request when that check can't be completed. It does not sign in, refresh credentials or add scopes on the user's behalf.
 
 | Failure | Required explanation |
 | --- | --- |
 | No login | Identify the host and the login command for the user's terminal |
-| Rejected token | Distinguish stored login from `GH_TOKEN` or `GITHUB_TOKEN`; identify renewal or replacement |
+| GitHub not reached | Name the connection failure, DNS, a timeout, a refused or reset connection, or TLS, quoting gh's error line; advise checking the network, a proxy or a VPN, and no change to any credential (#621) |
+| Rejected token | Only a 401 or `Bad credentials` in gh's error line, not gh's own "invalid" line, which it prints for a login it couldn't check; distinguish stored login from `GH_TOKEN` or `GITHUB_TOKEN`; identify renewal or replacement |
+| Any other failure | Quote gh's error line, scrubbed of anything shaped like a token, and claim no fix |
 | Missing scopes | Name only the missing scopes; `project` includes `read:project` |
 | Account unavailable despite scopes | Identify the access boundary and who must grant access |
 | Rate limit exhausted | Report the reset time in local time |

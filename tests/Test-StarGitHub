@@ -1074,11 +1074,22 @@ esac
 
 case "${1:-} ${2:-}" in
     "auth status")
+        # A case's own answer, from ${GH_REMOTES}/auth-status, as gh prints it for a failed login (#621).
+        if [[ -f "${GH_REMOTES}/auth-status" ]]; then
+            cat -- "${GH_REMOTES}/auth-status"
+            exit 1
+        fi
         printf '%s\n' "github.com" "  ✓ Logged in to github.com account tester (keyring)" "  - Active account: true" \
             "  - Git operations protocol: https" "  - Token scopes: 'admin:org', 'project', 'read:org', 'repo', 'workflow'"
         exit 0
         ;;
     "api rate_limit")
+        # A case's own answer, from ${GH_REMOTES}/rate-limit, failing when ${GH_REMOTES}/rate-limit-fails exists (#621).
+        if [[ -f "${GH_REMOTES}/rate-limit" ]]; then
+            cat -- "${GH_REMOTES}/rate-limit"
+            [[ ! -f "${GH_REMOTES}/rate-limit-fails" ]] || exit 1
+            exit 0
+        fi
         echo "4999 0"
         exit 0
         ;;
@@ -5579,6 +5590,90 @@ run_star "${data}" github model apply "${reference}/organization.yaml" Acme \
 unset APP_ID
 expect "221 (#451): an app not installed on the organization is refused, and nothing written" error "${writes}"'
     (writes | length) == 0' 'NOBLEFACTOR_AUTOMATION_APP_ID: the app whose ID it names isn.t installed on Acme' text
+
+# 222 to 234 (#621). The access check every command makes first: a connection failure is named as one, never as a
+# rejected token, and only a 401 is a rejected token; a missing login, a missing scope and a spent rate limit are as
+# before. Each stops before any other GitHub call. star github model get makes the check here.
+auth="${run_directory}/remotes/auth-status"
+failed_login() {
+    printf '%s\n' "github.com" "  X Failed to log in to github.com account tester (${2:-keyring})" "  - Active account: true" \
+        "  - The token in keyring is invalid." "  - To re-authenticate, run: gh auth refresh -h github.com" ${1:+"  - Error: $1"} >"${auth}"
+}
+declare -r stopped='([$calls[] | select(.[0] == "api" and .[1] != "rate_limit")] | length) == 0'
+
+# 222 (#621). No login.
+printf '%s\n' "You are not logged into any GitHub hosts. To log in, run: gh auth login" >"${auth}"
+run_star "${data}" github model get NobleFactor
+expect "222 (#621): no login is named, and nothing else is called" error "${stopped}" 'not signed in to github.com with gh' text
+expect "222 (#621): the fix is gh auth login" error "" 'Sign in:  gh auth login' text
+
+# 223 (#621). An actual 401: a rejected token, renewed with gh auth refresh.
+failed_login 'Get "https://api.github.com/": HTTP 401: Bad credentials (https://api.github.com/)'
+run_star "${data}" github model get NobleFactor
+expect "223 (#621): an actual 401 is a rejected token" error "${stopped}" 'refused gh.s token for tester \(401: bad credentials\)' text
+expect "223 (#621): its fix is gh auth refresh" error "" 'Renew your login:  gh auth refresh' text
+
+# 224 (#621). A refusal with no error line, as older gh prints it, is a rejected token, as before.
+failed_login
+run_star "${data}" github model get NobleFactor
+expect "224 (#621): a refusal with no error line is a rejected token" error "${stopped}" 'refused gh.s token for tester' text
+
+# 225 (#621). A 401 for the token in GH_TOKEN names the variable to replace.
+failed_login 'HTTP 401: Bad credentials' GH_TOKEN
+run_star "${data}" github model get NobleFactor
+expect "225 (#621): a rejected GH_TOKEN is named" error "${stopped}" 'refused the token in GH_TOKEN' text
+expect "225 (#621): its fix is to replace it or unset it" error "" 'Replace it, or unset GH_TOKEN' text
+
+# 226 to 229 (#621). GitHub not reached: DNS, a timeout, a refused connection, TLS. Each is named, gh's line quoted, no
+# credential blamed.
+for failure in 'Get "https://api.github.com/": dial tcp: lookup api.github.com: no such host|226|no such host' \
+    'Get "https://api.github.com/": dial tcp 140.82.112.6:443: i/o timeout|227|i/o timeout' \
+    'Get "https://api.github.com/": proxyconnect tcp: dial tcp 127.0.0.1:9: connect: connection refused|228|connection refused' \
+    'Get "https://api.github.com/": tls: failed to verify certificate: x509: certificate signed by unknown authority|229|x509'; do
+    IFS='|' read -r line number word <<<"${failure}"
+    failed_login "${line}"
+    run_star "${data}" github model get NobleFactor
+    expect "${number} (#621): ${word} is named as GitHub not reached, and nothing else is called" error "${stopped}" \
+        "can.t be reached from this machine.*${word}" text
+    expect "${number} (#621): no credential is at fault" error "" 'No credential is at fault: check the network' text
+    check "${number} (#621): ${word} blames no token and advises no renewal" bash -c \
+        "! grep -qE 'GitHub refused|expired or been revoked|gh auth refresh' '${run_directory}/errors'"
+done
+
+# 230 (#621). An error of no known kind is quoted, with no fix claimed.
+failed_login 'something unexpected happened'
+run_star "${data}" github model get NobleFactor
+expect "230 (#621): an unknown error is quoted" error "${stopped}" 'couldn.t check its login for tester: Error: something unexpected happened' text
+expect "230 (#621): no fix is claimed" error "" 'No fix is known for that answer' text
+rm -f -- "${auth}"
+
+# 231 (#621). A token value in gh's line is never quoted.
+failed_login 'Get "https://api.github.com/": dial tcp: lookup api.github.com: no such host for ghp_0123456789abcdefghijABCDEFGHIJ012345'
+run_star "${data}" github model get NobleFactor
+expect "231 (#621): a token in gh's line is scrubbed from the message" error "" 'no such host for <token>' text
+check "231 (#621): the token appears nowhere in the message" bash -c "! grep -q 'ghp_0123456789' '${run_directory}/errors'"
+rm -f -- "${auth}"
+
+# 232 (#621). A missing scope is named, as before.
+printf '%s\n' "github.com" "  ✓ Logged in to github.com account tester (keyring)" "  - Active account: true" \
+    "  - Git operations protocol: https" "  - Token scopes: 'repo'" >"${auth}"
+run_star "${data}" github model get NobleFactor
+expect "232 (#621): a missing scope is named" error "${stopped}" 'lacks the scope .* needs: read:project' text
+expect "232 (#621): its fix adds the scope" error "" 'gh auth refresh --hostname github.com --scopes read:project' text
+rm -f -- "${auth}"
+
+# 233 (#621). A spent rate limit is named, with when it resets, as before.
+printf '0 1893456000\n' >"${run_directory}/remotes/rate-limit"
+run_star "${data}" github model get NobleFactor
+expect "233 (#621): a spent rate limit is named, with its reset" error "${stopped}" 'rate limit for tester is spent; it resets at' text
+
+# 234 (#621). The rate limit's call failing to connect is GitHub not reached, not a rate limit or a token.
+printf '%s\n' 'Get "https://api.github.com/rate_limit": dial tcp: lookup api.github.com: no such host' >"${run_directory}/remotes/rate-limit"
+touch "${run_directory}/remotes/rate-limit-fails"
+run_star "${data}" github model get NobleFactor
+expect "234 (#621): the rate limit's call failing to connect is GitHub not reached" error "${stopped}" \
+    'can.t be reached from this machine.*no such host' text
+rm -f -- "${run_directory}/remotes/rate-limit" "${run_directory}/remotes/rate-limit-fails"
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"

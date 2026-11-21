@@ -2,7 +2,7 @@
 title: "Issue-tracking credentials"
 type: Guide
 status: Draft
-updated: 2026-11-20
+updated: 2026-11-21
 ---
 
 # Issue-tracking credentials
@@ -170,6 +170,26 @@ A secret can be present and still wrong, so the proof is a Triage run that succe
 ```bash
 gh run list --repo <owner>/<repository> --workflow triage.yml --limit 5
 ```
+
+<a id="alerts"></a>
+
+## 7a. Alerts
+
+Every participating repository checks its token each day and opens an issue, `Token alert: <condition>`, labeled `token-alert` and assigned to you, when something is wrong. GitHub notifies you of each. While the condition holds, the issue gets one comment a day; when the next check finds it gone, the issue closes itself. Closing one by hand doesn't fix anything: the next check opens it again.
+
+| Alert | What it means | What to do |
+| --- | --- | --- |
+| `missing` | The secret the workflows read isn't set | Make the token and name it to `apply` (§§ 4 to 6) |
+| `refused` | GitHub refused the token or the app's key, or wouldn't mint an installation token | Renew or regenerate it (§ 8) |
+| `not-installed` | The organization's app isn't installed on the organization | Install it on all repositories |
+| `short` | The token lacks a permission or scope the workflows need | Add it on the app's page, or make a token with the scope |
+| `wrong-account` | The classic token signs in as another account | Make it signed in as the account it serves |
+| `expiring`, `expired` | The classic token expires within 14 days, or has | Regenerate it (§ 8) |
+| `rotation-due`, `rotation-overdue` | The app key's rotation, `TOKEN_ROTATION_DUE`, is within 14 days, or past | Rotate the key, and set the next date |
+| `consumer-failed` | A Triage workflow failed | Read the run it names; the next healthy check closes it |
+| `no-recent-check in <repository>` | That repository's daily check has stopped running | Re-enable its workflow on its Actions page |
+
+GitHub not reached raises no alert: the run fails, and the next day's check tries again.
 
 <a id="renewing"></a>
 
