@@ -17,6 +17,8 @@ documents:
   - kind: Related work
     url: https://github.com/NobleFactor/noblefactor-engprod/issues/451
     text: "The credentials and permissions issue tracking runs on are listed in one place, with when and how each is renewed"
+  - kind: Design
+    path: docs/architecture/issue-data-model/6-the-asset-and-its-sync.md
   - kind: Related work
     url: https://github.com/NobleFactor/noblefactor-engprod/issues/614
     text: "Model publication stops for Owner review and verifies actual merge requirements"
@@ -59,6 +61,40 @@ Out of scope:
 
 #613 requires an alert whenever a token a process depends on expires, disappears, or is refused, repeating until fixed and closing only when the cause clears, checked through the binding that raised it. Its evidence names the sandboxes, which are no longer used (§ 12); § 7 says what replaces them.
 
+## Issue 621
+
+#621: every `star github` command reports a connection failure as a rejected token. `check_access` in `commands/access.star` reads `gh auth status`, and whenever the active login's check fails, it reports "401: bad credentials; it has expired or been revoked" and advises renewing or replacing the token, whatever stopped the check. It reached a user on 2026-11-21, when `star github schedule get` failed because `api.github.com` couldn't be resolved. `_run` appends `; true`, so no exit status survives.
+
+What gh itself says, read on 2026-11-21 with gh 2.104.0 and GitHub unreachable: the active login's block reads "X Failed to log in", then "The token in keyring is invalid.", even though no request reached GitHub. The cause is only on its `- Error:` line, for example `dial tcp 127.0.0.1:9: connect: connection refused`. `gh api rate_limit` fails with the same text. So gh's "invalid" line can't be trusted; its error line can.
+
+<a id="issue-621-fix"></a>
+
+### 621.1 The fix
+
+- `_run` returns the exit status beside the output.
+- The failed login's `- Error:` line decides the diagnosis:
+  - **Connection failure:** `no such host`, `i/o timeout`, `timeout`, `connection refused`, `connection reset`, `network is unreachable`, `tls:`, `x509:` or `certificate`. The message names GitHub as unreachable, quotes gh's error line, and says to check the network, a proxy or a VPN, and to rerun. It recommends no change to any credential.
+  - **Credential rejection:** `401` or `Bad credentials`. The message is today's, naming `gh auth refresh` or the token variable to replace.
+  - **Anything else:** gh's error line, quoted, with no fix claimed.
+- A block with no error line keeps today's handling.
+- Every later GitHub call in the check, the rate limit and the organization, fails the same way when its own exit status is non-zero, before any other call is made: a connection failure is named as one, never as a spent rate limit or a missing organization.
+- No credential ever appears in a message: gh's lines carry none, and the check adds none.
+
+<a id="issue-621-overlap"></a>
+
+### 621.2 The overlap with #613
+
+#613's check runs in GitHub Actions, where a connection failure is rare but possible. It is not a credential condition there either: the check's run fails, the next day's run checks again, and no credential incident is raised for it (§ 5.1).
+
+<a id="issue-621-tests"></a>
+
+### 621.3 Tests and evidence
+
+- The stand-in `gh` answers `auth status` and `api rate_limit` from a case's own text when one is given.
+- New cases in `tests/Test-StarGitHub`: a DNS failure, a timeout, a refused connection and a TLS failure, each named as a connection failure with gh's line and no credential advice; an actual HTTP 401, named as a rejected token; an error of no known kind, quoted with no fix; and the rate-limit check failing to connect. The existing access cases, for no login, a refused token, missing scopes, an organization not visible and a spent rate limit, keep passing. Each new case fails without the change.
+- The deployed command, run with `HTTPS_PROXY` pointing at a port nothing listens on, names GitHub as unreachable and no credential fault; the result is posted on #621.
+- Section 6, § 8's table of failures gains the connection failure.
+
 <a id="current-state"></a>
 
 ## 3. Current state
@@ -94,7 +130,7 @@ Read on 2026-11-21, at develop c69b4ae:
    - For an app, it signs a JSON Web Token with the key, finds the installation on the account, and mints an installation token. GitHub's answer lists the permissions granted; each one the repository's workflows need must be there. A key that doesn't sign or isn't accepted is `refused`; an app not installed is `not-installed`; a permission missing is `short`.
    - For a classic token, it calls `GET /user`. A refusal is `refused`; another login is `wrong-account`; a scope missing is `short`; an expiry passed is `expired`, within 14 days `expiring`.
 3. **Checks rotation.** For an app key, `TOKEN_ROTATION_DUE` passed is `rotation-overdue`, within 14 days `rotation-due`.
-4. **Writes the incidents,** § 5.2.
+4. **Writes the incidents,** § 5.2. A failure to reach GitHub is no credential condition: the run fails, the next run checks again, and no incident is raised for it (#621).
 
 The permissions each repository needs are listed in the template, `workflow-templates/credentials-check.json`, so they can change as the work does.
 
@@ -159,7 +195,7 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 
 | Milestone | Required? | Expected evidence | State/result |
 | --- | --- | --- | --- |
-| Implementation | Yes | The commits of §§ 9.2 to 9.4, reviewed | Pending |
+| Implementation | Yes | The commits of §§ 9.2 to 9.4 and 621.1, reviewed | Pending |
 | Merge | Yes | The pull request and the commit it lands | Pending |
 | Deployment | Yes: the templates landed in each participating repository | Each repository holding the check | Pending |
 | Verification | Yes, in the field | Two days of passing checks in every participating repository, posted on #613 | Pending |
@@ -173,6 +209,12 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 ### 9.1 Phase 1: the plan
 
 - [ ] This plan reviewed by Codex and approved by you, then #613's body rewritten to match.
+
+<a id="phase-1b-issue-621"></a>
+
+### 9.1b Issue 621: the access diagnostics
+
+- [ ] `access.star` as § 621.1 sets out; its cases; section 6, § 8; the deployed command checked as § 621.3 says.
 
 <a id="phase-2-the-check"></a>
 
