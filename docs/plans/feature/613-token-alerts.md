@@ -226,7 +226,7 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 
 ### 9.3 Phase 3: the Triage workflow's failure step
 
-- [ ] The step in both Triage templates; its cases.
+- [x] The step in both Triage templates, `workflow-templates/triage.organization.yml` and `triage.user.yml`, copied from each account's `.github` on 2026-11-21; the organization's job gains `contents: read` and `issues: write`, which it set none of, and the user account's `contents: read`. Its case, a reported failure raising `consumer-failed` at once and the next healthy check clearing it, is in `tests/Test-CredentialsCheck`.
 
 <a id="phase-4-the-documents"></a>
 
