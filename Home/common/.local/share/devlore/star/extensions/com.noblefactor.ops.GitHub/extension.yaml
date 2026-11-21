@@ -458,7 +458,7 @@ commands:
         help: "The account, an organization or a user; required"
 
   - name: github.model.apply
-    help: "Make a model the account's, writing each difference diff finds; deletes nothing of the account's without --prune"
+    help: "Make a model the account's; refused without its token, see docs/reference/issue-tracking-credentials.md"
     implementation: commands/github-model-apply.star
     args:
       - name: model
@@ -473,7 +473,7 @@ commands:
       - name: token
         type: string
         default: ""
-        help: "Each Triage workflow secret's source, <SECRET>=env:<NAME>, file:<path> or vault:<vault>/<name>, comma-separated, or bare for one"
+        help: "Each Triage secret's source, <SECRET>=env:<NAME>, file:<path> or vault:<vault>/<name>, comma-separated, or bare for one"
 
   - name: github.model.restore
     help: "Apply an account's backup, model.yaml in its .github repository at main or the revision named, as apply does"

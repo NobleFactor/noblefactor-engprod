@@ -337,7 +337,7 @@ Questions for you, 6 of them:
 
 ### 9.6 Phase 6: the inventory and the guide
 
-- [ ] Section 4 § 4.1's inventory and its decision record, `docs/reference/issue-tracking-credentials.md`, and the commands' help.
+- [x] Section 4 § 4.1's inventory and its decision record, `docs/reference/issue-tracking-credentials.md`, and the commands' help: `apply`'s names the guide, as `token make`'s does. The inventory's rotation dates and warning margins are § 6's call 5, awaiting your approval.
 
 <a id="phase-7-merge-deployment-and-verification"></a>
 
