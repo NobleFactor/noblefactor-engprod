@@ -1,10 +1,10 @@
-Owner-provided proposal and direction, 2026-11-20
+Owner-provided proposal and direction, 2026-11-20 to 2026-11-21
 
 Origin: Codex conversation 01a1dbab-52c1-7cc1-8847-75c961cc5e45.
 Native source: /Users/david-noble/.Codex/sessions/2026/11/14/rollout-2026-11-14T12-06-40-01a1dbab-52c1-7cc1-8847-75c961cc5e45.jsonl
 These are exact selected messages extracted from the local conversation log. Timestamps are the host's recorded message times. The supplied Antigravity material is a user-provided proposal, not an independently exported Antigravity transcript or verified product qualification.
 
-The Owner's broad reply and the Coder's subsequent interpretation remain distinct. This source does not invent separate answers to the proposal's two questions. Later messages explicitly clarify audit scope and timing. UTC timestamps on 2026-11-21 below fall on 2026-11-20 in the Owner's America/Los_Angeles timezone.
+The Owner's broad reply and the Coder's subsequent interpretation remain distinct. This source does not invent separate answers to the proposal's two questions. Later messages explicitly clarify audit scope and timing. On 2026-11-21, UTC times before 08:00 fall on 2026-11-20 in America/Los_Angeles; times from 08:00 fall on 2026-11-21.
 
 === MESSAGE 1: user ===
 recorded_at: 2026-11-20T20:52:33.657Z
@@ -364,3 +364,53 @@ text_sha256: 12a425f5d5d54e7f56805ad30b37f474e07f9d4067af37c9cfb07cce369a364c
 
 awesome. let's do that now, if it makes sense. What do you think?
 === END MESSAGE 26 ===
+
+Enabler-feature terminology, PR scope and hierarchy setup directions, from the originating Codex rollout above. These are exact Owner messages.
+
+=== MESSAGE 27: user ===
+recorded_at: 2026-11-21T08:00:38.496Z
+text_sha256: 93c3fc0c00df8b01d7d644ea11552e3e012f0d696ca5adbcf670cee8e38e2f82
+
+We have this terminology to work into our handbook. it relates to the design issue template and how we talk about design documents, plans, research, etc. we call them enabler features.
+
+Yes. Enabler feature is useful vocabulary to borrow. SAFe uses enablers for work that supports future capabilities, including research, architecture, infrastructure and compliance. Enablers can occupy the same backlog levels as other work, including Features. SAFe: Enablers
+
+That fits our situation: the design gives us the understanding needed to define and build the subsystem’s features.
+
+I suggest keeping Feature as the GitHub issue type and using enabler to describe its purpose:
+
+| Issue | Proposed title |
+|---|---|
+| Feature | Evidence archive design |
+| Task | Design the Evidence Archive subsystem and record its decisions |
+| Task | Produce the Evidence Archive roadmap |
+
+The Feature’s completion criteria would require the reviewed design, decision records and roadmap. Both Tasks would belong to Schedule: evidence archive design.
+
+Google offers a useful wording pattern: noun phrases for concepts and verbs for tasks. Applying that pattern to issue titles would be our convention; Google’s guidance concerns documentation headings. Google: Headings and titles
+
+arc42 supplies vocabulary for the design’s contents—solution strategy, architectural decisions, quality requirements and others. Its template addresses architecture documentation rather than naming tracker Features. arc42 overview
+
+We can borrow enabler feature without adopting the rest of SAFe.
+=== END MESSAGE 27 ===
+
+=== MESSAGE 28: user ===
+recorded_at: 2026-11-21T08:01:23.111Z
+text_sha256: 0fa13e94dde4b32505745677f199ca32ed095360e55f373f740f4019b0f6011d
+
+I need the change of vocabulary in PR #616.
+=== END MESSAGE 28 ===
+
+=== MESSAGE 29: user ===
+recorded_at: 2026-11-21T08:02:42.678Z
+text_sha256: 77c65267c55dd370ffa93500a0f7ae79af4f3ddde9970257103ff5534e824d5a
+
+I need a skill for setting up a design schedule and placing its tasks correctly in the related Epic hierarchy
+=== END MESSAGE 29 ===
+
+=== MESSAGE 30: user ===
+recorded_at: 2026-11-21T08:03:06.015Z
+text_sha256: 793992974a1d8ccaf2622ffb88670bc3d15ad6a8ae757abc868765f3168fd101
+
+that also goes into #616
+=== END MESSAGE 30 ===

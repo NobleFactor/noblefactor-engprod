@@ -2,7 +2,7 @@
 title: "Design schedule template"
 status: draft
 created: 2026-11-20
-updated: 2026-11-20
+updated: 2026-11-21
 ---
 
 # Design schedule template
@@ -19,7 +19,21 @@ Use this content guide for the two Tasks in every [design schedule](../engineeri
 
 **After:** The Owner has accepted design documents, Architecture decisions and a roadmap that give the Planner sufficient input to propose implementation issues and schedules.
 
-Identify the repository, owning Feature/Epic, Owner, Designer, review assignments and expected document locations. Use the [Schedule template](schedule.md) for the remaining schedule fields. Begin design directly from the approved assignment; no plan for writing these assets is required.
+Identify the repository, related Epic, design enabler Feature, Owner, Designer, review assignments and expected document locations. Use the [Schedule template](schedule.md) for the remaining schedule fields. Begin design directly from the approved assignment; no plan for writing these assets is required.
+
+### 1.1. Design enabler Feature
+
+**Type:** Feature. **Title:** {subsystem} design. **Native parent:** The related Epic.
+
+**Purpose:** Provide the understanding and decisions needed to define and build the subsystem's future capabilities. Use the [enabler-feature convention](../issue-standards.md#enabler-features); enabler describes purpose, not a new issue type.
+
+**Completion evidence:** The design, Architecture decisions and roadmap are technically reviewed, audited for compliance, approved by the Owner and merged. The Feature's own completion review checks these assets. Closing its Tasks alone does not replace that review.
+
+| Issue Type | Example title | Native parent | Execution |
+| --- | --- | --- | --- |
+| Feature | Evidence archive design | Related Epic | Retained in Backlog |
+| Task | Design the Evidence Archive subsystem and record its Architecture decisions | Evidence archive design Feature | Evidence archive design Schedule |
+| Task | Produce the Evidence Archive roadmap | Evidence archive design Feature | Evidence archive design Schedule |
 
 ## 2. Design and Architecture decisions Task
 
@@ -54,7 +68,7 @@ Identify the repository, owning Feature/Epic, Owner, Designer, review assignment
 
 ## 4. Relationships and handoff
 
-Both Tasks retain their owning Feature as native parent and join the same design Schedule. They are not native children of the Schedule issue. Record real dependencies; the roadmap may evolve alongside the design. Do not add a blocking relationship merely because the Tasks have an order.
+Both Tasks have the design enabler Feature as native parent and join the same design Schedule. The Feature has the related Epic as its native parent and remains in Backlog. They are not native children of the Schedule issue. Record real dependencies; the roadmap may evolve alongside the design. Do not add a blocking relationship merely because the Tasks have an order.
 
 Use the account's required Plan and design documents table. For these Designer deliverables, its plan row says “Not required: Designer deliverables”; include design, Architecture decisions and roadmap links as applicable. Use the [document-link rules](../engineering/work-assets.md#document-formats-and-links) for pending assets and committed review revisions.
 

@@ -2,7 +2,7 @@
 title: "Issue template"
 status: draft
 created: 2026-10-28
-updated: 2026-11-20
+updated: 2026-11-21
 ---
 
 # Issue template
@@ -13,7 +13,7 @@ Use the selected account form as the issue's body template. This guide supplies 
 
 ## 1. Select the account and type
 
-Use the forms in [NobleFactor's account repository](https://github.com/NobleFactor/.github/tree/main/.github/ISSUE_TEMPLATE) or [David-Noble-at-work's account repository](https://github.com/David-Noble-at-work/.github/tree/main/.github/ISSUE_TEMPLATE). Follow [Issue standards](../issue-standards.md) for type, parent, Area, attributes and project placement.
+Use the forms in [NobleFactor's account repository](https://github.com/NobleFactor/.github/tree/main/.github/ISSUE_TEMPLATE) or [David-Noble-at-work's account repository](https://github.com/David-Noble-at-work/.github/tree/main/.github/ISSUE_TEMPLATE). Follow [Issue standards](../issue-standards.md) for type, parent, Area, attributes and project placement. A design or research outcome can be an [enabler Feature](../issue-standards.md#enabler-features); describe its purpose while retaining Type Feature.
 
 [Issue forms (#572)](https://github.com/NobleFactor/noblefactor-engprod/issues/572) records the Owner-approved Task/Bug sections and the remaining form decisions during this migration. The forms and their standard references are reconciled there. Preserve the selected form's heading labels when preparing a body through another supported filing path.
 

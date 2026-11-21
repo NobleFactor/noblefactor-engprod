@@ -2,7 +2,7 @@
 title: "Work assets"
 status: draft
 created: 2026-10-28
-updated: 2026-11-20
+updated: 2026-11-21
 ---
 
 # Work assets
@@ -15,6 +15,7 @@ updated: 2026-11-20
 
 | Asset | Purpose |
 | --- | --- |
+| Research findings | Evidence, conclusions and remaining uncertainty from investigation |
 | Design | The system we want: behavior, structure, requirements and significant choices |
 | Architecture decisions | Significant architectural choices documented as architecture decision records (ADRs), with context, alternatives, reasons, status and consequences |
 | Decision record | A significant policy or process choice, its reasons, alternatives, consequences and attribution |
@@ -24,6 +25,8 @@ updated: 2026-11-20
 | Issue | A defined problem, scope and intended result, with parent, applicable schedule and document links |
 | Approval | Who approved which proposal/revision, when, and within what limits |
 | Completion review | Promised and delivered results, evidence, remaining work and approval to finish or continue |
+
+An [enabler Feature](../issue-standards.md#enabler-features) can own Tasks producing these assets to enable later capabilities. Its Feature issue identifies the outcome; the documents and findings supply its evidence.
 
 Planning produces issues and a schedule that orders them. Each issue links its plans and applicable designs; a plan can cover several issues. [Work organization](work-organization.md#schedule-commitment) defines schedule execution.
 

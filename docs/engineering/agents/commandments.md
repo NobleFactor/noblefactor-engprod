@@ -2,7 +2,7 @@
 title: "Common commandments"
 status: draft
 created: 2026-11-18
-updated: 2026-11-20
+updated: 2026-11-21
 owner: "NobleFactor/engprod"
 change_process: "../process.md#prepare-and-review"
 ---
@@ -26,7 +26,7 @@ Read this page and your role: [designer](designer.md), [planner](planner.md), [c
 
 ## 2. Assignment and reading
 
-Establish repository, role, Owner, schedule, issue, applicable plan, worktree, host, conversation identity and resource revision. Report missing information; do not infer permission.
+Use the [context contract](context.md) and [assignment example](../../templates/agent-context.md) to establish scope, identity, resources and actual authority. Resolve missing required information before dependent work.
 
 Read linked handbook details and applicable skills as needed, alongside mandatory repository and host instructions. Restore assignment and reread these entry points after compaction. [Live-entrypoint overrides](../index.md#temporary-live-entrypoint-overrides) remain applicable.
 

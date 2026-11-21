@@ -2,7 +2,7 @@
 title: "Decisions established in review"
 status: draft
 created: 2026-10-28
-updated: 2026-11-20
+updated: 2026-11-21
 ---
 
 # Decisions established in review
@@ -1149,4 +1149,25 @@ approved_by: David Noble
 recorded_by: Codex
 decided_at: '2026-11-20T21:02:38.158-08:00'
 recorded_at: '2026-11-21T05:09:21.453468+00:00'
+```
+
+<a id="decision-66"></a>
+
+## 66. Describe foundational work as an enabler feature
+
+Use enabler feature for a Feature that delivers knowledge or technical foundations for future capabilities. Keep native Type Feature and Epic → Feature → Task/Bug ownership. The [issue standard](../../issue-standards.md#enabler-features) owns the convention; the template and starter skill apply it.
+
+For design work, the enabler Feature delivers design, Architecture decisions and a roadmap. Its two Tasks run on the design Schedule while the Feature remains in Backlog. Completion requires review and audit of the actual assets, Owner approval and merged deliverables, without claiming that the future subsystem has been implemented.
+
+David Noble directed this vocabulary and the hierarchy-aware setup skill into PR #616 on 2026-11-21. The [Owner source](sources/role-context-2026-11-20/owner-direction.txt) preserves those instructions. We borrow the term from [SAFe's enablers](https://framework.scaledagile.com/enablers/) without adopting the rest of SAFe. Issue-title examples are our convention informed by Google's heading guidance, not a Google rule for GitHub.
+
+```yaml
+id: '66'
+status: accepted
+supersedes: []
+proposed_by: David Noble
+approved_by: David Noble
+recorded_by: Codex
+decided_at: '2026-11-21T00:00:38.496-08:00'
+recorded_at: '2026-11-21T08:09:15.338330+00:00'
 ```

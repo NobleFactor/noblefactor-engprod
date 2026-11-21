@@ -2,7 +2,7 @@
 title: "Engineering handbook"
 status: draft
 created: 2026-10-28
-updated: 2026-11-20
+updated: 2026-11-21
 ---
 
 <a id="engineering-documentation"></a>
@@ -50,6 +50,7 @@ Agents begin with the [common commandments](agents/commandments.md), their assig
 | Resource | Owns |
 | --- | --- |
 | [Agent entry points](agents/commandments.md) | Common context and the designer, planner, coder, reviewer and compliance-auditor entry points |
+| [Context contract](agents/context.md) | Resource categories, assignment fields, identity, source/version evidence and handoffs |
 | [Process](process.md) | Work transitions, approvals and completion |
 | [Work organization](work-organization.md) | Issues, schedules, scope, ordering and dependencies |
 | [Work assets](work-assets.md) | Designs, plans, approvals, locations, links and lifecycle |

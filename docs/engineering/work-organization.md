@@ -2,7 +2,7 @@
 title: "Work organization"
 status: draft
 created: 2026-10-28
-updated: 2026-11-20
+updated: 2026-11-21
 ---
 
 # Work organization
@@ -45,7 +45,7 @@ The [Schedule template](../templates/schedule.md) records deliverable, assignmen
 
 Every design runs on an Owner-approved schedule with at least two issues: one for the design and its architecture decisions, and a separate issue for the roadmap. Preserve each issue's native Feature/Epic ownership. These are ordinary work issues, not new issue types.
 
-The [design-schedule template](../templates/design-schedule.md) defines the two common Task bodies and their completion evidence. The [Start a design schedule skill](../../skills/start-design-schedule/SKILL.md) applies that template through the existing GitHub commands; the template owns content and the account forms own field labels.
+Group the design work under an [enabler Feature](../issue-standards.md#enabler-features) belonging to the related Epic. Its deliverables are the design, Architecture decisions and roadmap. The [design-schedule template](../templates/design-schedule.md) defines that Feature and the two common Task bodies with their completion evidence. The [Start a design schedule skill](../../skills/start-design-schedule/SKILL.md) applies that template through the existing GitHub commands; the template owns content and the account forms own field labels.
 
 The design schedule identifies the problem, scope, assigned Designer and completion evidence. The Designer produces those assets directly; a plan for writing the design is not a prerequisite. The Planner helps establish the schedule, then uses the accepted design and roadmap to propose implementation issues, their plans and one or more implementation schedules. The Planner remains a consultant as the work evolves.
 
@@ -85,6 +85,6 @@ Do not evade an external blocking defect to claim progress. Obtain approval befo
 
 An Owner-supervised worker receives a Schedule as its mission. Its assignment identifies the current issue, applicable plan, repository and worktree. Resume that assignment with its approvals and state; advancing issues does not require a new conversation.
 
-Role, assignment, native conversation and terminal view have separate identities. The [shared role entry points](agents/commandments.md) define each specialist's context; the [workstation architecture](../architecture/agentic-developer-workstation.md#41-persistent-specialists) describes persistent runtime roles. Role assets, host loading and runtime qualification are separate milestones.
+Role, assignment, native conversation and terminal view have separate identities. The [shared context contract](agents/context.md) defines resources, assignment and source evidence, and the [role entry points](agents/commandments.md) define specialist work; the [workstation architecture](../architecture/agentic-developer-workstation.md#41-persistent-specialists) describes persistent runtime roles. Role assets, host loading and runtime qualification are separate milestones.
 
 Restore context and authority under [Agent operation](agent-operation.md). A new view, reconnection or resumed host grants no new assignment or permission.

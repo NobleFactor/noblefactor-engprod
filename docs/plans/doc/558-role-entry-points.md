@@ -3,7 +3,7 @@ title: "Shared context and five specialist roles"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/558
 status: active
 created: 2026-11-18
-updated: 2026-11-20
+updated: 2026-11-21
 documents:
   - kind: Design
     path: docs/architecture/agentic-developer-workstation.md
@@ -11,12 +11,20 @@ documents:
   - kind: Handbook
     path: docs/engineering/index.md
     text: "Engineering handbook"
+  - kind: Context contract
+    path: docs/engineering/agents/context.md
+  - kind: Assignment example
+    path: docs/templates/agent-context.md
+  - kind: Design schedule template
+    path: docs/templates/design-schedule.md
+  - kind: Starter skill
+    path: skills/start-design-schedule/SKILL.md
   - kind: Schedule
     url: https://github.com/NobleFactor/noblefactor-engprod/issues/551
     text: "Handbook adoption"
   - kind: Owner-provided source
     path: docs/engineering/review/sources/role-context-2026-11-20/owner-direction.txt
-    text: "Owner input, proposal and direction on 2026-11-20"
+    text: "Owner input, proposal and direction on 2026-11-20–21"
 ---
 
 # Shared context and five specialist roles
@@ -43,9 +51,9 @@ PR #601's published squash commit omitted the human sign-off and assistance trai
 
 The handbook rewrite in [PR #596](https://github.com/NobleFactor/noblefactor-engprod/pull/596) was accepted at 8aa77e7a513dbc7b68e9bb1a9fe0aa4cf68cc32e and merged as 55dec2b044a2972f1037996c06d887a960d6c8ef on 2026-11-20. Its two issues and Schedule rows are Closed; installed-skill verification and cleanup passed. This checkpoint records its established completion facts in the existing plan.
 
-On 2026-11-20, David Noble supplied Terminal-First Development Roles and its evidence companion and directed, “Let's run with that,” in response to the Coder's recommendation. That reply directed further work; it does not establish review of a committed amendment. The amended plan was published in draft PR #616 at 20dd6b74f2fdf34bde50a257551e32ae82d24baa. The approved workstation design amendment followed at 0fb17badafebb03f8581252d9a2f2676bfa2818f. The remaining shared context contract still requires Owner review of its committed plan before implementation.
+On 2026-11-20, David Noble supplied Terminal-First Development Roles and its evidence companion and directed, “Let's run with that,” in response to the Coder's recommendation. That reply directed further work; it does not establish review of a committed amendment. The amended plan was published in draft PR #616 at 20dd6b74f2fdf34bde50a257551e32ae82d24baa. The approved workstation design amendment followed at 0fb17badafebb03f8581252d9a2f2676bfa2818f. The later Owner direction to finish the assigned assets and produce completed issues is recorded in section 12; the completed contract is now included for review and acceptance.
 
-The compliance audit of 0fb17badafebb03f8581252d9a2f2676bfa2818f identified incomplete policy and execution records. David Noble approved including the corrected handbook policy with the design amendment in PR #616 and an Owner-approved one-off audit path on 2026-11-20. These corrections publish the authoritative audit policy with the design, identify follow-up owners and correct the records. They do not complete the shared context contract or establish acceptance of a later revision.
+The compliance audit of 0fb17badafebb03f8581252d9a2f2676bfa2818f identified incomplete policy and execution records. David Noble approved including the corrected handbook policy with the design amendment in PR #616 and an Owner-approved one-off audit path on 2026-11-20. These corrections publish the authoritative audit policy with the design, identify follow-up owners and correct the records. Those earlier policy corrections did not complete the shared context contract or establish acceptance of a later revision.
 
 ## 4. Design impact
 
@@ -121,11 +129,17 @@ Update the workstation design and its decision companion with shared policy, per
 
 Publish docs/templates/design-schedule.md as the authoritative content guide for the design/Architecture decisions Task and roadmap Task. Account forms retain their field labels. Link the guide from the generic Schedule/issue templates, design-schedule policy and role entry points. Keep the Designer start rule and evidence requirements consistent.
 
-Publish one host-neutral skill at skills/start-design-schedule/SKILL.md. It reads the template, resolves an existing or new Schedule and Tasks, uses schedule open, issue open and issue move, verifies native metadata and membership, and hands the approved assignment to the Designer. It does not create a plan for writing the design, automatically reassign an agent, duplicate uncertain filings or manufacture dependencies. No new runtime helper or host installation is included.
+Publish one host-neutral skill at skills/start-design-schedule/SKILL.md. It reads the template, resolves the related Epic, reuses or creates the design enabler Feature, resolves the Schedule and two Tasks, and uses schedule open, issue open and issue move. It verifies Epic → Feature → Task native links and Task placement before handing the approved assignment to the Designer. It does not create a plan for writing the design, automatically reassign an agent, duplicate uncertain filings or manufacture dependencies. No new runtime helper or host installation is included.
 
 The new skill uses native name/description/metadata frontmatter. Include one explicit .github/frontmatter-exempt entry for this file and validate it with the native skill validator. This file-specific exception is proposed for Owner review with this PR, not a resolution of #560's broader format/catalog work. Existing skills remain unchanged. Claude/Codex discovery and loading remain with #562/#563; the published source can be read directly by either host.
 
 Validate source links, metadata, word budgets and the skill schema. Walk the setup using Evidence Archive design Schedule #619 as a read-only fixture, including an existing Schedule, missing Task, reused Tasks and a lost creation response. Record author verification outside Git; independent review and audit stay on this PR. Do not create or move work on #619 as part of this authoring change.
+
+### 5.7. Enabler-feature vocabulary and Epic hierarchy
+
+Apply the Owner's enabler-feature terminology in PR #616. Keep the native Type Feature, Epic parent and existing placement rules. Define the vocabulary in the issue standard and reference it from the handbook, hierarchy design, design-schedule template and starter skill. Feature completion reviews its actual deliverables, including code when present, so a design enabler can complete against design assets without requiring future subsystem implementation.
+
+The starter skill resolves the Epic, reuses or creates the design enabler Feature under it, and creates or reuses the two Tasks under that Feature. It places only the Tasks on the design Schedule, retaining the accepted Feature in Backlog. Preserve permissions, known issue identities and other workers' assignments; no live hierarchy changes are made as part of authoring this skill.
 
 ## 6. Alternatives and limits
 
@@ -173,7 +187,7 @@ Record source-to-requirement coverage and the author's walkthrough results in do
 | First entry-point delivery | Yes | Delivered and accepted in PR #601; its 2026-11-19 source/reference verification and cleanup are recorded below |
 | Environment role configuration design | Yes | Published in PR #616 at 0fb17badafebb03f8581252d9a2f2676bfa2818f; reviewed corrections remain subject to acceptance |
 | Authoritative audit policy | Yes | Written in Agent operation with its role/template references and decision 63 in this correction; verification and independent re-review recorded below |
-| Completed shared contract and role refinements | Yes | Pending implementation and substantive review under this amendment |
+| Completed shared contract and role refinements | Yes | Contract, assignment example and author coverage record written; independent review and Owner acceptance pending |
 | Current-head checks and independent review | Yes | Pending; retain the repository's actual checks and separate review/audit findings |
 | Owner acceptance and merge | Yes | Pending for this completion slice |
 | Published-source and reference verification | Yes | Verify the merged resources and their references before claiming availability |
@@ -198,28 +212,28 @@ Apply the established completion-only documentation process to observed post-mer
 - [x] Apply the Owner-approved workstation design amendment for environment role configuration and audit routing, with decision W6.
 - [x] Record Owner approval to include the handbook policy in PR #616 and add the one-off independent audit path, preserving the assigned auditor's session and binding, with decision W7.
 - [x] Commit and publish this amended plan and update its issue/Schedule links in PR #616 at 20dd6b74f2fdf34bde50a257551e32ae82d24baa, followed by the approved design amendment at 0fb17badafebb03f8581252d9a2f2676bfa2818f.
-- [ ] Obtain Owner review of the committed plan before implementing the remaining context contract.
+- [x] Record the Owner's direction to finish the assigned deliverables and produce issues that can close through audit, review, Owner approval and merge. Final acceptance of the delivered contract remains pending on this PR.
 
 ### 9.3. Shared contract and policy
 
-- [ ] Publish the context contract and structured assignment example, preserving the small common and role entry points.
+- [x] Write the context contract and structured assignment example, preserving the small common and role entry points.
 - [x] Write the Owner-directed role deliverables and Designer start rule into the authoritative handbook and role entry points; align the workstation design and roadmap. Published at 01ddb3c934f3f56793af8703910c94498bd7b328; Schedule bookkeeping stopped on a renamed option and the sibling script is repaired. Independent recheck and Owner acceptance remain pending.
-- [ ] Complete the remaining handoff/context details, including source/model identity, authority and missing-evidence behavior.
+- [x] Complete handoff/context details, including source/model identity, actual authority, changed/unavailable sources and missing-evidence behavior.
 - [x] Write the approved audit scope, on-demand operation, deferred blocking rollout, evidence and accuracy safeguards, independence, finding template support and decision 63 in their authoritative homes as corrections to PR #616. Published at d9a70c08d73c4fc6dc6268fa3c49feeeecd29949 with passing checks; follow-up reviews and Owner acceptance remain pending.
 - [x] File and link hook-wiring Task #617 under #519 for separate planning; preserve its source-owner and approval boundaries.
 - [x] Write the Owner-approved common design-schedule Task template and starter skill, update references and propose the file-specific native-frontmatter exception. Publication, independent review and Owner acceptance remain pending.
 
 ### 9.4. Verification and delivery
 
-- [ ] Complete the source map and five-role walkthroughs, correct findings and verify the documentation checks and word budgets.
+- [x] Write the source map and five-role author walkthroughs in docs/engineering/review/role-context-review.md. Final documentation checks and independent verification are recorded with the published revision.
 - [ ] Publish the implementation, pass required current-head checks, obtain independent technical review and compliance assessment, and resolve findings.
 - [ ] Obtain Owner acceptance and merge, verify published sources/references, update issue and Schedule records, and perform authorized cleanup.
 
 ## 10. Files and related assets
 
-Modify docs/architecture/agentic-developer-workstation.md, docs/architecture/agentic-developer-workstation.decisions.md, docs/roadmaps/agentic-developer-workstation.md, docs/plans/doc/558-role-entry-points.md, docs/engineering/agents/commandments.md, the five existing role pages, docs/engineering/agent-operation.md, docs/engineering/index.md, docs/engineering/work-organization.md, docs/engineering/review/decisions.md, docs/templates/index.md and docs/templates/review-comment.md. Create docs/engineering/agents/context.md, docs/templates/agent-context.md and docs/engineering/review/role-context-review.md. This approved starter slice also creates docs/templates/design-schedule.md and skills/start-design-schedule/SKILL.md, updates docs/templates/schedule.md, docs/templates/issue.md, docs/templates/index.md and docs/engineering/procedures/index.md, and proposes one entry in .github/frontmatter-exempt. Update docs/plans/doc/581-schedule-command-consumers.md only with established completion evidence.
+Modify docs/architecture/agentic-developer-workstation.md, docs/architecture/agentic-developer-workstation.decisions.md, docs/roadmaps/agentic-developer-workstation.md, docs/plans/doc/558-role-entry-points.md, docs/engineering/agents/commandments.md, the five existing role pages, docs/engineering/agent-operation.md, docs/engineering/index.md, docs/engineering/work-organization.md, docs/engineering/review/decisions.md, docs/templates/index.md and docs/templates/review-comment.md. Create docs/engineering/agents/context.md, docs/templates/agent-context.md and docs/engineering/review/role-context-review.md. This approved starter slice also creates docs/templates/design-schedule.md and skills/start-design-schedule/SKILL.md, updates docs/templates/schedule.md, docs/templates/issue.md, docs/templates/index.md and docs/engineering/procedures/index.md, docs/issue-standards.md and docs/architecture/issue-data-model/1-hierarchy.md, and proposes one entry in .github/frontmatter-exempt. Update docs/plans/doc/581-schedule-command-consumers.md only with established completion evidence.
 
-The preparation checkpoint changes the two existing plan files, the approved workstation design and decision companion, and preserves the exact Owner-provided source, proposal and direction in docs/engineering/review/sources/role-context-2026-11-20/owner-direction.txt. These audit corrections also update the authoritative compliance policy, auditor entry point, review template, handbook decision log and workstation roadmap. The Owner approved carrying the corrected handbook policy with the design amendment in PR #616; the source and scope are recorded below. Remaining role-contract implementation follows review of the committed amendment. Update phase state and affected documents in the commit that establishes their facts.
+The preparation checkpoint changes the two existing plan files, the approved workstation design and decision companion, and preserves the exact Owner-provided source, proposal and direction in docs/engineering/review/sources/role-context-2026-11-20/owner-direction.txt. These audit corrections also update the authoritative compliance policy, auditor entry point, review template, handbook decision log and workstation roadmap. The Owner approved carrying the corrected handbook policy with the design amendment in PR #616; the source and scope are recorded below. The contract, assignment example and author walkthrough complete the implementation scope in this PR; final checks, independent review and Owner acceptance remain required. Update phase state and affected documents in the commit that establishes their facts.
 
 ## 11. Dependencies and overlaps
 
@@ -261,16 +275,20 @@ On 2026-11-20T19:40:10.105-08:00, David Noble replied, “Yes, I approve both,�
 
 <a id="role-deliverables-correction"></a>
 
-On 2026-11-20, David Noble paused delivery to correct confusion about role outputs. He required the Designer to deliver design documents and a roadmap on a schedule with at least separate design and roadmap issues, the Planner to deliver schedules and remain a planning consultant, the Reviewer to review all affected assets, and the Compliance auditor to check them against adopted standards. He then specified: “A Designer owes a design, its decision records, and a roadmap, not a plan for writing a design.” These explicit instructions authorize this focused correction under #558 in PR #616, including the scoped Designer exception to retained host instructions. They do not authorize agent execution of the PR script, live host-file changes or a broader exemption for other roles. The [Owner source](../../engineering/review/sources/role-context-2026-11-20/owner-direction.txt) preserves the opening excerpt and exact revised Designer statement and identifies the complete original direction by native source, timestamp and hash. Remaining context-contract work stays paused while this correction is published and reviewed.
+On 2026-11-20, David Noble paused delivery to correct confusion about role outputs. He required the Designer to deliver design documents and a roadmap on a schedule with at least separate design and roadmap issues, the Planner to deliver schedules and remain a planning consultant, the Reviewer to review all affected assets, and the Compliance auditor to check them against adopted standards. He then specified: “A Designer owes a design, its decision records, and a roadmap, not a plan for writing a design.” These explicit instructions authorize this focused correction under #558 in PR #616, including the scoped Designer exception to retained host instructions. They do not authorize agent execution of the PR script, live host-file changes or a broader exemption for other roles. The [Owner source](../../engineering/review/sources/role-context-2026-11-20/owner-direction.txt) preserves the opening excerpt and exact revised Designer statement and identifies the complete original direction by native source, timestamp and hash. The role correction was prioritized first. The Owner subsequently required completed deliverables and issue closure; the existing context-contract scope is now finished in this PR for the required review and acceptance cycle.
 
 On 2026-11-20, David Noble directed immediate adoption of **Architecture decisions** as the Designer deliverable name, using architecture decision records (ADRs) for individual records. Apply this editorial correction in PR #616 without filing another issue. His Roadmap question is an inquiry, not a rename approval; retain that name pending a decision. [Decision 65](../../engineering/review/decisions.md#decision-65) and the preserved Owner source identify the scope. Historical quotations retain their original wording.
 
 On 2026-11-20, David Noble proposed the Evidence Archive design and roadmap Tasks as the common pattern for every design schedule. He accepted the Coder's proposal to put their content in a shared template and provide a small skill to apply it, saying, “awesome. let's do that now, if it makes sense. What do you think?” This authorizes this focused template/skill addition in the current worktree and PR. It does not authorize live changes to #619 or claim completion of the remaining skills/catalog or host-qualification tasks. The preserved Owner source contains the proposal and acceptance.
 
+On 2026-11-21, David Noble directed adoption of enabler feature as purpose vocabulary while retaining Type Feature, explicitly required the vocabulary in PR #616, and required the starter skill to place design Tasks correctly in their related Epic hierarchy. Those directions authorize the linked standard, template and skill corrections in this PR. The preserved Owner source records the scope. No new tracker type, label, field or broader SAFe workflow is introduced.
+
+On 2026-11-21, the Owner required issues to close with audited, reviewed, Owner-approved and merged deliverables. Complete #558's existing promised context contract, assignment example and role definitions in PR #616, rather than publish another partial planning checkpoint. This records direction to finish the existing assignment; it does not claim review approval, merge authority or native host qualification. The PR closes #558 through the established merge workflow after the required reviews and Owner acceptance.
+
 ## 13. Completion review
 
-The first entry-point slice is accepted, merged, source-verified and cleaned up. Its missing squash-trailer finding remains visible in PR #601. The workstation design amendment was published at 0fb17badafebb03f8581252d9a2f2676bfa2818f. The audit-policy and record corrections followed at d9a70c08d73c4fc6dc6268fa3c49feeeecd29949, with make check and all four jobs in CI run [44864266428](https://github.com/NobleFactor/noblefactor-engprod/actions/runs/44864266428) passing. The Owner-directed role-deliverables correction was committed and pushed at 01ddb3c934f3f56793af8703910c94498bd7b328 after make check passed. Its publication run stopped during Schedule bookkeeping because the Schedule option was renamed; the sibling script now resolves the assigned Schedule through issue #551. Finish bookkeeping and verify that head's CI before claiming the publication run complete. The nomenclature correction below still needs its own publication and reviews. The shared context contract, assignment example, remaining role refinements and their walkthroughs still require implementation and verification after Owner review of the committed plan.
+The first entry-point slice is accepted, merged, source-verified and cleaned up. Its missing squash-trailer finding remains visible in PR #601. The workstation design amendment was published at 0fb17badafebb03f8581252d9a2f2676bfa2818f. The audit-policy and record corrections followed at d9a70c08d73c4fc6dc6268fa3c49feeeecd29949, with make check and all four jobs in CI run [44864266428](https://github.com/NobleFactor/noblefactor-engprod/actions/runs/44864266428) passing. The Owner-directed role-deliverables correction was committed and pushed at 01ddb3c934f3f56793af8703910c94498bd7b328 after make check passed. Its publication run stopped during Schedule bookkeeping because the Schedule option was renamed; the sibling script now resolves the assigned Schedule through issue #551. Finish bookkeeping and verify that head's CI before claiming the publication run complete. The nomenclature correction below still needs its own publication and reviews. The context contract, assignment example and role handoffs are now written, with the author coverage record. Current-head checks, independent technical review, compliance audit, Owner acceptance, merge and published-source verification remain the completion gates. PR #616 will use a closing reference for #558 once these deliverables are published for that review cycle.
 
 The existing CI run [44846649105](https://github.com/NobleFactor/noblefactor-engprod/actions/runs/44846649105) completed successfully on 0fb17badafebb03f8581252d9a2f2676bfa2818f. That result establishes checks for that revision only. The follow-up technical review covers 0fb17badafebb03f8581252d9a2f2676bfa2818f and the earlier nine-file local correction, with findings T1–T4; this correction addresses their policy, scope, audit-routing and reference changes. The [compliance audit](https://github.com/NobleFactor/noblefactor-engprod/pull/616#pullrequestreview-6001649583) covers 0fb17badafebb03f8581252d9a2f2676bfa2818f. Both require follow-up on the corrected head. Local frontmatter, spelling, paragraph layout, source-hash, decision-footer, link/anchor, word-budget and PR-script syntax/lint checks passed for the prepared correction; retain the verification receipt outside Git. The Owner-run publication script runs make check, commits and pushes the named files, corrects Task #617's rollout wording and plan link, and records CI for the new head. No result for 0fb17ba is reused as evidence for that future head.
 
-Keep #558 Open/In progress, link its current worktree and present the committed plan for Owner review. Do not treat the first delivery, approval of the proposal, or this planning checkpoint as evidence that the remaining contract, host tasks or five-agent exercise is complete.
+Keep #558 Open/In progress while its delivered assets await checks, audit, technical review and Owner acceptance. PR #616 uses Closes #558 for this completed implementation scope; after observed Owner merge, its finish script records evidence, closes the Schedule row, verifies published sources and cleans up. Host qualification and the five-agent exercise remain separate issues. Record observed post-merge results through the established completion-only follow-up, without creating another delivery milestone.
