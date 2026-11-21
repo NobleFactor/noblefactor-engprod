@@ -27,6 +27,14 @@ account: organization
 # workflow template and quality gate, every file but its model.yaml (ruled 2026-11-10, noblefactor-engprod#437).
 files_from: NobleFactor
 
+# The token the organization's Triage workflow signs in with: a GitHub App of its own, its app ID and private key
+# in the organization secrets the workflow template names. Every account identifies its token, and apply refuses one
+# that doesn't (decided 2026-11-20, noblefactor-engprod#451). A reference names no source: applying it takes each
+# secret's from --token. An account's own model names each, env:, file: or held; it names no use and no permission,
+# which are free to change.
+token:
+  kind: github-app
+
 # Issue types, the organization's own. A type's level is the "Level N:" its description begins with; within a level,
 # the order here is the render order; the leaf type marked unplanned is the one found rather than planned. A type whose
 # description begins "Collection:" has no level: Schedule is the type of the issue that describes a schedule, its

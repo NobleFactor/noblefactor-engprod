@@ -1,7 +1,7 @@
 ---
 title: "Issue model storage and access"
 status: draft
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 <a id="4-storage-and-reach"></a>
@@ -103,6 +103,18 @@ Keep body parsing bounded, handle normal line endings and end-of-body conditions
 The organization workflow uses the account's automation GitHub App. NobleFactor supplies `NOBLEFACTOR_AUTOMATION_APP_ID` and `NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY` as organization secrets available to the participating repositories. The workflow needs project writes, issue writes and issue-field reads; the configured App may have other responsibilities outside this workflow.
 
 The user-account workflow uses the repository secret `ADD_TO_PROJECT_PAT` for project access. Its configured path uses a classic token with `project` and, for private repositories, `repo`. The workflow's own `GITHUB_TOKEN` has `issues: write` for label updates.
+
+Every account that takes part in triage identifies its token, and `star github model apply` refuses an account that doesn't, before it writes anything ([ACCESS-006](4-storage-and-reach.decisions.md#access-006)). Which token an account has, and what it's used for and permits, can change; that it has one can't. The model's token record ([section 6, § 1.1](6-the-asset-and-its-sync.md#the-asset)) names the token and where each value comes from, and the [credentials guide](../../reference/issue-tracking-credentials.md) says how to make, check and renew each kind.
+
+The inventory, read on 2026-11-20. A classic token's expiry is the date GitHub reports for it; an app key doesn't expire and is rotated. The rotation dates assume the yearly rotation #451's plan proposes, and the 14-day warning margin is its proposal too; [#613](https://github.com/NobleFactor/noblefactor-engprod/issues/613) acts on both.
+
+| Account | Credential | GitHub holds it as | Key Vault | Used by | Expiry or rotation | Warning margin |
+| --- | --- | --- | --- | --- | --- | --- |
+| NobleFactor | App noblefactor-automation, ID 2791147, and its private key | Organization secrets `NOBLEFACTOR_AUTOMATION_APP_ID` and `NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY`, visible to all repositories, set 2026-02-04 | None | Each participating repository's Triage workflow; devlore-cli's `release.yaml`, `docs-publish.yaml` and `knowledge-extract.yaml`; devlore-registry's `validate.yaml`, `sync-model-limits.yaml` and `update-indexes.yaml` | Rotation due 2027-02-04 | 14 days |
+| NobleFactor-sandbox | Its own app, with NobleFactor's permissions | The same two organization secrets | `kv-nf-engprod-dev`, `NobleFactor-sandbox--<SECRET>` | NobleFactor-sandbox/sandbox's Triage workflow | Not yet made | 14 days |
+| David-Noble-at-work | Classic tokens, `repo` and `project` | Repository secret `ADD_TO_PROJECT_PAT` in personal, set 2026-11-10, and in .github, set 2026-11-09 | `kv-david-noble-at-work`, `dot-github--ADD-TO-PROJECT-PAT`, .github's alone | Both repositories' Triage workflows | Not recorded; read on each token's page | 14 days |
+| David-Noble-at-work-sandbox | Classic token, `repo` and `project` | Repository secret `ADD_TO_PROJECT_PAT` in David-Noble-at-work-sandbox/sandbox | `kv-nf-engprod-dev`, `David-Noble-at-work-sandbox--ADD-TO-PROJECT-PAT` | David-Noble-at-work-sandbox/sandbox's Triage workflow | Missing since 2026-11-19; not yet made again | 14 days |
+| The owner's Mac | `gh` logins as David-Noble-at-work and David-Noble-at-work-sandbox, scopes `repo`, `project`, `admin:org` and `workflow` | `gh`'s keyring | None | `star github` | The credential behind each login renews as it does; refused, it is renewed with `gh auth refresh` | None |
 
 A token acts with its issuing account's access; its reach can exceed this workflow's needs. Do not treat a repository secret as proof that the token is restricted to that repository. Secret values do not belong in model files or logs. Renewal replaces the GitHub secret; the credential inventory owns renewal procedures and access review.
 

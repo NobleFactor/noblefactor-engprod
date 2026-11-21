@@ -21,8 +21,11 @@
 # One record for each difference: kind, path, change (missing: the model has it and GitHub does not; different;
 # renamed; extra: GitHub has it and the model does not), what GitHub holds, what the model holds, and by_hand when
 # GitHub's API cannot make the change, a view's grouping or sort. The .github files, and each participating
-# repository's Triage workflow, variable and secrets, come last, from participation.star (decision 12).
+# repository's Triage workflow, variable and secrets, come last, from participation.star (decision 12). diff adds a
+# token record for each secret the Triage workflow signs in with that the model's token record names no source for
+# (credentials.star, #451).
 
+load("commands/credentials.star", token_differences = "differences")
 load("commands/model.star", "extension_dir", "project_owners", "public", "read_account", "read_text", "with_owner")
 load("commands/participation.star", participation_compare = "compare", participation_read = "read")
 
@@ -46,6 +49,7 @@ KINDS = [
     "variable",
     "squash",
     "secret",
+    "token",
 ]
 
 # What is compared of each thing, and what of it GitHub's API cannot write.
@@ -196,6 +200,8 @@ def from_reference(ref, github):
                 _complete(source, "label", e)
     _complete_templates(source, ref.get("templates"))
     m = {"version": ref.get("version") or 1, "reference": True, "files_from": ref.get("files_from")}
+    if "token" in ref:
+        m["token"] = ref["token"]
     keep = ["name", "label", "level", "unplanned", "color", "description", "enabled", "pinned_fields"]
     m["types"] = [{k: t[k] for k in keep if k in t} for t in ref.get("types") or [] if type(t) == "dict"]
     if not user:
@@ -478,4 +484,4 @@ def differences(path, account):
     The records of every difference between the model a file holds and the account's, read from GitHub now.
     """
     model, github, projects, kind, state = prepare(path, account)
-    return every_difference(model, github, projects, kind, state)
+    return every_difference(model, github, projects, kind, state) + token_differences(account, kind, state, model)
