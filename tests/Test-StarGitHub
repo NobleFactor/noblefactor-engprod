@@ -5701,7 +5701,7 @@ done
 
 # 241 (#621). A token's characters never decide the diagnosis: one holding "eof" and "401" is neither a connection
 # failure nor a rejected token.
-failed_login "the request was cancelled for ghp_eof401${value}"
+failed_login "the request was canceled for ghp_eof401${value}"
 run_star "${data}" github model get NobleFactor
 expect "241 (#621): a token's characters never decide the diagnosis" error "" 'No fix is known for that answer' text
 check "241 (#621): nor do they make it GitHub not reached" \
