@@ -34,6 +34,10 @@
 #   CONFIG              credentials-check.json; default: beside this script.
 #   GITHUB_API_URL      GitHub's API; default: https://api.github.com.
 #
+# It runs on GitHub's runner from a sparse checkout of .github/credentials-check, where no engineering helper is, so
+# it sources no Declare-BashScript, as a script distributed beyond this repository needn't. It checks each failure
+# itself, so it sets -u and pipefail but not -e.
+#
 # Exit status: 0 when every condition is clear; 1 when one holds; 2 when the check couldn't finish, GitHub not reached
 # or its answer proving nothing; 3 when an incident couldn't be looked up, raised, repeated or cleared.
 set -uo pipefail

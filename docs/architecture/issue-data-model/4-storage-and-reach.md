@@ -76,9 +76,11 @@ The diagram shows responsibilities and data access. It does not grant the CLI, a
 | Project structure and shared configuration | Account templates, reconciled to their copies |
 | Team ownership and grants | GitHub team, repository and project relationships |
 | Issue forms | Account `.github/ISSUE_TEMPLATE` directory |
-| Triage workflow template | Account `workflow-templates` directory |
+| Triage and credentials check workflow templates | Written and tested in noblefactor-engprod's `workflow-templates/`; published from each account's `.github/workflow-templates` directory |
 | PR and community-health templates | Account `.github` repository |
 | Installed intake workflow | Each participating repository's `.github/workflows/triage.yml` |
+| Installed credentials check | Each participating repository's `.github/workflows/credentials-check.yml` and `.github/credentials-check/` |
+| Credential incidents | Issues labeled `token-alert` in the repository whose token failed |
 | Intake destination | Repository variable `TRIAGE_PROJECT_URL` |
 | Model backup | `model.yaml` in the account's `.github` repository |
 
@@ -106,7 +108,7 @@ The user-account workflow uses the repository secret `ADD_TO_PROJECT_PAT` for pr
 
 Every account that takes part in triage identifies its token, and `star github model apply` refuses an account that doesn't, before it writes anything ([ACCESS-006](4-storage-and-reach.decisions.md#access-006)). Which token an account has, and what it's used for and permits, can change; that it has one can't. The model's token record ([section 6, § 1.1](6-the-asset-and-its-sync.md#the-asset)) names the token and where each value comes from, and the [credentials guide](../../reference/issue-tracking-credentials.md) says how to make, check and renew each kind.
 
-The inventory, read on 2026-11-20. A classic token's expiry is the date GitHub reports for it; an app key doesn't expire and is rotated. The rotation dates assume the yearly rotation #451's plan proposes, and the 14-day warning margin is its proposal too; [#613](https://github.com/NobleFactor/noblefactor-engprod/issues/613) acts on both.
+The inventory, read on 2026-11-20. A classic token's expiry is the date GitHub reports for it; an app key doesn't expire and is rotated. An app key is rotated yearly, and each expiry and rotation is warned of 14 days ahead, as [#613](https://github.com/NobleFactor/noblefactor-engprod/issues/613) settled. NobleFactor-sandbox and David-Noble-at-work-sandbox are no longer used, work being verified in the field; their rows stand until the accounts are deleted.
 
 | Account | Credential | GitHub holds it as | Key Vault | Used by | Expiry or rotation | Warning margin |
 | --- | --- | --- | --- | --- | --- | --- |

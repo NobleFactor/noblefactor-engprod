@@ -1,7 +1,7 @@
 ---
 title: "Issue model commands and recovery"
 status: draft
-updated: 2026-11-20
+updated: 2026-11-21
 ---
 
 <a id="6-the-asset-and-its-sync"></a>

@@ -1,7 +1,7 @@
 ---
 title: "Every process that depends on a token alerts us when the token expires or goes missing, until it is fixed"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/613
-status: approved
+status: active
 created: 2026-11-21
 updated: 2026-11-21
 documents:
@@ -54,14 +54,14 @@ At the end:
 
 Out of scope:
 
-- `star` commands' own failures to sign in, which already stop with the fix named (section 6, § 8).
+- `star` commands' own failures to sign in, which already stop with the fix named (section 6, § 8), beyond how #621, § 2.2, corrects their diagnosis.
 - Workflows outside the participating repositories, which get the check only by taking part.
 
-## Issue 613
+### 2.1 Issue 613
 
 #613 requires an alert whenever a token a process depends on expires, disappears, or is refused, repeating until fixed and closing only when the cause clears, checked through the binding that raised it. Its evidence names the sandboxes, which are no longer used (§ 12); § 7 says what replaces them.
 
-## Issue 621
+### 2.2 Issue 621
 
 #621: every `star github` command reports a connection failure as a rejected token. `check_access` in `commands/access.star` reads `gh auth status`, and whenever the active login's check fails, it reports "401: bad credentials; it has expired or been revoked" and advises renewing or replacing the token, whatever stopped the check. It reached a user on 2026-11-21, when `star github schedule get` failed because `api.github.com` couldn't be resolved. `_run` appends `; true`, so no exit status survives.
 
@@ -69,7 +69,7 @@ What gh itself says, read on 2026-11-21 with gh 2.104.0 and GitHub unreachable: 
 
 <a id="issue-621-fix"></a>
 
-### 621.1 The fix
+#### 2.2.1 The fix
 
 - `_run` returns the exit status beside the output.
 - The failed login's `- Error:` line decides the diagnosis:
@@ -82,13 +82,13 @@ What gh itself says, read on 2026-11-21 with gh 2.104.0 and GitHub unreachable: 
 
 <a id="issue-621-overlap"></a>
 
-### 621.2 The overlap with #613
+#### 2.2.2 The overlap with #613
 
 #613's check runs in GitHub Actions, where a connection failure is rare but possible. It is not a credential condition there either: the check's run fails, the next day's run checks again, and no credential incident is raised for it (§ 5.1).
 
 <a id="issue-621-tests"></a>
 
-### 621.3 Tests and evidence
+#### 2.2.3 Tests and evidence
 
 - The stand-in `gh` answers `auth status` and `api rate_limit` from a case's own text when one is given.
 - New cases in `tests/Test-StarGitHub`: a DNS failure, a timeout, a refused connection and a TLS failure, each named as a connection failure with gh's line and no credential advice; an actual HTTP 401, named as a rejected token; an error of no known kind, quoted with no fix; and the rate-limit check failing to connect. The existing access cases, for no login, a refused token, missing scopes, an organization not visible and a spent rate limit, keep passing. Each new case fails without the change.
@@ -114,6 +114,9 @@ Read on 2026-11-21, at develop c69b4ae:
 - **Section 4, § 4.1:** the credentials check, its incidents and their clearing rules, and `TOKEN_ROTATION_DUE`.
 - **`4-storage-and-reach.decisions.md`:** a record for checking each binding where it lives and raising its incident there, proposed until approved.
 - **The guide:** what an incident means and how each clears.
+- **Section 4, § 3:** `workflow-templates/` here, the templates' source, and the installed check.
+- **Section 6, § 8:** the access check's failures: GitHub not reached, a rejected token only on a 401 or Bad credentials, and any other failure quoted with no fix claimed (#621).
+- **README.md:** `workflow-templates/`.
 
 <a id="proposed-implementation"></a>
 
@@ -133,6 +136,8 @@ Read on 2026-11-21, at develop c69b4ae:
 4. **Writes the incidents,** § 5.2. A failure to reach GitHub is no credential condition: the run fails, the next run checks again, and no incident is raised for it (#621).
 
 The permissions each repository needs are listed in the template, `workflow-templates/credentials-check.json`, so they can change as the work does.
+
+The script runs on GitHub's runner from a sparse checkout of `.github/credentials-check`, where no engineering helper is, so it doesn't source `Declare-BashScript`, as a script distributed beyond this repository needn't. It checks each failure itself, so it sets `-u` and `pipefail` but not `-e`.
 
 <a id="incidents"></a>
 
@@ -189,6 +194,8 @@ Questions for you, 3 of them:
 | Incidents repeat and clear by their own rules | A comment each day; closed only by the clearing rule | The same suite | Stand-ins |
 | Triage failures report at once | The failure step raises the incident | The same suite | Stand-ins |
 | The checks run in the field | Each participating repository's daily check runs and passes | The runs of the first two days after landing | The real accounts |
+| A connection failure is never a rejected token (#621) | GitHub not reached is named, gh's line quoted, with no credential advice; only a 401 is a rejected token | `tests/Test-StarGitHub`, cases 222 to 241 | Stand-in `gh` |
+| The deployed command (#621) | With GitHub unreachable, it names no credential fault | Run with `HTTPS_PROXY` at a port nothing listens on, after `writ deploy` | The owner's Mac |
 
 There are no sandbox runs (§ 12). Real credentials are never broken to prove an alert: the conditions are proved against the stand-ins, and the field shows the checks running and passing.
 
@@ -198,10 +205,10 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 
 | Milestone | Required? | Expected evidence | State/result |
 | --- | --- | --- | --- |
-| Implementation | Yes | The commits of §§ 9.2 to 9.4 and 621.1, reviewed | Pending |
+| Implementation | Yes | The commits of §§ 9.2 to 9.6, reviewed | Pending |
 | Merge | Yes | The pull request and the commit it lands | Pending |
-| Deployment | Yes: the templates landed in each participating repository | Each repository holding the check | Pending |
-| Verification | Yes, in the field | Two days of passing checks in every participating repository, posted on #613 | Pending |
+| Deployment | Yes: the templates landed in each participating repository (#613), and `writ deploy` of the extension (#621) | Each repository holding the check; the deployed `access.star` | Pending |
+| Verification | Yes, in the field | Two days of passing checks in every participating repository, posted on #613; the deployed command with GitHub unreachable, posted on #621 | Pending |
 
 <a id="implementation-phases"></a>
 
@@ -215,39 +222,40 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 
 <a id="phase-1b-issue-621"></a>
 
-### 9.1b Issue 621: the access diagnostics
+### 9.2 Phase 2: #621, the access diagnostics
 
-- [x] `access.star` as § 621.1 sets out; its cases, 222 to 234; section 6, § 8. The suite passes all 685 checks, 27 of them #621's. The deployed command's check of § 621.3 moves to § 9.5, after the merge.
+- [x] `access.star` as § 2.2.1 sets out; its cases, 222 to 234; section 6, § 8. The suite passes all 685 checks, 27 of them #621's. The deployed command's check of § 2.2.3 moves to § 9.7, after the merge.
 
 <a id="phase-2-the-check"></a>
 
-### 9.2 Phase 2: the check and its tests
+### 9.3 Phase 3: the check and its tests
 
 - [x] `workflow-templates/credentials-check.sh` and `credentials-check.json`, and the workflow for each kind of account, `credentials-check.organization.yml` and `credentials-check.user.yml`; `tests/Test-CredentialsCheck`, 32 cases, all passing. Writing the suite found that a check unable to reach GitHub raised a credential incident: `call` exited inside a command substitution, which ended only the subshell. `call` now returns 2, and each caller exits 2 (#621).
 
 <a id="phase-3-the-triage-step"></a>
 
-### 9.3 Phase 3: the Triage workflow's failure step
+### 9.4 Phase 4: the Triage workflow's failure step
 
 - [x] The step in both Triage templates, `workflow-templates/triage.organization.yml` and `triage.user.yml`, copied from each account's `.github` on 2026-11-21; the organization's job gains `contents: read` and `issues: write`, which it set none of, and the user account's `contents: read`. Its case, a reported failure raising `consumer-failed` at once and the next healthy check clearing it, is in `tests/Test-CredentialsCheck`.
 
 <a id="phase-4-the-documents"></a>
 
-### 9.4 Phase 4: the documents
+### 9.5 Phase 5: the documents
 
-- [x] Section 4 § 4.1, its decision record ACCESS-007, and the guide's § 7a, Alerts.
+- [x] Section 4 § 4.1, its decision record ACCESS-007, and the guide's § 8, Alerts.
 
 <a id="phase-4b-the-review"></a>
 
-### 9.4b Phase 4b: #625's review
+### 9.6 Phase 6: #625's review
 
-- [x] R5 and R6, #621: a failed organization answer with an HTTP status line, a server error among them, stops the command; a token is scrubbed wherever it starts in a line, and the diagnosis reads the line scrubbed. Cases 235 to 241, all 698 checks passing; section 6, § 8; § 621.1. The organization lookup has no case: no command passes `check_access` an organization, so none reaches it.
-- [x] R1, R2, R4 and R7, #613: an incident closes only when its own test passes; only GitHub's refusal is a credential condition; duplicates from runs at once are closed; a failed incident operation fails the run. Their cases in `tests/Test-CredentialsCheck`, 51 in all, every one passing; 25 of them fail against 1f76efa's script. §§ 5.2 and 6; section 4, § 4.1; the guide's § 7a.
+- [x] R5 and R6, #621: a failed organization answer with an HTTP status line, a server error among them, stops the command; a token is scrubbed wherever it starts in a line, and the diagnosis reads the line scrubbed. Cases 235 to 241, all 698 checks passing; section 6, § 8; § 2.2.1. The organization lookup has no case: no command passes `check_access` an organization, so none reaches it.
+- [x] R1, R2, R4 and R7, #613: an incident closes only when its own test passes; only GitHub's refusal is a credential condition; duplicates from runs at once are closed; a failed incident operation fails the run. Their cases in `tests/Test-CredentialsCheck`, 51 in all, every one passing; 25 of them fail against 1f76efa's script. §§ 5.2 and 6; section 4, § 4.1; the guide's § 8.
 - [ ] R3: what a failed Triage run raises, as you decide it.
+- [x] #625's audit, A02 to A07: #613's body rewritten to the approved design, and the plan review that didn't happen recorded in § 12; this plan active, #621 in §§ 2, 4, 7, 8 and 10, § 11 brought up to date, and its sections numbered in order; section 4's §§ 3 and 4.1 and ACCESS-007 naming `workflow-templates/` as the templates' source, with the README; ACCESS-007's recorded time made the commit's, 08:23:15Z, and ACCESS-006 and MODEL-007 to 009's made c910441's, 06:42:51Z, all four having carried an invented 03:00:00Z; the guide's sections numbered in order; and the script's exemption from `Declare-BashScript` stated in its header and § 5.1. A01, a review not yet made, was answered by Codex's.
 
 <a id="phase-5-merge-landing-and-verification"></a>
 
-### 9.5 Phase 5: merge, landing and verification
+### 9.7 Phase 7: merge, landing and verification
 
 - [ ] Merged; the templates landed in each participating repository; two days of passing checks posted on #613.
 - [ ] Deployed with `writ deploy`; the deployed command, run with `HTTPS_PROXY` at a port nothing listens on, names GitHub as unreachable and no credential fault; posted on #621.
@@ -258,22 +266,25 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 
 - `workflow-templates/` in this repository, new: the source of `credentials-check.sh`, `credentials-check.json`, `credentials-check.organization.yml` and `credentials-check.user.yml`, and of each account's Triage template, `triage.organization.yml` and `triage.user.yml`, copied from NobleFactor/.github and David-Noble-at-work/.github with the failure step added. No copy of the Triage template lived here before; § 5.4 lands each in its account's `.github` and each participating repository.
 - `tests/Test-CredentialsCheck`: new.
-- `docs/architecture/issue-data-model/4-storage-and-reach.md`, `4-storage-and-reach.decisions.md`, `docs/reference/issue-tracking-credentials.md`.
+- `Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/access.star` and `tests/Test-StarGitHub` (#621).
+- `README.md`.
+- `docs/architecture/issue-data-model/4-storage-and-reach.md`, `4-storage-and-reach.decisions.md`, `6-the-asset-and-its-sync.md` (#621), `docs/reference/issue-tracking-credentials.md`.
 
 <a id="dependencies-overlaps-and-blockers"></a>
 
 ## 11. Dependencies, overlaps and blockers
 
 - **#614:** `apply` lands workflows through a pull request it merges itself; question 3 decides whether landing waits for it.
-- **#451's inventory** supplies the warning margin and the rotation dates, both still proposed there.
+- **#451's inventory**, closed on 2026-11-21, lists each credential; the 14-day margin and the yearly rotation it proposed are settled here (§ 12).
 
 <a id="approval-and-departures"></a>
 
 ## 12. Approval and departures
 
 - **Approved, 2026-11-21.** David Noble approved this plan at revision 2856d6a, for #613 and #621, in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`, and directed the work to proceed phase by phase, each committed and pushed, and then the pull request opened for the full set. The three calls of § 6 are taken as § 6 makes them: incidents in the repository whose binding failed, assigned to David-Noble-at-work; daily, and 14 days ahead; and the check landed by hand before #614.
-- **#625's review, 2026-11-21.** Codex reviewed 1f76efa and found eight faults, R1 to R8, each fixed in § 9.4b. R3, what a failed Triage run raises, needs your decision.
-- **Phase 9.1b ticked before its design update.** 3beaa44 ticked 9.1b, section 6 § 8 among it, but the section's change landed in the next commit, 15acbb9: it had been made in the main clone, not this worktree. #625's review found it, as R8. The history stays as it is; each fix since lands with its documents and its box.
+- **No plan review.** Phase 1 named Codex's review of this plan before your approval. You approved it at 2856d6a without that review, and the work went ahead at once; Codex reviewed the work itself, on #625.
+- **#625's review, 2026-11-21.** Codex reviewed 1f76efa and found eight faults, R1 to R8, each fixed in § 9.6. R3, what a failed Triage run raises, needs your decision.
+- **Phase 9.1b, now § 9.2, ticked before its design update.** 3beaa44 ticked 9.1b, section 6 § 8 among it, but the section's change landed in the next commit, 15acbb9: it had been made in the main clone, not this worktree. #625's review found it, as R8. The history stays as it is; each fix since lands with its documents and its box.
 - **No sandbox runs, decided 2026-11-21.** Setting up the sandboxes' credentials takes the same manual effort every time, so until GitHub offers a way to automate it, work is verified in the field and the sandbox accounts are deleted. #613's evidence, which names the sandboxes, is replaced by § 7.
 
 <a id="completion-review"></a>

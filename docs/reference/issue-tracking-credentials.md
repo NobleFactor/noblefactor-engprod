@@ -173,18 +173,18 @@ gh run list --repo <owner>/<repository> --workflow triage.yml --limit 5
 
 <a id="alerts"></a>
 
-## 7a. Alerts
+## 8. Alerts
 
 Every participating repository checks its token each day and opens an issue, `Token alert: <condition>`, labeled `token-alert` and assigned to you, when something is wrong. GitHub notifies you of each. While the condition holds, the issue gets one comment a day; when the next check finds it gone, the issue closes itself. Closing one by hand doesn't fix anything: the next check opens it again.
 
 | Alert | What it means | What to do |
 | --- | --- | --- |
 | `missing` | The secret the workflows read isn't set | Make the token and name it to `apply` (§§ 4 to 6) |
-| `refused` | GitHub refused the token or the app's key, or wouldn't mint an installation token | Renew or regenerate it (§ 8) |
+| `refused` | GitHub refused the token or the app's key, or wouldn't mint an installation token | Renew or regenerate it (§ 9) |
 | `not-installed` | The organization's app isn't installed on the organization | Install it on all repositories |
 | `short` | The token lacks a permission or scope the workflows need | Add it on the app's page, or make a token with the scope |
 | `wrong-account` | The classic token signs in as another account | Make it signed in as the account it serves |
-| `expiring`, `expired` | The classic token expires within 14 days, or has | Regenerate it (§ 8) |
+| `expiring`, `expired` | The classic token expires within 14 days, or has | Regenerate it (§ 9) |
 | `rotation-due`, `rotation-overdue` | The app key's rotation, `TOKEN_ROTATION_DUE`, is within 14 days, or past | Rotate the key, and set the next date |
 | `consumer-failed` | A Triage workflow failed | Read the run it names; the next healthy check closes it |
 | `no-recent-check in <repository>` | That repository's daily check has stopped running | Re-enable its workflow on its Actions page |
@@ -193,7 +193,7 @@ An alert closes only when the check proves its own condition gone: fixing one th
 
 <a id="renewing"></a>
 
-## 8. Renewing
+## 9. Renewing
 
 - **A GitHub App's private key doesn't expire.** To rotate it, generate a new key on the app's page, name it to `apply` with `--token`, verify every workflow that signs in with it, and only then delete the old key on the app's page.
 - **A classic token expires on the date chosen when it was made.** GitHub emails the account a week before. Open the token at `https://github.com/settings/tokens` and select **Regenerate token**, which keeps its note and scopes, then name it to `apply` with `--token`.
@@ -201,7 +201,7 @@ An alert closes only when the check proves its own condition gone: fixing one th
 
 <a id="why"></a>
 
-## 9. Why these credentials
+## 10. Why these credentials
 
 - **A workflow's own token can't reach a project.** `GITHUB_TOKEN` reaches only the run's repository. A project belongs to the account, so adding an issue to the Triage project needs a credential of the account.
 - **An organization uses a GitHub App.** An app acts as itself, with exactly the permissions its installation grants. A workflow mints a token from the app's ID and private key with `actions/create-github-app-token`, and the token expires within an hour. Set once on the organization, the two secrets serve every repository's workflow.

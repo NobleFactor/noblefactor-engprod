@@ -133,7 +133,7 @@ proposed_by: David Noble
 approved_by: David Noble
 recorded_by: Claude Code
 decided_at: "2026-11-20"
-recorded_at: "2026-11-21T03:00:00Z"
+recorded_at: "2026-11-21T06:42:51Z"
 ```
 
 <a id="access-007"></a>
@@ -148,7 +148,7 @@ Scope: every repository that takes part in triage, and its Triage workflow.
 
 **Alternatives:** One central monitor writing every incident in a single repository was rejected: it would need a credential of its own, which could itself fail, and it couldn't read a private repository's secrets. Alerting from the Triage workflow alone was rejected: it runs only when an issue opens, so it can't repeat or warn ahead of expiry.
 
-**Consequence:** Every participating repository carries the check and its configuration, landed from its account's `.github` like the Triage workflow. Incidents are spread across repositories, each assigned to the owner, so GitHub notifies him of each. A check that stops is caught only for public repositories, by noblefactor-engprod's watch.
+**Consequence:** Every participating repository carries the check and its configuration, landed from its account's `.github` like the Triage workflow. Incidents are spread across repositories, each assigned to the owner, so GitHub notifies him of each. A check that stops is caught only for public repositories, by noblefactor-engprod's watch. The workflow, its script and its configuration are written and tested in noblefactor-engprod's `workflow-templates/`, with the Triage template beside them; each account's `.github` publishes them, as [ACCESS-002](#access-002) has it, and each participating repository's copy is landed from there.
 
 Evidence: [#613's plan, §§ 5 and 12](../../plans/feature/613-token-alerts.md#approval-and-departures), approved on 2026-11-21 in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`, and `tests/Test-CredentialsCheck`.
 
@@ -160,6 +160,5 @@ proposed_by: Claude Code
 approved_by: David Noble
 recorded_by: Claude Code
 decided_at: "2026-11-21"
-recorded_at: "2026-11-21T09:00:00Z"
+recorded_at: "2026-11-21T08:23:15Z"
 ```
-
