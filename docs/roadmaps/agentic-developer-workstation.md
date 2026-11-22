@@ -3,7 +3,7 @@ title: "Agentic developer workstation roadmap"
 type: Roadmap
 status: Draft
 created: 2026-11-11
-updated: 2026-11-20
+updated: 2026-11-21
 ---
 
 <a id="agentic-developer-workstation--roadmap"></a>

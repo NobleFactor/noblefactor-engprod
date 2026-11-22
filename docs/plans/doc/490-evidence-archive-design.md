@@ -61,6 +61,8 @@ The current conversation contains research comparing SQLite and PostgreSQL, arch
 
 The [initial review of fec570d](https://github.com/NobleFactor/noblefactor-engprod/pull/618#pullrequestreview-6002444899) identified preparation-plan omissions. The [final verification of 9cb06e6](https://github.com/NobleFactor/noblefactor-engprod/pull/618#pullrequestreview-6002690447) confirmed those findings resolved, CI passing and all seven threads resolved. Those reviews apply to preparation, not to the newly added system design and roadmap.
 
+The [design review of 842aa30b](https://github.com/NobleFactor/noblefactor-engprod/pull/618#pullrequestreview-6008500367) raised the historical-plan, coverage and protocol findings. The [posted local-candidate recheck](https://github.com/NobleFactor/noblefactor-engprod/pull/618#pullrequestreview-6008973627) confirms those High findings resolved locally, while publication, final revision verification and Owner scope/metadata rulings remain pending.
+
 <a id="design-impact"></a>
 
 ## 4. Design impact
@@ -119,7 +121,7 @@ Publishing an implementation Schedule now would invent commitments before the de
 | Storage comparison | The decision evaluates local spool engines, original-artifact placement, recovery and maintenance costs without claiming a selected stack | Compare documented alternatives against explicit workload assumptions, failure scenarios and proposed measurement methods; retain unmeasured results as open questions | Decision companion and open-choice register |
 | Useful planner handoff | The roadmap names outcomes, Feature owners, dependencies, qualification evidence and unresolved Owner choices without committing a Schedule | Compare with the existing Epic and workstation roadmap | Archive roadmap |
 | Publication quality | Frontmatter, numbered sections, stable links, plain US English and one physical line per prose paragraph conform | Run make check, including .github/scripts/Test-Frontmatter.sh; separately scan for wrapped prose, resolve relative Markdown paths and explicit/heading anchors, check every ordered decision footer, and inspect rendered diagrams where supported | Exact candidate worktree; record commands, validator coverage and results |
-| Issue/document consistency | The Epic, enabler Feature, two Tasks and design Schedule link the published drafts; the Epic no longer says the design is not yet opened | Run star github plan link for the retained Epic record after push; inspect refusals and dropped content. Update only the new issues' draft document rows, preserve other narrative, and read every result back | Live Epic #490, Feature #622, Tasks #623/#624, Schedule #619 and exact published documentation revision |
+| Issue/document consistency | The Epic, enabler Feature, two Tasks and design Schedule link the current drafts and their intended default-branch paths; merged issues retain the proper revision | The guarded design publisher owns the five document tables, using Kind/Document columns and preserving unrelated rows and narrative. Before merge include the exact review revision. After an observed merge, refresh open issues to develop and issues closed by that PR to the verified merge revision | Live Epic #490, Feature #622, Tasks #623/#624, Schedule #619 and exact published documentation revision |
 | Honest delivery status | No code, service deployment or production performance is claimed from this documentation change | Review the changed file set, plan milestones and result language | Candidate revision and review record |
 
 <a id="required-completion-milestones"></a>
@@ -145,7 +147,9 @@ The Designer supplies the [system design](../../architecture/engineering-evidenc
 
 Independent review applies to the exact design-document candidate and its requirements, references, decision metadata and approval claims. The Owner decides consequential architecture choices and acceptance. Publishing these drafts does not implement the archive or approve their database, security, performance or recovery proposals.
 
-The Owner-run publication script updates the existing PR, refreshes the served issues' document links and replaces the obsolete Epic design-not-yet-opened note after the draft is published, preserving unrelated narrative. It marks only the current design Task In progress and links its existing branch after push. The roadmap remains Open and blocked; its draft supplies context for the design review. Merge, completion records and cleanup retain their normal authority and verification boundaries.
+The Owner-run publication script updates the existing PR and refreshes all five served document tables from the design assets, with separate default-branch and exact-review links. The retained preparation record is not its linking prerequisite. The later --refresh-merged-links mode first verifies the observed merge, landed sign-off and document blobs, then uses develop for open issues and the actual merge revision for an issue closed by that PR. It preserves unrelated narrative and makes no merge or cleanup decision. Only the current design Task is In progress; the roadmap remains Open and blocked. Delivery comments, completion records and cleanup retain their normal authority and verification boundaries.
+
+After merge, the Epic uses the plan-link tool's canonical Plan label and path-text links for this retained record. The label is compatibility metadata, not a new execution-plan obligation. A read-only plan-link check must report unchanged with no dropped rows; the publisher stops on a mismatch instead of creating a recurring format transition. The other four tables retain the design publisher's direct ownership.
 
 <a id="files-and-related-assets"></a>
 
@@ -160,6 +164,8 @@ All proposed repository-relative paths below are within the assigned worktree.
 - Update docs/roadmaps/agentic-developer-workstation.md with the archive handoff reference.
 - Update docs/architecture/agentic-developer-workstation.decisions.md to link the archive evidence from W5/D4 without changing their approval status or treating D4 as resolved.
 - Maintain docs/plans/doc/490-evidence-archive-design.md with the same commits that change its facts.
+
+The review correction restores the completed docs/plans/doc/521-workstation-design.md byte-for-byte to develop blob a4fcdfe7d6117d1f13beeb77f3eef53cdaeba2d0. Its earlier preference remains historical evidence; current D4 and W6 record the withdrawal. That restoration belongs to the correction commit and removes this completed plan from the final PR delta. No reformatting or migration of the completed plan is part of the design deliverable.
 
 <a id="dependencies-overlaps-and-blockers"></a>
 

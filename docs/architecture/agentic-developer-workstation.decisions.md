@@ -2,7 +2,7 @@
 title: "Agentic developer workstation decisions"
 status: draft
 created: 2026-11-19
-updated: 2026-11-20
+updated: 2026-11-21
 ---
 
 # Agentic developer workstation decisions
@@ -113,7 +113,7 @@ proposed_by: null
 approved_by: null
 recorded_by: Codex
 decided_at: null
-recorded_at: '2026-11-20T02:02:55Z'
+recorded_at: '2026-11-21T22:34:06Z'
 ```
 
 <a id="d1"></a>
@@ -197,7 +197,7 @@ proposed_by: null
 approved_by: null
 recorded_by: Codex
 decided_at: null
-recorded_at: '2026-11-20T02:02:55Z'
+recorded_at: '2026-11-21T22:34:06Z'
 ```
 
 <a id="d5"></a>
@@ -250,7 +250,7 @@ The capture/outbox and central archive may use different storage engines. Choose
 
 The Owner explicitly withdrew the earlier preference on 2026-11-20 in the design conversation. This changes only that evaluation constraint. D4's storage, retention, authorization, receipt and recovery decisions remain unresolved; this record approves no engine, deployment or implementation. Retaining the former preference as a requirement would contradict the Owner's correction.
 
-The earlier direction remains available in repository history. This is a partial change to D4's context, rather than supersession of its entire unresolved contract.
+The [completed workstation plan](../plans/doc/521-workstation-design.md#open-questions) preserves the earlier direction as historical evidence. D4 and this record govern the current evaluation. This changes only the former preference; it does not supersede the rest of D4's unresolved contract.
 
 ```yaml
 id: W6
@@ -260,5 +260,5 @@ proposed_by: David Noble
 approved_by: David Noble
 recorded_by: Codex
 decided_at: '2026-11-20'
-recorded_at: '2026-11-21T04:17:39Z'
+recorded_at: '2026-11-21T22:34:06Z'
 ```

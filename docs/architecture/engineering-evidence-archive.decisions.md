@@ -25,6 +25,8 @@ PostgreSQL on every host offers transactional storage too, at the cost of a sepa
 
 The costs are serialized local writes, reader/checkpoint management, a second database implementation in the overall system, and qualification of the embedded library and filesystem. Read back FULL synchronization and platform-specific settings under the [pragma contract](https://www.sqlite.org/pragma.html#pragma_synchronous), and include the [WAL-reset fix](https://www.sqlite.org/wal.html#walreset). No comparative benchmark or power-failure qualification is claimed yet.
 
+Payloads, forwarding operations and holds have explicit identities and restrictive deletion relationships in the design's [conceptual model](engineering-evidence-archive.md#data-model). Ordinary release cannot clear a pending/quarantined obligation to evade that constraint. The initial local retrieval cache contains screened local captures; caching arbitrary shared-query results would add holder tracking and deletion propagation responsibilities and is deferred.
+
 ```yaml
 id: E1
 status: proposed
@@ -33,7 +35,7 @@ proposed_by: Codex
 approved_by: null
 recorded_by: Codex
 decided_at: null
-recorded_at: '2026-11-21T04:15:29Z'
+recorded_at: '2026-11-21T22:12:36Z'
 ```
 
 <a id="e2"></a>
@@ -46,6 +48,10 @@ The prototype's direct database sink reduces an initial service hop, but couples
 
 This is an architecture judgment from the [Epic's authorization and retrieval requirements](https://github.com/NobleFactor/noblefactor-engprod/issues/490) and [protection/recovery Feature (#496)](https://github.com/NobleFactor/noblefactor-engprod/issues/496), not a claim that an extra hop improves latency. Authenticate producer identity and verified bindings; client-supplied workspace or role labels are assertions, not access grants. Bounded batching amortizes protocol overhead without weakening exact-item receipts.
 
+The CLI calls shared retrieval directly with the caller's archive grant, and local retrieval with a separate local grant. A producer identity cannot stand in for that caller. A host query proxy would need explicit delegated credentials and independent audience/scope checks; direct calls avoid that additional trust path and support people without a capture service, at the cost of direct client reachability to the shared API.
+
+Shared and local searches return labeled streams with separate cursors, counts and read boundaries. A coordinated global rank/snapshot would require another consistency protocol; it is deferred in favor of explicit coverage and bounded views. The [retrieval contract](engineering-evidence-archive.md#retrieval-views) specifies duplicate, conflict, quarantine, indexing and policy-change behavior rather than implying that independent counts can simply be added.
+
 ```yaml
 id: E2
 status: proposed
@@ -54,7 +60,7 @@ proposed_by: Codex
 approved_by: null
 recorded_by: Codex
 decided_at: null
-recorded_at: '2026-11-21T04:15:29Z'
+recorded_at: '2026-11-21T22:12:36Z'
 ```
 
 <a id="e3"></a>
@@ -69,6 +75,8 @@ A central SQLite service is viable for a measured small workload and would reduc
 
 The recommendation accepts PostgreSQL patching, backup/WAL capacity, vacuum/index maintenance and migration responsibility. Workload, artifact sizes, operator effort and restore measurements remain open. The [catalog Feature (#492)](https://github.com/NobleFactor/noblefactor-engprod/issues/492) retains provenance requirements; the Owner's later broad evaluation request means its historical datastore preference is not a blanket approval of the recommendation.
 
+The proposed [Feature refinement and data model](engineering-evidence-archive.md#requirements-and-feature-coverage) put shared ingestion, provenance, conflict state and custody receipt issuance under #492, with query and policy behavior supplied by their respective capabilities. Deletion intent checks serialize with ingestion over the same affected identities/source selectors; independent-journal persistence precedes completion of removal. This prevents a late replay from recreating a known deleted original without adding a distributed transaction coordinator.
+
 ```yaml
 id: E3
 status: proposed
@@ -77,7 +85,7 @@ proposed_by: Codex
 approved_by: null
 recorded_by: Codex
 decided_at: null
-recorded_at: '2026-11-21T04:15:29Z'
+recorded_at: '2026-11-21T22:12:36Z'
 ```
 
 <a id="e4"></a>
@@ -92,6 +100,8 @@ Backup coverage binds exact capture digests to a retained recovery chain and dat
 
 The cost is additional custody metadata and delayed local eviction while backups lag. A disconnected host with only one durable copy remains exposed to loss of that host; no receipt language can remove that physical limitation. The Owner must establish required recovery objectives and independent failure domains before accepting the release policy.
 
+Per-item dispositions also govern conflicts and deletion. A durable central conflict record causes the host to retain bytes and its forwarding obligation under a quarantine hold, stop automatic retries, and preserve the first citation's identity with a conflict marker. A verified deletion notice instead cancels the operation through the approved deletion path. Treating either response as ordinary successful delivery would lose the distinction. Reconnect reconciliation and retained tombstones prevent known deleted source ranges from being reintroduced by an offline outbox; [deletion status](engineering-evidence-archive.md#deletion-and-recovery) reports outstanding host purges and backup expiry separately.
+
 ```yaml
 id: E4
 status: proposed
@@ -100,7 +110,7 @@ proposed_by: Codex
 approved_by: null
 recorded_by: Codex
 decided_at: null
-recorded_at: '2026-11-21T04:15:29Z'
+recorded_at: '2026-11-21T22:12:36Z'
 ```
 
 <a id="e5"></a>
@@ -136,6 +146,8 @@ Periodic logical dumps can support export or simpler recovery objectives, but do
 
 The remaining costs are backup storage and bandwidth, WAL monitoring, restore drills and key lifecycle management. Immutable retained backups can contain subsequently deleted bytes until expiry. If policy requires immediate removal from every retained copy, this recommendation needs a different erasure design; do not hide that conflict behind a logical tombstone.
 
+The upstream release notes and referenced database documentation were fetched live on 2026-11-21. This verifies the stated research baseline, not an installed version, supported-host deployment or successful restore. A restored central archive or local store remains closed until the current deletion/revocation journal has been reconciled.
+
 ```yaml
 id: E6
 status: proposed
@@ -144,7 +156,7 @@ proposed_by: Codex
 approved_by: null
 recorded_by: Codex
 decided_at: null
-recorded_at: '2026-11-21T04:15:29Z'
+recorded_at: '2026-11-21T22:12:36Z'
 ```
 
 <a id="e7"></a>
@@ -157,6 +169,8 @@ A summary-only memory store would lose original qualifications and rejected alte
 
 The cost is attributable review state and explicit uncertainty rather than automatic acceptance. A content hash is evidence of byte identity, not truth. Public documentation references private evidence only through cleared, non-secret descriptions and identifiers, with separate authorized resolution; it never embeds credentials or automatically publishes a raw transcript. The archive supplies traceability without becoming a new policy authority or general knowledge ontology.
 
+Checkpoint streams use verified schedule/environment/role-instance identities and immutable parent-linked revisions, with guarded head updates rather than host-clock last-writer-wins ordering. Local durability, central readiness and backup coverage remain distinct. A checkpoint cannot become centrally ready before its cited originals are in central custody; a deleted or quarantined dependency stays an explicit gap. These dependencies add delivery coordination, but prevent a host switch from treating dangling citations as available evidence. Readiness never supplies acceptance of the checkpoint's conclusions.
+
 ```yaml
 id: E7
 status: proposed
@@ -165,5 +179,5 @@ proposed_by: Codex
 approved_by: null
 recorded_by: Codex
 decided_at: null
-recorded_at: '2026-11-21T04:15:29Z'
+recorded_at: '2026-11-21T22:12:36Z'
 ```

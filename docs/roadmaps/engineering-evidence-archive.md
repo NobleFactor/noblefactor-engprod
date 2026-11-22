@@ -1,6 +1,7 @@
 ---
 title: "Engineering evidence archive roadmap"
-status: draft
+type: Roadmap
+status: Draft
 created: 2026-11-20
 updated: 2026-11-21
 owner: "NobleFactor/engprod"

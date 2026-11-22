@@ -3,7 +3,7 @@ title: "Agentic developer workstation"
 type: RFC
 status: Draft
 created: 2026-11-11
-updated: 2026-11-20
+updated: 2026-11-21
 ---
 
 # Agentic developer workstation
