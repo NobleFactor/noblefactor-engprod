@@ -90,7 +90,7 @@ The template is the design: its two CI gates. No other document describes them.
 
 ### 9.2 Phase 2: the gates
 
-- [ ] Both forms' CI gates as § 5 sets out; § 7's first row.
+- [x] Both forms' CI gates as § 5 sets out; § 7's first row: the Bash form passes `bash -n` and shellcheck, the PowerShell form parses with no PSScriptAnalyzer findings.
 
 <a id="files-and-related-assets"></a>
 
