@@ -1,7 +1,7 @@
 ---
 title: "Issue model storage and access"
 status: draft
-updated: 2026-11-20
+updated: 2026-11-21
 ---
 
 <a id="4-storage-and-reach"></a>
@@ -76,9 +76,11 @@ The diagram shows responsibilities and data access. It does not grant the CLI, a
 | Project structure and shared configuration | Account templates, reconciled to their copies |
 | Team ownership and grants | GitHub team, repository and project relationships |
 | Issue forms | Account `.github/ISSUE_TEMPLATE` directory |
-| Triage workflow template | Account `workflow-templates` directory |
+| Triage and credentials check workflow templates | Written and tested in noblefactor-engprod's `workflow-templates/`; published from each account's `.github/workflow-templates` directory |
 | PR and community-health templates | Account `.github` repository |
 | Installed intake workflow | Each participating repository's `.github/workflows/triage.yml` |
+| Installed credentials check | Each participating repository's `.github/workflows/credentials-check.yml` and `.github/credentials-check/` |
+| Credential incidents | Issues labeled `token-alert` in the repository whose token failed |
 | Intake destination | Repository variable `TRIAGE_PROJECT_URL` |
 | Model backup | `model.yaml` in the account's `.github` repository |
 
@@ -106,7 +108,7 @@ The user-account workflow uses the repository secret `ADD_TO_PROJECT_PAT` for pr
 
 Every account that takes part in triage identifies its token, and `star github model apply` refuses an account that doesn't, before it writes anything ([ACCESS-006](4-storage-and-reach.decisions.md#access-006)). Which token an account has, and what it's used for and permits, can change; that it has one can't. The model's token record ([section 6, § 1.1](6-the-asset-and-its-sync.md#the-asset)) names the token and where each value comes from, and the [credentials guide](../../reference/issue-tracking-credentials.md) says how to make, check and renew each kind.
 
-The inventory, read on 2026-11-20. A classic token's expiry is the date GitHub reports for it; an app key doesn't expire and is rotated. The rotation dates assume the yearly rotation #451's plan proposes, and the 14-day warning margin is its proposal too; [#613](https://github.com/NobleFactor/noblefactor-engprod/issues/613) acts on both.
+The inventory, read on 2026-11-20. A classic token's expiry is the date GitHub reports for it; an app key doesn't expire and is rotated. An app key is rotated yearly, and each expiry and rotation is warned of 14 days ahead, as [#613](https://github.com/NobleFactor/noblefactor-engprod/issues/613) settled. NobleFactor-sandbox and David-Noble-at-work-sandbox are no longer used, work being verified in the field; their rows stand until the accounts are deleted.
 
 | Account | Credential | GitHub holds it as | Key Vault | Used by | Expiry or rotation | Warning margin |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -115,6 +117,8 @@ The inventory, read on 2026-11-20. A classic token's expiry is the date GitHub r
 | David-Noble-at-work | Classic tokens, `repo` and `project` | Repository secret `ADD_TO_PROJECT_PAT` in personal, set 2026-11-10, and in .github, set 2026-11-09 | `kv-david-noble-at-work`, `dot-github--ADD-TO-PROJECT-PAT`, .github's alone | Both repositories' Triage workflows | Not recorded; read on each token's page | 14 days |
 | David-Noble-at-work-sandbox | Classic token, `repo` and `project` | Repository secret `ADD_TO_PROJECT_PAT` in David-Noble-at-work-sandbox/sandbox | `kv-nf-engprod-dev`, `David-Noble-at-work-sandbox--ADD-TO-PROJECT-PAT` | David-Noble-at-work-sandbox/sandbox's Triage workflow | Missing since 2026-11-19; not yet made again | 14 days |
 | The owner's Mac | `gh` logins as David-Noble-at-work and David-Noble-at-work-sandbox, scopes `repo`, `project`, `admin:org` and `workflow` | `gh`'s keyring | None | `star github` | The credential behind each login renews as it does; refused, it is renewed with `gh auth refresh` | None |
+
+Each participating repository checks its own token every day ([ACCESS-007](4-storage-and-reach.decisions.md#access-007)). Its credentials check proves the token through the same secret its workflows read: an organization's app must mint an installation token holding every permission the check's configuration names, and a user account's classic token must sign in as the account with its scopes, ahead of its expiry. An app key is due for rotation on the organization variable `TOKEN_ROTATION_DUE`. Each condition that holds raises one incident in that repository, an issue titled `Token alert: <condition>`, labeled `token-alert` and assigned to the owner, written with the run's own token so that it never depends on the token being checked. An open incident gets a comment each day its condition holds, and closes only when a check through the same secret passes that condition's own test: a missing, refused or short token when the token signs in with everything it needs, an expiry or rotation warning only when the date is beyond the 14-day margin. A test that didn't run, or failed another way, closes nothing. Only GitHub's refusal is a credential condition: GitHub not reached, a rate limit or a server error raises and closes nothing. Two runs at once that each open the same incident leave the older open and close the other as its duplicate. When a new issue doesn't reach Triage, the Triage workflow checks the token at once and raises its alert, naming the issue, or, the token fine, "New issues aren't reaching Triage", which closes only when a later issue reaches Triage and lists the issues missed earlier, to check. noblefactor-engprod's check raises `no-recent-check` for a watched repository whose check has stopped. The check's source is this repository's `workflow-templates/`.
 
 A token acts with its issuing account's access; its reach can exceed this workflow's needs. Do not treat a repository secret as proof that the token is restricted to that repository. Secret values do not belong in model files or logs. Renewal replaces the GitHub secret; the credential inventory owns renewal procedures and access review.
 

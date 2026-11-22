@@ -88,7 +88,7 @@ The following constraints bound the proposed architecture. The existing implemen
 | Protect private material | Original transcripts and credentials remain private; public documents and verification fixtures use synthetic or explicitly cleared material | [Protection and recovery Feature #496](https://github.com/NobleFactor/noblefactor-engprod/issues/496) |
 | Keep capture outside disposable sandboxes | Scoped service access replaces raw database mounts or archive credentials; a remote database cannot supply disconnected local durability | [Workstation archive contract](agentic-developer-workstation.md#55-shared-evidence-archive-and-policy) |
 | Preserve contracts across placement | Local, remote, or colocated shared services retain the same receipt meanings and authorization rules | [Archive storage question D4](agentic-developer-workstation.decisions.md#d4) |
-| Evaluate each store by its job | The former storage-uniformity preference is withdrawn; replacement engines and deployment choices remain proposed | [Owner-approved withdrawal W6](agentic-developer-workstation.decisions.md#w8) |
+| Evaluate each store by its job | The former storage-uniformity preference is withdrawn; replacement engines and deployment choices remain proposed | [Owner-approved withdrawal W8](agentic-developer-workstation.decisions.md#w8) |
 
 <a id="context-and-scope"></a>
 
@@ -454,7 +454,7 @@ The central backup and WAL policy uses [pgBackRest's documented encryption, rete
 
 ## 9. Significant decisions
 
-The [decision companion](engineering-evidence-archive.decisions.md) records the rationale and alternatives for local SQLite capture, the archive API, PostgreSQL originals and provenance, separate recovery receipts and safe release, trusted endpoints, and encrypted backup operations. All archive architecture selections remain proposed until the Owner explicitly accepts them. Workstation W6 is the accepted removal of a constraint, not acceptance of this architecture.
+The [decision companion](engineering-evidence-archive.decisions.md) records the rationale and alternatives for local SQLite capture, the archive API, PostgreSQL originals and provenance, separate recovery receipts and safe release, trusted endpoints, and encrypted backup operations. All archive architecture selections remain proposed until the Owner explicitly accepts them. Workstation W8 is the accepted removal of a constraint, not acceptance of this architecture.
 
 The recommendation minimizes independent services and consistency boundaries while retaining a path to change engines or move large artifacts after measured need. It accepts one central database's maintenance and restore responsibilities. It does not claim that a comparative workload benchmark, fault test, or deployment has already established the recommendation's performance or reliability.
 

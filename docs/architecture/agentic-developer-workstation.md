@@ -10,7 +10,7 @@ updated: 2026-11-21
 
 The workstation gives a developer five persistent agent roles inside a schedule's SBX sandbox. Desktop and iPad editors open views of those roles through shell profiles. Work, conversation identity and evidence survive short PR cycles and device changes.
 
-This is a proposed system design. The [roadmap](../roadmaps/agentic-developer-workstation.md) defines delivery and qualification; the [decision companion](agentic-developer-workstation.decisions.md) records significant choices and open questions.
+This is a proposed system design. The [roadmap](../roadmaps/agentic-developer-workstation.md) defines delivery and qualification; the [decision companion](agentic-developer-workstation.decisions.md) records significant choices and links the [open questions in this design](#113-open-architecture-questions).
 
 <a id="1-problem"></a>
 
@@ -230,7 +230,7 @@ Each driver reports support and failure behavior for discovery and startup, atta
 
 The documented foundations do not demonstrate the proposed SBX/editor integration. Codex can unload a thread after its last subscriber leaves; qualify a continuity strategy, such as a retained driver subscription. Protocol subscriptions alone do not prove simultaneous native TUI support.
 
-Pin host releases, model and provider settings, instructions and tool and check environments. Restore only authorized model access. Quota exhaustion or a connection failure cannot silently select a billable fallback.
+Pin host releases, model and provider settings, instructions, tools, and validation environments. Restore only authorized model access. Quota exhaustion or a connection failure cannot silently select a billable fallback.
 
 <a id="54-editor-instances-and-attachment-views"></a>
 
@@ -275,7 +275,7 @@ A protected permanent capture spool holds available transcripts, tool calls/resu
 
 Retrieval offers scoped search, bounded results, exact-source reads, citation resolution and surrounding-context expansion. Authorization covers snippets, counts, artifacts and expanded context. Ordinary readers have read-only access; agents use the scoped API rather than raw archive mounts or unrestricted database credentials. The archive owns retention, redaction, deletion, backup and index rebuilding.
 
-The handbook supplies approved common and role reading sets and host entry points. Evidence explains prior work; extracted claims become policy through review. [Role entry points (#528)](https://github.com/NobleFactor/noblefactor-engprod/issues/528) owns measured startup/post-compaction reading. Required reading changes through that review process.
+The handbook supplies the approved reading sets for common and role instructions, along with host entry points. Evidence explains prior work; extracted claims become policy through review. [Role entry points (#528)](https://github.com/NobleFactor/noblefactor-engprod/issues/528) owns measured startup/post-compaction reading. Required reading changes through that review process.
 
 <a id="environment-role-configuration"></a>
 
@@ -290,11 +290,11 @@ Each environment has a versioned configuration applied to its active SBX sandbox
 | Role binding and observed state | The control plane retains the selected daemon, original conversation ID, binding revision, actual model, and loaded resource evidence for each role within an environment |
 | External review and audit records | The PR introducing the changes holds the external reviews, findings, and corrective verification; review text is kept outside repository commits |
 
-The control plane uses DevLore to manage the environment and selected native hosts. Each role resolves through one authoritative binding for each role within its environment. Host selection is a setting in that binding, not a second identity under which another copy of the role can be created. Additional terminal views attach to the same native conversation.
+The control plane uses DevLore to manage the environment and selected native hosts. Within each environment, each role has one authoritative binding. Host selection is a setting in that binding, not a second identity under which another copy of the role can be created. Additional terminal views attach to the same native conversation.
 
 Configuration states the intended model; the host reports the model actually used. Record provider, model identifier, and family against the affected work. The Compliance auditor must use a different model family from every builder of the candidate. A distinct host name or role label does not establish that independence. If the configured auditor is ineligible or its model is unknown, report the conflict to the Owner and retain the existing binding. The Owner may authorize a [one-off audit](#compliance-audit-flow) by an eligible third model family for the identified candidate, preserving the assigned auditor's conversation and binding.
 
-Reviewed settings changes follow [I7](#i7-configuration-native-session-controls-and-delegation). Compatible changes preserve conversation identity. A different host preference does not authorize a new role conversation or bypass [session succession](#84-session-succession). The [configuration decision](agentic-developer-workstation.decisions.md#w8) records the responsibilities. [Developer control (#517)](https://github.com/NobleFactor/noblefactor-engprod/issues/517) owns configuration formats, revisions, and durable bindings; [Agent hosts (#459)](https://github.com/NobleFactor/noblefactor-engprod/issues/459) owns application through the native hosts. Their implementation plans define delivery.
+Reviewed settings changes follow [I7](#i7-configuration-native-session-controls-and-delegation). Compatible changes preserve conversation identity. A different host preference does not authorize a new role conversation or bypass [session succession](#84-session-succession). The [configuration decision](agentic-developer-workstation.decisions.md#w6) records the responsibilities. [Developer control (#517)](https://github.com/NobleFactor/noblefactor-engprod/issues/517) owns configuration formats, revisions, and durable bindings; [Agent hosts (#459)](https://github.com/NobleFactor/noblefactor-engprod/issues/459) owns application through the native hosts. Their implementation plans define delivery.
 
 ### 5.6 Management and access services
 
@@ -334,7 +334,7 @@ The first proposed implementation schedule walks selected scenarios and records 
 
 The developer selects an Owner-approved schedule. The control plane resolves its environment and starts or resumes SBX. Opening a role profile resolves its server and role binding through I1/I2.
 
-Before tool use, the role loads required common and role instructions and its source, plan, permissions and checkpoint. The incident record supplies evidence rather than compulsory startup reading.
+Before tool use, the role loads the required common and role instructions. It also loads its source, plan, permissions, and checkpoint. The incident record supplies evidence rather than compulsory startup reading.
 
 The developer opens useful roles, inspects source/diffs and gives bounded assignments. The coder implements/tests; the designer answers design questions; the planner proposes scope changes; the auditor records findings and rechecks corrections; the reviewer assesses identified results independently. Disconnection leaves the same authority and pending approvals in force.
 
@@ -609,7 +609,7 @@ A lifecycle request names its target and desired state.
 | One editor backend | Its client connections and terminal clients | Native host servers, conversations, durable work, and other editor instances |
 | One role's execution | Its supported active-turn interruption/pause through the native host | Conversation/native ID, other role sessions, and the shared host server |
 | One native host server | Execution managed by that server; every assigned role is accounted for | Role identities/history and permanent workspace; editors and other host servers |
-| SBX runtime | Its editor and native host services and local execution | Stable environment/role bindings, permanent work, spool/checkpoints, and shared external services |
+| SBX runtime | Its editors, native host services, and local execution | Stable environment/role bindings, permanent work, spool/checkpoints, and shared external services |
 | Environment retirement | New work and released runtime resources under the accepted lifecycle decision | Retained work, evidence, and historical bindings under their retention policy |
 
 For a planned server/environment stop, persist target, desired state, operation ID and binding generation. Prevent stale reconnect/start requests from reversing it. Identify affected roles, preserve available evidence/checkpoints and record unfinished or uncertain operations.
@@ -685,7 +685,7 @@ Record the reviewed versions, actual auditor model, requirement revisions, findi
 | Machine | Candidate placement | Qualification |
 | --- | --- | --- |
 | Mac mini | SBX and colocated shared services | Platform support and combined role/editor/build/service load |
-| Minisforum | Shared services or SBX if supported | CPU, memory, storage and input and output headroom alongside centralized logging |
+| Minisforum | Shared services or SBX if supported | CPU, memory, storage capacity, and input and output capacity alongside centralized logging |
 | Developer devices | Desktop editor and iPad browser clients | Authentication, supported input/clipboard behavior and reconnect |
 
 The first proof uses a qualified existing machine. Logical services do not require dedicated hardware. Resolve platform support, network access, quotas, backup destination, and resource reservations before relying on the placement. The SBX machine must remain awake and reachable for live remote work.
@@ -753,7 +753,7 @@ Views resolve the new binding; a returning old runtime does not regain authority
 
 Use the [decision-record standard](../standards/documentation.md#decision-records) and [decision template](../templates/decision.md) for significant choices.
 
-The [decision companion](agentic-developer-workstation.decisions.md) records editor access, native server ownership, session succession, environment role configuration, and one-off independent audits. It also records the proposed schedule and runtime and shared-archive choices and links the unresolved D1–D6 questions.
+The [decision companion](agentic-developer-workstation.decisions.md) records editor access, native server ownership, session succession, environment role configuration, and one-off independent audits. It also records proposals for runtime lifetime and shared archive placement, with links to the unresolved D1–D6 questions.
 
 
 
@@ -871,7 +871,7 @@ Archive owners (#490/#492/#496), integrated with continuity and checkpoints, est
 
 #### 11.3.5. D5: Placement and resource budgets
 
-Select qualified placement on the existing Mac mini and Minisforum and establish CPU, memory, storage, input and output, quotas, backup destination, and acceptance thresholds.
+Select qualified placement on the existing Mac mini and Minisforum and establish capacity budgets for CPU, memory, storage, and input and output. Define quotas, the backup destination, and acceptance thresholds.
 
 Colocation avoids an initial hardware purchase, but shared load must leave capacity for the Minisforum's centralized logging. Logical service boundaries do not require separate machines. Platform support and actual workloads determine whether each candidate placement is usable.
 
@@ -885,7 +885,7 @@ Identify the reviewed DevLore resource and control-plane interface and the produ
 
 The final lifecycle implementation belongs to DevLore. Prototypes consume existing host and SBX contracts and must preserve an adoption path rather than become a competing permanent manager. The exact product interface remains open.
 
-The DevLore lifecycle owner with Developer control (#517) and Operations (#520) resolves the interface early. [Wave 5](../roadmaps/agentic-developer-workstation.md#5-delivery-waves-and-gates) owns the adoption work, including retained identity, pending operations, upgrades and recovery and rollback evidence.
+The DevLore lifecycle owner with Developer control (#517) and Operations (#520) resolves the interface early. [Wave 5](../roadmaps/agentic-developer-workstation.md#5-delivery-waves-and-gates) owns the adoption work, including retained identity, pending operations, and evidence for upgrades, recovery, and rollback.
 
 ## 12. Glossary
 
@@ -896,6 +896,9 @@ These terms name the environment, role, access, and evidence concepts used in th
 | SBX sandbox | Isolated runtime containing the environment's native hosts, editors, and workspace mounts |
 | Schedule | Committed, ordered work in GitHub whose Steps and scope can change through approved amendments |
 | Role | Designer, Planner, Coder, Reviewer, or Compliance auditor assignment with its own context |
+| Driver | Adapter that translates common lifecycle operations into a native host's commands and reports its actual capabilities |
+| Profile | Editor configuration that opens a view of one logical role in the assigned environment |
+| Daemon | Background service process that can continue after an editor or terminal view closes |
 | Control plane | Service retaining environment configuration, role bindings, and authorized lifecycle operations |
 | Role-view launcher | Guest-side program that resolves a role binding and attaches a native client |
 | Runtime | Active sandbox and service execution, separate from the retained environment identity |

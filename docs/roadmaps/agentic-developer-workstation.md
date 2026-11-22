@@ -116,7 +116,7 @@ Use [Portable tooling (#152)](https://github.com/NobleFactor/noblefactor-engprod
 
 | Proposed scenario | Walk and evidence to retain | Main requirements |
 | --- | --- | --- |
-| S1 — Design leads to implementation schedules | Start on a design schedule with separate design and roadmap issues; deliver and review the design, architecture decisions, and roadmap; the Planner proposes implementation issues and plans and schedules and remains a consultant; preserve evidence across the handoff | R1, R2, R10 |
+| S1 — Design leads to implementation schedules | Start on a design schedule with separate design and roadmap issues; deliver and review the design, architecture decisions, and roadmap; the Planner proposes implementation issues, plans, and schedules and remains a consultant; preserve evidence across the handoff | R1, R2, R10 |
 | S2 — Five roles use three hosts | Create one schedule sandbox and selected host servers; open profiles to create roles on demand, inspect server/session bindings, perform bounded work, detach and resume; qualify shared-server session separation and host-managed execution | R2, R3, R6, R9 |
 | S3 — Leave the desktop for an iPad | Walk the eight stable editor/server/binding startup combinations; open two profiles on the desktop and corresponding iPad views; exercise concurrent opens, uncertain responses, pending approval, last-view detach, and connection loss against the same sessions | R1, R2, R4 |
 | S4 — The schedule changes during delivery | Discover a dependency, propose an amendment, update the owner-approved steps, merge increments, retain useful contexts, and complete independent closing review | R1, R2, R7, R10 |
@@ -194,7 +194,7 @@ A roadmap can produce several schedules, each with one execution sandbox and sha
 
 | Contract | Minimum information and invariant | Owner |
 | --- | --- | --- |
-| Environment role configuration | Versioned Schedule and workspace and per-role host and model settings; shared resource revisions; actual model and load evidence; compatible changes preserve one role binding | A1 (#517), using native-host application from #459; its delivery plan is not yet opened |
+| Environment role configuration | Versioned Schedule and workspace references, with host and model settings for each role; shared resource revisions; actual model and load evidence; compatible changes preserve one role binding | A1 (#517), using native-host application from #459; its delivery plan is not yet opened |
 | Environment/role binding | Schedule/environment/role identity; host-server instance and native session ID; binding revision; creation intent and outcome; assignment; one authoritative session; approved and fenced disaster-recovery succession | A1 with #459 |
 | Editor/view attachment | Separate client/editor-server/view states; identity/endpoint; profile and guest launcher; authenticated scope; native ID and binding revision; independent presentation; I1–I4 startup, reconnect, history/submission reconciliation, and no-view behavior | A1/A4 with #459 |
 | Runtime operation receipt | Operation/target identity; actor and authority reference; expected binding revision; requested action; pending/unknown/completed result; observed native outcome and evidence references | A1/A4 with #459 |

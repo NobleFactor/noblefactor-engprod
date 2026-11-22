@@ -27,7 +27,7 @@ def run(_command, ctx):
     if account == "":
         fail("name the account: star github model get <account>")
     refuse_dry_run(ctx.dry_run)
-    check_access("star github model get", scopes = ["read:project"], dry_run = ctx.dry_run)
+    check_access("star github model get", account = account, scopes = ["read:project"], dry_run = ctx.dry_run)
     model = read_model(account)
     kind = "organization" if "teams" in model else "user"
     repositories = sorted(((model.get("labels") or {}).get("repositories") or {}).keys())

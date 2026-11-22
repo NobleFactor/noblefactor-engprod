@@ -485,3 +485,29 @@ The native record is an escalated tool request, not a separate Owner message or 
 Accuracy-rule provenance: the independent Reviewer proposed the evidence and accuracy safeguards; message 18 records David Noble's acceptance. The proposal and its ruling are described in https://github.com/NobleFactor/noblefactor-engprod/pull/616#pullrequestreview-6002482562. External review text remains on that PR and is not reproduced here.
 
 Model provenance limits: no native log was found for the separate correction conversation identified by the auditor as session 01a1fba0. The assistant behind the wording relayed in message 27 is not identified. The Owner's adoption of that wording is recorded; it does not identify its originating model. These unknowns remain unresolved and cannot establish complete builder-family independence.
+
+Additional Owner directions from the Evidence Archive Designer conversation.
+Origin: Codex conversation 01a1fa76-3b38-7c81-8b36-262d5afe86bf.
+Native source: /Users/david-noble/.Codex/sessions/2026/11/20/rollout-2026-11-20T11-36-54-01a1fa76-3b38-7c81-8b36-262d5afe86bf.jsonl
+These exact selected messages were read from that log during the correction. Their UTC timestamps precede 08:00 on 2026-11-22, so their local date in America/Los_Angeles is 2026-11-21. They authorize the stated scope; they do not accept the proposed archive architecture or authorize merge.
+
+=== MESSAGE 37: user ===
+recorded_at: 2026-11-22T03:29:25.330Z
+text_sha256: f413208eee6f942fb7b165329291e07f38ebf4d4320f5053a3c3295ae3d46a68
+
+your scripts are running WAY too long without providing useful feedback. what all is this script that I ran doing? I can say that it should be pausing and updating me as soon as CI starts. And it should be providing useful feedback.
+=== END MESSAGE 37 ===
+
+=== MESSAGE 38: user ===
+recorded_at: 2026-11-22T03:47:34.884Z
+text_sha256: 524bd7e0a99cf804dcaf2f234602dfba694b51c39b10f4c088139bc0c2ac5c93
+
+My preferences are moderated by the suitability of the tech. You seem to have gotten in your head that my preferences reign supreme. they do not and i expect push back when i'm out of line with that. it is only when we can go one way or another, my preferences count.
+=== END MESSAGE 38 ===
+
+=== MESSAGE 39: user ===
+recorded_at: 2026-11-22T03:48:21.220Z
+text_sha256: 84db17237ef97fcc5d4e13700b357b921e1a9bb8976197abc5a94b9e2f760203
+
+then let's get the changes from #618 into #616 NOW!
+=== END MESSAGE 39 ===

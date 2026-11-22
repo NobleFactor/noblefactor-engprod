@@ -11,7 +11,7 @@ issue: https://github.com/NobleFactor/noblefactor-engprod/issues/623
 
 [System design](engineering-evidence-archive.md) · [Roadmap](../roadmaps/engineering-evidence-archive.md)
 
-These records explain the recommended architecture and actual alternatives considered. E1–E7 are proposals for Owner review. No engine, deployment, trust boundary, performance target or recovery objective is accepted by recording it here. [Workstation W6](agentic-developer-workstation.decisions.md#w8) separately records the Owner-approved removal of the earlier storage-uniformity constraint; it approves no replacement engine.
+These records explain the recommended architecture and actual alternatives considered. E1–E7 are proposals for Owner review. No engine, deployment, trust boundary, performance target or recovery objective is accepted by recording it here. [Workstation W8](agentic-developer-workstation.decisions.md#w8) separately records the Owner-approved removal of the earlier storage-uniformity constraint; it approves no replacement engine.
 
 <a id="e1"></a>
 

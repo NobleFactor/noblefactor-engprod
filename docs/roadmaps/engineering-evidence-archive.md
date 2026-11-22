@@ -59,7 +59,7 @@ The [workstation's G3 evidence integration](agentic-developer-workstation.md#5-d
 
 ## 4. Planner inputs and Owner choices
 
-The recommendation is embedded SQLite host capture, an archive API, central PostgreSQL original chunks/provenance, and qualified encrypted backup tooling. The [decision records E1–E7](../architecture/engineering-evidence-archive.decisions.md) explain reasons, alternatives and costs. Each remains proposed. [Workstation W6](../architecture/agentic-developer-workstation.decisions.md#w8) removes the former engine-uniformity constraint; neither a shared engine nor a mixed-engine stack is selected by that correction.
+The recommendation is embedded SQLite host capture, an archive API, central PostgreSQL original chunks/provenance, and qualified encrypted backup tooling. The [decision records E1–E7](../architecture/engineering-evidence-archive.decisions.md) explain reasons, alternatives and costs. Each remains proposed. [Workstation W8](../architecture/agentic-developer-workstation.decisions.md#w8) removes the former engine-uniformity constraint; neither a shared engine nor a mixed-engine stack is selected by that correction.
 
 | Input to resolve | Who decides or supplies evidence | Effect on implementation planning |
 | --- | --- | --- |

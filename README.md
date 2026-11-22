@@ -62,6 +62,8 @@ The `skills/` tree holds host-neutral skill sources. [Start a design schedule](s
 
 Repository-only tools live in `bin/`, with manuals in `share/man/man1/` and completions in `share/bash-completion/completions/`. They include `Test-Here`, `Test-OnHosts` and the Windows `Test-Here.ps1` entry point. Site-hosting tools belong to their owning site repository.
 
+`workflow-templates/` holds the source of the workflow templates each account's `.github` repository publishes: the Triage workflow and the credentials check, with the check's script and permissions file. They are tested here, by `tests/Test-CredentialsCheck`, and landed in each participating repository from the account's copy.
+
 <a id="deploying-it"></a>
 
 ## Deployment

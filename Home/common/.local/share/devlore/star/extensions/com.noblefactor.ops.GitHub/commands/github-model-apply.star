@@ -30,5 +30,5 @@ def run(_command, ctx):
     sources = parse(ctx.args.get("token") or "")
     refuse_dry_run(ctx.dry_run)
     check(sources)
-    check_access("star github model apply", scopes = ["repo", "project", "admin:org", "workflow"], dry_run = ctx.dry_run)
+    check_access("star github model apply", account = account, scopes = ["repo", "project", "admin:org", "workflow"], dry_run = ctx.dry_run)
     return apply_model(model, account, ctx.args.get("prune") in [True, "true"], sources)

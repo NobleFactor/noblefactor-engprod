@@ -94,7 +94,7 @@ proposed_by: null
 approved_by: null
 recorded_by: Codex
 decided_at: null
-recorded_at: '2026-11-20T02:02:55Z'
+recorded_at: '2026-11-22T06:33:18Z'
 ```
 
 <a id="w5"></a>
@@ -220,9 +220,9 @@ recorded_at: "2026-11-22T02:17:54.778689+00:00"
 
 The capture/outbox and central archive may use different storage engines. Choose according to integrity, performance, reliability, security and maintenance cost. Storage-engine uniformity has no independent priority in that evaluation. Technical suitability comes first: the Designer must challenge a preference that would compromise requirements and explain the evidence. Owner preferences guide choices among suitable alternatives when their tradeoffs are otherwise balanced.
 
-The Owner explicitly withdrew the earlier preference on 2026-11-20 in the design conversation. This changes only that evaluation constraint. D4's storage, retention, authorization, receipt and recovery decisions remain unresolved; this record approves no engine, deployment or implementation. Retaining the former preference as a requirement would contradict the Owner's correction.
+The Owner explicitly withdrew the earlier preference on 2026-11-20 in the design conversation. His later clarification at 2026-11-22T03:47:34.884Z (2026-11-21 locally) establishes technical suitability before preferences; [retained message 38](../engineering/review/sources/role-context-2026-11-20/owner-direction.txt) gives its exact words, timestamp, and source. The acceptance date below records the original withdrawal; the clarification has its own dated source. This changes only that evaluation constraint. D4's storage, retention, authorization, receipt and recovery decisions remain unresolved; this record approves no engine, deployment or implementation. Retaining the former preference as a requirement would contradict the Owner's correction.
 
-The [completed workstation plan](../plans/doc/521-workstation-design.md#open-questions) preserves the earlier direction as historical evidence. The [moved D4](agentic-developer-workstation.md#d4) and this record govern the current evaluation. During the Owner-directed consolidation into PR #616, this record was renamed from W6 to W8 to preserve the environment-role W6 and one-off-audit W7. This changes only the former preference; it does not supersede the rest of D4's unresolved contract.
+The [completed workstation plan](../plans/doc/521-workstation-design.md#open-questions) preserves the earlier direction as historical evidence. The [moved D4](agentic-developer-workstation.md#d4) and this record govern the current evaluation. Under the consolidation order at 2026-11-22T03:48:21.220Z in [retained message 39](../engineering/review/sources/role-context-2026-11-20/owner-direction.txt), this record was renamed from W6 to W8 to preserve the environment-role W6 and one-off-audit W7. This changes only the former preference; it does not supersede the rest of D4's unresolved contract.
 
 ```yaml
 id: W8
@@ -232,5 +232,5 @@ proposed_by: David Noble
 approved_by: David Noble
 recorded_by: Codex
 decided_at: '2026-11-20'
-recorded_at: '2026-11-22T03:53:46Z'
+recorded_at: '2026-11-22T06:33:18Z'
 ```
