@@ -375,7 +375,7 @@ incident_for() {
                 "${carried}")"
             gh issue comment "${first}" --repo "${REPOSITORY}" --body "${carried}" >/dev/null || return 1
         fi
-        gh issue close "${number}" --repo "${REPOSITORY}" --reason "not planned" \
+        gh issue close "${number}" --repo "${REPOSITORY}" --reason completed \
             --comment "Duplicate of #${first}, opened by a run at the same time; #${first} carries this alert." \
             >/dev/null || return 1
     done

@@ -31,6 +31,8 @@ decided_at: null
 recorded_at: "2026-11-20T15:55:37Z"
 ```
 
+<a id="access-002"></a>
+
 ## 2. Share files through the account repository
 
 The public `.github` repository owns forms, workflow templates, PR templates and the model backup. Participating repositories run their own installed Triage workflow.
@@ -160,5 +162,5 @@ proposed_by: Claude Code
 approved_by: David Noble
 recorded_by: Claude Code
 decided_at: "2026-11-21"
-recorded_at: "2026-11-21T08:23:15Z"
+recorded_at: "2026-11-22T00:19:40Z"
 ```

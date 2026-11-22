@@ -58,66 +58,24 @@ At the end:
 
 Out of scope:
 
-- `star` commands' own failures to sign in, which already stop with the fix named (section 6, § 8), beyond how #621, § 2.2, corrects their diagnosis.
+- `star` commands' own failures to sign in, which already stop with the fix named (section 6, § 8), beyond how #621, §§ 5.6 to 5.8, corrects their diagnosis.
 - Workflows outside the participating repositories, which get the check only by taking part.
 
-### 2.1 Issue 613
+## Issue 613
 
 #613 requires an alert whenever a token a process depends on expires, disappears, or is refused, repeating until fixed and closing only when the cause clears, checked through the binding that raised it. Its evidence names the sandboxes, which are no longer used (§ 12); § 7 says what replaces them.
 
-### 2.2 Issue 621
+## Issue 621
 
 #621: every `star github` command reports a connection failure as a rejected token. `check_access` in `commands/access.star` reads `gh auth status`, and whenever the active login's check fails, it reports "401: bad credentials; it has expired or been revoked" and advises renewing or replacing the token, whatever stopped the check. It reached a user on 2026-11-21, when `star github schedule get` failed because `api.github.com` couldn't be resolved. `_run` appends `; true`, so no exit status survives.
 
 What gh itself says, read on 2026-11-21 with gh 2.104.0 and GitHub unreachable: the active login's block reads "X Failed to log in", then "The token in keyring is invalid.", even though no request reached GitHub. The cause is only on its `- Error:` line, for example `dial tcp 127.0.0.1:9: connect: connection refused`. `gh api rate_limit` fails with the same text. So gh's "invalid" line can't be trusted; its error line can.
 
-<a id="issue-621-fix"></a>
-
-#### 2.2.1 The fix
-
-- `_run` returns the exit status beside the output.
-- The failed login's `- Error:` line decides the diagnosis:
-  - **Connection failure:** `no such host`, `i/o timeout`, `timeout`, `connection refused`, `connection reset`, `network is unreachable`, `tls:`, `x509:` or `certificate`. The message names GitHub as unreachable, quotes gh's error line, and says to check the network, a proxy or a VPN, and to rerun. It recommends no change to any credential.
-  - **Credential rejection:** `401` or `Bad credentials`. The message is today's, naming `gh auth refresh` or the token variable to replace.
-  - **Anything else:** gh's error line, quoted, with no fix claimed.
-- A block with no error line keeps today's handling.
-- Every later GitHub call in the check, the rate limit and the organization, fails the same way when its own exit status is non-zero, before any other call is made: a connection failure is named as one, never as a spent rate limit or a missing organization, and any other failed answer, a server error among them, is quoted with no fix claimed.
-- No credential ever appears in a message: a quoted line is scrubbed of anything shaped like a token, wherever it starts, the text around it kept, and the diagnosis reads it scrubbed, so that a token's own characters never decide it.
-
-<a id="issue-621-overlap"></a>
-
-#### 2.2.2 The overlap with #613
-
-#613's check runs in GitHub Actions, where a connection failure is rare but possible. It is not a credential condition there either: the check's run fails, the next day's run checks again, and no credential incident is raised for it (§ 5.1).
-
-<a id="issue-621-tests"></a>
-
-#### 2.2.3 Tests and evidence
-
-- The stand-in `gh` answers `auth status` and `api rate_limit` from a case's own text when one is given.
-- New cases in `tests/Test-StarGitHub`: a DNS failure, a timeout, a refused connection and a TLS failure, each named as a connection failure with gh's line and no credential advice; an actual HTTP 401, named as a rejected token; an error of no known kind, quoted with no fix; and the rate-limit check failing to connect. The existing access cases, for no login, a refused token, missing scopes, an organization not visible and a spent rate limit, keep passing. Each new case fails without the change.
-- The deployed command, run with `HTTPS_PROXY` pointing at a port nothing listens on, names GitHub as unreachable and no credential fault; the result is posted on #621.
-- Section 6, § 8's table of failures gains the connection failure.
-
 <a id="issue-626"></a>
 
-### 2.3 Issue 626
+## Issue 626
 
 #626: `check_access` can check that the login reaches the organization a command reads, section 6 § 8's "Account unavailable despite scopes", but none of its 24 callers passes an organization, so the check has never run. A command run against an organization that refuses the login, as one enforcing single sign-on does, gets past the access check and fails on its first real request with GitHub's own error. Found fixing #625's review.
-
-<a id="issue-626-fix"></a>
-
-#### 2.3.1 The fix
-
-- `check_access` takes the account a command names, an organization or a user. After the rate limit, it asks GitHub what kind of account it is: a name that can't be an account's is refused first, and one GitHub has no account for is named. For an organization, it reads the organization: a 401 is a rejected token, a 403 or a 404 names the boundary and who must grant access, and any other failure is quoted with no fix claimed. A user account needs no further request.
-- `star github model get`, `diff`, `apply`, `backup` and `restore`, and `token make`, the commands that name an account, pass it. The check returns the account's kind and checks the scopes that kind needs, so `token make` makes no request of its own before it.
-- A rate limit reading the organization, a 429, or a 403 with a Retry-After, no requests left or GitHub's words for one, is named as a rate limit, with how long to wait or until when, as GitHub says, and asks for no access.
-
-<a id="issue-626-tests"></a>
-
-#### 2.3.2 Tests
-
-Cases 242 to 254 in `tests/Test-StarGitHub`: an organization that refuses the login, a server error there, and a rate limit, each stopping the command before any other request; `token make` checking access before any request of its own; every command that names an account making the check; a user account making no organization request; an account GitHub doesn't have; and a name that can't be an account's. Each fails without the change.
 
 <a id="current-state"></a>
 
@@ -136,7 +94,7 @@ Read on 2026-11-21, at develop c69b4ae:
 ## 4. Design impact
 
 - **Section 4, § 4.1:** the credentials check, its incidents and their clearing rules, and `TOKEN_ROTATION_DUE`.
-- **`4-storage-and-reach.decisions.md`:** a record for checking each binding where it lives and raising its incident there, proposed until approved.
+- **`4-storage-and-reach.decisions.md`:** ACCESS-007, accepted: checking each binding where it lives and raising its incident there.
 - **The guide:** what an incident means and how each clears.
 - **Section 4, § 3:** `workflow-templates/` here, the templates' source, and the installed check.
 - **Section 6, § 8:** the commands that check the account they name (#626), and the access check's failures: GitHub not reached, a rejected token only on a 401 or Bad credentials, and any other failure quoted with no fix claimed (#621).
@@ -199,6 +157,48 @@ The workflow, its script and its permissions file, whose source is this reposito
 
 `tests/Test-CredentialsCheck` runs `credentials-check.sh` against a stand-in `gh` and `curl`, for every condition of § 5.1 and every clearing rule of § 5.2, for an organization and a user account: an incident raised once, repeated each day, and closed by the clearing rule alone; a check through another copy of the credential never clearing it.
 
+<a id="issue-621-fix"></a>
+
+### 5.6 #621: the fix
+
+- `_run` returns the exit status beside the output.
+- The failed login's `- Error:` line decides the diagnosis:
+  - **Connection failure:** `no such host`, `i/o timeout`, `timeout`, `connection refused`, `connection reset`, `network is unreachable`, `tls:`, `x509:` or `certificate`. The message names GitHub as unreachable, quotes gh's error line, and says to check the network, a proxy or a VPN, and to rerun. It recommends no change to any credential.
+  - **Credential rejection:** `401` or `Bad credentials`. The message is today's, naming `gh auth refresh` or the token variable to replace.
+  - **Anything else:** gh's error line, quoted, with no fix claimed.
+- A block with no error line keeps today's handling.
+- Every later GitHub call in the check, the rate limit and the organization, fails the same way when its own exit status is non-zero, before any other call is made: a connection failure is named as one, never as a spent rate limit or a missing organization, and any other failed answer, a server error among them, is quoted with no fix claimed.
+- No credential ever appears in a message: a quoted line is scrubbed of anything shaped like a token, wherever it starts, the text around it kept, and the diagnosis reads it scrubbed, so that a token's own characters never decide it.
+
+<a id="issue-621-overlap"></a>
+
+### 5.7 #621: the overlap with #613
+
+#613's check runs in GitHub Actions, where a connection failure is rare but possible. It is not a credential condition there either: the check's run fails, the next day's run checks again, and no credential incident is raised for it (§ 5.1).
+
+<a id="issue-621-tests"></a>
+
+### 5.8 #621: tests and evidence
+
+- The stand-in `gh` answers `auth status` and `api rate_limit` from a case's own text when one is given.
+- New cases in `tests/Test-StarGitHub`: a DNS failure, a timeout, a refused connection and a TLS failure, each named as a connection failure with gh's line and no credential advice; an actual HTTP 401, named as a rejected token; an error of no known kind, quoted with no fix; and the rate-limit check failing to connect. The existing access cases, for no login, a refused token, missing scopes, an organization not visible and a spent rate limit, keep passing. Each new case fails without the change.
+- The deployed command, run with `HTTPS_PROXY` pointing at a port nothing listens on, names GitHub as unreachable and no credential fault; the result is posted on #621.
+- Section 6, § 8's table of failures gains the connection failure.
+
+<a id="issue-626-fix"></a>
+
+### 5.9 #626: the fix
+
+- `check_access` takes the account a command names, an organization or a user. After the rate limit, it asks GitHub what kind of account it is: a name that can't be an account's is refused first, and one GitHub has no account for is named. For an organization, it reads the organization: a 401 is a rejected token, a 403 or a 404 names the boundary and who must grant access, and any other failure is quoted with no fix claimed. A user account needs no further request.
+- `star github model get`, `diff`, `apply`, `backup` and `restore`, and `token make`, the commands that name an account, pass it. The check returns the account's kind and checks the scopes that kind needs, so `token make` makes no request of its own before it.
+- A rate limit reading the organization, a 429, or a 403 with a Retry-After, no requests left or GitHub's words for one, is named as a rate limit, with how long to wait or until when, as GitHub says, and asks for no access.
+
+<a id="issue-626-tests"></a>
+
+### 5.10 #626: tests
+
+Cases 242 to 255 in `tests/Test-StarGitHub`: an organization that refuses the login, a server error there, and a rate limit, each stopping the command before any other request; `token make` checking access before any request of its own; every command that names an account making the check; a user account making no organization request; an account GitHub doesn't have; and a name that can't be an account's. Each fails without the change.
+
 <a id="alternatives-and-challenges"></a>
 
 ## 6. Alternatives and challenges
@@ -225,7 +225,7 @@ Questions for you, 3 of them:
 | A new issue that doesn't reach Triage is reported at once | The token's alert, or "New issues aren't reaching Triage", naming the issue; closed when a later issue reaches Triage, listing the issues missed earlier, to check | The same suite | Stand-ins |
 | The checks run in the field | Each participating repository's daily check runs and passes | The runs of the first two days after landing | The real accounts |
 | A connection failure is never a rejected token (#621) | GitHub not reached is named, gh's line quoted, with no credential advice; only a 401 is a rejected token | `tests/Test-StarGitHub`, cases 222 to 241 | Stand-in `gh` |
-| A command reading an organization checks the login can reach it (#626) | Refused, it stops naming who must grant access; a user account makes no organization request | `tests/Test-StarGitHub`, cases 242 to 254 | Stand-in `gh` |
+| A command reading an organization checks the login can reach it (#626) | Refused, it stops naming who must grant access; a user account makes no organization request | `tests/Test-StarGitHub`, cases 242 to 255 | Stand-in `gh` |
 | The deployed command (#621) | With GitHub unreachable, it names no credential fault | Run with `HTTPS_PROXY` at a port nothing listens on, after `writ deploy` | The owner's Mac |
 
 There are no sandbox runs (§ 12). Real credentials are never broken to prove an alert: the conditions are proved against the stand-ins, and the field shows the checks running and passing.
@@ -238,7 +238,7 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 | --- | --- | --- | --- |
 | Implementation | Yes | The commits of §§ 9.2 to 9.7, reviewed | Pending |
 | Merge | Yes | The pull request and the commit it lands | Pending |
-| Deployment | Yes: the templates landed in each participating repository (#613), and `writ deploy` of the extension (#621) | Each repository holding the check; the deployed `access.star` | Pending |
+| Deployment | Yes: the templates landed in each participating repository (#613), and `writ deploy` of the extension (#621, #626) | Each repository holding the check; the deployed `access.star` | Pending |
 | Verification | Yes, in the field | Two days of passing checks in every participating repository, posted on #613; the deployed command with GitHub unreachable, posted on #621 | Pending |
 
 <a id="implementation-phases"></a>
@@ -255,7 +255,7 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 
 ### 9.2 Phase 2: #621, the access diagnostics
 
-- [x] `access.star` as § 2.2.1 sets out; its cases, 222 to 234; section 6, § 8. The suite passes all 685 checks, 27 of them #621's. The deployed command's check of § 2.2.3 moves to § 9.8, after the merge.
+- [x] `access.star` as § 5.6 sets out; its cases, 222 to 234; section 6, § 8. The suite passes all 685 checks, 27 of them #621's. The deployed command's check of § 5.8 moves to § 9.8, after the merge.
 
 <a id="phase-2-the-check"></a>
 
@@ -279,19 +279,19 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 
 ### 9.6 Phase 6: #625's review
 
-- [x] R5 and R6, #621: a failed organization answer with an HTTP status line, a server error among them, stops the command; a token is scrubbed wherever it starts in a line, and the diagnosis reads the line scrubbed. Cases 235 to 241, all 698 checks passing; section 6, § 8; § 2.2.1. The organization lookup has no case: no command passes `check_access` an organization, so none reaches it.
+- [x] R5 and R6, #621: a failed organization answer with an HTTP status line, a server error among them, stops the command; a token is scrubbed wherever it starts in a line, and the diagnosis reads the line scrubbed. Cases 235 to 241, all 698 checks passing; section 6, § 8; § 5.6. The organization lookup has no case: no command passes `check_access` an organization, so none reaches it.
 - [x] R1, R2, R4 and R7, #613: an incident closes only when its own test passes; only GitHub's refusal is a credential condition; duplicates from runs at once are closed; a failed incident operation fails the run. Their cases in `tests/Test-CredentialsCheck`, 51 in all, every one passing; 25 of them fail against 1f76efa's script. §§ 5.2 and 6; section 4, § 4.1; the guide's § 8.
 - [x] R3: what a new issue that doesn't reach Triage raises, as decided on 2026-11-21 (§ 12): § 5.3, both Triage templates, and the script's report and placed modes. `consumer-failed` is gone. `tests/Test-CredentialsCheck`, 62 cases, every one passing.
 - [x] #625's audit, A02 to A07: #613's body rewritten to the approved design, and the plan review that didn't happen recorded in § 12; this plan active, #621 in §§ 2, 4, 7, 8 and 10, § 11 brought up to date, and its sections numbered in order; section 4's §§ 3 and 4.1 and ACCESS-007 naming `workflow-templates/` as the templates' source, with the README; ACCESS-007's recorded time made the commit's, 08:23:15Z, and ACCESS-006 and MODEL-007 to 009's made c910441's, 06:42:51Z, all four having carried an invented 03:00:00Z; the guide's sections numbered in order; and the script's exemption from `Declare-BashScript` stated in its header and § 5.1. A01, a review not yet made, was answered by Codex's.
 
-- [x] #625's second review, R9 to R15: a duplicate's missed issues carried to the alert kept; the alert closed whenever the issue reached Triage, a failure closing it failing the run; a run that couldn't tell where an issue belongs saying so; `token make` checking access before any request of its own; a rate limit on the organization named as one; and the alerts saying only what was seen. `tests/Test-CredentialsCheck`, 68 cases, and `tests/Test-StarGitHub`, cases 242 to 254, all passing; §§ 2.3 and 5.3, section 4 § 4.1, section 6 § 8 and the guide's § 8.
-- [x] #625's third review, R11 and R14: an issue whose place was unknown stays unknown in the reminder and the closing, and a rate limit giving its reset time and no Retry-After names that time. Case 255; the credentials check's reminder and closing cases; §§ 2.3.1 and 5.3, section 6 § 8.
+- [x] #625's second review, R9 to R15: a duplicate's missed issues carried to the alert kept; the alert closed whenever the issue reached Triage, a failure closing it failing the run; a run that couldn't tell where an issue belongs saying so; `token make` checking access before any request of its own; a rate limit on the organization named as one; and the alerts saying only what was seen. `tests/Test-CredentialsCheck`, 68 cases, and `tests/Test-StarGitHub`, cases 242 to 254, all passing; §§ 5.3 and 5.9, section 4 § 4.1, section 6 § 8 and the guide's § 8.
+- [x] #625's third review, R11 and R14: an issue whose place was unknown stays unknown in the reminder and the closing, and a rate limit giving its reset time and no Retry-After names that time. Case 255; the credentials check's reminder and closing cases; §§ 5.9 and 5.3, section 6 § 8.
 
 <a id="phase-6b-issue-626"></a>
 
 ### 9.7 Phase 7: #626, the account a command names
 
-- [x] `check_access` and the six commands that name an account, as § 2.3.1 sets out; cases 242 to 247, all 711 checks passing; section 6, § 8.
+- [x] `check_access` and the six commands that name an account, as § 5.9 sets out; cases 242 to 247, all 711 checks passing; section 6, § 8.
 
 <a id="phase-5-merge-landing-and-verification"></a>
 
@@ -309,7 +309,7 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 - `Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/access.star` and `tests/Test-StarGitHub` (#621, #626).
 - The same extension's `commands/github-model-get.star`, `github-model-diff.star`, `github-model-apply.star`, `github-model-backup.star`, `github-model-restore.star` and `github-token-make.star` (#626).
 - `README.md`.
-- `docs/architecture/issue-data-model/4-storage-and-reach.md`, `4-storage-and-reach.decisions.md`, `6-the-asset-and-its-sync.md` (#621), `docs/reference/issue-tracking-credentials.md`.
+- `docs/architecture/issue-data-model/4-storage-and-reach.md`, `4-storage-and-reach.decisions.md`, `6-the-asset-and-its-sync.md` (#621, #626), `6-the-asset-and-its-sync.decisions.md`, `docs/reference/issue-tracking-credentials.md`.
 
 <a id="dependencies-overlaps-and-blockers"></a>
 

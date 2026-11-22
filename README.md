@@ -1,7 +1,7 @@
 ---
 title: "noblefactor-engprod"
 description: "NobleFactor engineering process, standards and deployed base-layer tools"
-updated: 2026-11-19
+updated: 2026-11-21
 ---
 
 # noblefactor-engprod
