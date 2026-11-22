@@ -30,7 +30,7 @@
 
 load("commands/access.star", "check_access")
 load("commands/credentials.star", "KIND", "installed")
-load("commands/model.star", "extension_dir", "owner_kind", "quote", "read_text", "refuse_dry_run", "sh")
+load("commands/model.star", "extension_dir", "quote", "read_text", "refuse_dry_run", "sh")
 load("commands/participation.star", "TEMPLATE", "read_file", "secrets_of")
 load("commands/tokens.star", "CLEAN", "parse", "problem", "reader")
 
@@ -311,9 +311,12 @@ def run(_command, ctx):
             sources[flag] = named[0][1]
     if not _ok("az account show -o none"):
         fail("az is not signed in to Azure; run az login")
-    kind = owner_kind(account)
-    scopes = ["admin:org"] if kind == "organization" else ["repo"]
-    check_access("star github token make", scopes = scopes, dry_run = ctx.dry_run)
+    kind = check_access(
+        "star github token make",
+        account = account,
+        kind_scopes = {"organization": ["admin:org"], "user": ["repo"]},
+        dry_run = ctx.dry_run,
+    )
     names = _names(kind)
     replace = ctx.args.get("replace") in [True, "true"]
     if kind == "organization":

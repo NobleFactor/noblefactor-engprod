@@ -39,7 +39,7 @@ def run(_command, ctx):
     if account == "":
         fail("name the account: star github model backup <account>")
     refuse_dry_run(ctx.dry_run)
-    check_access("star github model backup", scopes = ["repo", "read:project"], dry_run = ctx.dry_run)
+    check_access("star github model backup", account = account, scopes = ["repo", "read:project"], dry_run = ctx.dry_run)
     repository = account + "/.github"
     model = sh("star github model get " + quote(account) + " --output yaml --silent --no-pager").rstrip("\n") + "\n"
 

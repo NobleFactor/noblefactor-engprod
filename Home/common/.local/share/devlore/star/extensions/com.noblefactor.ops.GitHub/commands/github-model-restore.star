@@ -29,7 +29,7 @@ def run(_command, ctx):
     sources = parse(ctx.args.get("token") or "")
     refuse_dry_run(ctx.dry_run)
     check(sources)
-    check_access("star github model restore", scopes = ["repo", "project", "admin:org", "workflow"], dry_run = ctx.dry_run)
+    check_access("star github model restore", account = account, scopes = ["repo", "project", "admin:org", "workflow"], dry_run = ctx.dry_run)
     text = read_file(account + "/.github", "model.yaml", revision)
     if text == None:
         fail(account + "/.github holds no model.yaml at " + revision + ": back it up first, star github model backup " + account)

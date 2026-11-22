@@ -1,7 +1,7 @@
 ---
 title: "Model command decisions"
 status: draft
-updated: 2026-11-20
+updated: 2026-11-21
 ---
 
 # Model command decisions
@@ -162,7 +162,7 @@ proposed_by: Claude Code
 approved_by: null
 recorded_by: Claude Code
 decided_at: null
-recorded_at: '2026-11-21T03:00:00Z'
+recorded_at: '2026-11-21T06:42:51Z'
 ```
 
 <a id="model-008"></a>
@@ -191,7 +191,7 @@ proposed_by: Claude Code
 approved_by: null
 recorded_by: Claude Code
 decided_at: null
-recorded_at: '2026-11-21T03:00:00Z'
+recorded_at: '2026-11-21T06:42:51Z'
 ```
 
 <a id="model-009"></a>
@@ -218,7 +218,7 @@ proposed_by: Claude Code
 approved_by: null
 recorded_by: Claude Code
 decided_at: null
-recorded_at: '2026-11-21T03:00:00Z'
+recorded_at: '2026-11-21T06:42:51Z'
 ```
 
 <a id="7-shared-review-policy"></a>

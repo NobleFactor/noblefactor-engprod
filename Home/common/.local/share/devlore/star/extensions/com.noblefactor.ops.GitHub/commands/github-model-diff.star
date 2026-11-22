@@ -26,5 +26,5 @@ def run(_command, ctx):
     if model == "" or account == "":
         fail("name the model and the account: star github model diff <model> <account>")
     refuse_dry_run(ctx.dry_run)
-    check_access("star github model diff", scopes = ["read:project"], dry_run = ctx.dry_run)
+    check_access("star github model diff", account = account, scopes = ["read:project"], dry_run = ctx.dry_run)
     return differences(model, account)
