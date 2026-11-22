@@ -41,9 +41,11 @@ shell-lint: ## Format-check and lint every shell script
 # tautology. That is one file named here, not a word exempted repository-wide. The files are what git tracks, as the
 # frontmatter and shell gates' are, so a local run checks what CI checks and nothing git ignores, such as a worktree's
 # scratch folder (ruled 2026-11-06); codespell walking the tree reads .gitignore not at all.
+# Two exact historical Owner lines retain their original spelling in the role-context source.
+# The exclusion file matches complete lines only; authored prose and other occurrences remain checked.
 spelling: ## Check the prose
 	git ls-files -z -- . ':!:*.svg' ':!:*.wasm' ':!:*.lock' ':!:docs/plans/fix/234-prose-is-not-checked-for.md' |
-		xargs --null --no-run-if-empty codespell --builtin clear,rare,en-GB_to_en-US --ignore-words .github/codespell-ignore
+		xargs --null --no-run-if-empty codespell --builtin clear,rare,en-GB_to_en-US --ignore-words .github/codespell-ignore --exclude-file .github/codespell-verbatim-lines
 
 # buildifier is Bazel's formatter and linter for the language and knows nothing of devlore's provider surface; it
 # catches formatting, unused variables, confusing names and missing docstrings, and passes a well-formed call to a

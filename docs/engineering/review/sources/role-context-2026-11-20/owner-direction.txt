@@ -1,0 +1,513 @@
+Owner-provided proposal and direction, 2026-11-20 to 2026-11-21
+
+Origin: Codex conversation 01a1dbab-52c1-7cc1-8847-75c961cc5e45.
+Native source: /Users/david-noble/.Codex/sessions/2026/11/14/rollout-2026-11-14T12-06-40-01a1dbab-52c1-7cc1-8847-75c961cc5e45.jsonl
+These are exact selected messages extracted from the local conversation log. Timestamps are the host's recorded message times. The supplied Antigravity material is a user-provided proposal, not an independently exported Antigravity transcript or verified product qualification.
+
+The Owner's broad reply and the Coder's subsequent interpretation remain distinct. This source does not invent separate answers to the proposal's two questions. Later messages explicitly clarify audit scope and timing. On 2026-11-21, UTC times before 08:00 fall on 2026-11-20 in America/Los_Angeles; times from 08:00 fall on 2026-11-21.
+
+=== MESSAGE 1: user ===
+recorded_at: 2026-11-20T20:52:33.657Z
+text_sha256: a4a29072b33579a1abb6983203712eeeaf4b93820900d4e3856a7d606a886d71
+
+since the shared context and roles are underway, I'd like to wrap on them with consideration for some refinements I've been looking at. Here are two markdown fences from an antigravity session.
+
+```markdown
+# Terminal-First Development Roles
+
+Use Antigravity CLI, Claude Code, Codex CLI, and OpenCode as role defaults. Adjust the assignments based on how each model and CLI performs on your repositories.
+
+## Role assignments
+
+| Role | Default | Responsibility |
+|---|---|---|
+| Repository exploration | Antigravity CLI (`agy`) with Gemini | Map unfamiliar code, trace dependencies, and identify files, history, and documentation affected by a proposed change. Cite the sources used for the impact assessment. |
+| Architecture and planning | Claude Code with Claude Opus | Define requirements, API and schema contracts, acceptance criteria, and the order of implementation. |
+| System and API design | Claude Code | Specify interfaces, state transitions, failure handling, and compatibility requirements. |
+| UI and interaction design | Antigravity CLI with Gemini | Explore visual flows and use browser-assisted testing to verify layouts and interactions. |
+| Code implementation and refactoring | Codex CLI | Implement scoped changes and run relevant checks. Use Claude Code as an alternate when it has the context to carry a coordinated change across modules. |
+| Documentation authoring | Claude Code | Draft and update specs, READMEs, developer guides, and architecture documentation. Verify examples and instructions against the implementation. |
+| Plan and code review | Antigravity CLI, Claude Code, or Codex CLI | Critique plans for missing requirements and review diffs for logic bugs, edge cases, and regressions. For independent review of critical changes, select a model from a different family than the one that implemented the change. |
+| **Code and Documentation Compliance Reviewer** | **OpenCode with approved local or Azure-hosted open-weight models** | Review every proposed change against the repository’s adopted standards. Use static analysis and CI results alongside the diff, relevant source, and affected documentation. Request specific corrections and verify them on revision. |
+
+## OpenCode compliance review
+
+CI runs repeatable checks such as secret scanning, license checks, linting, and schema validation. OpenCode reads those results and reviews requirements that depend on context, including whether a code change makes existing documentation stale.
+
+| Review area | What OpenCode checks | Example change request |
+|---|---|---|
+| Code and repository conventions | Applicable `AGENTS.md` rules, coding standards, and requirements for tests and public interfaces | “Add a test for the new configuration option’s default and document that default in the configuration reference.” |
+| Architecture documentation | Whether affected arc42 sections reflect the implemented architecture and record significant decisions | “Update the runtime view to show where retries occur and record the rationale in Architecture Decisions.” [arc42 template](https://arc42.org/overview) |
+| Developer documentation | Whether changed material follows the applicable Google developer documentation style guidance and gives readers what they need to complete the task | “Move the prerequisite before the procedure and show the expected output after the verification command.” [Google developer documentation style guide](https://developers.google.com/style) |
+| Code and documentation consistency | Whether examples, defaults, error messages, and operational instructions match the implementation, including in files outside the diff | “The guide lists a 30-second timeout. Update the guide and example to match the new 60-second default.” |
+
+Record which standards the repository has adopted, where they apply, and which requirements are mandatory. Each OpenCode finding should cite the requirement and the evidence, identify the file or section, and state the requested correction. Mark unmet mandatory requirements as blocking and identify any evidence needed to verify compliance. Maintainers resolve exceptions.
+
+## Configuration and execution
+
+- **Repository instructions.** Keep shared policy in `AGENTS.md`. Where Claude Code needs a `CLAUDE.md` wrapper, import `@AGENTS.md`. Verify instruction and skill discovery across the CLI versions and working directories your team uses.
+- **Local compliance reviews.** Use an approved local model for routine reviews. Verify that the inference runtime and enabled tools keep repository data on the host when local-only processing is required.
+- **Azure compliance reviews.** Use an approved Azure deployment when a broader review needs more context or capacity. Verify the deployment, region, and data-handling terms before submitting private repository content.
+- **Hosted tool settings.** Review telemetry and hosted data processing for each configured account and endpoint before using it with private repositories.
+
+## Merge workflow
+
+For a critical change, have Claude Code draft the plan and Codex CLI implement it. Run CI and give OpenCode the results for its code and documentation compliance review. Have a fresh Gemini session in Antigravity independently review the diff for correctness. Resolve blocking findings, rerun the affected checks, and get maintainer approval before merging.
+
+For routine changes, use the relevant authoring and review tools. Keep required CI checks and the OpenCode compliance pass in the workflow.
+```
+
+```markdown
+# Evidence for Terminal-First Development Roles
+
+Companion to *Terminal-First Development Roles*. The sources below document tool capabilities, standards, and merge controls. The assignments are workflow recommendations. Comparative performance should be evaluated on representative changes in your repositories.
+
+## Role assignments
+
+1. **Repository exploration with Antigravity CLI and Gemini.** Google documents `/codesearch` for repository exploration, `/teamwork` for collaborative agent sessions on eligible plans, and the Gemini models available by plan. These capabilities support using Antigravity for impact analysis. Evaluate the quality of the file references and dependency tracing on your own repositories. [Antigravity code search](https://antigravity.google/docs/cli/commands/codesearch/) · [Antigravity CLI reference](https://antigravity.google/docs/cli/reference/) · [Antigravity models](https://antigravity.google/docs/models)
+
+2. **Architecture and planning with Claude Code and Claude Opus.** Anthropic documents Plan Mode for inspecting a codebase and preparing a plan before editing. This supports a planning handoff that records requirements, acceptance criteria, and implementation order. Opus is the proposed starting model. [Claude Code common workflows](https://code.claude.com/docs/en/common-workflows) · [Claude Code model configuration](https://code.claude.com/docs/en/model-config)
+
+3. **System and API design with Claude Code.** Plan Mode also supports investigating existing interfaces and dependencies before proposing changes. Put API and schema contracts, compatibility requirements, and failure behavior in the design deliverable so reviewers can check them before implementation. [Claude Code common workflows](https://code.claude.com/docs/en/common-workflows)
+
+4. **UI and interaction design with Antigravity CLI.** Google documents `/browser` for delegating live UI testing, screenshots, and web inspection to a browser subagent. This supports checking proposed layouts and interactions in a running application. [Antigravity CLI getting started](https://antigravity.google/docs/getting-started?tab=cli) · [Antigravity CLI reference](https://antigravity.google/docs/cli/reference/)
+
+5. **Implementation and refactoring with Codex CLI.** OpenAI’s workflow guide shows how to provide repository instructions, scope changes, and verify implementation. Anthropic’s common workflows document refactoring with Claude Code, which supports keeping it as an alternate for coordinated changes. The preferred CLI and the decision to switch are team workflow choices. [OpenAI’s Codex development workflow guide](https://developers.openai.com/cookbook/examples/codex/iterating-development-workflows-with-codex) · [Claude Code common workflows](https://code.claude.com/docs/en/common-workflows)
+
+6. **Documentation authoring with Claude Code.** Anthropic’s workflows cover codebase exploration and documentation tasks. Use that access to ground specs, READMEs, and guides in source code, and verify changed examples against the implementation. Google’s code sample guidance provides criteria for reviewing the examples. [Claude Code common workflows](https://code.claude.com/docs/en/common-workflows) · [Google’s code sample guidance](https://developers.google.com/style/code-samples)
+
+7. **Plan critique and code review.** Antigravity and Claude Code provide planning workflows. Anthropic documents local code review, and OpenAI documents custom repository rules for Codex Code Review. Record the actual reviewer model for critical changes. Antigravity offers both Gemini and Claude, so recording the harness alone leaves the model family ambiguous. A fresh session with a different model family is the proposed independence control. [Antigravity CLI reference](https://antigravity.google/docs/cli/reference/) · [Claude Code local review](https://code.claude.com/docs/en/code-review) · [Codex custom code review rules](https://developers.openai.com/blog/custom-code-review-rules-for-codex) · [Antigravity models](https://antigravity.google/docs/models)
+
+## OpenCode as Code and Documentation Compliance Reviewer
+
+8. **Review every proposed change against repository policy.** OpenCode documents repository instructions, reusable skills, and tool permissions. Use those controls to give the reviewer the policy, diff, relevant source and docs, and CI output. Require each finding to identify the applicable requirement, cite evidence, and request a specific correction. Recheck findings on revision and record any requirement that still lacks evidence. This review and reporting contract is a proposed repository policy. [OpenCode instructions](https://opencode.ai/docs/instructions/) · [OpenCode skills](https://opencode.ai/docs/skills/) · [OpenCode permissions](https://opencode.ai/docs/permissions/)
+
+9. **Run repeatable checks in CI and feed the results into OpenCode.** GitHub documents code scanning, secret scanning, and dependency review, including policies that can reject disallowed licenses for dependencies introduced by a pull request. JSON Schema provides a specification for machine-checkable data constraints. Run the tools your repository adopts and have OpenCode use their results as evidence in its review. [GitHub code scanning](https://docs.github.com/en/code-security/code-scanning/introduction-to-code-scanning/about-code-scanning) · [GitHub secret scanning](https://docs.github.com/en/code-security/secret-scanning/introduction/about-secret-scanning) · [GitHub dependency review configuration](https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/configuring-the-dependency-review-action) · [JSON Schema specification](https://json-schema.org/specification)
+
+10. **Review architecture documentation against arc42.** The arc42 template defines a Runtime View for representative runtime scenarios and an Architecture Decisions section for significant decisions. Use the affected sections to check whether a change needs a documentation update. For example, request a revised runtime scenario when responsibility for retries moves to a different component. [Official arc42 template overview](https://arc42.org/overview)
+
+11. **Review developer documentation against the Google style guide.** Google publishes guidance on writing procedures, presenting command syntax, and preparing code samples. Cite the applicable page when asking an author to revise a procedure, command, or example. The repository should define which guidance it adopts and which findings block merge. [Google developer documentation style guide](https://developers.google.com/style) · [Procedures](https://developers.google.com/style/procedures) · [Command-line syntax](https://developers.google.com/style/code-syntax) · [Code samples](https://developers.google.com/style/code-samples)
+
+12. **Check code and documentation together.** Compare changed interfaces, defaults, errors, and runtime behavior with the corresponding references, guides, and architecture sections, including files outside the diff. The style guide and arc42 establish what those artifacts should communicate. The implementation, tests, and repository policy supply the evidence for an individual finding. [Google’s code sample guidance](https://developers.google.com/style/code-samples) · [Official arc42 template overview](https://arc42.org/overview)
+
+## Configuration and execution
+
+13. **Share repository instructions and verify discovery.** Codex, Antigravity, and OpenCode document repository instruction discovery. Anthropic documents when Claude Code loads `AGENTS.md` directly and how to use `@AGENTS.md` in `CLAUDE.md` when a wrapper is needed. Skills have their own discovery rules. Verify both instruction and skill loading from the working directories the team uses. [Codex `AGENTS.md` guide](https://developers.openai.com/codex/guides/agents-md) · [Antigravity customization discovery](https://antigravity.google/docs/customization-discovery?tab=cli) · [OpenCode instructions](https://opencode.ai/docs/instructions/) · [Claude Code project instructions](https://code.claude.com/docs/en/memory) · [Claude Code skills](https://code.claude.com/docs/en/skills)
+
+14. **Use local inference for routine compliance reviews where appropriate.** OpenCode documents local runtimes such as Ollama, custom endpoints, and permissions for tools. Verify the configured endpoint and enabled tools when a repository requires on-host processing. [OpenCode providers](https://opencode.ai/docs/providers/) · [OpenCode permissions](https://opencode.ai/docs/permissions/)
+
+15. **Use approved Azure deployments for broader compliance reviews.** Microsoft documents deployment types and model availability. Check the exact model, endpoint, region, and terms for the deployment you intend to use. `DeepSeek-V4-Pro` and `FW-GLM-5.3` are listed in different Foundry catalogs. Verify the chosen endpoint with OpenCode before relying on it for review. [OpenCode providers](https://opencode.ai/docs/providers/) · [Microsoft Foundry deployment overview](https://learn.microsoft.com/en-us/azure/foundry/concepts/deployments-overview) · [Azure-sold model catalog](https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/models-sold-directly-by-azure) · [Fireworks model catalog](https://learn.microsoft.com/en-us/azure/foundry/how-to/fireworks/fireworks-model-catalog)
+
+16. **Review hosted data handling by account and endpoint.** Google documents Antigravity CLI telemetry controls. Anthropic documents Claude Code data usage, and OpenAI documents Codex data controls by plan. Check the terms and settings that apply to each account and deployment used for private repositories. [Antigravity CLI settings](https://antigravity.google/docs/cli-settings) · [Claude Code data usage](https://code.claude.com/docs/en/data-usage) · [OpenAI’s Codex plan and data controls](https://help.openai.com/en/articles/11369540-using-codex-with-your-chatgpt-plan)
+
+## Merge workflow
+
+17. **Require CI and maintainer approval, with independent model review for critical changes.** GitHub documents required status checks, approving reviews, and dismissal of stale approvals when changes are pushed. Use those controls to enforce merge requirements. Keep the OpenCode compliance pass for routine and critical changes. For critical changes, also record the implementer and reviewer model families and review the final diff after blocking corrections. The four-tool handoff and cross-model review rule are proposed team policies. [GitHub protected branches](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches)
+```
+=== END MESSAGE 1 ===
+
+=== MESSAGE 2: assistant ===
+recorded_at: 2026-11-20T20:57:27.433Z
+text_sha256: 648f87a43a41c928677fee05b60f3fa37ae5ef4dd7fad499233eaad3ed1a1d5d
+
+These proposals would strengthen **Shared context and roles (#558)**. I recommend keeping our five roles and making the host/model assignments configurable preferences.
+
+| Role | Responsibility |
+|---|---|
+| Designer | System, API and UI design; requirements, contracts and significant choices |
+| Planner | Plans, issues, dependencies, verification and Schedule proposals |
+| Coder | Implementation, refactoring, tests and affected documentation |
+| Reviewer | Independent assessment of correctness and coherence |
+| Compliance auditor | Evidence-based assessment against adopted standards, process and authority |
+
+Repository exploration and documentation methods can support several roles through shared skills.
+
+The most useful refinements are:
+
+- **Broader compliance coverage.** Check code and documentation together, including affected files outside the diff. Passing CI supplies evidence for particular checks; the auditor still examines requirements that need judgment.
+- **Precise findings.** Cite the applicable requirement, location, evidence, consequence, correction and verification needed. Distinguish violations, missing evidence and recommendations. Recheck the corrected revision.
+- **Actual model identity.** Record the provider, model and model family used. Different CLI names alone cannot establish the required independence.
+- **Loaded context evidence.** Identify the common instructions, role material, skills, assignment and source revisions actually read.
+
+Instruction loading needs particular care. Codex documents discovery at startup; OpenCode documents updates during a running session; Claude’s native `AGENTS.md` loading depends on its version and configuration. Our shared contract must accommodate those differences. [Codex instructions](https://learn.chatgpt.com/docs/agent-configuration/agents-md), [OpenCode instructions](https://opencode.ai/docs/instructions/), [Claude instructions](https://code.claude.com/docs/en/memory).
+
+I saved a concrete [completion-plan amendment](/Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.558-role-entry-points/context-contract-amendment.txt) covering the resources, responsibilities, evidence and verification.
+
+My scope recommendation is to finish this contract within the approved Claude/Codex work and retain Antigravity, OpenCode and model preferences as candidates. Testing additional hosts would expand the Schedule. Making a compliance assessment mandatory for every change also needs your explicit policy approval before adoption.
+=== END MESSAGE 2 ===
+
+=== MESSAGE 3: user ===
+recorded_at: 2026-11-20T21:04:06.533Z
+text_sha256: c900c6ba379ae761f3d8682c5c34570a858c022a2ef41120ea1cd5eb6e2e7df6
+
+Let's run with that.
+=== END MESSAGE 3 ===
+
+=== MESSAGE 4: assistant ===
+recorded_at: 2026-11-20T21:04:09.182Z
+text_sha256: 17cb1740cfb0eb3f822600f6ea31b4c1679c5b0ad847cf5f3559ebaf494a0391
+
+I’ll treat that as approval to refine the shared contract and require a compliance assessment for every proposed change. I’ll keep Claude/Codex as this Schedule’s testing scope and record the other host/model assignments as candidates. Next I’ll prepare the amended plan and Owner-run script.
+=== END MESSAGE 4 ===
+
+=== MESSAGE 5: user ===
+recorded_at: 2026-11-20T23:31:38.814Z
+text_sha256: 3242f81a8c34dbf8fe72f228709a24743e7069e87186c469a766e948324e7d60
+
+Publication is NOT blocked by anything.
+=== END MESSAGE 5 ===
+
+=== MESSAGE 6: user ===
+recorded_at: 2026-11-20T23:32:27.258Z
+text_sha256: c73a0a399ef175ae534942fabcb5476632f38e00c1a832f094bcc942e9342a2a
+
+write a pr script. we have process and templates for this
+=== END MESSAGE 6 ===
+
+=== MESSAGE 7: user ===
+recorded_at: 2026-11-20T23:59:57.078Z
+text_sha256: 495f09160a61da37ca7a111ca4e775ee765b3148f12bc3301a8da607250ea419
+
+speak simply. we have a compliance auditor. we have a requirement that compliance is checked on demand or during a commit after our precommit hooks run. We might check locally immediately after the checks run. We need a trigger for that.
+=== END MESSAGE 7 ===
+
+=== MESSAGE 8: user ===
+recorded_at: 2026-11-21T00:00:43.881Z
+text_sha256: f640f460cc131ca2a39df102d6e65b4d2e45e0d02e058b330d7eff4c0cf17090
+
+the scope of the check should be self evident. it's all changed files and all files that might be effected by the changes to those files. this includes all artifacts: designs, plans, documentation, including help text, completions, and man pages. ALL assets.
+=== END MESSAGE 8 ===
+
+=== MESSAGE 9: user ===
+recorded_at: 2026-11-21T00:28:42.477Z
+text_sha256: bc94cd58b7f1499fb841101db086a0ff126f21de65f581b08cc966140ac907de
+
+external reviews should be logged with the PR that brings a set of changes into a repo. external review should not be committed. you saved some review text in a file. is that committed?
+=== END MESSAGE 9 ===
+
+=== MESSAGE 10: user ===
+recorded_at: 2026-11-21T00:35:21.678Z
+text_sha256: 4d4c667565559e0e3a0b620393cde6021b4f31ea74ba3ab9fc195ad060b11b4e
+
+go for it. let's make that change now.
+=== END MESSAGE 10 ===
+
+=== MESSAGE 11: user ===
+recorded_at: 2026-11-21T00:35:56.178Z
+text_sha256: f810675eabafd14465589fc13732b5c441e554436e7ca3c4ff06531eab19ea98
+
+Let's commit and push all your changes. put the commands for that into your script file.
+=== END MESSAGE 11 ===
+
+=== MESSAGE 12: user ===
+recorded_at: 2026-11-20T23:38:01.878Z
+text_sha256: 5bbd3ecbdedc1b7724541ef4140ff95b266af6edecc4a20d80d36a16bf9e2d26
+
+I need confirmation immediately commit all changes and push them. DO THAT NOW.
+=== END MESSAGE 12 ===
+
+=== MESSAGE 13: user ===
+recorded_at: 2026-11-20T23:48:27.927Z
+text_sha256: 0355472ba024f967e98b9483d696c3385004ddc6fe9d49298ae7342c2f2a43e7
+
+I want that goddamm draft pr. NOW!
+=== END MESSAGE 13 ===
+
+=== MESSAGE 14: user ===
+recorded_at: 2026-11-21T00:34:37.308Z
+text_sha256: 47d8f90cfd06cfc291ee7044bc633d8ca79c3eed7660886260008f33fe1db303
+
+We can defer that or update the design now. which do you prefer?
+=== END MESSAGE 14 ===
+
+=== MESSAGE 15: assistant ===
+recorded_at: 2026-11-21T00:34:50.605Z
+text_sha256: f76067695744fecdbcbe1784c05b6c3ff8cb2d96c7a766d30424030124801096
+
+I prefer to **update the design now** with a small, focused amendment covering:
+
+- Shared policy and per-environment role configuration.
+- One durable session binding per environment and role.
+- Auditor selection, independence checks and audit triggers.
+- Review evidence attached to the PR.
+
+Leave configuration formats and implementation steps to the control-plane plan. That gives the prototypes a clear destination without expanding into implementation.
+=== END MESSAGE 15 ===
+
+Additional Owner directions from the independent Reviewer conversation.
+Origin: Antigravity conversation 931a43d6-c3aa-4bc7-afd7-585662ec64c1.
+Native source: /Users/david-noble/.gemini/antigravity-cli/history.jsonl
+These are exact Owner messages from the native history, not external review text. Millisecond timestamps are converted to RFC 3339 UTC without adding precision. The earlier Codex source attribution applies to messages 1-15 only.
+
+=== MESSAGE 16: user ===
+recorded_at: 2026-11-21T00:12:43.255Z
+text_sha256: 56baf1e4e195ea0e20e618763691110eab86fe8664a17701c102b70db3a95953
+
+1. I defined the scope for your coder. I won't repeat it here. You can look now in the local repo, if that would help.
+
+2. Defer the universal blocking gate until later. I will be starting an auditor shortly. I will ask it to check compliance when I think it makes sense to gain some experience with the process.
+=== END MESSAGE 16 ===
+
+=== MESSAGE 17: user ===
+recorded_at: 2026-11-21T00:14:03.361Z
+text_sha256: a2949155ec6c71dec5b3d08a6e34ee7a07410a889b5244346aced0e0c689c5bd
+
+I would like a reliable auditor that is right almost all the time. Accuracy is hugely important.
+=== END MESSAGE 17 ===
+
+=== MESSAGE 18: user ===
+recorded_at: 2026-11-21T00:15:53.853Z
+text_sha256: f72935e071322fc38a45172e527d68146c24409f4827a0dbbcd39c46b09b72bf
+
+Those are good rules. Hold that thought and make sure what you say makes it into the plan.
+=== END MESSAGE 18 ===
+
+Additional scope and audit-routing approval from the originating Codex conversation.
+Origin and native source: Codex conversation 01a1dbab-52c1-7cc1-8847-75c961cc5e45 and the rollout path named above. Messages 19-20 preserve the Coder proposal and Owner reply, not an external review.
+
+=== MESSAGE 19: assistant ===
+recorded_at: 2026-11-21T03:35:06.037Z
+text_sha256: b009fc20289206d97baa0b1edc94580989198fac02055e1c6ba2bd09f927fb85
+
+The local edits now defer universal blocking and include all four accuracy safeguards. Documentation checks and script lint pass. Nothing new is committed or pushed.
+
+I recommend two decisions:
+
+1. Include the corrected handbook policy in PR #616.
+2. Allow an Owner-approved, one-off audit by an eligible third model family, preserving the assigned auditor’s session.
+
+Approve both? These change PR scope and the architecture’s audit-routing rule.
+=== END MESSAGE 19 ===
+
+=== MESSAGE 20: user ===
+recorded_at: 2026-11-21T03:40:10.105Z
+text_sha256: 73d91b9c9f9be611b5c98b09d73554b77e845bc461bb40b04de879097b6fff0e
+
+Yes, I approve both
+=== END MESSAGE 20 ===
+
+Owner direction on role deliverables and the Designer start rule, from the originating Codex rollout named above. Message 21 is a verbatim opening excerpt through the Designer bullet; message 22 is the complete revised Designer instruction. The complete message 21 remains in the native source and /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.558-role-context/role-deliverables/owner-role-direction.json, with SHA-256 48c7c52a9315f58bf38f3c37a98376022a4f60e8ca087b2ae59a6a5c57b28a48. These are Owner directions, not external reviews.
+
+=== MESSAGE 21: user ===
+recorded_at: 2026-11-21T04:19:04.169Z
+text_sha256: f800c3244b1565f28712c9a495858781306df35b28239f6e45170695f1a1c88a
+
+I see that some other agents are deeply confused about deliverables for each role.
+
+- designer => one or more design documents and a roadmap. Hence, every design should be done on a schedule that includes at least two issues: design + roadmap.
+=== END MESSAGE 21 ===
+
+=== MESSAGE 22: user ===
+recorded_at: 2026-11-21T04:22:39.061Z
+text_sha256: 625072e2192fd73fdf9b6832d5f82ce829b92276e15839da20d9b973b7459fa0
+
+Here is a revised statement for the Designer job: A Designer owes a design, its decision records, and a roadmap, not a plan for writing a design.
+=== END MESSAGE 22 ===
+
+Immediate nomenclature direction. Message 23 is a verbatim opening excerpt. The full message, including the requested deliverable name and the separate Roadmap inquiry, is retained in the native Codex rollout above and /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.558-role-context/nomenclature/owner-direction.json; complete message SHA-256: 67fa04642b53cabbd8b37e5741dfe6eb94443d997c1736b71bc458ab66a26908. The published spelling Architecture decisions corrects a typographical error in the requested name.
+
+=== MESSAGE 23: user ===
+recorded_at: 2026-11-21T05:02:38.158Z
+text_sha256: c1b019d224a67978ef58fcb7349c62d57285542680cdea899d4337a10348a719
+
+we must adopt that nomenclature immediately. no time to report a bug or a task. Let's just get it in. We use the nomenclature ADR elsewhere.
+=== END MESSAGE 23 ===
+
+Common design-schedule Task proposal and starter-skill approval. These are exact selected messages from the originating Codex rollout named above, not external review text.
+
+=== MESSAGE 24: user ===
+recorded_at: 2026-11-21T05:16:12.098Z
+text_sha256: 83a03ce62cf3ae63c1552ab69358bbaefe2f9ee792a0a238c22042532bbaed14
+
+I'm working on the design for the evidence archive and arrived at this construct for a design schedule.
+
+I propose two Tasks for `Schedule: evidence archive design (#619)`:
+
+1. **Design the Evidence Archive subsystem and record its architectural decisions**. Define boundaries, components, interfaces, data flows, integrity, security, recovery, and significant choices with alternatives.
+
+2. **Produce the Evidence Archive roadmap for planning". Identify capabilities, dependencies, useful delivery increments, acceptance evidence and unresolved choices for the Planner.
+
+I would like to turn these into the common tasks for every design schedule. The outputs drive planning.
+
+Where would we put them. is it a skill?
+=== END MESSAGE 24 ===
+
+=== MESSAGE 25: assistant ===
+recorded_at: 2026-11-21T05:17:06.113Z
+text_sha256: eac532bbf3b4f5672a125a0a9f96dce6f9eaadeb0cf09dd252ba2227e8834781
+
+**Put the two Task definitions in a design-schedule template, and use a skill to apply it.**
+
+The separation should be:
+
+| Home | Responsibility |
+|---|---|
+| Handbook: **Design schedules** | Requires the design, Architecture decisions and roadmap, with separate design and roadmap issues. |
+| **Design-schedule template** | Defines the two standard Tasks, their required content and completion evidence. |
+| A small **Start a design schedule** skill | Reads the template, fills in the subsystem and scope, and uses existing `star github` commands to establish the Schedule and Tasks. |
+
+I propose the template at `/Users/david-noble/Workspace/NobleFactor/noblefactor-engprod.558-role-context/docs/templates/design-schedule.md`, with these reusable titles:
+
+1. **Design `<subsystem>` and record its Architecture decisions.**
+2. **Produce the `<subsystem>` roadmap for planning.**
+
+Your descriptions supply their scope. Each Task should also specify its outputs and completion evidence: linked assets, technical review, compliance audit, your approval and the merged PR. One PR can deliver both Tasks.
+
+The roadmap can develop alongside the design. At handoff, they must agree and give the Planner enough information to propose implementation issues and schedules.
+
+The template supplies content; the existing account issue forms continue to define field labels. The skill references the shared requirements rather than duplicating them.
+=== END MESSAGE 25 ===
+
+=== MESSAGE 26: user ===
+recorded_at: 2026-11-21T05:35:35.534Z
+text_sha256: 12a425f5d5d54e7f56805ad30b37f474e07f9d4067af37c9cfb07cce369a364c
+
+awesome. let's do that now, if it makes sense. What do you think?
+=== END MESSAGE 26 ===
+
+Enabler-feature terminology, PR scope and hierarchy setup directions, from the originating Codex rollout above. These are exact Owner messages.
+
+=== MESSAGE 27: user ===
+recorded_at: 2026-11-21T08:00:38.496Z
+text_sha256: 93c3fc0c00df8b01d7d644ea11552e3e012f0d696ca5adbcf670cee8e38e2f82
+
+We have this terminology to work into our handbook. it relates to the design issue template and how we talk about design documents, plans, research, etc. we call them enabler features.
+
+Yes. Enabler feature is useful vocabulary to borrow. SAFe uses enablers for work that supports future capabilities, including research, architecture, infrastructure and compliance. Enablers can occupy the same backlog levels as other work, including Features. SAFe: Enablers
+
+That fits our situation: the design gives us the understanding needed to define and build the subsystem’s features.
+
+I suggest keeping Feature as the GitHub issue type and using enabler to describe its purpose:
+
+| Issue | Proposed title |
+|---|---|
+| Feature | Evidence archive design |
+| Task | Design the Evidence Archive subsystem and record its decisions |
+| Task | Produce the Evidence Archive roadmap |
+
+The Feature’s completion criteria would require the reviewed design, decision records and roadmap. Both Tasks would belong to Schedule: evidence archive design.
+
+Google offers a useful wording pattern: noun phrases for concepts and verbs for tasks. Applying that pattern to issue titles would be our convention; Google’s guidance concerns documentation headings. Google: Headings and titles
+
+arc42 supplies vocabulary for the design’s contents—solution strategy, architectural decisions, quality requirements and others. Its template addresses architecture documentation rather than naming tracker Features. arc42 overview
+
+We can borrow enabler feature without adopting the rest of SAFe.
+=== END MESSAGE 27 ===
+
+=== MESSAGE 28: user ===
+recorded_at: 2026-11-21T08:01:23.111Z
+text_sha256: 0fa13e94dde4b32505745677f199ca32ed095360e55f373f740f4019b0f6011d
+
+I need the change of vocabulary in PR #616.
+=== END MESSAGE 28 ===
+
+=== MESSAGE 29: user ===
+recorded_at: 2026-11-21T08:02:42.678Z
+text_sha256: 77c65267c55dd370ffa93500a0f7ae79af4f3ddde9970257103ff5534e824d5a
+
+I need a skill for setting up a design schedule and placing its tasks correctly in the related Epic hierarchy
+=== END MESSAGE 29 ===
+
+=== MESSAGE 30: user ===
+recorded_at: 2026-11-21T08:03:06.015Z
+text_sha256: 793992974a1d8ccaf2622ffb88670bc3d15ad6a8ae757abc868765f3168fd101
+
+that also goes into #616
+=== END MESSAGE 30 ===
+
+Complete material directions and the role-deliverables exchange from the originating Codex conversation. Messages 31 and 32 complete the previously published excerpts in messages 21 and 23 without changing those excerpts. The full wording, including misspellings, is retained. The exact historical lines with spelling errors are listed in .github/codespell-verbatim-lines; authored prose is still checked.
+
+=== MESSAGE 31: user ===
+recorded_at: 2026-11-21T04:19:04.169Z
+text_sha256: 48c7c52a9315f58bf38f3c37a98376022a4f60e8ca087b2ae59a6a5c57b28a48
+
+I see that some other agents are deeply confused about deliverables for each role.
+
+- designer => one or more design documents and a roadmap. Hence, every design should be done on a schedule that includes at least two issues: design + roadmap.
+- plannner => schedule and serves as a planning consultant throughtout.
+- reviewer => reviews assets: designs, roadmaps, plans, the code, and related artifacts (man pages, completions, etc.)
+- auditor => checks assets for compliance with standards: designs, roadmaps, plans, the code, and related artifacts (man pages, completions, etc.)
+
+We've written this stuff down and none of the agents get it. I just spent a full day getting a plan to write a fucking design. That is bullshit and is counter productive.
+
+We need to pause and deal with this immediately.
+=== END MESSAGE 31 ===
+
+=== MESSAGE 32: user ===
+recorded_at: 2026-11-21T05:02:38.158Z
+text_sha256: 67fa04642b53cabbd8b37e5741dfe6eb94443d997c1736b71bc458ab66a26908
+
+we must adopt that nomenclature immediately. no time to report a bug or a task. Let's just get it in. We use the nomenclature ADR elsewhere. Let's call the deliverable `Architecutre decisions`. Let's also consider a namechange for Roadmap. I like the word. What does arc42 or Google say about the concept?
+=== END MESSAGE 32 ===
+
+=== MESSAGE 33: user ===
+recorded_at: 2026-11-21T04:23:11.636Z
+text_sha256: 990b020da1446302c243ca2ef7daf969ce36e2b4d5460b7cdd5f92ddc59bebfd
+
+I need to see the deliverables for each role.
+=== END MESSAGE 33 ===
+
+=== MESSAGE 34: assistant ===
+recorded_at: 2026-11-21T04:23:36.246Z
+text_sha256: 69a4bcc90b50fcbeda098bc7cfd1e9ce99a1d3c1c2b6bc801c43bd9c4d66294b
+
+| Role | Deliverables |
+|---|---|
+| **Designer** | One or more design documents, their decision records, and a roadmap. A Designer owes these assets, not a plan for writing a design. |
+| **Planner** | A schedule containing ordered issues, dependencies, completion criteria and links to implementation plans. Provides planning advice throughout the work and proposes amendments as needed. |
+| **Coder** | The implemented change, appropriate tests, all affected assets updated, and verification evidence. |
+| **Reviewer** | A review of designs, decision records, roadmaps, plans, code and affected artifacts—including help, man pages and completions—with findings, corrective rechecks and an acceptance recommendation. |
+| **Compliance auditor** | An assessment of those assets against applicable adopted requirements, with cited evidence, findings, corrective rechecks and unresolved compliance gaps. |
+
+Every design runs on a schedule containing at least two issues: one for the design and its decision records, and one for the roadmap.
+=== END MESSAGE 34 ===
+
+=== MESSAGE 35: user ===
+recorded_at: 2026-11-21T04:32:21.996Z
+text_sha256: 1c25739026942b272660d6634b1447b46c80319cd5ca144897a79c0d3ac75f08
+
+I need issues that are closed with deliverables that are audited, reviewed, approved (by me) and merged. I do not need the bullshit that I ran into today: everyone spinning their wheels without knowing what the fucking deliverables are and going about this the wrong way.
+=== END MESSAGE 35 ===
+
+=== MESSAGE 36: user ===
+recorded_at: 2026-11-21T08:04:25.941Z
+text_sha256: 46538764bc6b4cf49e7fd6375464c6cb0373c6b1199b030d7f86958566cb4527
+
+And I need to see issues closing.
+=== END MESSAGE 36 ===
+
+Execution record for the bounded completion work:
+requested_at: 2026-11-21T08:14:46.943Z
+call_id: call_cef9106294194ed799cf21881afbec90
+justification: May I finish the approved role-context deliverables and completion record in the existing PR #616 worktree?
+The native record is an escalated tool request, not a separate Owner message or review of the committed amendment. Its execution completed successfully and wrote the approved context deliverables. The independent compliance audit on PR #616 classifies this as authorized work with an incomplete approval record. Read the exact Owner directions in messages 35 and 36 with that bounded request; do not turn them into an invented plan-review exchange.
+
+Accuracy-rule provenance: the independent Reviewer proposed the evidence and accuracy safeguards; message 18 records David Noble's acceptance. The proposal and its ruling are described in https://github.com/NobleFactor/noblefactor-engprod/pull/616#pullrequestreview-6002482562. External review text remains on that PR and is not reproduced here.
+
+Model provenance limits: no native log was found for the separate correction conversation identified by the auditor as session 01a1fba0. The assistant behind the wording relayed in message 27 is not identified. The Owner's adoption of that wording is recorded; it does not identify its originating model. These unknowns remain unresolved and cannot establish complete builder-family independence.
+
+Additional Owner directions from the Evidence Archive Designer conversation.
+Origin: Codex conversation 01a1fa76-3b38-7c81-8b36-262d5afe86bf.
+Native source: /Users/david-noble/.Codex/sessions/2026/11/20/rollout-2026-11-20T11-36-54-01a1fa76-3b38-7c81-8b36-262d5afe86bf.jsonl
+These exact selected messages were read from that log during the correction. Their UTC timestamps precede 08:00 on 2026-11-22, so their local date in America/Los_Angeles is 2026-11-21. They authorize the stated scope; they do not accept the proposed archive architecture or authorize merge.
+
+=== MESSAGE 37: user ===
+recorded_at: 2026-11-22T03:29:25.330Z
+text_sha256: f413208eee6f942fb7b165329291e07f38ebf4d4320f5053a3c3295ae3d46a68
+
+your scripts are running WAY too long without providing useful feedback. what all is this script that I ran doing? I can say that it should be pausing and updating me as soon as CI starts. And it should be providing useful feedback.
+=== END MESSAGE 37 ===
+
+=== MESSAGE 38: user ===
+recorded_at: 2026-11-22T03:47:34.884Z
+text_sha256: 524bd7e0a99cf804dcaf2f234602dfba694b51c39b10f4c088139bc0c2ac5c93
+
+My preferences are moderated by the suitability of the tech. You seem to have gotten in your head that my preferences reign supreme. they do not and i expect push back when i'm out of line with that. it is only when we can go one way or another, my preferences count.
+=== END MESSAGE 38 ===
+
+=== MESSAGE 39: user ===
+recorded_at: 2026-11-22T03:48:21.220Z
+text_sha256: 84db17237ef97fcc5d4e13700b357b921e1a9bb8976197abc5a94b9e2f760203
+
+then let's get the changes from #618 into #616 NOW!
+=== END MESSAGE 39 ===

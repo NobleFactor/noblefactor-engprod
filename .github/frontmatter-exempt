@@ -7,3 +7,7 @@
 # made for its migration guides. It would benefit from `title` and a `type`, which is a content
 # decision and not a gate one; this entry should go when that happens.
 docs/guides/go-style-guidelines.md
+
+# This skill uses native name/description/metadata frontmatter. A top-level title is rejected
+# by the Codex skill validator. Validate it separately; review this file-specific format exception.
+skills/start-design-schedule/SKILL.md

@@ -1,7 +1,7 @@
 ---
 title: "Issue hierarchy"
 status: draft
-updated: 2026-11-20
+updated: 2026-11-21
 ---
 
 <a id="1-the-hierarchy"></a>
@@ -16,16 +16,20 @@ The product hierarchy is Epic → Feature → Task or Bug. It describes what wor
 
 ## 1. Issue types
 
+The hierarchy uses these issue types and parent relationships.
+
 | Type | Meaning | Parent | User-account label |
 | --- | --- | --- | --- |
 | Epic | A body of work with an accountable owner, divided into Features | None | `epic` |
-| Feature | A capability delivered through Tasks and Bugs | One Epic | `feature` |
+| Feature | A product capability or enabling outcome delivered through Tasks and Bugs | One Epic | `feature` |
 | Task | Planned work that helps deliver a Feature | One Feature | `task` |
 | Bug | A defect in a Feature | One Feature | `bug` |
 | Schedule | A collection's deliverable, completion criteria and ordered work | None | `schedule` |
 | Scenario | A repeatable end-user goal and the walk used to exercise it | None | `scenario` |
 
 A classified issue has exactly one type. An organization uses its native GitHub issue types; the user-account representation uses one lowercase type label. Type descriptions begin with `Level 0:`, `Level 1:` or `Level 2:` for the product hierarchy, and `Collection:` for Schedule and Scenario.
+
+A Feature can be an [enabler feature](../../issue-standards.md#enabler-features), producing knowledge or technical foundations for later capabilities. Its Type and native parent rules are the same as other Features.
 
 A Task describes planned work; a Bug describes a discovered defect. Scheduling a Bug does not turn it into a Task. Area classifies product and engineering work independently of Type; see [Issue attributes](2-attributes.md).
 
@@ -99,7 +103,7 @@ Queries such as `no:type` and `no:parent-issue` help find missed intake, but are
 
 ## 4. Completion
 
-A Task or Bug closes against its agreed evidence. A Feature remains open after its Tasks and Bugs finish until an agent compliance audit and an agent code review are complete and the team lead signs off. An Epic closes when its Features ship.
+A Task or Bug closes against its agreed evidence. A Feature remains open after its Tasks and Bugs finish until an agent compliance audit and technical review of its deliverables, including code when present, are complete and the team lead signs off. An Epic closes when its Features ship.
 
 A Scenario describes a reusable walk and has no Evidence of completion section. Keep it useful as the product changes. Retire it with `star github scenario close` when the product no longer supports that Scenario, after its open findings have moved on. Retirement closes its issue as completed without a Resolution.
 

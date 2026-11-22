@@ -2,7 +2,7 @@
 title: "Pull request procedure"
 status: draft
 created: 2026-10-28
-updated: 2026-11-20
+updated: 2026-11-21
 ---
 
 # Pull request procedure
@@ -37,7 +37,7 @@ Use current specification examples; preserved source snapshots document earlier 
 
 ## 3. Owner review and merge
 
-The script's first part prepares and publishes the candidate, verifies its exact head and waits for required CI. It stops for Owner review and merge in GitHub. It prints no merge command.
+The script's first part prepares and publishes the candidate and verifies its exact head. It reports CI registration and current state, then returns control to the Owner without a watcher. A separate status command checks that same head, records completed CI results with guarded writes and readback, and inspects mergeability, required reviews, and unresolved conversations. If checks are pending or have not registered, it reports that state without claiming readiness. Required CI and reviews remain merge gates. The Owner reviews and merges in GitHub. The script prints no merge command.
 
 An absent check immediately after push does not prove CI is unconfigured. Wait for results on the current head and stop when status cannot be established. Inspect actual check conclusions, required reviews and unresolved conversations rather than infer readiness from `UNSTABLE` or `BLOCKED` alone.
 

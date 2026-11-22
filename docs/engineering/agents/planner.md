@@ -2,7 +2,7 @@
 title: "Planner"
 status: draft
 created: 2026-11-18
-updated: 2026-11-18
+updated: 2026-11-21
 owner: "NobleFactor/engprod"
 change_process: "../process.md#prepare-and-review"
 role: "planner"
@@ -10,7 +10,7 @@ role: "planner"
 
 # Planner
 
-Read [Common commandments](commandments.md) before acting.
+Before acting, read [Common commandments](commandments.md).
 
 ## 1. Purpose and inputs
 
@@ -20,9 +20,9 @@ Keep the plan's transition work distinct from the design's system explanation.
 
 ## 2. Output and handoff
 
-Deliver plans, issues and an ordered schedule with clear results, dependencies and evidence of completion. Each issue links its plans and applicable designs.
+Deliver a schedule containing ordered issues, dependencies, completion criteria, and links to applicable implementation plans, designs, architecture decisions, and roadmaps. Use [Start a design schedule](../../../skills/start-design-schedule/SKILL.md) for its two standard Tasks; use the Designer's assets to prepare implementation work.
 
-Explain estimates and uncertainty. Record decisions, approvals and approved amendments in the plan and schedule. Give the coder an approved, actionable plan with its acceptance criteria and relevant sources.
+Serve as a planning consultant throughout the work. Explain estimates and uncertainty, prepare issue plans, and propose schedule amendments as findings change the work. Record approvals and approved changes in the applicable plan and schedule. Give the coder an approved, actionable plan with its acceptance criteria and relevant sources.
 
 ## 3. Authority and reading
 

@@ -1,0 +1,139 @@
+{
+  "kind": "Controlled author consistency fixture; not production or native-agent evidence",
+  "recorded_at": "2026-11-22T00:32:11.358837+00:00",
+  "candidate_changed": [
+    "cmd/fixturectl.txt"
+  ],
+  "observed_stale_outside_diff": [
+    "docs/help.txt",
+    "docs/fixturectl.1",
+    "completions/fixturectl.txt",
+    "docs/design.md",
+    "docs/plan.md",
+    "docs/roadmap.md",
+    "config/example.conf"
+  ],
+  "recheck": "all eight agree on 30 seconds",
+  "assets": [
+    {
+      "path": "cmd/fixturectl.txt",
+      "before": {
+        "text": "default_timeout_seconds=10\n",
+        "sha256": "6d1224e2bc9c964cf932bfdb3c7d618dcf4df3f9bf57ee2e81ad8235a9f91fe5"
+      },
+      "candidate": {
+        "text": "default_timeout_seconds=30\n",
+        "sha256": "0400b6064899b628fa7d1c8dd6a8597313d2a112e3e6ce36f8f68aea3ad86a9f"
+      },
+      "corrected": {
+        "text": "default_timeout_seconds=30\n",
+        "sha256": "0400b6064899b628fa7d1c8dd6a8597313d2a112e3e6ce36f8f68aea3ad86a9f"
+      }
+    },
+    {
+      "path": "docs/help.txt",
+      "before": {
+        "text": "Default timeout: 10 seconds.\n",
+        "sha256": "4a839878e627f8c91a9ff3890aa41dc8edb538dd9a73c02512541791cb578313"
+      },
+      "candidate": {
+        "text": "Default timeout: 10 seconds.\n",
+        "sha256": "4a839878e627f8c91a9ff3890aa41dc8edb538dd9a73c02512541791cb578313"
+      },
+      "corrected": {
+        "text": "Default timeout: 30 seconds.\n",
+        "sha256": "6395c31cc64f46fc75c20340b88d2657d2955417d323e3e2c680bb4d7dd21c78"
+      }
+    },
+    {
+      "path": "docs/fixturectl.1",
+      "before": {
+        "text": ".SH DEFAULTS\nTimeout: 10 seconds.\n",
+        "sha256": "19360c375035038d5da96f83abc2f6cf11317ccac0d1c43d61db898b18c69664"
+      },
+      "candidate": {
+        "text": ".SH DEFAULTS\nTimeout: 10 seconds.\n",
+        "sha256": "19360c375035038d5da96f83abc2f6cf11317ccac0d1c43d61db898b18c69664"
+      },
+      "corrected": {
+        "text": ".SH DEFAULTS\nTimeout: 30 seconds.\n",
+        "sha256": "13c2bf05d71ec174ec83ca4ca334c7a0eb6752bd84f3b3049c140abbfd098dcd"
+      }
+    },
+    {
+      "path": "completions/fixturectl.txt",
+      "before": {
+        "text": "--timeout default: 10 seconds\n",
+        "sha256": "04ac17539d5e62c8179a3214dbeea66149c058a1847d307ada5b0f02ba1123ea"
+      },
+      "candidate": {
+        "text": "--timeout default: 10 seconds\n",
+        "sha256": "04ac17539d5e62c8179a3214dbeea66149c058a1847d307ada5b0f02ba1123ea"
+      },
+      "corrected": {
+        "text": "--timeout default: 30 seconds\n",
+        "sha256": "fa2c795303c80a81341306db5cc67b91e9868dd485ffb3342edee9b92af1040e"
+      }
+    },
+    {
+      "path": "docs/design.md",
+      "before": {
+        "text": "The default timeout is 10 seconds.\n",
+        "sha256": "dbfce7b20f1b9410f272e20daab1bb98a882dcbfe5590c23442f167c60a4ad30"
+      },
+      "candidate": {
+        "text": "The default timeout is 10 seconds.\n",
+        "sha256": "dbfce7b20f1b9410f272e20daab1bb98a882dcbfe5590c23442f167c60a4ad30"
+      },
+      "corrected": {
+        "text": "The default timeout is 30 seconds.\n",
+        "sha256": "503bc53a94e4fbe39f4c17639fcb1cea94feac8f6b2ed1e64dac55e95ab89d94"
+      }
+    },
+    {
+      "path": "docs/plan.md",
+      "before": {
+        "text": "Verify a default timeout of 10 seconds.\n",
+        "sha256": "6767a4f15ad5e983a3dd70908275a77e5870c8a61b6a1908e28151da5736bee4"
+      },
+      "candidate": {
+        "text": "Verify a default timeout of 10 seconds.\n",
+        "sha256": "6767a4f15ad5e983a3dd70908275a77e5870c8a61b6a1908e28151da5736bee4"
+      },
+      "corrected": {
+        "text": "Verify a default timeout of 30 seconds.\n",
+        "sha256": "1a017cb217842488ba227957c3238856035a4c108baae815f780ce666a297d6b"
+      }
+    },
+    {
+      "path": "docs/roadmap.md",
+      "before": {
+        "text": "Acceptance evidence: default timeout is 10 seconds.\n",
+        "sha256": "b63fc7696dfba10e09ba5972abd81e121ca387b050a5e09cc6ff90376701818c"
+      },
+      "candidate": {
+        "text": "Acceptance evidence: default timeout is 10 seconds.\n",
+        "sha256": "b63fc7696dfba10e09ba5972abd81e121ca387b050a5e09cc6ff90376701818c"
+      },
+      "corrected": {
+        "text": "Acceptance evidence: default timeout is 30 seconds.\n",
+        "sha256": "fdc01d4af1813a54c5e1fc20caca769c914b4101513c8295045b6dff7d260b24"
+      }
+    },
+    {
+      "path": "config/example.conf",
+      "before": {
+        "text": "timeout_seconds=10\n",
+        "sha256": "0786971c2856129dce349dc97988b7222f25717cdcbddf0850171e248a1152a7"
+      },
+      "candidate": {
+        "text": "timeout_seconds=10\n",
+        "sha256": "0786971c2856129dce349dc97988b7222f25717cdcbddf0850171e248a1152a7"
+      },
+      "corrected": {
+        "text": "timeout_seconds=30\n",
+        "sha256": "186ab82af6edb54fbb5e8b7d46cc8033936d4899d90b450fdde8f1f57a61fc6f"
+      }
+    }
+  ]
+}

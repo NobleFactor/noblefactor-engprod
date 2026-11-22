@@ -1,9 +1,9 @@
 ---
 title: "Align schedule and scenario command consumers"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/581
-status: active
+status: complete
 created: 2026-11-16
-updated: 2026-11-20
+updated: 2026-11-21
 documents:
   - kind: "Design: the schedule commands"
     path: docs/architecture/issue-data-model/8-the-schedule-commands.md
@@ -44,6 +44,10 @@ Skill/index update (#581), under Skills standard and catalog (#550), is the firs
 Handbook command alignment (#582), under Shared documentation (#419), is the second priority. Reconcile the issue's twelve-page inventory against the implemented commands and sections 8 and 9. Separate statements of required behavior from claims about automation that has not been implemented. Resolve affected policy choices before writing an answer into an authoritative document.
 
 ## 3. Current state
+
+PR #596 completed this work and merged as 55dec2b044a2972f1037996c06d887a960d6c8ef on 2026-11-20. The accepted head was 8aa77e7a513dbc7b68e9bb1a9fe0aa4cf68cc32e. Both served issues and their Schedule rows are Closed and link the PR. Installed-skill verification and cleanup are established; section 13 records the evidence.
+
+### 3.1. Earlier baseline
 
 PR #580 merged on 2026-11-17 at 00:12:21 UTC as b75b29ad6e4391c25bec8837164f3f59acb3abec; Scenario commands (#507) is closed. The native dependencies are satisfied. The Owner requested immediate priority on 2026-11-16 local time. The supported issue move command placed these issues at Steps 2 and 3, before Issue forms (#572), preserving the previous steps' relative order. The Schedule project's current rows remain authoritative.
 
@@ -98,18 +102,18 @@ Question 4 is settled by the forms-as-authority ruling preserved in the adoption
 | Every inventoried document is covered | The rewrite review records each document's disposition, retained requirements and any relocation |
 | Maintained prose meets the adopted writing guidance | A separate Google-based review records and resolves findings across the complete document bodies |
 | Architecture meets the adopted content guidance | Each architecture set has explicit arc42 coverage and a reviewed explanation of the system |
-| Delivery meets repository gates | Run the actual make check target and required GitHub checks for the rewritten head |
+| Delivery meets repository gates | Run the actual `make check` target and required GitHub checks for the rewritten head |
 | The change is adopted and verified | Owner review, merge, live skill/reference verification, issue/project updates and cleanup evidence |
 
 ### 7.1. Implementation verification — 2026-11-17
 
-After consuming the revised skill, one `star github schedule get NobleFactor/noblefactor-engprod#551` call returned the Schedule issue followed by its fifteen Step rows; one `star github scenario get NobleFactor/noblefactor-engprod#152` returned the Scenario issue and its two findings in Beat order. `star github schedule list NobleFactor --team engprod` also passed. The exact invocations, outputs and timestamps are retained in /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/routing-verification.7tg9jzn_/receipt.json and its sibling output files. These were normal read-only invocations, not dry runs.
+After consuming the revised skill, one `star github schedule get NobleFactor/noblefactor-engprod#551` call returned the Schedule issue followed by its fifteen Step rows; one `star github scenario get NobleFactor/noblefactor-engprod#152` returned the Scenario issue and its two findings in Beat order. `star github schedule list NobleFactor --team engprod` also passed. The exact invocations, outputs and timestamps are retained in `/Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/routing-verification.7tg9jzn_/receipt.json` and its sibling output files. These were normal read-only invocations, not dry runs.
 
 The shared skill retains its original top-level title, as required by the repository's documentation standard and frontmatter gate. The corrected document verifier checks that format plus the skill's name and description with the existing /opt/local/bin/python3.12 and installed PyYAML; no dependency installation or shared tool replacement was needed. Native Codex packaging is not qualified by these checks. Its validator rejects the top-level title required here; reconciling the shared format and native host bindings belongs to Skills curation (#560) and Codex consumption (#563).
 
-Read-only document verification covers the 25 named Markdown/skill files, their local references, frontmatter, retained explicit anchors, all 23 preserved source/review files and the unchanged original Owner-assignment appendix. The current receipt records the observed link count and file hashes. The verifier is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/verify-documents.py; its current receipt and complete output are beside it. The implementation includes no runtime code. Spelling passes for the changed files. Historical status companions, source snapshots and Owner quotations remain preserved.
+Read-only document verification covers the 25 named Markdown/skill files, their local references, frontmatter, retained explicit anchors, all 23 preserved source/review files and the unchanged original Owner-assignment appendix. The current receipt records the observed link count and file hashes. The verifier is `/Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/verify-documents.py`; its current receipt and complete output are beside it. The implementation includes no runtime code. Spelling passes for the changed files. Historical status companions, source snapshots and Owner quotations remain preserved.
 
-The earlier Owner-run `make check` passed for the plan checkpoint at 340f2cf7a5744460f1afd13b54a0ac16450a7dbd. The Owner-run implementation attempt on 2026-11-17 failed the repository frontmatter gate because this session had unnecessarily moved the skill's title under metadata to satisfy the native Codex validator. The complete failure output is retained in /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/verify-update.lSkcCZES. The title is restored and the verifier follows the existing repository format. The Owner's retry passed on 2026-11-17 at 22:21:31 UTC: make check exited 0, with 181 Markdown files checked, one exemption and no frontmatter errors; all other repository gates and tests passed. Verification covered the 25 frozen paths, 273 local references and 23 preserved sources. The named-path staging dry run left the index unchanged. The complete result and content hashes are retained in /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/verify-update.YGz2hbIa/receipt.json. This plan update records that established result. The Owner then ran the local commit/integration script: implementation commit 0e44ce0ef779460306235714d010be7cd95edbeb was merged with develop at 97d1e12f66fff8fe085f0e3dee3103db480a6b3c to produce 146d7c561c3926a3e1af91e8eca35adeedc6f0e6. The four upstream files do not overlap the 25 reviewed documents. The post-integration document checks and make check passed, and the checkout was clean at 2026-11-17T22:48:23.235257+00:00. The complete integration record is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/verify-update.ju3TZOQA/integration-receipt.json. PR publication, review, target-branch merge and deployed-skill verification remain separate milestones.
+The earlier Owner-run `make check` passed for the plan checkpoint at 340f2cf7a5744460f1afd13b54a0ac16450a7dbd. The Owner-run implementation attempt on 2026-11-17 failed the repository frontmatter gate because this session had unnecessarily moved the skill's title under metadata to satisfy the native Codex validator. The complete failure output is retained in `/Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/verify-update.lSkcCZES`. The title is restored and the verifier follows the existing repository format. The Owner's retry passed on 2026-11-17 at 22:21:31 UTC: `make check` exited 0, with 181 Markdown files checked, one exemption and no frontmatter errors; all other repository gates and tests passed. Verification covered the 25 frozen paths, 273 local references and 23 preserved sources. The named-path staging dry run left the index unchanged. The complete result and content hashes are retained in `/Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/verify-update.YGz2hbIa/receipt.json`. This plan update records that established result. The Owner then ran the local commit/integration script: implementation commit 0e44ce0ef779460306235714d010be7cd95edbeb was merged with develop at 97d1e12f66fff8fe085f0e3dee3103db480a6b3c to produce 146d7c561c3926a3e1af91e8eca35adeedc6f0e6. The four upstream files do not overlap the 25 reviewed documents. The post-integration document checks and `make check` passed, and the checkout was clean at 2026-11-17T22:48:23.235257+00:00. The complete integration record is `/Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/verify-update.ju3TZOQA/integration-receipt.json`. PR publication, review, target-branch merge and deployed-skill verification remain separate milestones.
 
 The Owner's 2026-11-17 ruling in [Issue filing (#338)](https://github.com/NobleFactor/noblefactor-engprod/issues/338) names the planned command `star github issue open`, with `create` as its synonym. Current prose follows that name while keeping the operation marked as undelivered; captured sources and historical Owner appendices remain unchanged.
 
@@ -118,15 +122,15 @@ The Owner's 2026-11-17 ruling in [Issue filing (#338)](https://github.com/NobleF
 
 The Owner clarified the methodology: designs describe what we want; plans explain how to get there from what exists; schedules order the issues we will carry out. Planning produces issues and a schedule, and each issue references one or more plans. Designs explain the wanted system and its significant design decisions. Transition decisions and migration history belong in plans. All documents must use plain language.
 
-After reviewing the copy in the Issue verbs (#589) worktree, the Owner explicitly directed this session to revise docs/engineering/work-assets.md in its own current worktree. This correction adds the definitions and handoff, states that an issue can use several plans and a plan can cover several issues, removes unnecessary consolidation history and simplifies the prose. Existing storage, linking and approval requirements and incoming anchors are preserved. The Owner subsequently required the full rewrite within this PR; sections 7.4 to 7.7 record that scope and its acceptance checks.
+After reviewing the copy in the Issue verbs (#589) worktree, the Owner explicitly directed this session to revise `docs/engineering/work-assets.md` in its own current worktree. This correction adds the definitions and handoff, states that an issue can use several plans and a plan can cover several issues, removes unnecessary consolidation history and simplifies the prose. Existing storage, linking and approval requirements and incoming anchors are preserved. The Owner subsequently required the full rewrite within this PR; sections 7.4 to 7.7 record that scope and its acceptance checks.
 
-The two local changes are this plan and the work-assets document. Earlier gate results remain evidence for their named revisions. The revised candidate must pass document checks, an Owner-run make check, publication to PR #596, fresh CI and review before merge. The previous merge command is replaced while these corrections are pending.
+The two local changes are this plan and the work-assets document. Earlier gate results remain evidence for their named revisions. The revised candidate must pass document checks, an Owner-run `make check`, publication to PR #596, fresh CI and review before merge. The previous merge command is replaced while these corrections are pending.
 
 ### 7.3. Design decisions and transition history — 2026-11-18
 
 The Owner clarified that a design decision explains what the system should be and why. Relevant alternatives and tradeoffs belong with that explanation. A transition decision explains how to reach the wanted system from what exists and belongs in a plan. The earlier work-assets correction excluded rulings and rejected approaches too broadly; this review correction makes the distinction explicit.
 
-The initial two-file correction was published at 7a30967d21033c140d8cfd7c3897bb8cf8b59645 after the Owner-run make check passed. Its publication and PR-description readback are recorded in /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/finish-review.h7eQzeWM/receipt.json. This clarification changes the work-assets definition and this plan. Read-only document checks passed on 2026-11-18 for all 26 reviewed files and 285 local references, with all 23 preserved source/review files and the original Owner appendix unchanged. The evidence is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/design-decision-clarification-verification.json. An Owner-run make check, publication and review remain required.
+The initial two-file correction was published at 7a30967d21033c140d8cfd7c3897bb8cf8b59645 after the Owner-run `make check` passed. Its publication and PR-description readback are recorded in `/Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/finish-review.h7eQzeWM/receipt.json`. This clarification changes the work-assets definition and this plan. Read-only document checks passed on 2026-11-18 for all 26 reviewed files and 285 local references, with all 23 preserved source/review files and the original Owner appendix unchanged. The evidence is `/Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/design-decision-clarification-verification.json`. An Owner-run `make check`, publication and review remain required.
 
 The Owner also approved Google writing guidance as the basis of the shared writing-and-review skill and arc42 as the basis of architecture content. [Google writing and review (#599)](https://github.com/NobleFactor/noblefactor-engprod/issues/599) and [arc42 architecture content (#600)](https://github.com/NobleFactor/noblefactor-engprod/issues/600) are open at Steps 4 and 5 of Handbook adoption (#551), after this PR's work. They can be planned independently. Their implementation plans, publication and qualification remain separate work. The approved guidance can inform corrections in this PR without claiming that either new deliverable is complete.
 
@@ -168,7 +172,7 @@ Designs describe the wanted system. Significant system choices and their rationa
 5. Preserve incoming link targets or update their callers with explicit evidence. Put significant system choices and their reasons in decision companions, and delivery progress and transition history in the applicable plans. Preserve the source material when replacing status companions. Refresh the inventory against the integrated Issue verbs work, then update the documentation verifier to cover it and each relocated source block.
 6. After the rewrite, scan for conflicts between our methodology and actual tooling behavior. Record each conflict with its document passage, methodology requirement, observed behavior, effects and proposed correction. Review the findings with the Owner, agree on the resolutions, record the decisions, and correct and verify the affected documents. Track required tooling changes through the issue process, making the remaining gap and any Owner-approved interim workflow explicit.
 7. Review the corrected set separately for writing, arc42 content, retained requirements and cross-document consistency. Record the document and passage for each finding and its resolution. The Owner appoints any independent reviewer; this plan does not grant cross-session contact or delegation.
-8. Run the repository's actual make check and required GitHub checks for the final head. Present the rewrite, coverage evidence and resolved findings for Owner review. Keep the PR a draft until the required review permits it to become ready, except for the scoped Owner-approved PR #596 review exception in section 7.22.
+8. Run the repository's actual `make check` and required GitHub checks for the final head. Present the rewrite, coverage evidence and resolved findings for Owner review. Keep the PR a draft until the required review permits it to become ready, except for the scoped Owner-approved PR #596 review exception in section 7.22.
 
 The writing-and-review skill (#599) and architecture guidance (#600) remain separate publication tasks. This PR applies the approved primary guidance directly. Their later completion cannot substitute for this PR's writing and architecture reviews.
 
@@ -232,11 +236,11 @@ The refreshed inventory has 51 documents after bringing in the Issue verbs archi
 
 ### 7.8. Integration checkpoint
 
-The Owner ran the integration script on 2026-11-19. The actual make check passed before integration: 189 documents checked, one exemption, no frontmatter errors, and every other gate and test passed. The six disclosure and plan files were committed as 5a8383ddc1ede02f009a76eaaca1a4fa17a64bdf. The merge of Issue verbs revision 643652b617f6c95414fbd8c7ab958ffc4d422494 then stopped with twelve documentation conflicts. Its receipt is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/integration-checkpoint/runs/20261119T081313Z/receipt.json.
+The Owner ran the integration script on 2026-11-19. The actual `make check` passed before integration: 189 documents checked, one exemption, no frontmatter errors, and every other gate and test passed. The six disclosure and plan files were committed as 5a8383ddc1ede02f009a76eaaca1a4fa17a64bdf. The merge of Issue verbs revision 643652b617f6c95414fbd8c7ab958ffc4d422494 then stopped with twelve documentation conflicts. Its receipt is `/Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/integration-checkpoint/runs/20261119T081313Z/receipt.json`.
 
 The working-file reconciliation combines the delivered command names, Backlog rules, source validation and decision companions with the prior Triage exclusions, Scenario closure and cleanup instructions, link targets, and permanent PR disclosure rule. The inventory now includes section 10 and the three decision companions in place of the deleted section 8 and 9 status pages. Conflict-marker removal does not stage the files or complete the merge.
 
-The Owner staged the reviewed resolutions, passed the integrated make check and committed the merge as 7b6e64520a6047687fddd28aaf8808b6ff4ce707. Publication stopped before any push because develop had advanced to 9bf246b4c074550c03b842bce5111e33ba34800e. The receipt is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/merge-reconciliation/finish-integration/20261119T175544Z/receipt.json. Both passing gates establish their recorded revisions; the next integration requires its own gate. Review the refreshed plan checkpoint before directing the full rewrite.
+The Owner staged the reviewed resolutions, passed the integrated `make check` and committed the merge as 7b6e64520a6047687fddd28aaf8808b6ff4ce707. Publication stopped before any push because develop had advanced to 9bf246b4c074550c03b842bce5111e33ba34800e. The receipt is `/Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/merge-reconciliation/finish-integration/20261119T175544Z/receipt.json`. Both passing gates establish their recorded revisions; the next integration requires its own gate. Review the refreshed plan checkpoint before directing the full rewrite.
 
 The two residual review findings, Table validation (#606) and Recovery guidance (#607), were subsequently fixed in PR #610. The integration below brings in those fixes. Automatic recovery is separate work in Task #609. Orphaned links remain within Writ upgrade (NobleFactor/devlore-cli#845).
 
@@ -248,15 +252,15 @@ Integrate this revision into the clean local checkpoint 7b6e64520a6047687fddd28a
 
 The Section 10 guidance distinguishes the limits of rerunning open, reopen, close and move. Automatic recovery remains in Task #609. The broader PR-procedure rewrite remains part of Handbook command alignment (#582); this integration does not claim that rewrite is complete or that every remaining policy reference is already reconciled.
 
-Prepared resolutions, the previous script and source comparisons are preserved under /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/merge-reconciliation/advance-610. The Owner-run sync-and-publish mode verifies the exact local and remote revisions, merges the inspected target, applies only these reviewed resolutions, runs make check and commits the integration before publishing. It stops if the target advances again or another worker changes the inspected records. It leaves PR #596 a draft, keeps both issues open, and performs no PR merge, worktree cleanup or canonical-clone maintenance.
+Prepared resolutions, the previous script and source comparisons are preserved under `/Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/merge-reconciliation/advance-610`. The Owner-run sync-and-publish mode verifies the exact local and remote revisions, merges the inspected target, applies only these reviewed resolutions, runs `make check` and commits the integration before publishing. It stops if the target advances again or another worker changes the inspected records. It leaves PR #596 a draft, keeps both issues open, and performs no PR merge, worktree cleanup or canonical-clone maintenance.
 
-The integrated make check passed, and this commit completes the reviewed integration of PR #610. Publication, current-head CI and Owner review remain separate milestones.
+The integrated `make check` passed, and this commit completes the reviewed integration of PR #610. Publication, current-head CI and Owner review remain separate milestones.
 
 ### 7.10. Architecture rewrite in progress
 
 The first implementation pass covers the nine agent-schedule input documents. It rewrites the overview, native session lifecycle, launcher interface, assignment proposal and SBX proposal, with four decision companions. It retains the status paths as references, preserves the Owner's assignment appendix verbatim and captures the nine original files as immutable source evidence. No native-host, launcher or SBX behavior is changed.
 
-The [rewrite review](../../engineering/review/rewrite-review.md) contains the 51-document dispositions, architecture coverage outline and agent-schedule requirement destinations. Its [manifest](../../engineering/review/sources/rewrite-2026-11-19/manifest.json) identifies the input revision and hashes, the existing source records and preserved anchors. Focused metadata, links, anchor, source-integrity, prose-layout and spelling checks passed. The receipt is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/rewrite-first-pass/verification.json. This is a first draft, not completed content review, repository validation or implementation qualification. The other architecture sets and handbook documents remain pending.
+The [rewrite review](../../engineering/review/rewrite-review.md) contains the 51-document dispositions, architecture coverage outline and agent-schedule requirement destinations. Its [manifest](../../engineering/review/sources/rewrite-2026-11-19/manifest.json) identifies the input revision and hashes, the existing source records and preserved anchors. Focused metadata, links, anchor, source-integrity, prose-layout and spelling checks passed. The receipt is `/Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/rewrite-first-pass/verification.json`. This is a first draft, not completed content review, repository validation or implementation qualification. The other architecture sets and handbook documents remain pending.
 
 The next draft covers issue hierarchy and attributes, including their retained status references and two decision companions. Four more original files are preserved as source evidence. This brings the rewritten input count to 13 of 51; the remaining model chapters, workstation architecture, handbook material and final content reviews remain open.
 
@@ -270,7 +274,7 @@ On 2026-11-19, David Noble directed this Handbook adoption work to incorporate a
 
 Implement this narrow Owner-directed addition within Handbook command alignment (#582), preserving the existing architecture rewrite and its no-merge condition. Add the dedicated review-comment template to the catalog and a reference from the completion-review template. Record the Owner and date in the decision log. This change affects shared guidance; native Claude and Codex entrypoint migration and qualification remain with their existing tasks.
 
-The additional paths outside the original 51-input rewrite inventory are docs/engineering/agents/commandments.md, docs/engineering/agents/reviewer.md, docs/engineering/review/decisions.md, docs/templates/completion-review.md, docs/templates/index.md and the new docs/templates/review-comment.md. They are a scoped Owner-approved addition, not a claim that the broader rewrite is complete.
+The additional paths outside the original 51-input rewrite inventory are `docs/engineering/agents/commandments.md`, `docs/engineering/agents/reviewer.md`, `docs/engineering/review/decisions.md`, `docs/templates/completion-review.md`, `docs/templates/index.md` and the new `docs/templates/review-comment.md`. They are a scoped Owner-approved addition, not a claim that the broader rewrite is complete.
 
 Verify the example's YAML key order and exact source values, its explicit non-default status, links from each applicable consumer, the dated Owner decision, source layout, spelling and preservation of the PR disclosure rule. Preserve the original agent-operation input before this addition so its later full rewrite can retain the new requirement alongside the original source.
 
@@ -279,9 +283,9 @@ Verify the example's YAML key order and exact source values, its explicit non-de
 
 On 2026-11-19, the Owner requested decision headlines, explanations including alternatives and available evidence, and YAML attribution/timestamps. The Owner asked for research rather than an immediate change and directed use of arc42 and Google's documentation guidance. After the researched recommendation, the Owner said, “Make the changes,” then, “Add that documentation.” These later instructions authorize implementation; the earlier questions did not.
 
-Define the format once in docs/standards/documentation.md, demonstrate it in the new docs/templates/decision.md, and reference it from the template catalog and design template. Restructure docs/engineering/review/decisions.md with the existing identifiers and approval evidence intact, and record this approval as decision 59. Do not infer missing proposers or approval times. Attribute this formatting pass separately from the historical decisions. Preserve the original standard, design template and pre-format decision log as source evidence.
+Define the format once in `docs/standards/documentation.md`, demonstrate it in the new `docs/templates/decision.md`, and reference it from the template catalog and design template. Restructure `docs/engineering/review/decisions.md` with the existing identifiers and approval evidence intact, and record this approval as decision 59. Do not infer missing proposers or approval times. Attribute this formatting pass separately from the historical decisions. Preserve the original standard, design template and pre-format decision log as source evidence.
 
-Verify the 58 existing record bodies, identifiers and known dates; preserve the review-comment decision's anchor; check every footer's YAML fields, order, status, attribution and time precision; check metadata, links, source layout, spelling and unchanged historical evidence. Record progress in the rewrite review and retain the evidence under /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/decision-record-format. This is a scoped addition within Handbook command alignment (#582), not a completed rewrite of the documentation standard or design template. Other architecture decision companions will be brought to the format during their remaining content review.
+Verify the 58 existing record bodies, identifiers and known dates; preserve the review-comment decision's anchor; check every footer's YAML fields, order, status, attribution and time precision; check metadata, links, source layout, spelling and unchanged historical evidence. Record progress in the rewrite review and retain the evidence under `/Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/decision-record-format`. This is a scoped addition within Handbook command alignment (#582), not a completed rewrite of the documentation standard or design template. Other architecture decision companions will be brought to the format during their remaining content review.
 
 ### 7.13. Workstation architecture and roadmap rewrite
 
@@ -293,7 +297,7 @@ Use the new decision format for W1–W5 and D1–D6. W1–W3 have explicit Owner
 
 Current primary host/editor documentation was consulted for documented foundations. It supports the shared-server and editor-instance constraints, while simultaneous native TUI behavior, no-view continuity, identity enforcement and the full SBX/iPad path still require qualification. Extend the focused metadata check to the documentation standard's existing catalog vocabulary rather than changing either document's family to satisfy a narrow check.
 
-This pass does not revise the completed Workstation architecture plan (#521), publish, amend tracker records or implement hosts, editors, lifecycle services or storage. Detailed content reviews and the complete methodology/tooling scan remain open. The focused receipt is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/workstation-rewrite/verification.json.
+This pass does not revise the completed Workstation architecture plan (#521), publish, amend tracker records or implement hosts, editors, lifecycle services or storage. Detailed content reviews and the complete methodology/tooling scan remain open. The focused receipt is `/Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/workstation-rewrite/verification.json`.
 
 #### 7.13.1 Retained source review and delivery record
 
@@ -317,7 +321,7 @@ The common commandments' issue-tool link pins an earlier commit. Replace that on
 
 Retain the original sources and the current post-amendment agent-operation/commandments texts. The existing original agent-operation snapshot remains unchanged; an additional snapshot preserves the Owner-approved review-comment rule before the full rewrite. Keep dated inspection and incident narratives in source/review evidence rather than requiring them to reconstruct current instructions.
 
-No new mid-session policy-refresh mechanism is selected. Preserve startup/post-compaction reading and assignment resource revision requirements; retain that remaining policy/tooling gap for the full review. The focused receipt is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/core-handbook-rewrite/verification.json.
+No new mid-session policy-refresh mechanism is selected. Preserve startup/post-compaction reading and assignment resource revision requirements; retain that remaining policy/tooling gap for the full review. The focused receipt is `/Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/core-handbook-rewrite/verification.json`.
 
 #### 7.14.1 Retained entrypoint inspection
 
@@ -339,7 +343,7 @@ Make the design template an arc42 content outline with role assignments, structu
 
 Retain the complete consolidation review's recorded findings, metrics, hashes and delivery evidence as historical records. Turn O01–O11 into an evidence index linking original responses and current authoritative homes; the older O03 closure summary and O11 invocation do not override later approved semantics. Record the already approved closing-reference and Owner-merge choices as decisions 60/61 from the explicit 2026-11-19 source plan, without inferring a new approval or a timestamp more precise than the source.
 
-The focused receipt is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/handbook-resources-rewrite/verification.json. Source cases, obsolete README implementation/transition stories and earlier review summaries remain in exact snapshots. No code, deployed instruction, protected-branch configuration or runtime behavior is changed.
+The focused receipt is `/Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/handbook-resources-rewrite/verification.json`. Source cases, obsolete README implementation/transition stories and earlier review summaries remain in exact snapshots. No code, deployed instruction, protected-branch configuration or runtime behavior is changed.
 
 ### 7.16. Reporting skill and Git reference guides
 
@@ -353,7 +357,7 @@ Shorten the PR specification's prose while retaining all thirteen stable rule nu
 
 Candidate M07: the Bash and PowerShell examples inspect the latest target commit after cleanup when checking landed trailers. In concurrent work another merge can advance that target. The proposed correction pins the lookup to the full mergeCommit.oid already read for this PR. The Owner has been asked whether to include it; no implementation or approval is inferred while awaiting the answer. The examples remain exact in this first pass.
 
-The focused receipt is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/handbook-final-guides/verification.json. No Git command, PR script, native binding or configuration change is performed.
+The focused receipt is `/Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/handbook-final-guides/verification.json`. No Git command, PR script, native binding or configuration change is performed.
 
 ### 7.17. Issue-standard candidate and substantive findings
 
@@ -363,7 +367,7 @@ M08: the standard contains both a one-managed-project rule including Triage and 
 
 M09: current primary GitHub documentation and the live User schema expose issueFields and issueTypes, contradicting retained platform-capability claims. The live account read for David-Noble-at-work returned FORBIDDEN/null for both, so native consumption is not qualified. The proposed documentation correction distinguishes our supported label-based user-account profile from GitHub capability; it does not adopt native user fields/types or change provisioning. Keep the source failures and account-access limit visible for the content review.
 
-The candidate is saved outside the repository at /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/rewrite-first-pass/pending-issue-standard/issue-standards.md. Its membership clause is explicitly unresolved; it is not an approved replacement. Native representation changes require separate planned work.
+The candidate is saved outside the repository at `/Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/rewrite-first-pass/pending-issue-standard/issue-standards.md`. Its membership clause is explicitly unresolved; it is not an approved replacement. Native representation changes require separate planned work.
 
 Verify the completed Handbook consolidation (#420) plan against the inventory input and retain it byte-for-byte. It is a historical record of accepted work, not an active guide to rewrite. Keep this active plan's amendments and progress current. Full consistency/content reviews, Owner decisions, the Owner-run repository gate and publication remain outstanding.
 
@@ -381,7 +385,7 @@ Candidate M10: the helper treats a branch-rules 403 on any private repository as
 
 The model decision companion records established choices with structured footers and actual source precision. Unknown proposers or combined approval dates remain null. The new publication approval names Codex as proposer, David Noble as approver and the known approval date alone; recording time remains separate.
 
-The focused receipt is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/model-publication-rewrite/verification.json. M07 trailer verification and M08 Triage/home membership remain independent pending decisions. The prepared issue-standard candidate, factual capability review, full content checks and Owner-run publication gates remain outstanding.
+The focused receipt is `/Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/model-publication-rewrite/verification.json`. M07 trailer verification and M08 Triage/home membership remain independent pending decisions. The prepared issue-standard candidate, factual capability review, full content checks and Owner-run publication gates remain outstanding.
 
 ### 7.19. Publish the current work for independent review
 
@@ -389,7 +393,7 @@ On 2026-11-19, the Owner explicitly directed this agent to commit and push all c
 
 Publish the complete current repository changes in PR #596, including source-preservation assets and the issue-standard candidate as a review proposal. The proposal does not replace the maintained issue standard or resolve M08. M07 and M08 remain unanswered; the request to publish is not approval of either recommendation. Record actual gate, commit, push and CI outcomes separately.
 
-Correct the two new blank-line-at-EOF findings before staging. Run the repository's make check on the explicitly staged candidate, preserve hooks and publish without a merge or issue closure. Read back the remote head and update the PR description and scheduled issue progress to describe this actual candidate. The Owner requested independent review of the unfinished work; keep remaining content reviews and merge requirements explicit.
+Correct the two new blank-line-at-EOF findings before staging. Run the repository's `make check` on the explicitly staged candidate, preserve hooks and publish without a merge or issue closure. Read back the remote head and update the PR description and scheduled issue progress to describe this actual candidate. The Owner requested independent review of the unfinished work; keep remaining content reviews and merge requirements explicit.
 
 The reviewer prompt identifies scope, source evidence, known findings and limits. It asks for independent findings on correctness, completeness, Google/arc42 compliance, methodology/tooling consistency and reviewability. It grants no implementation or merge authority.
 
@@ -413,7 +417,7 @@ At the initial review-response checkpoint, three choices awaited the Owner: the 
 
 Verify the corrected set's references, metadata, paragraph/table layout, structured footers and immutable sources. Check command claims against the delivered source and tests. Record the final changed-head checks separately from the passing checks on e3e4002, and retain independent re-review and Owner acceptance as merge requirements. This amendment changes no runtime command, protected branch, issue status or other worker's worktree.
 
-Focused checks pass for the six corrections: 68 ordered decision footers with retained approval evidence and explanations, 69 rewritten Markdown files, 898 local references, 522 preserved anchors, 21 immutable source files, 50 original snapshots, eight amendment snapshots and the exact Owner assignment appendix. The maintained issue standard has only the scoped R06 factual correction; its full replacement remains pending M08. Pandoc renders the session-model page with three tables and all eight main sections in order, without the duplicated tail. Current frontmatter, spelling and whitespace checks pass. These documentation checks do not repeat the unchanged runtime suite or qualify a new CI head; current-head CI and independent re-review remain required. The durable verification record is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/review-596-response/verification.json.
+Focused checks pass for the six corrections: 68 ordered decision footers with retained approval evidence and explanations, 69 rewritten Markdown files, 898 local references, 522 preserved anchors, 21 immutable source files, 50 original snapshots, eight amendment snapshots and the exact Owner assignment appendix. The maintained issue standard has only the scoped R06 factual correction; its full replacement remains pending M08. Pandoc renders the session-model page with three tables and all eight main sections in order, without the duplicated tail. Current frontmatter, spelling and whitespace checks pass. These documentation checks do not repeat the unchanged runtime suite or qualify a new CI head; current-head CI and independent re-review remain required. The durable verification record is `/Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/review-596-response/verification.json`.
 
 ### 7.22. Approved review dispositions
 
@@ -427,7 +431,7 @@ For R07, PR #596 may remain non-draft while these corrections and independent re
 
 Record progress and actual checks in this plan and the rewrite review. The 51-input first pass includes the maintained standard and this active plan's explicit record-maintenance disposition; content reviews and completion remain separate. Preserve all captured source bytes, legacy anchors and established approvals. Publish verified corrections to the existing PR under the current publication workflow; request independent re-review without claiming that the original review has accepted them.
 
-Local verification on 2026-11-20 passed for all 70 rewritten/maintained Markdown outputs, 913 local references, 522 legacy anchors and exact preserved sources. All 148 decision footers across fifteen logs/companions validate, including the explicit HIERARCHY-003/HIERARCHY-006 supersession. The five script examples parse after filling their documented placeholders; the three unrelated examples are unchanged. Ten fixture checks exercise actual Bash/PowerShell fragments: both opposite target/merge trailer states under old and corrected behavior, and refusal of an unavailable recorded object. Current frontmatter, spelling and whitespace checks pass. The durable results are /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/approved-review-dispositions/verification.json and /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/approved-review-dispositions/trailer-regressions.json. Runtime files are unchanged; the fixtures do not establish live cleanup, native Windows operation or current-head CI.
+Local verification on 2026-11-20 passed for all 70 rewritten/maintained Markdown outputs, 913 local references, 522 legacy anchors and exact preserved sources. All 148 decision footers across fifteen logs/companions validate, including the explicit HIERARCHY-003/HIERARCHY-006 supersession. The five script examples parse after filling their documented placeholders; the three unrelated examples are unchanged. Ten fixture checks exercise actual Bash/PowerShell fragments: both opposite target/merge trailer states under old and corrected behavior, and refusal of an unavailable recorded object. Current frontmatter, spelling and whitespace checks pass. The durable results are `/Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/approved-review-dispositions/verification.json` and `/Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/approved-review-dispositions/trailer-regressions.json`. Runtime files are unchanged; the fixtures do not establish live cleanup, native Windows operation or current-head CI.
 
 ### 7.23. Final review and Triage cleanup clarification
 
@@ -454,22 +458,22 @@ Implementation, Owner review, merge and post-merge verification are required. Co
 
 - [x] Identify both recent Triage issues and verify the merged command dependency.
 - [x] Record the Owner-approved priority amendment and verify Steps 2 and 3.
-- [x] Owner created the worktree and verified the one-file staging dry run; the index stayed unchanged. Receipt: /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/prepare.5mkFWiLR/receipt.json.
+- [x] Owner created the worktree and verified the one-file staging dry run; the index stayed unchanged. Receipt: `/Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/prepare.5mkFWiLR/receipt.json`.
 - [x] Commit the draft plan as the first checkpoint at 340f2cf7a5744460f1afd13b54a0ac16450a7dbd; the subsequent Owner approval and direction are recorded below.
 - [x] Owner approved the committed plan on 2026-11-17 and directed continuation of the work.
 
 ### 9.2. Reconciliation
 
-- [x] Update the skill and data-model index; validate the existing repository skill format with Python 3.12/PyYAML and record one-call schedule/scenario routing plus schedule-list evidence in /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/routing-verification.7tg9jzn_/receipt.json.
+- [x] Update the skill and data-model index; validate the existing repository skill format with Python 3.12/PyYAML and record one-call schedule/scenario routing plus schedule-list evidence in `/Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/routing-verification.7tg9jzn_/receipt.json`.
 - [x] Reconcile the delivered-command descriptions in the handbook inventory and linked design chapters, including the agent-operation routing conflict and preserved incoming anchors; remaining policy choices are recorded separately below.
 - [x] Consult prior decisions and record all four dispositions: manual cleanup pending #593, the existing Owner closure gate, verified issue-move behavior, and forms as body authority.
 - [x] Incorporate the established Handbook consolidation (#420) merge, adoption, post-merge verification, Owner closure and cleanup evidence into its plan and adoption review for this implementation commit.
 
 ### 9.3. Delivery
 
-- [x] Complete document/link/source checks and the Owner-run make check; record the passing result and unchanged-index staging dry run in /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/verify-update.YGz2hbIa/receipt.json. The Owner-run integration gate also passed at 146d7c561c3926a3e1af91e8eca35adeedc6f0e6.
+- [x] Complete document/link/source checks and the Owner-run `make check`; record the passing result and unchanged-index staging dry run in `/Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/verify-update.YGz2hbIa/receipt.json`. The Owner-run integration gate also passed at 146d7c561c3926a3e1af91e8eca35adeedc6f0e6.
 - [x] Prepare and check the Owner-run publication script, with explicit staging of this verification record, preserved integration evidence, human sign-off and the effective assistance disclosure. The Owner decides publication by reviewing and running that mode.
-- [ ] Obtain review and adoption, merge, verify delivered/deployed content, update issues and Schedule rows, and clean up.
+- [x] Obtain review and adoption, merge, verify delivered and deployed content, update issues and Schedule rows, and clean up.
 
 ### 9.4. Owner review correction
 
@@ -478,7 +482,7 @@ Implementation, Owner review, merge and post-merge verification are required. Co
 - [x] Apply the Owner's distinction between design decisions and transition history to work-assets and this plan.
 - [x] Verify the clarification's document scope, metadata, links, anchors and preserved evidence; retain the receipt cited in section 7.3.
 - [x] Run the Owner's repository gate and publish the clarification at f8d7702f971fb9967a7f3bc39a375cea6d3cff50; its passing publication receipt is recorded above.
-- [ ] Obtain Owner review and passing final-head CI for the full rewrite before merge.
+- [x] Obtain Owner review and passing final-head CI for the full rewrite before merge.
 
 ### 9.5. Full documentation rewrite
 
@@ -500,11 +504,11 @@ Implementation, Owner review, merge and post-merge verification are required. Co
 - [x] Complete the post-rewrite scan and record M01–M10, their evidence, corrections, qualification boundaries and owning follow-ups.
 - [x] Apply the recorded Owner decisions and verify documentation corrections. Track runtime alignment in Task #614 and existing context/host tasks, preserving the approved publication and loading boundaries.
 - [x] Record the author content assessment and independent reviews: R01–R09 are independently verified; R10 is corrected and locally checked, with its independent recheck still required.
-- [ ] Pass make check and final-head CI, obtain Owner review, and satisfy the explicit merge gate.
+- [x] Pass `make check` and final-head CI, obtain Owner review, and satisfy the explicit merge gate.
 
 ### 9.6. Issue verbs integration
 
-- [x] Owner ran make check and committed the six approved disclosure and plan files at 5a8383ddc1ede02f009a76eaaca1a4fa17a64bdf.
+- [x] Owner ran `make check` and committed the six approved disclosure and plan files at 5a8383ddc1ede02f009a76eaaca1a4fa17a64bdf.
 - [x] Reconcile the twelve conflicted working files and refresh the 51-document inventory.
 - [x] Stage the reviewed resolutions, pass the integrated gate and commit the pending merge through the Owner-run script.
 - [x] Publish the refreshed plan checkpoint at 1cba02d4af302b29ba26868ed99e95097b4eeae6.
@@ -513,7 +517,7 @@ Implementation, Owner review, merge and post-merge verification are required. Co
 ### 9.7. Incorporate the later merge
 
 - [x] Inspect PR #610, its approved plan and all ten incoming paths; prepare the three documentation resolutions while preserving the permanent disclosure rule.
-- [x] Integrate 9bf246b4c074550c03b842bce5111e33ba34800e, pass make check and commit this checkpoint through the Owner-run script.
+- [x] Integrate 9bf246b4c074550c03b842bce5111e33ba34800e, pass `make check` and commit this checkpoint through the Owner-run script.
 - [x] Publish the refreshed checkpoint at 1cba02d4af302b29ba26868ed99e95097b4eeae6 and pass all four current-head CI checks.
 - [x] Owner approved the amended plan and directed the rewrite on 2026-11-19.
 
@@ -536,13 +540,13 @@ Implementation, Owner review, merge and post-merge verification are required. Co
 
 - [x] Prepare the complete current review candidate, version the pending issue-standard proposal and record the Owner's direct publication instruction.
 - [x] Pass the repository gate for the explicitly staged candidate and preserve its result before committing.
-- [ ] Obtain independent review, resolve required findings and satisfy the existing merge gate.
+- [x] Obtain independent review, resolve required findings, and satisfy the existing merge gate.
 
 ### 9.11. Recovery integration
 
 - [x] Inspect the thirteen incoming paths, reconcile the three documentation overlaps and retain their source evidence.
 - [x] Pass the integrated repository gate and commit the merge resolution.
-- [ ] Resolve independent-review findings and obtain the existing completion approvals.
+- [x] Resolve independent-review findings and obtain the existing completion approvals.
 
 ### 9.12. Independent-review response
 
@@ -550,7 +554,7 @@ Implementation, Owner review, merge and post-merge verification are required. Co
 - [x] Correct and locally verify R02, R04, R05, R06, R08 and R09 within the approved rewrite; independent re-review remains required.
 - [x] Obtain and record David Noble's 2026-11-20 approvals for R01, R03 and R07 before the dependent changes.
 - [x] Apply and locally verify the approved membership, trailer and review-state corrections; independent re-review remains required.
-- [ ] Publish corrections, obtain independent re-review and satisfy the existing merge requirements.
+- [x] Publish corrections, obtain independent re-review, and satisfy the existing merge requirements.
 
 ### 9.13. Final review
 
@@ -558,11 +562,11 @@ Implementation, Owner review, merge and post-merge verification are required. Co
 - [x] Record the 51-input content assessment and complete M01–M10 dispositions, including the filed runtime follow-up and context-contract handoff.
 - [x] Verify, reply to and resolve all 21 older conversations against published corrections.
 - [x] Publish meaningful verification results in tracked review records; retain new machine evidence under stable names.
-- [ ] Obtain R10 recheck, passing final-head CI and Owner acceptance, then follow the authorized merge/delivery process.
+- [x] Obtain R10 recheck, passing final-head CI, and Owner acceptance, then follow the authorized merge and delivery process.
 
 ## 10. Files and related assets
 
-Primary files are Home/common/.claude/skills/star-github-schedule-progress/SKILL.md and docs/architecture/issue-data-model/index.md. The handbook issue lists docs/issue-standards.md, docs/engineering/work-organization.md, docs/engineering/process.md, docs/templates/schedule.md, docs/guides/pr-script-template.md, README.md, docs/github-branch-protection.md, docs/engineering/review/open-decisions.md, the three agent-schedule architecture pages, and the optional workstation roadmap. Inspect exact current content and incoming references before editing.
+Primary files are `Home/common/.claude/skills/star-github-schedule-progress/SKILL.md` and `docs/architecture/issue-data-model/index.md`. The handbook issue lists `docs/issue-standards.md`, `docs/engineering/work-organization.md`, `docs/engineering/process.md`, `docs/templates/schedule.md`, `docs/guides/pr-script-template.md`, README.md, `docs/github-branch-protection.md`, `docs/engineering/review/open-decisions.md`, the three agent-schedule architecture pages, and the optional workstation roadmap. Inspect exact current content and incoming references before editing.
 
 ## 11. Dependencies and overlaps
 
@@ -584,7 +588,7 @@ The Owner approved the Claude coder's recommended merge order: Issue verbs (#589
 
 The Owner then directed: "Assisted by goes into PR descriptions. Make that change permanent." This authorizes the scoped disclosure correction in this worktree: the PR description names the submitting agent in `Assisted-by:`, keeps the human sign-off, and passes both trailers to the squash commit. Branch commits carry no trailers. Remove the temporary requirement to name Claude Code regardless of the submitting host. Align the handbook, O05 resolution and script specification. This direction supersedes the retained literal Claude Code instruction for this session; migration and qualification of the personal entrypoint files remain with Claude consumption (#562) and Codex consumption (#563). Git and script execution remain Owner-run.
 
-The disclosure correction is committed locally in the six-file checkpoint and retained in the Issue verbs merge. Its focused validation evidence belongs under /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/permanent-pr-disclosure. Publication and all four CI checks passed at 1cba02d4af302b29ba26868ed99e95097b4eeae6. The PR's merge remains subject to the full-rewrite gate.
+The disclosure correction is committed locally in the six-file checkpoint and retained in the Issue verbs merge. Its focused validation evidence belongs under `/Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/permanent-pr-disclosure`. Publication and all four CI checks passed at 1cba02d4af302b29ba26868ed99e95097b4eeae6. The PR's merge remains subject to the full-rewrite gate.
 
 On 2026-11-19, the Owner required this rewrite to check and correct the substance by engaging with the Owner whenever our methodology and tooling conflict. The Owner then proposed scanning for those conflicts after rewriting for Google's guidance and arc42. The method, acceptance criteria and checklist follow that sequence: rewrite, scan, review findings with the Owner, then apply and verify the agreed corrections.
 
@@ -602,16 +606,28 @@ On 2026-11-19, after the current changes were pushed, the Owner explicitly appro
 
 On 2026-11-20, David Noble approved all three proposed review dispositions individually after their explanations. Section 7.22 records their scope and verification. These are implementation approvals within the existing rewrite; they neither authorize merge nor waive any completion requirement.
 
+On 2026-11-20, David Noble accepted the final reviewed head with “you are approved” and directed “Let's get this in.” PR #596 was squash-merged through the ordinary merge path after the exact-head checks and review were verified. The Owner subsequently ran the finishing script successfully. This completion-only amendment records those established results; it introduces no behavior or additional delivery milestone.
+
 ## 13. Completion review
+
+[PR #596](https://github.com/NobleFactor/noblefactor-engprod/pull/596) was accepted at 8aa77e7a513dbc7b68e9bb1a9fe0aa4cf68cc32e and merged as 55dec2b044a2972f1037996c06d887a960d6c8ef at 2026-11-20T20:17:23Z. Independent review verified R01–R10 and all 31 conversations were resolved. All four required accepted-head jobs passed in [CI run 44802544929](https://github.com/NobleFactor/noblefactor-engprod/actions/runs/44802544929).
+
+The exact recorded squash commit has the human sign-off and Codex assistance trailer. GitHub closed Skill and index update (#581) and Handbook command alignment (#582) through the PR references. The supported close command completed their evidence and row records; both Schedule rows read back Closed and linked PR #596. The PR's Time section was appended and read back.
+
+The Owner ran the finishing script on 2026-11-20. At 20:28:36 UTC, the canonical clone was synchronized and the installed schedule-progress skill resolved to the delivered source with SHA-256 e3baf8855476791afd7858c17a18e8d228c26b45dec17181763a35f5b914b8aa. At 20:28:49 UTC, the worktree, sibling script, and local and remote branch were verified removed. Post-merge evidence was posted to both issues.
+
+The durable receipt is `/Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/post-merge/receipt.json`. Completion criteria are met. Native host qualification, skill publication, and the separately tracked runtime work remain with their existing tasks. This follow-up records established results and creates no recursive completion milestone.
+
+### 13.1. Earlier checkpoints
 
 The final content and conflict assessment is recorded in rewrite-review section 19. All 21 older conversations are resolved with published evidence; R01–R09 are independently verified. R10 has a locally verified correction and remains open for independent recheck. M01/M02/M10 are tracked in Model publication (#614); the context freshness question is handed off to Shared context (#558). All four jobs pass at the reviewed 9d8f09d head; final-head CI and Owner acceptance remain required.
 
 The six routine review corrections were published at bfec2fcadfb8645b858a86ab143c170ae247ec31. The Owner then approved R01/M08, R03/M07 and R07 on 2026-11-20, and their corrections are locally verified. All 51 inputs have a first-pass disposition; content reviews, independent re-review, remaining tooling-gap handling, final-head CI and Owner acceptance remain required. Both issues stay open and the plan stays active. The PR may remain non-draft only under the scoped section 7.22 exception.
 
-The PR #612 integration passed make check with the incoming executable files and tests unchanged. The resolved command documentation preserves both old and new heading targets. Current documentation metadata and spelling are rechecked after recording this result; independent review and Owner acceptance remain outstanding.
+The PR #612 integration passed `make check` with the incoming executable files and tests unchanged. The resolved command documentation preserves both old and new heading targets. Current documentation metadata and spelling are rechecked after recording this result; independent review and Owner acceptance remain outstanding.
 
-The publication candidate passed make check, including frontmatter, spelling, shell, PowerShell, Starlark and the local test suite. The gate ran on the explicitly staged files. Three inherited whitespace findings in two exact source snapshots remain preserved by hash; maintained changes pass the whitespace check. Independent review and current-head CI are separate.
+The publication candidate passed `make check`, including frontmatter, spelling, shell, PowerShell, Starlark and the local test suite. The gate ran on the explicitly staged files. Three inherited whitespace findings in two exact source snapshots remain preserved by hash; maintained changes pass the whitespace check. Independent review and current-head CI are separate.
 
-The initial full-rewrite plan checkpoint was published at cbdc89b9d4eb601b7b5c47eb1202b803a6b45c1c. The Owner approved the merge order and document structure. The six-file disclosure and plan checkpoint is committed at 5a8383ddc1ede02f009a76eaaca1a4fa17a64bdf after its Owner-run make check passed.
+The initial full-rewrite plan checkpoint was published at cbdc89b9d4eb601b7b5c47eb1202b803a6b45c1c. The Owner approved the merge order and document structure. The six-file disclosure and plan checkpoint is committed at 5a8383ddc1ede02f009a76eaaca1a4fa17a64bdf after its Owner-run `make check` passed.
 
-Historical checkpoint: the Issue verbs integration is committed as 7b6e64520a6047687fddd28aaf8808b6ff4ce707 after its passing gate. The later PR #610 integration was published in draft PR #596 at 1cba02d4af302b29ba26868ed99e95097b4eeae6. The integrated make check and all four current-head CI checks passed. Progress was recorded on Skill/index update (#581) and Handbook command alignment (#582), and both Schedule rows read back In progress. The run's receipt is /Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/merge-reconciliation/advance-610/runs/20261119T183441Z/receipt.json. The inventory has 51 documents. The Owner approved the amended plan and directed implementation on 2026-11-19. This checkpoint records that approval. The initial architecture coverage outline and all 51 document dispositions are recorded in the rewrite review. The agent-schedule, issue hierarchy and attribute drafts are prepared; detailed mapping and rewriting of the remaining documents, the substantive reviews and final verification remain open. Keep both issues open; the scoped non-draft review exception in section 7.22 governs PR state. The Owner merges only after the rewrite's merge condition is satisfied; deployed-content verification, completion approval and cleanup follow.
+Historical checkpoint: the Issue verbs integration is committed as 7b6e64520a6047687fddd28aaf8808b6ff4ce707 after its passing gate. The later PR #610 integration was published in draft PR #596 at 1cba02d4af302b29ba26868ed99e95097b4eeae6. The integrated `make check` and all four current-head CI checks passed. Progress was recorded on Skill/index update (#581) and Handbook command alignment (#582), and both Schedule rows read back In progress. The run's receipt is `/Users/david-noble/Workspace/NobleFactor/scratch/noblefactor-engprod.581-schedule-command-consumers/merge-reconciliation/advance-610/runs/20261119T183441Z/receipt.json`. The inventory has 51 documents. The Owner approved the amended plan and directed implementation on 2026-11-19. This checkpoint records that approval. The initial architecture coverage outline and all 51 document dispositions are recorded in the rewrite review. The agent-schedule, issue hierarchy and attribute drafts are prepared; detailed mapping and rewriting of the remaining documents, the substantive reviews and final verification remain open. Keep both issues open; the scoped non-draft review exception in section 7.22 governs PR state. The Owner merges only after the rewrite's merge condition is satisfied; deployed-content verification, completion approval and cleanup follow.
