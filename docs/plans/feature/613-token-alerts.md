@@ -33,6 +33,7 @@ documents:
 - Owner: David Noble.
 - Participant: the Claude Code session assigned to Schedule #588, as coder.
 - Reviewer: Codex.
+- Compliance auditor: agy, the Antigravity CLI, of the Gemini model family.
 - Observers: none.
 
 <a id="summary-and-promised-result"></a>
