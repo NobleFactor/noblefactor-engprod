@@ -5596,7 +5596,7 @@ unset APP_ID
 expect "221 (#451): an app not installed on the organization is refused, and nothing written" error "${writes}"'
     (writes | length) == 0' 'NOBLEFACTOR_AUTOMATION_APP_ID: the app whose ID it names isn.t installed on Acme' text
 
-# 222 to 241 (#621), and 242 to 254 (#626). The access check every command makes first: a connection failure is named as
+# 222 to 241 (#621), and 242 to 255 (#626). The access check every command makes first: a connection failure is named as
 # one, never as a rejected token, and only a 401 is a rejected token; a missing login, a missing scope and a spent rate
 # limit are as before. Each stops before any other GitHub call. star github model get makes the check here.
 auth="${run_directory}/remotes/auth-status"
@@ -5778,6 +5778,14 @@ for answer in '403 Forbidden|Retry-After: 60|You have exceeded a secondary rate 
         "rate limit stopped the check reading the organization NobleFactor${pause}\\." text
     check "${number} (#626): and asks for no access" bash -c "! grep -q 'must grant' '${run_directory}/errors'"
 done
+
+# 255. A rate limit that gives its reset time and no Retry-After names that time.
+printf '%s\n' "HTTP/2.0 403 Forbidden" "X-RateLimit-Remaining: 0" "X-RateLimit-Reset: 1893456000" '' \
+    '{"message": "API rate limit exceeded"}' >"${remotes}/org-answer"
+run_star "${data}" github model get NobleFactor
+expect "255 (#626): a rate limit reading the organization names the reset time GitHub gives" error "${account_stopped}" \
+    'rate limit stopped the check reading the organization NobleFactor, until 20(29-12-31|30-01-01) ' text
+expect "255 (#626): and says to rerun after it" error "" 'rerun star github model get after that\.' text
 rm -f -- "${remotes}/org-answer"
 
 # 251 to 254. token make runs the access check before any request of its own: a name that can't be an account's, no

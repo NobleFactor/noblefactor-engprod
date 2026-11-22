@@ -162,12 +162,20 @@ def _limited(head, answer):
         return False
     return "retry-after:" in said or "x-ratelimit-remaining: 0" in said or "rate limit" in said
 
-def _retry_after(answer):
-    """The seconds an answer's Retry-After header asks for, or ""."""
+def _header(answer, name):
+    """The value of an answer's header, its name in lower case, or ""."""
     for line in answer.replace("\r", "").split("\n"):
-        if line.lower().startswith("retry-after:"):
+        if line.lower().startswith(name + ":"):
             return line.split(":", 1)[1].strip()
     return ""
+
+def _local_time(seconds):
+    """A time given in seconds since the epoch, as local time, or "" when it isn't one."""
+    if not seconds.isdigit():
+        return ""
+    shape = " '+%Y-%m-%d %H:%M %Z'"
+    _, at = _run("date -d @" + seconds + shape + " 2>/dev/null || date -r " + seconds + shape)
+    return at.strip()
 
 def check_access(command, account = "", scopes = [], kind_scopes = {}, dry_run = False):
     """Fail with the one fix when gh cannot do what command needs.
@@ -246,10 +254,11 @@ def check_access(command, account = "", scopes = [], kind_scopes = {}, dry_run =
                 _stopped(command, login, "read the organization " + org, answer, rerun)
             return kind
         if _limited(head, answer):
-            wait = _retry_after(answer)
-            fail("GitHub's rate limit stopped the check reading the organization " + org +
-                 (", for " + wait + " seconds" if wait else "") + ".\n" +
-                 "No access or token needs changing: rerun " + command + " after that.")
+            wait = _header(answer, "retry-after")
+            until = "" if wait else _local_time(_header(answer, "x-ratelimit-reset"))
+            when = ", for " + wait + " seconds" if wait else (", until " + until if until else "")
+            fail("GitHub's rate limit stopped the check reading the organization " + org + when + ".\n" +
+                 "No access or token needs changing: rerun " + command + (" after that." if when else " later."))
         if " 401 " in head + " ":
             _rejected(login, rerun)
         if " 404 " in head + " " or " 403 " in head + " ":

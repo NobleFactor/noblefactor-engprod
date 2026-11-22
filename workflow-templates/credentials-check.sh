@@ -301,8 +301,11 @@ title_of() {
     esac
 }
 
-# listed prints issue numbers as a phrase, "#1", "#1 and #2" or "#1, #2 and #3", and the verb that agrees with it.
+# listed prints issue numbers as a phrase, "#1", "#1 and #2" or "#1, #2 and #3", in the sentence for their kind, $1:
+# missed, an issue a run didn't add to Triage, or unknown, one a run couldn't tell the place of.
 listed() {
+    local kind="$1"
+    shift
     local -a numbers=("$@")
     local phrase="" i
     for i in "${!numbers[@]}"; do
@@ -314,11 +317,13 @@ listed() {
             phrase+=", #${numbers[i]}"
         fi
     done
-    if ((${#numbers[@]} == 1)); then
-        printf '%s was missed earlier: check that it is in Triage, and rerun its run, linked above, if not.' "${phrase}"
+    local one=$((${#numbers[@]} == 1))
+    if [[ "${kind}" == missed ]]; then
+        printf '%s %s missed earlier: check that %s in Triage, and rerun its run, linked above, if not.' "${phrase}" \
+            "$( ((one)) && echo was || echo were)" "$( ((one)) && echo "it is" || echo "each is")"
     else
-        printf '%s were missed earlier: check that each is in Triage, and rerun its run, linked above, if not.' \
-            "${phrase}"
+        printf '%s may not have been placed: check that %s where it belongs, and rerun its run, linked above, if not.' \
+            "${phrase}" "$( ((one)) && echo "it is" || echo "each is")"
     fi
 }
 
@@ -330,16 +335,20 @@ history() {
     gh issue view "$1" --repo "${REPOSITORY}" --json body,comments --jq '[.body] + [.comments[].body] | .[]'
 }
 
-# missed prints the sentence naming the issues an alert recorded as missed, all but ${ISSUE}, or nothing; it returns 1
-# when the alert can't be read. It reads the alert alone: an issue added to Triage by hand since is still named, as one
-# to check.
+# missed prints the sentences naming the issues an alert recorded, all but ${ISSUE}: those a run didn't add to Triage,
+# then those a run couldn't tell the place of, unless another run named them missed; or nothing. It returns 1 when the
+# alert can't be read. It reads the alert alone: an issue placed by hand since is still named, as one to check.
 missed() {
     local text
-    local -a numbers=()
+    local -a missing=() unknown=()
     text="$(history "$1")" || return 1
-    mapfile -t numbers < <(grep -oE "${marker}" <<<"${text}" | grep -oE '[0-9]+' |
+    mapfile -t missing < <(grep -oE "\\*\\*#[0-9]+\\*\\* wasn't added" <<<"${text}" | grep -oE '[0-9]+' |
         awk -v skip="${ISSUE:-}" '$0 != skip && !seen[$0]++')
-    ((${#numbers[@]} == 0)) || printf ' %s' "$(listed "${numbers[@]}")"
+    mapfile -t unknown < <(grep -oE "\\*\\*#[0-9]+\\*\\* may not have been placed" <<<"${text}" | grep -oE '[0-9]+' |
+        awk -v skip="${ISSUE:-} ${missing[*]}" 'BEGIN { split(skip, s, " "); for (i in s) out[s[i]] = 1 }
+            !($0 in out) && !seen[$0]++')
+    ((${#missing[@]} == 0)) || printf ' %s' "$(listed missed "${missing[@]}")"
+    ((${#unknown[@]} == 0)) || printf ' %s' "$(listed unknown "${unknown[@]}")"
 }
 
 # failed records an incident operation that failed: the run ends 3, and the next run tries again.
@@ -435,7 +444,7 @@ keep() {
         fi
         still="Still holds on ${today}: ${found[${condition}]}. ${run}."
     elif [[ -n "${number}" && "${condition}" == not-triaged && "${mode}" == check ]]; then
-        still="Still open on ${today}. The issues named above were missed: check that each is in Triage."
+        still="Still open on ${today}. Check that each issue named above is where it belongs."
         still+=" This closes when a new issue reaches it."
     elif [[ -n "${number}" && -n "${cleared[${condition}]+passed}" ]]; then
         still="$(missed "${number}")" || {
