@@ -1,7 +1,8 @@
 ---
-title: "Engineering evidence archive design preparation record"
+title: "Engineering evidence archive preparation history"
+type: Reference
+status: "Superseded by the evidence archive design"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/490
-status: draft
 created: 2026-11-20
 updated: 2026-11-21
 documents:
@@ -27,166 +28,59 @@ documents:
     text: "Evidence for reviewed policy derivation"
 ---
 
-# Engineering evidence archive design preparation record
+# Engineering evidence archive preparation history
+
+This reference preserves the preparation and review history of [PR #618](https://github.com/NobleFactor/noblefactor-engprod/pull/618). The Designer's deliverables are the [subsystem design](../../architecture/engineering-evidence-archive.md), [decision records](../../architecture/engineering-evidence-archive.decisions.md) and [roadmap](../../roadmaps/engineering-evidence-archive.md). This page is not an execution plan or an approval gate on that work.
 
 <a id="role-assignments"></a>
-
-## 1. Role assignments
-
-Owner: David Noble. Participant: Codex, acting as the NobleFactor engineering Designer, responsible for the design, decision records and planner handoff. Independent Reviewer: Antigravity, in the Engineering Evidence Archive Review conversation, assigned by the Owner to review this plan and its publication repair. No Observers are assigned.
-
-The Designer's deliverables are the wanted-system design, significant decision records and a roadmap as input to planning. The Owner explicitly clarified that an execution plan is not owed by the Designer. This retained preparation record is not a gate on drafting those deliverables, an implementation commitment or a competing Schedule. [Feature: Evidence archive design (#622)](https://github.com/NobleFactor/noblefactor-engprod/issues/622) owns the design work under Epic #490; [the design and decision records (#623)](https://github.com/NobleFactor/noblefactor-engprod/issues/623) precede [the roadmap (#624)](https://github.com/NobleFactor/noblefactor-engprod/issues/624) on [Schedule #619](https://github.com/NobleFactor/noblefactor-engprod/issues/619). The Epic and its six implementation Features remain open.
-
 <a id="summary-and-promised-result"></a>
+<a id="current-state"></a>
 
-## 2. Summary and promised result
+## 1. Preparation and review history
 
-Deliver a coherent description of the wanted engineering evidence archive, its significant decisions and alternatives, its development workflow, and a roadmap for the planner. Explain what people and agents can do, how originals remain traceable, and what capture, delivery, retrieval and recovery acknowledgments establish. Keep execution commitments in a separately approved Schedule; implementation planning belongs to the planner.
+Owner: David Noble. Designer: Codex. Independent Reviewer: Antigravity, Engineering Evidence Archive Review conversation. No Observers are assigned.
+
+The original plan was published at fec570d879cef390af6d1bb537eb7204423a2fb1. Its revised preparation record at 9cb06e6552b667ec71f6cea0789612beb8acffe5 passed CI and [independent re-review](https://github.com/NobleFactor/noblefactor-engprod/pull/618#pullrequestreview-6002690447). David then clarified that a Designer owes design documents, decision records and a roadmap, and that a Schedule orders their delivery. The earlier plan review does not accept the design.
+
+The actual design set was first published at 842aa30b2bc34d4e27cda1022a4cab69348d510e. The [design review of that head](https://github.com/NobleFactor/noblefactor-engprod/pull/618#pullrequestreview-6008500367) identified changes to a completed historical plan, missing requirements coverage and distributed-protocol gaps. The [local correction recheck](https://github.com/NobleFactor/noblefactor-engprod/pull/618#pullrequestreview-6008973627) checked the unpublished corrections. Those corrections were then published at dfb596dde192cdcb6c9cff78473120cd99857a05. The [published-revision review](https://github.com/NobleFactor/noblefactor-engprod/pull/618#pullrequestreview-6009380436), submitted on 2026-11-22 at 01:29:48 UTC, verified zero open technical defects on that revision and left document scope and format choices to the Owner.
+
+For dfb596dde192cdcb6c9cff78473120cd99857a05, the Owner-run publication script completed make check on Media-Server, validated seven active documents, 19 decision footers and 120 local links/anchors, and verified all four CI checks as successful. Its publication receipt was recorded on 2026-11-22 at 00:36:59 UTC. Diagram rendering and the Reviewer's independent verification of external vendor pages and private investigation inputs remain bounded gaps. This shortened record requires its own document checks and recheck after publication.
 
 ## Issue 490
 
-[Engineering evidence archive (#490)](https://github.com/NobleFactor/noblefactor-engprod/issues/490) requires private original evidence, incremental and repeatable capture, scoped retrieval with exact citations, source-linked checkpoints, reviewed conclusions and recoverable operations. It distinguishes assertions from captured observations and separates capture, retrieval, reasoning and acceptance. Its capture (#491), catalog (#492), retrieval (#493), checkpoint (#494), decision-trace (#495) and protection (#496) Features retain their existing ownership.
-
-<a id="current-state"></a>
-
-## 3. Current state
-
-The Epic supplies requirements and proposed Feature decomposition. Workstation decisions [W5](../../architecture/agentic-developer-workstation.decisions.md#w5) and [D4](../../architecture/agentic-developer-workstation.decisions.md#d4) leave archive placement, the spool engine, original-artifact layout and recovery acknowledgments for archive review. D4 leaves the spool engine open. The Owner has withdrawn the earlier storage-uniformity preference; evaluate each store against integrity, performance, reliability, security and maintenance needs.
-
-The plan was published at fec570d879cef390af6d1bb537eb7204423a2fb1 in [plan PR #618](https://github.com/NobleFactor/noblefactor-engprod/pull/618). All four CI checks passed for that revision. At 2026-11-21T01:50:27Z, the Epic's document table linked the plan, and its filing history and design-not-yet-opened note were restored outside the generated document section. The later preparation revision 9cb06e6552b667ec71f6cea0789612beb8acffe5 passed all four CI checks and independent re-review. This increment adds the draft design, decision companion and roadmap after the Owner's role correction. The earlier checks and reviews do not verify those new documents.
-
-Antigravity supplied a private design draft and Go prototype outside this repository. The Designer recorded the draft's SHA-256 as abc57d5b114233726fbb9faf688726beafb895b3a2c4b608318d7818385029ec and reported unsafe purge of quarantined records, silent conflicting replays, incomplete capture watermarks and client-controlled workspace labels from source inspection and isolated in-memory SQL reproductions. The independent Reviewer has not verified those private inputs or reproductions. Treat the findings as investigation leads; supply reviewable synthetic examples, source identity and reproduction methods before relying on them as design evidence. They do not establish daemon or deployment behavior.
-
-The current conversation contains research comparing SQLite and PostgreSQL, archive-service delivery, original storage, receipts and backup tooling. David requested documentation of the decisions and an updated design, then directed rereading the Designer entry points. The recording request authorizes preparation of the documentation; individual proposals retain their actual approval evidence.
-
-The [initial review of fec570d](https://github.com/NobleFactor/noblefactor-engprod/pull/618#pullrequestreview-6002444899) identified preparation-plan omissions. The [final verification of 9cb06e6](https://github.com/NobleFactor/noblefactor-engprod/pull/618#pullrequestreview-6002690447) confirmed those findings resolved, CI passing and all seven threads resolved. Those reviews apply to preparation, not to the newly added system design and roadmap.
-
-The [design review of 842aa30b](https://github.com/NobleFactor/noblefactor-engprod/pull/618#pullrequestreview-6008500367) raised the historical-plan, coverage and protocol findings. The [posted local-candidate recheck](https://github.com/NobleFactor/noblefactor-engprod/pull/618#pullrequestreview-6008973627) confirms those High findings resolved locally, while publication, final revision verification and Owner scope/metadata rulings remain pending.
-
 <a id="design-impact"></a>
-
-## 4. Design impact
-
-Create the archive design, its architectural decision companion and its planner roadmap under the owning repository's architecture and roadmap directories. Link them from the existing workstation design and roadmap where their archive contracts are discussed. Preserve existing requirement, decision and scenario identities. New links do not mark workstation D4 resolved or delivery complete.
-
 <a id="proposed-implementation"></a>
-
-## 5. Proposed implementation
-
-Use the current design template's arc42 coverage: problem and goals, constraints, context, strategy, components and interfaces, runtime and development workflow, deployment, shared concepts, significant decisions, quality requirements, risks and open choices, glossary, and delivery references.
-
-Evaluate the researched candidate architecture: a SQLite capture store and outbox outside sandboxes on each workstation; an authenticated archive API; PostgreSQL for central originals, provenance and searchable representations; and encrypted off-machine backups using qualified tooling. Compare it with PostgreSQL on both workstation and archive, an append-only file spool with a PostgreSQL archive, a SQLite-only service, and separate artifact storage. Account for disconnected operation, integrity, performance, recovery, security and maintenance cost. The Owner's later request to reconsider PostgreSQL for both stores broadens the evaluation without selecting a replacement. Database placement remains independent of the client-facing archive interface; neither the spool engine nor the original-artifact store is selected by this plan.
-
-Define original bytes separately from derived representations; stable source and evidence identities; source revisions, parser versions, active-session capture boundaries and explicit gaps; conflicting replay handling; citation resolution; checkpoints; retention and governed deletion; and recovery after source or archive loss. Preserve tool-call/result relationships and exact source ranges. Distinguish native-session restoration from evidence-based context reconstruction.
-
-Define local-durability, archive-durability and backup-recoverability receipts separately. Specify which verified receipt level and retention policy permit local-spool release or eviction, including lost replies and storage pressure. Automatic purge must unconditionally exclude quarantined or unreconciled originals; any removal follows the separately approved deletion process. Advance a capture watermark only across durably preserved contiguous source coverage or an explicitly recorded gap, never from the highest observed turn alone. Define how receipt and watermark state survive a crash, replay and restore.
-
-Define server-enforced caller and scope authorization for ingestion, search results, counts, snippets, exact-source reads, attachments, citation resolution and expanded context. Derive authorized associations from authenticated identity and verified bindings rather than client-supplied workspace labels. Give agents scoped API access rather than unrestricted database credentials or raw archive mounts. Specify revocation and denial behavior without cross-scope metadata disclosure.
-
-Address secrets captured in transcripts and tool output inside the archive. Separate protected originals from secret-screened derived representations; define auditable redaction and governed deletion without retaining prohibited content in audit records. Trace the policy through ordinary retrieval, logs, exports, indexes, attachments, public outputs and the backup lifecycle. Treat retrieved historical instructions as untrusted data that cannot override current policy or grant execution authority; include prompt-injection scenarios.
-
-Define the Feature #495 domain contracts: captured assertions versus captured observations for an identified revision; proposed conclusions versus reviewed, accepted decisions; supporting and conflicting evidence; review identity, rationale and status; and supersession without silent loss of history. Keep capture, retrieval, reasoning and acceptance distinct. Explain how a current common or role-specific policy rule resolves through reviewed rationale to original evidence without treating omission or an old instruction as permission.
-
-Describe the initial human and agent interface and its integration with existing engineering tooling: bounded search and pagination, exact-source reads, surrounding-context expansion, checkpoints, and explicit no-result or incomplete-coverage responses. Define how public engineering documents reference private evidence without exposing raw conversations, sensitive metadata or access credentials. Keep private citation resolution subject to authorization; publication and acceptance follow the existing review process.
-
-Record each significant proposal with reasons, actual alternatives, consequences and linked evidence in the sibling engineering-evidence-archive.decisions.md companion. End each record with the required YAML fields in order. Use proposed status, null approval and null decision time unless a source establishes acceptance. Retain known dates without inventing approval times. Keep the unanswered storage choices, archive trust boundary, workload, retention, recovery objectives, backup destination and key custody, initial interface and measured performance thresholds explicit.
-
-Prepare a planner handoff that states observable outcomes, dependencies and Feature ownership. Present delivery gates rather than a second Schedule or a committed issue order. Include ordinary evidence consultation and pre-compaction continuity, as well as disconnected capture, reconnect, archive recovery and storage-pressure scenarios.
-
-Use synthetic examples and public requirements in tracked documentation. Keep raw transcripts, credentials, private exports and prototype source outside this public repository.
-
 <a id="alternatives-and-challenges"></a>
-
-## 6. Alternatives and challenges
-
-Copying the Antigravity draft unchanged would preserve its durability and authorization gaps and its earlier document structure. Replacing its inputs with a coherent wanted-system design allows those gaps to be resolved through review. Preserve the private input; do not overwrite it or imply that it was an approved implementation.
-
-Using PostgreSQL for both local capture and central archive requires evaluating workstation service operation, disconnected durability and recovery alongside embedded-engine and file-spool alternatives. Do not assume that either fewer engines or an embedded engine establishes lower total maintenance cost without evidence. Keep original-artifact placement and backup destination/key custody separate from the catalog choice.
-
-Publishing an implementation Schedule now would invent commitments before the design review and planner decomposition. The enabler Feature and design Schedule identify the current documentation work. Publishing database or encryption proposals as accepted would likewise exceed their evidence; preserve the distinction between research, proposal and Owner approval.
-
-<a id="acceptance-criteria-and-evidence"></a>
-
-## 7. Acceptance criteria and evidence
-
-| Criterion | Observable result | Evidence and method | Environment or artifact |
-| --- | --- | --- | --- |
-| Coherent wanted system | The design explains users, boundaries, ownership, data, interfaces, normal actions and failure behavior | Trace requirements to design sections and walk the archive scenarios | Exact candidate documentation revision |
-| Evidence integrity | Original preservation, conflicting replays, durable watermark progression, explicit gaps, distinct receipt levels and safe local release are specified; quarantined or unreconciled originals cannot be automatically purged | Walk interrupted capture, a missing turn, lost-response replay, quarantine, storage pressure, purge and citation-preserving restore scenarios | Design and decision companion |
-| Reviewed traceability | Assertions, observations, proposed conclusions and accepted decisions remain distinguishable; conflicts, review status, policy rationale and supersession retain their sources | Trace a current rule and a changed conclusion to exact observations for an identified revision; verify capture, retrieval, reasoning and acceptance remain separate | Design, Feature #495 contract and roadmap |
-| Honest decision records | Each record has a stable identifier, reasons, actual alternatives, consequences, evidence and valid ordered YAML metadata | Parse every footer using Ruby Psych.safe_load; compare ordered keys and allowed statuses with the standard, check list and timestamp types, unique IDs and null approval fields on unaccepted proposals; verify approval claims against their sources | Decision companion; frontmatter checks alone do not validate footers |
-| Secret handling and authorization | Server-enforced caller/scope binding covers ingestion and every retrieval surface; protected originals, secret-screened representations, redaction/deletion, backups and untrusted instructions have explicit contracts | Walk synthetic secret-bearing and historical prompt-injection fixtures, forged workspace labels and cross-scope requests across content, counts, snippets, attachments, context, logs, exports, public outputs and backups | Design and security scenarios; implementation tests remain future work |
-| Security meaning | Archive-host trust, plaintext-processing boundaries, backup key custody and citation disclosure are explicit; transport encryption does not imply client-only end-to-end encryption | Review access/revocation, protected-original processing, backup recovery and safe public-to-private citation scenarios | Design and open-choice register |
-| Usable interface | People and agents have a defined first interface with bounded results, pagination, context expansion, exact citations and visible missing coverage | Walk a reviewed engineering question through ordinary retrieval and pre-compaction consultation, including no results, contradictory evidence and denied citation expansion | Design, interface contract and roadmap |
-| Storage comparison | The decision evaluates local spool engines, original-artifact placement, recovery and maintenance costs without claiming a selected stack | Compare documented alternatives against explicit workload assumptions, failure scenarios and proposed measurement methods; retain unmeasured results as open questions | Decision companion and open-choice register |
-| Useful planner handoff | The roadmap names outcomes, Feature owners, dependencies, qualification evidence and unresolved Owner choices without committing a Schedule | Compare with the existing Epic and workstation roadmap | Archive roadmap |
-| Publication quality | Frontmatter, numbered sections, stable links, plain US English and one physical line per prose paragraph conform | Run make check, including .github/scripts/Test-Frontmatter.sh; separately scan for wrapped prose, resolve relative Markdown paths and explicit/heading anchors, check every ordered decision footer, and inspect rendered diagrams where supported | Exact candidate worktree; record commands, validator coverage and results |
-| Issue/document consistency | The Epic, enabler Feature, two Tasks and design Schedule link the current drafts and their intended default-branch paths; merged issues retain the proper revision | The guarded design publisher owns the five document tables, using Kind/Document columns and preserving unrelated rows and narrative. Before merge include the exact review revision. After an observed merge, refresh open issues to develop and issues closed by that PR to the verified merge revision | Live Epic #490, Feature #622, Tasks #623/#624, Schedule #619 and exact published documentation revision |
-| Honest delivery status | No code, service deployment or production performance is claimed from this documentation change | Review the changed file set, plan milestones and result language | Candidate revision and review record |
-
-<a id="required-completion-milestones"></a>
-
-## 8. Required completion milestones
-
-| Milestone | Required? | Expected evidence | State or result |
-| --- | --- | --- | --- |
-| Documentation implementation | Yes | Coherent design, decisions, roadmap and updated references at an identified revision | Pending |
-| Owner review | Yes | Review of the design, unresolved choices and planner handoff, with dated decisions recorded | Pending |
-| Merge and completion record | Yes | Owner-approved documentation PR, observed merge revision recorded on the served issues, and the required completion follow-up in this retained record | Pending; design acceptance and delivery remain distinct milestones |
-| Service deployment | No | This plan changes documentation only | Outside this plan |
-| Runtime qualification | No | Requirements are handed to implementation planning; no runtime result is claimed here | Outside this plan |
-| Documentation verification | Yes | Required repository checks, decision metadata checks, link checks and source-layout review | Pending |
-
 <a id="implementation-phases"></a>
-
-## 9. Design deliverables and planning boundary
-
-The Owner requires every design to run on a Planner-supplied Schedule with at least two separate issues: one for design documents and their decision records, and one for the roadmap. The former prose phases do not establish those issues or their order. The live Schedule project owns Step order, dependencies, assignments, completion criteria and progress. The Owner created [Schedule: evidence archive design (#619)](https://github.com/NobleFactor/noblefactor-engprod/issues/619). [Feature: Evidence archive design (#622)](https://github.com/NobleFactor/noblefactor-engprod/issues/622) is its enabler under Epic #490, with [design/decision records (#623)](https://github.com/NobleFactor/noblefactor-engprod/issues/623) first and [the roadmap (#624)](https://github.com/NobleFactor/noblefactor-engprod/issues/624) second. The roadmap Task is blocked by the design Task. This resolves the earlier parent-ownership question within the existing Epic → Feature → Task hierarchy. The Owner-run setup created and read back the native types, parents, Step order and dependency on 2026-11-21. The handbook coder owns the shared terminology, templates and design-Schedule skill. The live project remains authoritative rather than a Markdown step table.
-
-The Designer supplies the [system design](../../architecture/engineering-evidence-archive.md), [significant decisions](../../architecture/engineering-evidence-archive.decisions.md) and [roadmap](../../roadmaps/engineering-evidence-archive.md). The design describes the wanted system; the roadmap gives the planner capabilities, dependencies, observable acceptance gates and open choices. It does not assign implementation issues or create an implementation plan.
-
-Independent review applies to the exact design-document candidate and its requirements, references, decision metadata and approval claims. The Owner decides consequential architecture choices and acceptance. Publishing these drafts does not implement the archive or approve their database, security, performance or recovery proposals.
-
-The Owner-run publication script updates the existing PR and refreshes all five served document tables from the design assets, with separate default-branch and exact-review links. The retained preparation record is not its linking prerequisite. The later --refresh-merged-links mode first verifies the observed merge, landed sign-off and document blobs, then uses develop for open issues and the actual merge revision for an issue closed by that PR. It preserves unrelated narrative and makes no merge or cleanup decision. Only the current design Task is In progress; the roadmap remains Open and blocked. Delivery comments, completion records and cleanup retain their normal authority and verification boundaries.
-
-After merge, the Epic uses the plan-link tool's canonical Plan label and path-text links for this retained record. The label is compatibility metadata, not a new execution-plan obligation. A read-only plan-link check must report unchanged with no dropped rows; the publisher stops on a mismatch instead of creating a recurring format transition. The other four tables retain the design publisher's direct ownership.
-
 <a id="files-and-related-assets"></a>
-
-## 10. Files and related assets
-
-All proposed repository-relative paths below are within the assigned worktree.
-
-- Add docs/architecture/engineering-evidence-archive.md as the wanted-system draft.
-- Add docs/architecture/engineering-evidence-archive.decisions.md with proposed choices and actual alternatives.
-- Add docs/roadmaps/engineering-evidence-archive.md as input to the planner.
-- Update docs/architecture/agentic-developer-workstation.md with the archive reference.
-- Update docs/roadmaps/agentic-developer-workstation.md with the archive handoff reference.
-- Update docs/architecture/agentic-developer-workstation.decisions.md to link the archive evidence from W5/D4 without changing their approval status or treating D4 as resolved.
-- Maintain docs/plans/doc/490-evidence-archive-design.md with the same commits that change its facts.
-
-The review correction restores the completed docs/plans/doc/521-workstation-design.md byte-for-byte to develop blob a4fcdfe7d6117d1f13beeb77f3eef53cdaeba2d0. Its earlier preference remains historical evidence; current D4 and W6 record the withdrawal. That restoration belongs to the correction commit and removes this completed plan from the final PR delta. No reformatting or migration of the completed plan is part of the design deliverable.
-
 <a id="dependencies-overlaps-and-blockers"></a>
 
-## 11. Dependencies, overlaps and blockers
+## 2. Current deliverables and ownership
 
-The archive Features own their respective future implementation. Existing workstation integration work supplies neighboring runtime and lifecycle contracts. Do not change another worker's worktree, Schedule, issue scope or assignments. Bring any discovered overlap to the Owner.
+[Engineering evidence archive (#490)](https://github.com/NobleFactor/noblefactor-engprod/issues/490) supplies requirements. Its six implementation Features remain provisional. [Evidence archive design (#622)](https://github.com/NobleFactor/noblefactor-engprod/issues/622) is the enabler Feature. [Schedule #619](https://github.com/NobleFactor/noblefactor-engprod/issues/619) orders [design and decision records (#623)](https://github.com/NobleFactor/noblefactor-engprod/issues/623) before [the roadmap (#624)](https://github.com/NobleFactor/noblefactor-engprod/issues/624). The live project owns progress and dependency records; the roadmap draft provides context and does not complete its Task.
 
-The current draft does not select the local spool engine; central original-artifact placement in PostgreSQL, private content-addressed files/object storage or a combination; backup destination and key custody; archive-host trust; deployment placement; initial human/agent interface; retention and deletion policy; workload/ingest volume and archive growth; recovery-point or recovery-time objectives; or numeric performance and capacity thresholds. Compare these choices against the Owner's integrity, performance, reliability, security and low-maintenance goals. Keep questions visible and obtain Owner decisions before representing them as settled requirements.
+The design owns requirements coverage, behavior, significant choices, alternatives, interfaces, data and recovery contracts. The roadmap supplies capabilities, dependencies and observable acceptance evidence to the Planner. The handbook coder owns the shared terminology, templates and design-Schedule skill. There is no Designer-owned implementation plan here.
+
+The Epic's post-merge document table retains the linking tool's canonical Plan label and path-text format for this historical reference. That compatibility label does not make this page an execution plan. The design publisher's merge-link check requires the tool to report the table unchanged, preventing recurring custom-row drops.
+
+The completed workstation plan is preserved byte-for-byte at develop blob a4fcdfe7d6117d1f13beeb77f3eef53cdaeba2d0; it is not part of the final PR delta. Current workstation [D4](../../architecture/agentic-developer-workstation.decisions.md#d4) and [W6](../../architecture/agentic-developer-workstation.decisions.md#w6) record the storage question and the withdrawal of the former uniformity preference. They do not approve a replacement engine.
 
 <a id="approval-and-departures"></a>
 
-## 12. Approval and departures
+## 3. Evidence and approval limits
 
-David Noble assigned Codex to take over the Engineering evidence archive design, directed research into integrity, performance, reliability, security and maintenance, and requested that the findings and decisions be documented in the updated design. Source: the current Owner conversation, including the messages beginning "research this" and "document these decisions and update the design". These messages establish the requested work; this plan does not infer an approval date, approval of its committed revision or a direction to start Phase 1 from them. The independent Reviewer has not verified that conversation evidence.
+On 2026-11-21, after the published-revision review above, the Designer asked in the Owner–Designer conversation: "Approve keeping the RFC/Roadmap formats and draft roadmap, and shortening the earlier preparation document to a historical record?" David Noble replied: "yes, i approve." This authorizes retaining the archive design as RFC/Draft, retaining the roadmap as Roadmap/Draft and review context, and replacing the earlier preparation document with this historical reference. The source exchange establishes the date and scope; it supplies no exact approval time. It does not accept the proposed archive architecture, complete either Task or authorize merge.
 
-On 2026-11-20, the Owner directed removal of the earlier storage-uniformity preference and explicitly clarified that Codex is the Designer and owes a design and roadmap as input to planning. That direction authorizes preparation of those design deliverables and supersedes the former preparation-plan gate on drafting them. It does not approve an unanswered architecture choice, implementation Schedule, agent Git command, PR-script execution exception or deployment.
+The private Antigravity draft, prototype, SQL reproductions and earlier conversation transcript were not independently verified by this design review. The recorded draft digest is abc57d5b114233726fbb9faf688726beafb895b3a2c4b608318d7818385029ec. They are investigation inputs, not deployment evidence. The Owner's recording request and role clarification authorize the design work; they do not accept each proposed architecture choice.
 
-The earlier preparation findings REV-490-01 through REV-490-05, REV-490-07 and REV-490-09 were independently verified resolved on 9cb06e6. The private-input verification gaps in REV-490-10 remain explicit in Section 3. The new design drafts need review on their own revision; no earlier preparation finding selects their storage architecture or supplies Owner acceptance.
+The design's open-choice register and individual decision footers retain the actual approval state. Vendor citations were checked live on 2026-11-21; versions remain research baselines requiring deployed qualification. Documentation checks establish neither measured performance nor running security/durability guarantees.
 
+<a id="acceptance-criteria-and-evidence"></a>
+<a id="required-completion-milestones"></a>
 <a id="completion-review"></a>
 
-## 13. Completion review
+## 4. Delivery records
 
-Pending. Record the reviewed documentation revision, checks, Owner decisions and remaining obligations here as their facts change. After observed merge, record delivery on design Task #623, link it from Feature #622 and Epic #490, and incorporate the required evidence here through the completion-only follow-up process. Publishing the roadmap draft does not complete Task #624 or remove its dependency. The Engineering evidence archive Epic remains open; this documentation increment does not satisfy its implementation milestones.
+The Owner directed review in order: process the Reviewer's comments and corrective rechecks, then the auditor's comments and corrective rechecks, repeating until the participants agree the work is complete. The [separate compliance audit of 842aa30b](https://github.com/NobleFactor/noblefactor-engprod/pull/618#issuecomment-7071338808) has not yet received that corrective audit round. Technical-review acceptance does not dispose of its findings. The Owner-approved document changes above are the current revision; review-thread resolution and audit acceptance remain outstanding.
+
+Publishing a draft or passing CI does not complete Task #623 or the roadmap. After the reviews, Owner acceptance and an observed merge, record the exact merge revision and results on the served issues, refresh open-issue document links to the default branch and any issue closed by that PR to its merge revision, and preserve the outstanding roadmap and completion-record obligations. The archive Epic and implementation Features remain open until their own completion evidence is accepted.
