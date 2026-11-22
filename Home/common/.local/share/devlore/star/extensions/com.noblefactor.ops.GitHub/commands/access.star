@@ -37,8 +37,9 @@ _CONNECTION = [
 # What a rejected credential says.
 _REJECTED = ["401", "bad credentials"]
 
-# The prefixes GitHub gives its tokens, scrubbed from any line a message quotes.
+# The prefixes GitHub gives its tokens, scrubbed from any line a message quotes, and the characters a token holds.
 _TOKEN_PREFIXES = ["ghp_", "gho_", "ghu_", "ghs_", "ghr_", "github_pat_"]
+_TOKEN_CHARACTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
 
 def _run(command):
     """A shell command's exit status and its output, standard error with it: (status, output)."""
@@ -50,21 +51,42 @@ def _run(command):
     return (int(code) if code.isdigit() else 1), out[:cut]
 
 def _scrub(line):
-    """A line of gh's, any word shaped like a GitHub token replaced, so that a message can quote it."""
-    words = []
-    for w in line.split(" "):
-        words.append("<token>" if [p for p in _TOKEN_PREFIXES if w.strip("'\"(),").startswith(p)] else w)
-    return " ".join(words)
+    """A line of gh's with anything shaped like a GitHub token replaced by <token>, so that a message can quote it.
+
+    A token is one of GitHub's prefixes, wherever it starts, and every token character after it: inside an assignment,
+    quotes, a URL's credentials or anything else, the text around it kept (#621).
+    """
+    out = ""
+    rest = line
+    for _ in range(len(line) + 1):
+        at = -1
+        prefix = ""
+        for p in _TOKEN_PREFIXES:
+            i = rest.find(p)
+            if i >= 0 and (at < 0 or i < at):
+                at = i
+                prefix = p
+        if at < 0:
+            break
+        end = at + len(prefix)
+        for c in rest[end:].elems():
+            if c not in _TOKEN_CHARACTERS:
+                break
+            end += 1
+        out += rest[:at] + "<token>"
+        rest = rest[end:]
+    return out + rest
 
 def _diagnose(text):
     """What a failure's text says stopped it: ("connection", line), ("rejected", line), or ("unknown", line).
 
-    The text's error lines decide: gh's "- Error: ..." in auth status, or a call's output. A line is quoted scrubbed.
+    The text's error lines decide: gh's "- Error: ..." in auth status, or a call's output. They are read scrubbed, so
+    that a token's characters never read as a word, and a line is quoted scrubbed.
     """
     lines = [x.strip() for x in text.replace("\r", "").split("\n") if x.strip() != ""]
     errors = [x for x in lines if x.lstrip("- ").lower().startswith("error")] or lines
     line = _scrub(errors[-1].lstrip("- ")) if errors else "no answer"
-    said = " ".join(errors).lower()
+    said = _scrub(" ".join(errors)).lower()
     for s in _CONNECTION:
         if s in said:
             return "connection", line
@@ -187,3 +209,8 @@ def check_access(command, org = "", scopes = [], dry_run = False):
             fail(account + " cannot see the organization " + org + " (GitHub answered " + head.split(" ", 1)[-1] +
                  "), though the token holds every scope " + command + " needs.\n" +
                  "No command here fixes this: an owner of " + org + " must grant " + account + " access to it.")
+
+        # Any other failed answer, a server error among them, proves nothing about the token, and stops the command.
+        if code != 0:
+            fail("gh couldn't read the organization " + org + ": GitHub answered " + _scrub(head.split(" ", 1)[-1]) +
+                 ".\nNo fix is known for that answer; " + rerun)

@@ -77,8 +77,8 @@ What gh itself says, read on 2026-11-21 with gh 2.104.0 and GitHub unreachable: 
   - **Credential rejection:** `401` or `Bad credentials`. The message is today's, naming `gh auth refresh` or the token variable to replace.
   - **Anything else:** gh's error line, quoted, with no fix claimed.
 - A block with no error line keeps today's handling.
-- Every later GitHub call in the check, the rate limit and the organization, fails the same way when its own exit status is non-zero, before any other call is made: a connection failure is named as one, never as a spent rate limit or a missing organization.
-- No credential ever appears in a message: gh's lines carry none, and the check adds none.
+- Every later GitHub call in the check, the rate limit and the organization, fails the same way when its own exit status is non-zero, before any other call is made: a connection failure is named as one, never as a spent rate limit or a missing organization, and any other failed answer, a server error among them, is quoted with no fix claimed.
+- No credential ever appears in a message: a quoted line is scrubbed of anything shaped like a token, wherever it starts, the text around it kept, and the diagnosis reads it scrubbed, so that a token's own characters never decide it.
 
 <a id="issue-621-overlap"></a>
 
@@ -234,6 +234,14 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 
 - [x] Section 4 § 4.1, its decision record ACCESS-007, and the guide's § 7a, Alerts.
 
+<a id="phase-4b-the-review"></a>
+
+### 9.4b Phase 4b: #625's review
+
+- [x] R5 and R6, #621: a failed organization answer with an HTTP status line, a server error among them, stops the command; a token is scrubbed wherever it starts in a line, and the diagnosis reads the line scrubbed. Cases 235 to 241, all 698 checks passing; section 6, § 8; § 621.1. The organization lookup has no case: no command passes `check_access` an organization, so none reaches it.
+- [ ] R1, R2, R4 and R7, #613: an incident closes only when its own test passes; only GitHub's refusal is a credential condition; duplicates from runs at once are closed; a failed incident operation fails the run. Their cases in `tests/Test-CredentialsCheck`; §§ 5.2 and 6; section 4, § 4.1; the guide's § 7a.
+- [ ] R3: what a failed Triage run raises, as you decide it.
+
 <a id="phase-5-merge-landing-and-verification"></a>
 
 ### 9.5 Phase 5: merge, landing and verification
@@ -261,6 +269,8 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 ## 12. Approval and departures
 
 - **Approved, 2026-11-21.** David Noble approved this plan at revision 2856d6a, for #613 and #621, in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`, and directed the work to proceed phase by phase, each committed and pushed, and then the pull request opened for the full set. The three calls of § 6 are taken as § 6 makes them: incidents in the repository whose binding failed, assigned to David-Noble-at-work; daily, and 14 days ahead; and the check landed by hand before #614.
+- **#625's review, 2026-11-21.** Codex reviewed 1f76efa and found eight faults, R1 to R8, each fixed in § 9.4b. R3, what a failed Triage run raises, needs your decision.
+- **Phase 9.1b ticked before its design update.** 3beaa44 ticked 9.1b, section 6 § 8 among it, but the section's change landed in the next commit, 15acbb9: it had been made in the main clone, not this worktree. #625's review found it, as R8. The history stays as it is; each fix since lands with its documents and its box.
 - **No sandbox runs, decided 2026-11-21.** Setting up the sandboxes' credentials takes the same manual effort every time, so until GitHub offers a way to automate it, work is verified in the field and the sandbox accounts are deleted. #613's evidence, which names the sandboxes, is replaced by § 7.
 
 <a id="completion-review"></a>
