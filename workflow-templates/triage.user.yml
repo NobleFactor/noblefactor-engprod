@@ -113,7 +113,9 @@ jobs:
           echo "Severity: $severity"
       # An issue meant for Triage that didn't reach it raises an alert at once, with the run's own token, so that it
       # doesn't depend on the token that may have failed: the token's own alert when the token is bad, otherwise "New
-      # issues aren't reaching Triage". An issue that reached it closes that alert (noblefactor-engprod#613).
+      # issues aren't reaching Triage". CLASSIFIED says whether the run could tell where the issue belongs, a step
+      # before it having failed. An issue that reached Triage closes that alert, whatever later steps did, and a
+      # failure closing it fails the run (noblefactor-engprod#613).
       - uses: actions/checkout@v4
         if: always() && steps.scenario.outputs.placed != 'true' && steps.collection.outputs.collection != 'true'
         with:
@@ -130,10 +132,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PAT: ${{ secrets.ADD_TO_PROJECT_PAT }}
           ISSUE: ${{ github.event.issue.number }}
+          CLASSIFIED: ${{ steps.scenario.outcome == 'success' && steps.collection.outcome == 'success' }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: bash .github/credentials-check/credentials-check.sh || true
       - name: Close the Triage alert, the issue having reached Triage
-        if: success() && steps.triage.outcome == 'success'
+        if: ${{ always() && steps.triage.outcome == 'success' }}
         env:
           MODE: placed
           KIND: user
@@ -142,4 +145,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           ISSUE: ${{ github.event.issue.number }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: bash .github/credentials-check/credentials-check.sh || true
+        run: bash .github/credentials-check/credentials-check.sh

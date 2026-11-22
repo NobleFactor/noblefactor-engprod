@@ -23,8 +23,9 @@
 # The Triage workflow runs it too. When a new issue isn't added to Triage, report mode checks the token: a bad one
 # raises its own alert, naming the issue missed; a healthy one raises not-triaged, "New issues aren't reaching Triage",
 # naming the issue and the run to rerun. Each further miss is a comment on the same alert, and the daily check reminds
-# once a day while it is open. When a later issue is added to Triage, placed mode closes it, listing the issues still
-# missing: closing an alert never adds them.
+# once a day while it is open. When a later issue is added to Triage, placed mode closes it, listing the issues missed
+# earlier, to check: closing an alert never adds them. An alert says only what was seen: what happened in the run, and
+# what the token check found right after it, never which caused which.
 #
 # Environment:
 #   KIND                organization or user.
@@ -36,6 +37,8 @@
 #   WATCH               repositories whose latest check this run also watches, comma-separated; optional.
 #   MODE                check, the default; report, when a new issue wasn't added to Triage; or placed, when one was.
 #   ISSUE               the new issue's number, in report and placed mode.
+#   CLASSIFIED          in report mode, false when the run failed before it could tell whether the issue belongs in
+#                       Triage, a schedule or a scenario; default: true.
 #   RUN_URL             this run's page, named in every incident.
 #   CONFIG              credentials-check.json; default: beside this script.
 #   GITHUB_API_URL      GitHub's API; default: https://api.github.com.
@@ -312,20 +315,29 @@ listed() {
         fi
     done
     if ((${#numbers[@]} == 1)); then
-        printf "%s still isn't in Triage: rerun its run, linked above." "${phrase}"
+        printf '%s was missed earlier: check that it is in Triage, and rerun its run, linked above, if not.' "${phrase}"
     else
-        printf "%s still aren't in Triage: rerun their runs, linked above." "${phrase}"
+        printf '%s were missed earlier: check that each is in Triage, and rerun its run, linked above, if not.' \
+            "${phrase}"
     fi
 }
 
-# missed prints the sentence naming the issues an alert recorded as missing Triage, all but ${ISSUE}, or nothing; it
-# returns 1 when the alert can't be read.
+# The words that mark a line naming an issue a run didn't place, as this script writes them.
+marker="\\*\\*#[0-9]+\\*\\* (wasn't added|may not have been placed)"
+
+# history prints an alert's body and comments, one after another; it returns 1 when the alert can't be read.
+history() {
+    gh issue view "$1" --repo "${REPOSITORY}" --json body,comments --jq '[.body] + [.comments[].body] | .[]'
+}
+
+# missed prints the sentence naming the issues an alert recorded as missed, all but ${ISSUE}, or nothing; it returns 1
+# when the alert can't be read. It reads the alert alone: an issue added to Triage by hand since is still named, as one
+# to check.
 missed() {
     local text
     local -a numbers=()
-    text="$(gh issue view "$1" --repo "${REPOSITORY}" --json body,comments \
-        --jq '[.body] + [.comments[].body] | .[]')" || return 1
-    mapfile -t numbers < <(grep -oE "\*\*#[0-9]+\*\* wasn't added" <<<"${text}" | grep -oE '[0-9]+' |
+    text="$(history "$1")" || return 1
+    mapfile -t numbers < <(grep -oE "${marker}" <<<"${text}" | grep -oE '[0-9]+' |
         awk -v skip="${ISSUE:-}" '$0 != skip && !seen[$0]++')
     ((${#numbers[@]} == 0)) || printf ' %s' "$(listed "${numbers[@]}")"
 }
@@ -338,13 +350,22 @@ failed() {
 
 # incident_for prints the number of a condition's open incident, or nothing when there is none, and returns 1 when the
 # lookup fails, never taking a failure for none. Two runs at once can each find none and each open one; the oldest is
-# kept and every other closed as its duplicate, so that one is left open.
+# kept and every other closed as its duplicate, so that one is left open. Each issue a duplicate names as missed is
+# carried to the one kept first, with its run, so that none is lost; a duplicate carried but not closed is carried
+# again by the next run, which names each issue once all the same.
 incident_for() {
-    local numbers first number
+    local numbers first number carried
     numbers="$(gh issue list --repo "${REPOSITORY}" --label "${label}" --state open --json number,title --limit 100 \
         --jq "[.[] | select(.title == \"$(title_of "$1")\") | .number] | sort | .[]")" || return 1
     first="$(head -n 1 <<<"${numbers}")"
     for number in $(tail -n +2 <<<"${numbers}"); do
+        carried="$(history "${number}")" || return 1
+        carried="$(grep -E "^${marker}" <<<"${carried}" || true)"
+        if [[ -n "${carried}" ]]; then
+            carried="$(printf 'Carried from #%s, which a run opened at the same time:\n\n%s\n' "${number}" \
+                "${carried}")"
+            gh issue comment "${first}" --repo "${REPOSITORY}" --body "${carried}" >/dev/null || return 1
+        fi
         gh issue close "${number}" --repo "${REPOSITORY}" --reason "not planned" \
             --comment "Duplicate of #${first}, opened by a run at the same time; #${first} carries this alert." \
             >/dev/null || return 1
@@ -352,21 +373,36 @@ incident_for() {
     printf '%s\n' "${first}"
 }
 
+# miss prints the line for ${ISSUE} in report mode: what happened to it in the run, and what the token check right after
+# it found, the condition $1 or nothing wrong; the first such line on an alert, when $2 is first, says what to do.
+miss() {
+    local line
+    if [[ "${CLASSIFIED:-true}" == true ]]; then
+        line="**#${ISSUE}** wasn't added to the Triage project in ${run}"
+    else
+        line="**#${ISSUE}** may not have been placed: ${run} failed before it could tell whether #${ISSUE} belongs in"
+        line+=" Triage, a schedule or a scenario"
+    fi
+    if [[ "$1" == not-triaged ]]; then
+        line+=". A token check right after found nothing wrong with the token."
+    else
+        line+=". A token check right after found $1."
+    fi
+    [[ "$2" != first ]] || line+=" To place #${ISSUE}, rerun that run from its page once the cause is fixed."
+    printf '%s' "${line}"
+}
+
 # opening prints a condition's alert body when it opens.
 opening() {
     local today="$2"
     if [[ "$1" == not-triaged ]]; then
-        local first="**#${ISSUE}** wasn't added to the Triage project. The run that tried is here: ${run}."
-        first+=" The token checked fine, so the cause is something else."
-        first+=" To add #${ISSUE}, rerun that run from its page."
-        printf '%s\n\n%s\n\n%s\n' "${first}" \
+        printf '%s\n\n%s\n\n%s\n' "$(miss not-triaged first)" \
             "Each further miss is added here as a comment. This closes when a later issue reaches Triage." \
             "How the alerts work: ${guide}"
         return
     fi
     printf '%s\n\n' "**$1:** ${found[$1]}, as ${run} found on ${today}."
-    [[ "${mode}" != report ]] ||
-        printf '%s\n\n' "**#${ISSUE}** wasn't added to Triage because of it. Once it's fixed, rerun ${run} to add it."
+    [[ "${mode}" != report ]] || printf '%s\n\n' "$(miss "$1" first)"
     printf '%s\n\n%s\n' "This incident gets a comment each day it holds, and closes when a check shows it gone." \
         "How to fix it: ${guide}"
 }
@@ -392,18 +428,14 @@ keep() {
             return
         fi
         if [[ "${mode}" == report ]]; then
-            if [[ "${condition}" == not-triaged ]]; then
-                still="**#${ISSUE}** wasn't added either: ${run}."
-            else
-                still="**#${ISSUE}** wasn't added to Triage because of it: ${run}."
-            fi
+            still="$(miss "${condition}" again)"
             gh issue comment "${number}" --repo "${REPOSITORY}" --body "${still}" >/dev/null ||
                 failed "${condition}" "commenting on #${number}"
             return
         fi
         still="Still holds on ${today}: ${found[${condition}]}. ${run}."
     elif [[ -n "${number}" && "${condition}" == not-triaged && "${mode}" == check ]]; then
-        still="Still open on ${today}: the issues named above aren't in Triage yet."
+        still="Still open on ${today}. The issues named above were missed: check that each is in Triage."
         still+=" This closes when a new issue reaches it."
     elif [[ -n "${number}" && -n "${cleared[${condition}]+passed}" ]]; then
         still="$(missed "${number}")" || {

@@ -5596,9 +5596,9 @@ unset APP_ID
 expect "221 (#451): an app not installed on the organization is refused, and nothing written" error "${writes}"'
     (writes | length) == 0' 'NOBLEFACTOR_AUTOMATION_APP_ID: the app whose ID it names isn.t installed on Acme' text
 
-# 222 to 241 (#621), and 242 to 247 (#626). The access check every command makes first: a connection failure is named as one, never as a
-# rejected token, and only a 401 is a rejected token; a missing login, a missing scope and a spent rate limit are as
-# before. Each stops before any other GitHub call. star github model get makes the check here.
+# 222 to 241 (#621), and 242 to 254 (#626). The access check every command makes first: a connection failure is named as
+# one, never as a rejected token, and only a 401 is a rejected token; a missing login, a missing scope and a spent rate
+# limit are as before. Each stops before any other GitHub call. star github model get makes the check here.
 auth="${run_directory}/remotes/auth-status"
 failed_login() {
     printf '%s\n' "github.com" "  X Failed to log in to github.com account tester (${2:-keyring})" \
@@ -5765,6 +5765,43 @@ expect "246 (#626): an account GitHub doesn't have is named" error "${account_st
 run_star "${data}" github model get no_such_account
 expect "247 (#626): a name that can't be an account's is refused" error "${account_stopped}" \
     'no_such_account isn.t a GitHub account.s name' text
+
+# 248 to 250. A rate limit reading the organization, secondary, primary or a 429, is named as one, with how long to
+# wait when GitHub says, and asks for no access.
+for answer in '403 Forbidden|Retry-After: 60|You have exceeded a secondary rate limit|248|, for 60 seconds' \
+    '403 Forbidden|X-RateLimit-Remaining: 0|API rate limit exceeded|249|' \
+    '429 Too Many Requests|Retry-After: 30|Too many requests|250|, for 30 seconds'; do
+    IFS='|' read -r code header message number pause <<<"${answer}"
+    printf '%s\n' "HTTP/2.0 ${code}" "${header}" '' "{\"message\": \"${message}\"}" >"${remotes}/org-answer"
+    run_star "${data}" github model get NobleFactor
+    expect "${number} (#626): a rate limit reading the organization is named as one" error "${account_stopped}" \
+        "rate limit stopped the check reading the organization NobleFactor${pause}\\." text
+    check "${number} (#626): and asks for no access" bash -c "! grep -q 'must grant' '${run_directory}/errors'"
+done
+rm -f -- "${remotes}/org-answer"
+
+# 251 to 254. token make runs the access check before any request of its own: a name that can't be an account's, no
+# login, and GitHub not reached each stop it before it looks the account up, and the check comes first when it does.
+declare -r no_owner='([$calls[] | select(any(.[]; test("starOwner")))] | length) == 0'
+run_star "${data}" github token make no_such_account --vault kv-acme-test
+expect "251 (#626): token make refuses a name that can't be an account's before any request of its own" error \
+    "${no_owner}" 'no_such_account isn.t a GitHub account.s name' text
+printf '%s\n' "You are not logged into any GitHub hosts. To log in, run: gh auth login" >"${auth}"
+run_star "${data}" github token make Acme --vault kv-acme-test
+expect "252 (#626): token make with no login says so before any request of its own" error "${no_owner}" \
+    'not signed in to github.com with gh' text
+failed_login "${api}: dial tcp: lookup api.github.com: no such host"
+run_star "${data}" github token make Acme --vault kv-acme-test
+expect "253 (#626): token make with GitHub not reached says so before any request of its own" error "${no_owner}" \
+    'can.t be reached from this machine' text
+rm -f -- "${auth}"
+refuses
+run_star "${data}" github token make Acme --vault kv-acme-test
+expect "254 (#626): token make checks the login before it looks the account up" error \
+    '[$calls[] | if .[0] == "auth" then "auth" elif any(.[]; test("starOwner")) then "owner" else empty end] as $o
+        | ($o | index("auth")) != null and ($o | index("auth")) < ($o | index("owner"))' \
+    'tester cannot see the organization Acme' text
+rm -f -- "${remotes}/org-answer"
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"

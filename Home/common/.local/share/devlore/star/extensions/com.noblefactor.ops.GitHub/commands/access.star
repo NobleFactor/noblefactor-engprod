@@ -148,7 +148,28 @@ def _stopped(command, login, what, text, rerun):
         _rejected(login, rerun)
     fail("gh couldn't " + what + ": " + line + "\nNo fix is known for that answer; " + rerun)
 
-def check_access(command, account = "", scopes = [], dry_run = False):
+def _lacks(command, who, missing, rerun):
+    """Fail naming the scopes a login lacks, and the command that adds them."""
+    fail("Your gh login as " + who + " lacks the scope " + command + " needs: " + ", ".join(missing) + ".\n" +
+         "Add it:  gh auth refresh --hostname github.com --scopes " + ",".join(missing) + "\n" + rerun)
+
+def _limited(head, answer):
+    """Whether an answer is GitHub's rate limit: a 429, or a 403 with a Retry-After, no requests left, or the words."""
+    said = answer.lower()
+    if " 429 " in head + " ":
+        return True
+    if " 403 " not in head + " ":
+        return False
+    return "retry-after:" in said or "x-ratelimit-remaining: 0" in said or "rate limit" in said
+
+def _retry_after(answer):
+    """The seconds an answer's Retry-After header asks for, or ""."""
+    for line in answer.replace("\r", "").split("\n"):
+        if line.lower().startswith("retry-after:"):
+            return line.split(":", 1)[1].strip()
+    return ""
+
+def check_access(command, account = "", scopes = [], kind_scopes = {}, dry_run = False):
     """Fail with the one fix when gh cannot do what command needs.
 
     It checks, in order: gh is there, signed in, with a live token, the scopes, GitHub's rate limit, and the account:
@@ -159,10 +180,14 @@ def check_access(command, account = "", scopes = [], dry_run = False):
       command: the command as the user typed it, star github <...>, named in every message.
       account: the account the command reads, an organization or a user, checked when given.
       scopes: the token scopes the command needs beyond gh's own.
+      kind_scopes: further scopes by the account's kind, "organization" or "user", checked once GitHub says which.
       dry_run: under star's --dry-run every shell.exec is skipped, so nothing can be checked and nothing is.
+
+    Returns:
+      The account's kind, "organization" or "user"; "" when no account is given, or under --dry-run.
     """
     if dry_run:
-        return
+        return ""
     rerun = "then rerun " + command + "."
 
     _, found = _run("command -v gh >/dev/null && echo yes || echo no")
@@ -184,8 +209,7 @@ def check_access(command, account = "", scopes = [], dry_run = False):
     who = login["account"] or "this login"
     missing = [s for s in scopes if not _holds(login["scopes"], s)]
     if missing:
-        fail("Your gh login as " + who + " lacks the scope " + command + " needs: " + ", ".join(missing) + ".\n" +
-             "Add it:  gh auth refresh --hostname github.com --scopes " + ",".join(missing) + "\n" + rerun)
+        _lacks(command, who, missing, rerun)
 
     code, rate = _run("gh api rate_limit --jq '.resources.core | \"\\(.remaining) \\(.reset)\"'")
     if code != 0:
@@ -198,7 +222,7 @@ def check_access(command, account = "", scopes = [], dry_run = False):
              "Rerun " + command + " after that.")
 
     if not account:
-        return
+        return ""
     if [c for c in account.elems() if not (c.isalnum() or c == "-")]:
         fail(account + " isn't a GitHub account's name: one is letters, digits and hyphens.\n" + rerun)
     code, kind = _run("gh api graphql -f query='query starOwner { repositoryOwner(login: \"" + account + "\") " +
@@ -209,14 +233,23 @@ def check_access(command, account = "", scopes = [], dry_run = False):
     if kind == "":
         fail("GitHub has no account named " + account + " that " + who + " can see.\n" +
              "Check the name, " + rerun)
-    if kind == "Organization":
+    kind = {"Organization": "organization", "User": "user"}.get(kind, kind)
+    missing = [s for s in kind_scopes.get(kind, []) if not _holds(login["scopes"], s)]
+    if missing:
+        _lacks(command, who, missing, rerun)
+    if kind == "organization":
         org = account
         code, answer = _run("gh api -i orgs/" + org)
         head = answer.replace("\r", "").split("\n")[0].strip()
         if not head.startswith("HTTP"):
             if code != 0:
                 _stopped(command, login, "read the organization " + org, answer, rerun)
-            return
+            return kind
+        if _limited(head, answer):
+            wait = _retry_after(answer)
+            fail("GitHub's rate limit stopped the check reading the organization " + org +
+                 (", for " + wait + " seconds" if wait else "") + ".\n" +
+                 "No access or token needs changing: rerun " + command + " after that.")
         if " 401 " in head + " ":
             _rejected(login, rerun)
         if " 404 " in head + " " or " 403 " in head + " ":
@@ -228,3 +261,4 @@ def check_access(command, account = "", scopes = [], dry_run = False):
         if code != 0:
             fail("gh couldn't read the organization " + org + ": GitHub answered " + _scrub(head.split(" ", 1)[-1]) +
                  ".\nNo fix is known for that answer; " + rerun)
+    return kind

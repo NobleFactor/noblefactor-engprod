@@ -190,7 +190,7 @@ Every GitHub operation checks the active `gh` access before its requests, and st
 | Any other failure | Quote gh's error line, or the status line of an answer GitHub gave, a server error among them, scrubbed of anything shaped like a token wherever it starts, and claim no fix |
 | Missing scopes | Name only the missing scopes; `project` includes `read:project` |
 | Account unavailable despite scopes | Every command that names an account checks it: one GitHub doesn't have is named, and an organization that refuses the login, as one enforcing single sign-on does, is named with who must grant access (#626) |
-| Rate limit exhausted | Report the reset time in local time |
+| Rate limit exhausted | Report the reset time in local time; a rate limit reading an organization, a 429 or a rate-limited 403, is named as one, with how long to wait when GitHub says, never as access to grant (#626) |
 
 The configured scope checks require `read:project` for get and diff, plus `repo` for backup. Apply and restore check `repo`, `project`, `admin:org` and `workflow`. These checks do not replace repository, organization or project permissions.
 

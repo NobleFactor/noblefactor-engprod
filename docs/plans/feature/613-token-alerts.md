@@ -50,7 +50,7 @@ At the end:
 1. **A credentials check** in each participating repository, `.github/workflows/credentials-check.yml`, landed from the account's `.github` workflow template like the Triage workflow. It runs daily and on demand.
 2. **Each check proves its binding.** For an organization, it mints an installation token from the same two organization secrets the Triage workflow reads, and requires the permissions GitHub grants it to include every one the repository's workflows need, writing to projects among them. For a user account, it calls GitHub with the repository's classic token and requires its login to be the account, its scopes to include `repo` and `project`, and its expiry to be outside the warning margin.
 3. **One incident per repository and condition,** an issue titled `Token alert: <condition>`, labeled `token-alert`, assigned to David-Noble-at-work. The run's own `GITHUB_TOKEN`, granted `issues: write`, writes it, so it never depends on the credential being checked. While open, it gets a comment each day the condition holds. It closes when the condition's own clearing rule is met.
-4. **When a new issue doesn't reach Triage,** the Triage workflow checks the token at once: a bad one raises its own alert, naming the issue; a healthy one raises "New issues aren't reaching Triage", which closes only when a later issue reaches Triage, listing the issues still missing.
+4. **When a new issue doesn't reach Triage,** the Triage workflow checks the token at once: a bad one raises its own alert, naming the issue; a healthy one raises "New issues aren't reaching Triage", which closes only when a later issue reaches Triage, listing the issues missed earlier, to check.
 5. **Expiry and rotation:**
    - a classic token's expiry is the date GitHub reports in `GitHub-Authentication-Token-Expiration`, and it warns 14 days ahead;
    - an app key doesn't expire; it is due for rotation on the date in the organization variable `TOKEN_ROTATION_DUE`, set when the key is made or rotated, and that warns 14 days ahead too.
@@ -110,13 +110,14 @@ What gh itself says, read on 2026-11-21 with gh 2.104.0 and GitHub unreachable: 
 #### 2.3.1 The fix
 
 - `check_access` takes the account a command names, an organization or a user. After the rate limit, it asks GitHub what kind of account it is: a name that can't be an account's is refused first, and one GitHub has no account for is named. For an organization, it reads the organization: a 401 is a rejected token, a 403 or a 404 names the boundary and who must grant access, and any other failure is quoted with no fix claimed. A user account needs no further request.
-- `star github model get`, `diff`, `apply`, `backup` and `restore`, and `token make`, the commands that name an account, pass it.
+- `star github model get`, `diff`, `apply`, `backup` and `restore`, and `token make`, the commands that name an account, pass it. The check returns the account's kind and checks the scopes that kind needs, so `token make` makes no request of its own before it.
+- A rate limit reading the organization, a 429, or a 403 with a Retry-After, no requests left or GitHub's words for one, is named as a rate limit, with how long to wait when GitHub says, and asks for no access.
 
 <a id="issue-626-tests"></a>
 
 #### 2.3.2 Tests
 
-Cases 242 to 247 in `tests/Test-StarGitHub`: an organization that refuses the login, and a server error there, each stopping the command before any other request; every command that names an account making the check; a user account making no organization request; an account GitHub doesn't have; and a name that can't be an account's. Each fails without the change.
+Cases 242 to 254 in `tests/Test-StarGitHub`: an organization that refuses the login, a server error there, and a rate limit, each stopping the command before any other request; `token make` checking access before any request of its own; every command that names an account making the check; a user account making no organization request; an account GitHub doesn't have; and a name that can't be an account's. Each fails without the change.
 
 <a id="current-state"></a>
 
@@ -184,7 +185,7 @@ The Triage template's step that adds an issue to Triage is named `triage`. When 
 - **A healthy token raises "New issues aren't reaching Triage",** naming the issue and the run to rerun from its page. Each further miss is a comment on the same alert.
 - **GitHub not reached,** or answering with something that proves nothing, raises nothing.
 
-When an issue does reach Triage, a last step runs the script in placed mode, which closes that alert, listing the issues still missing, since closing it adds none of them. The daily check never closes it, as it can't tell whether issues reach Triage; it reminds once a day while the alert is open. Schedule, Scenario and scenario-found issues, left out of Triage on purpose, raise nothing, and nor does an issue that reached Triage when a later step, setting its Area or Severity, fails: the run shows failed on the Actions page.
+When an issue does reach Triage, a last step runs the script in placed mode, which closes that alert, listing the issues missed earlier, to check, since closing it adds none of them and the run's own token can't read the Triage project to tell which were added by hand since. That step runs whenever the issue reached Triage, whatever later steps did, and a failure closing the alert fails the run. A run that failed before it could tell where the issue belongs, its scenario or Schedule check unfinished, says the issue may not have been placed, never that it missed Triage. Two runs at once that each open the alert leave one, carrying each issue the other named. An alert says only what was seen, what happened in the run and what the token check found right after it, and never which caused which. The daily check never closes it, as it can't tell whether issues reach Triage; it reminds once a day while the alert is open. Schedule, Scenario and scenario-found issues, left out of Triage on purpose, raise nothing, and nor does an issue that reached Triage when a later step, setting its Area or Severity, fails: the run shows failed on the Actions page.
 
 <a id="landing"></a>
 
@@ -221,10 +222,10 @@ Questions for you, 3 of them:
 | --- | --- | --- | --- |
 | Each condition raises its incident | One issue per repository and condition, assigned, naming the fix | `tests/Test-CredentialsCheck` | Stand-in `gh` and `curl` |
 | Incidents repeat and clear by their own rules | A comment each day; closed only by the clearing rule | The same suite | Stand-ins |
-| A new issue that doesn't reach Triage is reported at once | The token's alert, or "New issues aren't reaching Triage", naming the issue; closed when a later issue reaches Triage, listing the issues still missing | The same suite | Stand-ins |
+| A new issue that doesn't reach Triage is reported at once | The token's alert, or "New issues aren't reaching Triage", naming the issue; closed when a later issue reaches Triage, listing the issues missed earlier, to check | The same suite | Stand-ins |
 | The checks run in the field | Each participating repository's daily check runs and passes | The runs of the first two days after landing | The real accounts |
 | A connection failure is never a rejected token (#621) | GitHub not reached is named, gh's line quoted, with no credential advice; only a 401 is a rejected token | `tests/Test-StarGitHub`, cases 222 to 241 | Stand-in `gh` |
-| A command reading an organization checks the login can reach it (#626) | Refused, it stops naming who must grant access; a user account makes no organization request | `tests/Test-StarGitHub`, cases 242 to 247 | Stand-in `gh` |
+| A command reading an organization checks the login can reach it (#626) | Refused, it stops naming who must grant access; a user account makes no organization request | `tests/Test-StarGitHub`, cases 242 to 254 | Stand-in `gh` |
 | The deployed command (#621) | With GitHub unreachable, it names no credential fault | Run with `HTTPS_PROXY` at a port nothing listens on, after `writ deploy` | The owner's Mac |
 
 There are no sandbox runs (§ 12). Real credentials are never broken to prove an alert: the conditions are proved against the stand-ins, and the field shows the checks running and passing.
@@ -283,6 +284,8 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 - [x] R3: what a new issue that doesn't reach Triage raises, as decided on 2026-11-21 (§ 12): § 5.3, both Triage templates, and the script's report and placed modes. `consumer-failed` is gone. `tests/Test-CredentialsCheck`, 62 cases, every one passing.
 - [x] #625's audit, A02 to A07: #613's body rewritten to the approved design, and the plan review that didn't happen recorded in § 12; this plan active, #621 in §§ 2, 4, 7, 8 and 10, § 11 brought up to date, and its sections numbered in order; section 4's §§ 3 and 4.1 and ACCESS-007 naming `workflow-templates/` as the templates' source, with the README; ACCESS-007's recorded time made the commit's, 08:23:15Z, and ACCESS-006 and MODEL-007 to 009's made c910441's, 06:42:51Z, all four having carried an invented 03:00:00Z; the guide's sections numbered in order; and the script's exemption from `Declare-BashScript` stated in its header and § 5.1. A01, a review not yet made, was answered by Codex's.
 
+- [x] #625's second review, R9 to R15: a duplicate's missed issues carried to the alert kept; the alert closed whenever the issue reached Triage, a failure closing it failing the run; a run that couldn't tell where an issue belongs saying so; `token make` checking access before any request of its own; a rate limit on the organization named as one; and the alerts saying only what was seen. `tests/Test-CredentialsCheck`, 68 cases, and `tests/Test-StarGitHub`, cases 242 to 254, all passing; §§ 2.3 and 5.3, section 4 § 4.1, section 6 § 8 and the guide's § 8.
+
 <a id="phase-6b-issue-626"></a>
 
 ### 9.7 Phase 7: #626, the account a command names
@@ -321,6 +324,7 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 - **Approved, 2026-11-21.** David Noble approved this plan at revision 2856d6a, for #613 and #621, in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`, and directed the work to proceed phase by phase, each committed and pushed, and then the pull request opened for the full set. The three calls of § 6 are taken as § 6 makes them: incidents in the repository whose binding failed, assigned to David-Noble-at-work; daily, and 14 days ahead; and the check landed by hand before #614.
 - **#626 in this pull request, decided 2026-11-21.** The bug #625's review found, an organization check no command made, is fixed here rather than left for later, since this pull request already changes the check. Decided in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`.
 - **When a new issue doesn't reach Triage, decided 2026-11-21.** The token is checked first: a bad one raises its own alert, naming the issue; a healthy one raises "New issues aren't reaching Triage", which closes only when a later issue reaches Triage, listing the issues still missing. It replaces `consumer-failed`, which said Triage had failed when what failed was placing an issue in it, and which a healthy token check closed though issues could still be missing. Decided in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`.
+- **#625's second review, 2026-11-21.** Codex reviewed 4645ee9 and found seven faults, R9 to R15, each fixed in § 9.6. The alerts' closing words name the issues missed earlier, to check, not as still missing: the run's own token can't read the Triage project, so an alert can't tell which were added by hand since.
 - **No plan review.** Phase 1 named Codex's review of this plan before your approval. You approved it at 2856d6a without that review, and the work went ahead at once; Codex reviewed the work itself, on #625.
 - **#625's review, 2026-11-21.** Codex reviewed 1f76efa and found eight faults, R1 to R8, each fixed in § 9.6. R3, what a new issue that doesn't reach Triage raises, was decided the same day, below.
 - **Phase 9.1b, now § 9.2, ticked before its design update.** 3beaa44 ticked 9.1b, section 6 § 8 among it, but the section's change landed in the next commit, 15acbb9: it had been made in the main clone, not this worktree. #625's review found it, as R8. The history stays as it is; each fix since lands with its documents and its box.
