@@ -247,7 +247,15 @@ EOF
 
     # The default requires observed passing checks. A proven no-CI repository
     # needs its reviewed policy reflected here; empty output never proves it.
-    gh pr checks "${pr_number}" --watch
+    # gh pr checks --watch waits only for the checks it sees when it starts, and a run that starts later, as a pull
+    # request's own after its branch's push, is still pending when it returns; so the script watches again while any
+    # check is pending, for up to 30 minutes (#629).
+    for _ in {1..60}; do
+        gh pr checks "${pr_number}" --watch || true
+        pending=$(gh pr checks "${pr_number}" --json bucket --jq '[.[] | select(.bucket == "pending")] | length')
+        [[ "${pending}" != 0 ]] || break
+        sleep 30
+    done
     checks=$(gh pr checks "${pr_number}" --json bucket)
     jq -e 'length > 0 and all(.[]; .bucket == "pass")' <<<"${checks}" >/dev/null || {
         echo 'The observed checks are not all passing. Inspect the current head and CI policy.' >&2
@@ -924,11 +932,23 @@ try {
             Start-Sleep -Seconds 10
         }
 
-        $null = Invoke-Native -Name gh -Operation "Waiting for #$number's checks" -Narrate -ArgumentList 'pr', 'checks',
-            $number, '--watch'
-        $answer = Invoke-Native -Name gh -Operation "Reading #$number's check results" -ArgumentList 'pr', 'checks',
-            $number, '--json', 'bucket'
-        $checks = @(ConvertFrom-Json -InputObject $answer.Output)
+        # gh pr checks --watch waits only for the checks it sees when it starts, and a run that starts later, as a pull
+        # request's own after its branch's push, is still pending when it returns; so the script watches again while
+        # any check is pending, for up to 30 minutes (#629).
+        foreach ($round in 1..60) {
+            $null = Invoke-Native -Name gh -Operation "Waiting for #$number's checks" -Narrate -AllowFailure `
+                -ArgumentList 'pr', 'checks', $number, '--watch'
+            $answer = Invoke-Native -Name gh -Operation "Reading #$number's check results" -ArgumentList 'pr', 'checks',
+                $number, '--json', 'bucket'
+            $checks = @(ConvertFrom-Json -InputObject $answer.Output)
+
+            if (@($checks | Where-Object { $_.bucket -eq 'pending' }).Count -eq 0) {
+                break
+            }
+
+            Write-Verbose -Message "#$number has checks still running, round $round of 60."
+            Start-Sleep -Seconds 30
+        }
 
         if ($checks.Count -eq 0 -or @($checks | Where-Object { $_.bucket -ne 'pass' }).Count -ne 0) {
             $message = "#$number's observed checks are not all passing; inspect the head and CI policy."
