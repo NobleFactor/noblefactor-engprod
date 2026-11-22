@@ -138,10 +138,12 @@ The permissions each repository needs are listed in the template, `workflow-temp
 
 ### 5.2 Incidents
 
-- One open issue per repository and condition, found by its title and the `token-alert` label.
+- One open issue per repository and condition, found by its title and the `token-alert` label. Two runs at once can each find none and each open one, so every lookup, and every create, closes all but the oldest open one as its duplicate.
 - **Raised** when a condition holds and no incident for it is open: assigned to David-Noble-at-work, its body naming the credential, the binding, the condition and how to fix it, with a link to the guide.
 - **Repeated** as a comment each day the condition still holds, the date and the run in it.
-- **Closed** by the first check whose own test shows the condition gone: `missing`, `refused`, `not-installed`, `short` and `wrong-account` when the binding signs in and is granted everything; `expiring` and `expired` when the expiry is beyond the margin; `rotation-due` and `rotation-overdue` when `TOKEN_ROTATION_DUE` is beyond it.
+- **Closed** only by a check whose own test passed: `missing`, `refused`, `not-installed`, `short`, `wrong-account` and `consumer-failed` when the binding signs in and is granted everything; `expiring` and `expired` when the expiry is beyond the margin, or there is none; `rotation-due` and `rotation-overdue` when `TOKEN_ROTATION_DUE` is beyond it; `no-recent-check` when the watched repository's check ran within two days. A test that didn't run, or failed another way, clears nothing: a refused token says nothing of its expiry, and an overdue rotation leaves its due warning open.
+- **Only GitHub's refusal is a credential condition:** a 401, or a 403 that isn't a rate limit; a 404 minting an installation token is `not-installed`. GitHub not reached, a rate limit, a server error or any other answer proves nothing about the credential: the run ends 2, raising and clearing nothing.
+- **A run's status** is 0 when every condition is clear, 1 when one holds, 2 when the check couldn't finish, and 3 when an incident couldn't be looked up, raised, repeated or closed. A failed lookup is never taken for no incident.
 - **No recent check:** GitHub disables a public repository's scheduled workflows after 60 days with no commit, and a disabled check can't report itself. So noblefactor-engprod's own check also reads each NobleFactor participating repository's latest check run, which public data allows, and raises `no-recent-check` for one more than two days old. A private repository is checked by its own run alone.
 
 <a id="triage-failure-step"></a>
@@ -168,6 +170,7 @@ The workflow, its script and its permissions file, whose source is this reposito
 
 - **One central monitor writing every incident in noblefactor-engprod.** Rejected: a workflow's `GITHUB_TOKEN` writes only its own repository, so a central monitor would need a credential of its own that could itself fail, and it couldn't read a private repository's secrets. Each repository checks and reports itself; the central part reads only public check runs.
 - **Alerting from the Triage workflow alone.** Rejected: it runs only when an issue opens, so it can't repeat on a schedule or warn ahead of expiry.
+- **A concurrency group serializing the check and the Triage report.** Rejected: GitHub keeps one run pending per group and cancels any other, so overlapping Triage runs and daily checks would be lost. Duplicates are closed instead (§ 5.2).
 - **Rotation dates in the model's token record.** Rejected: the record names a token and its sources, never its schedule, which is free to change; an organization variable holds it.
 
 Questions for you, 3 of them:
@@ -239,7 +242,7 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 ### 9.4b Phase 4b: #625's review
 
 - [x] R5 and R6, #621: a failed organization answer with an HTTP status line, a server error among them, stops the command; a token is scrubbed wherever it starts in a line, and the diagnosis reads the line scrubbed. Cases 235 to 241, all 698 checks passing; section 6, § 8; § 621.1. The organization lookup has no case: no command passes `check_access` an organization, so none reaches it.
-- [ ] R1, R2, R4 and R7, #613: an incident closes only when its own test passes; only GitHub's refusal is a credential condition; duplicates from runs at once are closed; a failed incident operation fails the run. Their cases in `tests/Test-CredentialsCheck`; §§ 5.2 and 6; section 4, § 4.1; the guide's § 7a.
+- [x] R1, R2, R4 and R7, #613: an incident closes only when its own test passes; only GitHub's refusal is a credential condition; duplicates from runs at once are closed; a failed incident operation fails the run. Their cases in `tests/Test-CredentialsCheck`, 51 in all, every one passing; 25 of them fail against 1f76efa's script. §§ 5.2 and 6; section 4, § 4.1; the guide's § 7a.
 - [ ] R3: what a failed Triage run raises, as you decide it.
 
 <a id="phase-5-merge-landing-and-verification"></a>

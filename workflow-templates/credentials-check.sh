@@ -7,14 +7,18 @@
 # The credentials check's logic, which credentials-check.yml runs daily in each participating repository. It proves the
 # token through the same secret the repository's workflows read, and raises one incident per condition in this
 # repository, assigned to the owner, with the run's own GITHUB_TOKEN, so that it never depends on the token it checks.
-# An open incident gets a comment each day its condition holds, and closes when a check shows the condition gone.
+# An open incident gets a comment each day its condition holds, and closes only when its own test passes: a test that
+# didn't run, or that couldn't finish, clears nothing.
 #
 # An organization's token is a GitHub App: the check signs a JSON Web Token with the key, finds the app's installation
 # on the account, mints an installation token, and requires the permissions GitHub grants it to include every one
 # credentials-check.json names. A user account's is a classic token: the check calls GitHub with it, and requires its
 # login to be the account, its scopes to include every one the file names, and its expiry to be beyond the margin. An
-# app key isn't expired but rotated, due on TOKEN_ROTATION_DUE. GitHub not reached is no credential condition: the run
-# fails, the next one checks again, and no incident is raised (#621).
+# app key isn't expired but rotated, due on TOKEN_ROTATION_DUE.
+#
+# Only GitHub's refusal is a credential condition: a 401, or a 403 that isn't a rate limit. GitHub not reached, a rate
+# limit, a server error or any other answer proves nothing about the credential: the run ends 2, raising and clearing
+# nothing, and the next one checks again (#621).
 #
 # Environment:
 #   KIND                organization or user.
@@ -30,7 +34,8 @@
 #   CONFIG              credentials-check.json; default: beside this script.
 #   GITHUB_API_URL      GitHub's API; default: https://api.github.com.
 #
-# Exit status: 0 when every condition is clear, 1 when one holds, 2 when GitHub couldn't be reached.
+# Exit status: 0 when every condition is clear; 1 when one holds; 2 when the check couldn't finish, GitHub not reached
+# or its answer proving nothing; 3 when an incident couldn't be looked up, raised, repeated or cleared.
 set -uo pipefail
 
 : "${KIND:?}" "${ACCOUNT:?}" "${REPOSITORY:?}" "${GH_TOKEN:?}"
@@ -45,12 +50,22 @@ label=token-alert
 work="$(mktemp -d)"
 trap 'rm -rf -- "${work}"' EXIT
 
-declare -A found=()
+declare -A found=() cleared=()
 declare -a watched=()
+incomplete=0
+broken=0
 
 # raise records a condition that holds, with what was seen.
 raise() {
     found["$1"]="$2"
+}
+
+# passed records conditions whose own test passed, so that their incidents may close.
+passed() {
+    local condition
+    for condition in "$@"; do
+        cleared["${condition}"]=1
+    done
 }
 
 # epoch prints the UTC midnight of a date's day, YYYY-MM-DD first, in seconds; GNU or BSD date.
@@ -87,13 +102,38 @@ header() {
         'tolower($1) == h { $1 = ""; sub(/^ /, ""); print; exit }'
 }
 
+# message prints GitHub's own message in the last answer's body, or nothing.
+message() {
+    jq -r '.message // empty' "${work}/body" 2>/dev/null | head -n 1
+}
+
+# refusal succeeds when the last answer is GitHub refusing the credential: a 401, or a 403 that isn't a rate limit.
+refusal() {
+    case "$1" in
+        401) return 0 ;;
+        403) [[ "$(header x-ratelimit-remaining)" != 0 ]] && ! message | grep -qi 'rate limit' ;;
+        *) return 1 ;;
+    esac
+}
+
+# inconclusive ends the run 2 for an answer that proves nothing about the credential: a rate limit, a server error or
+# anything else GitHub's refusal isn't. Nothing is raised or cleared, and the next run checks again.
+inconclusive() {
+    local said
+    said="$(message)"
+    printf 'GitHub answered %s with HTTP %s%s, which proves nothing about the credential; nothing is raised or ' \
+        "$1" "$2" "${said:+ (${said})}" >&2
+    printf 'cleared, and the next run checks again\n' >&2
+    exit 2
+}
+
 # b64url prints its input as unpadded base64url, as a JSON Web Token takes it.
 b64url() {
     openssl base64 -A | tr '+/' '-_' | tr -d '='
 }
 
 # check_app proves an organization's app: its key signs, it is installed on the account, and the installation token
-# GitHub mints holds every permission credentials-check.json names.
+# GitHub mints holds every permission credentials-check.json names. Only all of that clears the app's conditions.
 check_app() {
     if [[ -z "${APP_ID:-}" || -z "${APP_PRIVATE_KEY:-}" ]]; then
         local names="NOBLEFACTOR_AUTOMATION_APP_ID and NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY"
@@ -114,7 +154,8 @@ check_app() {
     code="$(call -H "Authorization: Bearer ${jwt}" -H "Accept: application/vnd.github+json" \
         "${api}/app/installations")" || exit 2
     if [[ "${code}" != 200 ]]; then
-        raise refused "GitHub refused app ${APP_ID}'s key: HTTP ${code}"
+        refusal "${code}" || inconclusive "app ${APP_ID}'s installations" "${code}"
+        raise refused "GitHub refused app ${APP_ID}'s key: HTTP ${code} ($(message))"
         return
     fi
     installation="$(jq -r --arg a "${ACCOUNT}" \
@@ -125,8 +166,13 @@ check_app() {
     fi
     code="$(call -X POST -H "Authorization: Bearer ${jwt}" -H "Accept: application/vnd.github+json" \
         "${api}/app/installations/${installation}/access_tokens")" || exit 2
+    if [[ "${code}" == 404 ]]; then
+        raise not-installed "app ${APP_ID}'s installation on ${ACCOUNT} is gone: HTTP 404"
+        return
+    fi
     if [[ "${code}" != 201 ]]; then
-        raise refused "GitHub minted no installation token for app ${APP_ID}: HTTP ${code}"
+        refusal "${code}" || inconclusive "the installation token's minting" "${code}"
+        raise refused "GitHub minted no installation token for app ${APP_ID}: HTTP ${code} ($(message))"
         return
     fi
     needed="$(jq -c .organization.permissions "${config}")"
@@ -136,10 +182,12 @@ check_app() {
         | "\(.key): \(.value), granted \($got[.key] // "none")"' "${work}/body" | paste -sd ';' -)"
     if [[ -n "${short}" ]]; then
         raise short "the installation token lacks ${short}"
+        return
     fi
+    passed missing refused not-installed short consumer-failed
 }
 
-# check_rotation warns before an app key's rotation date, and after it.
+# check_rotation warns before an app key's rotation date, and after it; a date beyond the margin clears both.
 check_rotation() {
     [[ -n "${ROTATION_DUE:-}" ]] || return 0
     local left
@@ -151,90 +199,146 @@ check_rotation() {
         raise rotation-overdue "the app key's rotation was due on ${ROTATION_DUE:0:10}"
     elif ((left <= margin)); then
         raise rotation-due "the app key's rotation is due on ${ROTATION_DUE:0:10}, in ${left} days"
+    else
+        passed rotation-due rotation-overdue
     fi
 }
 
 # check_token proves a user account's classic token: it signs in as the account, with every scope, before its expiry.
+# Signing in as the account with every scope clears the sign-in conditions; an expiry beyond the margin, or none,
+# clears the expiry conditions.
 check_token() {
     if [[ -z "${PAT:-}" ]]; then
         raise missing "the repository secret ADD_TO_PROJECT_PAT isn't set"
         return
     fi
-    local code login scopes need expiry left
+    local code login scopes need expiry left signed_in=1
     code="$(call -H "Authorization: token ${PAT}" -H "Accept: application/vnd.github+json" "${api}/user")" || exit 2
     if [[ "${code}" != 200 ]]; then
-        raise refused "GitHub refused ADD_TO_PROJECT_PAT: HTTP ${code}"
+        refusal "${code}" || inconclusive "ADD_TO_PROJECT_PAT's sign-in" "${code}"
+        raise refused "GitHub refused ADD_TO_PROJECT_PAT: HTTP ${code} ($(message))"
         return
     fi
     login="$(jq -r .login "${work}/body")"
     if [[ "${login,,}" != "${ACCOUNT,,}" ]]; then
         raise wrong-account "ADD_TO_PROJECT_PAT signs in as ${login}, not ${ACCOUNT}"
+        signed_in=0
     fi
     scopes=",$(header x-oauth-scopes | tr -d ' '),"
     for need in $(jq -r '.user.scopes[]' "${config}"); do
-        [[ "${scopes}" == *",${need},"* ]] || raise short "ADD_TO_PROJECT_PAT lacks the ${need} scope"
+        [[ "${scopes}" == *",${need},"* ]] || {
+            raise short "ADD_TO_PROJECT_PAT lacks the ${need} scope"
+            signed_in=0
+        }
     done
+    ((signed_in == 0)) || passed missing refused wrong-account short consumer-failed
     expiry="$(header github-authentication-token-expiration)"
-    [[ -n "${expiry}" ]] || return 0
+    if [[ -z "${expiry}" ]]; then
+        passed expiring expired
+        return
+    fi
     left="$(days_until "${expiry}")" || return 0
     if ((left < 0)); then
         raise expired "ADD_TO_PROJECT_PAT expired on ${expiry}"
     elif ((left <= margin)); then
         raise expiring "ADD_TO_PROJECT_PAT expires on ${expiry}, in ${left} days"
+    else
+        passed expiring expired
     fi
 }
 
-# check_watched raises no-recent-check for a watched repository whose latest credentials check is over two days old.
+# check_watched raises no-recent-check for a watched repository whose latest credentials check is over two days old,
+# or that has none, and clears it for one checked within two days. A repository whose runs can't be read is neither.
 check_watched() {
-    local repository latest left
+    local repository condition latest left
     IFS=',' read -r -a watched <<<"${WATCH:-}"
     for repository in "${watched[@]}"; do
         repository="${repository// /}"
         [[ -n "${repository}" ]] || continue
-        latest="$(gh api "repos/${repository}/actions/workflows/credentials-check.yml/runs?per_page=1" \
-            --jq '.workflow_runs[0].created_at // ""' 2>/dev/null)" || latest=""
-        if [[ -z "${latest}" ]]; then
-            raise "no-recent-check in ${repository}" "${repository} has no credentials check run"
+        condition="no-recent-check in ${repository}"
+        if ! latest="$(gh api "repos/${repository}/actions/workflows/credentials-check.yml/runs?per_page=1" \
+            --jq '.workflow_runs[0].created_at // ""' 2>"${work}/watched")"; then
+            if grep -q 'HTTP 404' "${work}/watched"; then
+                raise "${condition}" "${repository} has no credentials check"
+            else
+                printf "%s's credentials check runs couldn't be read: %s; its alert is neither raised nor cleared\n" \
+                    "${repository}" "$(head -n 1 "${work}/watched")" >&2
+                incomplete=1
+            fi
             continue
         fi
-        left="$(days_until "${latest}")" || continue
-        if ((left < -2)); then
-            raise "no-recent-check in ${repository}" "${repository}'s latest credentials check ran on ${latest:0:10}"
+        if [[ -z "${latest}" ]]; then
+            raise "${condition}" "${repository} has no credentials check run"
+        elif ! left="$(days_until "${latest}")"; then
+            incomplete=1
+        elif ((left < -2)); then
+            raise "${condition}" "${repository}'s latest credentials check ran on ${latest:0:10}"
+        else
+            passed "${condition}"
         fi
     done
 }
 
-# incident_for prints the number of the open incident for a condition, or nothing.
-incident_for() {
-    gh issue list --repo "${REPOSITORY}" --label "${label}" --state open --json number,title --limit 100 \
-        --jq ".[] | select(.title == \"Token alert: $1\") | .number" | head -n 1
+# failed records an incident operation that failed: the run ends 3, and the next run tries again.
+failed() {
+    printf 'Token alert: %s: %s failed; the next run tries again\n' "$1" "$2" >&2
+    broken=1
 }
 
-# keep raises, repeats or clears the incident of one condition.
+# incident_for prints the number of a condition's open incident, or nothing when there is none, and returns 1 when the
+# lookup fails, never taking a failure for none. Two runs at once can each find none and each open one; the oldest is
+# kept and every other closed as its duplicate, so that one is left open.
+incident_for() {
+    local numbers first number
+    numbers="$(gh issue list --repo "${REPOSITORY}" --label "${label}" --state open --json number,title --limit 100 \
+        --jq "[.[] | select(.title == \"Token alert: $1\") | .number] | sort | .[]")" || return 1
+    first="$(head -n 1 <<<"${numbers}")"
+    for number in $(tail -n +2 <<<"${numbers}"); do
+        gh issue close "${number}" --repo "${REPOSITORY}" --reason "not planned" \
+            --comment "Duplicate of #${first}, opened by a run at the same time; #${first} carries this alert." \
+            >/dev/null || return 1
+    done
+    printf '%s\n' "${first}"
+}
+
+# keep raises, repeats or clears the incident of one condition: raised or repeated while it holds, closed only when its
+# own test passed, and left as it is otherwise.
 keep() {
-    local condition="$1" number last
-    number="$(incident_for "${condition}")"
+    local condition="$1" number last today
+    today="$(date -u +%Y-%m-%d)"
+    number="$(incident_for "${condition}")" || {
+        failed "${condition}" "looking up its incident"
+        return
+    }
     if [[ -n "${found[${condition}]+held}" ]]; then
         if [[ -z "${number}" ]]; then
             gh issue create --repo "${REPOSITORY}" --title "Token alert: ${condition}" --label "${label}" \
                 --assignee "${assignee}" --body "$(printf '%s\n\n%s\n\n%s\n' \
-                    "**${condition}:** ${found[${condition}]}, as ${run} found on $(date -u +%Y-%m-%d)." \
+                    "**${condition}:** ${found[${condition}]}, as ${run} found on ${today}." \
                     "This incident gets a comment each day it holds, and closes when a check shows it gone." \
-                    "How to fix it: ${guide}")" >/dev/null
+                    "How to fix it: ${guide}")" >/dev/null || {
+                failed "${condition}" "opening its incident"
+                return
+            }
+            incident_for "${condition}" >/dev/null || failed "${condition}" "closing a duplicate of its incident"
             return
         fi
         last="$(gh issue view "${number}" --repo "${REPOSITORY}" --json createdAt,comments \
-            --jq '([.createdAt] + [.comments[].createdAt]) | max | .[0:10]')"
-        if [[ "${last}" != "$(date -u +%Y-%m-%d)" ]]; then
+            --jq '([.createdAt] + [.comments[].createdAt]) | max | .[0:10]')" || {
+            failed "${condition}" "reading #${number}"
+            return
+        }
+        if [[ "${last}" != "${today}" ]]; then
             gh issue comment "${number}" --repo "${REPOSITORY}" \
-                --body "Still holds on $(date -u +%Y-%m-%d): ${found[${condition}]}. ${run}." >/dev/null
+                --body "Still holds on ${today}: ${found[${condition}]}. ${run}." >/dev/null ||
+                failed "${condition}" "commenting on #${number}"
         fi
         return
     fi
-    if [[ -n "${number}" && "${mode}" != report ]]; then
-        gh issue comment "${number}" --repo "${REPOSITORY}" \
-            --body "Cleared on $(date -u +%Y-%m-%d): ${run} found it gone." >/dev/null
-        gh issue close "${number}" --repo "${REPOSITORY}" >/dev/null
+    if [[ -n "${number}" && -n "${cleared[${condition}]+passed}" ]]; then
+        gh issue close "${number}" --repo "${REPOSITORY}" \
+            --comment "Cleared on ${today}: ${run} found it gone." >/dev/null ||
+            failed "${condition}" "closing #${number}"
     fi
 }
 
@@ -272,4 +376,7 @@ done
 for condition in "${!found[@]}"; do
     printf '%s: %s\n' "${condition}" "${found[${condition}]}"
 done
-((${#found[@]} == 0))
+((broken == 0)) || exit 3
+((${#found[@]} == 0)) || exit 1
+((incomplete == 0)) || exit 2
+exit 0

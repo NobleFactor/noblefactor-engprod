@@ -189,7 +189,7 @@ Every participating repository checks its token each day and opens an issue, `To
 | `consumer-failed` | A Triage workflow failed | Read the run it names; the next healthy check closes it |
 | `no-recent-check in <repository>` | That repository's daily check has stopped running | Re-enable its workflow on its Actions page |
 
-GitHub not reached raises no alert: the run fails, and the next day's check tries again.
+An alert closes only when the check proves its own condition gone: fixing one thing closes another's alert only once the check can test it. GitHub not reached, a rate limit or a GitHub server error raises no alert and closes none: the run fails, and the next day's check tries again. A run that can't write an alert fails too, so a failed check run is worth reading even when no alert is open. Two runs at once can open the same alert twice; the later is closed as a duplicate of the earlier.
 
 <a id="renewing"></a>
 
