@@ -11,7 +11,7 @@ updated: 2026-11-21
 
 [System design](agentic-developer-workstation.md) · [Roadmap](../roadmaps/agentic-developer-workstation.md)
 
-These architecture decision records (ADRs) use the [shared decision format](../standards/documentation.md#decision-records). W1–W3 record explicit Owner-approved boundaries from the source plan; W6 records the approved environment-configuration boundary; W7 records the approved one-off independent audit path. The overall design remains Draft. W4/W5 are design proposals; D1–D6 remain unresolved. Metadata records approval of a choice separately from its implementation or qualification.
+These architecture decision records (ADRs) use the [shared decision format](../standards/documentation.md#decision-records). W1–W3 record explicit Owner-approved boundaries from the source plan; W6 records the approved environment-configuration boundary; W7 records the approved one-off independent audit path; W8 records the withdrawal of the storage-uniformity preference. The overall design remains Draft. W4/W5 are design proposals; D1–D6 remain unresolved. Metadata records approval of a choice separately from its implementation or qualification.
 
 <a id="w1"></a>
 
@@ -31,7 +31,7 @@ proposed_by: null
 approved_by: David Noble
 recorded_by: Codex
 decided_at: '2026-11-13'
-recorded_at: "2026-11-22T02:17:54.778689+00:00"
+recorded_at: '2026-11-20T02:02:55Z'
 ```
 
 <a id="w2"></a>
@@ -105,7 +105,7 @@ Place capture/retrieval services, provenance/catalog and retained originals outs
 
 Keeping the only evidence copy inside a disposable runtime would couple retention and cross-schedule retrieval to that runtime's lifetime. A shared service preserves an independent storage and authorization boundary. Its outage still requires bounded spooling, visible gaps and blocked evidence-dependent transitions.
 
-The [source plan](../plans/doc/521-workstation-design.md#current-state) records shared placement and preferred PostgreSQL catalog and provenance. The [archive contract](agentic-developer-workstation.md#55-shared-evidence-archive-and-policy) preserves the proposal. Original-artifact layout and spool implementation remain [D4](#d4).
+The [source plan](../plans/doc/521-workstation-design.md#current-state) records shared placement and preferred PostgreSQL catalog and provenance. The [archive contract](agentic-developer-workstation.md#55-shared-evidence-archive-and-policy) preserves the proposal. The [archive design](engineering-evidence-archive.md) and its [decision records](engineering-evidence-archive.decisions.md) provide concrete proposals. Original-artifact layout and spool implementation remain [D4](#d4) until accepted.
 
 ```yaml
 id: W5
@@ -115,7 +115,7 @@ proposed_by: null
 approved_by: null
 recorded_by: Codex
 decided_at: null
-recorded_at: "2026-11-22T02:17:54.778689+00:00"
+recorded_at: '2026-11-22T03:53:46Z'
 ```
 
 <a id="d1"></a>
@@ -212,4 +212,25 @@ approved_by: David Noble
 recorded_by: Codex
 decided_at: '2026-11-20T19:40:10.105-08:00'
 recorded_at: "2026-11-22T02:17:54.778689+00:00"
+```
+
+<a id="w8"></a>
+
+## 14. Evaluate each evidence store by its requirements
+
+The capture/outbox and central archive may use different storage engines. Choose according to integrity, performance, reliability, security and maintenance cost. Storage-engine uniformity has no independent priority in that evaluation. Technical suitability comes first: the Designer must challenge a preference that would compromise requirements and explain the evidence. Owner preferences guide choices among suitable alternatives when their tradeoffs are otherwise balanced.
+
+The Owner explicitly withdrew the earlier preference on 2026-11-20 in the design conversation. This changes only that evaluation constraint. D4's storage, retention, authorization, receipt and recovery decisions remain unresolved; this record approves no engine, deployment or implementation. Retaining the former preference as a requirement would contradict the Owner's correction.
+
+The [completed workstation plan](../plans/doc/521-workstation-design.md#open-questions) preserves the earlier direction as historical evidence. The [moved D4](agentic-developer-workstation.md#d4) and this record govern the current evaluation. During the Owner-directed consolidation into PR #616, this record was renamed from W6 to W8 to preserve the environment-role W6 and one-off-audit W7. This changes only the former preference; it does not supersede the rest of D4's unresolved contract.
+
+```yaml
+id: W8
+status: accepted
+supersedes: []
+proposed_by: David Noble
+approved_by: David Noble
+recorded_by: Codex
+decided_at: '2026-11-20'
+recorded_at: '2026-11-22T03:53:46Z'
 ```

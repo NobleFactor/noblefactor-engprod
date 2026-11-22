@@ -32,7 +32,9 @@ Keep startup reading small: common commandments, the assigned role, mandatory re
 
 Keep the specialist role distinct from the process's Owner, Reviewer, Participant, and Observer responsibilities. A specialist Reviewer or Compliance auditor does not acquire the Owner's accountability. Role, native host service, primary conversation, and attachment are separate identities; another view does not create another assignment or grant.
 
-Record role, owner, repository, scope, parent, schedule, issue, plan, worktree, host, model, session, resources, authority, and artifacts. The parent records its native issue key and Type. Record the related Epic through that hierarchy. A design assignment identifies its enabler Feature and design Schedule, with design and roadmap Tasks. Its implementation plan is not applicable to producing those assets.
+Record role, owner, repository, scope, parent, schedule, issue, plan, worktree, host, model, session, resources, authority, artifacts, and handoff. The parent mapping records its native issue key and Type; optional `parent.epic` records the verified Epic reached through that hierarchy. A design assignment also records `roadmap_issue` for its companion Task. Its implementation plan is not applicable to producing the design, architecture decisions, and roadmap.
+
+Use a worktree mapping with branch, source, `local_path`, and evidence. Artifact inputs are records with source, revision, purpose, and evidence; outputs list the expected paths. The handoff mapping records destination and evidence. Mark unavailable values explicitly and explain them in the evidence field. These shapes are shared by the Coder and Designer examples; fields conditional on a role do not change the other fields' types.
 
 Host records name and observed version. Model records the actual provider, identifier, and family used for the work, including material changes. Session records native identity and the exact originating session name. A host label cannot establish model-family independence.
 

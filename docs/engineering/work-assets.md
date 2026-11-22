@@ -19,7 +19,7 @@ Each asset answers a distinct engineering question.
 | --- | --- |
 | Research findings | Evidence, conclusions, and remaining uncertainty from investigation |
 | Design | The system we want: behavior, structure, requirements and significant choices |
-| architecture decisions | Significant architectural choices documented as architecture decision records (ADRs), with context, alternatives, reasons, status, and consequences |
+| Architecture decisions | Significant architectural choices documented as architecture decision records (ADRs), with context, alternatives, reasons, status, and consequences |
 | Decision record | A significant policy or process choice, its reasons, alternatives, consequences, and attribution |
 | Roadmap | Useful delivery increments, dependencies, and outcomes handed to the planner |
 | Plan | How to reach that system from what exists: approach, changes, phases, transitions and verification |
@@ -44,7 +44,7 @@ Each role owes these deliverables.
 
 | Role | Deliverables |
 | --- | --- |
-| Designer | One or more design documents, [Architecture decisions](../standards/documentation.md#architecture-decisions), and a roadmap |
+| Designer | One or more design documents, [architecture decisions](../standards/documentation.md#architecture-decisions), and a roadmap |
 | Planner | A schedule of ordered issues, dependencies, completion criteria, and links to implementation plans; planning advice and proposed amendments throughout the work |
 | Coder | The implemented change, appropriate tests, updated affected assets, and verification evidence |
 | Reviewer | Findings, corrective rechecks, and an acceptance recommendation covering designs, architecture decisions, roadmaps, plans, code, and affected artifacts, including help, man pages, and completions |

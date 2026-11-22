@@ -38,6 +38,8 @@ Use the [engineering handbook](engineering/index.md) for NobleFactor's shared pr
 - [Agent schedules](architecture/agent-schedule/index.md): native sessions, launchers, assignment interfaces and SBX.
 - [Developer workstation](architecture/agentic-developer-workstation.md): schedule environments, role sessions and multi-device editor access.
 - [Workstation roadmap](roadmaps/agentic-developer-workstation.md): delivery dependencies and planner handoff.
+- [Engineering evidence archive](architecture/engineering-evidence-archive.md): capture, shared retention, retrieval, provenance and recovery.
+- [Evidence archive roadmap](roadmaps/engineering-evidence-archive.md): candidate capabilities, dependencies and acceptance evidence for planning.
 
 <a id="3-decisions-and-preservation-evidence"></a>
 

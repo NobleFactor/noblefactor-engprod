@@ -269,7 +269,7 @@ Publish authenticated editor endpoints. Keep native agent endpoints on guest-loc
 
 ### 5.4 Evidence and policy services
 
-The archive runs outside schedule sandboxes with its own service identity and durable storage. PostgreSQL is the preferred catalog, provenance and full-text platform. Placement of large originals remains the archive owner's decision.
+The [archive design](engineering-evidence-archive.md) and [roadmap](../roadmaps/engineering-evidence-archive.md) define the proposed capture, custody, retrieval and recovery contracts for review. The archive runs outside schedule sandboxes with its own service identity and durable storage. PostgreSQL is the preferred catalog, provenance and full-text platform. Placement of large originals remains the archive owner's decision.
 
 A protected permanent capture spool holds available transcripts, tool calls/results, attachments and work artifacts incrementally. Preserve originals, source identity/ranges, hashes, parser versions, capture watermarks and explicit gaps before deriving indexes or summaries. Capture is idempotent. Local durable acknowledgment and backup recoverability are separate facts.
 
@@ -294,7 +294,7 @@ The control plane uses DevLore to manage the environment and selected native hos
 
 Configuration states the intended model; the host reports the model actually used. Record provider, model identifier, and family against the affected work. The Compliance auditor must use a different model family from every builder of the candidate. A distinct host name or role label does not establish that independence. If the configured auditor is ineligible or its model is unknown, report the conflict to the Owner and retain the existing binding. The Owner may authorize a [one-off audit](#compliance-audit-flow) by an eligible third model family for the identified candidate, preserving the assigned auditor's conversation and binding.
 
-Reviewed settings changes follow [I7](#i7-configuration-native-session-controls-and-delegation). Compatible changes preserve conversation identity. A different host preference does not authorize a new role conversation or bypass [session succession](#84-session-succession). The [configuration decision](agentic-developer-workstation.decisions.md#w6) records the responsibilities. [Developer control (#517)](https://github.com/NobleFactor/noblefactor-engprod/issues/517) owns configuration formats, revisions, and durable bindings; [Agent hosts (#459)](https://github.com/NobleFactor/noblefactor-engprod/issues/459) owns application through the native hosts. Their implementation plans define delivery.
+Reviewed settings changes follow [I7](#i7-configuration-native-session-controls-and-delegation). Compatible changes preserve conversation identity. A different host preference does not authorize a new role conversation or bypass [session succession](#84-session-succession). The [configuration decision](agentic-developer-workstation.decisions.md#w8) records the responsibilities. [Developer control (#517)](https://github.com/NobleFactor/noblefactor-engprod/issues/517) owns configuration formats, revisions, and durable bindings; [Agent hosts (#459)](https://github.com/NobleFactor/noblefactor-engprod/issues/459) owns application through the native hosts. Their implementation plans define delivery.
 
 ### 5.6 Management and access services
 
@@ -385,7 +385,7 @@ Check authority, approved configuration, pending operations and service availabi
 | Owner | Authoritative responsibility | Information retained for these interactions |
 | --- | --- | --- |
 | GitHub | Schedule, issue, plan, and accepted source/workflow authority | Existing native planning records; the runtime stores references |
-| Lifecycle manager and control plane | Environment and host-server desired state, active runtime binding, role-to-role binding, and consequential operation intent and outcome | Stable target IDs, binding revisions, configuration references, operation IDs, actor and authority references, and observed results |
+| Lifecycle manager and control plane | Environment and host-server desired state, active runtime binding, role binding, and consequential operation intent and outcome | Stable target IDs, binding revisions, configuration references, operation IDs, actor and authority references, and observed results |
 | Native host server | Conversation history, turn execution, approvals, and session-owned sub-agents/helper processes | Native session/turn/request IDs and execution outcomes, exposed through its driver |
 | Editor service | Backend instance, client connection, shell and terminal process, and attachment lifetime | Environment, client, backend, and view IDs and the role binding used for attachment |
 | Capture/archive services | Preserved originals, capture completeness, source-linked checkpoints, and recovery evidence | Original locators, hashes, watermarks, explicit gaps, and archive receipts |
@@ -727,7 +727,7 @@ Auditors read identified immutable inputs; reviewers verify separate identified 
 
 ### 8.3 Capture and restoration
 
-An archive outage uses bounded permanent spooling with visible lag/coverage. Block transitions requiring evidence that is not securely preserved. On return, reconcile delivery receipts and preserve evidence identity. The local spool storage engine remains undecided. Its evaluation should consider the Owner's preference for one stack end to end.
+An archive outage uses bounded permanent spooling with visible lag/coverage. Block transitions requiring evidence that is not securely preserved. On return, reconcile delivery receipts and preserve evidence identity. The local spool storage engine remains undecided. Evaluate integrity, performance, reliability, security and maintenance for each store; [W8](agentic-developer-workstation.decisions.md#w8) records the Owner's withdrawal of the earlier storage-uniformity preference.
 
 Machine sleep suspends local execution when it occurs; it is not an application checkpoint. A viewing laptop's sleep only affects its view when SBX runs elsewhere. Restore compatible workspace, configuration, archive, checkpoint and binding manifests after reboot or runtime replacement. A sandbox template alone is not a complete backup, and live processes are not assumed to survive.
 
@@ -739,7 +739,7 @@ Restoration has separately reviewed loss windows and recovery objectives. This d
 
 Restore the original native conversation first. Diagnose configuration, credentials, connectivity, mounts and host compatibility before treating restoration as exhausted. A failed resume or timeout alone does not establish loss.
 
-When restoration is exhausted, retain the incident, original schedule/environment/role binding identity, attempted remedies, backups and evidence coverage. Present a proposed successor, host/configuration and known gaps for explicit Owner approval.
+When restoration is exhausted, retain the incident, original schedule, environment, role, and native session identity, attempted remedies, backups, and evidence coverage. Present a proposed successor, its host and configuration, and known gaps for explicit Owner approval.
 
 Before the successor can act, prevent the old runtime and binding from authorizing further actions. This revocation is called fencing. If fencing cannot be established, replacement remains blocked. Serialize cutover and reconcile unknown creation outcomes before retrying.
 
@@ -863,7 +863,7 @@ Agent hosts (#459) with Developer control (#517) owns the [capability matrix](..
 
 Resolve original-artifact placement, catalog and provenance boundaries, retention, authorization, capture acknowledgments, and restoration. The local capture-spool storage engine is also undecided.
 
-PostgreSQL remains the preferred shared catalog platform. The Owner deferred the spool implementation choice and expressed a preference for one stack end to end; the [source plan's open questions](../plans/doc/521-workstation-design.md#open-questions) preserve that direction. Evaluate implementation options without presenting a particular local database or queue as selected.
+The [archive design](engineering-evidence-archive.md) and [roadmap](../roadmaps/engineering-evidence-archive.md) propose a persistent local SQLite outbox and a PostgreSQL shared archive. Evaluate each store by integrity, performance, reliability, security, and maintenance cost. [W8](agentic-developer-workstation.decisions.md#w8) withdraws the earlier storage-uniformity preference; technical suitability takes priority, and Owner preferences guide otherwise suitable choices with balanced tradeoffs. The proposed engines, artifact layout, retention, authorization, receipts, and recovery contract require their recorded acceptance and qualification; this correction selects no engine.
 
 Archive owners (#490/#492/#496), integrated with continuity and checkpoints, establish minimal durability in Wave 1 and the full contract before G3. Demonstrate citation-preserving restore and distinguish recoverable native state from evidence-based reconstruction, including S8's gaps and approval trace.
 

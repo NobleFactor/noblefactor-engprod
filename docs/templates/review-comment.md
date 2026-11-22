@@ -15,9 +15,9 @@ Use this template for a review finding. Replace placeholders with evidence for t
 
 **[Severity] — [Finding title]**
 
-- **Reviewed revision and scope:** [Candidate and base and affected assets checked.]
+- **Reviewed revision and scope:** [Candidate, base, and affected assets checked.]
 - **Requirement:** [Applicable rule and its source revision; identify a violation, missing evidence, or recommendation.]
-- **Location and evidence:** [File or section or behavior, method, time, and observed result.]
+- **Location and evidence:** [File, section, or behavior, method, time, and observed result.]
 - **Consequence:** [Effect on correctness, compliance, or completion.]
 - **Requested correction:** [Specific change needed.]
 - **Disposition and verification:** [Open, corrected, verified, or explicit Owner exception, with corrective revision and evidence still needed.]

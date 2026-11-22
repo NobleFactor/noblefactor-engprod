@@ -20,7 +20,7 @@ Establish the actual issue, plan revision, acceptance criteria and current autho
 
 ## 2. Output and handoff
 
-Deliver a clear implementation with appropriate tests, current documentation and evidence identifying the revision, environment, checks, results and remaining limitations.
+Deliver a clear implementation with appropriate tests, updated affected assets, and evidence identifying the revision, environment, checks, results, and remaining limitations. Include affected documentation, help, man pages, and completions.
 
 Make routine choices within approved scope. Bring discoveries that change the promised result to the Owner before proceeding with the affected work. Update progress and affected documents with the change.
 

@@ -29,7 +29,7 @@ Replace the following example values before running a command:
 
 1. Establish the approved problem, scope, repository, related Epic, Owner, Designer, per-issue Area, and intended document locations.
 2. Discover existing work through `schedule report` and `schedule list` and `schedule get`.
-3. [Verify the installed tools](../../docs/engineering/agent-operation.md#all-agents-tools-and-status) against the [issue command contract](../../docs/architecture/issue-data-model/10-the-issue-commands.md) and [Schedule command contract](../../docs/architecture/issue-data-model/8-the-schedule-commands.md) contracts.
+3. [Verify the installed tools](../../docs/engineering/agent-operation.md#all-agents-tools-and-status) against the [issue command contract](../../docs/architecture/issue-data-model/10-the-issue-commands.md) and [Schedule command contract](../../docs/architecture/issue-data-model/8-the-schedule-commands.md).
 4. Read supplied Feature, Schedule, and Task keys before reusing them.
 5. Confirm the Feature's native Epic parent. Titles alone do not establish identity.
 

@@ -13,7 +13,7 @@ Use the [shared context contract](../engineering/agents/context.md). Fill this r
 
 ## 1. Example: Handbook adoption
 
-This example uses real Schedule #551, Task #558, Feature #460, and the current worktree. Its resource entry identifies a published baseline; read evidence and native model and session details are deliberately unknown. Replace them with observed values for an actual handoff. The example does not establish that a running agent has loaded the current candidate.
+This example uses real Schedule #551, Task #558, Feature #460, and the current worktree. Existing resources reference merged baseline 55dec2b044a2972f1037996c06d887a960d6c8ef, which remains in the default branch history. That baseline is illustrative, not the current assignment revision or proof of approval. Replace it with the actual accepted source revision at handoff. Newly added resources use null revisions until a durable revision is available. Read evidence and native model and session details are deliberately unknown; neither example establishes what a running agent has loaded.
 
 ```yaml
 role: coder
@@ -27,9 +27,13 @@ schedule: NobleFactor/noblefactor-engprod#551
 issue: NobleFactor/noblefactor-engprod#558
 plan:
   source: docs/plans/doc/558-role-entry-points.md
-  revision: 01ddb3c934f3f56793af8703910c94498bd7b328
+  revision: 55dec2b044a2972f1037996c06d887a960d6c8ef
   approval: Consult the plan and subsequent Owner directions for current scope.
-worktree: /Users/david-noble/Workspace/NobleFactor/noblefactor-engprod.558-role-context
+worktree:
+  branch: doc/558-role-context
+  source: https://github.com/NobleFactor/noblefactor-engprod/tree/doc/558-role-context
+  local_path: /Users/david-noble/Workspace/NobleFactor/noblefactor-engprod.558-role-context
+  evidence: Recorded assignment location; not proof of effective host loading.
 host:
   name: Codex
   version: null
@@ -46,12 +50,12 @@ session:
 resources:
   - kind: overview
     source: docs/engineering/index.md
-    revision: 01ddb3c934f3f56793af8703910c94498bd7b328
+    revision: 55dec2b044a2972f1037996c06d887a960d6c8ef
     read_at: null
     state: published_read_evidence_unknown
   - kind: role
     source: docs/engineering/agents/coder.md
-    revision: 01ddb3c934f3f56793af8703910c94498bd7b328
+    revision: 55dec2b044a2972f1037996c06d887a960d6c8ef
     read_at: null
     state: published_read_evidence_unknown
   - kind: skill
@@ -61,7 +65,7 @@ resources:
     state: Resolve the applicable skill path and revision before claiming it was read.
   - kind: common
     source: docs/engineering/agents/commandments.md
-    revision: 01ddb3c934f3f56793af8703910c94498bd7b328
+    revision: 55dec2b044a2972f1037996c06d887a960d6c8ef
     read_at: null
     state: published_read_evidence_unknown
 authority:
@@ -73,7 +77,9 @@ authority:
 artifacts:
   inputs:
     - source: NobleFactor/noblefactor-engprod#558
-      role: Requirements and evidence of completion.
+      revision: null
+      purpose: Requirements and evidence of completion.
+      evidence: Capture the issue revision or content hash when preparing the actual handoff.
   outputs:
     - docs/engineering/agents/context.md
     - docs/templates/agent-context.md
@@ -123,24 +129,25 @@ session:
 resources:
   - kind: overview
     source: docs/engineering/index.md
-    revision: 2653ee5a9662bb1b86b7c24f02c7267459513770
+    revision: 55dec2b044a2972f1037996c06d887a960d6c8ef
     read_at: null
     state: published_read_evidence_unknown
   - kind: common
     source: docs/engineering/agents/commandments.md
-    revision: 2653ee5a9662bb1b86b7c24f02c7267459513770
+    revision: 55dec2b044a2972f1037996c06d887a960d6c8ef
     read_at: null
     state: published_read_evidence_unknown
   - kind: role
     source: docs/engineering/agents/designer.md
-    revision: 2653ee5a9662bb1b86b7c24f02c7267459513770
+    revision: 55dec2b044a2972f1037996c06d887a960d6c8ef
     read_at: null
     state: published_read_evidence_unknown
   - kind: skill
     source: skills/start-design-schedule/SKILL.md
-    revision: 2653ee5a9662bb1b86b7c24f02c7267459513770
+    revision: null
     read_at: null
-    state: published_read_evidence_unknown
+    state: candidate_revision_required
+    evidence: New source in PR 616; record its merged revision before an actual handoff.
 authority:
   assignment: Existing design Schedule and native Task relationships observed.
   changes: No assignment to this Coder to change the archive assets or tracker.
@@ -149,7 +156,9 @@ authority:
 artifacts:
   inputs:
     - source: NobleFactor/noblefactor-engprod#619
-      revision: See the read receipt and published Schedule body.
+      revision: null
+      purpose: Design assignment and native Task relationships.
+      evidence: Observed on 2026-11-22 UTC; read receipt retained outside Git with the author verification.
   outputs:
     - docs/architecture/engineering-evidence-archive.md
     - docs/architecture/engineering-evidence-archive.decisions.md
@@ -158,5 +167,7 @@ handoff:
   destination: Planner after review and Owner acceptance.
   evidence: Accepted asset revisions, dependencies, increments, and open choices.
 ```
+
+The shared worktree and artifact-input mappings have the same shape in both examples. The optional `parent.epic` field records verified ancestry; `roadmap_issue` applies to the Designer's companion Task. The handoff mapping records the receiving role and required evidence. Newly added resources are not assigned intermediate branch revisions that could disappear after squash merge and branch cleanup.
 
 A missing Schedule or Feature is an assignment gap, not an inapplicable field. The plan field is inapplicable for producing these Designer assets. Unknown native identity and loading evidence remain unknown. This example does not qualify a running host or establish that another agent has read the resources.

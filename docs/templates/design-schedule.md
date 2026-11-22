@@ -41,7 +41,7 @@ Identify the repository, related Epic, design enabler Feature, Owner, Designer, 
 
 **Problem and scope:** Define the wanted subsystem within the agreed problem and boundaries. Explain components, interfaces, data flows, integrity, security, recovery, quality goals, and important interactions. Apply relevant [arc42 content](design.md). Identify assumptions, dependencies, and unresolved choices with the evidence needed to resolve them.
 
-**Outputs:** One or more design documents and their [Architecture decisions](../standards/documentation.md#architecture-decisions). Each significant choice has an architecture decision record (ADR) explaining context, alternatives, reasons, status, and consequences.
+**Outputs:** One or more design documents and their [architecture decisions](../standards/documentation.md#architecture-decisions). Each significant choice has an architecture decision record (ADR) explaining context, alternatives, reasons, status, and consequences.
 
 **Evidence of completion:** Demonstrate the following results on the reviewed revision.
 

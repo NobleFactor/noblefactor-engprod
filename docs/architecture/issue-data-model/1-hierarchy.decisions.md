@@ -28,7 +28,7 @@ proposed_by: null
 approved_by: null
 recorded_by: Codex
 decided_at: null
-recorded_at: "2026-11-22T02:17:54.778689+00:00"
+recorded_at: "2026-11-20T15:55:37Z"
 ```
 
 ## 2. Classify at intake without losing discoveries
