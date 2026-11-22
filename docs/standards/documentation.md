@@ -2,7 +2,7 @@
 title: "Documentation standards"
 status: draft
 created: 2026-10-28
-updated: 2026-11-20
+updated: 2026-11-21
 ---
 
 # Documentation standards
@@ -94,13 +94,13 @@ When replacing a document, name its successor and migrate references while retai
 
 <a id="architecture-decisions"></a>
 
-Name the Designer's deliverable **Architecture decisions**. Document each significant architectural choice as an **architecture decision record (ADR)**. Expand the abbreviation on first use. The collection explains the choices behind a design; it can be a companion document or linked individual ADRs. The same record format also applies to handbook policy and process decisions, which are not architectural choices.
+Name the Designer's deliverable *architecture decisions*. Document each significant architectural choice as an **architecture decision record (ADR)**. Expand the abbreviation on first use. The collection explains the choices behind a design; it can be a companion document or linked individual ADRs. The same record format also applies to handbook policy and process decisions, which are not architectural choices.
 
 Apply this format to handbook decisions and architecture decision records. [Arc42](https://docs.arc42.org/section-9/) supplies the decision content; [Google's writing guidance](https://developers.google.com/style) supplies the presentation. Use the [decision template](../templates/decision.md). Templates demonstrate this standard and do not introduce separate requirements.
 
 Lead with a descriptive headline that states the chosen or proposed outcome. Follow it with the decision's scope, context, reasons, considered alternatives and their tradeoffs, consequences, and links to available evidence. Separate observations from assumptions. Identify the reasons for rejecting alternatives when recorded; do not invent alternatives, research or approval evidence to fill a gap. Scale the explanation to the significance of the decision.
 
-End each record with one fenced `yaml` block using the fields below in this order. A file containing several decisions has one footer per decision. These fields describe the individual decision; the document's frontmatter still describes the whole file.
+End each record with one fenced `yaml` block using the following fields in this order. A file containing several decisions has one footer per decision. These fields describe the individual decision; the document's frontmatter still describes the whole file.
 
 | Field | Content |
 | --- | --- |

@@ -1,0 +1,4 @@
+# Exact historical Owner lines preserved in the role-context source.
+# Exclude these complete lines only; do not ignore the misspellings globally.
+- plannner => schedule and serves as a planning consultant throughtout.
+we must adopt that nomenclature immediately. no time to report a bug or a task. Let's just get it in. We use the nomenclature ADR elsewhere. Let's call the deliverable `Architecutre decisions`. Let's also consider a namechange for Roadmap. I like the word. What does arc42 or Google say about the concept?

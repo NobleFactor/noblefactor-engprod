@@ -2,7 +2,7 @@
 title: "Coder"
 status: draft
 created: 2026-11-18
-updated: 2026-11-18
+updated: 2026-11-21
 owner: "NobleFactor/engprod"
 change_process: "../process.md#prepare-and-review"
 role: "coder"
@@ -10,7 +10,7 @@ role: "coder"
 
 # Coder
 
-Read [Common commandments](commandments.md) before acting.
+Before acting, read [Common commandments](commandments.md).
 
 ## 1. Purpose and inputs
 

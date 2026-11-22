@@ -2,7 +2,7 @@
 title: "Schedule template"
 status: draft
 created: 2026-10-28
-updated: 2026-11-20
+updated: 2026-11-21
 ---
 
 # Schedule template
@@ -77,7 +77,7 @@ The project owns ordered Tasks/Bugs, contiguous Step numbers, Status, Worktree a
 
 ## 7. Plan and design documents
 
-[Under the issue's literal `## Plan and design documents` heading, include the required Kind/Document table. For implementation work, add its plan row with “Not yet opened” until available. A design schedule records “Not required: Designer deliverables” and links its design, Architecture decisions and roadmap.]
+[Under the issue's literal `## Plan and design documents` heading, include the required Kind and Document table. For implementation work, add its plan row with “Not yet opened” until available. A design schedule records “Not required: Designer deliverables” and links its design, architecture decisions, and roadmap.]
 
 | Kind | Document |
 | --- | --- |

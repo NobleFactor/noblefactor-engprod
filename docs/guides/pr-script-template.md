@@ -5,7 +5,7 @@ type: Process
 audience: Engineers, agents
 status: Draft
 created: 2026-03-16
-updated: 2026-11-20
+updated: 2026-11-21
 ---
 
 <a id="pr-script-template"></a>
@@ -34,13 +34,17 @@ Verify locally built organization tools before putting their commands in the scr
 
 <a id="2-a-worktrees-first-script"></a>
 
-## 2. Publish the plan
+<a id="2-publish-the-plan"></a>
 
-The first script opens the issue-bound branch/worktree, commits the plan and pushes it. Only after the push, mark its issues In progress and link their Schedule rows' Worktree fields to the branch. Resolve projects, rows, fields and options by name; guard existing ownership rather than replace another worker's link.
+## 2. Publish the first assets
 
-Run star github plan link for each plan, using its path relative to docs/plans. It updates each served issue's Plan and design documents section from the plans serving that issue. A nonzero exit stops the script. Also inspect returned records: refused issues and dropped table rows can accompany exit zero and must be shown to the Owner.
+For implementation work, the first script opens the issue-bound branch and worktree, commits the plan, and pushes it. Only after the push, mark its issues In progress and link their Schedule rows' Worktree fields to the branch. Resolve projects, rows, fields and options by name; guard existing ownership rather than replace another worker's link.
 
-The Bash example supplies the guarded row update:
+Run `star github plan link` for each applicable implementation plan, using its path relative to `docs/plans`. It updates each served issue's Plan and design documents section from the plans serving that issue. A nonzero exit stops the script. Also inspect returned records: refused issues and dropped table rows can accompany exit zero and must be shown to the Owner.
+
+For a Designer, follow the [design-start rule](../engineering/process.md#prepare-and-review): begin with approved scope on a design Schedule and produce the design, architecture decisions, and roadmap directly. The first publication commits those assets and links their exact review revisions from the issues. Do not create or link a plan for writing them. The script retains the same Git, status, review, disclosure, and Owner-run boundaries.
+
+The Bash example demonstrates implementation-plan publication and the guarded row update. For a Designer, omit the plan array and plan-link call and publish the actual design assets and their review links:
 
 ```bash
 # The schedule's helpers (agent-rules.md, rule 19). A step's row is found by its issue and its team's Schedule project,
@@ -478,7 +482,7 @@ The rule numbers are stable references used by the examples.
 3. **Preserve literal messages.** Use single-quoted heredocs for Bash commit messages and PR bodies; provide multiline bodies through files. Do not let shell interpolation change the text.
 4. **Verify CI on the published head.** Observe passing required checks for the qualified full head ID. An empty list is not evidence of unconfigured CI. A verified no-check policy or approved conditional result must be recorded in the plan and represented explicitly in the gate. Preserve every required check; stop when evidence is incomplete.
 5. **Check readiness, then stop.** Inspect the head, merge state, review decision and all review conversations. A PR waiting solely for the Owner's review can be ready for that review. Stop for the Owner to review and merge in GitHub. A queued merge is outstanding; verify actual merged state before delivery records. Administrative bypass needs a separate explicit Owner grant.
-6. **Use git close-branch for cleanup.** It handles worktrees and regular branches, removes the worktree and sibling script, and synchronizes the canonical clone to the target. Move to the canonical clone before invoking it; the worktree's directory will disappear. Exit 75 means clone synchronization failed. Cleanup and canonical-clone maintenance require the applicable authority.
+6. **Use `git close-branch` for cleanup.** It handles worktrees and regular branches, removes the worktree and sibling script, and synchronizes the canonical clone to the target. Move to the canonical clone before invoking it; the worktree's directory will disappear. Exit 75 means clone synchronization failed. Cleanup and canonical-clone maintenance require the applicable authority.
 7. **Respect the worktree boundary.** One active PR belongs to a worktree; its integration changes are review/CI corrections for that PR. Apply the [process](../engineering/process.md#pull-request-and-integration) and any effective session override. Another worker's PR does not serialize this session's work.
 8. **Keep merge with the Owner.** The first part never merges or prints a merge command. After the Owner merges in GitHub, the second records delivery. Cleanup deletes the remote branch, worktree, local branch and script in that order, then synchronizes the canonical clone.
 9. **Provide a report when asked.** Print the requested all-state Epic, Feature or Schedule report as a table after cleanup. Scope it to the work served. Reporting is not an automatic final step.
@@ -502,7 +506,7 @@ Use PowerShell 7 and the [PowerShell style guide](powershell-style-guidelines.md
 3. **Separate progress and results.** Use Write-Verbose for activity and objects for issue records and observed PR delivery. Write neither to the host nor the information stream; set no preference other than ErrorActionPreference.
 4. **Keep bodies literal.** Use single-quoted here-strings for PR text and jq programs. Pass the body through --body-file.
 5. **Patch Time through a file.** Use gh api PATCH with body=@<file> and UTF-8 content. Preserve actual GitHub timestamps and the exact intended body.
-6. **Leave the worktree before cleanup.** Set-Location to the canonical clone before git close-branch; Windows cannot remove a process's current directory. PowerShell has parsed the script before its deletion. Confirm the clone synchronization with git pull --ff-only.
+6. **Leave the worktree before cleanup.** Set-Location to the canonical clone before `git close-branch`; Windows cannot remove a process's current directory. PowerShell has parsed the script before its deletion. Confirm the clone synchronization with git pull --ff-only.
 7. **Fix the launch environment outside the script.** Do not change PATH. Launch pwsh with Git for Windows' Git/cmd/git.exe launcher available; it supplies the shell environment Git children need. A pwsh launched through Git Bash can resolve raw Git/clangarm64/bin/git.exe and fail with exit 128. Correct that environment rather than hide it in the script.
 8. **Hand over an absolute command with -Verbose.** Use & 'C:/Users/<user>/Workspace/<org>/<clone>.<issue>-<name>.ps1' -Verbose. A host requiring a shell-command prefix adds that prefix separately.
 

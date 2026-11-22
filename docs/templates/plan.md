@@ -2,7 +2,7 @@
 title: "Plan template"
 status: draft
 created: 2026-10-28
-updated: 2026-11-15
+updated: 2026-11-21
 ---
 
 # Plan template
@@ -73,7 +73,9 @@ The plan is the authority for the issue's document table. The worktree's first s
 
 ## 7. Acceptance criteria and evidence
 
-| Criterion | Observable result | Evidence/method | Environment/artifact |
+Record how each criterion is checked against its named artifacts and target environment.
+
+| Criterion | Observable result | Evidence and method | Environment or artifact |
 | --- | --- | --- | --- |
 | [criterion] | [result] | [check and retained evidence] | [target] |
 
@@ -83,7 +85,9 @@ Apply the [completion and progression rules](../engineering/process.md#completio
 
 ## 8. Required completion milestones
 
-| Milestone | Required? | Expected evidence | State/result |
+These milestones distinguish implementation, merge, deployment, and verification.
+
+| Milestone | Required? | Expected evidence | State and result |
 | --- | --- | --- | --- |
 | Implementation | [yes/no with rationale] | [revision/review] | Pending |
 | Merge | [yes/no with rationale] | [PR/commit] | Pending |

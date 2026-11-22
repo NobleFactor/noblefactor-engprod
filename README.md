@@ -1,7 +1,7 @@
 ---
 title: "noblefactor-engprod"
 description: "NobleFactor engineering process, standards and deployed base-layer tools"
-updated: 2026-11-19
+updated: 2026-11-21
 ---
 
 # noblefactor-engprod
@@ -52,6 +52,10 @@ The [issue-model command references](docs/architecture/issue-data-model/index.md
 
 <a id="what-is-not-here-despite-what-this-file-used-to-say"></a>
 
+## Shared skills
+
+The `skills/` tree holds host-neutral skill sources. [Start a design schedule](skills/start-design-schedule/SKILL.md) applies the handbook's Epic → enabler Feature → Task relationships and design deliverables. Publishing this source does not install it or prove native discovery; the scheduled catalog and host tasks own those results.
+
 ## Product and repository tools
 
 [devlore-cli](https://github.com/NobleFactor/devlore-cli) owns the `star` and `writ` binaries and their product documentation. This repository owns the extension and base-layer assets it deploys.
@@ -70,9 +74,9 @@ Verify the installed product's supported registration/deployment syntax rather t
 
 ## Verification
 
-Use the repository's Makefile targets for its checks and tests. [CI](.github/workflows/ci.yaml) runs `make check` on Linux, `make test` on macOS and PowerShell tests on Windows arm64/amd64. Preserve the `quality-gate` check name required by protection policy.
+Use the repository's `Makefile` targets for its checks and tests. [CI](.github/workflows/ci.yaml) runs `make check` on Linux, `make test` on macOS and PowerShell tests on Windows arm64/amd64. Preserve the `quality-gate` check name required by protection policy.
 
-[The frontmatter checker](.github/scripts/Test-Frontmatter.sh) is the reference implementation for the shared document families. Repositories adopting that gate use the same script. Spelling, shell/Starlark checks and tests follow the current Makefile and CI configuration.
+[The frontmatter checker](.github/scripts/Test-Frontmatter.sh) is the reference implementation for the shared document families. Repositories adopting that gate use the same script. Spelling, shell/Starlark checks and tests follow the current `Makefile` and CI configuration.
 
 ## License
 

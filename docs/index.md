@@ -2,7 +2,7 @@
 title: "Engineering documentation"
 status: draft
 created: 2026-10-29
-updated: 2026-11-19
+updated: 2026-11-21
 ---
 
 <a id="engineering-handbook"></a>
@@ -28,6 +28,7 @@ Use the [engineering handbook](engineering/index.md) for NobleFactor's shared pr
 - [Coding standards](standards/coding/index.md): shared, Bash, Go, PowerShell and Starlark requirements.
 - [Documentation standard](standards/documentation.md): writing, metadata, source layout, links and decision records.
 - [Issue standards](issue-standards.md): classification and GitHub representation.
+- [Design-schedule Tasks](templates/design-schedule.md) and [agent assignment context](templates/agent-context.md): reusable design setup and explicit role assignments.
 - [Work templates](templates/index.md): schedules, issues, plans, designs, decisions, completion reviews and review comments.
 - [Procedures](engineering/procedures/index.md): mechanics for carrying out the process.
 
@@ -42,6 +43,7 @@ Use the [engineering handbook](engineering/index.md) for NobleFactor's shared pr
 
 ## 4. Decisions and preservation evidence
 
+- [Role-context author coverage](engineering/review/role-context-review.md): requirement mapping, five-role walkthrough, and consistency evidence.
 - [Decision log](engineering/review/decisions.md): approved choices and their sources.
 - [Review resolutions](engineering/review/open-decisions.md): O01–O11 and original Owner responses.
 - [Original findings](../ENGINEERING-DOCUMENTATION-REVIEW.findings.md), [adoption review](engineering/review/adoption-review.md) and [conflict register](engineering/review/conflicts.md).
@@ -56,4 +58,4 @@ Keep original responses, snapshots and import identities as evidence. Current in
 
 [Handbook consolidation (#420)](plans/doc/420-consolidate-engineering.md) records adoption and completion. [Handbook adoption (#551)](https://github.com/NobleFactor/noblefactor-engprod/issues/551) owns the remaining role-context, skill, reading, host and formatting qualifications.
 
-The common/role entry points are shared resources; native host loading and runtime behavior need their own evidence. [Effective host overrides](engineering/index.md#temporary-live-entrypoint-overrides) remain until their approved cutovers. Handbook publication alone does not change execution permissions.
+The common and role entry points are shared resources; native host loading and runtime behavior need their own evidence. [Effective host overrides](engineering/index.md#temporary-live-entrypoint-overrides) remain until their approved cutovers. Handbook publication alone does not change execution permissions.

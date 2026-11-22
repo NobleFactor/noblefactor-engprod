@@ -13,7 +13,7 @@ Use the selected account form as the issue's body template. This guide supplies 
 
 ## 1. Select the account and type
 
-Use the forms in [NobleFactor's account repository](https://github.com/NobleFactor/.github/tree/main/.github/ISSUE_TEMPLATE) or [David-Noble-at-work's account repository](https://github.com/David-Noble-at-work/.github/tree/main/.github/ISSUE_TEMPLATE). Follow [Issue standards](../issue-standards.md) for type, parent, Area, attributes and project placement. A design or research outcome can be an [enabler Feature](../issue-standards.md#enabler-features); describe its purpose while retaining Type Feature.
+Use the forms in [NobleFactor's account repository](https://github.com/NobleFactor/.github/tree/main/.github/ISSUE_TEMPLATE) or [David-Noble-at-work's account repository](https://github.com/David-Noble-at-work/.github/tree/main/.github/ISSUE_TEMPLATE). Follow [Issue standards](../issue-standards.md) for type, parent, Area, attributes, and project placement. A design or research outcome can be an [enabler Feature](../issue-standards.md#enabler-features); describe its purpose while retaining Type Feature.
 
 [Issue forms (#572)](https://github.com/NobleFactor/noblefactor-engprod/issues/572) records the Owner-approved Task/Bug sections and the remaining form decisions during this migration. The forms and their standard references are reconciled there. Preserve the selected form's heading labels when preparing a body through another supported filing path.
 
@@ -39,7 +39,7 @@ Identify scope, repository, native feature/epic relationship, schedule assignmen
 <a id="architecture-and-design-impact"></a>
 <a id="4-architecture-and-design-impact"></a>
 
-Record the architecture/design impact and related links, or the reasoned no-change determination, in the issue and any applicable implementation plan under [Plans and designs](../engineering/work-assets.md#plans-and-designs).
+Record the architecture and design impact and related links, or the reasoned no-change determination, in the issue and any applicable implementation plan under [Plans and designs](../engineering/work-assets.md#plans-and-designs).
 
 <a id="acceptance"></a>
 <a id="5-acceptance"></a>
@@ -50,4 +50,4 @@ Use the selected form's Evidence of completion section where its type requires o
 
 <a id="plan-and-design-documents"></a>
 
-Every filed issue carries its Plan and design documents table under [Work assets](../engineering/work-assets.md#plans-and-designs), with a plan placeholder where required and links to applicable designs. Designer Tasks use the [design-schedule template](design-schedule.md), record their plan as not required, and link the design, Architecture decisions and roadmap. Plans subsequently supply the authoritative rows through plan linking. Verify native metadata and project records through the supported filing path as well as checking the Markdown body.
+Every filed issue carries its Plan and design documents table under [Work assets](../engineering/work-assets.md#plans-and-designs), with a plan placeholder where required and links to applicable designs. Designer Tasks use the [design-schedule template](design-schedule.md), record their plan as not required, and link the design, architecture decisions, and roadmap. Plans subsequently supply the authoritative rows through plan linking. Verify native metadata and project records through the supported filing path as well as checking the Markdown body.

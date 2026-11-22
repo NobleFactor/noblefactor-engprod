@@ -1,7 +1,7 @@
 ---
 title: "Issue hierarchy decisions"
 status: draft
-updated: 2026-11-20
+updated: 2026-11-21
 ---
 
 # Issue hierarchy decisions
@@ -28,7 +28,7 @@ proposed_by: null
 approved_by: null
 recorded_by: Codex
 decided_at: null
-recorded_at: "2026-11-20T15:55:37Z"
+recorded_at: "2026-11-22T02:17:54.778689+00:00"
 ```
 
 ## 2. Classify at intake without losing discoveries
@@ -78,6 +78,8 @@ recorded_at: "2026-11-20T16:19:16Z"
 
 ## 4. Close Features after independent checks
 
+This earlier gate is superseded by [HIERARCHY-007](#7-review-the-features-actual-deliverables).
+
 Finishing child Tasks and Bugs is necessary but insufficient for Feature closure. Require an agent compliance audit, agent code review and team-lead sign-off.
 
 **Reason:** Child closure alone does not establish the Feature's quality or compliance.
@@ -88,13 +90,14 @@ Finishing child Tasks and Bugs is necessary but insufficient for Feature closure
 
 ```yaml
 id: "HIERARCHY-004"
-status: accepted
+status: superseded
 supersedes: []
+superseded_by: ["HIERARCHY-007"]
 proposed_by: null
 approved_by: null
 recorded_by: Codex
 decided_at: null
-recorded_at: "2026-11-20T15:55:37Z"
+recorded_at: "2026-11-22T02:17:54.778689+00:00"
 ```
 
 ## 5. Preserve conflicting-collection evidence
@@ -135,4 +138,23 @@ approved_by: David Noble
 recorded_by: Codex
 decided_at: "2026-11-20"
 recorded_at: "2026-11-20T16:19:16Z"
+```
+
+## 7. Review the Feature's actual deliverables
+
+A Feature closes after its child Tasks and Bugs finish, an agent compliance audit and independent technical review cover its deliverables, and the team lead signs off. Review code when the Feature delivers code. A design enabler instead supplies design, architecture decisions, and a roadmap; its closure does not require implementation of the future subsystem.
+
+The former code-only wording excluded legitimate design work from the closure gate. Generalizing the reviewed assets preserves the independent checks and sign-off required by HIERARCHY-004. Closing children automatically remains insufficient. Tool enforcement must be verified separately.
+
+David Noble required audited, reviewed, approved, and merged deliverables and adopted enabler-feature vocabulary. [Messages 27 and 35](../../engineering/review/sources/role-context-2026-11-20/owner-direction.txt) preserve those directions. The [issue standard](../../issue-standards.md#the-types) owns the current gate; [handbook decision 66](../../engineering/review/decisions.md#decision-66) records the vocabulary.
+
+```yaml
+id: "HIERARCHY-007"
+status: accepted
+supersedes: ["HIERARCHY-004"]
+proposed_by: David Noble
+approved_by: David Noble
+recorded_by: Codex
+decided_at: "2026-11-21T00:00:38.496-08:00"
+recorded_at: "2026-11-22T02:17:54.778689+00:00"
 ```

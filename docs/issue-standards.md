@@ -23,6 +23,8 @@ The user-account labels are our supported representation. [GitHub documents nati
 
 ## 1. Issue types and parents
 
+These issue types distinguish work ownership from collections.
+
 | Level | Type | Meaning | Parent |
 | --- | --- | --- | --- |
 | 0 | Epic | A body of work spanning several Features | None |
@@ -52,19 +54,19 @@ A Task/Bug lacking a parent is unclassified and waits in Triage or its originati
 
 Do not render these cases as an unexplained blank. An Epic without Features needs either correction of its Type or a plan/design that supplies its decomposition.
 
-A Feature stays open after its Tasks/Bugs close until an agent has audited compliance, an agent has technically reviewed its deliverables, including code when present and the team lead has signed off. An Epic closes when its Features do. A Scenario remains useful across releases and is retired when the product no longer has that Scenario and its open findings have moved on.
+A Feature stays open after its Tasks and Bugs close until an agent has audited compliance, an agent has technically reviewed its deliverables, including code when present, and the team lead has signed off. An Epic closes when its Features do. A Scenario remains useful across releases and is retired when the product no longer has that Scenario and its open findings have moved on.
 
 <a id="enabler-features"></a>
 
 ### 1.2. Enabler features
 
-An enabler feature delivers knowledge or a technical foundation needed for future capabilities. It can cover research, architecture, infrastructure or compliance. Keep Feature as its GitHub issue Type and its Epic as native parent. Enabler describes purpose; it does not introduce a hierarchy level, type, label or field, or determine Area and Priority.
+An enabler feature delivers knowledge or a technical foundation needed for future capabilities. It can cover research, architecture, infrastructure, or compliance. Keep Feature as its GitHub issue Type and its Epic as native parent. Enabler describes purpose; it does not introduce a hierarchy level, type, label, or field, or determine Area and Priority.
 
-Name the enabling outcome and the future work it supports. For a design enabler Feature, completion requires the accepted design, Architecture decisions and roadmap, with technical review, compliance assessment, Owner approval and merged deliverables. Its Tasks belong to the design Schedule; the Feature remains in Backlog under the placement rules. Completing the design enabler does not establish delivery of the subsystem's future capabilities.
+Name the enabling outcome and the future work it supports. For a design enabler Feature, completion requires the accepted design, architecture decisions, and roadmap, with technical review, compliance assessment, Owner approval, and merged deliverables. Its Tasks belong to the design Schedule; the Feature remains in Backlog under the placement rules. Completing the design enabler does not establish delivery of the subsystem's future capabilities.
 
 For design work, use a noun phrase for the Feature, such as Evidence archive design, and action titles for its Tasks, such as Design the Evidence Archive subsystem and Produce the Evidence Archive roadmap. This is our issue-title convention, informed by [Google's heading guidance](https://developers.google.com/style/headings); that guide addresses documentation headings, not GitHub issue classification.
 
-We borrow this vocabulary from [SAFe's enablers](https://framework.scaledagile.com/enablers/), without adopting its other roles, backlog levels or planning practices. [Arc42](https://arc42.org/overview/) guides design contents, not issue types. Research findings, designs, Architecture decisions, roadmaps and plans are deliverable assets; they do not become new issue types.
+We borrow this vocabulary from [SAFe's enablers](https://framework.scaledagile.com/enablers/), without adopting its other roles, backlog levels, or planning practices. [Arc42](https://arc42.org/overview/) guides design contents, not issue types. Research findings, designs, architecture decisions, roadmaps, and plans are deliverable assets; they do not become new issue types.
 
 <a id="product-and-engineering"></a>
 

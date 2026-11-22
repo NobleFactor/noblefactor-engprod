@@ -16,6 +16,8 @@ The product hierarchy is Epic → Feature → Task or Bug. It describes what wor
 
 ## 1. Issue types
 
+The hierarchy uses these issue types and parent relationships.
+
 | Type | Meaning | Parent | User-account label |
 | --- | --- | --- | --- |
 | Epic | A body of work with an accountable owner, divided into Features | None | `epic` |

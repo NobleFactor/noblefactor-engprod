@@ -2,7 +2,7 @@
 title: "Designer"
 status: draft
 created: 2026-11-18
-updated: 2026-11-20
+updated: 2026-11-21
 owner: "NobleFactor/engprod"
 change_process: "../process.md#prepare-and-review"
 role: "designer"
@@ -10,7 +10,7 @@ role: "designer"
 
 # Designer
 
-Read [Common commandments](commandments.md) before acting.
+Before acting, read [Common commandments](commandments.md).
 
 ## 1. Purpose and inputs
 
@@ -22,9 +22,9 @@ Use [arc42](https://arc42.org/overview/) for relevant architecture coverage. Exp
 
 A Designer owes a design, its architecture decisions, and a roadmap, not a plan for writing a design.
 
-Work from approved scope on a [design schedule](../work-organization.md#design-schedules). Use its [Task template](../../templates/design-schedule.md) for the design and roadmap issues. Give the Planner these assets with observable goals, constraints, dependencies and open questions. The Planner uses them to prepare implementation work.
+Work from approved scope on a [design schedule](../work-organization.md#design-schedules). Use its [Task template](../../templates/design-schedule.md) for the design and roadmap issues. Give the Planner these assets with observable goals, constraints, dependencies, and open questions. The Planner uses them to prepare implementation work.
 
-Revisit the design when findings require it; keep the intended system understandable as a whole.
+When findings require a design change, revisit it; keep the intended system understandable as a whole.
 
 ## 3. Authority and reading
 

@@ -1094,32 +1094,32 @@ recorded_at: '2026-11-20T04:27:07Z'
 
 ## 63. Use on-demand audits and qualify accuracy before universal blocking
 
-Use the existing Compliance auditor when the Owner requests an audit. Include every changed file and every asset that might be affected, including code, tests, configuration, designs, plans, documentation, examples, help, completions and man pages outside the diff. A requested audit can follow successful pre-commit checks and applies to the identified candidate. Defer the universal blocking gate.
+Use the existing Compliance auditor when the Owner requests an audit. The authoritative [compliance policy](../agent-operation.md#compliance-auditing) defines the scope, exact-candidate evidence, and independence requirements. A requested audit can follow successful pre-commit checks. Activating universal blocking requires a separate Owner decision based on observed accuracy.
 
-The [compliance policy](../agent-operation.md#compliance-auditing) is the authoritative home for scope, timing, actual-model independence, findings and corrective verification. Shared role definitions and templates link there. The [environment configuration decision](../../architecture/agentic-developer-workstation.decisions.md#w6) applies these requirements to sandbox configuration and routing. External reviews and their verification belong on the PR introducing the changes, with saved copies outside Git.
+The [compliance policy](../agent-operation.md#compliance-auditing) is the authoritative home for scope, timing, actual-model independence, findings, and corrective verification. Shared role definitions and templates link there. The [environment configuration decision](../../architecture/agentic-developer-workstation.decisions.md#w6) applies these requirements to sandbox configuration and routing. External reviews and their verification belong on the PR introducing the changes, with saved copies outside Git.
 
-David Noble explicitly clarified scope and timing on 2026-11-20 and approved the related design amendment. The [preserved source](sources/role-context-2026-11-20/owner-direction.txt) retains those messages and the preceding proposal. His Reviewer-session ruling explicitly defers universal blocking while on-demand runs provide experience. Mandatory findings need an adopted requirement, applicability and direct evidence; external suggestions are not automatically requirements. Deterministic tools establish mechanical facts, while the auditor judges context-dependent obligations. Before universal blocking, the Owner reviews confirmed findings, false positives and independently known missed defects, requires reliable accuracy and a low false-positive rate, and separately approves criteria and activation. No numerical threshold is selected. Automatic trigger wiring is owned by [Continuous compliance (#519)](https://github.com/NobleFactor/noblefactor-engprod/issues/519); implementation does not itself activate a gate. David Noble also approved publishing this policy with PR #616's design amendment and permitting a request-specific one-off audit by an eligible third model family when the assigned auditor is ineligible. Preserve the assigned session and binding; require approval for each actual one-off assignment. [W7](../../architecture/agentic-developer-workstation.decisions.md#w7) records the architecture decision. Owner authority and technical review remain separate.
+David Noble explicitly clarified scope and timing on 2026-11-20 and approved the related design amendment. The [preserved source](sources/role-context-2026-11-20/owner-direction.txt) retains those messages and the preceding proposal. The independent Reviewer proposed the evidence and accuracy safeguards described in the [technical review](https://github.com/NobleFactor/noblefactor-engprod/pull/616#pullrequestreview-6002482562); source message 18 records David Noble's acceptance. His Reviewer-session ruling explicitly defers universal blocking while on-demand runs provide experience. Mandatory findings need an adopted requirement, applicability, and direct evidence; external suggestions are not automatically requirements. Deterministic tools establish mechanical facts, while the auditor judges context-dependent obligations. Before universal blocking, the Owner reviews confirmed findings, false positives, and independently known missed defects, requires reliable accuracy and a low false-positive rate, and separately approves criteria and activation. No numerical threshold is selected. Automatic trigger wiring is owned by [Continuous compliance (#519)](https://github.com/NobleFactor/noblefactor-engprod/issues/519); implementation does not itself activate a gate. David Noble also approved publishing this policy with PR #616's design amendment and permitting a request-specific one-off audit by an eligible third model family when the assigned auditor is ineligible. Preserve the assigned session and binding; require approval for each actual one-off assignment. [W7](../../architecture/agentic-developer-workstation.decisions.md#w7) records the architecture decision. Owner authority and technical review remain separate.
 
 ```yaml
 id: '63'
 status: accepted
 supersedes: []
-proposed_by: David Noble
+proposed_by: David Noble and Antigravity (Gemini)
 approved_by: David Noble
 recorded_by: Codex
 decided_at: '2026-11-20'
-recorded_at: '2026-11-21T03:54:25.329872+00:00'
+recorded_at: "2026-11-22T02:17:54.778689+00:00"
 ```
 
 <a id="decision-64"></a>
 
 ## 64. Deliver role assets directly and start design on a design schedule
 
-A Designer owes a design, its decision records, and a roadmap, not a plan for writing a design. Every design runs on a schedule with at least two issues: design and roadmap. The Planner delivers schedules and remains a planning consultant throughout. The Reviewer reviews all affected assets; the Compliance auditor checks those assets against applicable adopted requirements. The Coder delivers implementation, tests, updated assets and verification evidence.
+A Designer owes a design, its decision records, and a roadmap, not a plan for writing a design. Every design runs on a schedule with at least two issues: design and roadmap. The Planner delivers schedules and remains a planning consultant throughout. The Reviewer reviews all affected assets; the Compliance auditor checks those assets against applicable adopted requirements. The Coder delivers implementation, tests, updated assets, and verification evidence.
 
 The [role deliverables](../work-assets.md#role-deliverables) are authoritative; the [design start rule](../process.md#prepare-and-review) makes the Designer's approved assignment sufficient to draft those assets. Requiring a separate implementation plan to write a design delayed the actual deliverables. The scoped Designer rule takes precedence over retained host instructions requiring a plan for every task. Implementation planning and other approval boundaries remain in force.
 
-David Noble directed the correction and supplied the exact Designer statement on 2026-11-20. The [source](sources/role-context-2026-11-20/owner-direction.txt) identifies the original role direction and preserves the exact revised Designer statement. The [implementation record](../../plans/doc/558-role-entry-points.md#role-deliverables-correction) owns publication and host-alignment work; this decision does not establish that a running agent has loaded the correction.
+David Noble directed the correction and supplied the exact Designer statement on 2026-11-20. The [Owner role-deliverables direction](sources/role-context-2026-11-20/owner-direction.txt) identifies the original role direction and preserves the exact revised Designer statement. The [implementation record](../../plans/doc/558-role-entry-points.md#role-deliverables-correction) owns publication and host-alignment work; this decision does not establish that a running agent has loaded the correction.
 
 ```yaml
 id: '64'
@@ -1129,16 +1129,16 @@ proposed_by: David Noble
 approved_by: David Noble
 recorded_by: Codex
 decided_at: '2026-11-20T20:22:39.061-08:00'
-recorded_at: '2026-11-21T04:25:16.563983+00:00'
+recorded_at: "2026-11-22T02:17:54.778689+00:00"
 ```
 
 <a id="decision-65"></a>
 
 ## 65. Name the deliverable Architecture decisions and use ADRs
 
-Name the Designer's deliverable **Architecture decisions**. Document individual significant choices as **architecture decision records (ADRs)**, following [arc42 section 9](https://docs.arc42.org/section-9/) and [Google Cloud's ADR guidance](https://docs.cloud.google.com/architecture/architecture-decision-records). The [documentation standard](../../standards/documentation.md#architecture-decisions) owns the terminology and format.
+Name the Designer's deliverable *architecture decisions*. Document individual significant choices as *architecture decision records (ADRs)*, following [arc42 section 9](https://docs.arc42.org/section-9/) and [Google Cloud's ADR guidance](https://docs.cloud.google.com/architecture/architecture-decision-records). The [documentation standard](../../standards/documentation.md#architecture-decisions) owns the terminology and format.
 
-David Noble directed immediate adoption in this PR without another issue. This clarifies the Designer deliverable named in decision 64; its other requirements remain in force. His question about Roadmap does not approve a name change. The [Owner source](sources/role-context-2026-11-20/owner-direction.txt) identifies the direction and its complete native message. Preserve historical quotations.
+David Noble directed immediate adoption in this PR without another issue. This clarifies the Designer deliverable named in decision 64; its other requirements remain in force. The alternative was to retain the generic name decision records, which obscures whether a record explains an architectural choice or a handbook policy. The adopted name follows arc42 and the ADR vocabulary already used elsewhere by the Owner. Keep policy decisions distinct; existing individual ADR identities and links remain valid. His question about Roadmap does not approve a name change. The [Owner source](sources/role-context-2026-11-20/owner-direction.txt) identifies the direction and its complete native message. Preserve historical quotations.
 
 ```yaml
 id: '65'
@@ -1148,16 +1148,16 @@ proposed_by: David Noble
 approved_by: David Noble
 recorded_by: Codex
 decided_at: '2026-11-20T21:02:38.158-08:00'
-recorded_at: '2026-11-21T05:09:21.453468+00:00'
+recorded_at: "2026-11-22T02:17:54.778689+00:00"
 ```
 
 <a id="decision-66"></a>
 
 ## 66. Describe foundational work as an enabler feature
 
-Use enabler feature for a Feature that delivers knowledge or technical foundations for future capabilities. Keep native Type Feature and Epic → Feature → Task/Bug ownership. The [issue standard](../../issue-standards.md#enabler-features) owns the convention; the template and starter skill apply it.
+Use enabler feature for a Feature that delivers knowledge or technical foundations for future capabilities. Keep native Type Feature and Epic → Feature → Task or Bug ownership. The [issue standard](../../issue-standards.md#enabler-features) owns the convention; the template and starter skill apply it.
 
-For design work, the enabler Feature delivers design, Architecture decisions and a roadmap. Its two Tasks run on the design Schedule while the Feature remains in Backlog. Completion requires review and audit of the actual assets, Owner approval and merged deliverables, without claiming that the future subsystem has been implemented.
+For design work, the enabler Feature delivers design, architecture decisions, and a roadmap. [HIERARCHY-007](../../architecture/issue-data-model/1-hierarchy.decisions.md#7-review-the-features-actual-deliverables) replaces the earlier code-only Feature-review gate with review of the actual deliverables. Its two Tasks run on the design Schedule while the Feature remains in Backlog. Completion requires review and audit of the actual assets, Owner approval, and merged deliverables, without claiming that the future subsystem has been implemented.
 
 David Noble directed this vocabulary and the hierarchy-aware setup skill into PR #616 on 2026-11-21. The [Owner source](sources/role-context-2026-11-20/owner-direction.txt) preserves those instructions. We borrow the term from [SAFe's enablers](https://framework.scaledagile.com/enablers/) without adopting the rest of SAFe. Issue-title examples are our convention informed by Google's heading guidance, not a Google rule for GitHub.
 
@@ -1169,5 +1169,5 @@ proposed_by: David Noble
 approved_by: David Noble
 recorded_by: Codex
 decided_at: '2026-11-21T00:00:38.496-08:00'
-recorded_at: '2026-11-21T08:09:15.338330+00:00'
+recorded_at: "2026-11-22T02:17:54.778689+00:00"
 ```

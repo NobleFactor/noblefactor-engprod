@@ -414,3 +414,74 @@ text_sha256: 793992974a1d8ccaf2622ffb88670bc3d15ad6a8ae757abc868765f3168fd101
 
 that also goes into #616
 === END MESSAGE 30 ===
+
+Complete material directions and the role-deliverables exchange from the originating Codex conversation. Messages 31 and 32 complete the previously published excerpts in messages 21 and 23 without changing those excerpts. The full wording, including misspellings, is retained. The exact historical lines with spelling errors are listed in .github/codespell-verbatim-lines; authored prose is still checked.
+
+=== MESSAGE 31: user ===
+recorded_at: 2026-11-21T04:19:04.169Z
+text_sha256: 48c7c52a9315f58bf38f3c37a98376022a4f60e8ca087b2ae59a6a5c57b28a48
+
+I see that some other agents are deeply confused about deliverables for each role.
+
+- designer => one or more design documents and a roadmap. Hence, every design should be done on a schedule that includes at least two issues: design + roadmap.
+- plannner => schedule and serves as a planning consultant throughtout.
+- reviewer => reviews assets: designs, roadmaps, plans, the code, and related artifacts (man pages, completions, etc.)
+- auditor => checks assets for compliance with standards: designs, roadmaps, plans, the code, and related artifacts (man pages, completions, etc.)
+
+We've written this stuff down and none of the agents get it. I just spent a full day getting a plan to write a fucking design. That is bullshit and is counter productive.
+
+We need to pause and deal with this immediately.
+=== END MESSAGE 31 ===
+
+=== MESSAGE 32: user ===
+recorded_at: 2026-11-21T05:02:38.158Z
+text_sha256: 67fa04642b53cabbd8b37e5741dfe6eb94443d997c1736b71bc458ab66a26908
+
+we must adopt that nomenclature immediately. no time to report a bug or a task. Let's just get it in. We use the nomenclature ADR elsewhere. Let's call the deliverable `Architecutre decisions`. Let's also consider a namechange for Roadmap. I like the word. What does arc42 or Google say about the concept?
+=== END MESSAGE 32 ===
+
+=== MESSAGE 33: user ===
+recorded_at: 2026-11-21T04:23:11.636Z
+text_sha256: 990b020da1446302c243ca2ef7daf969ce36e2b4d5460b7cdd5f92ddc59bebfd
+
+I need to see the deliverables for each role.
+=== END MESSAGE 33 ===
+
+=== MESSAGE 34: assistant ===
+recorded_at: 2026-11-21T04:23:36.246Z
+text_sha256: 69a4bcc90b50fcbeda098bc7cfd1e9ce99a1d3c1c2b6bc801c43bd9c4d66294b
+
+| Role | Deliverables |
+|---|---|
+| **Designer** | One or more design documents, their decision records, and a roadmap. A Designer owes these assets, not a plan for writing a design. |
+| **Planner** | A schedule containing ordered issues, dependencies, completion criteria and links to implementation plans. Provides planning advice throughout the work and proposes amendments as needed. |
+| **Coder** | The implemented change, appropriate tests, all affected assets updated, and verification evidence. |
+| **Reviewer** | A review of designs, decision records, roadmaps, plans, code and affected artifacts—including help, man pages and completions—with findings, corrective rechecks and an acceptance recommendation. |
+| **Compliance auditor** | An assessment of those assets against applicable adopted requirements, with cited evidence, findings, corrective rechecks and unresolved compliance gaps. |
+
+Every design runs on a schedule containing at least two issues: one for the design and its decision records, and one for the roadmap.
+=== END MESSAGE 34 ===
+
+=== MESSAGE 35: user ===
+recorded_at: 2026-11-21T04:32:21.996Z
+text_sha256: 1c25739026942b272660d6634b1447b46c80319cd5ca144897a79c0d3ac75f08
+
+I need issues that are closed with deliverables that are audited, reviewed, approved (by me) and merged. I do not need the bullshit that I ran into today: everyone spinning their wheels without knowing what the fucking deliverables are and going about this the wrong way.
+=== END MESSAGE 35 ===
+
+=== MESSAGE 36: user ===
+recorded_at: 2026-11-21T08:04:25.941Z
+text_sha256: 46538764bc6b4cf49e7fd6375464c6cb0373c6b1199b030d7f86958566cb4527
+
+And I need to see issues closing.
+=== END MESSAGE 36 ===
+
+Execution record for the bounded completion work:
+requested_at: 2026-11-21T08:14:46.943Z
+call_id: call_cef9106294194ed799cf21881afbec90
+justification: May I finish the approved role-context deliverables and completion record in the existing PR #616 worktree?
+The native record is an escalated tool request, not a separate Owner message or review of the committed amendment. Its execution completed successfully and wrote the approved context deliverables. The independent compliance audit on PR #616 classifies this as authorized work with an incomplete approval record. Read the exact Owner directions in messages 35 and 36 with that bounded request; do not turn them into an invented plan-review exchange.
+
+Accuracy-rule provenance: the independent Reviewer proposed the evidence and accuracy safeguards; message 18 records David Noble's acceptance. The proposal and its ruling are described in https://github.com/NobleFactor/noblefactor-engprod/pull/616#pullrequestreview-6002482562. External review text remains on that PR and is not reproduced here.
+
+Model provenance limits: no native log was found for the separate correction conversation identified by the auditor as session 01a1fba0. The assistant behind the wording relayed in message 27 is not identified. The Owner's adoption of that wording is recorded; it does not identify its originating model. These unknowns remain unresolved and cannot establish complete builder-family independence.

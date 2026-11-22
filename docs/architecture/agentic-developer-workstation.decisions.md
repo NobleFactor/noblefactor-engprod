@@ -2,7 +2,7 @@
 title: "Agentic developer workstation architecture decisions"
 status: draft
 created: 2026-11-19
-updated: 2026-11-20
+updated: 2026-11-21
 ---
 
 <a id="agentic-developer-workstation-decisions"></a>
@@ -31,7 +31,7 @@ proposed_by: null
 approved_by: David Noble
 recorded_by: Codex
 decided_at: '2026-11-13'
-recorded_at: '2026-11-20T02:02:55Z'
+recorded_at: "2026-11-22T02:17:54.778689+00:00"
 ```
 
 <a id="w2"></a>
@@ -105,7 +105,7 @@ Place capture/retrieval services, provenance/catalog and retained originals outs
 
 Keeping the only evidence copy inside a disposable runtime would couple retention and cross-schedule retrieval to that runtime's lifetime. A shared service preserves an independent storage and authorization boundary. Its outage still requires bounded spooling, visible gaps and blocked evidence-dependent transitions.
 
-The [source plan](../plans/doc/521-workstation-design.md#current-state) records shared placement and preferred PostgreSQL catalog/provenance. The [archive contract](agentic-developer-workstation.md#55-shared-evidence-archive-and-policy) preserves the proposal. Original-artifact layout and spool implementation remain [D4](#d4).
+The [source plan](../plans/doc/521-workstation-design.md#current-state) records shared placement and preferred PostgreSQL catalog and provenance. The [archive contract](agentic-developer-workstation.md#55-shared-evidence-archive-and-policy) preserves the proposal. Original-artifact layout and spool implementation remain [D4](#d4).
 
 ```yaml
 id: W5
@@ -115,148 +115,70 @@ proposed_by: null
 approved_by: null
 recorded_by: Codex
 decided_at: null
-recorded_at: '2026-11-20T02:02:55Z'
+recorded_at: "2026-11-22T02:17:54.778689+00:00"
 ```
 
 <a id="d1"></a>
 
 <a id="6-resolve-the-pre-schedule-runtime"></a>
 
+<a id="6-resolve-continuity-from-design-to-implementation-schedules"></a>
+
 ## 6. Resolve continuity from design to implementation schedules
 
-Design runs on a schedule with separate design and roadmap issues. The Designer delivers the design, its architecture decisions and roadmap directly. The [role-deliverables decision](../engineering/review/decisions.md#decision-64) records this requirement.
-
-The remaining open choice is how runtime references and evidence carry from that design schedule into one or several implementation schedules. Preserve source identities, approved access and one active sandbox per schedule; do not silently move a role session between schedules.
-
-Designer/planner work under [Developer control (#517)](https://github.com/NobleFactor/noblefactor-engprod/issues/517) resolves that continuity contract through [S1 and Wave 0](../roadmaps/agentic-developer-workstation.md#6-scenario-walkthroughs-and-qualification-obligations).
-
-```yaml
-id: D1
-status: proposed
-supersedes: []
-proposed_by: null
-approved_by: null
-recorded_by: Codex
-decided_at: null
-recorded_at: '2026-11-21T04:25:16.563983+00:00'
-```
+[Open question D1: Continuity between design and implementation schedules](agentic-developer-workstation.md#d1).
 
 <a id="d2"></a>
 
+<a id="7-select-the-editor-backend-and-connection-path"></a>
+
 ## 7. Select the editor backend and connection path
 
-Choose the editor/backend, profile format, transport, client routing and independently configured runtime state for simultaneous desktop/iPad access.
-
-VS Code Remote Tunnels and Coder code-server are candidates. [Microsoft documents one client per server instance](https://code.visualstudio.com/docs/remote/tunnels/#can-multiple-users-or-clients-access-the-same-remote-instance-simultaneously); [code-server documents iPad use](https://coder.com/docs/code-server/ipad) and its [extension differences](https://coder.com/docs/code-server/FAQ). These references do not qualify the proposed topology.
-
-Developer control (#517) and Operations (#520) must demonstrate all eight startup combinations, coexistence/resource budgets, private native endpoints and actual iPad interaction before G2. The [editor contract](agentic-developer-workstation.md#54-editor-instances-and-attachment-views) defines the required behavior.
-
-```yaml
-id: D2
-status: proposed
-supersedes: []
-proposed_by: null
-approved_by: null
-recorded_by: Codex
-decided_at: null
-recorded_at: '2026-11-20T02:02:55Z'
-```
+[Open question D2: Editor backend and connection path](agentic-developer-workstation.md#d2).
 
 <a id="d3"></a>
 
+<a id="8-qualify-host-behavior-and-identity-enforcement"></a>
+
 ## 8. Qualify host behavior and identity enforcement
 
-Resolve the pinned hosts' shared-server role configuration, simultaneous views, history/input/approval behavior, native session controls and failure recovery.
-
-[Claude Remote Control](https://code.claude.com/docs/en/remote-control), [Codex app-server](https://learn.chatgpt.com/docs/app-server) and [OpenCode's background service](https://opencode.ai/docs/cli/#background-service) provide documented foundations. Actual editor-to-session paths, creation discovery, supported hooks and no-view continuity need evidence. Codex's last-subscriber unload behavior requires an explicit continuity strategy.
-
-Agent hosts (#459) with Developer control (#517) owns the [capability matrix](../roadmaps/agentic-developer-workstation.md#host-capability-matrix-the-planner-must-obtain). Report unsupported or inconclusive behavior rather than infer that a common interface has erased provider differences.
-
-```yaml
-id: D3
-status: proposed
-supersedes: []
-proposed_by: null
-approved_by: null
-recorded_by: Codex
-decided_at: null
-recorded_at: '2026-11-20T02:02:55Z'
-```
+[Open question D3: Host capabilities and identity enforcement](agentic-developer-workstation.md#d3).
 
 <a id="d4"></a>
 
+<a id="9-resolve-archive-storage-and-recovery-acknowledgments"></a>
+
 ## 9. Resolve archive storage and recovery acknowledgments
 
-Resolve original-artifact placement, catalog/provenance boundaries, retention, authorization, capture acknowledgments and restoration. The local capture-spool storage engine is also undecided.
-
-PostgreSQL remains the preferred shared catalog platform. The Owner deferred the spool implementation choice and expressed a preference for one stack end to end; the [source plan's open questions](../plans/doc/521-workstation-design.md#open-questions) preserve that direction. Evaluate implementation options without presenting a particular local database or queue as selected.
-
-Archive owners (#490/#492/#496), integrated with continuity/checkpoints, establish minimal durability in Wave 1 and the full contract before G3. Demonstrate citation-preserving restore and distinguish recoverable native state from evidence-based reconstruction, including S8's gaps and approval trace.
-
-```yaml
-id: D4
-status: proposed
-supersedes: []
-proposed_by: null
-approved_by: null
-recorded_by: Codex
-decided_at: null
-recorded_at: '2026-11-20T02:02:55Z'
-```
+[Open question D4: Archive storage and recovery acknowledgments](agentic-developer-workstation.md#d4).
 
 <a id="d5"></a>
 
+<a id="10-qualify-placement-and-resource-budgets"></a>
+
 ## 10. Qualify placement and resource budgets
 
-Select qualified placement on the existing Mac mini and Minisforum and establish CPU, memory, storage, I/O, quotas, backup destination and acceptance thresholds.
-
-Colocation avoids an initial hardware purchase, but shared load must leave capacity for the Minisforum's centralized logging. Logical service boundaries do not require separate machines. Platform support and actual workloads determine whether each candidate placement is usable.
-
-Protected workspaces (#518) and Operations (#520) own qualification for the first deployment and repeat it at G6. The [deployment view](agentic-developer-workstation.md#57-initial-physical-deployment) preserves the candidates without assuming machine specifications.
-
-```yaml
-id: D5
-status: proposed
-supersedes: []
-proposed_by: null
-approved_by: null
-recorded_by: Codex
-decided_at: null
-recorded_at: '2026-11-20T02:02:55Z'
-```
+[Open question D5: Placement and resource budgets](agentic-developer-workstation.md#d5).
 
 <a id="d6"></a>
 
+<a id="11-define-the-devlore-lifecycle-interface"></a>
+
 ## 11. Define the DevLore lifecycle interface
 
-Identify the reviewed DevLore resource/control-plane interface and the product-side owners/dependencies for environments and shared services.
-
-The final lifecycle implementation belongs to DevLore. Prototypes consume existing host/SBX contracts and must preserve an adoption path rather than become a competing permanent manager. The exact product interface remains open.
-
-The DevLore lifecycle owner with Developer control (#517) and Operations (#520) resolves the interface early. [Wave 5](../roadmaps/agentic-developer-workstation.md#5-delivery-waves-and-gates) owns the adoption work, including retained identity, pending operations, upgrades and recovery/rollback evidence.
-
-```yaml
-id: D6
-status: proposed
-supersedes: []
-proposed_by: null
-approved_by: null
-recorded_by: Codex
-decided_at: null
-recorded_at: '2026-11-20T02:02:55Z'
-```
+[Open question D6: DevLore lifecycle interface](agentic-developer-workstation.md#d6).
 
 <a id="w6"></a>
 
 ## 12. Configure environment roles under shared policy
 
-Give each environment a versioned role configuration: its Schedule, selected hosts and model settings, workspace and shared resource references. The handbook owns the common requirements. The control plane retains the configuration and one authoritative native-session binding per environment/role, and uses DevLore for lifecycle management.
+Give each environment a versioned role configuration: its Schedule, selected hosts and model settings, workspace, and shared resource references. The handbook owns the common requirements. The control plane retains the configuration and one authoritative native-session binding for each role within an environment, and uses DevLore for lifecycle management.
 
-Keeping host choices in the environment configuration allows different assignments to use suitable models without changing role responsibilities. Treating a host choice as another role identity could create competing conversations. Desired settings and observed model/session state therefore remain distinct. Compatible configuration changes preserve the original session; replacement retains the existing Owner-approval requirement.
+Keeping host choices in the environment configuration allows different assignments to use suitable models without changing role responsibilities. Treating a host choice as another role identity could create competing conversations. Desired settings and observed model and session state therefore remain distinct. Compatible configuration changes preserve the original session; replacement retains the existing Owner-approval requirement.
 
 Audit requests run on demand or through an enabled trigger after successful pre-commit checks and reach the bound auditor. Shared policy governs required requests and activation of blocking checks. Independence is checked against the actual model families used to build the candidate. The check covers changed and potentially affected assets. External reviews and corrective verification are recorded on the PR introducing the change; reports produced before the PR exists stay outside Git until it is opened.
 
-The Owner chose to record this boundary now rather than defer it, approving the focused design amendment on 2026-11-20. The [approval record](../plans/doc/558-role-entry-points.md#environment-role-configuration-approval) preserves the scope. [Environment configuration](agentic-developer-workstation.md#environment-role-configuration) and [audit flow](agentic-developer-workstation.md#compliance-audit-flow) describe the intended system. [Developer control (#517)](https://github.com/NobleFactor/noblefactor-engprod/issues/517) owns configuration planning and durable bindings, using [Agent hosts (#459)](https://github.com/NobleFactor/noblefactor-engprod/issues/459) for native-host application. [Continuous compliance (#519)](https://github.com/NobleFactor/noblefactor-engprod/issues/519) owns audit routing, trigger wiring and the exact-candidate commit check. The [handbook policy](../engineering/agent-operation.md#compliance-auditing) defines the requirements; those open Features require separate implementation plans.
+The Owner chose to record this boundary now rather than defer it, approving the focused design amendment on 2026-11-20. The [environment-configuration approval](../plans/doc/558-role-entry-points.md#environment-role-configuration-approval) preserves the scope. [Environment configuration](agentic-developer-workstation.md#environment-role-configuration) and [audit flow](agentic-developer-workstation.md#compliance-audit-flow) describe the intended system. [Developer control (#517)](https://github.com/NobleFactor/noblefactor-engprod/issues/517) owns configuration planning and durable bindings, using [Agent hosts (#459)](https://github.com/NobleFactor/noblefactor-engprod/issues/459) for native-host application. [Continuous compliance (#519)](https://github.com/NobleFactor/noblefactor-engprod/issues/519) owns audit routing, trigger wiring, and the exact-candidate commit check. The [handbook policy](../engineering/agent-operation.md#compliance-auditing) defines the requirements; those open Features require separate implementation plans.
 
 ```yaml
 id: W6
@@ -266,20 +188,20 @@ proposed_by: Codex
 approved_by: David Noble
 recorded_by: Codex
 decided_at: '2026-11-20T16:35:21.678-08:00'
-recorded_at: '2026-11-21T03:17:57.600877+00:00'
+recorded_at: "2026-11-22T02:17:54.778689+00:00"
 ```
 
 <a id="w7"></a>
 
 ## 13. Allow an approved one-off audit without replacing the assigned auditor
 
-When the assigned auditor helped build a candidate or its independence is unknown, the Owner can authorize one audit by an eligible third model family independent of every builder. The assignment covers the identified candidate and does not create a second persistent environment/role binding. Preserve the assigned auditor's conversation and binding.
+When the assigned auditor helped build a candidate or its independence is unknown, the Owner can authorize one audit by an eligible third model family independent of every builder. The assignment covers the identified candidate and does not create a second persistent environment and role binding. Preserve the assigned auditor's conversation and binding.
 
 Several model families can contribute to one candidate, leaving its assigned auditor ineligible. A different model in the retained session was considered, but host support and observed model evidence still govern whether that works. Leaving every such request unresolved preserves independence but provides no assessment. The approved one-off path obtains an independent assessment without switching the retained session.
 
-Record the Owner's request-specific approval, candidate/base, original binding reference, actual assessor/model and result with the audit and introducing PR. If no eligible assessor is available, the audit remains unresolved. This decision does not waive independence, qualify a host or authorize automatic agent creation.
+Record the Owner's request-specific approval, candidate and base, original binding reference, actual auditor and model, and result with the audit and introducing PR. If no eligible auditor is available, the audit remains unresolved. This decision does not waive independence, qualify a host, or authorize automatic agent creation.
 
-[Audit flow](agentic-developer-workstation.md#compliance-audit-flow) defines the system interaction. The [handbook policy](../engineering/agent-operation.md#compliance-auditing) owns auditor authority. The [approval record](../plans/doc/558-role-entry-points.md#compliance-policy-and-one-off-audit-approval) preserves David Noble's acceptance of this proposal. This extends W6's audit routing while retaining its one-binding rule.
+[Audit flow](agentic-developer-workstation.md#compliance-audit-flow) defines the system interaction. The [handbook policy](../engineering/agent-operation.md#compliance-auditing) owns auditor authority. The [one-off audit approval](../plans/doc/558-role-entry-points.md#compliance-policy-and-one-off-audit-approval) preserves David Noble's acceptance of this proposal. This extends W6's audit routing while retaining its one-binding rule.
 
 ```yaml
 id: W7
@@ -289,5 +211,5 @@ proposed_by: Codex
 approved_by: David Noble
 recorded_by: Codex
 decided_at: '2026-11-20T19:40:10.105-08:00'
-recorded_at: '2026-11-21T03:54:25.329872+00:00'
+recorded_at: "2026-11-22T02:17:54.778689+00:00"
 ```
