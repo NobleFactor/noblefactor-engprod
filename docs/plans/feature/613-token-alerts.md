@@ -47,7 +47,7 @@ At the end:
 1. **A credentials check** in each participating repository, `.github/workflows/credentials-check.yml`, landed from the account's `.github` workflow template like the Triage workflow. It runs daily and on demand.
 2. **Each check proves its binding.** For an organization, it mints an installation token from the same two organization secrets the Triage workflow reads, and requires the permissions GitHub grants it to include every one the repository's workflows need, writing to projects among them. For a user account, it calls GitHub with the repository's classic token and requires its login to be the account, its scopes to include `repo` and `project`, and its expiry to be outside the warning margin.
 3. **One incident per repository and condition,** an issue titled `Token alert: <condition>`, labeled `token-alert`, assigned to David-Noble-at-work. The run's own `GITHUB_TOKEN`, granted `issues: write`, writes it, so it never depends on the credential being checked. While open, it gets a comment each day the condition holds. It closes when the condition's own clearing rule is met.
-4. **The Triage workflow's last step,** on any earlier step's failure, writes the same incident at once.
+4. **When a new issue doesn't reach Triage,** the Triage workflow checks the token at once: a bad one raises its own alert, naming the issue; a healthy one raises "New issues aren't reaching Triage", which closes only when a later issue reaches Triage, listing the issues still missing.
 5. **Expiry and rotation:**
    - a classic token's expiry is the date GitHub reports in `GitHub-Authentication-Token-Expiration`, and it warns 14 days ahead;
    - an app key doesn't expire; it is due for rotation on the date in the organization variable `TOKEN_ROTATION_DUE`, set when the key is made or rotated, and that warns 14 days ahead too.
@@ -147,7 +147,7 @@ The script runs on GitHub's runner from a sparse checkout of `.github/credential
 - One open issue per repository and condition, found by its title and the `token-alert` label. Two runs at once can each find none and each open one, so every lookup, and every create, closes all but the oldest open one as its duplicate.
 - **Raised** when a condition holds and no incident for it is open: assigned to David-Noble-at-work, its body naming the credential, the binding, the condition and how to fix it, with a link to the guide.
 - **Repeated** as a comment each day the condition still holds, the date and the run in it.
-- **Closed** only by a check whose own test passed: `missing`, `refused`, `not-installed`, `short`, `wrong-account` and `consumer-failed` when the binding signs in and is granted everything; `expiring` and `expired` when the expiry is beyond the margin, or there is none; `rotation-due` and `rotation-overdue` when `TOKEN_ROTATION_DUE` is beyond it; `no-recent-check` when the watched repository's check ran within two days. A test that didn't run, or failed another way, clears nothing: a refused token says nothing of its expiry, and an overdue rotation leaves its due warning open.
+- **Closed** only by a check whose own test passed: `missing`, `refused`, `not-installed`, `short` and `wrong-account` when the binding signs in and is granted everything; `not-triaged`, "New issues aren't reaching Triage", when a later issue reaches Triage (§ 5.3); `expiring` and `expired` when the expiry is beyond the margin, or there is none; `rotation-due` and `rotation-overdue` when `TOKEN_ROTATION_DUE` is beyond it; `no-recent-check` when the watched repository's check ran within two days. A test that didn't run, or failed another way, clears nothing: a refused token says nothing of its expiry, and an overdue rotation leaves its due warning open.
 - **Only GitHub's refusal is a credential condition:** a 401, or a 403 that isn't a rate limit; a 404 minting an installation token is `not-installed`. GitHub not reached, a rate limit, a server error or any other answer proves nothing about the credential: the run ends 2, raising and clearing nothing.
 - **A run's status** is 0 when every condition is clear, 1 when one holds, 2 when the check couldn't finish, and 3 when an incident couldn't be looked up, raised, repeated or closed. A failed lookup is never taken for no incident.
 - **No recent check:** GitHub disables a public repository's scheduled workflows after 60 days with no commit, and a disabled check can't report itself. So noblefactor-engprod's own check also reads each NobleFactor participating repository's latest check run, which public data allows, and raises `no-recent-check` for one more than two days old. A private repository is checked by its own run alone.
@@ -156,7 +156,13 @@ The script runs on GitHub's runner from a sparse checkout of `.github/credential
 
 ### 5.3 The Triage workflow's failure step
 
-The Triage template gains a last step, `if: failure()`, that runs the same script in report mode: it names the step that failed and raises or updates the incident at once, with the run's `GITHUB_TOKEN`.
+The Triage template's step that adds an issue to Triage is named `triage`. When a run fails and an issue meant for Triage didn't reach it, a step runs the same script in report mode, with the run's `GITHUB_TOKEN` and the workflow's own secrets:
+
+- **It checks the token first.** A bad token raises its own alert, naming the issue missed and the run to rerun once the token is fixed.
+- **A healthy token raises "New issues aren't reaching Triage",** naming the issue and the run to rerun from its page. Each further miss is a comment on the same alert.
+- **GitHub not reached,** or answering with something that proves nothing, raises nothing.
+
+When an issue does reach Triage, a last step runs the script in placed mode, which closes that alert, listing the issues still missing, since closing it adds none of them. The daily check never closes it, as it can't tell whether issues reach Triage; it reminds once a day while the alert is open. Schedule, Scenario and scenario-found issues, left out of Triage on purpose, raise nothing, and nor does an issue that reached Triage when a later step, setting its Area or Severity, fails: the run shows failed on the Actions page.
 
 <a id="landing"></a>
 
@@ -193,7 +199,7 @@ Questions for you, 3 of them:
 | --- | --- | --- | --- |
 | Each condition raises its incident | One issue per repository and condition, assigned, naming the fix | `tests/Test-CredentialsCheck` | Stand-in `gh` and `curl` |
 | Incidents repeat and clear by their own rules | A comment each day; closed only by the clearing rule | The same suite | Stand-ins |
-| Triage failures report at once | The failure step raises the incident | The same suite | Stand-ins |
+| A new issue that doesn't reach Triage is reported at once | The token's alert, or "New issues aren't reaching Triage", naming the issue; closed when a later issue reaches Triage, listing the issues still missing | The same suite | Stand-ins |
 | The checks run in the field | Each participating repository's daily check runs and passes | The runs of the first two days after landing | The real accounts |
 | A connection failure is never a rejected token (#621) | GitHub not reached is named, gh's line quoted, with no credential advice; only a 401 is a rejected token | `tests/Test-StarGitHub`, cases 222 to 241 | Stand-in `gh` |
 | The deployed command (#621) | With GitHub unreachable, it names no credential fault | Run with `HTTPS_PROXY` at a port nothing listens on, after `writ deploy` | The owner's Mac |
@@ -251,7 +257,7 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 
 - [x] R5 and R6, #621: a failed organization answer with an HTTP status line, a server error among them, stops the command; a token is scrubbed wherever it starts in a line, and the diagnosis reads the line scrubbed. Cases 235 to 241, all 698 checks passing; section 6, § 8; § 2.2.1. The organization lookup has no case: no command passes `check_access` an organization, so none reaches it.
 - [x] R1, R2, R4 and R7, #613: an incident closes only when its own test passes; only GitHub's refusal is a credential condition; duplicates from runs at once are closed; a failed incident operation fails the run. Their cases in `tests/Test-CredentialsCheck`, 51 in all, every one passing; 25 of them fail against 1f76efa's script. §§ 5.2 and 6; section 4, § 4.1; the guide's § 8.
-- [ ] R3: what a failed Triage run raises, as you decide it.
+- [x] R3: what a new issue that doesn't reach Triage raises, as decided on 2026-11-21 (§ 12): § 5.3, both Triage templates, and the script's report and placed modes. `consumer-failed` is gone. `tests/Test-CredentialsCheck`, 62 cases, every one passing.
 - [x] #625's audit, A02 to A07: #613's body rewritten to the approved design, and the plan review that didn't happen recorded in § 12; this plan active, #621 in §§ 2, 4, 7, 8 and 10, § 11 brought up to date, and its sections numbered in order; section 4's §§ 3 and 4.1 and ACCESS-007 naming `workflow-templates/` as the templates' source, with the README; ACCESS-007's recorded time made the commit's, 08:23:15Z, and ACCESS-006 and MODEL-007 to 009's made c910441's, 06:42:51Z, all four having carried an invented 03:00:00Z; the guide's sections numbered in order; and the script's exemption from `Declare-BashScript` stated in its header and § 5.1. A01, a review not yet made, was answered by Codex's.
 
 <a id="phase-5-merge-landing-and-verification"></a>
@@ -283,6 +289,7 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 ## 12. Approval and departures
 
 - **Approved, 2026-11-21.** David Noble approved this plan at revision 2856d6a, for #613 and #621, in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`, and directed the work to proceed phase by phase, each committed and pushed, and then the pull request opened for the full set. The three calls of § 6 are taken as § 6 makes them: incidents in the repository whose binding failed, assigned to David-Noble-at-work; daily, and 14 days ahead; and the check landed by hand before #614.
+- **When a new issue doesn't reach Triage, decided 2026-11-21.** The token is checked first: a bad one raises its own alert, naming the issue; a healthy one raises "New issues aren't reaching Triage", which closes only when a later issue reaches Triage, listing the issues still missing. It replaces `consumer-failed`, which said Triage had failed when what failed was placing an issue in it, and which a healthy token check closed though issues could still be missing. Decided in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`.
 - **No plan review.** Phase 1 named Codex's review of this plan before your approval. You approved it at 2856d6a without that review, and the work went ahead at once; Codex reviewed the work itself, on #625.
 - **#625's review, 2026-11-21.** Codex reviewed 1f76efa and found eight faults, R1 to R8, each fixed in § 9.6. R3, what a failed Triage run raises, needs your decision.
 - **Phase 9.1b, now § 9.2, ticked before its design update.** 3beaa44 ticked 9.1b, section 6 § 8 among it, but the section's change landed in the next commit, 15acbb9: it had been made in the main clone, not this worktree. #625's review found it, as R8. The history stays as it is; each fix since lands with its documents and its box.

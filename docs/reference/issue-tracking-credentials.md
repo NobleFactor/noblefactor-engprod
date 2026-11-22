@@ -175,7 +175,7 @@ gh run list --repo <owner>/<repository> --workflow triage.yml --limit 5
 
 ## 8. Alerts
 
-Every participating repository checks its token each day and opens an issue, `Token alert: <condition>`, labeled `token-alert` and assigned to you, when something is wrong. GitHub notifies you of each. While the condition holds, the issue gets one comment a day; when the next check finds it gone, the issue closes itself. Closing one by hand doesn't fix anything: the next check opens it again.
+Every participating repository checks its token each day and opens an issue, `Token alert: <condition>`, labeled `token-alert` and assigned to you, when something is wrong. GitHub notifies you of each. While the condition holds, the issue gets one comment a day; when the next check finds it gone, the issue closes itself. Closing one by hand doesn't fix anything: the next check opens it again. One alert is different: "New issues aren't reaching Triage" opens when a new issue isn't added to the Triage project though the token is fine, and closes only when a later issue is added.
 
 | Alert | What it means | What to do |
 | --- | --- | --- |
@@ -186,7 +186,7 @@ Every participating repository checks its token each day and opens an issue, `To
 | `wrong-account` | The classic token signs in as another account | Make it signed in as the account it serves |
 | `expiring`, `expired` | The classic token expires within 14 days, or has | Regenerate it (§ 9) |
 | `rotation-due`, `rotation-overdue` | The app key's rotation, `TOKEN_ROTATION_DUE`, is within 14 days, or past | Rotate the key, and set the next date |
-| `consumer-failed` | A Triage workflow failed | Read the run it names; the next healthy check closes it |
+| "New issues aren't reaching Triage" | A new issue wasn't added to the Triage project, and the token checked fine; each further miss is a comment | Read the run it names and fix the cause, then rerun each missed issue's run from its page. It closes when a later issue reaches Triage, listing the issues still missing |
 | `no-recent-check in <repository>` | That repository's daily check has stopped running | Re-enable its workflow on its Actions page |
 
 An alert closes only when the check proves its own condition gone: fixing one thing closes another's alert only once the check can test it. GitHub not reached, a rate limit or a GitHub server error raises no alert and closes none: the run fails, and the next day's check tries again. A run that can't write an alert fails too, so a failed check run is worth reading even when no alert is open. Two runs at once can open the same alert twice; the later is closed as a duplicate of the earlier.

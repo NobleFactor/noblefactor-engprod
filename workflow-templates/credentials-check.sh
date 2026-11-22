@@ -20,6 +20,12 @@
 # limit, a server error or any other answer proves nothing about the credential: the run ends 2, raising and clearing
 # nothing, and the next one checks again (#621).
 #
+# The Triage workflow runs it too. When a new issue isn't added to Triage, report mode checks the token: a bad one
+# raises its own alert, naming the issue missed; a healthy one raises not-triaged, "New issues aren't reaching Triage",
+# naming the issue and the run to rerun. Each further miss is a comment on the same alert, and the daily check reminds
+# once a day while it is open. When a later issue is added to Triage, placed mode closes it, listing the issues still
+# missing: closing an alert never adds them.
+#
 # Environment:
 #   KIND                organization or user.
 #   ACCOUNT, REPOSITORY the account and this repository, owner/name.
@@ -28,8 +34,8 @@
 #   PAT                 a user account's classic token, from its secret.
 #   ROTATION_DUE        an organization's next key rotation, YYYY-MM-DD, from TOKEN_ROTATION_DUE; optional.
 #   WATCH               repositories whose latest check this run also watches, comma-separated; optional.
-#   MODE                check, the default, or report: raise consumer-failed with DETAIL, and change nothing else.
-#   DETAIL              what failed, in report mode.
+#   MODE                check, the default; report, when a new issue wasn't added to Triage; or placed, when one was.
+#   ISSUE               the new issue's number, in report and placed mode.
 #   RUN_URL             this run's page, named in every incident.
 #   CONFIG              credentials-check.json; default: beside this script.
 #   GITHUB_API_URL      GitHub's API; default: https://api.github.com.
@@ -39,7 +45,8 @@
 # itself, so it sets -u and pipefail but not -e.
 #
 # Exit status: 0 when every condition is clear; 1 when one holds; 2 when the check couldn't finish, GitHub not reached
-# or its answer proving nothing; 3 when an incident couldn't be looked up, raised, repeated or cleared.
+# or its answer proving nothing; 3 when an incident couldn't be looked up, raised, repeated or cleared. An open Triage
+# alert, which the daily check can't test, is reminded of but leaves its status as it is.
 set -uo pipefail
 
 : "${KIND:?}" "${ACCOUNT:?}" "${REPOSITORY:?}" "${GH_TOKEN:?}"
@@ -188,7 +195,7 @@ check_app() {
         raise short "the installation token lacks ${short}"
         return
     fi
-    passed missing refused not-installed short consumer-failed
+    passed missing refused not-installed short
 }
 
 # check_rotation warns before an app key's rotation date, and after it; a date beyond the margin clears both.
@@ -235,7 +242,7 @@ check_token() {
             signed_in=0
         }
     done
-    ((signed_in == 0)) || passed missing refused wrong-account short consumer-failed
+    ((signed_in == 0)) || passed missing refused wrong-account short
     expiry="$(header github-authentication-token-expiration)"
     if [[ -z "${expiry}" ]]; then
         passed expiring expired
@@ -283,6 +290,46 @@ check_watched() {
     done
 }
 
+# title_of prints a condition's alert title.
+title_of() {
+    case "$1" in
+        not-triaged) printf "New issues aren't reaching Triage" ;;
+        *) printf 'Token alert: %s' "$1" ;;
+    esac
+}
+
+# listed prints issue numbers as a phrase, "#1", "#1 and #2" or "#1, #2 and #3", and the verb that agrees with it.
+listed() {
+    local -a numbers=("$@")
+    local phrase="" i
+    for i in "${!numbers[@]}"; do
+        if ((i == 0)); then
+            phrase="#${numbers[i]}"
+        elif ((i == ${#numbers[@]} - 1)); then
+            phrase+=" and #${numbers[i]}"
+        else
+            phrase+=", #${numbers[i]}"
+        fi
+    done
+    if ((${#numbers[@]} == 1)); then
+        printf "%s still isn't in Triage: rerun its run, linked above." "${phrase}"
+    else
+        printf "%s still aren't in Triage: rerun their runs, linked above." "${phrase}"
+    fi
+}
+
+# missed prints the sentence naming the issues an alert recorded as missing Triage, all but ${ISSUE}, or nothing; it
+# returns 1 when the alert can't be read.
+missed() {
+    local text
+    local -a numbers=()
+    text="$(gh issue view "$1" --repo "${REPOSITORY}" --json body,comments \
+        --jq '[.body] + [.comments[].body] | .[]')" || return 1
+    mapfile -t numbers < <(grep -oE "\*\*#[0-9]+\*\* wasn't added" <<<"${text}" | grep -oE '[0-9]+' |
+        awk -v skip="${ISSUE:-}" '$0 != skip && !seen[$0]++')
+    ((${#numbers[@]} == 0)) || printf ' %s' "$(listed "${numbers[@]}")"
+}
+
 # failed records an incident operation that failed: the run ends 3, and the next run tries again.
 failed() {
     printf 'Token alert: %s: %s failed; the next run tries again\n' "$1" "$2" >&2
@@ -295,7 +342,7 @@ failed() {
 incident_for() {
     local numbers first number
     numbers="$(gh issue list --repo "${REPOSITORY}" --label "${label}" --state open --json number,title --limit 100 \
-        --jq "[.[] | select(.title == \"Token alert: $1\") | .number] | sort | .[]")" || return 1
+        --jq "[.[] | select(.title == \"$(title_of "$1")\") | .number] | sort | .[]")" || return 1
     first="$(head -n 1 <<<"${numbers}")"
     for number in $(tail -n +2 <<<"${numbers}"); do
         gh issue close "${number}" --repo "${REPOSITORY}" --reason "not planned" \
@@ -305,10 +352,30 @@ incident_for() {
     printf '%s\n' "${first}"
 }
 
+# opening prints a condition's alert body when it opens.
+opening() {
+    local today="$2"
+    if [[ "$1" == not-triaged ]]; then
+        local first="**#${ISSUE}** wasn't added to the Triage project. The run that tried is here: ${run}."
+        first+=" The token checked fine, so the cause is something else."
+        first+=" To add #${ISSUE}, rerun that run from its page."
+        printf '%s\n\n%s\n\n%s\n' "${first}" \
+            "Each further miss is added here as a comment. This closes when a later issue reaches Triage." \
+            "How the alerts work: ${guide}"
+        return
+    fi
+    printf '%s\n\n' "**$1:** ${found[$1]}, as ${run} found on ${today}."
+    [[ "${mode}" != report ]] ||
+        printf '%s\n\n' "**#${ISSUE}** wasn't added to Triage because of it. Once it's fixed, rerun ${run} to add it."
+    printf '%s\n\n%s\n' "This incident gets a comment each day it holds, and closes when a check shows it gone." \
+        "How to fix it: ${guide}"
+}
+
 # keep raises, repeats or clears the incident of one condition: raised or repeated while it holds, closed only when its
-# own test passed, and left as it is otherwise.
+# own test passed, and left as it is otherwise. In report mode each miss is a comment of its own; otherwise a held
+# condition, or an open Triage alert, gets one comment a day.
 keep() {
-    local condition="$1" number last today
+    local condition="$1" number last today still
     today="$(date -u +%Y-%m-%d)"
     number="$(incident_for "${condition}")" || {
         failed "${condition}" "looking up its incident"
@@ -316,64 +383,105 @@ keep() {
     }
     if [[ -n "${found[${condition}]+held}" ]]; then
         if [[ -z "${number}" ]]; then
-            gh issue create --repo "${REPOSITORY}" --title "Token alert: ${condition}" --label "${label}" \
-                --assignee "${assignee}" --body "$(printf '%s\n\n%s\n\n%s\n' \
-                    "**${condition}:** ${found[${condition}]}, as ${run} found on ${today}." \
-                    "This incident gets a comment each day it holds, and closes when a check shows it gone." \
-                    "How to fix it: ${guide}")" >/dev/null || {
+            gh issue create --repo "${REPOSITORY}" --title "$(title_of "${condition}")" --label "${label}" \
+                --assignee "${assignee}" --body "$(opening "${condition}" "${today}")" >/dev/null || {
                 failed "${condition}" "opening its incident"
                 return
             }
             incident_for "${condition}" >/dev/null || failed "${condition}" "closing a duplicate of its incident"
             return
         fi
-        last="$(gh issue view "${number}" --repo "${REPOSITORY}" --json createdAt,comments \
-            --jq '([.createdAt] + [.comments[].createdAt]) | max | .[0:10]')" || {
+        if [[ "${mode}" == report ]]; then
+            if [[ "${condition}" == not-triaged ]]; then
+                still="**#${ISSUE}** wasn't added either: ${run}."
+            else
+                still="**#${ISSUE}** wasn't added to Triage because of it: ${run}."
+            fi
+            gh issue comment "${number}" --repo "${REPOSITORY}" --body "${still}" >/dev/null ||
+                failed "${condition}" "commenting on #${number}"
+            return
+        fi
+        still="Still holds on ${today}: ${found[${condition}]}. ${run}."
+    elif [[ -n "${number}" && "${condition}" == not-triaged && "${mode}" == check ]]; then
+        still="Still open on ${today}: the issues named above aren't in Triage yet."
+        still+=" This closes when a new issue reaches it."
+    elif [[ -n "${number}" && -n "${cleared[${condition}]+passed}" ]]; then
+        still="$(missed "${number}")" || {
             failed "${condition}" "reading #${number}"
             return
         }
-        if [[ "${last}" != "${today}" ]]; then
-            gh issue comment "${number}" --repo "${REPOSITORY}" \
-                --body "Still holds on ${today}: ${found[${condition}]}. ${run}." >/dev/null ||
-                failed "${condition}" "commenting on #${number}"
+        if [[ "${condition}" == not-triaged ]]; then
+            still="#${ISSUE} was added to Triage on ${today}, so new issues are reaching it again.${still}"
+        else
+            still="Cleared on ${today}: ${run} found it gone.${still}"
         fi
+        gh issue close "${number}" --repo "${REPOSITORY}" --comment "${still}" >/dev/null ||
+            failed "${condition}" "closing #${number}"
+        return
+    else
         return
     fi
-    if [[ -n "${number}" && -n "${cleared[${condition}]+passed}" ]]; then
-        gh issue close "${number}" --repo "${REPOSITORY}" \
-            --comment "Cleared on ${today}: ${run} found it gone." >/dev/null ||
-            failed "${condition}" "closing #${number}"
+    last="$(gh issue view "${number}" --repo "${REPOSITORY}" --json createdAt,comments \
+        --jq '([.createdAt] + [.comments[].createdAt]) | max | .[0:10]')" || {
+        failed "${condition}" "reading #${number}"
+        return
+    }
+    if [[ "${last}" != "${today}" ]]; then
+        gh issue comment "${number}" --repo "${REPOSITORY}" --body "${still}" >/dev/null ||
+            failed "${condition}" "commenting on #${number}"
     fi
 }
 
-if [[ "${mode}" == report ]]; then
-    raise consumer-failed "${DETAIL:-a workflow failed signing in}"
-    conditions=(consumer-failed)
-else
-    case "${KIND}" in
-        organization)
+# The conditions that keep a token from signing in, any of which explains a new issue missing Triage; a warning ahead of
+# an expiry or a rotation explains nothing.
+case "${KIND}" in
+    organization) causes=(missing refused not-installed short) ;;
+    user) causes=(missing refused wrong-account short expired) ;;
+    *)
+        printf 'KIND is organization or user, not %s\n' "${KIND}" >&2
+        exit 64
+        ;;
+esac
+
+case "${mode}" in
+    report)
+        : "${ISSUE:?}"
+        if [[ "${KIND}" == organization ]]; then check_app; else check_token; fi
+        explained=0
+        for condition in "${causes[@]}"; do
+            [[ -z "${found[${condition}]+held}" ]] || explained=1
+        done
+        ((explained)) || raise not-triaged "#${ISSUE} wasn't added to Triage"
+        conditions=("${causes[@]}" not-triaged)
+        ;;
+    placed)
+        : "${ISSUE:?}"
+        passed not-triaged
+        conditions=(not-triaged)
+        ;;
+    check)
+        if [[ "${KIND}" == organization ]]; then
             check_app
             check_rotation
-            conditions=(missing refused not-installed short rotation-due rotation-overdue consumer-failed)
-            ;;
-        user)
+            conditions=("${causes[@]}" rotation-due rotation-overdue not-triaged)
+        else
             check_token
-            conditions=(missing refused wrong-account short expired expiring consumer-failed)
-            ;;
-        *)
-            printf 'KIND is organization or user, not %s\n' "${KIND}" >&2
-            exit 64
-            ;;
-    esac
-    check_watched
-    for repository in "${watched[@]}"; do
-        repository="${repository// /}"
-        [[ -z "${repository}" ]] || conditions+=("no-recent-check in ${repository}")
-    done
-fi
+            conditions=("${causes[@]}" expiring not-triaged)
+        fi
+        check_watched
+        for repository in "${watched[@]}"; do
+            repository="${repository// /}"
+            [[ -z "${repository}" ]] || conditions+=("no-recent-check in ${repository}")
+        done
+        ;;
+    *)
+        printf 'MODE is check, report or placed, not %s\n' "${mode}" >&2
+        exit 64
+        ;;
+esac
 
-gh label create "${label}" --repo "${REPOSITORY}" --color B60205 --force \
-    --description "A token this repository's workflows sign in with needs attention" >/dev/null 2>&1 || true
+[[ "${mode}" == placed ]] || gh label create "${label}" --repo "${REPOSITORY}" --color B60205 --force \
+    --description "The credentials check found something this repository's owner must fix" >/dev/null 2>&1 || true
 for condition in "${conditions[@]}"; do
     keep "${condition}"
 done
