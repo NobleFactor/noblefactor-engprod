@@ -189,7 +189,7 @@ Every GitHub operation checks the active `gh` access before its requests, and st
 | Rejected token | Only a 401 or `Bad credentials` in gh's error line, not gh's own "invalid" line, which it prints for a login it couldn't check; distinguish stored login from `GH_TOKEN` or `GITHUB_TOKEN`; identify renewal or replacement |
 | Any other failure | Quote gh's error line, or the status line of an answer GitHub gave, a server error among them, scrubbed of anything shaped like a token wherever it starts, and claim no fix |
 | Missing scopes | Name only the missing scopes; `project` includes `read:project` |
-| Account unavailable despite scopes | Identify the access boundary and who must grant access |
+| Account unavailable despite scopes | Every command that names an account checks it: one GitHub doesn't have is named, and an organization that refuses the login, as one enforcing single sign-on does, is named with who must grant access (#626) |
 | Rate limit exhausted | Report the reset time in local time |
 
 The configured scope checks require `read:project` for get and diff, plus `repo` for backup. Apply and restore check `repo`, `project`, `admin:org` and `workflow`. These checks do not replace repository, organization or project permissions.

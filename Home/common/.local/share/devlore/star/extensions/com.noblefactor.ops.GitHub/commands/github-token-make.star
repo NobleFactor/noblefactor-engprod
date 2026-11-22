@@ -313,7 +313,7 @@ def run(_command, ctx):
         fail("az is not signed in to Azure; run az login")
     kind = owner_kind(account)
     scopes = ["admin:org"] if kind == "organization" else ["repo"]
-    check_access("star github token make", scopes = scopes, dry_run = ctx.dry_run)
+    check_access("star github token make", account = account, scopes = scopes, dry_run = ctx.dry_run)
     names = _names(kind)
     replace = ctx.args.get("replace") in [True, "true"]
     if kind == "organization":

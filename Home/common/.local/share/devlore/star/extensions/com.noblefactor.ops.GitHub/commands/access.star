@@ -148,15 +148,16 @@ def _stopped(command, login, what, text, rerun):
         _rejected(login, rerun)
     fail("gh couldn't " + what + ": " + line + "\nNo fix is known for that answer; " + rerun)
 
-def check_access(command, org = "", scopes = [], dry_run = False):
+def check_access(command, account = "", scopes = [], dry_run = False):
     """Fail with the one fix when gh cannot do what command needs.
 
-    It checks, in order: gh is there, signed in, with a live token, the scopes, GitHub's rate limit, and the
-    organization. A check that can't reach GitHub stops the command, named as a connection failure (#621).
+    It checks, in order: gh is there, signed in, with a live token, the scopes, GitHub's rate limit, and the account:
+    that GitHub has it, and, for an organization, that this login can reach it (#626). A check that can't reach GitHub
+    stops the command, named as a connection failure (#621).
 
     Args:
       command: the command as the user typed it, star github <...>, named in every message.
-      org: the organization the command reads, checked when given.
+      account: the account the command reads, an organization or a user, checked when given.
       scopes: the token scopes the command needs beyond gh's own.
       dry_run: under star's --dry-run every shell.exec is skipped, so nothing can be checked and nothing is.
     """
@@ -180,10 +181,10 @@ def check_access(command, org = "", scopes = [], dry_run = False):
         what = "check its login" + (" for " + login["account"] if login["account"] else "")
         _stopped(command, login, what, login["error"], rerun)
 
-    account = login["account"] or "this login"
+    who = login["account"] or "this login"
     missing = [s for s in scopes if not _holds(login["scopes"], s)]
     if missing:
-        fail("Your gh login as " + account + " lacks the scope " + command + " needs: " + ", ".join(missing) + ".\n" +
+        fail("Your gh login as " + who + " lacks the scope " + command + " needs: " + ", ".join(missing) + ".\n" +
              "Add it:  gh auth refresh --hostname github.com --scopes " + ",".join(missing) + "\n" + rerun)
 
     code, rate = _run("gh api rate_limit --jq '.resources.core | \"\\(.remaining) \\(.reset)\"'")
@@ -193,10 +194,23 @@ def check_access(command, org = "", scopes = [], dry_run = False):
     if len(rate) == 2 and rate[0] == "0" and rate[1].isdigit():
         _, at = _run("date -d @" + rate[1] + " '+%Y-%m-%d %H:%M %Z' 2>/dev/null || " +
                      "date -r " + rate[1] + " '+%Y-%m-%d %H:%M %Z'")
-        fail("GitHub's rate limit for " + account + " is spent; it resets at " + at.strip() + ".\n" +
+        fail("GitHub's rate limit for " + who + " is spent; it resets at " + at.strip() + ".\n" +
              "Rerun " + command + " after that.")
 
-    if org:
+    if not account:
+        return
+    if [c for c in account.elems() if not (c.isalnum() or c == "-")]:
+        fail(account + " isn't a GitHub account's name: one is letters, digits and hyphens.\n" + rerun)
+    code, kind = _run("gh api graphql -f query='query starOwner { repositoryOwner(login: \"" + account + "\") " +
+                      "{ __typename login id } }' --jq '.data.repositoryOwner.__typename // \"\"'")
+    if code != 0:
+        _stopped(command, login, "look up the account " + account, kind, rerun)
+    kind = kind.strip()
+    if kind == "":
+        fail("GitHub has no account named " + account + " that " + who + " can see.\n" +
+             "Check the name, " + rerun)
+    if kind == "Organization":
+        org = account
         code, answer = _run("gh api -i orgs/" + org)
         head = answer.replace("\r", "").split("\n")[0].strip()
         if not head.startswith("HTTP"):
@@ -206,9 +220,9 @@ def check_access(command, org = "", scopes = [], dry_run = False):
         if " 401 " in head + " ":
             _rejected(login, rerun)
         if " 404 " in head + " " or " 403 " in head + " ":
-            fail(account + " cannot see the organization " + org + " (GitHub answered " + head.split(" ", 1)[-1] +
+            fail(who + " cannot see the organization " + org + " (GitHub answered " + head.split(" ", 1)[-1] +
                  "), though the token holds every scope " + command + " needs.\n" +
-                 "No command here fixes this: an owner of " + org + " must grant " + account + " access to it.")
+                 "No command here fixes this: an owner of " + org + " must grant " + who + " access to it.")
 
         # Any other failed answer, a server error among them, proves nothing about the token, and stops the command.
         if code != 0:

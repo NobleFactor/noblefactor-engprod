@@ -1427,6 +1427,11 @@ if [[ "${rest_path}" != graphql ]]; then
     ((include)) || { printf 'stand-in gh: a REST call without -i: %s\n' "${rest_path}" >&2; exit 1; }
     file="$(fixture "rest/${rest_path//[?=&]/_}.json")"
     if [[ "${rest_path}" =~ ^orgs/[^/]+$ ]]; then
+        # A case's own answer, from ${GH_REMOTES}/org-answer, failing as gh does for an HTTP error (#626).
+        if [[ -f "${GH_REMOTES}/org-answer" ]]; then
+            cat -- "${GH_REMOTES}/org-answer"
+            exit 1
+        fi
         printf 'HTTP/2.0 200 OK\n\n{}\n'
         exit 0
     fi
@@ -5591,7 +5596,7 @@ unset APP_ID
 expect "221 (#451): an app not installed on the organization is refused, and nothing written" error "${writes}"'
     (writes | length) == 0' 'NOBLEFACTOR_AUTOMATION_APP_ID: the app whose ID it names isn.t installed on Acme' text
 
-# 222 to 241 (#621). The access check every command makes first: a connection failure is named as one, never as a
+# 222 to 241 (#621), and 242 to 247 (#626). The access check every command makes first: a connection failure is named as one, never as a
 # rejected token, and only a 401 is a rejected token; a missing login, a missing scope and a spent rate limit are as
 # before. Each stops before any other GitHub call. star github model get makes the check here.
 auth="${run_directory}/remotes/auth-status"
@@ -5707,6 +5712,59 @@ expect "241 (#621): a token's characters never decide the diagnosis" error "" 'N
 check "241 (#621): nor do they make it GitHub not reached" \
     bash -c "! grep -q 'No credential is at fault' '${run_directory}/errors'"
 rm -f -- "${auth}"
+
+# 242 to 247 (#626). The access check reads the account a command names: that GitHub has it, and, for an organization,
+# that this login can reach it. No command asked for that before, so an organization that refused the login was found
+# only by the command's first real request. Each failure stops before any other request.
+declare -r account_stopped='([$calls[] | select(.[0] == "api" and .[1] != "rate_limit"
+    and (any(.[]; test("starOwner|^orgs/[A-Za-z0-9-]+$")) | not))] | length) == 0'
+remotes="${run_directory}/remotes"
+
+# 242. An organization that refuses the login, as one enforcing single sign-on does.
+refuses() {
+    printf '%s\n' 'HTTP/2.0 403 Forbidden' '' \
+        '{"message": "Resource protected by organization SAML enforcement."}' >"${remotes}/org-answer"
+}
+refuses
+run_star "${data}" github model get NobleFactor
+expect "242 (#626): an organization that refuses the login stops the command, naming the boundary" error \
+    "${account_stopped}" 'tester cannot see the organization NobleFactor \(GitHub answered 403 Forbidden\)' text
+expect "242 (#626): and who must grant access" error "" 'an owner of NobleFactor must grant tester access' text
+
+# 243. A server error there proves nothing about the token: quoted, no fix claimed.
+printf '%s\n' 'HTTP/2.0 503 Service Unavailable' '' '{"message": "Service Unavailable"}' >"${remotes}/org-answer"
+run_star "${data}" github model get NobleFactor
+expect "243 (#626): a server error reading the organization stops the command, quoted" error "${account_stopped}" \
+    'couldn.t read the organization NobleFactor: GitHub answered 503 Service Unavailable' text
+expect "243 (#626): no fix is claimed for it" error "" 'No fix is known for that answer' text
+
+# 244. Every command that names an account makes the check.
+refuses
+for command in "model get NobleFactor" "model diff noblefactor.json NobleFactor" \
+    "model apply changed.json NobleFactor" "model backup NobleFactor" "model restore NobleFactor" \
+    "token make NobleFactor --vault kv-acme-test"; do
+    read -r -a words <<<"${command}"
+    run_star "${data}" github "${words[@]}"
+    expect "244 (#626): star github ${words[0]} ${words[1]} checks the organization it names" error "" \
+        'tester cannot see the organization NobleFactor' text
+done
+rm -f -- "${remotes}/org-answer"
+
+# 245. A user account makes no organization request.
+run_star "${data}" github model get test-user
+expect "245 (#626): a user account makes no organization request" ok \
+    '([$calls[] | select(any(.[]; test("^orgs/")))] | length) == 0'
+
+# 246. An account GitHub doesn't have.
+jq -n '[{data: {repositoryOwner: null}}]' >"${run_directory}/fixtures/starOwner/nobody.json"
+run_star "${data}" github model get nobody
+expect "246 (#626): an account GitHub doesn't have is named" error "${account_stopped}" \
+    'GitHub has no account named nobody that tester can see' text
+
+# 247. A name that can't be an account's is refused before any request is made of it.
+run_star "${data}" github model get no_such_account
+expect "247 (#626): a name that can't be an account's is refused" error "${account_stopped}" \
+    'no_such_account isn.t a GitHub account.s name' text
 
 ((failures == 0)) || error $EX_SOFTWARE "${failures} of the ${case_count} cases failed"
 success "every case passed"

@@ -22,6 +22,9 @@ documents:
   - kind: Related work
     url: https://github.com/NobleFactor/noblefactor-engprod/issues/614
     text: "Model publication stops for Owner review and verifies actual merge requirements"
+  - kind: Related work
+    url: https://github.com/NobleFactor/noblefactor-engprod/issues/626
+    text: "star github commands never check that their login can reach the organization they read"
 ---
 
 # Every process that depends on a token alerts us when the token expires or goes missing, until it is fixed
@@ -96,6 +99,25 @@ What gh itself says, read on 2026-11-21 with gh 2.104.0 and GitHub unreachable: 
 - The deployed command, run with `HTTPS_PROXY` pointing at a port nothing listens on, names GitHub as unreachable and no credential fault; the result is posted on #621.
 - Section 6, § 8's table of failures gains the connection failure.
 
+<a id="issue-626"></a>
+
+### 2.3 Issue 626
+
+#626: `check_access` can check that the login reaches the organization a command reads, section 6 § 8's "Account unavailable despite scopes", but none of its 24 callers passes an organization, so the check has never run. A command run against an organization that refuses the login, as one enforcing single sign-on does, gets past the access check and fails on its first real request with GitHub's own error. Found fixing #625's review.
+
+<a id="issue-626-fix"></a>
+
+#### 2.3.1 The fix
+
+- `check_access` takes the account a command names, an organization or a user. After the rate limit, it asks GitHub what kind of account it is: a name that can't be an account's is refused first, and one GitHub has no account for is named. For an organization, it reads the organization: a 401 is a rejected token, a 403 or a 404 names the boundary and who must grant access, and any other failure is quoted with no fix claimed. A user account needs no further request.
+- `star github model get`, `diff`, `apply`, `backup` and `restore`, and `token make`, the commands that name an account, pass it.
+
+<a id="issue-626-tests"></a>
+
+#### 2.3.2 Tests
+
+Cases 242 to 247 in `tests/Test-StarGitHub`: an organization that refuses the login, and a server error there, each stopping the command before any other request; every command that names an account making the check; a user account making no organization request; an account GitHub doesn't have; and a name that can't be an account's. Each fails without the change.
+
 <a id="current-state"></a>
 
 ## 3. Current state
@@ -116,7 +138,7 @@ Read on 2026-11-21, at develop c69b4ae:
 - **`4-storage-and-reach.decisions.md`:** a record for checking each binding where it lives and raising its incident there, proposed until approved.
 - **The guide:** what an incident means and how each clears.
 - **Section 4, § 3:** `workflow-templates/` here, the templates' source, and the installed check.
-- **Section 6, § 8:** the access check's failures: GitHub not reached, a rejected token only on a 401 or Bad credentials, and any other failure quoted with no fix claimed (#621).
+- **Section 6, § 8:** the commands that check the account they name (#626), and the access check's failures: GitHub not reached, a rejected token only on a 401 or Bad credentials, and any other failure quoted with no fix claimed (#621).
 - **README.md:** `workflow-templates/`.
 
 <a id="proposed-implementation"></a>
@@ -202,6 +224,7 @@ Questions for you, 3 of them:
 | A new issue that doesn't reach Triage is reported at once | The token's alert, or "New issues aren't reaching Triage", naming the issue; closed when a later issue reaches Triage, listing the issues still missing | The same suite | Stand-ins |
 | The checks run in the field | Each participating repository's daily check runs and passes | The runs of the first two days after landing | The real accounts |
 | A connection failure is never a rejected token (#621) | GitHub not reached is named, gh's line quoted, with no credential advice; only a 401 is a rejected token | `tests/Test-StarGitHub`, cases 222 to 241 | Stand-in `gh` |
+| A command reading an organization checks the login can reach it (#626) | Refused, it stops naming who must grant access; a user account makes no organization request | `tests/Test-StarGitHub`, cases 242 to 247 | Stand-in `gh` |
 | The deployed command (#621) | With GitHub unreachable, it names no credential fault | Run with `HTTPS_PROXY` at a port nothing listens on, after `writ deploy` | The owner's Mac |
 
 There are no sandbox runs (§ 12). Real credentials are never broken to prove an alert: the conditions are proved against the stand-ins, and the field shows the checks running and passing.
@@ -212,7 +235,7 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 
 | Milestone | Required? | Expected evidence | State/result |
 | --- | --- | --- | --- |
-| Implementation | Yes | The commits of §§ 9.2 to 9.6, reviewed | Pending |
+| Implementation | Yes | The commits of §§ 9.2 to 9.7, reviewed | Pending |
 | Merge | Yes | The pull request and the commit it lands | Pending |
 | Deployment | Yes: the templates landed in each participating repository (#613), and `writ deploy` of the extension (#621) | Each repository holding the check; the deployed `access.star` | Pending |
 | Verification | Yes, in the field | Two days of passing checks in every participating repository, posted on #613; the deployed command with GitHub unreachable, posted on #621 | Pending |
@@ -231,7 +254,7 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 
 ### 9.2 Phase 2: #621, the access diagnostics
 
-- [x] `access.star` as § 2.2.1 sets out; its cases, 222 to 234; section 6, § 8. The suite passes all 685 checks, 27 of them #621's. The deployed command's check of § 2.2.3 moves to § 9.7, after the merge.
+- [x] `access.star` as § 2.2.1 sets out; its cases, 222 to 234; section 6, § 8. The suite passes all 685 checks, 27 of them #621's. The deployed command's check of § 2.2.3 moves to § 9.8, after the merge.
 
 <a id="phase-2-the-check"></a>
 
@@ -260,9 +283,15 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 - [x] R3: what a new issue that doesn't reach Triage raises, as decided on 2026-11-21 (§ 12): § 5.3, both Triage templates, and the script's report and placed modes. `consumer-failed` is gone. `tests/Test-CredentialsCheck`, 62 cases, every one passing.
 - [x] #625's audit, A02 to A07: #613's body rewritten to the approved design, and the plan review that didn't happen recorded in § 12; this plan active, #621 in §§ 2, 4, 7, 8 and 10, § 11 brought up to date, and its sections numbered in order; section 4's §§ 3 and 4.1 and ACCESS-007 naming `workflow-templates/` as the templates' source, with the README; ACCESS-007's recorded time made the commit's, 08:23:15Z, and ACCESS-006 and MODEL-007 to 009's made c910441's, 06:42:51Z, all four having carried an invented 03:00:00Z; the guide's sections numbered in order; and the script's exemption from `Declare-BashScript` stated in its header and § 5.1. A01, a review not yet made, was answered by Codex's.
 
+<a id="phase-6b-issue-626"></a>
+
+### 9.7 Phase 7: #626, the account a command names
+
+- [x] `check_access` and the six commands that name an account, as § 2.3.1 sets out; cases 242 to 247, all 711 checks passing; section 6, § 8.
+
 <a id="phase-5-merge-landing-and-verification"></a>
 
-### 9.7 Phase 7: merge, landing and verification
+### 9.8 Phase 8: merge, landing and verification
 
 - [ ] Merged; the templates landed in each participating repository; two days of passing checks posted on #613.
 - [ ] Deployed with `writ deploy`; the deployed command, run with `HTTPS_PROXY` at a port nothing listens on, names GitHub as unreachable and no credential fault; posted on #621.
@@ -273,7 +302,8 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 
 - `workflow-templates/` in this repository, new: the source of `credentials-check.sh`, `credentials-check.json`, `credentials-check.organization.yml` and `credentials-check.user.yml`, and of each account's Triage template, `triage.organization.yml` and `triage.user.yml`, copied from NobleFactor/.github and David-Noble-at-work/.github with the failure step added. No copy of the Triage template lived here before; § 5.4 lands each in its account's `.github` and each participating repository.
 - `tests/Test-CredentialsCheck`: new.
-- `Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/access.star` and `tests/Test-StarGitHub` (#621).
+- `Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/access.star` and `tests/Test-StarGitHub` (#621, #626).
+- The same extension's `commands/github-model-get.star`, `github-model-diff.star`, `github-model-apply.star`, `github-model-backup.star`, `github-model-restore.star` and `github-token-make.star` (#626).
 - `README.md`.
 - `docs/architecture/issue-data-model/4-storage-and-reach.md`, `4-storage-and-reach.decisions.md`, `6-the-asset-and-its-sync.md` (#621), `docs/reference/issue-tracking-credentials.md`.
 
@@ -289,9 +319,10 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 ## 12. Approval and departures
 
 - **Approved, 2026-11-21.** David Noble approved this plan at revision 2856d6a, for #613 and #621, in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`, and directed the work to proceed phase by phase, each committed and pushed, and then the pull request opened for the full set. The three calls of § 6 are taken as § 6 makes them: incidents in the repository whose binding failed, assigned to David-Noble-at-work; daily, and 14 days ahead; and the check landed by hand before #614.
+- **#626 in this pull request, decided 2026-11-21.** The bug #625's review found, an organization check no command made, is fixed here rather than left for later, since this pull request already changes the check. Decided in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`.
 - **When a new issue doesn't reach Triage, decided 2026-11-21.** The token is checked first: a bad one raises its own alert, naming the issue; a healthy one raises "New issues aren't reaching Triage", which closes only when a later issue reaches Triage, listing the issues still missing. It replaces `consumer-failed`, which said Triage had failed when what failed was placing an issue in it, and which a healthy token check closed though issues could still be missing. Decided in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`.
 - **No plan review.** Phase 1 named Codex's review of this plan before your approval. You approved it at 2856d6a without that review, and the work went ahead at once; Codex reviewed the work itself, on #625.
-- **#625's review, 2026-11-21.** Codex reviewed 1f76efa and found eight faults, R1 to R8, each fixed in § 9.6. R3, what a failed Triage run raises, needs your decision.
+- **#625's review, 2026-11-21.** Codex reviewed 1f76efa and found eight faults, R1 to R8, each fixed in § 9.6. R3, what a new issue that doesn't reach Triage raises, was decided the same day, below.
 - **Phase 9.1b, now § 9.2, ticked before its design update.** 3beaa44 ticked 9.1b, section 6 § 8 among it, but the section's change landed in the next commit, 15acbb9: it had been made in the main clone, not this worktree. #625's review found it, as R8. The history stays as it is; each fix since lands with its documents and its box.
 - **No sandbox runs, decided 2026-11-21.** Setting up the sandboxes' credentials takes the same manual effort every time, so until GitHub offers a way to automate it, work is verified in the field and the sandbox accounts are deleted. #613's evidence, which names the sandboxes, is replaced by § 7.
 
