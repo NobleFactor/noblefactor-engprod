@@ -176,7 +176,7 @@ The workflow, its script and its permissions file, whose source is this reposito
 
 - **One central monitor writing every incident in noblefactor-engprod.** Rejected: a workflow's `GITHUB_TOKEN` writes only its own repository, so a central monitor would need a credential of its own that could itself fail, and it couldn't read a private repository's secrets. Each repository checks and reports itself; the central part reads only public check runs.
 - **Alerting from the Triage workflow alone.** Rejected: it runs only when an issue opens, so it can't repeat on a schedule or warn ahead of expiry.
-- **A concurrency group serializing the check and the Triage report.** Rejected: GitHub keeps one run pending per group and cancels any other, so overlapping Triage runs and daily checks would be lost. Duplicates are closed instead (§ 5.2).
+- **A concurrency group serializing the check and the Triage report.** Not taken. By default GitHub keeps one run pending per group and cancels the one already pending, which would lose overlapping runs; `queue: max` keeps up to 100 pending and cancels any past that. Closing duplicates on every lookup needs neither, and holds no run waiting on another (§ 5.2).
 - **Rotation dates in the model's token record.** Rejected: the record names a token and its sources, never its schedule, which is free to change; an organization variable holds it.
 
 Questions for you, 3 of them:
