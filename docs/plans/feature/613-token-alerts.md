@@ -45,7 +45,7 @@ Every repository whose workflows sign in with a token checks that token every da
 At the end:
 
 1. **A credentials check** in each participating repository, `.github/workflows/credentials-check.yml`, landed from the account's `.github` workflow template like the Triage workflow. It runs daily and on demand.
-2. **Each check proves its binding.** For an organization, it mints an installation token from the same two organization secrets the Triage workflow reads, and requires the permissions GitHub grants it to include every one the repository's workflows need, writing to projects among them. For a user account, it calls GitHub with the repository's classic token and requires its login to be the account, its scopes to include `repo` and `project`, and its expiry to be outside the warning margin.
+2. **Each check proves its binding.** For an organization, it mints an installation token from the same two organization secrets the Triage workflow reads, and requires the permissions GitHub grants it to include every one the repository's workflows need, writing to projects among them, and the app to reach the repository and every other one its workflows write to (§ 5.14). For a user account, it calls GitHub with the repository's classic token and requires its login to be the account, its scopes to include `repo` and `project`, and its expiry to be outside the warning margin.
 3. **One incident per repository and condition,** an issue titled `Token alert: <condition>`, labeled `token-alert`, assigned to David-Noble-at-work. The run's own `GITHUB_TOKEN`, granted `issues: write`, writes it, so it never depends on the credential being checked. While open, it gets a comment each day the condition holds. It closes when the condition's own clearing rule is met.
 4. **When a new issue doesn't reach Triage,** the Triage workflow checks the token at once: a bad one raises its own alert, naming the issue; a healthy one raises "New issues aren't reaching Triage", which closes only when a later issue reaches Triage, listing the issues missed earlier, to check.
 5. **Expiry and rotation:**
@@ -106,7 +106,7 @@ Read on 2026-11-21, at develop c69b4ae:
 
 - **Section 4, § 4.1:** the credentials check, its incidents and their clearing rules, and `TOKEN_ROTATION_DUE`; its inventory gains the site's Azure credentials, and its text the Azure check and each job's own report.
 - **`4-storage-and-reach.decisions.md`:** ACCESS-007, accepted: checking each binding where it lives and raising its incident there; ACCESS-008, accepted: a site's Azure credentials checked where it deploys, their expiry from a repository variable, and every job that signs in reporting its own failure.
-- **The guide:** what an incident means and how each clears, the Azure alerts among them, and how the Azure credentials are renewed (§ 9).
+- **The guide:** what an incident means and how each clears, the Azure alerts and `unreachable` among them; every setting the check reads (§ 7); and how the Azure credentials are renewed (§ 9).
 - **Section 4, § 3:** `workflow-templates/` here, the templates' source, and the installed check.
 - **Section 6, § 8:** the commands that check the account they name (#626), and the access check's failures: GitHub not reached, a rejected token only on a 401 or Bad credentials, and any other failure quoted with no fix claimed (#621).
 - **README.md:** `workflow-templates/`.
@@ -295,7 +295,7 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 
 | Milestone | Required? | Expected evidence | State/result |
 | --- | --- | --- | --- |
-| Implementation | Yes | The commits of §§ 9.2 to 9.9, reviewed | §§ 9.2 to 9.8 in #625; § 9.9 in #632, under review |
+| Implementation | Yes | The commits of §§ 9.2 to 9.9, reviewed | §§ 9.2 to 9.8 in #625; §§ 9.9 and 9.10 in #632, under review |
 | Merge | Yes | The pull requests and the commits they land | #625, fe18e58, on 2026-11-22; #632 pending |
 | Deployment | Yes: the templates landed in each participating repository (#613), and `writ deploy` of the extension (#621, #626) | Each repository holding the check; the deployed `access.star` | The first landing, seven repositories, and the extension, on 2026-11-22; the second landing, with the failure steps and the site's two variables, after #632 |
 | Verification | Yes, in the field | Two days of passing checks in every participating repository, posted on #613; the deployed command with GitHub unreachable, posted on #621 | #621 and #626 posted on 2026-11-22; #613's two days after the second landing |
@@ -370,7 +370,7 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 - [x] #632's audit by agy, D02 to D04 and D06: § 12's records of the canonical clone, phase 9's start and #632's PR script; §§ 2, 4, 7 and 8 and the frontmatter brought to #632's scope; section 4's inventory date and ACCESS-008; the guide's § 9 for the Azure credentials; #613's body; #629's and devlore-cli#1241's plan links to develop; and #632's description, 103 cases. D05, the four parents' Backlog rows, done on your approval with `star github issue move --backlog`.
 - [x] #632's review, C02: the app's reach to this repository and every one `TOKEN_CHECK_TARGETS` names, as § 5.14 sets out; `tests/Test-CredentialsCheck`, 114 cases, 11 of which fail against 333df2a's files.
 - [x] #632's review, C04: the Azure expiry alerts follow the recorded date while Azure is down, as § 5.11 now says; `tests/Test-CredentialsCheck`, 120 cases.
-- [ ] Landed in every repository the change reaches, its first check passing.
+- [ ] Landed in every repository the change reaches, its first check passing: the templates, the Triage templates among them; the failure steps in devlore-cli's three app workflows, devlore-registry's three and the site's deployment, with `issues: write` granted where a job's token lacks it; `TOKEN_CHECK_TARGETS` on devlore-cli and devlore-registry, as § 5.14 lists; and `AZURE_STATIC_SITE` and `AZURE_CREDENTIALS_EXPIRES` on devlore.noblefactor.com.
 
 <a id="phase-10-633-the-triage-templates-lines"></a>
 

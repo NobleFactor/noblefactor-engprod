@@ -162,14 +162,29 @@ List what each account holds, by name. GitHub never shows a secret's value.
 ```bash
 gh secret list --org <organization>
 gh secret list --repo <owner>/<repository>
+gh variable list --repo <owner>/<repository>
 star github model diff <model> <account>
 ```
 
-A secret can be present and still wrong, so the proof is a Triage run that succeeds:
+A secret can be present and still wrong, so the proof is the repository's daily credentials check, which signs in with it. Run it on demand, and read how it ended:
 
 ```bash
-gh run list --repo <owner>/<repository> --workflow triage.yml --limit 5
+gh workflow run credentials-check.yml --repo <owner>/<repository>
+gh run list --repo <owner>/<repository> --workflow credentials-check.yml --limit 5
 ```
+
+Besides the secrets each account needs (§ 1), the check reads these:
+
+| Setting | Kind | What it holds | Set on |
+| --- | --- | --- | --- |
+| `TOKEN_ROTATION_DUE` | Organization variable | The date the app's key is next rotated, YYYY-MM-DD | Each organization |
+| `TOKEN_CHECK_WATCH` | Repository variable | The other repositories whose daily check this one watches, comma-separated | noblefactor-engprod |
+| `TOKEN_CHECK_TARGETS` | Repository variable | The other repositories in the organization this one's workflows write to with the app, comma-separated | A repository whose workflows write elsewhere: devlore-cli and devlore-registry |
+| `AZURE_STATIC_SITE` | Repository variable | The static site the repository deploys to Azure | devlore.noblefactor.com |
+| `AZURE_CREDENTIALS_EXPIRES` | Repository variable | The date the Azure service principal's secret expires, YYYY-MM-DD | Wherever `AZURE_STATIC_SITE` is set |
+| `AZURE_CREDENTIALS`, `AZURE_STATIC_WEB_APPS_API_TOKEN` | Repository secrets | The service principal's JSON, as `azure/login` reads it, and the site's deployment token | Wherever `AZURE_STATIC_SITE` is set |
+
+A workflow that signs in also checks its credentials the moment it fails, with the two steps it ends with, and a bad one raises its alert, naming the workflow (§ 8).
 
 <a id="alerts"></a>
 
