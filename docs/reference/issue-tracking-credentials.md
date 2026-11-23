@@ -183,6 +183,7 @@ Every participating repository checks its token each day and opens an issue, `To
 | `refused` | GitHub refused the token or the app's key, or wouldn't mint an installation token | Renew or regenerate it (§ 9) |
 | `not-installed` | The organization's app isn't installed on the organization | Install it on all repositories |
 | `short` | The token lacks a permission or scope the workflows need | Add it on the app's page, or make a token with the scope |
+| `unreachable` | The app can't reach this repository, or one the repository variable `TOKEN_CHECK_TARGETS` names | Add the repository to the app's installation, on the organization's Installed GitHub Apps page, or correct the variable |
 | `wrong-account` | The classic token signs in as another account | Make it signed in as the account it serves |
 | `expiring`, `expired` | The classic token expires within 14 days, or has | Regenerate it (§ 9) |
 | `rotation-due`, `rotation-overdue` | The app key's rotation, `TOKEN_ROTATION_DUE`, is within 14 days, or past | Rotate the key, and set the next date |

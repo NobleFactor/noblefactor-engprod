@@ -147,6 +147,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           APP_ID: ${{ secrets.NOBLEFACTOR_AUTOMATION_APP_ID }}
           APP_PRIVATE_KEY: ${{ secrets.NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY }}
+          TARGETS: ${{ vars.TOKEN_CHECK_TARGETS }}
           ISSUE: ${{ github.event.issue.number }}
           CLASSIFIED: ${{ steps.scenario.outcome == 'success' && steps.collection.outcome == 'success' }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

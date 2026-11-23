@@ -169,13 +169,13 @@ recorded_at: "2026-11-22T00:19:40Z"
 
 ## 8. Check a site's Azure credentials where it deploys, and have every job that signs in report its own failure
 
-Where a repository's variable `AZURE_STATIC_SITE` names a static site, its daily check also proves the Azure credentials the site's deployment signs in with: the service principal signs in, its secret's expiry is outside the margin, and the stored deployment token is the site's current one. The expiry is the date in the repository variable `AZURE_CREDENTIALS_EXPIRES`, set when the secret is made. Every job that signs in, with the app or to Azure, ends with two steps that check its credentials the moment it fails, and a bad one raises its alert, naming the workflow and its run.
+Where a repository's variable `AZURE_STATIC_SITE` names a static site, its daily check also proves the Azure credentials the site's deployment signs in with: the service principal signs in, its secret's expiry is outside the margin, and the stored deployment token is the site's current one. The expiry is the date in the repository variable `AZURE_CREDENTIALS_EXPIRES`, set when the secret is made. Every job that signs in, with the app or to Azure, ends with two steps that check its credentials the moment it fails, and a bad one raises its alert, naming the workflow and its run. Every check of the app also proves it reaches each repository the workflows write to, from the repository variable `TOKEN_CHECK_TARGETS`, by a token GitHub mints for that repository alone.
 
 Scope: devlore.noblefactor.com's deployment, and the workflows in devlore-cli and devlore-registry that sign in with the app.
 
 **Reason:** #613 asks that every process depending on a token report when it can't sign in, and the daily check alone reported a workflow's failure up to a day late. The site's deployment signs in to Azure, not GitHub, so its credentials are checked where it deploys, like every other binding ([ACCESS-007](#access-007)).
 
-**Alternatives:** Reading the secret's expiry from Azure was rejected: it takes a directory permission the service principal needs for nothing else. A check only daily was rejected: a workflow that fails on its credential would go unreported until the next day.
+**Alternatives:** Proving the app's health alone was rejected: an installation that loses one repository still mints a token for the rest, so a workflow writing there fails with nothing raised. Reading the secret's expiry from Azure was rejected: it takes a directory permission the service principal needs for nothing else. A check only daily was rejected: a workflow that fails on its credential would go unreported until the next day.
 
 **Consequence:** The variable has to be set again whenever the secret is renewed, or the check warns of an expiry that isn't. Each signing-in job carries the two steps, landed with the check, and its own token needs `issues: write`. A process outside GitHub Actions isn't checked.
 

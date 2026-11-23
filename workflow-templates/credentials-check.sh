@@ -27,6 +27,11 @@
 # earlier, to check: closing an alert never adds them. An alert says only what was seen: what happened in the run, and
 # what the token check found right after it, never which caused which.
 #
+# An organization's app must reach this repository and every other one its workflows write to with the app, which the
+# repository variable TOKEN_CHECK_TARGETS names: GitHub mints a token for each repository alone, and refuses one the
+# app's installation doesn't cover. A refusal raises unreachable, naming each repository; only every one reached
+# clears it. Every run in a repository, the daily check, Triage's report and a workflow's own, reads the same list.
+#
 # Where the repository variable AZURE_STATIC_SITE names a static site, the Azure credentials its deployment signs in
 # with are checked too: AZURE_CREDENTIALS, the service principal azure/login reads, must sign in, and its secret's
 # expiry, which the repository variable AZURE_CREDENTIALS_EXPIRES records, must be beyond the margin;
@@ -45,6 +50,8 @@
 #   PAT                 a user account's classic token, from its secret.
 #   ROTATION_DUE        an organization's next key rotation, YYYY-MM-DD, from TOKEN_ROTATION_DUE; optional.
 #   WATCH               repositories whose latest check this run also watches, comma-separated; optional.
+#   TARGETS             the other repositories, in the account, this repository's workflows write to with the app,
+#                       comma-separated, from TOKEN_CHECK_TARGETS; optional. This repository is always reached too.
 #   MODE                check, the default; report, when a new issue wasn't added to Triage or a workflow failed; or
 #                       placed, when a new issue was added to Triage.
 #   ISSUE               the new issue's number: in report mode, a Triage miss; in placed mode, the issue placed.
@@ -239,6 +246,50 @@ check_app() {
         return
     fi
     passed missing refused not-installed short
+    check_reach "${jwt}" "${installation}"
+}
+
+# check_reach proves the app reaches this repository and every one TARGETS names: GitHub mints a token for each
+# repository alone, and refuses one its installation doesn't cover, with HTTP 422. Every repository reached clears
+# unreachable; an answer that proves nothing ends the run 2.
+check_reach() {
+    local jwt="$1" installation="$2" name code list
+    local -a names=("${REPOSITORY#*/}") targets=() missed=()
+    IFS=',' read -r -a targets <<<"${TARGETS:-}"
+    for name in "${targets[@]}"; do
+        name="${name// /}"
+        [[ -n "${name}" ]] || continue
+        if [[ "${name}" == */* ]]; then
+            if [[ "${name%%/*}" != "${ACCOUNT}" ]]; then
+                printf 'TOKEN_CHECK_TARGETS names %s, outside %s, which its app can never reach\n' "${name}" \
+                    "${ACCOUNT}" >&2
+                exit 64
+            fi
+            name="${name#*/}"
+        fi
+        names+=("${name}")
+    done
+    mapfile -t names < <(printf '%s\n' "${names[@]}" | sort -u)
+    for name in "${names[@]}"; do
+        jq -n --arg r "${name}" '{repositories: [$r]}' >"${work}/request"
+        code="$(call -X POST -H "Authorization: Bearer ${jwt}" -H "Accept: application/vnd.github+json" \
+            -H "Content-Type: application/json" --data "@${work}/request" \
+            "${api}/app/installations/${installation}/access_tokens")" || exit 2
+        case "${code}" in
+            201) ;;
+            422) missed+=("${ACCOUNT}/${name}") ;;
+            *)
+                refusal "${code}" || inconclusive "a token for ${ACCOUNT}/${name} alone" "${code}"
+                missed+=("${ACCOUNT}/${name}")
+                ;;
+        esac
+    done
+    if ((${#missed[@]} == 0)); then
+        passed unreachable
+        return
+    fi
+    printf -v list '%s, ' "${missed[@]}"
+    raise unreachable "app ${APP_ID} can't reach ${list%, }: GitHub refused it a token for each"
 }
 
 # check_rotation warns before an app key's rotation date, and after it; a date beyond the margin clears both.
@@ -693,7 +744,7 @@ keep() {
 # The conditions that keep a token from signing in, any of which explains a new issue missing Triage; a warning ahead of
 # an expiry or a rotation explains nothing.
 case "${KIND}" in
-    organization) causes=(missing refused not-installed short) ;;
+    organization) causes=(missing refused not-installed short unreachable) ;;
     user) causes=(missing refused wrong-account short expired) ;;
     *)
         printf 'KIND is organization or user, not %s\n' "${KIND}" >&2
@@ -712,7 +763,7 @@ case "${mode}" in
                 case "${check}" in
                     app)
                         check_app
-                        conditions+=(missing refused not-installed short)
+                        conditions+=(missing refused not-installed short unreachable)
                         ;;
                     token)
                         check_token
