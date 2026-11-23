@@ -281,6 +281,7 @@ Questions for you, 3 of them:
 | A site's Azure credentials raise their incidents | Each Azure condition raises, repeats and clears by its own rule; Azure not reached raises nothing of the sign-in's or the token's | The same suite | Stand-in `curl` for Azure |
 | A job's own failure is reported at once | A bad credential's alert names the workflow and its run; a healthy one raises nothing; the steps run as a job runs them, and on a failed Azure sign-in the job carries on past | The same suite | Stand-ins |
 | A duplicate alert is resolved | Closed with its Resolution set to Duplicate, every line it gained carried, none twice; left open, the run ending 3, when the Resolution can't be set | The same suite | Stand-ins |
+| The Triage templates' lines (#633) | Every line within 120 characters; the sorting steps print, output and call exactly as before | `tests/Test-TriageTemplates`, 31 cases, passing before and after | Stand-in `gh` |
 | The checks run in the field | Each participating repository's daily check runs and passes, devlore.noblefactor.com's checking its Azure credentials | The runs of the first two days after the second landing | The real accounts |
 | A connection failure is never a rejected token (#621) | GitHub not reached is named, gh's line quoted, with no credential advice; only a 401 is a rejected token | `tests/Test-StarGitHub`, cases 222 to 241 | Stand-in `gh` |
 | A command reading an organization checks the login can reach it (#626) | Refused, it stops naming who must grant access; a user account makes no organization request | `tests/Test-StarGitHub`, cases 242 to 255 | Stand-in `gh` |
@@ -376,7 +377,7 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 ### 9.10 Phase 10: #633, the Triage templates' lines
 
 - [x] `tests/Test-TriageTemplates`, passing against the templates as they are: 31 cases, four of which fail when a message and a GraphQL variable in the organization template are changed.
-- [ ] Every line of both Triage templates within 120 characters, the test passing after.
+- [x] Every line of both Triage templates within 120 characters, the test passing after: each split GraphQL query checked equal to the original but for whitespace; both templates parse; every step's script passes shellcheck.
 
 <a id="files-and-related-assets"></a>
 
