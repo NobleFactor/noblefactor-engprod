@@ -375,7 +375,7 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 
 ### 9.10 Phase 10: #633, the Triage templates' lines
 
-- [ ] `tests/Test-TriageTemplates`, passing against the templates as they are.
+- [x] `tests/Test-TriageTemplates`, passing against the templates as they are: 31 cases, four of which fail when a message and a GraphQL variable in the organization template are changed.
 - [ ] Every line of both Triage templates within 120 characters, the test passing after.
 
 <a id="files-and-related-assets"></a>
