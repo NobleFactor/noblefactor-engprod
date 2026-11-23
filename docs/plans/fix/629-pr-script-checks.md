@@ -83,7 +83,7 @@ As first delivered on 2026-11-22, each form ran up to 60 rounds of `gh pr checks
 | Implementation | Yes | The commits of §§ 9.2 and 9.4 | § 9.2's in #630; § 9.4's on `fix/629-pr-script-deadline` |
 | Merge | Yes | The pull requests and the commits they land | #630, a02ce8b, on 2026-11-22; the clock's pending |
 | Deployment | No: a guide | None | Not required |
-| Verification | Yes | § 7's last row, posted on #629 | The rounds' seen in #632's script on 2026-11-23; the clock's pending |
+| Verification | Yes | § 7's last row, posted on #629 | The rounds' seen in #632's script on 2026-11-23; the clock's in #634's own script the same day, waiting out its checks for 16 minutes, posted on #629 |
 
 <a id="implementation-phases"></a>
 
