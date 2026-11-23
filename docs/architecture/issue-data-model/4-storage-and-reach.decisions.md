@@ -1,7 +1,7 @@
 ---
 title: "Issue storage and access decisions"
 status: draft
-updated: 2026-11-21
+updated: 2026-11-23
 ---
 
 # Issue storage and access decisions
@@ -163,4 +163,31 @@ approved_by: David Noble
 recorded_by: Claude Code
 decided_at: "2026-11-21"
 recorded_at: "2026-11-22T00:19:40Z"
+```
+
+<a id="access-008"></a>
+
+## 8. Check a site's Azure credentials where it deploys, and have every job that signs in report its own failure
+
+Where a repository's variable `AZURE_STATIC_SITE` names a static site, its daily check also proves the Azure credentials the site's deployment signs in with: the service principal signs in, its secret's expiry is outside the margin, and the stored deployment token is the site's current one. The expiry is the date in the repository variable `AZURE_CREDENTIALS_EXPIRES`, set when the secret is made. Every job that signs in, with the app or to Azure, ends with two steps that check its credentials the moment it fails, and a bad one raises its alert, naming the workflow and its run.
+
+Scope: devlore.noblefactor.com's deployment, and the workflows in devlore-cli and devlore-registry that sign in with the app.
+
+**Reason:** #613 asks that every process depending on a token report when it can't sign in, and the daily check alone reported a workflow's failure up to a day late. The site's deployment signs in to Azure, not GitHub, so its credentials are checked where it deploys, like every other binding ([ACCESS-007](#access-007)).
+
+**Alternatives:** Reading the secret's expiry from Azure was rejected: it takes a directory permission the service principal needs for nothing else. A check only daily was rejected: a workflow that fails on its credential would go unreported until the next day.
+
+**Consequence:** The variable has to be set again whenever the secret is renewed, or the check warns of an expiry that isn't. Each signing-in job carries the two steps, landed with the check, and its own token needs `issues: write`. A process outside GitHub Actions isn't checked.
+
+Evidence: [#613's plan, §§ 5.11 to 5.13 and 12](../../plans/feature/613-token-alerts.md#azure-credentials), decided on 2026-11-23 in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`, and `tests/Test-CredentialsCheck`.
+
+```yaml
+id: "ACCESS-008"
+status: accepted
+supersedes: []
+proposed_by: Claude Code
+approved_by: David Noble
+recorded_by: Claude Code
+decided_at: "2026-11-23"
+recorded_at: "2026-11-23T19:17:05Z"
 ```

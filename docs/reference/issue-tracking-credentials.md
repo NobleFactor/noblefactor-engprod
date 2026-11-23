@@ -204,6 +204,8 @@ An alert closes only when the check proves its own condition gone: fixing one th
 
 - **A GitHub App's private key doesn't expire.** To rotate it, generate a new key on the app's page, name it to `apply` with `--token`, verify every workflow that signs in with it, and only then delete the old key on the app's page.
 - **A classic token expires on the date chosen when it was made.** GitHub emails the account a week before. Open the token at `https://github.com/settings/tokens` and select **Regenerate token**, which keeps its note and scopes, then name it to `apply` with `--token`.
+- **An Azure service principal's secret expires** on the date chosen when it was made. Add a new one with `az ad app credential reset --id <appId> --append --years 1`, store the JSON `azure/login` reads, with `clientId`, `clientSecret`, `subscriptionId` and `tenantId`, in the repository secret `AZURE_CREDENTIALS`, and set the repository variable `AZURE_CREDENTIALS_EXPIRES` to the new secret's expiry, YYYY-MM-DD. Once the site deploys with it, delete the old secret with `az ad app credential delete`.
+- **A static site's deployment token** doesn't expire, but a reset in Azure makes the stored one stale. Copy the current one with `az staticwebapp secrets list --name <site> --query properties.apiKey -o tsv` into the repository secret `AZURE_STATIC_WEB_APPS_API_TOKEN`.
 - **A `gh` login** is whatever credential stands behind it. Renew one from the browser sign-in with `gh auth refresh -h github.com -s project,admin:org,workflow`, signed in as the account.
 
 <a id="why"></a>
