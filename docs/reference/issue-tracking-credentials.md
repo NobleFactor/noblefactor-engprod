@@ -2,7 +2,7 @@
 title: "Issue-tracking credentials"
 type: Guide
 status: Draft
-updated: 2026-11-21
+updated: 2026-11-23
 ---
 
 # Issue-tracking credentials
@@ -187,7 +187,14 @@ Every participating repository checks its token each day and opens an issue, `To
 | `expiring`, `expired` | The classic token expires within 14 days, or has | Regenerate it (§ 9) |
 | `rotation-due`, `rotation-overdue` | The app key's rotation, `TOKEN_ROTATION_DUE`, is within 14 days, or past | Rotate the key, and set the next date |
 | "New issues aren't reaching Triage" | A new issue wasn't added to the Triage project, and the token checked fine; each further miss is a comment | Read the run it names and fix the cause, then rerun each missed issue's run from its page. It closes when a later issue reaches Triage, listing the issues missed earlier, to check. When the run failed before it could tell where the issue belongs, it says the issue may not have been placed |
+| `azure-missing`, `azure-refused` | A site's Azure service principal, `AZURE_CREDENTIALS`, isn't set, or Azure refuses it | Make a new secret for it in Azure, and store the JSON `azure/login` reads |
+| `azure-expiring`, `azure-expired` | Its secret expires within 14 days, or has, by `AZURE_CREDENTIALS_EXPIRES` | Make a new secret, store it, and set the variable to its expiry date |
+| `azure-expiry-unset` | The repository variable `AZURE_CREDENTIALS_EXPIRES` isn't set, or isn't a date | Set it to the date the service principal's secret expires, YYYY-MM-DD |
+| `azure-short` | The service principal can't read the site named by `AZURE_STATIC_SITE` | Grant it access to the site's resource group, or correct the variable |
+| `deploy-token-missing`, `deploy-token-stale` | `AZURE_STATIC_WEB_APPS_API_TOKEN` isn't set, or isn't the site's current deployment token | Copy the site's deployment token from Azure into the secret |
 | `no-recent-check in <repository>` | That repository's daily check has stopped running | Re-enable its workflow on its Actions page |
+
+When a workflow that signs in fails, its alert gets a line naming the workflow and its run: rerun it once the cause is fixed. A failure whose credentials check fine raises nothing.
 
 An alert closes only when the check proves its own condition gone: fixing one thing closes another's alert only once the check can test it. GitHub not reached, a rate limit or a GitHub server error raises no alert and closes none: the run fails, and the next day's check tries again. A run that can't write an alert fails too, so a failed check run is worth reading even when no alert is open. Two runs at once can open the same alert twice; the later is closed as a duplicate of the earlier, its Resolution set to Duplicate.
 

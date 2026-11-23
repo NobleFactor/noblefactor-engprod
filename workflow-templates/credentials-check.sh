@@ -27,6 +27,16 @@
 # earlier, to check: closing an alert never adds them. An alert says only what was seen: what happened in the run, and
 # what the token check found right after it, never which caused which.
 #
+# Where the repository variable AZURE_STATIC_SITE names a static site, the Azure credentials its deployment signs in
+# with are checked too: AZURE_CREDENTIALS, the service principal azure/login reads, must sign in, and its secret's
+# expiry, which the repository variable AZURE_CREDENTIALS_EXPIRES records, must be beyond the margin;
+# AZURE_STATIC_WEB_APPS_API_TOKEN must be the site's current deployment token, which the service principal reads from
+# Azure. Azure not reached, or answering with something that proves nothing, leaves Azure's alerts as they are.
+#
+# Any workflow that signs in can report its own failure: report mode without ISSUE checks what CHECKS names at once,
+# and a bad credential raises its alert, naming the workflow and its run; a credential that checks fine raises nothing,
+# the failure being the workflow's own.
+#
 # Environment:
 #   KIND                organization or user.
 #   ACCOUNT, REPOSITORY the account and this repository, owner/name.
@@ -35,8 +45,19 @@
 #   PAT                 a user account's classic token, from its secret.
 #   ROTATION_DUE        an organization's next key rotation, YYYY-MM-DD, from TOKEN_ROTATION_DUE; optional.
 #   WATCH               repositories whose latest check this run also watches, comma-separated; optional.
-#   MODE                check, the default; report, when a new issue wasn't added to Triage; or placed, when one was.
-#   ISSUE               the new issue's number, in report and placed mode.
+#   MODE                check, the default; report, when a new issue wasn't added to Triage or a workflow failed; or
+#                       placed, when a new issue was added to Triage.
+#   ISSUE               the new issue's number: in report mode, a Triage miss; in placed mode, the issue placed.
+#   WORKFLOW            in report mode without ISSUE, the workflow that failed.
+#   CHECKS              in report mode without ISSUE, what the workflow signs in with, comma-separated: app, the
+#                       organization's GitHub App; token, the user account's classic token; azure, the Azure
+#                       credentials.
+#   AZURE_STATIC_SITE   the static site whose deployment signs in to Azure; unset, no Azure check.
+#   AZURE_CREDENTIALS   the service principal's JSON, as azure/login reads it.
+#   AZURE_CREDENTIALS_EXPIRES  the date its secret expires, YYYY-MM-DD.
+#   AZURE_STATIC_WEB_APPS_API_TOKEN  the site's deployment token.
+#   AZURE_LOGIN_URL, AZURE_API_URL  Azure's sign-in and management APIs; defaults: https://login.microsoftonline.com and
+#                       https://management.azure.com.
 #   CLASSIFIED          in report mode, false when the run failed before it could tell whether the issue belongs in
 #                       Triage, a schedule or a scenario; default: true.
 #   RUN_URL             this run's page, named in every incident.
@@ -55,6 +76,8 @@ set -uo pipefail
 : "${KIND:?}" "${ACCOUNT:?}" "${REPOSITORY:?}" "${GH_TOKEN:?}"
 config="${CONFIG:-$(dirname -- "$0")/credentials-check.json}"
 api="${GITHUB_API_URL:-https://api.github.com}"
+azure_login="${AZURE_LOGIN_URL:-https://login.microsoftonline.com}"
+azure_api="${AZURE_API_URL:-https://management.azure.com}"
 mode="${MODE:-check}"
 run="${RUN_URL:-the run}"
 margin="$(jq -r .margin_days "${config}")"
@@ -74,7 +97,9 @@ broken=0
 
 # raise records a condition that holds, with what was seen.
 raise() {
-    found["$1"]="$2"
+    local condition="$1"
+    shift
+    found["${condition}"]="$*"
 }
 
 # passed records conditions whose own test passed, so that their incidents may close.
@@ -99,14 +124,17 @@ days_until() {
     printf '%d\n' $(((due - now) / 86400))
 }
 
-# call makes one request of GitHub, the body to ${work}/body and the headers to ${work}/headers, and prints the HTTP
-# status. A request that doesn't reach GitHub returns 2, and its caller exits 2 at once: no credential is at fault
-# (#621). It returns rather than exits, since it runs in a command substitution, whose exit would end only that.
+# call makes one request of GitHub or Azure, the body to ${work}/body and the headers to ${work}/headers, and prints the
+# HTTP status. A request that doesn't reach its service returns 2, and no credential is at fault (#621): a GitHub
+# request's caller exits 2 at once, and an Azure request's leaves Azure's alerts as they are. It returns rather than
+# exits, since it runs in a command substitution, whose exit would end only that.
 call() {
     local code
     if ! code="$(curl -sS --max-time 30 -o "${work}/body" -D "${work}/headers" -w '%{http_code}' "$@" \
         2>"${work}/curl")"; then
-        printf 'GitHub not reached: %s; no credential is at fault, and the next run checks again\n' \
+        local url="${!#}"
+        url="${url#*://}"
+        printf '%s not reached: %s; no credential is at fault, and the next run checks again\n' "${url%%/*}" \
             "$(<"${work}/curl")" >&2
         return 2
     fi
@@ -273,6 +301,123 @@ check_token() {
     fi
 }
 
+# azure_skipped says why the Azure check stopped short, leaving Azure's alerts as they are, and marks the run
+# incomplete: the service not reached, or answering with something that proves nothing about the credentials.
+azure_skipped() {
+    printf 'Azure answered %s with HTTP %s, which proves nothing about the credentials;' "$1" "$2" >&2
+    printf ' their alerts stay as they are\n' >&2
+    incomplete=1
+}
+
+# check_azure_expiry warns before the Azure service principal's secret expires, and after, from the date the repository
+# variable AZURE_CREDENTIALS_EXPIRES records; a date beyond the margin clears both.
+check_azure_expiry() {
+    local left
+    if [[ -z "${AZURE_CREDENTIALS_EXPIRES:-}" ]]; then
+        raise azure-expiry-unset "the repository variable AZURE_CREDENTIALS_EXPIRES, the date" \
+            "AZURE_CREDENTIALS's secret expires, isn't set"
+        return
+    fi
+    left="$(days_until "${AZURE_CREDENTIALS_EXPIRES}")" || {
+        raise azure-expiry-unset "AZURE_CREDENTIALS_EXPIRES, ${AZURE_CREDENTIALS_EXPIRES}, isn't a date"
+        return
+    }
+    if ((left < 0)); then
+        raise azure-expired "AZURE_CREDENTIALS's secret expired on ${AZURE_CREDENTIALS_EXPIRES:0:10}"
+    elif ((left <= margin)); then
+        raise azure-expiring "AZURE_CREDENTIALS's secret expires on ${AZURE_CREDENTIALS_EXPIRES:0:10}, in ${left} days"
+    else
+        passed azure-expiring azure-expired azure-expiry-unset
+    fi
+}
+
+# check_azure proves the Azure credentials the static site AZURE_STATIC_SITE deploys with: the service principal signs
+# in, and the deployment token stored is the site's current one. Signing in clears the sign-in conditions; the token
+# matching clears the deployment token's.
+check_azure() {
+    local client secret tenant subscription code access site said
+    check_azure_expiry
+    if [[ -z "${AZURE_CREDENTIALS:-}" ]]; then
+        raise azure-missing "the repository secret AZURE_CREDENTIALS isn't set"
+        return
+    fi
+    client="$(jq -r '.clientId // empty' <<<"${AZURE_CREDENTIALS}" 2>/dev/null)"
+    secret="$(jq -r '.clientSecret // empty' <<<"${AZURE_CREDENTIALS}" 2>/dev/null)"
+    tenant="$(jq -r '.tenantId // empty' <<<"${AZURE_CREDENTIALS}" 2>/dev/null)"
+    subscription="$(jq -r '.subscriptionId // empty' <<<"${AZURE_CREDENTIALS}" 2>/dev/null)"
+    if [[ -z "${client}" || -z "${secret}" || -z "${tenant}" || -z "${subscription}" ]]; then
+        raise azure-refused "AZURE_CREDENTIALS isn't the JSON azure/login reads: it needs clientId, clientSecret," \
+            "tenantId and subscriptionId"
+        return
+    fi
+    (umask 077 && jq -rn --arg c "${client}" --arg s "${secret}" --arg scope "${azure_api}/.default" \
+        '"client_id=\($c|@uri)&client_secret=\($s|@uri)&grant_type=client_credentials&scope=\($scope|@uri)"' \
+        >"${work}/azure-form")
+    code="$(call -X POST -H "Content-Type: application/x-www-form-urlencoded" --data "@${work}/azure-form" \
+        "${azure_login}/${tenant}/oauth2/v2.0/token")" || {
+        incomplete=1
+        return
+    }
+    if [[ "${code}" == 400 || "${code}" == 401 ]]; then
+        said="$(jq -r '.error_description // .error // empty' "${work}/body" 2>/dev/null | head -n 1 | cut -c1-200)"
+        raise azure-refused "Azure refused AZURE_CREDENTIALS: HTTP ${code}${said:+ (${said})}"
+        return
+    fi
+    access="$(jq -r '.access_token // empty' "${work}/body" 2>/dev/null)"
+    if [[ "${code}" != 200 || -z "${access}" ]]; then
+        azure_skipped "the service principal's sign-in" "${code}"
+        return
+    fi
+    passed azure-missing azure-refused
+    if [[ -z "${AZURE_STATIC_WEB_APPS_API_TOKEN:-}" ]]; then
+        raise deploy-token-missing "the repository secret AZURE_STATIC_WEB_APPS_API_TOKEN isn't set"
+        return
+    fi
+    code="$(call -H "Authorization: Bearer ${access}" \
+        "${azure_api}/subscriptions/${subscription}/providers/Microsoft.Web/staticSites?api-version=2022-09-01")" || {
+        incomplete=1
+        return
+    }
+    case "${code}" in
+        200) ;;
+        401 | 403)
+            raise azure-short "AZURE_CREDENTIALS can't read the subscription's static sites: HTTP ${code}"
+            return
+            ;;
+        *)
+            azure_skipped "the list of static sites" "${code}"
+            return
+            ;;
+    esac
+    site="$(jq -r --arg n "${AZURE_STATIC_SITE}" '.value[]? | select(.name == $n) | .id' "${work}/body" | head -n 1)"
+    if [[ -z "${site}" ]]; then
+        raise azure-short "AZURE_CREDENTIALS sees no static site named ${AZURE_STATIC_SITE}"
+        return
+    fi
+    code="$(call -X POST -H "Authorization: Bearer ${access}" -H "Content-Length: 0" \
+        "${azure_api}${site}/listSecrets?api-version=2022-09-01")" || {
+        incomplete=1
+        return
+    }
+    case "${code}" in
+        200) ;;
+        401 | 403)
+            raise azure-short "AZURE_CREDENTIALS can't read ${AZURE_STATIC_SITE}'s deployment token: HTTP ${code}"
+            return
+            ;;
+        *)
+            azure_skipped "${AZURE_STATIC_SITE}'s deployment token" "${code}"
+            return
+            ;;
+    esac
+    if [[ "$(jq -r '.properties.apiKey // empty' "${work}/body")" == "${AZURE_STATIC_WEB_APPS_API_TOKEN}" ]]; then
+        passed azure-short deploy-token-missing deploy-token-stale
+    else
+        raise deploy-token-stale "AZURE_STATIC_WEB_APPS_API_TOKEN isn't ${AZURE_STATIC_SITE}'s current deployment" \
+            "token: it was reset in Azure after it was stored"
+    fi
+}
+
 # check_watched raises no-recent-check for a watched repository whose latest credentials check is over two days old,
 # or that has none, and clears it for one checked within two days. A repository whose runs can't be read is neither.
 check_watched() {
@@ -339,8 +484,8 @@ listed() {
     fi
 }
 
-# The words that mark a line naming an issue a run didn't place, as this script writes them.
-marker="\\*\\*#[0-9]+\\*\\* (wasn't added|may not have been placed)"
+# The words that mark a line a report writes, an issue's or a workflow's, which a duplicate carries.
+reported="\\*\\*[^*]+\\*\\* (wasn't added|may not have been placed|failed in)"
 
 # history prints an alert's body and comments, one after another; it returns 1 when the alert can't be read.
 history() {
@@ -425,7 +570,7 @@ incident_for() {
     first="$(head -n 1 <<<"${numbers}")"
     for number in $(tail -n +2 <<<"${numbers}"); do
         carried="$(history "${number}")" || return 1
-        carried="$(grep -E "^${marker}" <<<"${carried}" || true)"
+        carried="$(grep -E "^${reported}" <<<"${carried}" || true)"
         if [[ -n "${carried}" ]] && ! history "${first}" |
             grep -qxF "Carried from #${number}, which a run opened at the same time:"; then
             carried="$(printf 'Carried from #%s, which a run opened at the same time:\n\n%s\n' "${number}" \
@@ -449,6 +594,12 @@ incident_for() {
 # it found, the condition $1 or nothing wrong; the first such line on an alert, when $2 is first, says what to do.
 miss() {
     local line
+    if [[ -z "${ISSUE:-}" ]]; then
+        line="**${WORKFLOW}** failed in ${run}. A check right after found $1."
+        [[ "$2" != first ]] || line+=" Rerun it from its page once the cause is fixed."
+        printf '%s' "${line}"
+        return
+    fi
     if [[ "${CLASSIFIED:-true}" == true ]]; then
         line="**#${ISSUE}** wasn't added to the Triage project in ${run}"
     else
@@ -546,17 +697,43 @@ case "${KIND}" in
         exit 64
         ;;
 esac
+azure_causes=(azure-missing azure-refused azure-short azure-expired deploy-token-missing deploy-token-stale)
+azure_conditions=("${azure_causes[@]}" azure-expiring azure-expiry-unset)
 
 case "${mode}" in
     report)
-        : "${ISSUE:?}"
-        if [[ "${KIND}" == organization ]]; then check_app; else check_token; fi
-        explained=0
-        for condition in "${causes[@]}"; do
-            [[ -z "${found[${condition}]+held}" ]] || explained=1
-        done
-        ((explained)) || raise not-triaged "#${ISSUE} wasn't added to Triage"
-        conditions=("${causes[@]}" not-triaged)
+        if [[ -z "${ISSUE:-}" ]]; then
+            : "${WORKFLOW:?}" "${CHECKS:?}"
+            conditions=()
+            for check in ${CHECKS//,/ }; do
+                case "${check}" in
+                    app)
+                        check_app
+                        conditions+=(missing refused not-installed short)
+                        ;;
+                    token)
+                        check_token
+                        conditions+=(missing refused wrong-account short expired)
+                        ;;
+                    azure)
+                        check_azure
+                        conditions+=("${azure_causes[@]}")
+                        ;;
+                    *)
+                        printf 'CHECKS names app, token or azure, not %s\n' "${check}" >&2
+                        exit 64
+                        ;;
+                esac
+            done
+        else
+            if [[ "${KIND}" == organization ]]; then check_app; else check_token; fi
+            explained=0
+            for condition in "${causes[@]}"; do
+                [[ -z "${found[${condition}]+held}" ]] || explained=1
+            done
+            ((explained)) || raise not-triaged "#${ISSUE} wasn't added to Triage"
+            conditions=("${causes[@]}" not-triaged)
+        fi
         ;;
     placed)
         : "${ISSUE:?}"
@@ -571,6 +748,10 @@ case "${mode}" in
         else
             check_token
             conditions=("${causes[@]}" expiring not-triaged)
+        fi
+        if [[ -n "${AZURE_STATIC_SITE:-}" ]]; then
+            check_azure
+            conditions+=("${azure_conditions[@]}")
         fi
         check_watched
         for repository in "${watched[@]}"; do

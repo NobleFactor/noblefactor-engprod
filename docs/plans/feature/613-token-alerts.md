@@ -3,7 +3,7 @@ title: "Every process that depends on a token alerts us when the token expires o
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/613
 status: active
 created: 2026-11-21
-updated: 2026-11-21
+updated: 2026-11-23
 documents:
   - kind: Design
     path: docs/architecture/issue-data-model/4-storage-and-reach.md
@@ -199,6 +199,38 @@ The workflow, its script and its permissions file, whose source is this reposito
 
 Cases 242 to 255 in `tests/Test-StarGitHub`: an organization that refuses the login, a server error there, and a rate limit, each stopping the command before any other request; `token make` checking access before any request of its own; every command that names an account making the check; a user account making no organization request; an account GitHub doesn't have; and a name that can't be an account's. Each fails without the change.
 
+<a id="azure-credentials"></a>
+
+### 5.11 Azure credentials
+
+Where the repository variable `AZURE_STATIC_SITE` names a static site, the daily check proves the Azure credentials its deployment signs in with. Today that is devlore.noblefactor.com alone, whose site is `devlore-noblefactor-com`.
+
+- **`AZURE_CREDENTIALS`,** the service principal `azure/login` reads, signs in to Azure: `azure-missing` when the secret isn't set, `azure-refused` when Azure refuses it or it isn't the JSON `azure/login` reads.
+- **Its secret's expiry** is the date in the repository variable `AZURE_CREDENTIALS_EXPIRES`, set when the secret is made: `azure-expiring` within 14 days, `azure-expired` after, `azure-expiry-unset` when the variable isn't set or isn't a date. A variable, not Azure's own record: reading that would take a directory permission the service principal doesn't need otherwise.
+- **`AZURE_STATIC_WEB_APPS_API_TOKEN`,** the deployment token, must be the site's current one, which the service principal reads from Azure: `deploy-token-stale` when it was reset in Azure after it was stored, `deploy-token-missing` when the secret isn't set, `azure-short` when the service principal can't read the site.
+- **Azure not reached,** or answering with something that proves nothing, leaves Azure's alerts as they are and ends the run 2; the GitHub checks still run.
+
+<a id="a-workflows-own-failure"></a>
+
+### 5.12 A workflow's own failure
+
+Every job that signs in ends with two steps, from `workflow-templates/credentials-check.app-failure-steps.yml` or `credentials-check.azure-failure-steps.yml`, that run only when the job fails: one fetches the check into a folder of its own, and one runs it in report mode, with `WORKFLOW` naming the workflow and `CHECKS` what the job signs in with. A bad credential raises its alert, a line naming the workflow and its run; one that checks fine raises nothing, the failure being the job's own. The job's own token needs `issues: write` and `contents: read`.
+
+<a id="what-the-checks-cover"></a>
+
+### 5.13 What the checks cover
+
+| Process | Signs in with | For | Checked daily | Reports its own failure |
+| --- | --- | --- | --- | --- |
+| Each participating NobleFactor repository's Triage | The App's secrets | Adding an issue to Triage, its fields | Yes: the App signs in, with every permission | Yes, § 5.3 |
+| David-Noble-at-work's Triage, in .github and personal | `ADD_TO_PROJECT_PAT` | Adding an issue to Triage | Yes: the token signs in, with its scopes, ahead of its expiry | Yes, § 5.3 |
+| devlore-cli's docs-publish, knowledge-extract and release | The App's secrets | Pull requests to devlore.noblefactor.com and devlore-registry, and the installers' sync | Yes: the same App | Yes, § 5.12 |
+| devlore-registry's sync-model-limits, update-indexes and validate | The App's secrets | Commits and pull requests | Yes: the same App | Yes, § 5.12 |
+| devlore.noblefactor.com's deployment | `AZURE_CREDENTIALS` and `AZURE_STATIC_WEB_APPS_API_TOKEN` | Its staging environments and custom domain, and the upload | Yes, § 5.11 | Yes, § 5.12 |
+| `star github` on the owner's machine | Its `gh` login | Every command | No: each command checks its login first (#621, #626) | Yes: the command stops, naming the fix |
+
+The daily check proves that a credential signs in and holds the permissions the configuration names; it doesn't prove each workflow's access to each repository it writes to. A process outside GitHub, such as a service on one of the owner's machines that signs in to Azure, isn't checked: its secret isn't where the check runs.
+
 <a id="alternatives-and-challenges"></a>
 
 ## 6. Alternatives and challenges
@@ -306,14 +338,14 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 ### 9.9 Phase 9: #613 reopened
 
 - [x] A duplicate alert's Resolution set to Duplicate before it closes, as § 5.2 sets out; `tests/Test-CredentialsCheck`, 73 cases, 4 of which fail against fe18e58's script; section 4 § 4.1 and the guide's § 8.
-- [ ] The checks #613 asks for and the merge left out: devlore.noblefactor.com's two Azure credentials, and each workflow that signs in with the App reporting its own failure, with the plan's consumer-by-consumer account of what is covered.
+- [x] The checks #613 asks for and the merge left out: devlore.noblefactor.com's two Azure credentials, and each workflow that signs in with the App reporting its own failure, with the plan's consumer-by-consumer account of what is covered: §§ 5.11 to 5.13; `credentials-check.sh`, both daily-check workflows, and the two failure-step files; `tests/Test-CredentialsCheck`, 96 cases, 14 of which fail against ab2b8dd's script; section 4 § 4.1 and its inventory, the guide's § 8 and the README.
 - [ ] Landed in every repository the change reaches, its first check passing.
 
 <a id="files-and-related-assets"></a>
 
 ## 10. Files and related assets
 
-- `workflow-templates/` in this repository, new: the source of `credentials-check.sh`, `credentials-check.json`, `credentials-check.organization.yml` and `credentials-check.user.yml`, and of each account's Triage template, `triage.organization.yml` and `triage.user.yml`, copied from NobleFactor/.github and David-Noble-at-work/.github with the failure step added. No copy of the Triage template lived here before; § 5.4 lands each in its account's `.github` and each participating repository.
+- `workflow-templates/` in this repository, new: the source of `credentials-check.sh`, `credentials-check.json`, `credentials-check.organization.yml` and `credentials-check.user.yml`, the failure steps `credentials-check.app-failure-steps.yml` and `credentials-check.azure-failure-steps.yml`, and each account's Triage template, `triage.organization.yml` and `triage.user.yml`, copied from NobleFactor/.github and David-Noble-at-work/.github with the failure step added. No copy of the Triage template lived here before; § 5.4 lands each in its account's `.github` and each participating repository.
 - `tests/Test-CredentialsCheck`: new.
 - `Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/access.star` and `tests/Test-StarGitHub` (#621, #626).
 - The same extension's `commands/github-model-get.star`, `github-model-diff.star`, `github-model-apply.star`, `github-model-backup.star`, `github-model-restore.star` and `github-token-make.star` (#626).
@@ -342,6 +374,8 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 - **No sandbox runs, decided 2026-11-21.** Setting up the sandboxes' credentials takes the same manual effort every time, so until GitHub offers a way to automate it, work is verified in the field and the sandbox accounts are deleted. #613's evidence, which names the sandboxes, is replaced by § 7.
 
 - **Reopened, 2026-11-23.** #613 closed at #625's merge with its first requirement unmet: every process that depends on a token reports when it can't sign in. The plan's promised result narrowed the check to the GitHub App and the classic tokens, without recording that narrowing or its approval, and so left out devlore.noblefactor.com's site deployment, which signs in to Azure with `AZURE_STATIC_WEB_APPS_API_TOKEN` and `AZURE_CREDENTIALS`, and the six workflows besides Triage that sign in with the App, none of which reports its own failure at once. Found by the Owner's question on 2026-11-22, then by Codex (F01) and agy; reopened at the Owner's direction, with `star github issue reopen`, which also reopened #333 and placed it in Triage. § 9.9 finishes it.
+- **The Azure credentials and each workflow's failure, decided 2026-11-23.** Every workflow that signs in with the App reports its own failure, and the Azure service principal's expiry is a repository variable, `AZURE_CREDENTIALS_EXPIRES`, set when its secret is made. `webhook-executor-sp`, found while reading the site's service principals, with its secret expired on 2026-11-15, is left for you, unlogged, as you directed. Decided in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`.
+- **Records set by hand, 2026-11-23.** Reopening #613, #629 and devlore-cli#1241 put #333, personal#317 and devlore-cli#798 in Triage; at your direction their Triage rows were deleted through GitHub's project API, since no `star` command removes a row from an open issue.
 - **A duplicate's Resolution, decided 2026-11-23.** A duplicate alert gets a Resolution of Duplicate before it closes, as the issue standard has every duplicate closed (Codex's F02). Decided in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`.
 - **The landing, 2026-11-22.** The seven landing pull requests were opened, one at a time, by a one-off script, and merged with neither Codex's review nor agy's audit; Codex reviewed them after the merges. They carry no Time section. The script signed off NobleFactor's address, `David.Noble@noblefactor.com`, on David-Noble-at-work/.github#19 and David-Noble-at-work/personal#339, where the account's own address belongs. It set NobleFactor's `TOKEN_ROTATION_DUE` to 2027-02-04 and noblefactor-engprod's `TOKEN_CHECK_WATCH` to the other four NobleFactor repositories. You deleted the script once for my not cleaning up after myself, and I recreated it without asking.
 - **Records set by hand.** #626's Status and Worktree on Schedule #588 were set through GitHub's project API, since neither `star` nor `git open-branch` sets them.
