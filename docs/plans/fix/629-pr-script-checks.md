@@ -64,7 +64,7 @@ As first delivered on 2026-11-22, each form ran up to 60 rounds of `gh pr checks
 
 - **A fixed wait before watching.** Not taken: no wait is long enough for every repository's second set, and every pull request would pay it.
 - **The read run under perl's `alarm`, by `exec`.** Not taken, though first delivered: a Go program catches SIGALRM and ignores it, so the real `gh` ran on, 30 seconds against a limit of 2, where a shell stand-in had stopped.
-- **A watchdog process killing a slow read.** Not taken: a watchdog's own `sleep` outlives it, holding the read's output open until it ends; perl's `alarm`, set in the process the read becomes, needs no second process.
+- **A separate watchdog process killing a slow read.** Not taken: a watchdog's own `sleep` outlives it, holding the read's output open until it ends. Instead, perl supervises the read itself: it forks the read as its child and sets its own `alarm` for the time left. At the alarm it sends the child SIGTERM, on which a Go program exits, waits up to two seconds for it, reaping it as soon as it ends, then sends SIGKILL and reaps it, and returns 142; if the child ends first, perl returns its status. The supervisor and the read are two processes, and nothing outlives the supervisor (Codex's R03 on #634).
 - **The watch, under a time limit.** Not taken: macOS has no `timeout` command, and stopping a watch run in the background takes more than reading the checks on a clock.
 - **Counting the workflows a head should run.** Not taken: a template can't know each repository's workflows, and the reads need nothing of them.
 
