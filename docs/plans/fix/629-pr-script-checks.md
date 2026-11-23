@@ -50,7 +50,7 @@ The template is the design: its two CI gates. No other document describes them.
 ## 5. Proposed implementation
 
 - **Both forms read the checks every 30 seconds while any is pending, on a 30-minute clock** that starts once the first check is reported: Bash's `SECONDS`, PowerShell's `Get-Date`. Neither runs `gh pr checks --watch`, which has no limit of its own. Each says how many checks are still running whenever that number changes, and prints the checks table once at the end.
-- **No read or wait outlasts the clock** (Codex's R01 on #634). Each read of the checks is given only the time left: in Bash, `within` runs it under perl's `alarm`, since macOS has no `timeout` command and perl is on every macOS and Linux; in PowerShell, `Invoke-Native` takes a `-Deadline`, waits for the process only until then, and stops it and its children, refusing with `DeadlinePassed`. No wait is longer than the time left. The first wait, up to five minutes for a check to be reported, is bounded the same way.
+- **No read or wait outlasts the clock** (Codex's R01 on #634). Each read of the checks is given only the time left: in Bash, `within` runs it as perl's child, and at the time left perl stops it, with SIGTERM and then SIGKILL, since macOS has no `timeout` command, perl is on every macOS and Linux, and `gh`, a Go program, ignores SIGALRM (Codex's re-review of #634); in PowerShell, `Invoke-Native` takes a `-Deadline`, waits for the process only until then, and stops it and its children, refusing with `DeadlinePassed`. No wait is longer than the time left. The first wait, up to five minutes for a check to be reported, is bounded the same way.
 - **The script judges its last read alone,** and prints the table from it, making no further read it could ignore (Codex's R02 on #634).
 - **Checks still running when the clock runs out stop the script** with a message of their own: run it again once they finish.
 - The gate after it is unchanged: every check has passed, or the script stops.
@@ -63,6 +63,7 @@ As first delivered on 2026-11-22, each form ran up to 60 rounds of `gh pr checks
 ## 6. Alternatives and challenges
 
 - **A fixed wait before watching.** Not taken: no wait is long enough for every repository's second set, and every pull request would pay it.
+- **The read run under perl's `alarm`, by `exec`.** Not taken, though first delivered: a Go program catches SIGALRM and ignores it, so the real `gh` ran on, 30 seconds against a limit of 2, where a shell stand-in had stopped.
 - **A watchdog process killing a slow read.** Not taken: a watchdog's own `sleep` outlives it, holding the read's output open until it ends; perl's `alarm`, set in the process the read becomes, needs no second process.
 - **The watch, under a time limit.** Not taken: macOS has no `timeout` command, and stopping a watch run in the background takes more than reading the checks on a clock.
 - **Counting the workflows a head should run.** Not taken: a template can't know each repository's workflows, and the reads need nothing of them.
@@ -125,6 +126,8 @@ As first delivered on 2026-11-22, each form ran up to 60 rounds of `gh pr checks
 
 - [x] #634's PR script made again from the template at its head, and run, its gate, the bounded reads', waiting out the checks within the clock; posted on #629: at cd4f5f4 it waited out `test-macos` and printed the four checks from its last read, all passing; the readiness check after it then stopped on develop's ruleset, Codex's threads awaiting re-review.
 
+- [ ] Codex's re-review of #634, R01: `within` forks the read and stops it with SIGTERM, then SIGKILL, the real `gh` stopped at the limit; the stand-in `gh` ignores SIGALRM as Go does.
+
 <a id="files-and-related-assets"></a>
 
 ## 10. Files and related assets
@@ -150,6 +153,7 @@ As first delivered on 2026-11-22, each form ran up to 60 rounds of `gh pr checks
 - **The PR script run by the coder, 2026-11-22 (agy's B10).** #630's script was run by the coder, not the owner, each run at your direction in the session, a one-run exception each time.
 - **Closed before its verification, its plan unlinked (agy's B05 and B06).** #629 closed at the merge with § 7's last row not yet seen, and its plan row read Not yet opened. On 2026-11-23 `star github plan link` was run, the pending verification was posted, and the issue reopened.
 - **Codex's review of #634, 2026-11-23.** R01: the clock was checked only between reads, so a slow or stalled read, and the table's own read, could outlast it. R02: the table's read could see a newer pending check the verdict then ignored. Both are fixed in #634, § 5, with a test of both forms, worked straight through, as your direction of 2026-11-21, to work each phase straight through, committing and pushing each, has it; in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`.
+- **Codex's re-review of #634, 2026-11-23.** R02 resolved. R01 stands: the real `gh`, a Go program, ignores SIGALRM, so `within`'s `alarm` and `exec` left a hung read running; the shell stand-in, which SIGALRM stops, hid it. Fixed in § 5, worked straight through as before, in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`.
 - **The plan before the work, 2026-11-23 (agy's E03).** 61b0113, this plan's update for the clock, was committed before the fix, b74570b, but not reviewed with you first; you had directed the reopening and the fix. No first script was written for this worktree: 34b46e9's row repair stood in for its row step, and the plan link was run by hand. efb1ad1, the plan for Codex's R01 and R02, came before their fix, e3a33ea, as above.
 - **The schedule row repaired, 2026-11-23.** #629's row on Schedule #588 still linked #630, this issue's own pull request, merged on 2026-11-22, its branch gone. The template's guarded update refuses a row linking anything but this branch, reading it as another worktree's; no worktree holds the step, so the row was set In progress, linking `fix/629-pr-script-deadline`, with the template's own `step_row` and `set_row`, the guard allowing only that one link, and read back.
 - **Reopened, 2026-11-23,** for Codex's F04, at your direction, in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`: § 5's clock.
