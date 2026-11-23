@@ -1,0 +1,280 @@
+#!/usr/bin/env bash
+
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Noble Factor. All rights reserved.
+
+# Test-PrScriptGate - Tests the CI gate of docs/guides/pr-script-template.md, both its forms (#629): the checks are read
+# while any is pending, for 30 minutes at most, and no read or wait outlasts that; the verdict and the table come from
+# the last read alone; and the wait for the first check is bounded the same way. Each form's gate is taken from the
+# template and run against a stand-in gh, the Bash form by bash and the PowerShell form by pwsh, with the template's own
+# Invoke-Native. A case on the template's 30 minutes runs on a clock the case moves; a case on a slow or stalled read
+# runs in real time, the limits scaled to seconds.
+
+[[ -r "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" ]] || {
+    printf '%s: cannot find Declare-BashScript in %s\n' "${0##*/}" "$(dirname "$0")/../Home/common/.local/bin" >&2
+    exit 72 # EX_OSFILE
+}
+
+XDG_DATA_HOME="$(cd "$(dirname "$0")/../Home/common/.local/share" && pwd)" || exit 72 # EX_OSFILE
+export XDG_DATA_HOME
+
+# shellcheck source=Declare-BashScript
+source "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" "$0" "help" "h" "$@"
+require_command jq awk perl pwsh mktemp
+
+template="$(cd "$(dirname "$0")/../docs/guides" && pwd)/pr-script-template.md"
+
+###########
+# Functions
+###########
+
+# cleanup removes the run's directory, however the run ends.
+#
+# Returns:
+#   - 0, the run's directory gone.
+function cleanup {
+    if [[ -n "${run_directory:-}" && -d "${run_directory}" ]]; then
+        rm -rf -- "${run_directory}"
+    fi
+}
+
+# write_stand_in writes the stand-in gh into the run's bin directory.
+#
+# The stand-in answers `gh pr checks <n> --json name --jq length`, the wait for the first check, with reported, 1 when
+# it is absent, after first-delay seconds; and `gh pr checks <n> --json name,bucket` with the next line of answers, the
+# last line once they run out, after delay seconds. It logs each answer to calls, first or read. Its waits write to
+# nothing, so that one stopped mid-wait leaves no process holding the gate's pipe.
+#
+# Returns:
+#   - 0, the stand-in written.
+function write_stand_in {
+    mkdir -p -- "${run_directory}/bin"
+    cat >"${run_directory}/bin/gh" <<'GH'
+#!/usr/bin/env bash
+state="${STATE:?}"
+[[ "$1 $2" == "pr checks" ]] || exit 1
+if [[ " $* " == *" --jq length "* ]]; then
+    printf 'first\n' >>"${state}/calls"
+    sleep "$(cat "${state}/first-delay" 2>/dev/null || echo 0)" </dev/null >/dev/null 2>&1
+    cat "${state}/reported" 2>/dev/null || echo 1
+    exit 0
+fi
+printf 'read\n' >>"${state}/calls"
+reads="$(grep -c '^read$' "${state}/calls")"
+answer="$(sed -n "${reads}p" "${state}/answers")"
+[[ -n "${answer}" ]] || answer="$(tail -n 1 "${state}/answers")"
+sleep "$(cat "${state}/delay" 2>/dev/null || echo 0)" </dev/null >/dev/null 2>&1
+printf '%s\n' "${answer}"
+GH
+    chmod +x "${run_directory}/bin/gh"
+}
+
+# extract_gates writes each form's gate, taken from the template, its limits made placeholders a case fills: the Bash
+# form's to bash-gate, from within to the verdict; the PowerShell form's to ps-gate, from the wait for the first check
+# to the verdict, with the template's Invoke-Native and ConvertTo-Refusal in ps-helpers.
+#
+# Returns:
+#   - 0, the gates written; the run ends when the template's gate isn't where the test expects it.
+function extract_gates {
+    awk '/^```bash$/ && ++block == 2 { on = 1; next } on && /^```$/ { exit } on' "${template}" |
+        awk '/^    # within runs a command/ { on = 1 } on { print substr($0, 5) } on && /not all passing/ { last = 1 }
+            last && /^    }$/ { exit }' >"${run_directory}/bash-gate"
+    awk '/^```powershell$/ && ++block == 1 { on = 1; next } on && /^```$/ { exit } on' "${template}" \
+        >"${run_directory}/ps-form.ps1"
+    local gate old new count
+    gate="$(<"${run_directory}/bash-gate")"
+    for old in 'SECONDS + 300' 'SECONDS + 1800' 'nap < 10)) || nap=10' 'nap < 30)) || nap=30'; do
+        case "${old}" in
+            *300*) new='SECONDS + FIRST_BUDGET' ;;
+            *1800*) new='SECONDS + BUDGET' ;;
+            *10*) new='nap < FIRST_NAP)) || nap=FIRST_NAP' ;;
+            *) new='nap < NAP)) || nap=NAP' ;;
+        esac
+        count="$(grep -cF -- "${old}" <<<"${gate}" || true)"
+        [[ "${count}" == 1 ]] || error "${EX_SOFTWARE}" "the Bash gate has ${count} of '${old}', not 1"
+        gate="${gate//"${old}"/"${new}"}"
+    done
+    printf '%s\n' "${gate}" >"${run_directory}/bash-gate"
+}
+
+# write_ps_runner writes the PowerShell runner: it takes the template's Invoke-Native and ConvertTo-Refusal from the
+# PowerShell form by its parser, and its gate from the wait for the first check to the verdict, fills the gate's limits,
+# runs it for pull request 7, and prints how it ended, its reads, and the seconds it took.
+#
+# Returns:
+#   - 0, the runner written.
+function write_ps_runner {
+    cat >"${run_directory}/run-gate.ps1" <<'PS'
+param([String] $Form, [Int] $FirstBudget, [Int] $Budget, [Int] $FirstNap, [Int] $Nap, [Switch] $MovedClock,
+    [String] $State)
+$ErrorActionPreference = 'Stop'
+$tokens = $null
+$errors = $null
+$ast = [System.Management.Automation.Language.Parser]::ParseFile($Form, [ref] $tokens, [ref] $errors)
+foreach ($name in 'Invoke-Native', 'ConvertTo-Refusal') {
+    $function = $ast.Find({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and
+            $node.Name -eq $name }, $true)
+    if ($null -eq $function) { throw "the PowerShell form has no function $name" }
+    . ([ScriptBlock]::Create($function.Extent.Text))
+}
+$text = Get-Content -Raw -LiteralPath $Form
+$start = $text.IndexOf("        # GitHub registers a pull request's checks a moment after it opens")
+$end = $text.IndexOf("'ChecksNotEstablished'")
+if ($start -lt 0 -or $end -lt 0) { throw 'the PowerShell gate is not where the test expects it' }
+$end = $text.IndexOf("        }", $text.IndexOf('throw', $end)) + 9
+$gate = $text.Substring($start, $end - $start)
+foreach ($pair in @(('AddMinutes(5)', "AddSeconds($FirstBudget)"), ('AddMinutes(30)', "AddSeconds($Budget)"),
+        ('[Math]::Min(10,', "[Math]::Min($FirstNap,"), ('[Math]::Min(30,', "[Math]::Min($Nap,"))) {
+    $count = ([regex]::Matches($gate, [regex]::Escape($pair[0]))).Count
+    if ($count -ne 1) { throw "the PowerShell gate has $count of '$($pair[0])', not 1" }
+    $gate = $gate.Replace($pair[0], $pair[1])
+}
+if ($MovedClock) {
+    $script:now = [DateTime]::new(2026, 11, 23, 12, 0, 0)
+    function Get-Date { $script:now }
+    function Start-Sleep { param([Double] $Seconds) $script:now = $script:now.AddSeconds($Seconds) }
+}
+$number = 7
+$watch = [System.Diagnostics.Stopwatch]::StartNew()
+$outcome = 'passed'
+try {
+    . ([ScriptBlock]::Create($gate))
+}
+catch {
+    $outcome = "refused:$($_.FullyQualifiedErrorId)"
+}
+$reads = @(Get-Content -LiteralPath (Join-Path $State 'calls') -ErrorAction SilentlyContinue |
+        Where-Object { $_ -eq 'read' }).Count
+"$outcome $reads $([Math]::Round($watch.Elapsed.TotalSeconds, 1))"
+PS
+}
+
+# run_case runs one form's gate for pull request 7, in a fresh state, its answers the arguments, recording how it ended,
+# its reads, and the whole seconds it took.
+#
+# Parameters:
+#   - `$1`: the form, bash or powershell.
+#   - `$2`: first-budget,budget,first-nap,nap: the gate's limits in seconds, the template's 300,1800,10,30.
+#   - `$3`: clock, moved by the case, or real.
+#   - `$4`: delay,first-delay,reported: the stand-in's delays in seconds, and what the first wait is told.
+#   - `$@`: after those, the stand-in's answers, one read each.
+#
+# Returns:
+#   - 0, whatever the gate's own ending.
+function run_case {
+    local form="$1" limits="$2" clock="$3" stand_in="$4" first_budget budget first_nap nap delay first_delay reported
+    shift 4
+    IFS=, read -r first_budget budget first_nap nap <<<"${limits}"
+    IFS=, read -r delay first_delay reported <<<"${stand_in}"
+    rm -rf -- "${state}" && mkdir -p -- "${state}"
+    printf '%s\n' "$@" >"${state}/answers"
+    printf '%s' "${delay}" >"${state}/delay"
+    printf '%s' "${first_delay}" >"${state}/first-delay"
+    printf '%s' "${reported}" >"${state}/reported"
+    local started="${SECONDS}" line
+    if [[ "${form}" == bash ]]; then
+        {
+            printf 'set -euo pipefail\npr_number=7\n'
+            [[ "${clock}" != moved ]] || printf 'sleep() { SECONDS=$((SECONDS + $1)); }\n'
+            sed "s/FIRST_BUDGET/${first_budget}/; s/BUDGET/${budget}/; s/FIRST_NAP/${first_nap}/g; s/NAP/${nap}/g" \
+                "${run_directory}/bash-gate"
+        } >"${run_directory}/gate.bash"
+        status=0
+        printed="$(env PATH="${run_directory}/bin:${PATH}" STATE="${state}" bash "${run_directory}/gate.bash" 2>&1)" ||
+            status=$?
+        ended=$([[ "${status}" == 0 ]] && echo passed || echo "exit ${status}")
+        reads="$(grep -c '^read$' "${state}/calls" 2>/dev/null || true)"
+        seconds=$((SECONDS - started))
+    else
+        local -a moved=()
+        [[ "${clock}" != moved ]] || moved=(-MovedClock)
+        line="$(env PATH="${run_directory}/bin:${PATH}" STATE="${state}" pwsh -NoProfile -NonInteractive \
+            -File "${run_directory}/run-gate.ps1" -Form "${run_directory}/ps-form.ps1" -FirstBudget "${first_budget}" \
+            -Budget "${budget}" -FirstNap "${first_nap}" -Nap "${nap}" -State "${state}" "${moved[@]}" 2>&1 |
+            tail -n 1)"
+        read -r ended reads seconds <<<"${line}"
+        seconds="${seconds%.*}"
+        printed="${line}"
+    fi
+}
+
+# expect records one case: how the gate ended, its reads, that it took no more seconds than given, and, for the Bash
+# form, that it printed the text given.
+#
+# Parameters:
+#   - `$1`: the case's name.
+#   - `$2`: how it should end: passed; for Bash, exit <status>; for PowerShell, refused:<error id>.
+#   - `$3`: its reads, or any.
+#   - `$4`: the most seconds it may take.
+#   - `$5`: for the Bash form, text its output must hold; optional.
+#
+# Returns:
+#   - 0, the case recorded.
+function expect {
+    local name="$1" problem=""
+    case_count=$((case_count + 1))
+    [[ "${ended}" == "$2" ]] || problem+="it ended '${ended}', not '$2'; "
+    [[ "$3" == any || "${reads}" == "$3" ]] || problem+="it read ${reads} times, not $3; "
+    ((seconds <= $4)) || problem+="it took ${seconds} seconds, more than $4; "
+    [[ -z "${5:-}" || "${form}" != bash || "${printed}" == *"$5"* ]] || problem+="its output lacks '$5'; "
+    if [[ -z "${problem}" ]]; then
+        success "${name}"
+    else
+        failures=$((failures + 1))
+        error 0 "${name}: ${problem}output: ${printed:0:600}"
+    fi
+}
+
+######
+# Main
+######
+
+case_count=0
+failures=0
+run_directory=""
+
+Set-Traps cleanup
+run_directory="$(mktemp -d)"
+state="${run_directory}/state"
+write_stand_in
+extract_gates
+write_ps_runner
+
+pending='[{"name": "test", "bucket": "pending"}]'
+passing='[{"name": "test", "bucket": "pass"}]'
+failing='[{"name": "test", "bucket": "fail"}]'
+template_limits=300,1800,10,30
+scaled=2,3,1,1
+
+for form in bash powershell; do
+    timed_out=$([[ "${form}" == bash ]] && echo "exit 1" || echo "refused:ChecksStillRunning")
+    stopped=$([[ "${form}" == bash ]] && echo "exit 1" || echo "refused:ChecksNotEstablished")
+
+    run_case "${form}" "${template_limits}" moved 0,0,1 "${pending}"
+    expect "${form}: a check pending throughout stops the gate after 30 minutes, 60 reads" "${timed_out}" 60 20 \
+        "checks are still running after 30 minutes"
+
+    run_case "${form}" "${template_limits}" moved 0,0,1 "${pending}" "${pending}" "${pending}" "${passing}"
+    expect "${form}: a second set passing after three reads passes" passed 4 20 $'test\tpass'
+
+    run_case "${form}" "${template_limits}" moved 0,0,1 "${pending}" "${pending}" "${failing}"
+    expect "${form}: a check failing stops the gate" "${stopped}" 3 20 "not all passing"
+
+    run_case "${form}" "${template_limits}" moved 0,0,1 "${passing}" "${pending}"
+    expect "${form}: the last read is judged, and no later read is made to be ignored" passed 1 20 $'test\tpass'
+
+    run_case "${form}" "${scaled}" real 2,0,1 "${pending}"
+    expect "${form}: slow reads don't outlast the limit" "${timed_out}" any 5
+
+    run_case "${form}" "${scaled}" real 60,0,1 "${pending}"
+    expect "${form}: a stalled read is stopped at the limit" "${timed_out}" 1 5
+
+    run_case "${form}" 2,3,1,30 real 0,0,1 "${pending}"
+    expect "${form}: a wait doesn't outlast the limit" "${timed_out}" 1 5
+
+    run_case "${form}" "${scaled}" real 0,60,1 "${passing}"
+    expect "${form}: a stalled read in the wait for the first check is stopped at its limit" passed 1 6
+done
+
+((failures == 0)) || error "${EX_SOFTWARE}" "${failures} of the ${case_count} cases failed"
+success "every case passed"

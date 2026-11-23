@@ -84,7 +84,7 @@ As first delivered on 2026-11-22, each form ran up to 60 rounds of `gh pr checks
 
 | Milestone | Required? | Expected evidence | State/result |
 | --- | --- | --- | --- |
-| Implementation | Yes | The commits of §§ 9.2 and 9.4 | § 9.2's in #630; § 9.4's on `fix/629-pr-script-deadline` |
+| Implementation | Yes | The commits of §§ 9.2, 9.4 and 9.5 | § 9.2's in #630; §§ 9.4's and 9.5's in #634 |
 | Merge | Yes | The pull requests and the commits they land | #630, a02ce8b, on 2026-11-22; the clock's pending |
 | Deployment | No: a guide | None | Not required |
 | Verification | Yes | § 7's last row, posted on #629 | The rounds' seen in #632's script on 2026-11-23; the clock's in #634's own script the same day, waiting out its checks for 16 minutes, posted on #629 |
@@ -121,7 +121,7 @@ As first delivered on 2026-11-22, each form ran up to 60 rounds of `gh pr checks
 
 ### 9.5 Phase 5: the reads bounded, and the last read judged
 
-- [ ] Codex's R01 and R02 on #634: every read and wait within the clock, in both forms, and the verdict and the table from the last read; `tests/Test-PrScriptGate`, new, for both forms, § 7's third row.
+- [x] Codex's R01 and R02 on #634: every read and wait within the clock, in both forms, and the verdict and the table from the last read; `tests/Test-PrScriptGate`, new, for both forms, § 7's third row: 16 cases, all passing; with a read left unbounded in each form and the table read again, 8 fail, the stalled read taking 120 seconds in Bash and 60 in PowerShell against a limit of 5.
 
 <a id="files-and-related-assets"></a>
 
