@@ -29,7 +29,7 @@ documents:
 
 A PR script made from the template runs `gh pr checks --watch` once, reads every check once, and requires each to have passed. `--watch` waits only for the checks it sees when it starts, so a set that starts later, as a pull request's own after its branch's push, is still pending when the script reads it, and the script stops on checks that go on to pass. At the end, both of the template's forms watch again while any check is pending, for up to 30 minutes, and only then require every check to have passed.
 
-Reopened on 2026-11-23: the 30 minutes weren't a limit. One `gh pr checks --watch` has no limit of its own and can run past them, and the next round then starts another (Codex's F04). At the end, both forms read the checks every 30 seconds on a 30-minute clock instead of watching them, and checks still running when it runs out stop the script with a message of their own.
+Reopened on 2026-11-23: the 30 minutes weren't a limit. One `gh pr checks --watch` has no limit of its own and can run past them, and the next round then starts another (Codex's F04). At the end, both forms read the checks every 30 seconds on a 30-minute clock instead of watching them, and checks still running when it runs out stop the script with a message of their own. Codex's review of #634 then found that the clock bounded neither a slow or stalled read nor the table's own read (R01), and that the table's read could see a pending check the verdict ignored (R02): every read and wait now gets only the time left, and the verdict and the table come from the last read.
 
 <a id="current-state"></a>
 
@@ -65,7 +65,7 @@ As first delivered on 2026-11-22, each form ran up to 60 rounds of `gh pr checks
 - **A fixed wait before watching.** Not taken: no wait is long enough for every repository's second set, and every pull request would pay it.
 - **A watchdog process killing a slow read.** Not taken: a watchdog's own `sleep` outlives it, holding the read's output open until it ends; perl's `alarm`, set in the process the read becomes, needs no second process.
 - **The watch, under a time limit.** Not taken: macOS has no `timeout` command, and stopping a watch run in the background takes more than reading the checks on a clock.
-- **Counting the workflows a head should run.** Not taken: a template can't know each repository's workflows, and the rounds need nothing of them.
+- **Counting the workflows a head should run.** Not taken: a template can't know each repository's workflows, and the reads need nothing of them.
 
 <a id="acceptance-criteria-and-evidence"></a>
 
@@ -87,7 +87,7 @@ As first delivered on 2026-11-22, each form ran up to 60 rounds of `gh pr checks
 | Implementation | Yes | The commits of §§ 9.2, 9.4 and 9.5 | § 9.2's in #630; §§ 9.4's and 9.5's in #634 |
 | Merge | Yes | The pull requests and the commits they land | #630, a02ce8b, on 2026-11-22; the clock's pending |
 | Deployment | No: a guide | None | Not required |
-| Verification | Yes | § 7's last row, posted on #629 | The rounds' seen in #632's script on 2026-11-23; the clock's in #634's own script the same day, waiting out its checks for 16 minutes, posted on #629 |
+| Verification | Yes | § 7's last row, posted on #629 | The rounds' seen in #632's script on 2026-11-23; the clock's in #634's own script at 34b46e9 the same day, waiting out its checks for 16 minutes, posted on #629; the bounded reads of e3a33ea, pending a run of #634's script made again from them |
 
 <a id="implementation-phases"></a>
 
@@ -123,6 +123,8 @@ As first delivered on 2026-11-22, each form ran up to 60 rounds of `gh pr checks
 
 - [x] Codex's R01 and R02 on #634: every read and wait within the clock, in both forms, and the verdict and the table from the last read; `tests/Test-PrScriptGate`, new, for both forms, § 7's third row: 16 cases, all passing; with a read left unbounded in each form and the table read again, 8 fail, the stalled read taking 120 seconds in Bash and 60 in PowerShell against a limit of 5.
 
+- [ ] #634's PR script made again from the template at its head, and run, its gate, the bounded reads', waiting out the checks within the clock; posted on #629.
+
 <a id="files-and-related-assets"></a>
 
 ## 10. Files and related assets
@@ -147,7 +149,8 @@ As first delivered on 2026-11-22, each form ran up to 60 rounds of `gh pr checks
 - **The schedule row set by hand, 2026-11-22 (agy's B09).** The worktree's first script wasn't run, so #629's row on Schedule #588 had no worktree link; #630's PR script refused to record the merge on it, and the row was set In progress with its link through GitHub's project API.
 - **The PR script run by the coder, 2026-11-22 (agy's B10).** #630's script was run by the coder, not the owner, each run at your direction in the session, a one-run exception each time.
 - **Closed before its verification, its plan unlinked (agy's B05 and B06).** #629 closed at the merge with § 7's last row not yet seen, and its plan row read Not yet opened. On 2026-11-23 `star github plan link` was run, the pending verification was posted, and the issue reopened.
-- **Codex's review of #634, 2026-11-23.** R01: the clock was checked only between reads, so a slow or stalled read, and the table's own read, could outlast it. R02: the table's read could see a newer pending check the verdict then ignored. Both are fixed in #634, § 5, with a test of both forms; worked straight through, in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`.
+- **Codex's review of #634, 2026-11-23.** R01: the clock was checked only between reads, so a slow or stalled read, and the table's own read, could outlast it. R02: the table's read could see a newer pending check the verdict then ignored. Both are fixed in #634, § 5, with a test of both forms, worked straight through, as your direction of 2026-11-21, to work each phase straight through, committing and pushing each, has it; in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`.
+- **The plan before the work, 2026-11-23 (agy's E03).** 61b0113, this plan's update for the clock, was committed before the fix, b74570b, but not reviewed with you first; you had directed the reopening and the fix. No first script was written for this worktree: 34b46e9's row repair stood in for its row step, and the plan link was run by hand. efb1ad1, the plan for Codex's R01 and R02, came before their fix, e3a33ea, as above.
 - **The schedule row repaired, 2026-11-23.** #629's row on Schedule #588 still linked #630, this issue's own pull request, merged on 2026-11-22, its branch gone. The template's guarded update refuses a row linking anything but this branch, reading it as another worktree's; no worktree holds the step, so the row was set In progress, linking `fix/629-pr-script-deadline`, with the template's own `step_row` and `set_row`, the guard allowing only that one link, and read back.
 - **Reopened, 2026-11-23,** for Codex's F04, at your direction, in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`: § 5's clock.
 

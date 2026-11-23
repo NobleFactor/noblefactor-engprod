@@ -780,13 +780,15 @@ def hrs(a; b): (((b | fromdate) - (a | fromdate)) / 3600 * 10 | round) / 10;
 # The program runs through .NET's Process, each argument passed as one and its standard input closed, so that text
 # beyond ASCII survives a Windows console's code page (the style guide's section 7, Native programs). What it writes to
 # standard error, and to standard output with Narrate, goes to the verbose stream. A non-zero exit is a refusal naming
-# the operation, unless AllowFailure lets the caller read it.
+# the operation, unless AllowFailure lets the caller read it. Given a Deadline, it waits for the program only until then,
+# and then stops it and its children and refuses with DeadlinePassed (#629).
 #
 # Parameters:
 #   - `Name`: The program, as the PATH finds it: git, gh or star.
 #   - `Operation`: What the call does, said on the verbose stream and in a refusal.
 #   - `AllowFailure`: Gets a non-zero exit, in place of refusing it.
 #   - `Narrate`: Says what the program writes to standard output on the verbose stream too.
+#   - `Deadline`: When the program must have finished; unset, it may take as long as it takes.
 #   - `ArgumentList`: Its arguments, each one argument.
 #
 # Returns:
@@ -841,7 +843,7 @@ function Invoke-Native {
     if ($null -ne $Deadline) {
         $left = [Math]::Max(0, [Math]::Ceiling(($Deadline - (Get-Date)).TotalMilliseconds))
 
-        if (-not $process.WaitForExit([int]$left)) {
+        if (-not $process.WaitForExit([Int32]$left)) {
             $process.Kill($true)
             $process.WaitForExit()
             $message = "$Operation ran out of time: $Name was stopped at its deadline."
@@ -989,7 +991,7 @@ try {
             }
 
             Write-Verbose -Message "#$number reports no checks yet."
-            $nap = [Math]::Min(10, [Math]::Max(0, [int][Math]::Ceiling(($deadline - (Get-Date)).TotalSeconds)))
+            $nap = [Math]::Min(10, [Math]::Max(0, [Int32][Math]::Ceiling(($deadline - (Get-Date)).TotalSeconds)))
 
             if ($nap -gt 0) {
                 Start-Sleep -Seconds $nap
@@ -1030,7 +1032,7 @@ try {
                 $said = $pending
             }
 
-            $nap = [Math]::Min(30, [Math]::Max(0, [int][Math]::Ceiling(($deadline - (Get-Date)).TotalSeconds)))
+            $nap = [Math]::Min(30, [Math]::Max(0, [Int32][Math]::Ceiling(($deadline - (Get-Date)).TotalSeconds)))
 
             if ($nap -gt 0) {
                 Start-Sleep -Seconds $nap
