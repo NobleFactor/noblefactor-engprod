@@ -189,7 +189,7 @@ Every participating repository checks its token each day and opens an issue, `To
 | "New issues aren't reaching Triage" | A new issue wasn't added to the Triage project, and the token checked fine; each further miss is a comment | Read the run it names and fix the cause, then rerun each missed issue's run from its page. It closes when a later issue reaches Triage, listing the issues missed earlier, to check. When the run failed before it could tell where the issue belongs, it says the issue may not have been placed |
 | `no-recent-check in <repository>` | That repository's daily check has stopped running | Re-enable its workflow on its Actions page |
 
-An alert closes only when the check proves its own condition gone: fixing one thing closes another's alert only once the check can test it. GitHub not reached, a rate limit or a GitHub server error raises no alert and closes none: the run fails, and the next day's check tries again. A run that can't write an alert fails too, so a failed check run is worth reading even when no alert is open. Two runs at once can open the same alert twice; the later is closed as a duplicate of the earlier.
+An alert closes only when the check proves its own condition gone: fixing one thing closes another's alert only once the check can test it. GitHub not reached, a rate limit or a GitHub server error raises no alert and closes none: the run fails, and the next day's check tries again. A run that can't write an alert fails too, so a failed check run is worth reading even when no alert is open. Two runs at once can open the same alert twice; the later is closed as a duplicate of the earlier, its Resolution set to Duplicate.
 
 <a id="renewing"></a>
 

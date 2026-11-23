@@ -65,6 +65,9 @@ work="$(mktemp -d)"
 trap 'rm -rf -- "${work}"' EXIT
 
 declare -A found=() cleared=()
+# The organization app's installation token, once minted: setting an issue field takes push access, which the run's own
+# token lacks.
+app_token=""
 declare -a watched=()
 incomplete=0
 broken=0
@@ -146,6 +149,20 @@ b64url() {
     openssl base64 -A | tr '+/' '-_' | tr -d '='
 }
 
+# app_jwt prints a JSON Web Token for the organization's app, signed with its private key, or returns 1 when the key
+# can't sign one.
+app_jwt() {
+    local key="${work}/key.pem" now head body signature
+    (umask 077 && printf '%s\n' "${APP_PRIVATE_KEY}" >"${key}")
+    now="$(date -u +%s)"
+    head="$(printf '{"alg":"RS256","typ":"JWT"}' | b64url)"
+    body="$(printf '{"iat":%d,"exp":%d,"iss":"%s"}' $((now - 60)) $((now + 540)) "${APP_ID}" | b64url)"
+    signature="$(printf '%s.%s' "${head}" "${body}" | openssl dgst -sha256 -sign "${key}" 2>/dev/null | b64url)" ||
+        return 1
+    [[ -n "${signature}" ]] || return 1
+    printf '%s.%s.%s\n' "${head}" "${body}" "${signature}"
+}
+
 # check_app proves an organization's app: its key signs, it is installed on the account, and the installation token
 # GitHub mints holds every permission credentials-check.json names. Only all of that clears the app's conditions.
 check_app() {
@@ -154,17 +171,11 @@ check_app() {
         raise missing "the organization secrets ${names} aren't both set"
         return
     fi
-    local key="${work}/key.pem" now head body signature jwt code installation needed short
-    (umask 077 && printf '%s\n' "${APP_PRIVATE_KEY}" >"${key}")
-    now="$(date -u +%s)"
-    head="$(printf '{"alg":"RS256","typ":"JWT"}' | b64url)"
-    body="$(printf '{"iat":%d,"exp":%d,"iss":"%s"}' $((now - 60)) $((now + 540)) "${APP_ID}" | b64url)"
-    if ! signature="$(printf '%s.%s' "${head}" "${body}" | openssl dgst -sha256 -sign "${key}" 2>/dev/null | b64url)" ||
-        [[ -z "${signature}" ]]; then
+    local jwt code installation needed short
+    if ! jwt="$(app_jwt)"; then
         raise refused "the private key in NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY can't sign a token"
         return
     fi
-    jwt="${head}.${body}.${signature}"
     code="$(call -H "Authorization: Bearer ${jwt}" -H "Accept: application/vnd.github+json" \
         "${api}/app/installations")" || exit 2
     if [[ "${code}" != 200 ]]; then
@@ -189,6 +200,7 @@ check_app() {
         raise refused "GitHub minted no installation token for app ${APP_ID}: HTTP ${code} ($(message))"
         return
     fi
+    app_token="$(jq -r '.token // ""' "${work}/body")"
     needed="$(jq -c .organization.permissions "${config}")"
     short="$(jq -r --argjson need "${needed}" '
         def rank: {"read": 1, "write": 2, "admin": 3}[.] // 0;
@@ -357,11 +369,55 @@ failed() {
     broken=1
 }
 
+# mint_token mints the organization app's installation token into app_token, for writing an issue field, and returns 1
+# when it can't: the secrets unset, the key refused, the app not installed, or GitHub not answering. It raises nothing:
+# proving the app is the credentials check's work.
+mint_token() {
+    [[ -z "${app_token}" ]] || return 0
+    [[ -n "${APP_ID:-}" && -n "${APP_PRIVATE_KEY:-}" ]] || return 1
+    local jwt code installation
+    jwt="$(app_jwt)" || return 1
+    code="$(call -H "Authorization: Bearer ${jwt}" -H "Accept: application/vnd.github+json" \
+        "${api}/app/installations")" || return 1
+    [[ "${code}" == 200 ]] || return 1
+    installation="$(jq -r --arg a "${ACCOUNT}" \
+        '.[] | select((.account.login | ascii_downcase) == ($a | ascii_downcase)) | .id' "${work}/body" | head -n 1)"
+    [[ -n "${installation}" ]] || return 1
+    code="$(call -X POST -H "Authorization: Bearer ${jwt}" -H "Accept: application/vnd.github+json" \
+        "${api}/app/installations/${installation}/access_tokens")" || return 1
+    [[ "${code}" == 201 ]] || return 1
+    app_token="$(jq -r '.token // ""' "${work}/body")"
+    [[ -n "${app_token}" ]]
+}
+
+# resolve sets a duplicate alert's Resolution to Duplicate, as the issue standard has every duplicate closed: in a user
+# account, the resolution:duplicate label, with the run's own token; in an organization, its Resolution issue field,
+# with the app's installation token. It returns 1 when it can't.
+resolve() {
+    local number="$1" field code
+    if [[ "${KIND}" == user ]]; then
+        gh issue edit "${number}" --repo "${REPOSITORY}" --add-label resolution:duplicate >/dev/null
+        return
+    fi
+    mint_token || return 1
+    code="$(call -H "Authorization: Bearer ${app_token}" -H "Accept: application/vnd.github+json" \
+        "${api}/orgs/${ACCOUNT}/issue-fields")" || return 1
+    [[ "${code}" == 200 ]] || return 1
+    field="$(jq -r '.[] | select(.name == "Resolution") | .id' "${work}/body" | head -n 1)"
+    [[ -n "${field}" ]] || return 1
+    jq -cn --argjson f "${field}" '{issue_field_values: [{field_id: $f, value: "Duplicate"}]}' >"${work}/request"
+    code="$(call -X POST -H "Authorization: Bearer ${app_token}" -H "Accept: application/vnd.github+json" \
+        -H "Content-Type: application/json" --data "@${work}/request" \
+        "${api}/repos/${REPOSITORY}/issues/${number}/issue-field-values")" || return 1
+    [[ "${code}" == 2* ]]
+}
+
 # incident_for prints the number of a condition's open incident, or nothing when there is none, and returns 1 when the
 # lookup fails, never taking a failure for none. Two runs at once can each find none and each open one; the oldest is
 # kept and every other closed as its duplicate, so that one is left open. Each issue a duplicate names as missed is
-# carried to the one kept first, with its run, so that none is lost; a duplicate carried but not closed is carried
-# again by the next run, which names each issue once all the same.
+# carried to the one kept first, with its run, once, so that none is lost. A duplicate's Resolution is set to Duplicate
+# before it is closed; one whose Resolution can't be set stays open, marked in ${work}/unresolved, and the next run
+# tries again.
 incident_for() {
     local numbers first number carried
     numbers="$(gh issue list --repo "${REPOSITORY}" --label "${label}" --state open --json number,title --limit 100 \
@@ -370,10 +426,17 @@ incident_for() {
     for number in $(tail -n +2 <<<"${numbers}"); do
         carried="$(history "${number}")" || return 1
         carried="$(grep -E "^${marker}" <<<"${carried}" || true)"
-        if [[ -n "${carried}" ]]; then
+        if [[ -n "${carried}" ]] && ! history "${first}" |
+            grep -qxF "Carried from #${number}, which a run opened at the same time:"; then
             carried="$(printf 'Carried from #%s, which a run opened at the same time:\n\n%s\n' "${number}" \
                 "${carried}")"
             gh issue comment "${first}" --repo "${REPOSITORY}" --body "${carried}" >/dev/null || return 1
+        fi
+        if ! resolve "${number}"; then
+            printf "#%s, a duplicate of #%s, stays open: its Resolution couldn't be set to Duplicate\n" "${number}" \
+                "${first}" >&2
+            touch "${work}/unresolved"
+            continue
         fi
         gh issue close "${number}" --repo "${REPOSITORY}" --reason completed \
             --comment "Duplicate of #${first}, opened by a run at the same time; #${first} carries this alert." \
@@ -529,6 +592,7 @@ done
 for condition in "${!found[@]}"; do
     printf '%s: %s\n' "${condition}" "${found[${condition}]}"
 done
+[[ ! -e "${work}/unresolved" ]] || failed "a duplicate alert" "setting its Resolution"
 ((broken == 0)) || exit 3
 ((${#found[@]} == 0)) || exit 1
 ((incomplete == 0)) || exit 2

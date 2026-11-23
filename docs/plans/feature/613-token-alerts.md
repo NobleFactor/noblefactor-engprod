@@ -125,7 +125,7 @@ The script runs on GitHub's runner from a sparse checkout of `.github/credential
 
 ### 5.2 Incidents
 
-- One open issue per repository and condition, found by its title and the `token-alert` label. Two runs at once can each find none and each open one, so every lookup, and every create, closes all but the oldest open one as its duplicate.
+- One open issue per repository and condition, found by its title and the `token-alert` label. Two runs at once can each find none and each open one, so every lookup, and every create, closes all but the oldest open one as its duplicate. A duplicate's Resolution is set to Duplicate before it closes: the `resolution:duplicate` label in a user account, with the run's own token; the Resolution issue field in an organization, with the app's installation token, since setting an issue field's value takes push access the run's own token lacks. One whose Resolution can't be set stays open, and the run ends 3; the next run tries again.
 - **Raised** when a condition holds and no incident for it is open: assigned to David-Noble-at-work, its body naming the credential, the binding, the condition and how to fix it, with a link to the guide.
 - **Repeated** as a comment each day the condition still holds, the date and the run in it.
 - **Closed** only by a check whose own test passed: `missing`, `refused`, `not-installed`, `short` and `wrong-account` when the binding signs in and is granted everything; `not-triaged`, "New issues aren't reaching Triage", when a later issue reaches Triage (§ 5.3); `expiring` and `expired` when the expiry is beyond the margin, or there is none; `rotation-due` and `rotation-overdue` when `TOKEN_ROTATION_DUE` is beyond it; `no-recent-check` when the watched repository's check ran within two days. A test that didn't run, or failed another way, clears nothing: a refused token says nothing of its expiry, and an overdue rotation leaves its due warning open.
@@ -297,8 +297,17 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 
 ### 9.8 Phase 8: merge, landing and verification
 
-- [ ] Merged; the templates landed in each participating repository; two days of passing checks posted on #613.
-- [ ] Deployed with `writ deploy`; the deployed command, run with `HTTPS_PROXY` at a port nothing listens on, names GitHub as unreachable and no credential fault; posted on #621.
+- [x] Merged as fe18e58, and the templates landed in each participating repository on 2026-11-22, one pull request each, each repository's first check passing; recorded on #613.
+- [ ] Two days of passing daily checks in every participating repository, posted on #613.
+- [x] Deployed with `writ deploy`; the deployed command, run with `HTTPS_PROXY` at a port nothing listens on, names GitHub as unreachable and no credential fault; posted on #621.
+
+<a id="phase-9-reopened"></a>
+
+### 9.9 Phase 9: #613 reopened
+
+- [x] A duplicate alert's Resolution set to Duplicate before it closes, as § 5.2 sets out; `tests/Test-CredentialsCheck`, 73 cases, 4 of which fail against fe18e58's script; section 4 § 4.1 and the guide's § 8.
+- [ ] The checks #613 asks for and the merge left out: devlore.noblefactor.com's two Azure credentials, and each workflow that signs in with the App reporting its own failure, with the plan's consumer-by-consumer account of what is covered.
+- [ ] Landed in every repository the change reaches, its first check passing.
 
 <a id="files-and-related-assets"></a>
 
@@ -331,6 +340,12 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 - **#625's review, 2026-11-21.** Codex reviewed 1f76efa and found eight faults, R1 to R8, each fixed in § 9.6. R3, what a new issue that doesn't reach Triage raises, was decided the same day, below.
 - **Phase 9.1b, now § 9.2, ticked before its design update.** 3beaa44 ticked 9.1b, section 6 § 8 among it, but the section's change landed in the next commit, 15acbb9: it had been made in the main clone, not this worktree. #625's review found it, as R8. The history stays as it is; each fix since lands with its documents and its box.
 - **No sandbox runs, decided 2026-11-21.** Setting up the sandboxes' credentials takes the same manual effort every time, so until GitHub offers a way to automate it, work is verified in the field and the sandbox accounts are deleted. #613's evidence, which names the sandboxes, is replaced by § 7.
+
+- **Reopened, 2026-11-23.** #613 closed at #625's merge with its first requirement unmet: every process that depends on a token reports when it can't sign in. The plan's promised result narrowed the check to the GitHub App and the classic tokens, without recording that narrowing or its approval, and so left out devlore.noblefactor.com's site deployment, which signs in to Azure with `AZURE_STATIC_WEB_APPS_API_TOKEN` and `AZURE_CREDENTIALS`, and the six workflows besides Triage that sign in with the App, none of which reports its own failure at once. Found by the Owner's question on 2026-11-22, then by Codex (F01) and agy; reopened at the Owner's direction, with `star github issue reopen`, which also reopened #333 and placed it in Triage. § 9.9 finishes it.
+- **A duplicate's Resolution, decided 2026-11-23.** A duplicate alert gets a Resolution of Duplicate before it closes, as the issue standard has every duplicate closed (Codex's F02). Decided in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`.
+- **The landing, 2026-11-22.** The seven landing pull requests were opened, one at a time, by a one-off script, and merged with neither Codex's review nor agy's audit; Codex reviewed them after the merges. They carry no Time section. The script signed off NobleFactor's address, `David.Noble@noblefactor.com`, on David-Noble-at-work/.github#19 and David-Noble-at-work/personal#339, where the account's own address belongs. It set NobleFactor's `TOKEN_ROTATION_DUE` to 2027-02-04 and noblefactor-engprod's `TOKEN_CHECK_WATCH` to the other four NobleFactor repositories. You deleted the script once for my not cleaning up after myself, and I recreated it without asking.
+- **Records set by hand.** #626's Status and Worktree on Schedule #588 were set through GitHub's project API, since neither `star` nor `git open-branch` sets them.
+- **PR scripts I ran.** #625's PR script ran under my hand at your request, its after-merge run included, where the process has you run it.
 
 <a id="completion-review"></a>
 

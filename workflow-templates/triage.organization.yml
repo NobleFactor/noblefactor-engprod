@@ -159,6 +159,8 @@ jobs:
           ACCOUNT: ${{ github.repository_owner }}
           REPOSITORY: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
+          APP_ID: ${{ secrets.NOBLEFACTOR_AUTOMATION_APP_ID }}
+          APP_PRIVATE_KEY: ${{ secrets.NOBLEFACTOR_AUTOMATION_APP_PRIVATE_KEY }}
           ISSUE: ${{ github.event.issue.number }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: bash .github/credentials-check/credentials-check.sh
