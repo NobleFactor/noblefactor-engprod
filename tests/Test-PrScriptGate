@@ -42,8 +42,9 @@ function cleanup {
 #
 # The stand-in answers `gh pr checks <n> --json name --jq length`, the wait for the first check, with reported, 1 when
 # it is absent, after first-delay seconds; and `gh pr checks <n> --json name,bucket` with the next line of answers, the
-# last line once they run out, after delay seconds. It logs each answer to calls, first or read. Its waits write to
-# nothing, so that one stopped mid-wait leaves no process holding the gate's pipe.
+# last line once they run out, after delay seconds. It logs each answer to calls, first or read. Like gh, a Go program,
+# it ignores SIGALRM, so only a stop it can't ignore ends a stalled read. Its waits write to nothing, so that one
+# stopped mid-wait leaves no process holding the gate's pipe.
 #
 # Returns:
 #   - 0, the stand-in written.
@@ -51,6 +52,8 @@ function write_stand_in {
     mkdir -p -- "${run_directory}/bin"
     cat >"${run_directory}/bin/gh" <<'GH'
 #!/usr/bin/env bash
+# Like gh, a Go program, it ignores SIGALRM.
+trap '' ALRM
 state="${STATE:?}"
 [[ "$1 $2" == "pr checks" ]] || exit 1
 if [[ " $* " == *" --jq length "* ]]; then

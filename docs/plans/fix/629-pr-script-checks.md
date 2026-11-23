@@ -126,7 +126,7 @@ As first delivered on 2026-11-22, each form ran up to 60 rounds of `gh pr checks
 
 - [x] #634's PR script made again from the template at its head, and run, its gate, the bounded reads', waiting out the checks within the clock; posted on #629: at cd4f5f4 it waited out `test-macos` and printed the four checks from its last read, all passing; the readiness check after it then stopped on develop's ruleset, Codex's threads awaiting re-review.
 
-- [ ] Codex's re-review of #634, R01: `within` forks the read and stops it with SIGTERM, then SIGKILL, the real `gh` stopped at the limit; the stand-in `gh` ignores SIGALRM as Go does.
+- [x] Codex's re-review of #634, R01: `within` forks the read and stops it with SIGTERM, then SIGKILL, the real `gh` stopped at the limit; the stand-in `gh` ignores SIGALRM as Go does. With a hung connection, the real `gh` ran 30 seconds under the old `within` against a limit of 2, and stopped at 2 under the new, leaving no process; the PowerShell form's `Invoke-Native` stopped it at 2.1. `tests/Test-PrScriptGate`, 16 cases, passes; against the old `within`, its two stalled-read cases fail.
 
 <a id="files-and-related-assets"></a>
 

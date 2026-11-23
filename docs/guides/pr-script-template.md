@@ -238,12 +238,26 @@ EOF
     qualified_head=$(gh pr view "${pr_number}" --json headRefOid --jq '.headRefOid')
 
     # within runs a command for what is left until deadline, in seconds since the script started, and stops it when
-    # that runs out, with perl's alarm, since macOS has no timeout command: it returns 142 then, and at once when no
-    # time is left (#629).
+    # that runs out: perl runs it as a child and, at its alarm, sends it SIGTERM, then SIGKILL, since macOS has no
+    # timeout command and gh, a Go program, ignores the SIGALRM an alarm would send it. It returns 142 then, and at once
+    # when no time is left; otherwise the command's own status (#629).
     within() {
         local left=$((deadline - SECONDS))
         ((left > 0)) || return 142
-        perl -e 'alarm shift @ARGV; exec @ARGV or exit 127' "${left}" "$@"
+        perl -MPOSIX=:sys_wait_h -e '
+            my $left = shift @ARGV;
+            defined(my $pid = fork) or exit 127;
+            exec @ARGV or exit 127 unless $pid;
+            $SIG{ALRM} = sub {
+                kill TERM => $pid;
+                for (1 .. 20) { exit 142 if waitpid($pid, WNOHANG) > 0; select undef, undef, undef, 0.1 }
+                kill KILL => $pid;
+                waitpid $pid, 0;
+                exit 142;
+            };
+            alarm $left;
+            waitpid $pid, 0;
+            exit($? & 127 ? 128 + ($? & 127) : $? >> 8);' "${left}" "$@"
     }
 
     # GitHub registers a pull request's checks a moment after it opens, and gh pr checks fails while it reports none
