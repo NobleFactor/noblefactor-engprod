@@ -559,22 +559,25 @@ resolve() {
 
 # incident_for prints the number of a condition's open incident, or nothing when there is none, and returns 1 when the
 # lookup fails, never taking a failure for none. Two runs at once can each find none and each open one; the oldest is
-# kept and every other closed as its duplicate, so that one is left open. Each issue a duplicate names as missed is
-# carried to the one kept first, with its run, once, so that none is lost. A duplicate's Resolution is set to Duplicate
-# before it is closed; one whose Resolution can't be set stays open, marked in ${work}/unresolved, and the next run
-# tries again.
+# kept and every other closed as its duplicate, so that one is left open. Each line a duplicate's reports wrote, an
+# issue missed or a workflow failed, is carried to the one kept first, unless it has the line already: a retry carries
+# what was added since, and repeats nothing a carry whose answer was lost delivered. A duplicate's Resolution is set to
+# Duplicate before it is closed; one whose Resolution can't be set stays open, marked in ${work}/unresolved, and the
+# next run tries again.
 incident_for() {
-    local numbers first number carried
+    local numbers first number carried kept fresh line
     numbers="$(gh issue list --repo "${REPOSITORY}" --label "${label}" --state open --json number,title --limit 100 \
         --jq "[.[] | select(.title == \"$(title_of "$1")\") | .number] | sort | .[]")" || return 1
     first="$(head -n 1 <<<"${numbers}")"
     for number in $(tail -n +2 <<<"${numbers}"); do
         carried="$(history "${number}")" || return 1
-        carried="$(grep -E "^${reported}" <<<"${carried}" || true)"
-        if [[ -n "${carried}" ]] && ! history "${first}" |
-            grep -qxF "Carried from #${number}, which a run opened at the same time:"; then
-            carried="$(printf 'Carried from #%s, which a run opened at the same time:\n\n%s\n' "${number}" \
-                "${carried}")"
+        kept="$(history "${first}")" || return 1
+        fresh=""
+        while IFS= read -r line; do
+            [[ -z "${line}" ]] || grep -qxF -- "${line}" <<<"${kept}" || fresh+="${line}"$'\n'
+        done < <(grep -E "^${reported}" <<<"${carried}" || true)
+        if [[ -n "${fresh}" ]]; then
+            carried="$(printf 'Carried from #%s, which a run opened at the same time:\n\n%s' "${number}" "${fresh}")"
             gh issue comment "${first}" --repo "${REPOSITORY}" --body "${carried}" >/dev/null || return 1
         fi
         if ! resolve "${number}"; then
