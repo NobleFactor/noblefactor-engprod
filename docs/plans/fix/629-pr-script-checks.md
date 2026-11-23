@@ -124,7 +124,7 @@ As first delivered on 2026-11-22, each form ran up to 60 rounds of `gh pr checks
 ## 11. Dependencies, overlaps and blockers
 
 - PR scripts already made keep the old gate until they are made again; personal#338's and devlore-cli#1241's are among them.
-- #632, #613's, is in flight: this work's pull request opens once it merges, one pull request being in flight at a time.
+- #632, #613's, was in flight while this work was done; it merged on 2026-11-23 as eb28e48, merged into this branch, and this work's pull request opened after it.
 
 <a id="approval-and-departures"></a>
 
@@ -136,6 +136,7 @@ As first delivered on 2026-11-22, each form ran up to 60 rounds of `gh pr checks
 - **The schedule row set by hand, 2026-11-22 (agy's B09).** The worktree's first script wasn't run, so #629's row on Schedule #588 had no worktree link; #630's PR script refused to record the merge on it, and the row was set In progress with its link through GitHub's project API.
 - **The PR script run by the coder, 2026-11-22 (agy's B10).** #630's script was run by the coder, not the owner, each run at your direction in the session, a one-run exception each time.
 - **Closed before its verification, its plan unlinked (agy's B05 and B06).** #629 closed at the merge with § 7's last row not yet seen, and its plan row read Not yet opened. On 2026-11-23 `star github plan link` was run, the pending verification was posted, and the issue reopened.
+- **The schedule row repaired, 2026-11-23.** #629's row on Schedule #588 still linked #630, this issue's own pull request, merged on 2026-11-22, its branch gone. The template's guarded update refuses a row linking anything but this branch, reading it as another worktree's; no worktree holds the step, so the row was set In progress, linking `fix/629-pr-script-deadline`, with the template's own `step_row` and `set_row`, the guard allowing only that one link, and read back.
 - **Reopened, 2026-11-23,** for Codex's F04, at your direction, in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`: § 5's clock.
 
 <a id="completion-review"></a>
