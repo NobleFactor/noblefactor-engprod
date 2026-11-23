@@ -177,7 +177,7 @@ Scope: devlore.noblefactor.com's deployment, and the workflows in devlore-cli an
 
 **Alternatives:** Proving the app's health alone was rejected: an installation that loses one repository still mints a token for the rest, so a workflow writing there fails with nothing raised. Reading the secret's expiry from Azure was rejected: it takes a directory permission the service principal needs for nothing else. A check only daily was rejected: a workflow that fails on its credential would go unreported until the next day.
 
-**Consequence:** The variable has to be set again whenever the secret is renewed, or the check warns of an expiry that isn't. Each signing-in job carries the two steps, landed with the check, and its own token needs `issues: write`. A process outside GitHub Actions isn't checked.
+**Consequence:** The variable has to be set again whenever the secret is renewed, or the check warns of an expiry that isn't. Its alerts follow that date even while Azure can't be reached; only the sign-in's and the deployment token's wait for Azure to answer. Each signing-in job carries the two steps, landed with the check, and its own token needs `issues: write`. A process outside GitHub Actions isn't checked.
 
 Evidence: [#613's plan, §§ 5.11 to 5.13 and 12](../../plans/feature/613-token-alerts.md#azure-credentials), decided on 2026-11-23 in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`, and `tests/Test-CredentialsCheck`.
 

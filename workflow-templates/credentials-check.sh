@@ -36,7 +36,9 @@
 # with are checked too: AZURE_CREDENTIALS, the service principal azure/login reads, must sign in, and its secret's
 # expiry, which the repository variable AZURE_CREDENTIALS_EXPIRES records, must be beyond the margin;
 # AZURE_STATIC_WEB_APPS_API_TOKEN must be the site's current deployment token, which the service principal reads from
-# Azure. Azure not reached, or answering with something that proves nothing, leaves Azure's alerts as they are.
+# Azure. Azure not reached, or answering with something that proves nothing, leaves the sign-in's and the deployment
+# token's alerts as they are; the expiry's follow the recorded date, which needs nothing of Azure. A run that finds
+# something wrong ends 1, even when part of it couldn't be checked.
 #
 # Any workflow that signs in can report its own failure: report mode without ISSUE checks what CHECKS names at once,
 # and a bad credential raises its alert, naming the workflow and its run; a credential that checks fine raises nothing,
@@ -133,8 +135,8 @@ days_until() {
 
 # call makes one request of GitHub or Azure, the body to ${work}/body and the headers to ${work}/headers, and prints the
 # HTTP status. A request that doesn't reach its service returns 2, and no credential is at fault (#621): a GitHub
-# request's caller exits 2 at once, and an Azure request's leaves Azure's alerts as they are. It returns rather than
-# exits, since it runs in a command substitution, whose exit would end only that.
+# request's caller exits 2 at once, and an Azure request's leaves the Azure sign-in's and deployment token's alerts as
+# they are. It returns rather than exits, since it runs in a command substitution, whose exit would end only that.
 call() {
     local code
     if ! code="$(curl -sS --max-time 30 -o "${work}/body" -D "${work}/headers" -w '%{http_code}' "$@" \
@@ -352,11 +354,11 @@ check_token() {
     fi
 }
 
-# azure_skipped says why the Azure check stopped short, leaving Azure's alerts as they are, and marks the run
-# incomplete: the service not reached, or answering with something that proves nothing about the credentials.
+# azure_skipped says why the Azure check stopped short, leaving the sign-in's and the deployment token's alerts as they
+# are, and marks the run incomplete: the service answering with something that proves nothing about the credentials.
 azure_skipped() {
     printf 'Azure answered %s with HTTP %s, which proves nothing about the credentials;' "$1" "$2" >&2
-    printf ' their alerts stay as they are\n' >&2
+    printf " the sign-in's and the deployment token's alerts stay as they are\n" >&2
     incomplete=1
 }
 
