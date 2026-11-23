@@ -5,7 +5,7 @@ type: Process
 audience: Engineers, agents
 status: Draft
 created: 2026-03-16
-updated: 2026-11-20
+updated: 2026-11-23
 ---
 
 <a id="pr-script-template"></a>
@@ -237,8 +237,8 @@ EOF
     pr_number=$(gh pr view --json number --jq '.number')
     qualified_head=$(gh pr view "${pr_number}" --json headRefOid --jq '.headRefOid')
 
-    # GitHub registers a pull request's checks a moment after it opens, and gh pr checks --watch exits 1 while it
-    # reports none (PR #610's first run), so the script waits up to five minutes for the first.
+    # GitHub registers a pull request's checks a moment after it opens, and gh pr checks fails while it reports none
+    # (PR #610's first run), so the script waits up to five minutes for the first.
     for _ in {1..30}; do
         reported="$(gh pr checks "${pr_number}" --json name --jq length 2>/dev/null || true)"
         [[ "${reported:-0}" == 0 ]] || break
@@ -247,16 +247,24 @@ EOF
 
     # The default requires observed passing checks. A proven no-CI repository
     # needs its reviewed policy reflected here; empty output never proves it.
-    # gh pr checks --watch waits only for the checks it sees when it starts, and a run that starts later, as a pull
-    # request's own after its branch's push, is still pending when it returns; so the script watches again while any
-    # check is pending, for up to 30 minutes (#629).
-    for _ in {1..60}; do
-        gh pr checks "${pr_number}" --watch || true
-        pending=$(gh pr checks "${pr_number}" --json bucket --jq '[.[] | select(.bucket == "pending")] | length')
-        [[ "${pending}" != 0 ]] || break
+    # A run that starts after the pull request opens, as its own after its branch's push, is pending when the first
+    # run's checks pass, and gh pr checks --watch waits only for the checks it sees when it starts, with no limit of
+    # its own; so the script reads the checks every 30 seconds while any is pending, for 30 minutes at most (#629).
+    deadline=$((SECONDS + 1800))
+    said=0
+    while :; do
+        checks=$(gh pr checks "${pr_number}" --json bucket)
+        pending=$(jq '[.[] | select(.bucket == "pending")] | length' <<<"${checks}")
+        ((pending > 0 && SECONDS < deadline)) || break
+        ((pending == said)) || echo "Checks still running on #${pr_number}: ${pending}."
+        said=${pending}
         sleep 30
     done
-    checks=$(gh pr checks "${pr_number}" --json bucket)
+    gh pr checks "${pr_number}" || true
+    ((pending == 0)) || {
+        echo "#${pr_number}'s checks are still running after 30 minutes. Run this script again once they finish." >&2
+        exit 1
+    }
     jq -e 'length > 0 and all(.[]; .bucket == "pass")' <<<"${checks}" >/dev/null || {
         echo 'The observed checks are not all passing. Inspect the current head and CI policy.' >&2
         exit 1
@@ -918,8 +926,8 @@ try {
         $qualifiedHead = (Invoke-Native -Name gh -Operation "Reading #$number's qualified head" -ArgumentList 'pr',
                 'view', $number, '--json', 'headRefOid', '--jq', '.headRefOid').Output.Trim()
 
-        # GitHub registers a pull request's checks a moment after it opens, and gh pr checks --watch fails while it
-        # reports none (PR #610's first run), so the script waits up to five minutes for the first.
+        # GitHub registers a pull request's checks a moment after it opens, and gh pr checks fails while it reports
+        # none (PR #610's first run), so the script waits up to five minutes for the first.
         foreach ($attempt in 1..30) {
             $reported = Invoke-Native -Name gh -Operation "Finding #$number's checks" -AllowFailure -ArgumentList 'pr',
                 'checks', $number, '--json', 'name', '--jq', 'length'
@@ -932,22 +940,38 @@ try {
             Start-Sleep -Seconds 10
         }
 
-        # gh pr checks --watch waits only for the checks it sees when it starts, and a run that starts later, as a pull
-        # request's own after its branch's push, is still pending when it returns; so the script watches again while
-        # any check is pending, for up to 30 minutes (#629).
-        foreach ($round in 1..60) {
-            $null = Invoke-Native -Name gh -Operation "Waiting for #$number's checks" -Narrate -AllowFailure `
-                -ArgumentList 'pr', 'checks', $number, '--watch'
-            $answer = Invoke-Native -Name gh -Operation "Reading #$number's check results" -ArgumentList 'pr', 'checks',
+        # A run that starts after the pull request opens, as its own after its branch's push, is pending when the
+        # first run's checks pass, and gh pr checks --watch waits only for the checks it sees when it starts, with no
+        # limit of its own; so the script reads the checks every 30 seconds while any is pending, for 30 minutes at
+        # most (#629).
+        $deadline = (Get-Date).AddMinutes(30)
+        $said = 0
+
+        while ($true) {
+            $answer = Invoke-Native -Name gh -Operation "Reading #$number's checks" -ArgumentList 'pr', 'checks',
                 $number, '--json', 'bucket'
             $checks = @(ConvertFrom-Json -InputObject $answer.Output)
+            $pending = @($checks | Where-Object { $_.bucket -eq 'pending' }).Count
 
-            if (@($checks | Where-Object { $_.bucket -eq 'pending' }).Count -eq 0) {
+            if ($pending -eq 0 -or (Get-Date) -ge $deadline) {
                 break
             }
 
-            Write-Verbose -Message "#$number has checks still running, round $round of 60."
+            if ($pending -ne $said) {
+                Write-Verbose -Message "Checks still running on #${number}: $pending."
+                $said = $pending
+            }
+
             Start-Sleep -Seconds 30
+        }
+
+        $null = Invoke-Native -Name gh -Operation "Showing #$number's checks" -Narrate -AllowFailure -ArgumentList 'pr',
+            'checks', $number
+
+        if ($pending -ne 0) {
+            $message = "#$number's checks are still running after 30 minutes; run this again once they finish."
+            $refusal = @{ Id = 'ChecksStillRunning'; Category = 'OperationTimeout'; Target = $number }
+            throw (ConvertTo-Refusal -Message $message @refusal)
         }
 
         if ($checks.Count -eq 0 -or @($checks | Where-Object { $_.bucket -ne 'pass' }).Count -ne 0) {

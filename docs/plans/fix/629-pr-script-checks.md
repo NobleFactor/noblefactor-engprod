@@ -80,7 +80,7 @@ As first delivered on 2026-11-22, each form ran up to 60 rounds of `gh pr checks
 
 | Milestone | Required? | Expected evidence | State/result |
 | --- | --- | --- | --- |
-| Implementation | Yes | The commits of §§ 9.2 and 9.4 | § 9.2's in #630; § 9.4's pending |
+| Implementation | Yes | The commits of §§ 9.2 and 9.4 | § 9.2's in #630; § 9.4's on `fix/629-pr-script-deadline` |
 | Merge | Yes | The pull requests and the commits they land | #630, a02ce8b, on 2026-11-22; the clock's pending |
 | Deployment | No: a guide | None | Not required |
 | Verification | Yes | § 7's last row, posted on #629 | The rounds' seen in #632's script on 2026-11-23; the clock's pending |
@@ -111,7 +111,7 @@ As first delivered on 2026-11-22, each form ran up to 60 rounds of `gh pr checks
 
 ### 9.4 Phase 4: the clock
 
-- [ ] Both forms' CI gates as § 5 sets out, and the template's `updated:` date; § 7's first two rows.
+- [x] Both forms' CI gates as § 5 sets out, and the template's `updated:` date; § 7's first two rows: each form passes its checks, and its loop, with a check pending throughout, stops after 61 reads and 30 minutes with its own message; with a second set passing after three reads, passes; and with a check failing, stops at the gate.
 
 <a id="files-and-related-assets"></a>
 
