@@ -78,6 +78,16 @@ What gh itself says, read on 2026-11-21 with gh 2.104.0 and GitHub unreachable: 
 
 #626: `check_access` can check that the login reaches the organization a command reads, section 6 § 8's "Account unavailable despite scopes", but none of its 24 callers passes an organization, so the check has never run. A command run against an organization that refuses the login, as one enforcing single sign-on does, gets past the access check and fails on its first real request with GitHub's own error. Found fixing #625's review.
 
+<a id="issue-633"></a>
+
+## Issue 633
+
+#633: the two Triage templates, `triage.organization.yml` and `triage.user.yml`, have 41 lines over 120 characters, the longest 402, in the steps that sort each new issue: routing an issue found while walking a scenario, leaving a Schedule or Scenario issue out of Triage, copying the form's Area, and setting Severity. They came over unchanged from the accounts' `.github` repositories in #625, and no test covers those steps. Found answering #632's review; fixed in #632, at your direction.
+
+- **A test first,** `tests/Test-TriageTemplates`: it takes each of those steps' scripts out of each template, runs it as GitHub does, `bash -e`, against a stand-in `gh` and the case's issue, and checks what it prints, what it writes to `GITHUB_OUTPUT`, and the calls it makes. It passes against the templates as they are, before any line changes.
+- **Then the lines,** each within 120 characters: a long GraphQL query split across lines inside its quotes, which GraphQL reads the same; a pipeline broken after a `|`; a long message given to `echo` in two parts, which it joins with a space; and comments rewrapped. The same test passes after.
+- **Landed** with #613's second landing, in every participating repository.
+
 <a id="current-state"></a>
 
 ## 3. Current state
@@ -361,12 +371,20 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 - [x] #632's review, C04: the Azure expiry alerts follow the recorded date while Azure is down, as § 5.11 now says; `tests/Test-CredentialsCheck`, 120 cases.
 - [ ] Landed in every repository the change reaches, its first check passing.
 
+<a id="phase-10-633-the-triage-templates-lines"></a>
+
+### 9.10 Phase 10: #633, the Triage templates' lines
+
+- [ ] `tests/Test-TriageTemplates`, passing against the templates as they are.
+- [ ] Every line of both Triage templates within 120 characters, the test passing after.
+
 <a id="files-and-related-assets"></a>
 
 ## 10. Files and related assets
 
 - `workflow-templates/` in this repository, new: the source of `credentials-check.sh`, `credentials-check.json`, `credentials-check.organization.yml` and `credentials-check.user.yml`, the failure steps `credentials-check.app-failure-steps.yml` and `credentials-check.azure-failure-steps.yml`, and each account's Triage template, `triage.organization.yml` and `triage.user.yml`, copied from NobleFactor/.github and David-Noble-at-work/.github with the failure step added. No copy of the Triage template lived here before; § 5.4 lands each in its account's `.github` and each participating repository.
 - `tests/Test-CredentialsCheck`: new.
+- `workflow-templates/triage.organization.yml` and `triage.user.yml`, and `tests/Test-TriageTemplates`, new (#633).
 - `Home/common/.local/share/devlore/star/extensions/com.noblefactor.ops.GitHub/commands/access.star` and `tests/Test-StarGitHub` (#621, #626).
 - The same extension's `commands/github-model-get.star`, `github-model-diff.star`, `github-model-apply.star`, `github-model-backup.star`, `github-model-restore.star` and `github-token-make.star` (#626).
 - `README.md`.
@@ -401,6 +419,7 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 - **#632's PR script, 2026-11-23.** Its first run, which opened #632, was mine, as your direction of 2026-11-21 has it: the coder opens its own pull request through the worktree's PR script, and merging is yours.
 - **The app's reach, decided 2026-11-23.** A workflow that writes to another repository fails when the app loses it, and the check, proving only the app's own health, raised nothing (Codex's C02). This gap was reported closed before, and it wasn't. Every run now proves the app reaches each repository the workflows write to, § 5.14. Decided in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`.
 - **The Azure expiry during an Azure outage, decided 2026-11-23.** The expiry date is recorded in GitHub, so the check raises an expired secret's alert whether or not Azure answers; the promise that an outage changes no Azure alert is corrected to the sign-in's and the deployment token's (Codex's C04). Decided in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`.
+- **#633, decided 2026-11-23.** The Triage templates' long lines are wrapped in #632, with a test of the steps they're in, at your direction; #633 is step 24 of Schedule #588, after #613's, and its row was set In progress, linking `feature/613-token-alerts-complete`, through GitHub's project API, as #613's was. Decided in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`.
 - **A duplicate's Resolution, decided 2026-11-23.** A duplicate alert gets a Resolution of Duplicate before it closes, as the issue standard has every duplicate closed (Codex's F02). Decided in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`.
 - **The landing, 2026-11-22.** The seven landing pull requests were opened, one at a time, by a one-off script, and merged with neither Codex's review nor agy's audit. Codex reviewed them after the merges, as its [review ledger](https://github.com/NobleFactor/noblefactor-engprod/issues/588#issuecomment-7104181078) on #588 records: the five NobleFactor pull requests, with reviews posted; David-Noble-at-work/.github#19, read in full, its review not postable; and not David-Noble-at-work/personal#339, Codex having no access to the private repository, whose review is still owed (Codex's C05). They carry no Time section. The script signed off NobleFactor's address, `David.Noble@noblefactor.com`, on David-Noble-at-work/.github#19 and David-Noble-at-work/personal#339, where the account's own address belongs. It set NobleFactor's `TOKEN_ROTATION_DUE` to 2027-02-04 and noblefactor-engprod's `TOKEN_CHECK_WATCH` to the other four NobleFactor repositories. You deleted the script once for my not cleaning up after myself, and I recreated it without asking.
 - **Records set by hand.** #626's Status and Worktree on Schedule #588 were set through GitHub's project API, since neither `star` nor `git open-branch` sets them.
