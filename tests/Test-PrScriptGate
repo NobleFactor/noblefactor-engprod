@@ -6,9 +6,9 @@
 # Test-PrScriptGate - Tests the CI gate of docs/guides/pr-script-template.md, both its forms (#629): the checks are read
 # while any is pending, for 30 minutes at most, and no read or wait outlasts that; the verdict and the table come from
 # the last read alone; and the wait for the first check is bounded the same way. Each form's gate is taken from the
-# template and run against a stand-in gh, the Bash form by bash and the PowerShell form by pwsh, with the template's own
-# Invoke-Native. A case on the template's 30 minutes runs on a clock the case moves; a case on a slow or stalled read
-# runs in real time, the limits scaled to seconds.
+# template and run against a stand-in gh, the Bash form by bash, and by macOS's own bash 3.2 where /bin/bash is that,
+# and the PowerShell form by pwsh, with the template's own Invoke-Native. A case on the template's 30 minutes runs on a
+# clock the case moves; a case on a slow or stalled read runs in real time, the limits scaled to seconds.
 
 [[ -r "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" ]] || {
     printf '%s: cannot find Declare-BashScript in %s\n' "${0##*/}" "$(dirname "$0")/../Home/common/.local/bin" >&2
@@ -20,7 +20,7 @@ export XDG_DATA_HOME
 
 # shellcheck source=Declare-BashScript
 source "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" "$0" "help" "h" "$@"
-require_command jq awk perl pwsh mktemp
+require_command jq awk pwsh mktemp
 
 template="$(cd "$(dirname "$0")/../docs/guides" && pwd)/pr-script-template.md"
 
@@ -156,7 +156,7 @@ PS
 # its reads, and the whole seconds it took.
 #
 # Parameters:
-#   - `$1`: the form, bash or powershell.
+#   - `$1`: the form: bash, run by the bash on the PATH; bash-3.2, by /bin/bash; or powershell.
 #   - `$2`: first-budget,budget,first-nap,nap: the gate's limits in seconds, the template's 300,1800,10,30.
 #   - `$3`: clock, moved by the case, or real.
 #   - `$4`: delay,first-delay,reported: the stand-in's delays in seconds, and what the first wait is told.
@@ -175,15 +175,18 @@ function run_case {
     printf '%s' "${first_delay}" >"${state}/first-delay"
     printf '%s' "${reported}" >"${state}/reported"
     local started="${SECONDS}" line
-    if [[ "${form}" == bash ]]; then
+    if [[ "${form}" == bash* ]]; then
         {
             printf 'set -euo pipefail\npr_number=7\n'
-            [[ "${clock}" != moved ]] || printf 'sleep() { SECONDS=$((SECONDS + $1)); }\n'
+            # On the moved clock a whole wait moves it; within's fifths of a second are real.
+            [[ "${clock}" != moved ]] || printf '%s\n' 'sleep() {' \
+                '    if [[ "$1" == *.* ]]; then command sleep "$1"; else SECONDS=$((SECONDS + $1)); fi' '}'
             sed "s/FIRST_BUDGET/${first_budget}/; s/BUDGET/${budget}/; s/FIRST_NAP/${first_nap}/g; s/NAP/${nap}/g" \
                 "${run_directory}/bash-gate"
         } >"${run_directory}/gate.bash"
         status=0
-        printed="$(env PATH="${run_directory}/bin:${PATH}" STATE="${state}" bash "${run_directory}/gate.bash" 2>&1)" ||
+        printed="$(env PATH="${run_directory}/bin:${PATH}" STATE="${state}" "${shell}" "${run_directory}/gate.bash" \
+            2>&1)" ||
             status=$?
         ended=$([[ "${status}" == 0 ]] && echo passed || echo "exit ${status}")
         reads="$(grep -c '^read$' "${state}/calls" 2>/dev/null || true)"
@@ -219,7 +222,7 @@ function expect {
     [[ "${ended}" == "$2" ]] || problem+="it ended '${ended}', not '$2'; "
     [[ "$3" == any || "${reads}" == "$3" ]] || problem+="it read ${reads} times, not $3; "
     ((seconds <= $4)) || problem+="it took ${seconds} seconds, more than $4; "
-    [[ -z "${5:-}" || "${form}" != bash || "${printed}" == *"$5"* ]] || problem+="its output lacks '$5'; "
+    [[ -z "${5:-}" || "${form}" != bash* || "${printed}" == *"$5"* ]] || problem+="its output lacks '$5'; "
     if [[ -z "${problem}" ]]; then
         success "${name}"
     else
@@ -249,9 +252,17 @@ failing='[{"name": "test", "bucket": "fail"}]'
 template_limits=300,1800,10,30
 scaled=2,3,1,1
 
-for form in bash powershell; do
-    timed_out=$([[ "${form}" == bash ]] && echo "exit 1" || echo "refused:ChecksStillRunning")
-    stopped=$([[ "${form}" == bash ]] && echo "exit 1" || echo "refused:ChecksNotEstablished")
+# The Bash form runs under the bash on the PATH, and under macOS's own, 3.2, where /bin/bash is older.
+forms=(bash)
+[[ "$(/bin/bash -c 'echo "${BASH_VERSINFO[0]}"' 2>/dev/null)" != 3 ]] || forms+=(bash-3.2)
+forms+=(powershell)
+for form in "${forms[@]}"; do
+    case "${form}" in
+        bash) shell=bash ;;
+        bash-3.2) shell=/bin/bash ;;
+    esac
+    timed_out=$([[ "${form}" == bash* ]] && echo "exit 1" || echo "refused:ChecksStillRunning")
+    stopped=$([[ "${form}" == bash* ]] && echo "exit 1" || echo "refused:ChecksNotEstablished")
 
     run_case "${form}" "${template_limits}" moved 0,0,1 "${pending}"
     expect "${form}: a check pending throughout stops the gate after 30 minutes, 60 reads" "${timed_out}" 60 20 \

@@ -129,7 +129,7 @@ As first delivered on 2026-11-22, each form ran up to 60 rounds of `gh pr checks
 
 - [x] Codex's re-review of #634, R01: `within` forks the read and stops it with SIGTERM, then SIGKILL, the real `gh` stopped at the limit; the stand-in `gh` ignores SIGALRM as Go does. With a hung connection, the real `gh` ran 30 seconds under the old `within` against a limit of 2, and stopped at 2 under the new, leaving no process; the PowerShell form's `Invoke-Native` stopped it at 2.1. `tests/Test-PrScriptGate`, 16 cases, passes; against the old `within`, its two stalled-read cases fail.
 
-- [ ] Perl replaced by plain Bash in `within`, at your direction: the read in the background, its output to a file, stopped at the time left with SIGTERM, then SIGKILL; under bash 3.2 and 5, against the real `gh` hung; `tests/Test-PrScriptGate` needing no perl.
+- [x] Perl replaced by plain Bash in `within`, at your direction: the read in the background, its output to a file, stopped at the time left with SIGTERM, then SIGKILL; under bash 3.2 and 5, against the real `gh` hung; `tests/Test-PrScriptGate` needing no perl. Under both bashes the real `gh`, its connection hung, stopped at a limit of 2 seconds, leaving no process; an answering `gh` returned its output; a status passed through. The test runs the Bash form under macOS's bash 3.2 too: 24 cases, all passing; with `within` never stopping a read, its four stalled-read cases fail, 60 seconds each.
 
 <a id="files-and-related-assets"></a>
 

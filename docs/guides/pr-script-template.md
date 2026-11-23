@@ -237,27 +237,35 @@ EOF
     pr_number=$(gh pr view --json number --jq '.number')
     qualified_head=$(gh pr view "${pr_number}" --json headRefOid --jq '.headRefOid')
 
-    # within runs a command for what is left until deadline, in seconds since the script started, and stops it when
-    # that runs out: perl runs it as a child and, at its alarm, sends it SIGTERM, then SIGKILL, since macOS has no
-    # timeout command and gh, a Go program, ignores the SIGALRM an alarm would send it. It returns 142 then, and at once
-    # when no time is left; otherwise the command's own status (#629).
+    # within runs a command for what is left until deadline, in seconds since the script started, and prints what it
+    # wrote: it runs in the background, its output to a file rather than a pipe, so that a command stopped holds nothing
+    # open, and at the deadline it is sent SIGTERM, then SIGKILL two seconds later, since macOS has no timeout command
+    # and gh, a Go program, ignores SIGALRM. It returns the command's status, or 142 when it was stopped or no time was
+    # left (#629). Plain Bash, from 3.2, macOS's own.
     within() {
-        local left=$((deadline - SECONDS))
-        ((left > 0)) || return 142
-        perl -MPOSIX=:sys_wait_h -e '
-            my $left = shift @ARGV;
-            defined(my $pid = fork) or exit 127;
-            exec @ARGV or exit 127 unless $pid;
-            $SIG{ALRM} = sub {
-                kill TERM => $pid;
-                for (1 .. 20) { exit 142 if waitpid($pid, WNOHANG) > 0; select undef, undef, undef, 0.1 }
-                kill KILL => $pid;
-                waitpid $pid, 0;
-                exit 142;
-            };
-            alarm $left;
-            waitpid $pid, 0;
-            exit($? & 127 ? 128 + ($? & 127) : $? >> 8);' "${left}" "$@"
+        local out pid read_status=0
+        ((SECONDS < deadline)) || return 142
+        out="$(mktemp)"
+        "$@" >"${out}" &
+        pid=$!
+        while kill -0 "${pid}" 2>/dev/null && ((SECONDS < deadline)); do
+            sleep 0.2
+        done
+        if kill -0 "${pid}" 2>/dev/null; then
+            kill -TERM "${pid}" 2>/dev/null || true
+            for _ in 1 2 3 4 5 6 7 8 9 10; do
+                kill -0 "${pid}" 2>/dev/null || break
+                sleep 0.2
+            done
+            kill -KILL "${pid}" 2>/dev/null || true
+            wait "${pid}" 2>/dev/null || true
+            rm -f -- "${out}"
+            return 142
+        fi
+        wait "${pid}" 2>/dev/null || read_status=$?
+        cat -- "${out}"
+        rm -f -- "${out}"
+        return "${read_status}"
     }
 
     # GitHub registers a pull request's checks a moment after it opens, and gh pr checks fails while it reports none
@@ -789,12 +797,11 @@ def hrs(a; b): (((b | fromdate) - (a | fromdate)) / 3600 * 10 | round) / 10;
     $answer.Output.TrimEnd()
 }
 
-# Invoke-Native runs a native program, its output read as UTF-8, and gets what it wrote and how it exited.
-#
-# The program runs through .NET's Process, each argument passed as one and its standard input closed, so that text
-# beyond ASCII survives a Windows console's code page (the style guide's section 7, Native programs). What it writes to
-# standard error, and to standard output with Narrate, goes to the verbose stream. A non-zero exit is a refusal naming
-# the operation, unless AllowFailure lets the caller read it. Given a Deadline, it waits for the program only until then,
+# Invoke-Native runs a native program, its output read as UTF-8, and gets what it wrote and how it exited. The program
+# runs through .NET's Process, each argument passed as one and its standard input closed, so that text beyond ASCII
+# survives a Windows console's code page (the style guide's section 7, Native programs). What it writes to standard
+# error, and to standard output with Narrate, goes to the verbose stream. A non-zero exit is a refusal naming the
+# operation, unless AllowFailure lets the caller read it. Given a Deadline, it waits for the program only until then,
 # and then stops it and its children and refuses with DeadlinePassed (#629).
 #
 # Parameters:
