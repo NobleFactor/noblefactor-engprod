@@ -1,0 +1,332 @@
+#!/usr/bin/env bash
+
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Noble Factor. All rights reserved.
+
+# Test-TriageTemplates - Tests the steps of workflow-templates/triage.organization.yml and triage.user.yml that sort a
+# new issue (#633): an issue found while walking a scenario put in the scenario, a Schedule or Scenario issue left out
+# of Triage, the form's Area copied, and the Severity a new issue starts with. Each step's script is taken from its
+# template and run as GitHub runs it, bash -e, against a stand-in gh; each case checks the step's status, what it
+# printed, what it wrote to GITHUB_OUTPUT, and the calls it made.
+
+[[ -r "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" ]] || {
+    printf '%s: cannot find Declare-BashScript in %s\n' "${0##*/}" "$(dirname "$0")/../Home/common/.local/bin" >&2
+    exit 72 # EX_OSFILE
+}
+
+XDG_DATA_HOME="$(cd "$(dirname "$0")/../Home/common/.local/share" && pwd)" || exit 72 # EX_OSFILE
+export XDG_DATA_HOME
+
+# shellcheck source=Declare-BashScript
+source "$(dirname "$0")/../Home/common/.local/bin/Declare-BashScript" "$0" "help" "h" "$@"
+require_command jq awk mktemp
+
+templates="$(cd "$(dirname "$0")/../workflow-templates" && pwd)"
+
+###########
+# Functions
+###########
+
+# cleanup removes the run's directory, however the run ends.
+#
+# Returns:
+#   - 0, the run's directory gone.
+function cleanup {
+    if [[ -n "${run_directory:-}" && -d "${run_directory}" ]]; then
+        rm -rf -- "${run_directory}"
+    fi
+}
+
+# write_stand_in writes the stand-in gh into the run's bin directory.
+#
+# The stand-in logs each call to calls, one line each: a GraphQL request as the operation it is, then its variables in
+# the order given, and `gh issue edit` as its arguments. It answers a scenario's lookup from scenario.json, failing when
+# scenario-fails exists; adds a project item as ITEM_1, failing when add-fails exists; sets an item's option, failing
+# when option-fails exists; answers an issue's type from type, empty for none, and its Severity from severity, absent
+# for none; and answers the organization's issue fields with Area, its options Product and Engineering, and Severity,
+# its options Critical, High, Medium, Low and N/A. A request it doesn't know fails.
+#
+# Returns:
+#   - 0, the stand-in written.
+function write_stand_in {
+    mkdir -p -- "${run_directory}/bin"
+    cat >"${run_directory}/bin/gh" <<'GH'
+#!/usr/bin/env bash
+state="${STATE:?}" query="" jq_program="" variables=()
+if [[ "$1 $2" == "issue edit" ]]; then
+    shift 2
+    printf 'issue edit %s\n' "$*" >>"${state}/calls"
+    exit 0
+fi
+[[ "$1 $2" == "api graphql" ]] || exit 1
+shift 2
+while (($#)); do
+    case "$1" in
+        -f | -F)
+            if [[ "$2" == query=* ]]; then query="${2#query=}"; else variables+=("$2"); fi
+            shift
+            ;;
+        --jq) jq_program="$2" && shift ;;
+    esac
+    shift
+done
+query="$(tr -s '[:space:]' ' ' <<<"${query}")"
+case "${query}" in
+    *fieldValueByName*) operation=scenario ;;
+    *addProjectV2ItemById*) operation=add-item ;;
+    *updateProjectV2ItemFieldValue*) operation=set-option ;;
+    *deleteProjectV2Item*) operation=delete-item ;;
+    *setIssueFieldValue*) operation=set-field ;;
+    *issueFieldValues*) operation=field-values ;;
+    *issueType*) operation=issue-type ;;
+    *issueFields*) operation=issue-fields ;;
+    *) operation=unknown ;;
+esac
+printf '%s %s\n' "${operation}" "${variables[*]}" >>"${state}/calls"
+type="$(cat "${state}/type" 2>/dev/null)"
+case "${operation}" in
+    scenario)
+        [[ ! -e "${state}/scenario-fails" ]] || exit 1
+        answer="$(cat "${state}/scenario.json")"
+        ;;
+    add-item)
+        [[ ! -e "${state}/add-fails" ]] || exit 1
+        answer='{"data": {"addProjectV2ItemById": {"item": {"id": "ITEM_1"}}}}'
+        ;;
+    set-option)
+        [[ ! -e "${state}/option-fails" ]] || exit 1
+        answer='{"data": {"updateProjectV2ItemFieldValue": {"projectV2Item": {"id": "ITEM_1"}}}}'
+        ;;
+    delete-item) answer='{"data": {"deleteProjectV2Item": {"deletedItemId": "ITEM_1"}}}' ;;
+    set-field) answer='{"data": {"setIssueFieldValue": {"clientMutationId": null}}}' ;;
+    issue-type)
+        answer="$(jq -cn --arg t "${type}" '{data: {node: {issueType: (if $t == "" then null else {name: $t} end)}}}')"
+        ;;
+    field-values)
+        answer="$(jq -cn --arg t "${type}" --arg s "$(cat "${state}/severity" 2>/dev/null)" '{data: {node: {
+            issueType: (if $t == "" then null else {name: $t} end),
+            issueFieldValues: {nodes: (if $s == "" then [] else [{name: $s, field: {name: "Severity"}}] end)}}}}')"
+        ;;
+    issue-fields)
+        answer='{"data": {"organization": {"issueFields": {"nodes": [
+            {"id": "AREA_FIELD", "name": "Area", "options": [{"id": "AREA_P", "name": "Product"},
+                {"id": "AREA_E", "name": "Engineering"}]},
+            {"id": "SEVERITY_FIELD", "name": "Severity", "options": [{"id": "SEV_C", "name": "Critical"},
+                {"id": "SEV_H", "name": "High"}, {"id": "SEV_M", "name": "Medium"}, {"id": "SEV_L", "name": "Low"},
+                {"id": "SEV_NA", "name": "N/A"}]}]}}}}'
+        ;;
+    *) exit 1 ;;
+esac
+if [[ -n "${jq_program}" ]]; then jq -r "${jq_program}" <<<"${answer}"; else printf '%s\n' "${answer}"; fi
+GH
+    chmod +x "${run_directory}/bin/gh"
+}
+
+# step_script prints the script of a template's step: the block under its run key, its indentation removed.
+#
+# Parameters:
+#   - `$1`: the template's file name, under workflow-templates/.
+#   - `$2`: the step's name.
+#
+# Returns:
+#   - 0, the script printed, or nothing when the template has no such step.
+function step_script {
+    awk -v name="$2" '
+        !found && index($0, "- name: ") && substr($0, index($0, "- name: ") + 8) == name { found = 1; next }
+        found && !body && /^ +- / { exit }
+        found && !body && /^ +run: \|$/ { body = 1; next }
+        body {
+            if ($0 ~ /^[[:space:]]*$/) { print ""; next }
+            match($0, /^ */)
+            if (!width) width = RLENGTH
+            if (RLENGTH < width) exit
+            print substr($0, width + 1)
+        }' "${templates}/$1"
+}
+
+# run_step runs a template's step as GitHub runs it, bash -e, in a fresh state, its issue in Acme/site, recording its
+# status, what it printed and what it wrote to GITHUB_OUTPUT.
+#
+# Parameters:
+#   - `$1`: the template's file name.
+#   - `$2`: the step's name.
+#   - `$@`: after those, the step's environment, as NAME=value.
+#
+# Returns:
+#   - 0, whatever the step's own status.
+function run_step {
+    local template="$1" name="$2"
+    shift 2
+    step_script "${template}" "${name}" >"${run_directory}/step.sh"
+    [[ -s "${run_directory}/step.sh" ]] || error "${EX_SOFTWARE}" "${template} has no step named ${name}"
+    : >"${state}/output"
+    : >"${state}/calls"
+    status=0
+    printed="$(env PATH="${run_directory}/bin:${PATH}" STATE="${state}" GITHUB_OUTPUT="${state}/output" \
+        GITHUB_REPOSITORY=Acme/site GITHUB_REPOSITORY_OWNER=Acme GH_TOKEN=token "$@" \
+        bash -e "${run_directory}/step.sh" 2>&1)" || status=$?
+}
+
+# expect records one case: the step's status, what it printed, what it wrote to GITHUB_OUTPUT, and its calls, each
+# exactly as given.
+#
+# Parameters:
+#   - `$1`: the case's name.
+#   - `$2`: the status the step should have.
+#   - `$3`: what it should print.
+#   - `$4`: what it should write to GITHUB_OUTPUT.
+#   - `$5`: the calls it should make, one a line.
+#
+# Returns:
+#   - 0, the case recorded.
+function expect {
+    local name="$1" problem="" output calls
+    output="$(<"${state}/output")"
+    calls="$(<"${state}/calls")"
+    case_count=$((case_count + 1))
+    ((status == $2)) || problem+="its status was ${status}, not $2; "
+    [[ "${printed}" == "$3" ]] || problem+="it printed '${printed}', not '$3'; "
+    [[ "${output}" == "$4" ]] || problem+="it wrote '${output}' to GITHUB_OUTPUT, not '$4'; "
+    [[ "${calls}" == "$5" ]] || problem+="its calls were '${calls}', not '$5'; "
+    if [[ -z "${problem}" ]]; then
+        success "${name}"
+    else
+        failures=$((failures + 1))
+        error 0 "${name}: ${problem}"
+    fi
+}
+
+######
+# Main
+######
+
+case_count=0
+failures=0
+run_directory=""
+
+Set-Traps cleanup
+run_directory="$(mktemp -d)"
+state="${run_directory}/state"
+mkdir -p -- "${state}"
+write_stand_in
+
+scenario="Put an issue found while walking a scenario in the scenario"
+lookup="scenario owner=Acme name=site number=5"
+added="add-item p=PROJECT_S c=I_1"
+optioned="set-option p=PROJECT_S i=ITEM_1 f=FIELD_S o=OPTION_1"
+walked='{"data": {"repository": {"issue": {"state": "OPEN", "projectItems": {"nodes": [
+    {"project": {"id": "PROJECT_B", "title": "Backlog: engprod"}, "scenario": null},
+    {"project": {"id": "PROJECT_S", "title": "Scenario: engprod"},
+        "scenario": {"optionId": "OPTION_1", "name": "Walk one", "field": {"id": "FIELD_S"}}}]}}}}}'
+
+# The scenario step, the same in both templates.
+for template in triage.organization.yml triage.user.yml; do
+    rm -f -- "${state}"/*-fails "${state}/scenario.json"
+    run_step "${template}" "${scenario}" "BODY=Nothing found." ISSUE=I_1
+    expect "${template}: an issue that names no scenario is left for Triage, silently" 0 "" "" ""
+
+    run_step "${template}" "${scenario}" "BODY=Found while walking Other/walks#5" ISSUE=I_1
+    expect "${template}: a scenario of another account sends the issue to Triage" 0 \
+        "Found while walking Other/walks#5: a scenario of another account. The issue goes to Triage." "" ""
+
+    touch "${state}/scenario-fails"
+    run_step "${template}" "${scenario}" $'BODY=A finding.\r\nFound while walking #5\r\n' ISSUE=I_1
+    expect "${template}: a scenario it can't read sends the issue to Triage" 0 \
+        "Found while walking #5: no issue this workflow can read. The issue goes to Triage." "" "${lookup}"
+    rm -f -- "${state}/scenario-fails"
+
+    jq '.data.repository.issue.state = "CLOSED"' <<<"${walked}" >"${state}/scenario.json"
+    run_step "${template}" "${scenario}" "BODY=Found while walking Acme/walks#7" ISSUE=I_1
+    said="Found while walking Acme/walks#7: not an open scenario with its own row on a Scenario project."
+    expect "${template}: a closed scenario sends the issue to Triage" 0 "${said} The issue goes to Triage." "" \
+        "scenario owner=Acme name=walks number=7"
+
+    printf '%s' "${walked}" >"${state}/scenario.json"
+    touch "${state}/add-fails"
+    run_step "${template}" "${scenario}" "BODY=Found while walking #5" ISSUE=I_1
+    expect "${template}: an issue that can't be added to the scenario's project goes to Triage" 0 \
+        "Found while walking #5: the issue could not be added to Scenario: engprod. It goes to Triage." "" \
+        "${lookup}"$'\n'"${added}"
+    rm -f -- "${state}/add-fails"
+
+    touch "${state}/option-fails"
+    run_step "${template}" "${scenario}" "BODY=Found while walking #5" ISSUE=I_1
+    expect "${template}: an option that can't be set takes the row back out, and the issue goes to Triage" 0 \
+        "Found while walking #5: the scenario's option could not be set. The issue goes to Triage." "" \
+        "${lookup}"$'\n'"${added}"$'\n'"${optioned}"$'\n'"delete-item p=PROJECT_S i=ITEM_1"
+    rm -f -- "${state}/option-fails"
+
+    run_step "${template}" "${scenario}" "BODY=Found while walking #5 and later #6" ISSUE=I_1
+    expect "${template}: an issue found while walking a scenario gets its row there, under the scenario's option" 0 \
+        "Found while walking #5: a row of Scenario: engprod under Walk one." "placed=true" \
+        "${lookup}"$'\n'"${added}"$'\n'"${optioned}"
+done
+
+# The organization's collection step reads the issue's type; the user account's, its labels.
+collection="Leave a Schedule or Scenario issue out of Triage"
+printf 'Schedule' >"${state}/type"
+run_step triage.organization.yml "${collection}" ISSUE=I_1
+expect "organization: a Schedule issue goes to no Triage project" 0 \
+    "A Schedule issue: its row is on its Schedule project, so it goes to no Triage project." "collection=true" \
+    "issue-type i=I_1"
+printf 'Task' >"${state}/type"
+run_step triage.organization.yml "${collection}" ISSUE=I_1
+expect "organization: a Task goes to Triage" 0 "" "" "issue-type i=I_1"
+run_step triage.user.yml "${collection}" "LABELS=scenario,area:product"
+expect "user account: a scenario issue goes to no Triage project" 0 \
+    "A schedule or scenario issue: its row is on its project of that kind, so it goes to no Triage project." \
+    "collection=true" ""
+run_step triage.user.yml "${collection}" "LABELS=task"
+expect "user account: a task goes to Triage" 0 "" "" ""
+
+# The Area: the organization's field, the user account's label.
+form=$'### Area\r\n\r\nProduct\r\n\r\n### What\r\n\r\nSomething.'
+run_step triage.organization.yml "Copy the form's Area into the Area field" "BODY=${form}" ISSUE=I_1
+expect "organization: the form's Area, Windows line ends and all, sets the Area field" 0 "Area: Product" "" \
+    "issue-fields login=Acme"$'\n'"set-field i=I_1 f=AREA_FIELD o=AREA_P"
+run_step triage.organization.yml "Copy the form's Area into the Area field" "BODY=### What"$'\n\n'"No Area." ISSUE=I_1
+expect "organization: no Area in the form leaves it for the Missing Area view" 0 \
+    "No Area in the form: the Triage project's Missing Area view will show it." "" ""
+run_step triage.organization.yml "Copy the form's Area into the Area field" "BODY=### Area"$'\n\n'"Operations" ISSUE=I_1
+expect "organization: an Area that isn't an option is said and left" 0 \
+    "Area 'Operations' is not one of the field's options." "" "issue-fields login=Acme"
+run_step triage.user.yml "Copy the form's Area into its label" "BODY=${form}" NUMBER=9
+expect "user account: the form's Area becomes its label" 0 "Area: Product" "" \
+    "issue edit 9 --repo Acme/site --add-label area:product"
+run_step triage.user.yml "Copy the form's Area into its label" "BODY=### Area"$'\n\n'"Operations" NUMBER=9
+expect "user account: an Area that isn't one is left for the Missing Area view" 0 \
+    "No Area in the form: the Triage project's Missing Area view will show it." "" ""
+
+# The Severity a new issue starts with.
+severity="Set the Severity a new issue starts with"
+printf 'Bug' >"${state}/type"
+printf 'High' >"${state}/severity"
+run_step triage.organization.yml "${severity}" ISSUE=I_1
+expect "organization: an issue with a Severity keeps it" 0 "The issue has a Severity already: High" "" \
+    "field-values i=I_1"
+rm -f -- "${state}/severity"
+run_step triage.organization.yml "${severity}" ISSUE=I_1
+expect "organization: a bug starts at Medium" 0 "Severity: Medium" "" \
+    "field-values i=I_1"$'\n'"issue-fields login=Acme"$'\n'"set-field i=I_1 f=SEVERITY_FIELD o=SEV_M"
+printf 'Feature' >"${state}/type"
+run_step triage.organization.yml "${severity}" ISSUE=I_1
+expect "organization: another type is N/A" 0 "Severity: N/A" "" \
+    "field-values i=I_1"$'\n'"issue-fields login=Acme"$'\n'"set-field i=I_1 f=SEVERITY_FIELD o=SEV_NA"
+: >"${state}/type"
+run_step triage.organization.yml "${severity}" ISSUE=I_1
+expect "organization: an issue with no type waits for triage" 0 \
+    "No type yet: the Severity waits for triage, which sets it with the type." "" "field-values i=I_1"
+run_step triage.user.yml "${severity}" "LABELS=bug,severity:low" NUMBER=9
+expect "user account: an issue with a severity keeps it" 0 "The issue has a severity already: bug,severity:low" "" ""
+run_step triage.user.yml "${severity}" "LABELS=area:engineering,bug" NUMBER=9
+expect "user account: a bug starts at severity:medium" 0 "Severity: medium" "" \
+    "issue edit 9 --repo Acme/site --add-label severity:medium"
+run_step triage.user.yml "${severity}" "LABELS=feature" NUMBER=9
+expect "user account: another type is severity:n/a" 0 "Severity: n/a" "" \
+    "issue edit 9 --repo Acme/site --add-label severity:n/a"
+run_step triage.user.yml "${severity}" "LABELS=area:product" NUMBER=9
+expect "user account: an issue with no type label waits for triage" 0 \
+    "No type label yet: the severity waits for triage, which sets it with the type." "" ""
+
+((failures == 0)) || error "${EX_SOFTWARE}" "${failures} of the ${case_count} cases failed"
+success "every case passed"

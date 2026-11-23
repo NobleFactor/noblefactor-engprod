@@ -2,7 +2,7 @@
 title: "Issue-tracking credentials"
 type: Guide
 status: Draft
-updated: 2026-11-21
+updated: 2026-11-23
 ---
 
 # Issue-tracking credentials
@@ -162,14 +162,29 @@ List what each account holds, by name. GitHub never shows a secret's value.
 ```bash
 gh secret list --org <organization>
 gh secret list --repo <owner>/<repository>
+gh variable list --repo <owner>/<repository>
 star github model diff <model> <account>
 ```
 
-A secret can be present and still wrong, so the proof is a Triage run that succeeds:
+A secret can be present and still wrong, so the proof is the repository's daily credentials check, which signs in with it. Run it on demand, and read how it ended:
 
 ```bash
-gh run list --repo <owner>/<repository> --workflow triage.yml --limit 5
+gh workflow run credentials-check.yml --repo <owner>/<repository>
+gh run list --repo <owner>/<repository> --workflow credentials-check.yml --limit 5
 ```
+
+Besides the secrets each account needs (§ 1), the check reads these:
+
+| Setting | Kind | What it holds | Set on |
+| --- | --- | --- | --- |
+| `TOKEN_ROTATION_DUE` | Organization variable | The date the app's key is next rotated, YYYY-MM-DD | Each organization |
+| `TOKEN_CHECK_WATCH` | Repository variable | The other repositories whose daily check this one watches, comma-separated | noblefactor-engprod |
+| `TOKEN_CHECK_TARGETS` | Repository variable | The other repositories in the organization this one's workflows write to with the app, comma-separated | A repository whose workflows write elsewhere: devlore-cli and devlore-registry |
+| `AZURE_STATIC_SITE` | Repository variable | The static site the repository deploys to Azure | devlore.noblefactor.com |
+| `AZURE_CREDENTIALS_EXPIRES` | Repository variable | The date the Azure service principal's secret expires, YYYY-MM-DD | Wherever `AZURE_STATIC_SITE` is set |
+| `AZURE_CREDENTIALS`, `AZURE_STATIC_WEB_APPS_API_TOKEN` | Repository secrets | The service principal's JSON, as `azure/login` reads it, and the site's deployment token | Wherever `AZURE_STATIC_SITE` is set |
+
+A workflow that signs in also checks its credentials the moment it fails, with the two steps it ends with, and a bad one raises its alert, naming the workflow (§ 8).
 
 <a id="alerts"></a>
 
@@ -183,13 +198,21 @@ Every participating repository checks its token each day and opens an issue, `To
 | `refused` | GitHub refused the token or the app's key, or wouldn't mint an installation token | Renew or regenerate it (§ 9) |
 | `not-installed` | The organization's app isn't installed on the organization | Install it on all repositories |
 | `short` | The token lacks a permission or scope the workflows need | Add it on the app's page, or make a token with the scope |
+| `unreachable` | The app can't reach this repository, or one the repository variable `TOKEN_CHECK_TARGETS` names | Add the repository to the app's installation, on the organization's Installed GitHub Apps page, or correct the variable |
 | `wrong-account` | The classic token signs in as another account | Make it signed in as the account it serves |
 | `expiring`, `expired` | The classic token expires within 14 days, or has | Regenerate it (§ 9) |
 | `rotation-due`, `rotation-overdue` | The app key's rotation, `TOKEN_ROTATION_DUE`, is within 14 days, or past | Rotate the key, and set the next date |
 | "New issues aren't reaching Triage" | A new issue wasn't added to the Triage project, and the token checked fine; each further miss is a comment | Read the run it names and fix the cause, then rerun each missed issue's run from its page. It closes when a later issue reaches Triage, listing the issues missed earlier, to check. When the run failed before it could tell where the issue belongs, it says the issue may not have been placed |
+| `azure-missing`, `azure-refused` | A site's Azure service principal, `AZURE_CREDENTIALS`, isn't set, or Azure refuses it | Make a new secret for it in Azure, and store the JSON `azure/login` reads |
+| `azure-expiring`, `azure-expired` | Its secret expires within 14 days, or has, by `AZURE_CREDENTIALS_EXPIRES` | Make a new secret, store it, and set the variable to its expiry date |
+| `azure-expiry-unset` | The repository variable `AZURE_CREDENTIALS_EXPIRES` isn't set, or isn't a date | Set it to the date the service principal's secret expires, YYYY-MM-DD |
+| `azure-short` | The service principal can't read the site named by `AZURE_STATIC_SITE` | Grant it access to the site's resource group, or correct the variable |
+| `deploy-token-missing`, `deploy-token-stale` | `AZURE_STATIC_WEB_APPS_API_TOKEN` isn't set, or isn't the site's current deployment token | Copy the site's deployment token from Azure into the secret |
 | `no-recent-check in <repository>` | That repository's daily check has stopped running | Re-enable its workflow on its Actions page |
 
-An alert closes only when the check proves its own condition gone: fixing one thing closes another's alert only once the check can test it. GitHub not reached, a rate limit or a GitHub server error raises no alert and closes none: the run fails, and the next day's check tries again. A run that can't write an alert fails too, so a failed check run is worth reading even when no alert is open. Two runs at once can open the same alert twice; the later is closed as a duplicate of the earlier.
+When a workflow that signs in fails, its alert gets a line naming the workflow and its run: rerun it once the cause is fixed. A failure whose credentials check fine raises nothing.
+
+An alert closes only when the check proves its own condition gone: fixing one thing closes another's alert only once the check can test it. GitHub not reached, a rate limit or a GitHub server error raises no alert and closes none: the run fails, and the next day's check tries again. A run that can't write an alert fails too, so a failed check run is worth reading even when no alert is open. Two runs at once can open the same alert twice; the later is closed as a duplicate of the earlier, its Resolution set to Duplicate.
 
 <a id="renewing"></a>
 
@@ -197,6 +220,8 @@ An alert closes only when the check proves its own condition gone: fixing one th
 
 - **A GitHub App's private key doesn't expire.** To rotate it, generate a new key on the app's page, name it to `apply` with `--token`, verify every workflow that signs in with it, and only then delete the old key on the app's page.
 - **A classic token expires on the date chosen when it was made.** GitHub emails the account a week before. Open the token at `https://github.com/settings/tokens` and select **Regenerate token**, which keeps its note and scopes, then name it to `apply` with `--token`.
+- **An Azure service principal's secret expires** on the date chosen when it was made. Add a new one with `az ad app credential reset --id <appId> --append --years 1`, store the JSON `azure/login` reads, with `clientId`, `clientSecret`, `subscriptionId` and `tenantId`, in the repository secret `AZURE_CREDENTIALS`, and set the repository variable `AZURE_CREDENTIALS_EXPIRES` to the new secret's expiry, YYYY-MM-DD. Once the site deploys with it, delete the old secret with `az ad app credential delete`.
+- **A static site's deployment token** doesn't expire, but a reset in Azure makes the stored one stale. Copy the current one with `az staticwebapp secrets list --name <site> --query properties.apiKey -o tsv` into the repository secret `AZURE_STATIC_WEB_APPS_API_TOKEN`.
 - **A `gh` login** is whatever credential stands behind it. Renew one from the browser sign-in with `gh auth refresh -h github.com -s project,admin:org,workflow`, signed in as the account.
 
 <a id="why"></a>
