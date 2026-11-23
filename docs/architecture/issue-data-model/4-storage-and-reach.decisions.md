@@ -179,7 +179,7 @@ Scope: devlore.noblefactor.com's deployment, and the workflows in devlore-cli an
 
 **Consequence:** The variable has to be set again whenever the secret is renewed, or the check warns of an expiry that isn't. Its alerts follow that date even while Azure can't be reached; only the sign-in's and the deployment token's wait for Azure to answer. Each signing-in job carries the two steps, landed with the check, and its own token needs `issues: write`. A process outside GitHub Actions isn't checked.
 
-Evidence: [#613's plan, §§ 5.11 to 5.13 and 12](../../plans/feature/613-token-alerts.md#azure-credentials), decided on 2026-11-23 in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`, and `tests/Test-CredentialsCheck`.
+Evidence: [#613's plan, §§ 5.11 to 5.14 and 12](../../plans/feature/613-token-alerts.md#azure-credentials), decided on 2026-11-23 in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`, and `tests/Test-CredentialsCheck`.
 
 ```yaml
 id: "ACCESS-008"
@@ -189,5 +189,5 @@ proposed_by: Claude Code
 approved_by: David Noble
 recorded_by: Claude Code
 decided_at: "2026-11-23"
-recorded_at: "2026-11-23T19:17:05Z"
+recorded_at: "2026-11-23T21:14:26Z"
 ```

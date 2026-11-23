@@ -227,18 +227,6 @@ Where the repository variable `AZURE_STATIC_SITE` names a static site, the daily
 
 Every job that signs in ends with two steps, from `workflow-templates/credentials-check.app-failure-steps.yml` or `credentials-check.azure-failure-steps.yml`, that run only when the job fails, or, for Azure, when its sign-in, the `azure/login` step with the id `azure-login`, fails and the job carries on past it, as the site's deploy does (Codex's C01): one fetches the check into a folder of its own, and one runs it in report mode, with `WORKFLOW` naming the workflow and `CHECKS` what the job signs in with. A bad credential raises its alert, a line naming the workflow and its run; one that checks fine raises nothing, the failure being the job's own. The job's own token needs `issues: write` and `contents: read`.
 
-<a id="reach"></a>
-
-### 5.14 Reach
-
-The app must reach the repository it runs in and every other one its workflows write to with it, which the repository variable `TOKEN_CHECK_TARGETS` names, names or `owner/name`, comma-separated. For each, the check asks GitHub for an installation token for that repository alone; GitHub refuses one the installation doesn't cover, with HTTP 422. A refusal raises `unreachable`, naming each repository; only every one reached clears it; an answer that proves nothing ends the run 2. The app's permissions apply to every repository its installation covers, so the permission check of § 5.2 holds for each. Every run in a repository, the daily check, Triage's report and a workflow's own, reads the same variable, so no run clears what another raised. A repository outside the account is refused as a mistake, exit 64.
-
-| Repository | `TOKEN_CHECK_TARGETS` | Its workflows that write there |
-| --- | --- | --- |
-| devlore-cli | `devlore.noblefactor.com,devlore-registry` | docs-publish and release, devlore.noblefactor.com; knowledge-extract, devlore-registry |
-| devlore-registry | `devlore-cli` | update-indexes and validate, devlore-cli; sync-model-limits and update-indexes, devlore-registry itself |
-| Every other participating repository | Unset | Triage, the repository itself |
-
 <a id="what-the-checks-cover"></a>
 
 ### 5.13 What the checks cover
@@ -253,6 +241,18 @@ The app must reach the repository it runs in and every other one its workflows w
 | `star github` on the owner's machine | Its `gh` login | Every command | No: each command checks its login first (#621, #626) | Yes: the command stops, naming the fix |
 
 The daily check proves that a credential signs in, holds the permissions the configuration names, and reaches every repository its workflows write to (§ 5.14). A process outside GitHub, such as a service on one of the owner's machines that signs in to Azure, isn't checked: its secret isn't where the check runs.
+
+<a id="reach"></a>
+
+### 5.14 Reach
+
+The app must reach the repository it runs in and every other one its workflows write to with it, which the repository variable `TOKEN_CHECK_TARGETS` names, names or `owner/name`, comma-separated. For each, the check asks GitHub for an installation token for that repository alone; GitHub refuses one the installation doesn't cover, with HTTP 422. A refusal raises `unreachable`, naming each repository; only every one reached clears it; an answer that proves nothing ends the run 2. The app's permissions apply to every repository its installation covers, so the permission check of § 5.1 holds for each. Every run in a repository, the daily check, Triage's report and a workflow's own, reads the same variable, so no run clears what another raised. A repository outside the account is refused as a mistake, exit 64.
+
+| Repository | `TOKEN_CHECK_TARGETS` | Its workflows that write there |
+| --- | --- | --- |
+| devlore-cli | `devlore.noblefactor.com,devlore-registry` | docs-publish and release, devlore.noblefactor.com; knowledge-extract, devlore-registry |
+| devlore-registry | `devlore-cli` | update-indexes and validate, devlore-cli; sync-model-limits and update-indexes, devlore-registry itself |
+| Every other participating repository | Unset | Triage, the repository itself |
 
 <a id="alternatives-and-challenges"></a>
 
@@ -295,9 +295,9 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 
 | Milestone | Required? | Expected evidence | State/result |
 | --- | --- | --- | --- |
-| Implementation | Yes | The commits of §§ 9.2 to 9.9, reviewed | §§ 9.2 to 9.8 in #625; §§ 9.9 and 9.10 in #632, under review |
+| Implementation | Yes | The commits of §§ 9.2 to 9.10, reviewed | §§ 9.2 to 9.8 in #625; §§ 9.9 and 9.10 in #632, under review |
 | Merge | Yes | The pull requests and the commits they land | #625, fe18e58, on 2026-11-22; #632 pending |
-| Deployment | Yes: the templates landed in each participating repository (#613), and `writ deploy` of the extension (#621, #626) | Each repository holding the check; the deployed `access.star` | The first landing, seven repositories, and the extension, on 2026-11-22; the second landing, with the failure steps and the site's two variables, after #632 |
+| Deployment | Yes: the templates landed in each participating repository (#613), and `writ deploy` of the extension (#621, #626) | Each repository holding the check; the deployed `access.star` | The first landing, seven repositories, and the extension, on 2026-11-22; the second landing, with the failure steps, #633's Triage templates, `TOKEN_CHECK_TARGETS` and the site's two variables, after #632 |
 | Verification | Yes, in the field | Two days of passing checks in every participating repository, posted on #613; the deployed command with GitHub unreachable, posted on #621 | #621 and #626 posted on 2026-11-22; #613's two days after the second landing |
 
 <a id="implementation-phases"></a>
@@ -370,6 +370,7 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 - [x] #632's audit by agy, D02 to D04 and D06: § 12's records of the canonical clone, phase 9's start and #632's PR script; §§ 2, 4, 7 and 8 and the frontmatter brought to #632's scope; section 4's inventory date and ACCESS-008; the guide's § 9 for the Azure credentials; #613's body; #629's and devlore-cli#1241's plan links to develop; and #632's description, 103 cases. D05, the four parents' Backlog rows, done on your approval with `star github issue move --backlog`.
 - [x] #632's review, C02: the app's reach to this repository and every one `TOKEN_CHECK_TARGETS` names, as § 5.14 sets out; `tests/Test-CredentialsCheck`, 114 cases, 11 of which fail against 333df2a's files.
 - [x] #632's review, C04: the Azure expiry alerts follow the recorded date while Azure is down, as § 5.11 now says; `tests/Test-CredentialsCheck`, 120 cases.
+- [ ] After the merge, once the canonical clone holds it, `star github plan link feature/613-token-alerts.md` rewrites the table of every issue this plan serves, #613, #621, #626 and #633: #633's Plan row links § Issue 633 on develop, and #613's and #626's lose the #626 row (agy's D08).
 - [ ] Landed in every repository the change reaches, its first check passing: the templates, the Triage templates among them; the failure steps in devlore-cli's three app workflows, devlore-registry's three and the site's deployment, with `issues: write` granted where a job's token lacks it; `TOKEN_CHECK_TARGETS` on devlore-cli and devlore-registry, as § 5.14 lists; and `AZURE_STATIC_SITE` and `AZURE_CREDENTIALS_EXPIRES` on devlore.noblefactor.com.
 
 <a id="phase-10-633-the-triage-templates-lines"></a>
@@ -414,7 +415,7 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 
 - **Reopened, 2026-11-23.** #613 closed at #625's merge with its first requirement unmet: every process that depends on a token reports when it can't sign in. The plan's promised result narrowed the check to the GitHub App and the classic tokens, without recording that narrowing or its approval, and so left out devlore.noblefactor.com's site deployment, which signs in to Azure with `AZURE_STATIC_WEB_APPS_API_TOKEN` and `AZURE_CREDENTIALS`, and the six workflows besides Triage that sign in with the App, none of which reports its own failure at once. Found by the Owner's question on 2026-11-22, then by Codex (F01) and agy; reopened at the Owner's direction, with `star github issue reopen`, which also reopened #333 and placed it in Triage. § 9.9 finishes it.
 - **The Azure credentials and each workflow's failure, decided 2026-11-23.** Every workflow that signs in with the App reports its own failure, and the Azure service principal's expiry is a repository variable, `AZURE_CREDENTIALS_EXPIRES`, set when its secret is made. `webhook-executor-sp`, found while reading the site's service principals, with its secret expired on 2026-11-15, is left for you, unlogged, as you directed. Decided in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`.
-- **Records set by hand, 2026-11-23.** Reopening #613, #629 and devlore-cli#1241 put #333, personal#317 and devlore-cli#798 in Triage; at your direction their Triage rows were deleted through GitHub's project API, since no `star` command removes a row from an open issue. That left the three, Features and an Epic, with no Backlog row, where issue-standards § 3 holds them until they close; and Epic #526, reopened with #629, is still in Triage: engprod (agy's D05). With your approval, on 2026-11-23 `star github issue move --backlog` moved all four to their teams' Backlogs, taking #526 out of Triage: engprod; each now has that one row. #613's own row on Schedule #588 was set In progress, linking `feature/613-token-alerts-complete`, the same way, for this pull request's script to record its merge.
+- **Records set by hand, 2026-11-23.** Reopening #613, #629 and devlore-cli#1241 put #333, personal#317 and devlore-cli#798 in Triage; at your direction their Triage rows were deleted through GitHub's project API, `star github issue move --backlog` not yet having been thought of. That left the three, Features and an Epic, with no Backlog row, where issue-standards § 3 holds them until they close, and left Epic #526, reopened with #629, in Triage: engprod (agy's D05). With your approval, on 2026-11-23 `star github issue move --backlog` moved all four to their teams' Backlogs, taking #526 out of Triage: engprod; each now has that one row. #613's own row on Schedule #588 was set In progress, linking `feature/613-token-alerts-complete`, the same way, for this pull request's script to record its merge.
 - **The canonical clone, 2026-11-23 (agy's B14 and D02).** I fast-forwarded noblefactor-engprod's canonical clone to d6f7c4c at 08:21 Pacific, before you authorized updating the clones; you then authorized devlore-cli's and personal's. A second `git pull` there, later the same day, found it current and changed nothing.
 - **Phase 9 began without its plan reviewed, 2026-11-23 (agy's D03).** #613 reopened at your direction, and the work began at once: the duplicate's Resolution, ab2b8dd, and the Azure check, e4b7477, were committed with phase 9 written beside them, not reviewed with you first, and the worktree's first script wasn't run. The decisions they rest on are yours, made in the session: the Resolution, the six workflows reporting their own failure, and the repository variable.
 - **#632's PR script, 2026-11-23.** Its first run, which opened #632, was mine, as your direction of 2026-11-21 has it: the coder opens its own pull request through the worktree's PR script, and merging is yours.
