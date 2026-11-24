@@ -404,7 +404,7 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 
 ### 9.11 Phase 11: the second landing
 
-- [ ] The failure steps' guard, § 5.12, Dependabot excluded on every event, with `tests/Test-CredentialsCheck`'s evaluation of each step's condition.
+- [x] The failure steps' guard, § 5.12, Dependabot excluded on every event, with `tests/Test-CredentialsCheck`'s evaluation of each step's condition: 40 cases, the 159 all passing; against the step files on develop, 16 fail, and against the guard that tested Dependabot only on pull requests, 6.
 - [ ] NobleFactor/noblefactor-engprod's pull request, § 5.15's first row, with #629's completion.
 - [ ] NobleFactor/.github's.
 - [ ] NobleFactor/devlore-cli's, and its variable.

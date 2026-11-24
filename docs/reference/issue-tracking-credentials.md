@@ -2,7 +2,7 @@
 title: "Issue-tracking credentials"
 type: Guide
 status: Draft
-updated: 2026-11-23
+updated: 2026-11-24
 ---
 
 # Issue-tracking credentials
@@ -184,7 +184,7 @@ Besides the secrets each account needs (§ 1), the check reads these:
 | `AZURE_CREDENTIALS_EXPIRES` | Repository variable | The date the Azure service principal's secret expires, YYYY-MM-DD | Wherever `AZURE_STATIC_SITE` is set |
 | `AZURE_CREDENTIALS`, `AZURE_STATIC_WEB_APPS_API_TOKEN` | Repository secrets | The service principal's JSON, as `azure/login` reads it, and the site's deployment token | Wherever `AZURE_STATIC_SITE` is set |
 
-A workflow that signs in also checks its credentials the moment it fails, with the two steps it ends with, and a bad one raises its alert, naming the workflow (§ 8).
+A workflow that signs in also checks its credentials the moment it fails, with the two steps it ends with, and a bad one raises its alert, naming the workflow (§ 8). The steps skip a run that can't read the repository's secrets, Dependabot's on any event and a fork's pull request, so that such a failure raises no false alert.
 
 <a id="alerts"></a>
 
