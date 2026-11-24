@@ -3,7 +3,7 @@ title: "A PR script waits out every set of checks before it judges them"
 issue: https://github.com/NobleFactor/noblefactor-engprod/issues/629
 status: complete
 created: 2026-11-22
-updated: 2026-11-23
+updated: 2026-11-24
 documents:
   - kind: Design
     path: docs/guides/pr-script-template.md
@@ -166,4 +166,4 @@ As first delivered on 2026-11-22, each form ran up to 60 rounds of `gh pr checks
 
 ## 13. Completion review
 
-Complete 2026-11-24 (UTC): #634, merged as 3cb8201, closed #629, by your merge. `tests/Test-PrScriptGate`, 24 cases, the Bash form under bash 3.2 and 5 and the PowerShell form, passes, and its stalled-read cases fail against the code before each fix. The clock was seen in the field in #634's own PR script, at 34b46e9 and again at cd4f5f4, and the plain-Bash `within` stopped the real `gh`, its connection hung, at its limit under bash 3.2 and 5, as `Invoke-Native` did; posted on #629. Outstanding: a PR script made before 3cb8201 keeps its old gate until it is made again.
+Complete 2026-11-24 (UTC): #634, merged as 3cb8201, closed #629, by your merge. `tests/Test-PrScriptGate`, 24 cases, the Bash form under bash 3.2 and 5 and the PowerShell form, passes, and its stalled-read cases fail against the code before each fix. The clock was seen in the field in #634's own PR script, at 34b46e9 and again at cd4f5f4, both runs posted on #629. The plain-Bash `within` stopped the real `gh`, its connection hung, at its limit under bash 3.2 and 5, as `Invoke-Native` did; those runs by hand are recorded in § 9.5, not posted on #629 (agy's F01 on #637). Outstanding: a PR script made before 3cb8201 keeps its old gate until it is made again.
