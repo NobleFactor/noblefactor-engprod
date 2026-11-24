@@ -225,7 +225,7 @@ Where the repository variable `AZURE_STATIC_SITE` names a static site, the daily
 
 ### 5.12 A workflow's own failure
 
-Every job that signs in ends with two steps, from `workflow-templates/credentials-check.app-failure-steps.yml` or `credentials-check.azure-failure-steps.yml`, that run only when the job fails, or, for Azure, when its sign-in, the `azure/login` step with the id `azure-login`, fails and the job carries on past it, as the site's deploy does (Codex's C01): one fetches the check into a folder of its own, and one runs it in report mode, with `WORKFLOW` naming the workflow and `CHECKS` what the job signs in with. A bad credential raises its alert, a line naming the workflow and its run; one that checks fine raises nothing, the failure being the job's own. The job's own token needs `issues: write` and `contents: read`.
+Every job that signs in ends with two steps, from `workflow-templates/credentials-check.app-failure-steps.yml` or `credentials-check.azure-failure-steps.yml`, that run only when the job fails, or, for Azure, when its sign-in, the `azure/login` step with the id `azure-login`, fails and the job carries on past it, as the site's deploy does (Codex's C01): one fetches the check into a folder of its own, and one runs it in report mode, with `WORKFLOW` naming the workflow and `CHECKS` what the job signs in with. A bad credential raises its alert, a line naming the workflow and its run; one that checks fine raises nothing, the failure being the job's own. The job's own token needs `issues: write` and `contents: read`. The steps run only where the run can read the repository's secrets: never on a pull request from a fork or from Dependabot, whose runs get no Actions secrets, so that such a job's failure doesn't raise a false `missing` alert. knowledge-extract, validate and the site's deployment run on pull requests (found planning the second landing).
 
 <a id="what-the-checks-cover"></a>
 
@@ -253,6 +253,24 @@ The app must reach the repository it runs in and every other one its workflows w
 | devlore-cli | `devlore.noblefactor.com,devlore-registry` | docs-publish and release, devlore.noblefactor.com; knowledge-extract, devlore-registry |
 | devlore-registry | `devlore-cli` | update-indexes and validate, devlore-cli; sync-model-limits and update-indexes, devlore-registry itself |
 | Every other participating repository | Unset | Triage, the repository itself |
+
+<a id="the-second-landing"></a>
+
+### 5.15 The second landing
+
+What #632 and #634 merged lands by hand, a pull request a repository, one at a time, in this order, each made by its worktree's PR script, with a Time section and its account's own sign-off, and each reviewed by Codex and audited by agy before you merge it. A repository's variables are set by its PR script, which you run, after the merge.
+
+| # | Repository | What lands | Jobs given the failure steps | Token permission added | Variables |
+| --- | --- | --- | --- | --- | --- |
+| 1 | NobleFactor/noblefactor-engprod | `.github/credentials-check/credentials-check.sh`, `.github/workflows/credentials-check.yml` and `triage.yml`, from the organization templates; the failure steps' guard, § 5.12; this plan's records and #629's completion | None | None | None |
+| 2 | NobleFactor/.github | The same three, in `workflow-templates/` and in its own `.github/` | None | None | None |
+| 3 | NobleFactor/devlore-cli | The same three | docs-publish's `generate-and-pr`, knowledge-extract's `knowledge-extract` and release's `sync-install-script`: the app's steps | `issues: write`: docs-publish's, at the top, beside `contents: read`; release's `sync-install-script` job, beside `contents: write` | `TOKEN_CHECK_TARGETS=devlore.noblefactor.com,devlore-registry` |
+| 4 | NobleFactor/devlore-registry | The same three | sync-model-limits, update-indexes and validate: the app's steps | None: their jobs have no permissions block, so they get the organization's default, which includes it | `TOKEN_CHECK_TARGETS=devlore-cli` |
+| 5 | NobleFactor/devlore.noblefactor.com | The same three | azure-static-web-apps's `build_and_deploy`: the Azure steps, its sign-in step already `azure-login` | None, as above | `AZURE_STATIC_SITE=devlore-noblefactor-com`, `AZURE_CREDENTIALS_EXPIRES=2027-01-27` |
+| 6 | David-Noble-at-work/.github | The same three, from the user templates, in `workflow-templates/` and in its own `.github/` | None | None | None |
+| 7 | David-Noble-at-work/personal | The same three, from the user templates | None | None | None |
+
+`credentials-check.json` is unchanged since the first landing and isn't landed again. The two step files are snippets for a job to end with, not workflows, and stay in this repository's `workflow-templates/`.
 
 <a id="alternatives-and-challenges"></a>
 
@@ -370,7 +388,7 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 - [x] #632's audit by agy, D02 to D04 and D06: § 12's records of the canonical clone, phase 9's start and #632's PR script; §§ 2, 4, 7 and 8 and the frontmatter brought to #632's scope; section 4's inventory date and ACCESS-008; the guide's § 9 for the Azure credentials; #613's body; #629's and devlore-cli#1241's plan links to develop; and #632's description, 103 cases. D05, the four parents' Backlog rows, done on your approval with `star github issue move --backlog`.
 - [x] #632's review, C02: the app's reach to this repository and every one `TOKEN_CHECK_TARGETS` names, as § 5.14 sets out; `tests/Test-CredentialsCheck`, 114 cases, 11 of which fail against 333df2a's files.
 - [x] #632's review, C04: the Azure expiry alerts follow the recorded date while Azure is down, as § 5.11 now says; `tests/Test-CredentialsCheck`, 120 cases.
-- [ ] After the merge, once the canonical clone holds it, `star github plan link feature/613-token-alerts.md` rewrites the table of every issue this plan serves, #613, #621, #626 and #633: #633's Plan row links § Issue 633 on develop, and #613's and #626's lose the #626 row (agy's D08).
+- [x] After the merge, once the canonical clone holds it, `star github plan link feature/613-token-alerts.md` rewrites the table of every issue this plan serves, #613, #621, #626 and #633: #633's Plan row links § Issue 633 on develop, and #613's and #626's lose the #626 row (agy's D08). Run on 2026-11-23 after #632 merged: written for all four, #633 linking its plan on develop and #613's and #626's tables without the #626 row.
 - [ ] Landed in every repository the change reaches, its first check passing: the templates, the Triage templates among them; the failure steps in devlore-cli's three app workflows, devlore-registry's three and the site's deployment, with `issues: write` granted where a job's token lacks it; `TOKEN_CHECK_TARGETS` on devlore-cli and devlore-registry, as § 5.14 lists; and `AZURE_STATIC_SITE` and `AZURE_CREDENTIALS_EXPIRES` on devlore.noblefactor.com.
 
 <a id="phase-10-633-the-triage-templates-lines"></a>
@@ -379,6 +397,19 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 
 - [x] `tests/Test-TriageTemplates`, passing against the templates as they are: 31 cases, four of which fail when a message and a GraphQL variable in the organization template are changed.
 - [x] Every line of both Triage templates within 120 characters, the test passing after: each split GraphQL query checked equal to the original but for whitespace; both templates parse; every step's script passes shellcheck.
+
+<a id="phase-11-the-second-landing"></a>
+
+### 9.11 Phase 11: the second landing
+
+- [ ] The failure steps' guard, § 5.12, with `tests/Test-CredentialsCheck`'s check of it.
+- [ ] NobleFactor/noblefactor-engprod's pull request, § 5.15's first row, with #629's completion.
+- [ ] NobleFactor/.github's.
+- [ ] NobleFactor/devlore-cli's, and its variable.
+- [ ] NobleFactor/devlore-registry's, and its variable.
+- [ ] NobleFactor/devlore.noblefactor.com's, and its two variables.
+- [ ] David-Noble-at-work/.github's.
+- [ ] David-Noble-at-work/personal's.
 
 <a id="files-and-related-assets"></a>
 
@@ -419,6 +450,7 @@ There are no sandbox runs (§ 12). Real credentials are never broken to prove an
 - **The canonical clone, 2026-11-23 (agy's B14 and D02).** I fast-forwarded noblefactor-engprod's canonical clone to d6f7c4c at 08:21 Pacific, before you authorized updating the clones; you then authorized devlore-cli's and personal's. A second `git pull` there, later the same day, found it current and changed nothing. You accepted this record the same day, the clone matching develop with no local changes, and nothing was undone.
 - **Phase 9 began without its plan reviewed, 2026-11-23 (agy's D03).** #613 reopened at your direction, and the work began at once: the duplicate's Resolution, ab2b8dd, and the Azure check, e4b7477, were committed with phase 9 written beside them, not reviewed with you first, and the worktree's first script wasn't run. The decisions they rest on are yours, made in the session: the Resolution, the six workflows reporting their own failure, and the repository variable.
 - **#632's PR script, 2026-11-23.** Its first run, which opened #632, was mine, as your direction of 2026-11-21 has it: the coder opens its own pull request through the worktree's PR script, and merging is yours.
+- **The second landing, planned 2026-11-23.** § 5.15: a pull request a repository, each reviewed and audited before your merge, unlike the first landing's, and its variables set by its PR script, which you run. Planning it found the failure steps would raise a false `missing` alert when a pull request from a fork or Dependabot fails, its run getting no secrets; § 5.12's guard. #629's completion record goes in the first of these pull requests, at your direction. In the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`.
 - **The app's reach, decided 2026-11-23.** A workflow that writes to another repository fails when the app loses it, and the check, proving only the app's own health, raised nothing (Codex's C02). This gap was reported closed before, and it wasn't. Every run now proves the app reaches each repository the workflows write to, § 5.14. Decided in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`.
 - **The Azure expiry during an Azure outage, decided 2026-11-23.** The expiry date is recorded in GitHub, so the check raises an expired secret's alert whether or not Azure answers; the promise that an outage changes no Azure alert is corrected to the sign-in's and the deployment token's (Codex's C04). Decided in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`.
 - **#633, decided 2026-11-23.** The Triage templates' long lines are wrapped in #632, with a test of the steps they're in, at your direction; #633 is step 24 of Schedule #588, after #613's, and its row was set In progress, linking `feature/613-token-alerts-complete`, through GitHub's project API, as #613's was. Decided in the session `NobleFactor/noblefactor-engprod#588 | Schedule: issue tracking, iteration 2 | Coder`.
