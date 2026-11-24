@@ -5,7 +5,7 @@ type: Process
 audience: Engineers, agents
 status: Draft
 created: 2026-03-16
-updated: 2026-11-20
+updated: 2026-11-23
 ---
 
 <a id="pr-script-template"></a>
@@ -237,26 +237,80 @@ EOF
     pr_number=$(gh pr view --json number --jq '.number')
     qualified_head=$(gh pr view "${pr_number}" --json headRefOid --jq '.headRefOid')
 
-    # GitHub registers a pull request's checks a moment after it opens, and gh pr checks --watch exits 1 while it
-    # reports none (PR #610's first run), so the script waits up to five minutes for the first.
-    for _ in {1..30}; do
-        reported="$(gh pr checks "${pr_number}" --json name --jq length 2>/dev/null || true)"
+    # within runs a command for what is left until deadline, in seconds since the script started, and prints what it
+    # wrote: it runs in the background, its output to a file rather than a pipe, so that a command stopped holds nothing
+    # open, and at the deadline it is sent SIGTERM, then SIGKILL two seconds later, since macOS has no timeout command
+    # and gh, a Go program, ignores SIGALRM. It returns the command's status, or 142 when it was stopped or no time was
+    # left (#629). Plain Bash, from 3.2, macOS's own.
+    within() {
+        local out pid read_status=0
+        ((SECONDS < deadline)) || return 142
+        out="$(mktemp)"
+        "$@" >"${out}" &
+        pid=$!
+        while kill -0 "${pid}" 2>/dev/null && ((SECONDS < deadline)); do
+            sleep 0.2
+        done
+        if kill -0 "${pid}" 2>/dev/null; then
+            kill -TERM "${pid}" 2>/dev/null || true
+            for _ in 1 2 3 4 5 6 7 8 9 10; do
+                kill -0 "${pid}" 2>/dev/null || break
+                sleep 0.2
+            done
+            kill -KILL "${pid}" 2>/dev/null || true
+            wait "${pid}" 2>/dev/null || true
+            rm -f -- "${out}"
+            return 142
+        fi
+        wait "${pid}" 2>/dev/null || read_status=$?
+        cat -- "${out}"
+        rm -f -- "${out}"
+        return "${read_status}"
+    }
+
+    # GitHub registers a pull request's checks a moment after it opens, and gh pr checks fails while it reports none
+    # (PR #610's first run), so the script waits up to five minutes for the first, no read or wait outlasting them.
+    deadline=$((SECONDS + 300))
+    while ((SECONDS < deadline)); do
+        reported="$(within gh pr checks "${pr_number}" --json name --jq length 2>/dev/null || true)"
         [[ "${reported:-0}" == 0 ]] || break
-        sleep 10
+        nap=$((deadline - SECONDS))
+        ((nap < 10)) || nap=10
+        ((nap <= 0)) || sleep "${nap}"
     done
 
     # The default requires observed passing checks. A proven no-CI repository
     # needs its reviewed policy reflected here; empty output never proves it.
-    # gh pr checks --watch waits only for the checks it sees when it starts, and a run that starts later, as a pull
-    # request's own after its branch's push, is still pending when it returns; so the script watches again while any
-    # check is pending, for up to 30 minutes (#629).
-    for _ in {1..60}; do
-        gh pr checks "${pr_number}" --watch || true
-        pending=$(gh pr checks "${pr_number}" --json bucket --jq '[.[] | select(.bucket == "pending")] | length')
-        [[ "${pending}" != 0 ]] || break
-        sleep 30
+    # A run that starts after the pull request opens, as its own after its branch's push, is pending when the first
+    # run's checks pass, and gh pr checks --watch waits only for the checks it sees when it starts, with no limit of
+    # its own; so the script reads the checks every 30 seconds while any is pending, for 30 minutes at most, no read or
+    # wait outlasting them. It judges the last read alone, and prints the table from it (#629).
+    deadline=$((SECONDS + 1800))
+    checks='[]'
+    pending=1
+    said=0
+    while ((SECONDS < deadline)); do
+        read_status=0
+        latest=$(within gh pr checks "${pr_number}" --json name,bucket) || read_status=$?
+        ((read_status != 142)) || break
+        ((read_status == 0)) || {
+            echo "Reading #${pr_number}'s checks failed: gh exited ${read_status}." >&2
+            exit 1
+        }
+        checks=${latest}
+        pending=$(jq '[.[] | select(.bucket == "pending")] | length' <<<"${checks}")
+        ((pending > 0)) || break
+        ((pending == said)) || echo "Checks still running on #${pr_number}: ${pending}."
+        said=${pending}
+        nap=$((deadline - SECONDS))
+        ((nap < 30)) || nap=30
+        ((nap <= 0)) || sleep "${nap}"
     done
-    checks=$(gh pr checks "${pr_number}" --json bucket)
+    jq -r '.[] | "\(.name)\t\(.bucket)"' <<<"${checks}"
+    ((pending == 0)) || {
+        echo "#${pr_number}'s checks are still running after 30 minutes. Run this script again once they finish." >&2
+        exit 1
+    }
     jq -e 'length > 0 and all(.[]; .bucket == "pass")' <<<"${checks}" >/dev/null || {
         echo 'The observed checks are not all passing. Inspect the current head and CI policy.' >&2
         exit 1
@@ -748,13 +802,15 @@ def hrs(a; b): (((b | fromdate) - (a | fromdate)) / 3600 * 10 | round) / 10;
 # The program runs through .NET's Process, each argument passed as one and its standard input closed, so that text
 # beyond ASCII survives a Windows console's code page (the style guide's section 7, Native programs). What it writes to
 # standard error, and to standard output with Narrate, goes to the verbose stream. A non-zero exit is a refusal naming
-# the operation, unless AllowFailure lets the caller read it.
+# the operation, unless AllowFailure lets the caller read it. Given a Deadline, it waits for the program only until
+# then, and then stops it and its children and refuses with DeadlinePassed (#629).
 #
 # Parameters:
 #   - `Name`: The program, as the PATH finds it: git, gh or star.
 #   - `Operation`: What the call does, said on the verbose stream and in a refusal.
 #   - `AllowFailure`: Gets a non-zero exit, in place of refusing it.
 #   - `Narrate`: Says what the program writes to standard output on the verbose stream too.
+#   - `Deadline`: When the program must have finished; unset, it may take as long as it takes.
 #   - `ArgumentList`: Its arguments, each one argument.
 #
 # Returns:
@@ -776,6 +832,9 @@ function Invoke-Native {
 
         [Switch]
         $Narrate,
+
+        [Nullable[DateTime]]
+        $Deadline = $null,
 
         [Parameter(Mandatory)]
         [String[]]
@@ -800,9 +859,22 @@ function Invoke-Native {
 
     $process = [System.Diagnostics.Process]::Start($start)
     $process.StandardInput.Close()
+    $outputRead = $process.StandardOutput.ReadToEndAsync()
     $errorRead = $process.StandardError.ReadToEndAsync()
-    $output = $process.StandardOutput.ReadToEnd()
+
+    if ($null -ne $Deadline) {
+        $left = [Math]::Max(0, [Math]::Ceiling(($Deadline - (Get-Date)).TotalMilliseconds))
+
+        if (-not $process.WaitForExit([Int32]$left)) {
+            $process.Kill($true)
+            $process.WaitForExit()
+            $message = "$Operation ran out of time: $Name was stopped at its deadline."
+            throw (ConvertTo-Refusal -Message $message -Id 'DeadlinePassed' -Category OperationTimeout -Target $Name)
+        }
+    }
+
     $process.WaitForExit()
+    $output = $outputRead.GetAwaiter().GetResult()
     $errorText = $errorRead.GetAwaiter().GetResult()
     $said = $errorText
 
@@ -918,36 +990,85 @@ try {
         $qualifiedHead = (Invoke-Native -Name gh -Operation "Reading #$number's qualified head" -ArgumentList 'pr',
                 'view', $number, '--json', 'headRefOid', '--jq', '.headRefOid').Output.Trim()
 
-        # GitHub registers a pull request's checks a moment after it opens, and gh pr checks --watch fails while it
-        # reports none (PR #610's first run), so the script waits up to five minutes for the first.
-        foreach ($attempt in 1..30) {
-            $reported = Invoke-Native -Name gh -Operation "Finding #$number's checks" -AllowFailure -ArgumentList 'pr',
-                'checks', $number, '--json', 'name', '--jq', 'length'
+        # GitHub registers a pull request's checks a moment after it opens, and gh pr checks fails while it reports
+        # none (PR #610's first run), so the script waits up to five minutes for the first, no read or wait outlasting
+        # them.
+        $deadline = (Get-Date).AddMinutes(5)
+
+        while ((Get-Date) -lt $deadline) {
+            try {
+                $reported = Invoke-Native -Name gh -Operation "Finding #$number's checks" -AllowFailure `
+                    -Deadline $deadline -ArgumentList 'pr', 'checks', $number, '--json', 'name', '--jq', 'length'
+            }
+            catch {
+                if ($_.FullyQualifiedErrorId -ne 'DeadlinePassed') {
+                    throw
+                }
+
+                break
+            }
 
             if ($reported.Output.Trim() -notin @('', '0')) {
                 break
             }
 
-            Write-Verbose -Message "#$number reports no checks yet, attempt $attempt of 30."
-            Start-Sleep -Seconds 10
+            Write-Verbose -Message "#$number reports no checks yet."
+            $nap = [Math]::Min(10, [Math]::Max(0, [Int32][Math]::Ceiling(($deadline - (Get-Date)).TotalSeconds)))
+
+            if ($nap -gt 0) {
+                Start-Sleep -Seconds $nap
+            }
         }
 
-        # gh pr checks --watch waits only for the checks it sees when it starts, and a run that starts later, as a pull
-        # request's own after its branch's push, is still pending when it returns; so the script watches again while
-        # any check is pending, for up to 30 minutes (#629).
-        foreach ($round in 1..60) {
-            $null = Invoke-Native -Name gh -Operation "Waiting for #$number's checks" -Narrate -AllowFailure `
-                -ArgumentList 'pr', 'checks', $number, '--watch'
-            $answer = Invoke-Native -Name gh -Operation "Reading #$number's check results" -ArgumentList 'pr', 'checks',
-                $number, '--json', 'bucket'
-            $checks = @(ConvertFrom-Json -InputObject $answer.Output)
+        # A run that starts after the pull request opens, as its own after its branch's push, is pending when the
+        # first run's checks pass, and gh pr checks --watch waits only for the checks it sees when it starts, with no
+        # limit of its own; so the script reads the checks every 30 seconds while any is pending, for 30 minutes at
+        # most, no read or wait outlasting them. It judges the last read alone, and shows the table from it (#629).
+        $deadline = (Get-Date).AddMinutes(30)
+        $checks = @()
+        $pending = 1
+        $said = 0
 
-            if (@($checks | Where-Object { $_.bucket -eq 'pending' }).Count -eq 0) {
+        while ((Get-Date) -lt $deadline) {
+            try {
+                $answer = Invoke-Native -Name gh -Operation "Reading #$number's checks" -Deadline $deadline `
+                    -ArgumentList 'pr', 'checks', $number, '--json', 'name,bucket'
+            }
+            catch {
+                if ($_.FullyQualifiedErrorId -ne 'DeadlinePassed') {
+                    throw
+                }
+
                 break
             }
 
-            Write-Verbose -Message "#$number has checks still running, round $round of 60."
-            Start-Sleep -Seconds 30
+            $checks = @(ConvertFrom-Json -InputObject $answer.Output)
+            $pending = @($checks | Where-Object { $_.bucket -eq 'pending' }).Count
+
+            if ($pending -eq 0) {
+                break
+            }
+
+            if ($pending -ne $said) {
+                Write-Verbose -Message "Checks still running on #${number}: $pending."
+                $said = $pending
+            }
+
+            $nap = [Math]::Min(30, [Math]::Max(0, [Int32][Math]::Ceiling(($deadline - (Get-Date)).TotalSeconds)))
+
+            if ($nap -gt 0) {
+                Start-Sleep -Seconds $nap
+            }
+        }
+
+        foreach ($check in $checks) {
+            Write-Verbose -Message "  $($check.name): $($check.bucket)"
+        }
+
+        if ($pending -ne 0) {
+            $message = "#$number's checks are still running after 30 minutes; run this again once they finish."
+            $refusal = @{ Id = 'ChecksStillRunning'; Category = 'OperationTimeout'; Target = $number }
+            throw (ConvertTo-Refusal -Message $message @refusal)
         }
 
         if ($checks.Count -eq 0 -or @($checks | Where-Object { $_.bucket -ne 'pass' }).Count -ne 0) {
