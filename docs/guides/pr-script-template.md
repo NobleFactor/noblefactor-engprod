@@ -797,12 +797,13 @@ def hrs(a; b): (((b | fromdate) - (a | fromdate)) / 3600 * 10 | round) / 10;
     $answer.Output.TrimEnd()
 }
 
-# Invoke-Native runs a native program, its output read as UTF-8, and gets what it wrote and how it exited. The program
-# runs through .NET's Process, each argument passed as one and its standard input closed, so that text beyond ASCII
-# survives a Windows console's code page (the style guide's section 7, Native programs). What it writes to standard
-# error, and to standard output with Narrate, goes to the verbose stream. A non-zero exit is a refusal naming the
-# operation, unless AllowFailure lets the caller read it. Given a Deadline, it waits for the program only until then,
-# and then stops it and its children and refuses with DeadlinePassed (#629).
+# Invoke-Native runs a native program, its output read as UTF-8, and gets what it wrote and how it exited.
+#
+# The program runs through .NET's Process, each argument passed as one and its standard input closed, so that text
+# beyond ASCII survives a Windows console's code page (the style guide's section 7, Native programs). What it writes to
+# standard error, and to standard output with Narrate, goes to the verbose stream. A non-zero exit is a refusal naming
+# the operation, unless AllowFailure lets the caller read it. Given a Deadline, it waits for the program only until
+# then, and then stops it and its children and refuses with DeadlinePassed (#629).
 #
 # Parameters:
 #   - `Name`: The program, as the PATH finds it: git, gh or star.
